@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bağlı Listeler</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Bağlı listeler ve dizilerle kapsamlı karşılaştırma: bellek, önbellek, dinamik diziler, nesne havuzu, yılan oyunu. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d3a4a 0%, #120c2c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · VERİ YAPILARI</div>
+  <div class="ttl" style="font-size:76px">Bağlı Listeler</div>
+  <div class="sub"><i>Linked lists</i> — dizi mi, bağlı liste mi? Bellekte gerçekte neler oluyor?</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlelist"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 1.3 (bağlı listeler, yeniden boyutlanan diziler) bölümünü temel alır; dizi ile bağlı listenin bellek, önbellek ve oyun açısından kapsamlı karşılaştırmasını ekler. Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.92em">
+      <li><b>Dizi</b>: bellekte tek parça — güçlü ve zayıf yanları <span class="en">array</span></li>
+      <li><b>Bağlı liste</b>: düğümler ve oklar <span class="en">linked list</span></li>
+      <li><b>İşlemler</b>: başa/sona ekleme, silme, arama, tersine çevirme</li>
+      <li><b>Dinamik dizi</b>: Python <code>list</code>, C# <code>List&lt;T&gt;</code> aslında ne? <span class="en">resizing array</span></li>
+      <li><b>Büyük karşılaştırma</b>: işlemler, bellek, önbellek, canlı ölçüm</li>
+      <li><b>Oyunlarda</b>: yılan oyunu, Uno sırası, mermi havuzu, düşman listesi</li>
+      <li>⚙️ <b>Kaputun altında</b>: C’de işaretçiler, bellek sızıntısı, çöp toplayıcı</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…“bu oyunda düşmanları hangi yapıda tutmalıyım?” sorusuna <b>gerekçeli</b> bir cevap verebileceksiniz — ve cevabın çoğu zaman sandığınız gibi olmadığını göreceksiniz. 😉</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: DOLAPLAR ve HAZİNE AVI</span>
+    <div class="cols">
+      <div><p class="big">🗄️ Spor salonu dolapları</p><p>Yan yana numaralı 100 dolap. <b>37 numaralı</b> dolaba nasıl gidersiniz?</p></div>
+      <div><p class="big">🗺️ Hazine avı</p><p>Her ipucu kâğıdı bir sonrakinin <b>yerini</b> söylüyor. <b>37. ipucuna</b> nasıl ulaşırsınız?</p></div>
+    </div>
+  </div>
+  <p class="fragment lead">Dolap: <b>doğrudan</b> gidersiniz (numarası belli) → <b>dizi</b>. Hazine avı: 1’den başlayıp <b>36 ipucunu</b> takip edersiniz → <b>bağlı liste</b>.</p>
+  <p class="fragment lead">Ama araya yeni bir ipucu eklemek için hazine avında sadece <b>bir kâğıdı</b> değiştirmek yeter; dolaplarda herkesi bir dolap kaydırmanız gerekir! 🤔</p>
+  <aside class="notes">Bu iki benzetmeyi ders boyunca kullanın: dizi = numaralı dolaplar, bağlı liste = hazine avı ipuçları.</aside>
+</section>
+
+<section>
+  <h2>Oyun programcısı neden umursamalı?</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">🐍</div><b>Yılan oyunu</b>Her adımda başa ekle, sondan sil</div>
+    <div class="icon-card"><div class="ic">🃏</div><b>Tur sırası</b>Uno: “yön değiştir”, “atla”, oyuncu elendi</div>
+    <div class="icon-card"><div class="ic">🔫</div><b>Mermi havuzu</b>Saniyede yüzlerce mermi — <code>new</code> olmadan!</div>
+    <div class="icon-card"><div class="ic">👾</div><b>Düşman listesi</b>Ölen düşmanı listeden en hızlı nasıl çıkarırım?</div>
+    <div class="icon-card"><div class="ic">⚡</div><b>Performans</b>Aynı algoritma, farklı veri yapısı: 10 kat hız farkı</div>
+    <div class="icon-card"><div class="ic">🧱</div><b>Temel taş</b>Yığın, kuyruk, ağaç, graf… hepsi bu iki fikirden doğar</div>
+  </div>
+</section>
+
+<section>
+  <h2>Mini sözlük (1/2)</h2>
+  <table class="gloss">
+    <tr><td>array</td><td>dizi</td><td>Bellekte yan yana duran, indeksle erişilen elemanlar</td></tr>
+    <tr><td>contiguous</td><td>bitişik</td><td>Bellekte boşluksuz, ardışık</td></tr>
+    <tr><td>random access</td><td>rastgele (doğrudan) erişim</td><td><code>a[i]</code>’ye tek adımda ulaşmak</td></tr>
+    <tr><td>node</td><td>düğüm</td><td>Bağlı listenin bir halkası: değer + bağlantı</td></tr>
+    <tr><td>link / next</td><td>bağlantı / sonraki</td><td>Bir sonraki düğümün referansı (adresi)</td></tr>
+    <tr><td>head / tail</td><td>baş / son</td><td>Listenin ilk / son düğümünü gösteren değişken</td></tr>
+    <tr><td>null</td><td>boş referans</td><td>“Hiçbir düğümü göstermiyor” — listenin sonu</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Mini sözlük (2/2)</h2>
+  <table class="gloss">
+    <tr><td>doubly linked list</td><td>çift yönlü bağlı liste</td><td>Her düğümde hem <code>next</code> hem <code>prev</code> var</td></tr>
+    <tr><td>circular list</td><td>dairesel liste</td><td>Sonun <code>next</code>’i başa döner</td></tr>
+    <tr><td>dynamic (resizing) array</td><td>dinamik dizi</td><td>Dolunca kendini büyüten dizi (<code>list</code>, <code>List&lt;T&gt;</code>)</td></tr>
+    <tr><td>capacity</td><td>kapasite</td><td>Ayrılmış yer sayısı (kullanılan eleman sayısından büyük olabilir)</td></tr>
+    <tr><td>amortized</td><td>amortize (uzun vadeli ortalama)</td><td>Ara sıra pahalı, ortalamada ucuz işlem</td></tr>
+    <tr><td>cache locality</td><td>önbellek yerelliği</td><td>Birlikte kullanılan verinin bellekte yakın durması</td></tr>
+    <tr><td>object pool / free list</td><td>nesne havuzu / boş liste</td><td>Nesneleri silmek yerine geri dönüştürmek</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Dizi</div>
+  <div class="sub"><i>array</i> — bellekte tek parça, numaralı dolaplar gibi</div>
+  <ul class="agenda"><li class="on">dizi: bellekte tek parça</li><li class="">bağlı liste: düğümler ve oklar</li><li class="">işlemler</li><li class="">dinamik dizi</li><li class="">büyük karşılaştırma</li><li class="">varyasyonlar ve oyunlar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="dizi">
+  <h2>Dizi bellekte nasıl durur?</h2>
+  <p>Dizi = bellekte <b>yan yana</b> duran, <b>aynı boyutta</b> kutular. <code>a[i]</code>’nin adresi tek bir hesapla bulunur:</p>
+  <div class="demo" data-demo="memory"></div>
+  <div class="cols fragment">
+    <div class="box game"><span class="bt">💪 Süper gücü: rastgele erişim <span class="en">random access</span></span><code>a[0]</code> ile <code>a[999999]</code>’a ulaşmak <b>aynı</b> sürer: bir çarpma + bir toplama. → İkili arama bu yüzden dizide çalışır!</div>
+    <div class="box low"><span class="bt">⚙️ Bonus: önbellek dostu</span>İşlemci bellekten 64 baytlık parçalar getirir. <code>a[i]</code>’yi okuyunca komşuları da “bedavaya” gelir.</div>
+  </div>
+</section>
+
+<section data-sec="dizi">
+  <h2>Dizinin bedeli: araya ekleme ve silme</h2>
+  <div class="demo" data-demo="arrinsert"></div>
+  <div class="cols fragment">
+    <div class="box warn"><span class="bt">😓 Zayıf yan 1: kaydırma</span>Araya ekleme/silme, sağdaki <b>her elemanı</b> bir kaydırır. Başa eklemek = N taşıma.</div>
+    <div class="box warn"><span class="bt">😓 Zayıf yan 2: sabit boyut</span><code>new int[12]</code> diye ayrılan dizi <b>büyüyemez</b>. 13. eleman için yeni, daha büyük bir dizi ayırıp hepsini kopyalamak gerekir.</div>
+  </div>
+  <aside class="notes">Önce 2. konuma ekleyin, sonra 0. konuma: taşıma sayısı nasıl değişiyor? Ekleme sırasında sağdan sola kopyalamanın nedeni: soldan başlarsak elemanların üzerine yazarız.</aside>
+</section>
+
+<section data-sec="dizi">
+  <div class="quiz" data-answer="D">
+    <div class="qhead">Quiz 1 · dizi</div>
+    <div class="q">1000 elemanlı bir dizinin (yeterli kapasitesi var) <b>en başına</b> yeni bir eleman eklemek kaç taşıma gerektirir?</div>
+    <div class="opts">
+      <button data-opt="A">1</button>
+      <button data-opt="B">~10</button>
+      <button data-opt="C">~500</button>
+      <button data-opt="D">1000</button>
+    </div>
+    <div class="explain">Yeni elemana yer açmak için mevcut <b>1000 elemanın hepsi</b> bir sağa kaymalı. Sona eklemek ise 0 taşıma. Dizide “nereye” eklediğiniz çok önemli.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Bağlı Liste</div>
+  <div class="sub"><i>linked list</i> — her düğüm bir sonrakinin yerini bilir (hazine avı)</div>
+  <ul class="agenda"><li class="done">dizi: bellekte tek parça</li><li class="on">bağlı liste: düğümler ve oklar</li><li class="">işlemler</li><li class="">dinamik dizi</li><li class="">büyük karşılaştırma</li><li class="">varyasyonlar ve oyunlar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: sınıf ve nesne <span class="en">class &amp; object</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.85em">
+      <ul>
+        <li><b>Sınıf</b> <span class="en">class</span> = kalıp: “Her düğümün bir <b>değeri</b> ve bir <b>sonraki</b> bağlantısı olur.”</li>
+        <li><b>Nesne</b> <span class="en">object</span> = kalıptan üretilmiş somut düğüm</li>
+        <li><b>Alan</b> <span class="en">field</span> = nesnenin bilgisi: <code>key</code>, <code>next</code></li>
+        <li><b>Yapıcı</b> <span class="en">constructor</span> = nesne üretilirken çalışan fonksiyon (<code>__init__</code> / <code>constructor</code>)</li>
+        <li><code>self</code> / <code>this</code> = “bu nesnenin”</li>
+        <li>Nokta = “-nin”: <code>n.key</code> → “n’nin değeri”</li>
+      </ul>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Node:                       # sınıf = kalıp
+    def __init__(self, key):      # yapıcı: Node("to") yazınca çalışır
+        self.key = key            # bu düğümün değeri
+        self.next = None          # bu düğümün sonraki bağlantısı (şimdilik yok)
+
+n = Node("to")                    # nesne = kalıptan üretilen düğüm
+print(n.key)                      # to
+print(n.next)                     # None
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Node                         // sınıf = kalıp
+{
+    public string Key;             // değer
+    public Node Next;              // sonraki düğüm (yoksa null)
+
+    public Node(string key)        // yapıcı
+    {
+        Key = key;
+        Next = null;
+    }
+}
+
+Node n = new Node("to");           // new → nesne üret
+Debug.Log(n.Key);                  // to
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Node {                       // sınıf = kalıp
+  constructor(key) {               // yapıcı: new Node("to") ile çalışır
+    this.key = key;                // değer
+    this.next = null;              // sonraki düğüm (şimdilik yok)
+  }
+}
+
+const n = new Node("to");          // new → nesne üret
+console.log(n.key);                // to
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: referans ve <code>null</code> <span class="en">reference · null</span></h2>
+  <div class="cols">
+    <div style="font-size:.92em">
+      <p>Bir değişken nesnenin <b>kendisini</b> değil, nerede durduğunu (<b>adresini</b>) tutar: bir <b>ok</b> gibi düşünün.</p>
+      <ul>
+        <li class="fragment"><code>b = a</code> yeni düğüm <b>üretmez</b>: iki ok aynı düğümü gösterir.</li>
+        <li class="fragment"><code>a.next = b</code> → a’nın içine b’nin <b>adresi</b> yazıldı: işte “bağlantı”!</li>
+        <li class="fragment"><code>None</code> / <code>null</code> = ok hiçbir şeyi göstermiyor → listenin sonu.</li>
+        <li class="fragment"><code>null.key</code> okumaya çalışmak → <b>hata</b> (<code>NullReferenceException</code> — Unity’nin en meşhur hatası 😅)</li>
+      </ul>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+a = Node("to")
+b = Node("be")
+a.next = b            # a → b   (a'nın içine b'nin adresi yazıldı)
+print(a.next.key)     # be      ("a'nın sonrakinin değeri")
+print(b.next)         # None    → b son düğüm
+print(b.next.key)     # ❌ AttributeError: None'ın key alanı yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node a = new Node("to");
+Node b = new Node("be");
+a.Next = b;                 // a → b
+Debug.Log(a.Next.Key);      // be
+Debug.Log(b.Next == null);  // True → b son düğüm
+Debug.Log(b.Next.Key);      // ❌ NullReferenceException
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const a = new Node("to");
+const b = new Node("be");
+a.next = b;                 // a → b
+console.log(a.next.key);    // be
+console.log(b.next);        // null → b son düğüm
+console.log(b.next.key);    // ❌ TypeError: null'ın özelliği okunamaz
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="bağlı liste">
+  <h2>Bağlı liste: tanım</h2>
+  <div class="cols c64">
+    <div>
+      <ul>
+        <li>Her <b>düğüm</b>: bir <b>değer</b> + bir sonraki düğümün <b>referansı</b> (<code>next</code>)</li>
+        <li><code>head</code> değişkeni ilk düğümü gösterir</li>
+        <li>Son düğümün <code>next</code>’i <code>null</code></li>
+        <li>Boş liste: <code>head = null</code></li>
+      </ul>
+      <p class="fragment">Düğümler bellekte <b>herhangi bir yerde</b> olabilir; sırayı adresler değil <b>oklar</b> belirler.</p>
+      <div class="box story fragment"><span class="bt">📜 1955–56</span>Bağlı listeler, ilk yapay zekâ programlarından biri olan <i>Logic Theorist</i> için (Newell, Shaw, Simon) icat edildi. Yani bağlı liste ve yapay zekâ en başından beri kardeş! 🤖</div>
+    </div>
+    <svg viewBox="0 0 420 150" style="width:100%">
+      <g font-family="JetBrains Mono" font-size="16">
+        <text x="10" y="135" fill="var(--blue)" font-weight="700">head</text><line x1="30" y1="118" x2="44" y2="78" stroke="var(--blue)" stroke-width="2.5"/>
+        <rect x="20" y="40" width="90" height="40" rx="7" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="52" y="66" text-anchor="middle" fill="var(--ink)" font-weight="700">to</text><line x1="84" y1="40" x2="84" y2="80" stroke="var(--ink-2)"/><circle cx="97" cy="60" r="4" fill="var(--ink-2)"/>
+        <line x1="97" y1="60" x2="148" y2="60" stroke="var(--ink-2)" stroke-width="2.5"/><path d="M148,55 L156,60 L148,65 z" fill="var(--ink-2)"/>
+        <rect x="158" y="40" width="90" height="40" rx="7" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="190" y="66" text-anchor="middle" fill="var(--ink)" font-weight="700">be</text><line x1="222" y1="40" x2="222" y2="80" stroke="var(--ink-2)"/><circle cx="235" cy="60" r="4" fill="var(--ink-2)"/>
+        <line x1="235" y1="60" x2="286" y2="60" stroke="var(--ink-2)" stroke-width="2.5"/><path d="M286,55 L294,60 L286,65 z" fill="var(--ink-2)"/>
+        <rect x="296" y="40" width="90" height="40" rx="7" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="328" y="66" text-anchor="middle" fill="var(--ink)" font-weight="700">or</text><line x1="360" y1="40" x2="360" y2="80" stroke="var(--ink-2)"/><circle cx="373" cy="60" r="4" fill="var(--ink-2)"/>
+        <text x="373" y="110" text-anchor="middle" fill="var(--muted)" font-size="14">null</text><line x1="373" y1="64" x2="373" y2="95" stroke="var(--muted)"/>
+        <text x="64" y="30" fill="var(--muted)" font-size="11">key │ next</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-sec="bağlı liste">
+  <h2>Elle bir liste kuralım: “to be or”</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|1-3|5-6|8|9"><script type="text/template">
+first = Node("to")         # üç ayrı düğüm oluştur
+second = Node("be")
+third = Node("or")
+
+first.next = second        # okları bağla: to → be
+second.next = third        #               be → or   (third.next zaten None)
+
+head = first               # listeye artık head üzerinden ulaşırız
+print(head.next.next.key)  # or
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node first  = new Node("to");    // üç ayrı düğüm oluştur
+Node second = new Node("be");
+Node third  = new Node("or");
+
+first.Next  = second;            // to → be
+second.Next = third;             // be → or
+
+Node head = first;
+Debug.Log(head.Next.Next.Key);   // or
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const first = new Node("to");    // üç ayrı düğüm oluştur
+const second = new Node("be");
+const third = new Node("or");
+
+first.next = second;             // to → be
+second.next = third;             // be → or
+
+const head = first;
+console.log(head.next.next.key); // or
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Bu, kitaptaki klasik örneğin aynısı (Shakespeare: <i>“to be or not to be”</i>).</p>
+</section>
+
+<section data-sec="bağlı liste">
+  <h2>Listeyi gezmek <span class="en">traversal</span>: “oku takip et”</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p>Dizideki <code>for (i = 0; i &lt; N; i++)</code> döngüsünün bağlı liste hali:</p>
+      <ol>
+        <li><code>x = head</code> — baştan başla</li>
+        <li><code>x</code> null değilken: düğümü kullan</li>
+        <li><code>x = x.next</code> — bir sonrakine <b>geç</b></li>
+      </ol>
+      <div class="box bgk"><span class="bt">🎒 <code>x = x.next</code> ne demek?</span>“x şu an bir düğümü gösteriyor. O düğümün <b>sonraki</b> okunun gösterdiği yeri, x’in yeni değeri yap.” x bir “parmak” gibi listede ilerler; düğümlerin kendisi yerinden kıpırdamaz.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+x = head
+while x is not None:        # liste bitmediyse
+    print(x.key)            # düğümü kullan
+    x = x.next              # sonrakine geç
+
+# Arama da aynı kalıp:
+def contains(head, key):
+    x = head
+    while x is not None:
+        if x.key == key:
+            return True
+        x = x.next
+    return False
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+for (Node x = head; x != null; x = x.Next)   // tek satırda aynı kalıp
+    Debug.Log(x.Key);
+
+bool Contains(Node head, string key)
+{
+    Node x = head;
+    while (x != null)
+    {
+        if (x.Key == key) return true;
+        x = x.Next;
+    }
+    return false;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+for (let x = head; x !== null; x = x.next)   // tek satırda aynı kalıp
+  console.log(x.key);
+
+function contains(head, key) {
+  let x = head;
+  while (x !== null) {
+    if (x.key === key) return true;
+    x = x.next;
+  }
+  return false;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="bağlı liste">
+  <h2>Arama animasyonu</h2>
+  <div class="llviz" data-keys="to be or not to" data-ops="find,reset" data-default="not" data-hint="Bir değer yazıp Ara’ya basın. x işaretçisinin listede nasıl ilerlediğini izleyin."></div>
+  <p class="mini">Dizide ikili arama yapabiliyorduk; bağlı listede <b>yapamayız</b>: ortadaki düğüme ulaşmak için zaten yarısını yürümek gerekir. Arama hep <b>O(N)</b>.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">İşlemler</div>
+  <div class="sub">başa ekle · baştan sil · sona ekle · sil · tersine çevir</div>
+  <ul class="agenda"><li class="done">dizi: bellekte tek parça</li><li class="done">bağlı liste: düğümler ve oklar</li><li class="on">işlemler</li><li class="">dinamik dizi</li><li class="">büyük karşılaştırma</li><li class="">varyasyonlar ve oyunlar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Başa ekleme: 3 adım, liste ne kadar uzun olursa olsun</h2>
+  <div class="llviz" data-keys="be or not" data-ops="pushfront,popfront,reset" data-default="to" data-code="oldFirst = head|head = new Node(…)|head.next = oldFirst" data-h="270"></div>
+  <aside class="notes">Kitaptaki “insert at the beginning” şeması. Adımların sırası önemli: önce eskiyi tut (1), sonra yeni düğümü oluştur (2), sonra bağla (3). Baştan silme de tek satır: head = head.next. Silinen düğüm “çöp” olur; GC toplar.</aside>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Başa ekle / baştan sil — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def push_front(head, key):     # yeni baş düğümü döndürür
+    old_first = head
+    head = Node(key)
+    head.next = old_first
+    return head
+
+def pop_front(head):           # (değer, yeni baş) döndürür
+    key = head.key
+    head = head.next           # eski ilk düğüme kimse bağlı değil → çöp
+    return key, head
+
+head = push_front(head, "to")
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node PushFront(Node head, string key)
+{
+    Node oldFirst = head;
+    head = new Node(key);
+    head.Next = oldFirst;
+    return head;              // yeni baş
+}
+
+string PopFront(ref Node head)   // ref: head değişkenini fonksiyon içinde değiştir
+{
+    string key = head.Key;
+    head = head.Next;         // eski ilk düğüm → çöp (GC toplar)
+    return key;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function pushFront(head, key) {
+  const oldFirst = head;
+  head = new Node(key);
+  head.next = oldFirst;
+  return head;              // yeni baş
+}
+
+function popFront(head) {   // [değer, yeni baş] döndürür
+  return [head.key, head.next];
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Fonksiyon <code>head</code>’i değiştirdiği için <b>yeni başı döndürüyoruz</b> ve çağıran <code>head = push_front(head, …)</code> diye kaydediyor. (Gerçek kodda bunu bir <code>LinkedList</code> sınıfının içine saklarız; yığınlar dersinde göreceğiz.) C#’taki <code>ref</code>: “değişkenin kopyasını değil, kendisini ver.”</p>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Sona ekleme — <code>tail</code> olmadan: yürümek zorundayız</h2>
+  <div class="llviz" data-keys="to be or not" data-ops="pushback,reset" data-default="to" data-hint="Sona ekle: son düğümü bulmak için baştan yürümek gerekiyor."></div>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Sona ekleme — <code>tail</code> ile: O(1)</h2>
+  <div class="llviz" data-keys="to be or not" data-ops="pushback,popfront,reset" data-tail data-default="be" data-code="oldLast = tail|oldLast.next = yeni düğüm|tail = yeni düğüm" data-h="270"></div>
+  <aside class="notes">Son düğümü gösteren ikinci bir değişken (tail) tutmak, sona eklemeyi O(1) yapar. Bedeli: her işlemde tail’i doğru güncellemek (özellikle liste boşalınca!). Kuyruk (queue) veri yapısı tam olarak budur: sona ekle, baştan çıkar → sonraki ders.</aside>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Sona ekle (tail ile) — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class LinkedList:
+    def __init__(self):
+        self.head = None
+        self.tail = None
+
+    def push_back(self, key):
+        node = Node(key)
+        if self.tail is None:       # liste boşsa: ilk ve son aynı düğüm
+            self.head = node
+        else:
+            self.tail.next = node   # eski sonun next'i yeni düğüm
+        self.tail = node            # yeni son
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class LinkedList
+{
+    Node head, tail;
+
+    public void PushBack(string key)
+    {
+        Node node = new Node(key);
+        if (tail == null) head = node;   // liste boştu
+        else tail.Next = node;           // eski sonu bağla
+        tail = node;                     // yeni son
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class LinkedList {
+  constructor() { this.head = null; this.tail = null; }
+
+  pushBack(key) {
+    const node = new Node(key);
+    if (this.tail === null) this.head = node;   // liste boştu
+    else this.tail.next = node;                 // eski sonu bağla
+    this.tail = node;                           // yeni son
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Burada düğümleri ve <code>head</code>/<code>tail</code>’i bir <b>sınıfın</b> içine sakladık: kullanan kişi okları hiç görmez, sadece <code>push_back("x")</code> der. Buna <b>kapsülleme</b> <span class="en">encapsulation</span> denir.</p>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Ortadan silme: “üzerinden atla”</h2>
+  <div class="llviz" data-keys="to be or not to" data-ops="remove,reset" data-default="or" data-hint="Bir değer yazıp Sil’e basın. prev ve x işaretçilerini izleyin."></div>
+  <div class="cols">
+    <div class="box game"><span class="bt">👍 Kaydırma yok</span>Sadece <code>prev.next = x.next</code>: tek bir bağlantı değişir.</div>
+    <div class="box warn"><span class="bt">👎 Ama önce bulmak lazım</span>Silinecek düğümü ve <b>bir öncekini</b> bulmak için baştan yürümek gerekir: O(N). Elimizde düğümün kendisi varsa (ve çift yönlü listeyse) O(1).</div>
+  </div>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Tersine çevirme: klasik bir bulmaca 🔄</h2>
+  <div class="llviz" data-keys="1 2 3 4 5" data-ops="reverse,reset" data-code="prev = null; cur = head|nxt = cur.next|cur.next = prev|prev = cur; cur = nxt|head = prev" data-h="280"></div>
+  <aside class="notes">Mülakatların en sevilen sorusu. Üç işaretçi: prev, cur, nxt. Düğümler yerinden oynamıyor; sadece oklar ters çevriliyor. İleri/Geri ile tek tek adımlayın ve her adımda “şimdi hangi ok değişecek?” diye sorun.</aside>
+</section>
+
+<section data-sec="işlemler">
+  <h2>Tersine çevirme — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|2-3|5|6|7-8|9"><script type="text/template">
+def reverse(head):
+    prev = None
+    cur = head
+    while cur is not None:
+        nxt = cur.next      # 1) devamını kaybetme
+        cur.next = prev     # 2) oku ters çevir
+        prev = cur          # 3) bir adım ilerle
+        cur = nxt
+    return prev             # yeni baş = eski son
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node Reverse(Node head)
+{
+    Node prev = null, cur = head;
+    while (cur != null)
+    {
+        Node nxt = cur.Next;   // 1) devamını kaybetme
+        cur.Next = prev;       // 2) oku ters çevir
+        prev = cur;            // 3) bir adım ilerle
+        cur = nxt;
+    }
+    return prev;               // yeni baş
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function reverse(head) {
+  let prev = null, cur = head;
+  while (cur !== null) {
+    const nxt = cur.next;   // 1) devamını kaybetme
+    cur.next = prev;        // 2) oku ters çevir
+    prev = cur;             // 3) bir adım ilerle
+    cur = nxt;
+  }
+  return prev;              // yeni baş
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="işlemler">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · işlemler</div>
+    <div class="q">Tersine çevirme kodunda <code>nxt = cur.next</code> satırını unutup doğrudan <code>cur.next = prev</code> yazarsak ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Hiçbir şey; sonuç aynı</button>
+      <button data-opt="B">Listenin geri kalanına ulaşan tek ok silinir → liste kopar, düğümler kaybolur</button>
+      <button data-opt="C">Sonsuz döngü</button>
+      <button data-opt="D">Liste iki kez tersine çevrilir</button>
+    </div>
+    <div class="explain"><code>cur.next</code>, listenin geri kalanına giden <b>tek</b> yol. Önce onu bir değişkende saklamazsak üzerine <code>prev</code> yazdığımız an devamı kaybolur (ve çöp toplayıcı onları siler). Bağlı listelerde altın kural: <b>bir oku değiştirmeden önce, gösterdiği yeri kaydet</b>.</div>
+  </div>
+</section>
+
+<section data-sec="işlemler · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: uzunluk (ısınma)</h2>
+  <div class="lllab" data-lang="js" data-task="length">
+<textarea>
+// Node: new Node(key, next) — alanlar: key, next
+// GÖREV: listedeki düğüm sayısını döndür.
+function length(head) {
+  let count = 0;
+  let x = head;
+  while (x !== null) {
+    count = count + 1;
+    x = x.next;
+  }
+  return count;
+}
+</textarea>
+    <div class="lab-tasks"><b>Dene:</b>
+      <ol>
+        <li>Çalıştır: tüm testler geçiyor mu?</li>
+        <li>8. satırı (<code>x = x.next</code>) sil. Ne oldu, neden?</li>
+        <li>Fonksiyonu <b>özyinelemeli</b> yaz: boş listenin uzunluğu 0; değilse 1 + kalanın uzunluğu.</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">2) x hiç ilerlemez → sonsuz döngü; laboratuvarın döngü bekçisi bunu yakalar. 3) return head === null ? 0 : 1 + length(head.next); — ağaçlar dersindeki özyinelemenin habercisi.</aside>
+</section>
+
+<section data-sec="işlemler · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: tersine çevir</h2>
+  <div class="lllab" data-lang="js" data-task="reverse">
+<textarea>
+// GÖREV: listeyi tersine çevir ve YENİ başı döndür.
+// İpucu: prev, cur, nxt
+function reverse(head) {
+  // kodunu buraya yaz
+  return head;
+}
+</textarea>
+    <div class="lab-tasks">Önce animasyonu tekrar izle, sonra kendin yaz. Takılırsan önceki slayttaki kodu <b>ezberden değil</b>, adımları düşünerek yazmayı dene. Bonus: özyinelemeli sürüm.</div>
+  </div>
+</section>
+
+<section data-sec="işlemler · laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python: sona ekle</h2>
+  <div class="lllab" data-lang="python" data-task="pushback">
+<textarea>
+# Node(key, next=None) — alanlar: key, next
+# GÖREV: listenin SONUNA yeni bir düğüm ekle ve başı döndür.
+# Dikkat: liste boş olabilir (head is None)!
+def push_back(head, key):
+    node = Node(key)
+    x = head
+    while x.next is not None:
+        x = x.next
+    x.next = node
+    return head
+</textarea>
+    <div class="lab-tasks">Bu kodda bir <b>hata</b> var: çalıştır, hangi testte patlıyor? Düzelt. (İpucu: boş liste.)</div>
+  </div>
+  <aside class="notes">head None iken x.next okunur → AttributeError. Çözüm: if head is None: return node.</aside>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Dinamik Dizi</div>
+  <div class="sub"><i>resizing array</i> — Python <code>list</code>, C# <code>List&lt;T&gt;</code>, JS <code>Array</code> aslında ne?</div>
+  <ul class="agenda"><li class="done">dizi: bellekte tek parça</li><li class="done">bağlı liste: düğümler ve oklar</li><li class="done">işlemler</li><li class="on">dinamik dizi</li><li class="">büyük karşılaştırma</li><li class="">varyasyonlar ve oyunlar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="dinamik dizi">
+  <h2>Sürpriz: Python’un <code>list</code>’i bağlı liste DEĞİL! 😮</h2>
+  <div class="cols c64">
+    <div>
+      <p>Python <code>list</code>, C# <code>List&lt;T&gt;</code>, JavaScript <code>Array</code> ve C++ <code>vector</code>: hepsi içeride bir <b>dizi</b> kullanır.</p>
+      <ul>
+        <li><b>Eleman sayısı</b> <span class="en">count</span>: kullandığınız kutu sayısı</li>
+        <li><b>Kapasite</b> <span class="en">capacity</span>: ayrılmış kutu sayısı (genelde daha fazla)</li>
+        <li>Dolunca: <b>daha büyük</b> yeni bir dizi ayır, eskileri kopyala, eskiyi bırak</li>
+      </ul>
+      <p class="fragment">Bu yüzden <code>a[i]</code> hızlı (dizi!), sona ekleme <b>genelde</b> hızlı, başa ekleme (<code>insert(0, x)</code>, <code>unshift</code>) <b>yavaş</b>.</p>
+    </div>
+    <div class="box warn fragment"><span class="bt">⚠️ İsim tuzağı</span>C#’ta <code>List&lt;T&gt;</code> = dinamik dizi. Gerçek bağlı liste ise <code>LinkedList&lt;T&gt;</code>. Java’da da <code>ArrayList</code> ve <code>LinkedList</code> ayrı. Python’da yerleşik bağlı liste yok (<code>collections.deque</code> bloklardan oluşan bir liste).</div>
+  </div>
+</section>
+
+<section data-sec="dinamik dizi">
+  <h2>Dolunca ne kadar büyütmeli? 📐</h2>
+  <div class="demo" data-demo="dynarray"></div>
+  <aside class="notes">“+1” seçeneğinde toplam kopya ~N²/2 olur: her eklemede bütün diziyi kopyalarız. “×2” seçeneğinde toplam kopya 1+2+4+…+32 = 63 &lt; 2N. Tek tük pahalı adımlar var ama ortalama sabit.</aside>
+</section>
+
+<section data-sec="dinamik dizi · matematik">
+  <h2>Neden “iki katı”? Amortize maliyet <span class="en">amortized cost</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>Kapasite 1, 2, 4, 8, …, N olurken yapılan toplam kopya:</p>
+      <p class="formula center">\( 1 + 2 + 4 + \dots + \frac{N}{2} = N - 1 \; &lt; \; N \)</p>
+      <p>N ekleme için: N yazma + &lt; N kopya → toplam &lt; <b>2N</b> → eleman başına <b>&lt; 2</b> iş (kitapta ~3 dizi erişimi olarak sayılır).</p>
+      <p class="fragment">Bazı eklemeler pahalı (kopyalama anı), ama <b>uzun vadede ortalama</b> sabit: buna <b>amortize O(1)</b> denir.</p>
+    </div>
+    <div class="box prop"><span class="bt">Önerme</span>Kapasiteyi her dolduğunda <b>iki katına</b> çıkaran dinamik dizide, boş diziden başlayan N <code>push</code> işlemi toplam ~N’e orantılı zaman alır.
+      <p class="mini">🧠 Benzetme: kira öder gibi değil, ev alır gibi. Arada bir büyük ödeme (taşınma), ama yıllara bölünce aylık maliyet düşük.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="dinamik dizi">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · dinamik dizi</div>
+    <div class="q">Dinamik dizi, eleman sayısı kapasitenin <b>yarısına</b> düşünce kapasiteyi yarıya indirirse ne olabilir?</div>
+    <div class="opts">
+      <button data-opt="A">Hiçbir sorun olmaz</button>
+      <button data-opt="B">Sınırda push/pop yapan bir döngüde her işlem kopyalama tetikler (çırpınma)</button>
+      <button data-opt="C">Bellek sızıntısı</button>
+      <button data-opt="D">Diziler küçülemez</button>
+    </div>
+    <div class="explain">Kapasite 8, eleman 8 → push: 16’ya büyü (kopya). Pop: eleman 8 = 16’nın yarısı → 8’e küçül (kopya). Push → büyü… Her işlem N kopya! Buna “çırpınma” <span class="en">thrashing</span> denir. Çözüm (kitaptaki): kapasitenin <b>dörtte birine</b> düşünce yarıya indir.</div>
+  </div>
+</section>
+
+<section data-sec="dinamik dizi">
+  <h2>Kendi dinamik dizimiz (kitaptaki ResizingArray)</h2>
+  <div class="tabs short" style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class DynArray:
+    def __init__(self):
+        self.a = [None] * 1        # kapasite 1 (sabit boyutlu "dizi")
+        self.n = 0                 # eleman sayısı
+
+    def _resize(self, cap):
+        b = [None] * cap           # yeni, farklı boyutta dizi
+        for i in range(self.n):
+            b[i] = self.a[i]       # eskileri kopyala
+        self.a = b
+
+    def push(self, x):
+        if self.n == len(self.a):          # dolu mu?
+            self._resize(2 * len(self.a))  # iki katına çıkar
+        self.a[self.n] = x
+        self.n += 1
+
+    def pop(self):
+        self.n -= 1
+        x = self.a[self.n]
+        self.a[self.n] = None              # referansı bırak (GC için!)
+        if 0 < self.n == len(self.a) // 4:
+            self._resize(len(self.a) // 2) # dörtte bire düşünce yarıya indir
+        return x
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class DynArray
+{
+    int[] a = new int[1];
+    int n = 0;
+
+    void Resize(int cap)
+    {
+        int[] b = new int[cap];
+        for (int i = 0; i < n; i++) b[i] = a[i];
+        a = b;
+    }
+
+    public void Push(int x)
+    {
+        if (n == a.Length) Resize(2 * a.Length);   // dolu → iki katı
+        a[n++] = x;                                // a[n] = x; n = n + 1;
+    }
+
+    public int Pop()
+    {
+        int x = a[--n];                            // n = n - 1; x = a[n];
+        if (n > 0 && n == a.Length / 4) Resize(a.Length / 2);
+        return x;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class DynArray {
+  constructor() { this.a = new Array(1); this.n = 0; }
+
+  resize(cap) {
+    const b = new Array(cap);
+    for (let i = 0; i < this.n; i++) b[i] = this.a[i];
+    this.a = b;
+  }
+
+  push(x) {
+    if (this.n === this.a.length) this.resize(2 * this.a.length);
+    this.a[this.n] = x;
+    this.n++;
+  }
+
+  pop() {
+    this.n--;
+    const x = this.a[this.n];
+    this.a[this.n] = undefined;            // referansı bırak
+    if (this.n > 0 && this.n === this.a.length / 4) this.resize(this.a.length / 2);
+    return x;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 C#’taki <code>a[n++] = x</code>: önce <code>a[n] = x</code>, sonra <code>n</code> bir artar (modern kısa yazım). <code>--n</code>: önce azalt, sonra kullan. Python’da “referansı bırak” satırı önemli: yoksa silinmiş eleman bellekte kalır (<b>bekleyen referans</b> <span class="en">loitering</span>).</p>
+</section>
+
+<section data-sec="dinamik dizi · oyunda">
+  <h2>🎮 Unity ipuçları: <code>List&lt;T&gt;</code> ile çöpsüz çalışmak</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// ❌ Her karede YENİ liste → her karede çöp → GC takılmaları
+void Update()
+{
+    var nearby = new List<Enemy>();
+    foreach (var e in enemies) if (Close(e)) nearby.Add(e);
+}
+
+// ✅ Listeyi bir kez oluştur, her karede temizleyip tekrar kullan
+readonly List<Enemy> nearby = new List<Enemy>(256);   // kapasiteyi baştan ayır
+void Update()
+{
+    nearby.Clear();            // elemanlar silinir ama kapasite (dizi) KALIR
+    foreach (var e in enemies) if (Close(e)) nearby.Add(e);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Aynı fikir Python'da: listeyi yeniden kullan
+nearby = []
+def update():
+    nearby.clear()                 # yeni liste oluşturmadan boşalt
+    for e in enemies:
+        if close(e):
+            nearby.append(e)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Aynı fikir p5.js'te: diziyi yeniden kullan
+const nearby = [];
+function draw() {
+  nearby.length = 0;               // diziyi boşalt (yeni dizi oluşturmadan)
+  for (const e of enemies) if (close(e)) nearby.push(e);
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>new List&lt;Enemy&gt;(256)</code>: “baştan 256 kişilik yer ayır” → ilk 256 eklemede hiç büyütme/kopya olmaz. <code>readonly</code>: değişken bir kez atanır (liste aynı kalır, içeriği değişebilir).</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Büyük Karşılaştırma</div>
+  <div class="sub">işlemler · bellek · önbellek · canlı ölçüm</div>
+  <ul class="agenda"><li class="done">dizi: bellekte tek parça</li><li class="done">bağlı liste: düğümler ve oklar</li><li class="done">işlemler</li><li class="done">dinamik dizi</li><li class="on">büyük karşılaştırma</li><li class="">varyasyonlar ve oyunlar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="karşılaştırma">
+  <h2>İşlem işlem karşılaştırma 📋</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>işlem</th><th>sabit dizi</th><th>dinamik dizi</th><th>tek yönlü liste<br><span class="mini">(head + tail)</span></th><th>çift yönlü liste</th></tr>
+    <tr><td><code>a[i]</code>’ye eriş</td><td class="yes">1</td><td class="yes">1</td><td class="no">i</td><td class="no">i</td></tr>
+    <tr><td>arama (sırasız)</td><td>N</td><td>N</td><td>N</td><td>N</td></tr>
+    <tr><td>arama (sıralı)</td><td class="yes">lg N</td><td class="yes">lg N</td><td class="no">N</td><td class="no">N</td></tr>
+    <tr><td>başa ekle / baştan sil</td><td class="no">N</td><td class="no">N</td><td class="yes">1</td><td class="yes">1</td></tr>
+    <tr><td>sona ekle</td><td class="no">— (dolu)</td><td class="yes">1*</td><td class="yes">1</td><td class="yes">1</td></tr>
+    <tr><td>sondan sil</td><td class="yes">1</td><td class="yes">1*</td><td class="no">N</td><td class="yes">1</td></tr>
+    <tr><td>düğümü elindeyken araya ekle/sil</td><td class="no">N</td><td class="no">N</td><td>1 (sonrasına)</td><td class="yes">1</td></tr>
+    <tr><td>eleman başına bellek</td><td class="yes">en az</td><td>az (+ boş kapasite)</td><td class="no">çok (+1 ref)</td><td class="no">daha çok (+2 ref)</td></tr>
+  </table>
+  <p class="mini">* amortize (ortalama). Büyük-O tablosu hikâyenin sadece yarısı → sonraki slaytlar: bellek ve önbellek.</p>
+</section>
+
+<section data-sec="karşılaştırma · kaputun altında">
+  <h2>⚙️ 1 milyon tamsayı ne kadar yer kaplar?</h2>
+  <div class="cols c64">
+    <div>
+      <table class="sum-t" style="font-size:19px">
+        <tr><th>yapı (C#, 64-bit)</th><th>eleman başına</th><th>1 milyon eleman</th><th></th></tr>
+        <tr><td><code>int[]</code></td><td>4 bayt</td><td>~4 MB</td><td style="width:34%"><div class="lb" style="width:12%;background:var(--s1);height:14px;border-radius:4px"></div></td></tr>
+        <tr><td><code>List&lt;int&gt;</code></td><td>4–8 bayt</td><td>~4–8 MB</td><td><div class="lb" style="width:20%;background:var(--s1);height:14px;border-radius:4px"></div></td></tr>
+        <tr><td><code>LinkedList&lt;int&gt;</code></td><td>~48 bayt</td><td>~48 MB</td><td><div class="lb" style="width:100%;background:var(--s2);height:14px;border-radius:4px"></div></td></tr>
+      </table>
+      <p class="mini">Yaklaşık değerler. Her düğüm ayrı bir <b>nesne</b>: nesne başlığı (~16 bayt) + değer + <code>next</code>/<code>prev</code> referansları (8’er bayt) + listenin kendisine referans + hizalama boşlukları.</p>
+    </div>
+    <div class="box low"><span class="bt">⚙️ Neden önemli?</span>
+      <ul style="font-size:.95em"><li>Daha çok bellek = önbelleğe daha az eleman sığar</li><li>1 milyon ayrı nesne = çöp toplayıcı için 1 milyon ayrı iş</li><li>Mobil oyunlarda bellek sınırı gerçek bir sorun</li></ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="karşılaştırma · kaputun altında">
+  <h2>⚙️ Önbellek simülasyonu: diziyi ve listeyi gezmek</h2>
+  <div class="demo" data-demo="memlayout"></div>
+  <p class="mini">Her hücre bir bellek adresi; her satır (8 hücre) bir önbellek satırı. Önbellek sadece 3 satır tutabiliyor. Dizide elemanlar yan yana; listede her düğüm (değer + sonraki adres) belleğe dağılmış.</p>
+  <aside class="notes">Önce diziyi gezin (2 ıska), sonra listeyi (neredeyse her adım ıska). Gerçek bir RAM erişimi önbellekten ~100 kat yavaştır. Oyun motorlarındaki “Data-Oriented Design” / Unity DOTS fikrinin özü bu.</aside>
+</section>
+
+<section data-sec="karşılaştırma · deney">
+  <h2>🧪 Canlı ölçüm: bu bilgisayarda kim kazanır?</h2>
+  <div class="demo" data-demo="bench"></div>
+  <div class="cols fragment">
+    <div class="box prop"><span class="bt">Tahmin edin, sonra ölçün</span>Başa ekleme: liste kazanmalı (dizi her seferinde kaydırıyor). Sona ekleme ve gezme: dizi kazanmalı (önbellek!). Sonuçlar tahminle uyuşuyor mu?</div>
+    <div class="box story"><span class="bt">🔬 Bilimsel yöntem</span>Algoritma analizi dersindeki gibi: <b>hipotez → deney → sonuç</b>. N’i iki katına çıkarınca süreler nasıl değişiyor?</div>
+  </div>
+  <aside class="notes">“Tümünü gez” deneyinde liste düğümleri bilerek rastgele sırada bağlanıyor (uzun süre çalışan oyunlarda düğümler belleğe dağılır). JavaScript motorlarının ayrıntıları sonuçları etkileyebilir; önemli olan büyüklük farkları.</aside>
+</section>
+
+<section data-sec="karşılaştırma · hikâye">
+  <h2>📜 C++’ın yaratıcısı: “Bağlı listelerden kaçının”</h2>
+  <div class="cols c64">
+    <div>
+      <p>2012’de Bjarne Stroustrup bir konferansta şu deneyi gösterdi: Sıralı bir diziye rastgele sayılar <b>ekle</b> (doğru yere), sonra rastgele konumlardan <b>sil</b>.</p>
+      <p class="fragment">Teoride bağlı liste kazanmalı: ekleme/silme O(1)! Ama… <b>doğru yeri bulmak</b> zaten sıralı arama gerektiriyor (O(N)), ve listede bu arama önbellek ıskalarıyla dolu.</p>
+      <p class="fragment big c-red">Sonuç: dizi (<code>vector</code>) her boyutta kat kat hızlı çıktı.</p>
+    </div>
+    <div class="box story fragment"><span class="bt">💡 Stroustrup’un dersi</span>
+      <ul style="font-size:.95em">
+        <li>Gereksiz veri saklama</li>
+        <li>Veriyi <b>sıkı</b> tut</li>
+        <li>Belleğe <b>tahmin edilebilir</b> şekilde eriş</li>
+      </ul>
+      <p class="mini">Kendisi de “bu bağlı listeler kötü demek değil, ölçmeden karar vermeyin demek” diye ekliyor.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="karşılaştırma">
+  <h2>Peki ne zaman hangisi? 🧭</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">✅ Varsayılan: dinamik dizi</span>
+      <ul style="font-size:.92em">
+        <li>Çoğunlukla <b>gezip</b> okuyorsanız</li>
+        <li><code>a[i]</code> ile erişiyorsanız, sıralayıp ikili arama yapıyorsanız</li>
+        <li>Ekleme/silme çoğunlukla <b>sonda</b> ise</li>
+        <li>Sıra önemli değilse silme için “swap &amp; pop” (Level 5)</li>
+      </ul>
+    </div>
+    <div class="box prop"><span class="bt">✅ Bağlı liste mantıklı olduğunda</span>
+      <ul style="font-size:.92em">
+        <li><b>Düğümün kendisi elinizdeyken</b> sık sık araya ekleme/silme (ör. LRU önbelleği)</li>
+        <li>Elemanların bellekte <b>yer değiştirmemesi</b> gerekiyorsa (adresleri sabit kalmalı)</li>
+        <li>Başa ekleme/baştan silme ağırlıklı (yığın, kuyruk — sonraki ders)</li>
+        <li>Çok büyük nesneleri kopyalamadan taşımak</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fragment center lead">Altın kural: <b>Önce basit olanı (dinamik dizi) kullan. Yavaşsa, ölç. Sonra değiştir.</b></p>
+</section>
+
+<section data-sec="karşılaştırma">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · karşılaştırma</div>
+    <div class="q">Bir 2D nişancı oyununda ekranda ~500 düşman var. Her karede <b>hepsi</b> güncelleniyor (gezme), ara sıra biri ölüyor (sıra önemsiz), ara sıra yenisi ekleniyor. Hangi yapı?</div>
+    <div class="opts">
+      <button data-opt="A">Bağlı liste — silme O(1)</button>
+      <button data-opt="B">Dinamik dizi + ölen düşmanı swap &amp; pop ile silmek</button>
+      <button data-opt="C">Sabit boyutlu dizi + ölenleri kaydırarak silmek</button>
+      <button data-opt="D">Fark etmez</button>
+    </div>
+    <div class="explain">İşin çoğu <b>her karede gezmek</b> → dizi önbellek sayesinde kazanır. Silme: sıra önemli değilse ölen düşmanın yerine sondakini koyup diziyi bir kısaltmak (swap &amp; pop) O(1). Bağlı listenin silme avantajı burada gerekmiyor ama gezme bedelini her karede ödersiniz.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #07332a 0%, #3a0d33 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Varyasyonlar ve Oyunlar</div>
+  <div class="sub">çift yönlü · dairesel · yılan · Uno · mermi havuzu</div>
+  <ul class="agenda"><li class="done">dizi: bellekte tek parça</li><li class="done">bağlı liste: düğümler ve oklar</li><li class="done">işlemler</li><li class="done">dinamik dizi</li><li class="done">büyük karşılaştırma</li><li class="on">varyasyonlar ve oyunlar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="varyasyonlar">
+  <h2>Çift yönlü ve dairesel listeler <span class="en">doubly linked · circular</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <ul>
+        <li><b>Çift yönlü</b>: her düğümde <code>prev</code> de var → geriye gidebilir, elindeki düğümü O(1)’de silebilirsin. Bedeli: düğüm başına bir referans daha.</li>
+        <li><b>Dairesel</b>: son düğümün <code>next</code>’i başa döner → “sonra kim?” sorusu hiç bitmez. Tur sırası, döngüsel animasyonlar, müzik çalma listesi (“tekrarla”).</li>
+      </ul>
+      <p class="fragment mini">C#’taki <code>LinkedList&lt;T&gt;</code> çift yönlü ve içeride dairesel bir listedir.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class DNode:                       # çift yönlü düğüm
+    def __init__(self, key):
+        self.key = key
+        self.prev = None
+        self.next = None
+
+def remove(node):                  # elimizdeki düğümü O(1) sil
+    node.prev.next = node.next     # (ilk/son değilse)
+    node.next.prev = node.prev
+
+def insert_after(node, new):       # node'dan sonra ekle: 4 ok
+    new.prev = node
+    new.next = node.next
+    node.next.prev = new
+    node.next = new
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class DNode
+{
+    public string Key;
+    public DNode Prev, Next;          // iki yönlü oklar
+}
+
+void Remove(DNode node)               // O(1)
+{
+    node.Prev.Next = node.Next;
+    node.Next.Prev = node.Prev;
+}
+
+// Hazırı: var list = new LinkedList<string>();
+//         LinkedListNode<string> n = list.AddLast("a");
+//         list.Remove(n);            // O(1)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class DNode {
+  constructor(key) { this.key = key; this.prev = null; this.next = null; }
+}
+
+function remove(node) {               // O(1)
+  node.prev.next = node.next;
+  node.next.prev = node.prev;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="varyasyonlar · oyunda">
+  <h2>🃏 Uno masası: dairesel çift yönlü liste</h2>
+  <div class="demo" data-demo="uno"></div>
+  <aside class="notes">“Yön değiştir” kartı: hiçbir şeyi yeniden düzenlemiyoruz, sadece next yerine prev izlemeye başlıyoruz. Oyuncu elenince 2 ok değişiyor. Dizide oyuncu elemek kaydırma, yön değiştirmek de indeks hesabı (i - 1 + n) % n gerektirirdi — o da işe yarar, ama liste bu problemi çok doğal ifade ediyor.</aside>
+</section>
+
+<section data-sec="varyasyonlar · oyunda">
+  <h2>🐍 Yılan oyunu: gövde = liste</h2>
+  <div class="demo" data-demo="snake"></div>
+  <p class="mini">Her adımda: yeni baş düğüm <b>başa eklenir</b>, kuyruk <b>sondan silinir</b> (yemek yediyse silinmez). Uzunluk 1000 olsa bile her adım sabit iş. Yılanı yöneten minik “YZ”: yemeğe en çok yaklaştıran güvenli yönü seçiyor (açgözlü / <i>greedy</i> — yol bulma derslerine selam!).</p>
+  <aside class="notes">Sondan silme tek yönlü listede O(N) olurdu (sondan bir önceki düğümü bulmak için). Bu yüzden yılan için çift yönlü liste ya da “deque” (iki uçlu kuyruk) kullanılır — bir sonraki dersin konusu. Coding Train’in p5.js yılan videosu Kaynaklar’da.</aside>
+</section>
+
+<section data-sec="varyasyonlar · oyunda">
+  <h2>👾 Ölen düşmanı listeden çıkarmak: swap &amp; pop</h2>
+  <div class="demo" data-demo="swapremove"></div>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Sıra önemli değilse: O(1) silme
+void RemoveAtSwapBack(List<Enemy> list, int i)
+{
+    int last = list.Count - 1;
+    list[i] = list[last];       // sondakini ölünün yerine koy
+    list.RemoveAt(last);        // sondan silmek: kaydırma yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def remove_swap(lst, i):        # sıra önemli değilse: O(1)
+    lst[i] = lst[-1]            # sondakini ölünün yerine koy
+    lst.pop()                   # sondan sil
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function removeSwap(arr, i) {   // sıra önemli değilse: O(1)
+  arr[i] = arr[arr.length - 1]; // sondakini ölünün yerine koy
+  arr.pop();                    // sondan sil
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="varyasyonlar · oyunda">
+  <h2>🔫 Mermi havuzu: nesne havuzu + boş liste <span class="en">object pool · free list</span></h2>
+  <div class="demo" data-demo="pool"></div>
+  <p class="mini">Saniyede yüzlerce mermi için <code>new</code>/<code>Destroy</code> = sürekli çöp + GC takılmaları. Havuz: mermileri baştan bir kez oluştur; boş olanları <b>indekslerle bağlı bir liste</b> (boş liste) halinde tut. Ateş: listenin başını al. Yok olma: başa geri koy. İkisi de O(1), çöp sıfır!</p>
+  <aside class="notes">Boş liste, dizinin içine gömülmüş bir bağlı listedir: “sonraki” bir referans değil, bir İNDEKS. Böylece bağlı listenin O(1) ekleme/çıkarma avantajı ile dizinin önbellek dostu yapısını birleştiriyoruz. Robert Nystrom’un “Game Programming Patterns” kitabının Object Pool bölümü (Kaynaklar) tam olarak bunu anlatır.</aside>
+</section>
+
+<section data-sec="varyasyonlar · oyunda">
+  <h2>Mermi havuzu — kod</h2>
+  <div class="tabs short" style="font-size:.8em">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class BulletPool : MonoBehaviour
+{
+    public Bullet prefab;
+    Bullet[] bullets;
+    int[] nextFree;          // boş liste: her kutu bir sonraki boş kutunun İNDEKSİNİ tutar
+    int freeHead;            // -1 = havuz dolu
+
+    void Awake()
+    {
+        bullets = new Bullet[100];
+        nextFree = new int[100];
+        for (int i = 0; i < bullets.Length; i++)
+        {
+            bullets[i] = Instantiate(prefab);          // bir kez oluştur
+            bullets[i].gameObject.SetActive(false);
+            nextFree[i] = i + 1 < bullets.Length ? i + 1 : -1;
+        }
+        freeHead = 0;
+    }
+
+    public Bullet Spawn()                  // O(1), new yok
+    {
+        if (freeHead == -1) return null;   // havuz boş
+        int i = freeHead;
+        freeHead = nextFree[i];            // boş listenin başını çıkar
+        bullets[i].gameObject.SetActive(true);
+        return bullets[i];
+    }
+
+    public void Despawn(int i)             // O(1), Destroy yok
+    {
+        bullets[i].gameObject.SetActive(false);
+        nextFree[i] = freeHead;            // boş listenin başına ekle
+        freeHead = i;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class BulletPool:
+    def __init__(self, size):
+        self.bullets = [Bullet() for _ in range(size)]   # bir kez oluştur
+        self.next_free = [i + 1 for i in range(size)]
+        self.next_free[-1] = -1
+        self.free_head = 0
+
+    def spawn(self):
+        if self.free_head == -1:
+            return None
+        i = self.free_head
+        self.free_head = self.next_free[i]
+        self.bullets[i].active = True
+        return i
+
+    def despawn(self, i):
+        self.bullets[i].active = False
+        self.next_free[i] = self.free_head
+        self.free_head = i
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class BulletPool {
+  constructor(size) {
+    this.bullets = Array.from({ length: size }, () => new Bullet()); // bir kez
+    this.nextFree = Array.from({ length: size }, (_, i) => (i + 1 < size ? i + 1 : -1));
+    this.freeHead = 0;
+  }
+  spawn() {
+    if (this.freeHead === -1) return -1;
+    const i = this.freeHead;
+    this.freeHead = this.nextFree[i];
+    this.bullets[i].active = true;
+    return i;
+  }
+  despawn(i) {
+    this.bullets[i].active = false;
+    this.nextFree[i] = this.freeHead;
+    this.freeHead = i;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>koşul ? a : b</code> = “koşul doğruysa a, değilse b” · <code>Array.from({ length: n }, (_, i) =&gt; …)</code> = “n elemanlı dizi, i. eleman = …” · Unity’nin kendi hazır havuzu da var: <code>UnityEngine.Pool.ObjectPool&lt;T&gt;</code>.</p>
+</section>
+
+<section data-sec="varyasyonlar · gerçek dünya">
+  <h2>Hash + çift yönlü liste = LRU önbelleği</h2>
+  <div class="cols c64">
+    <div>
+      <p>Oyununuz bellek sınırlı bir cihazda: en fazla 50 doku <span class="en">texture</span> bellekte durabiliyor. Yenisi gerekince hangisini atmalı?</p>
+      <p class="fragment"><b>En uzun süredir kullanılmayanı</b> (Least Recently Used, LRU):</p>
+      <ul>
+        <li class="fragment">Dokuları <b>çift yönlü listede</b> tut: kullanılan doku listenin başına taşınır (O(1))</li>
+        <li class="fragment">Yer lazım olunca listenin <b>sonundakini</b> at (O(1))</li>
+        <li class="fragment">“Bu doku listede nerede?” sorusu için bir <b>hash tablosu</b> (Dictionary) düğümü doğrudan gösterir (ileriki ders)</li>
+      </ul>
+    </div>
+    <div class="box story fragment"><span class="bt">🌍 Her yerde</span>İşlemci önbellekleri, web tarayıcıları, veritabanları, işletim sistemlerinin sayfa yönetimi… Bağlı listenin “elindeki düğümü O(1) taşı/sil” süper gücünün en ünlü kullanımı.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kaputun Altında</div>
+  <div class="sub">C’de işaretçiler · bellek sızıntısı · çöp toplayıcı</div>
+  <ul class="agenda"><li class="done">dizi: bellekte tek parça</li><li class="done">bağlı liste: düğümler ve oklar</li><li class="done">işlemler</li><li class="done">dinamik dizi</li><li class="done">büyük karşılaştırma</li><li class="done">varyasyonlar ve oyunlar</li><li class="on">kaputun altında</li></ul>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ Bağlı liste C dilinde: gerçek işaretçiler <span class="en">pointer</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <ul>
+        <li><code>Node*</code> = “bir Node’un adresi” (işaretçi). C#/Python/JS’deki referansın çıplak hali.</li>
+        <li><code>malloc</code>: bellekten yer iste · <code>free</code>: geri ver — <b>elle!</b></li>
+        <li class="fragment"><b>Bellek sızıntısı</b> <span class="en">memory leak</span>: <code>free</code>’yi unutmak → bellek hep dolu kalır. Saatlerce açık kalan oyunlar yavaş yavaş belleği yer.</li>
+        <li class="fragment"><b>Sarkan işaretçi</b> <span class="en">dangling pointer</span>: <code>free</code>’den sonra hâlâ kullanmak → rastgele çökme, güvenlik açığı.</li>
+        <li class="fragment">C#, Python, JS’de bunları <b>çöp toplayıcı</b> sizin yerinize yapar: ulaşılamayan düğümler otomatik silinir.</li>
+      </ul>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="C">
+<pre><code class="language-c" data-trim data-line-numbers><script type="text/template">
+#include <stdlib.h>
+
+typedef struct Node {
+    int key;
+    struct Node* next;          // sonraki düğümün ADRESİ
+} Node;
+
+Node* push_front(Node* head, int key) {
+    Node* n = malloc(sizeof(Node));   // bellekten yer al
+    n->key = key;                     // ->  =  "işaretçinin gösterdiğinin"
+    n->next = head;
+    return n;
+}
+
+Node* pop_front(Node* head) {
+    Node* rest = head->next;
+    free(head);                       // ⚠️ elle geri ver (unutursan sızıntı)
+    return rest;                      // head'i bir daha KULLANMA (sarkan işaretçi)
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// C#'ta malloc/free yok: new ile oluşturursun,
+// kimse göstermeyince çöp toplayıcı (GC) siler.
+Node PopFront(Node head)
+{
+    Node rest = head.Next;
+    // eski head'e artık ulaşan kimse yoksa → çöp → GC sonra toplar
+    return rest;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Python'da da elle silme yok.
+def pop_front(head):
+    rest = head.next
+    # eski head'e başka referans yoksa Python onu hemen siler
+    # (referans sayımı + döngüler için çöp toplayıcı)
+    return rest
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Dizi</b>: bitişik bellek, <code>a[i]</code> O(1), araya ekleme O(N), sabit boyut.</li>
+      <li><b>Bağlı liste</b>: düğümler + oklar; başa ekleme O(1), <code>a[i]</code> O(N).</li>
+      <li><b>Ok kuralı</b>: değiştirmeden önce gösterdiği yeri kaydet.</li>
+      <li><b>Dinamik dizi</b>: iki katına büyüt, dörtte birde yarıya küçült → amortize O(1).</li>
+    </ul>
+    <ul>
+      <li><b>Bellek ve önbellek</b>: Büyük-O her şey değil; dizi çoğu zaman kazanır.</li>
+      <li><b>Çift yönlü / dairesel</b>: Uno sırası, LRU önbelleği.</li>
+      <li><b>Oyun desenleri</b>: yılan, swap &amp; pop, nesne havuzu + boş liste.</li>
+      <li>⚙️ İşaretçi, sızıntı, sarkan işaretçi, çöp toplayıcı.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: <code>1 → 2 → 3 → 4</code> listesini tersine çevirirken her adımda <code>prev</code>, <code>cur</code>, <code>nxt</code>’nin neyi gösterdiğini çizin.</li>
+    <li>Laboratuvarda <b>removeFirst(head, key)</b> yazın: değeri <code>key</code> olan ilk düğümü silip başı döndürsün. (Silinecek ilk düğümse?)</li>
+    <li>Bir listenin <b>ortadaki</b> düğümünü tek geçişte bulun. (İpucu: biri birer, biri ikişer adım atan iki işaretçi.)</li>
+    <li>p5.js’te yılan oyununu yazın; gövdeyi bir dizi ile <code>unshift</code>/<code>pop</code> kullanarak tutun. Yılan çok uzayınca ne olur? (İpucu: <code>unshift</code> O(N)!)</li>
+    <li>Unity’de mermiler için <code>Instantiate/Destroy</code> ile havuzu karşılaştırın: Profiler’da <i>GC Alloc</i> sütununa bakın.</li>
+    <li>🤖 Bir YZ asistanından C#’ta çift yönlü liste isteyin. Boş liste, tek elemanlı liste ve baştaki/sondaki düğümü silme durumlarını test edin — kodda hata buldunuz mu?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=_jQhALI4ujg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/_jQhALI4ujg/hqdefault.jpg" alt=""><span><b>Linked Lists</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=zQI3FyWm144" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/zQI3FyWm144/hqdefault.jpg" alt=""><span><b>Singly-Linked Lists</b><br>CS50 Shorts (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=lC-yYCOnN8Q" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/lC-yYCOnN8Q/hqdefault.jpg" alt=""><span><b>Arrays vs Linked Lists</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=sYcOK51hl-A" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/sYcOK51hl-A/hqdefault.jpg" alt=""><span><b>Reverse a linked list — Iterative method</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=njTh_OwMljA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/njTh_OwMljA/hqdefault.jpg" alt=""><span><b>Data Structures: Linked Lists</b><br>HackerRank</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=R9PTBwOzceo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/R9PTBwOzceo/hqdefault.jpg" alt=""><span><b>Introduction to Linked List</b><br>Neso Academy</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=AaGK-fj-BAM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/AaGK-fj-BAM/hqdefault.jpg" alt=""><span><b>Coding Challenge #3: The Snake Game</b><br>The Coding Train (p5.js!)</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/13stacks/" target="_blank">algs4 · 1.3 Bags, Queues, and Stacks</a> (bağlı listeler, yeniden boyutlanan diziler)</li>
+      <li><a href="https://gameprogrammingpatterns.com/object-pool.html" target="_blank">Game Programming Patterns · Object Pool</a> (R. Nystrom, ücretsiz)</li>
+      <li><a href="https://gameprogrammingpatterns.com/data-locality.html" target="_blank">Game Programming Patterns · Data Locality</a></li>
+      <li><a href="https://isocpp.org/blog/2014/06/stroustrup-lists" target="_blank">Bjarne Stroustrup · Are lists evil?</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://visualgo.net/en/list" target="_blank">VisuAlgo · Linked List</a> (tek/çift yönlü, yığın, kuyruk)</li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/StackLL.html" target="_blank">USFCA · bağlı liste ile yığın</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.linkedlist-1" target="_blank">.NET · LinkedList&lt;T&gt;</a></li>
+      <li><a href="https://colin-scott.github.io/personal_website/research/interactive_latency.html" target="_blank">Gecikme sayıları (interaktif)</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a4a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Yığınlar ve Kuyruklar</div>
+    <div class="sub">Başa ekle + baştan çıkar = yığın. Sona ekle + baştan çıkar = kuyruk. İkisini de az önce yaptık! 😉</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yiginlar-kuyruklar/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/liste.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

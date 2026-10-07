@@ -12,7 +12,7 @@ Oyun yapay zekâsı algoritmalarına geçmeden önce ihtiyaç duyulan temel algo
 |---|------|-------|
 | 01 | Union–Find | hazırlanıyor |
 | 02 | Algoritma Analizi | hazırlanıyor |
-| 03 | Bağlı Listeler (dizi ile karşılaştırma) | hazırlanıyor |
+| 03 | [Bağlı Listeler (dizi ile karşılaştırma)](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/bagli-listeler/) | ✅ hazır |
 | 04 | Yığınlar ve Kuyruklar | hazırlanıyor |
 | 05 | [Arama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/arama-algoritmalari/) | ✅ hazır |
 | 06 | [Temel Sıralama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/siralama-temel/) | ✅ hazır |
@@ -43,6 +43,8 @@ ortak/              tüm destelerin ortak stil ve kodları
   siralama.js       sıralama görselleştirmeleri
   agac.js           ağaç görselleştirmeleri
   arama.js          arama görselleştirmeleri ve ikili arama laboratuvarı
+  liste.js          dizi ve bağlı liste görselleştirmeleri, liste laboratuvarı
+bagli-listeler/     03 · Bağlı listeler
 arama-algoritmalari/ 05 · Arama algoritmaları
 siralama-temel/     06 · Temel sıralama algoritmaları
 agaclar-bst/        09 · Ağaçlar ve ikili arama ağaçları
