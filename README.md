@@ -8,22 +8,52 @@ Oyun yapay zekâsı algoritmalarına geçmeden önce ihtiyaç duyulan temel algo
 
 ## Ders haritası
 
+Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmüştür.
+
+**Bölüm 1 · Temeller**
+
 | # | Konu | Durum |
 |---|------|-------|
 | 01 | Union–Find | hazırlanıyor |
 | 02 | Algoritma Analizi | hazırlanıyor |
-| 03 | [Bağlı Listeler (dizi ile karşılaştırma)](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/bagli-listeler/) | ✅ hazır |
-| 04 | Yığınlar ve Kuyruklar | hazırlanıyor |
+| 03 | [Bağlı Listeler](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/bagli-listeler/) | ✅ hazır |
+| 04 | [Yığınlar ve Kuyruklar](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yiginlar-kuyruklar/) | ✅ hazır |
 | 05 | [Arama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/arama-algoritmalari/) | ✅ hazır |
+
+**Bölüm 2 · Siralama**
+
+| # | Konu | Durum |
+|---|------|-------|
 | 06 | [Temel Sıralama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/siralama-temel/) | ✅ hazır |
-| 07 | Mergesort | sonra |
-| 08 | Quicksort | sonra |
+| 07 | Mergesort | hazırlanıyor |
+| 08 | Quicksort | hazırlanıyor |
+
+**Bölüm 3 · Arama Ağaçlari**
+
+| # | Konu | Durum |
+|---|------|-------|
 | 09 | [Ağaçlar ve İkili Arama Ağaçları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/agaclar-bst/) | ✅ hazır |
 | 10 | Dengeli Arama Ağaçları | hazırlanıyor |
-| 11 | BST Uygulamaları | hazırlanıyor |
-| 12 | Öncelik Kuyrukları (Heap) | hazırlanıyor |
-| 13 | Hash Tabloları | sonra |
-| 14 | Graflar | sonra |
+| 11 | BST’nin Geometrik Uygulamaları | hazırlanıyor |
+
+**Bölüm 4 · Önceli̇k Kuyruklari Ve Hash**
+
+| # | Konu | Durum |
+|---|------|-------|
+| 12 | Öncelik Kuyrukları | hazırlanıyor |
+| 13 | Hash Tabloları | hazırlanıyor |
+| 14 | Sembol Tablosu Uygulamaları | hazırlanıyor |
+
+**Bölüm 5 · Graflar**
+
+| # | Konu | Durum |
+|---|------|-------|
+| 15 | Yönsüz Graflar | hazırlanıyor |
+| 16 | Yönlü Graflar | hazırlanıyor |
+| 17 | Minimum Yayılan Ağaçlar | hazırlanıyor |
+| 18 | En Kısa Yollar | hazırlanıyor |
+
+Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 
 ## Slaytların özellikleri
 
@@ -44,6 +74,8 @@ ortak/              tüm destelerin ortak stil ve kodları
   agac.js           ağaç görselleştirmeleri
   arama.js          arama görselleştirmeleri ve ikili arama laboratuvarı
   liste.js          dizi ve bağlı liste görselleştirmeleri, liste laboratuvarı
+  yigin.js          yığın ve kuyruk görselleştirmeleri, fonksiyon laboratuvarı
+yiginlar-kuyruklar/ 04 · Yığınlar ve kuyruklar
 bagli-listeler/     03 · Bağlı listeler
 arama-algoritmalari/ 05 · Arama algoritmaları
 siralama-temel/     06 · Temel sıralama algoritmaları

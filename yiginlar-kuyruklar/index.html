@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yığınlar ve Kuyruklar</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Yığınlar ve kuyruklar: API, bağlı liste/dizi/dairesel tampon gerçeklemeleri, geri al, menü yığını, RTS hedef kuyruğu, olay kuyruğu, DFS/BFS. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3a0d33 0%, #120c2c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · VERİ YAPILARI</div>
+  <div class="ttl" style="font-size:70px">Yığınlar ve<br>Kuyruklar</div>
+  <div class="sub"><i>Stacks &amp; Queues</i> — geri al, menüler, waypoint’ler, kombo girdileri</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlestack"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 1.3 (Bags, Queues, and Stacks) bölümünü ve Princeton’ın “Stacks and Queues” dersini temel alır. Bir önceki deste (bağlı listeler) ile doğrudan bağlantılı: başa ekle/baştan sil = yığın; sona ekle/baştan sil = kuyruk.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.92em">
+      <li><b>Kurallar</b>: yığın ve kuyruk ne yapar? <span class="en">API · LIFO · FIFO</span></li>
+      <li><b>Gerçekleme</b>: bağlı liste ile, dizi ile, dairesel tampon ile <span class="en">implementation</span></li>
+      <li><b>Klasik uygulamalar</b>: parantez kontrolü, hesap makinesi, çağrı yığını</li>
+      <li><b>Oyunlarda</b>: geri al/yinele, menü yığını, RTS hedef kuyruğu, olay kuyruğu, kombo girdileri</li>
+      <li><b>Yığın mı kuyruk mu?</b> Boya kovası ile DFS ve BFS</li>
+      <li>⚙️ <b>Kaputun altında</b>: yığın belleği ve öbek belleği <span class="en">stack vs heap</span></li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…Ctrl+Z’nin, “geri” düğmesinin ve bir RTS biriminin hedef listesinin içinde ne olduğunu bilecek, yol bulma algoritmalarının temelini atmış olacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA</span>
+    <div class="cols">
+      <div><p class="big">🍽️ Tabak yığını</p><p>Yıkanan tabaklar üst üste konuyor. Hangi tabağı <b>ilk</b> alırsınız?</p></div>
+      <div><p class="big">🎟️ Sinema kuyruğu</p><p>Gişeye sıra var. Bilet <b>ilk</b> kime verilir?</p></div>
+    </div>
+  </div>
+  <p class="fragment lead">Tabak: <b>en son konan</b> ilk alınır → <b>yığın</b> <span class="en">stack</span>: LIFO (Last In, First Out)</p>
+  <p class="fragment lead">Sinema: <b>en önce gelen</b> ilk alınır → <b>kuyruk</b> <span class="en">queue</span>: FIFO (First In, First Out)</p>
+  <p class="fragment mini">İkisi de bir “koleksiyon”: eleman ekler, eleman çıkarırız. Tek fark: <b>hangisini çıkardığımız</b>. Ama bu küçük fark bambaşka algoritmalar doğurur!</p>
+</section>
+
+<section>
+  <h2>Oyunlarda yığın ve kuyruk</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">↶</div><b>Geri al / yinele</b>Seviye editörü, bulmaca oyunları (Sokoban)</div>
+    <div class="icon-card"><div class="ic">📋</div><b>Menü yığını</b>Duraklat → Ayarlar → Ses… “Geri” = pop</div>
+    <div class="icon-card"><div class="ic">🪖</div><b>Hedef kuyruğu</b>RTS’te Shift+tık ile sıralı waypoint’ler</div>
+    <div class="icon-card"><div class="ic">📨</div><b>Olay kuyruğu</b>Ses, başarım, ağ mesajları sırayla işlenir</div>
+    <div class="icon-card"><div class="ic">🕹️</div><b>Girdi tamponu</b>Dövüş oyunlarında ↓↘→👊 kombo tespiti</div>
+    <div class="icon-card"><div class="ic">🧭</div><b>Yol bulma</b>DFS yığın, BFS kuyruk kullanır — oyun YZ’sinin temeli</div>
+  </div>
+</section>
+
+<section>
+  <h2>Mini sözlük (1/2)</h2>
+  <table class="gloss">
+    <tr><td>stack</td><td>yığın</td><td>En son ekleneni ilk veren koleksiyon (LIFO)</td></tr>
+    <tr><td>push / pop</td><td>it / çek</td><td>Yığına ekle / yığından çıkar</td></tr>
+    <tr><td>top / peek</td><td>tepe / bak</td><td>En üstteki eleman / çıkarmadan ona bakmak</td></tr>
+    <tr><td>queue</td><td>kuyruk</td><td>En önce ekleneni ilk veren koleksiyon (FIFO)</td></tr>
+    <tr><td>enqueue / dequeue</td><td>kuyruğa ekle / kuyruktan çıkar</td><td>Sona ekle / baştan çıkar</td></tr>
+    <tr><td>front / back</td><td>baş / son</td><td>Kuyruğun çıkış ve giriş uçları</td></tr>
+    <tr><td>LIFO / FIFO</td><td>son giren ilk çıkar / ilk giren ilk çıkar</td><td>Last In First Out / First In First Out</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Mini sözlük (2/2)</h2>
+  <table class="gloss">
+    <tr><td>deque</td><td>çift uçlu kuyruk</td><td>İki uçtan da ekleme/çıkarma (“dek” diye okunur)</td></tr>
+    <tr><td>bag</td><td>torba</td><td>Sadece ekleme ve gezme; sıra önemsiz</td></tr>
+    <tr><td>ring buffer</td><td>dairesel tampon</td><td>Sonu başa bağlanan sabit boyutlu dizi</td></tr>
+    <tr><td>overflow / underflow</td><td>taşma / boşalma</td><td>Dolu yapıya ekleme / boş yapıdan çıkarma</td></tr>
+    <tr><td>call stack</td><td>çağrı yığını</td><td>Çalışan fonksiyonların listesi (bilgisayarın kendi yığını)</td></tr>
+    <tr><td>generic</td><td>genel (tür parametreli)</td><td><code>Stack&lt;T&gt;</code>: her türle çalışan yapı</td></tr>
+    <tr><td>DFS / BFS</td><td>derinlik / genişlik öncelikli arama</td><td>Yığınla / kuyrukla dolaşma</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Kurallar</div>
+  <div class="sub"><i>API</i> — ne yapar? (nasıl yaptığı sonra)</div>
+  <ul class="agenda"><li class="on">kurallar: API</li><li class="">gerçekleme</li><li class="">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="kurallar">
+  <h2>İki yapının sözleşmesi <span class="en">API</span></h2>
+  <div class="cols">
+    <table class="sum-t" style="font-size:20px">
+      <tr><th colspan="2">📚 Yığın (stack)</th></tr>
+      <tr><td><code>push(x)</code></td><td>x’i tepeye koy</td></tr>
+      <tr><td><code>pop()</code></td><td>tepedekini çıkar ve döndür</td></tr>
+      <tr><td><code>peek()</code></td><td>tepedekine bak (çıkarma)</td></tr>
+      <tr><td><code>isEmpty()</code> · <code>size()</code></td><td>boş mu? · kaç eleman?</td></tr>
+    </table>
+    <table class="sum-t" style="font-size:20px">
+      <tr><th colspan="2">🎟️ Kuyruk (queue)</th></tr>
+      <tr><td><code>enqueue(x)</code></td><td>x’i sona ekle</td></tr>
+      <tr><td><code>dequeue()</code></td><td>baştakini çıkar ve döndür</td></tr>
+      <tr><td><code>peek()</code></td><td>baştakine bak</td></tr>
+      <tr><td><code>isEmpty()</code> · <code>size()</code></td><td>boş mu? · kaç eleman?</td></tr>
+    </table>
+  </div>
+  <div class="box prop fragment"><span class="bt">💡 API = sözleşme</span>Kullanan kişi sadece bu işlemleri bilir; içeride dizi mi, bağlı liste mi kullanıldığını <b>bilmek zorunda değildir</b>. Gerçeklemeyi değiştirsek de onun kodu çalışmaya devam eder. Buna <b>soyutlama</b> <span class="en">abstraction</span> denir.</div>
+</section>
+
+<section data-sec="kurallar">
+  <h2>Aynı girdiler, farklı çıkış sırası</h2>
+  <div class="demo" data-demo="sqviz"></div>
+  <aside class="notes">Birkaç kez Ekle, sonra birkaç kez Çıkar. Çıkanlar satırlarını karşılaştırın: yığın sırayı TERS çevirir, kuyruk KORUR. “Bir diziyi tersine çevirmek için ne kullanırdınız?” sorusunun cevabı burada.</aside>
+</section>
+
+<section data-sec="kurallar">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · kurallar</div>
+    <div class="q">Boş bir yığına sırayla <b>1, 2, 3</b> push ediliyor, sonra bir pop, sonra <b>4</b> push, sonra iki pop. Çıkan sayılar sırasıyla?</div>
+    <div class="opts">
+      <button data-opt="A">1, 2, 3</button>
+      <button data-opt="B">3, 4, 2</button>
+      <button data-opt="C">3, 2, 4</button>
+      <button data-opt="D">1, 4, 2</button>
+    </div>
+    <div class="explain">push 1, 2, 3 → [1, 2, 3]. pop → <b>3</b>. push 4 → [1, 2, 4]. pop → <b>4</b>, pop → <b>2</b>. Kuyruk olsaydı: 1, 2, 3 (her zaman giriş sırası).</div>
+  </div>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: <code>Stack&lt;T&gt;</code> — “T” ne demek? <span class="en">generics</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>Bir yığın her şeyi tutabilir: sayıları, hamleleri, menü ekranlarını… Her tür için ayrı sınıf yazmak yerine türü bir <b>parametre</b> yaparız:</p>
+      <ul>
+        <li><code>Stack&lt;int&gt;</code> → tamsayı yığını</li>
+        <li><code>Stack&lt;Move&gt;</code> → hamle yığını</li>
+        <li><code>Queue&lt;Vector3&gt;</code> → konum kuyruğu</li>
+      </ul>
+      <p><code>&lt;T&gt;</code> = “T yerine sonra bir tür yazılacak”. Buna <b>generic</b> (tür parametreli) sınıf denir.</p>
+      <p class="mini">Python ve JavaScript’te türler yazılmadığı için bu sorun yok: aynı liste her şeyi tutar (Python’da isteğe bağlı tür ipucu: <code>list[int]</code>).</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var undo = new Stack<string>();     // string tutan yığın
+undo.Push("sağa git");
+undo.Push("zıpla");
+string last = undo.Pop();           // "zıpla"
+string top = undo.Peek();           // "sağa git" (çıkarmadan bak)
+
+var waypoints = new Queue<Vector3>();   // Vector3 tutan kuyruk
+waypoints.Enqueue(new Vector3(5, 0, 2));
+Vector3 next = waypoints.Dequeue();
+Debug.Log(waypoints.Count);         // 0
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from collections import deque
+
+undo = []                    # Python'da yığın = list (sona ekle/sondan çıkar)
+undo.append("sağa git")      # push
+undo.append("zıpla")
+last = undo.pop()            # "zıpla"
+top = undo[-1]               # peek: son eleman
+
+waypoints = deque()          # kuyruk = deque (iki uçlu kuyruk)
+waypoints.append((5, 0, 2))  # enqueue
+nxt = waypoints.popleft()    # dequeue (baştan)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const undo = [];               // JS'te yığın = dizi
+undo.push("sağa git");
+undo.push("zıpla");
+const last = undo.pop();       // "zıpla"
+const top = undo[undo.length - 1];   // peek
+
+const waypoints = [];          // kuyruk: dizi + push/shift
+waypoints.push({ x: 5, y: 2 });      // enqueue
+const nxt = waypoints.shift();       // dequeue ⚠️ shift() O(N)!
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kurallar">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 2 · kurallar</div>
+    <div class="q">Python’da bir kuyruğu <code>list</code> ile tutup <code>liste.pop(0)</code> ile baştan çıkarırsak, N elemanlı kuyrukta tek bir dequeue ne kadar sürer?</div>
+    <div class="opts">
+      <button data-opt="A">Sabit (1)</button>
+      <button data-opt="B">lg N</button>
+      <button data-opt="C">N — kalan herkes bir sola kayar</button>
+      <button data-opt="D">N²</button>
+    </div>
+    <div class="explain">Python <code>list</code>’i bir <b>dinamik dizidir</b> (bağlı listeler dersi!). Baştan çıkarmak = kalan elemanların hepsini bir sola kaydırmak. Çözüm: <code>collections.deque</code> (baştan çıkarma O(1)). JavaScript’te <code>shift()</code> ve C#’ta <code>List.RemoveAt(0)</code> için de aynı uyarı geçerli; C#’ın <code>Queue&lt;T&gt;</code>’i ise dairesel tampon kullanır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Gerçekleme</div>
+  <div class="sub"><i>implementation</i> — bağlı liste, dinamik dizi, dairesel tampon</div>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="on">gerçekleme</li><li class="">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="gerçekleme">
+  <h2>Yığın = bağlı listenin başı</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p>Bağlı listeler dersinde iki O(1) işlem gördük: <b>başa ekle</b> ve <b>baştan sil</b>. İşte yığın!</p>
+      <ul><li><code>push</code> = başa ekle</li><li><code>pop</code> = baştan sil</li></ul>
+      <p>Her işlem <b>en kötü durumda bile</b> sabit zaman. Bedeli: her eleman için bir düğüm nesnesi (bellek + çöp toplayıcı).</p>
+    </div>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Node:
+    def __init__(self, item, next=None):
+        self.item = item
+        self.next = next
+
+class Stack:
+    def __init__(self):
+        self.first = None       # tepe = listenin başı
+        self.n = 0
+
+    def push(self, item):
+        self.first = Node(item, self.first)   # yeni düğüm, eski başı göstersin
+        self.n += 1
+
+    def pop(self):
+        item = self.first.item
+        self.first = self.first.next          # eski tepe → çöp
+        self.n -= 1
+        return item
+
+    def is_empty(self):
+        return self.first is None
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class LinkedStack<T>
+{
+    class Node { public T Item; public Node Next; }
+    Node first;          // tepe = listenin başı
+    int n;
+
+    public void Push(T item)
+    {
+        Node oldFirst = first;
+        first = new Node();
+        first.Item = item;
+        first.Next = oldFirst;
+        n++;
+    }
+
+    public T Pop()
+    {
+        T item = first.Item;
+        first = first.Next;      // eski tepe → çöp
+        n--;
+        return item;
+    }
+
+    public bool IsEmpty() { return first == null; }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class LinkedStack {
+  constructor() { this.first = null; this.n = 0; }   // tepe = listenin başı
+
+  push(item) {
+    this.first = { item: item, next: this.first };  // nesne sabiti ile düğüm
+    this.n++;
+  }
+
+  pop() {
+    const item = this.first.item;
+    this.first = this.first.next;     // eski tepe → çöp
+    this.n--;
+    return item;
+  }
+
+  isEmpty() { return this.first === null; }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="gerçekleme">
+  <h2>Yığın = dinamik dizinin sonu</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <ul>
+        <li><code>push</code> = sona ekle (<code>a[n++] = x</code>)</li>
+        <li><code>pop</code> = sondan çıkar (<code>a[--n]</code>)</li>
+        <li>Dolunca <b>iki katına</b>, dörtte bire düşünce <b>yarıya</b> (bağlı listeler dersindeki dinamik dizi)</li>
+      </ul>
+      <p>Her işlem <b>amortize</b> O(1); ara sıra bir kopyalama. Ama bellek az ve önbellek dostu → pratikte çoğu zaman <b>daha hızlı</b>.</p>
+      <p class="mini">Python <code>list</code>, JS <code>Array</code> ve C# <code>Stack&lt;T&gt;</code> tam olarak böyle çalışır.</p>
+    </div>
+  <div class="tabs " style="font-size:.82em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class ArrayStack:
+    def __init__(self):
+        self.a = [None]          # kapasite 1
+        self.n = 0
+
+    def push(self, item):
+        if self.n == len(self.a):
+            self._resize(2 * len(self.a))
+        self.a[self.n] = item
+        self.n += 1
+
+    def pop(self):
+        self.n -= 1
+        item = self.a[self.n]
+        self.a[self.n] = None    # referansı bırak (bekleyen referans olmasın)
+        if 0 < self.n == len(self.a) // 4:
+            self._resize(len(self.a) // 2)
+        return item
+
+    def _resize(self, cap):
+        b = [None] * cap
+        for i in range(self.n):
+            b[i] = self.a[i]
+        self.a = b
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class ArrayStack<T>
+{
+    T[] a = new T[1];
+    int n;
+
+    public void Push(T item)
+    {
+        if (n == a.Length) Resize(2 * a.Length);
+        a[n] = item;
+        n++;
+    }
+
+    public T Pop()
+    {
+        n--;
+        T item = a[n];
+        a[n] = default;            // referansı bırak
+        if (n > 0 && n == a.Length / 4) Resize(a.Length / 2);
+        return item;
+    }
+
+    void Resize(int cap)
+    {
+        T[] b = new T[cap];
+        for (int i = 0; i < n; i++) b[i] = a[i];
+        a = b;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JS dizileri zaten dinamik: push/pop yığın işlemleridir
+class ArrayStack {
+  constructor() { this.a = []; }
+  push(item) { this.a.push(item); }
+  pop() { return this.a.pop(); }
+  peek() { return this.a[this.a.length - 1]; }
+  isEmpty() { return this.a.length === 0; }
+  size() { return this.a.length; }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="gerçekleme">
+  <h2>Kuyruk = bağlı liste (başı + sonu)</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <ul>
+        <li><code>enqueue</code> = sona ekle (<code>last</code> ile O(1))</li>
+        <li><code>dequeue</code> = baştan sil (<code>first</code> ile O(1))</li>
+      </ul>
+      <div class="box warn"><span class="bt">⚠️ Klasik hata</span>Kuyruk boşalınca <code>last</code>’ı da <code>null</code> yapmayı unutmak. Sonraki enqueue, artık listede olmayan eski düğüme bağlanır ve eleman kaybolur!</div>
+    </div>
+  <div class="tabs " style="font-size:.82em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Queue:
+    def __init__(self):
+        self.first = None      # baş: buradan çıkar
+        self.last = None       # son: buraya ekle
+        self.n = 0
+
+    def enqueue(self, item):
+        old_last = self.last
+        self.last = Node(item)
+        if self.first is None:          # kuyruk boştuysa
+            self.first = self.last
+        else:
+            old_last.next = self.last
+        self.n += 1
+
+    def dequeue(self):
+        item = self.first.item
+        self.first = self.first.next
+        if self.first is None:          # kuyruk boşaldıysa
+            self.last = None            # ⚠️ unutma!
+        self.n -= 1
+        return item
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class LinkedQueue<T>
+{
+    class Node { public T Item; public Node Next; }
+    Node first, last;
+    int n;
+
+    public void Enqueue(T item)
+    {
+        Node oldLast = last;
+        last = new Node { Item = item };       // nesne başlatıcı
+        if (first == null) first = last;       // boştuysa
+        else oldLast.Next = last;
+        n++;
+    }
+
+    public T Dequeue()
+    {
+        T item = first.Item;
+        first = first.Next;
+        if (first == null) last = null;        // ⚠️ boşaldıysa
+        n--;
+        return item;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class LinkedQueue {
+  constructor() { this.first = null; this.last = null; this.n = 0; }
+
+  enqueue(item) {
+    const oldLast = this.last;
+    this.last = { item: item, next: null };
+    if (this.first === null) this.first = this.last;   // boştuysa
+    else oldLast.next = this.last;
+    this.n++;
+  }
+
+  dequeue() {
+    const item = this.first.item;
+    this.first = this.first.next;
+    if (this.first === null) this.last = null;   // ⚠️ boşaldıysa
+    this.n--;
+    return item;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="gerçekleme">
+  <h2>Kuyruk = dairesel tampon <span class="en">ring buffer · circular array</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>Dizi ile kuyruk: baştan çıkarınca herkesi kaydırmak istemiyoruz. Çözüm: başın <b>indeksini</b> tut ve ilerlet.</p>
+      <p>Sona gelince <b>başa sar</b>: <code>(i + 1) % N</code>. Dizinin sonu başına bağlanmış gibi davranır.</p>
+      <p class="mini">🎒 <code>%</code> = mod (bölümden kalan): <code>7 % 8 = 7</code>, <code>8 % 8 = 0</code>, <code>9 % 8 = 1</code> → saat gibi döner.</p>
+    </div>
+    <div class="demo" data-demo="ring"></div>
+  </div>
+  <aside class="notes">Enqueue’ya 10 kez basın: 8’i geçince en eski girdinin üzerine yazılır (bu sürüm “üzerine yaz” politikası kullanıyor; başka bir seçenek dolunca hata vermek ya da büyütmektir). head ve tail indekslerinin 7’den 0’a nasıl sardığını gösterin.</aside>
+</section>
+
+<section data-sec="gerçekleme">
+  <h2>Dairesel tampon — kod</h2>
+  <div class="tabs short" style="font-size:.85em">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class RingQueue<T>
+{
+    T[] a;
+    int head, count;               // baş indeksi ve eleman sayısı
+
+    public RingQueue(int capacity) { a = new T[capacity]; }
+
+    public void Enqueue(T item)
+    {
+        if (count == a.Length) throw new InvalidOperationException("Dolu");
+        int tail = (head + count) % a.Length;    // sona yaz, gerekirse başa sar
+        a[tail] = item;
+        count++;
+    }
+
+    public T Dequeue()
+    {
+        if (count == 0) throw new InvalidOperationException("Boş");
+        T item = a[head];
+        a[head] = default;
+        head = (head + 1) % a.Length;            // baş ilerler, başa sarar
+        count--;
+        return item;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class RingQueue:
+    def __init__(self, capacity):
+        self.a = [None] * capacity
+        self.head = 0
+        self.count = 0
+
+    def enqueue(self, item):
+        if self.count == len(self.a):
+            raise OverflowError("Dolu")
+        tail = (self.head + self.count) % len(self.a)
+        self.a[tail] = item
+        self.count += 1
+
+    def dequeue(self):
+        if self.count == 0:
+            raise IndexError("Boş")
+        item = self.a[self.head]
+        self.a[self.head] = None
+        self.head = (self.head + 1) % len(self.a)
+        self.count -= 1
+        return item
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class RingQueue {
+  constructor(capacity) { this.a = new Array(capacity); this.head = 0; this.count = 0; }
+
+  enqueue(item) {
+    if (this.count === this.a.length) throw new Error("Dolu");
+    const tail = (this.head + this.count) % this.a.length;
+    this.a[tail] = item;
+    this.count++;
+  }
+
+  dequeue() {
+    if (this.count === 0) throw new Error("Boş");
+    const item = this.a[this.head];
+    this.a[this.head] = undefined;
+    this.head = (this.head + 1) % this.a.length;
+    this.count--;
+    return item;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>throw</code> / <code>raise</code>: hata fırlat (programı “burada bir sorun var” diye durdur). C#’ın <code>Queue&lt;T&gt;</code>’i içeride dairesel tampon kullanır ve dolunca iki katına büyür.</p>
+</section>
+
+<section data-sec="gerçekleme · deney">
+  <h2>🧪 Canlı ölçüm: kuyruğu nasıl gerçeklemeli?</h2>
+  <div class="demo" data-demo="qbench"></div>
+  <div class="box story fragment"><span class="bt">🔬 Ne bekliyoruz?</span><code>shift()</code> her dequeue’da kalanları kaydırırsa toplam iş ~N²/2 olur: N 4 katına çıkınca süre ~16 katına. Baş indeksi ve dairesel tampon ise doğrusal: N 4 katına → süre ~4 katına.</div>
+</section>
+
+<section data-sec="gerçekleme">
+  <h2>Hangi gerçekleme? 📋</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>gerçekleme</th><th>işlem başına zaman</th><th>bellek</th><th>sınır</th></tr>
+    <tr><td>bağlı liste</td><td>her zaman sabit <span class="mini">(en kötü durumda bile)</span></td><td class="no">eleman başına bir düğüm (+ GC)</td><td class="yes">yok</td></tr>
+    <tr><td>dinamik dizi</td><td><b>ortalama</b> sabit <span class="mini">(arada bir kopyalama)</span></td><td class="yes">az, önbellek dostu</td><td class="yes">yok</td></tr>
+    <tr><td>dairesel tampon (sabit)</td><td>her zaman sabit</td><td class="yes">en az, sıfır çöp</td><td class="no">kapasite sabit</td></tr>
+  </table>
+  <div class="cols fragment" style="margin-top:14px">
+    <div class="box game"><span class="bt">🎮 Oyunlarda</span>Kare süresi önemli: “ortalama hızlı ama arada bir yavaş” işlemler takılmaya yol açabilir. Kapasiteyi baştan bildiğiniz yerlerde (girdi tamponu, son 5 saniyenin kaydı) <b>sabit dairesel tampon</b> ideal.</div>
+    <div class="box prop"><span class="bt">Sedgewick’in notu</span>Bir uçak kontrol sistemi gibi “her işlem garanti hızlı olmalı” durumunda bağlı liste; toplam süre önemliyse dinamik dizi.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Klasik Uygulamalar</div>
+  <div class="sub">parantezler · hesap makinesi · çağrı yığını</div>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="on">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="uygulamalar">
+  <h2>Parantezler dengeli mi? <span class="en">balanced brackets</span></h2>
+  <div class="demo" data-demo="brackets"></div>
+  <p class="mini">🎮 Her kod editörü, her JSON/seviye dosyası okuyucusu, her diyalog betiği ayrıştırıcısı bunu yapar. Unity bir sahne dosyasını okurken de!</p>
+  <aside class="notes">Örnekler listesinden “( [ ) ]” seçin: sayıca dengeli ama sırası yanlış → sadece saymak yetmez, YIĞIN gerekir. “( ( ( )” : metin biter ama yığında açık kalır.</aside>
+</section>
+
+<section data-sec="uygulamalar · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: parantez kontrolü</h2>
+  <div class="fnlab" data-lang="js" data-task="brackets">
+<textarea>
+// GÖREV: s içindeki ( ) [ ] { } dengeliyse true, değilse false döndür.
+// Diğer karakterleri yok say.
+function isBalanced(s) {
+  const stack = [];
+  for (const ch of s) {
+    if (ch === '(' || ch === '[' || ch === '{') {
+      stack.push(ch);
+    } else if (ch === ')') {
+      if (stack.pop() !== '(') return false;
+    }
+    // ] ve } için de benzer kontrolleri ekle
+  }
+  return stack.length === 0;
+}
+</textarea>
+    <div class="lab-tasks"><b>Görev:</b> Kod sadece <code>( )</code>’yi biliyor. <code>]</code> ve <code>}</code> durumlarını ekleyip tüm testleri geçir. Bonus: bir “eşler” sözlüğü/nesnesi (<code>{')': '(', ...}</code>) kullanarak kodu kısalt.</div>
+  </div>
+  <aside class="notes">Boş yığından pop: JS’te undefined döner → !== '(' → false: doğru davranış. Python’da boş listeden pop IndexError fırlatır: öğrenciler bunu ayrıca kontrol etmeli.</aside>
+</section>
+
+<section data-sec="uygulamalar">
+  <h2>Dijkstra’nın iki yığınlı hesap makinesi</h2>
+  <div class="demo" data-demo="twostack" data-expr="( 1 + ( ( 2 + 3 ) * ( 4 * 5 ) ) )"></div>
+  <aside class="notes">Kitaptaki örneğin aynısı. Edsger Dijkstra 1960’larda bu algoritmayı derleyiciler için kullandı (yol bulma dersinde adı tekrar karşımıza çıkacak: Dijkstra’nın en kısa yol algoritması). Oyunlarda: veri dosyalarındaki hasar formülleri, modlanabilir betik dilleri.</aside>
+</section>
+
+<section data-sec="uygulamalar">
+  <h2>Tersine Lehçe gösterimi <span class="en">postfix · reverse Polish notation</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>İşlemi sayılardan <b>sonra</b> yazarsak parantez gerekmez!</p>
+      <table class="sum-t" style="font-size:20px">
+        <tr><th>alışık olduğumuz (infix)</th><th>postfix</th></tr>
+        <tr><td><code>3 + 4</code></td><td><code>3 4 +</code></td></tr>
+        <tr><td><code>(2 + 3) * 4</code></td><td><code>2 3 + 4 *</code></td></tr>
+        <tr><td><code>2 + 3 * 4</code></td><td><code>2 3 4 * +</code></td></tr>
+      </table>
+      <p class="fragment">Algoritma: sayıyı yığına it; işlem görünce iki sayı çek, sonucu it. Tek yığın yeter!</p>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">📜 Hesap makineleri ve sanal makineler</span>1970’lerin HP hesap makineleri postfix kullanırdı. Bugün Java, C# (.NET) ve Python’un sanal makineleri de <b>yığın makinesidir</b>: kodunuz önce postfix benzeri komutlara çevrilir.</div>
+      <a class="vid sm" href="https://www.youtube.com/watch?v=7ha78yWRDlE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7ha78yWRDlE/hqdefault.jpg" alt=""><span><b>Reverse Polish Notation and The Stack</b><br>Computerphile</span></a>
+    </div>
+  </div>
+</section>
+
+<section data-sec="uygulamalar · laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python: postfix hesapla</h2>
+  <div class="fnlab" data-lang="python" data-task="postfix">
+<textarea>
+# GÖREV: boşlukla ayrılmış bir postfix ifadeyi hesapla.
+# Örnek: "2 3 + 4 *"  →  20
+def eval_postfix(s):
+    stack = []
+    for token in s.split():          # "2 3 +" → ["2", "3", "+"]
+        if token == "+":
+            b = stack.pop()
+            a = stack.pop()
+            stack.append(a + b)
+        else:
+            stack.append(float(token))
+    return stack.pop()
+</textarea>
+    <div class="lab-tasks">Şu an sadece <code>+</code> çalışıyor. <code>-</code>, <code>*</code>, <code>/</code> işlemlerini ekle. Dikkat: çıkarma ve bölmede sıra önemli — önce çekilen <b>ikinci</b> sayıdır (<code>a - b</code>, <code>b - a</code> değil)!</div>
+  </div>
+</section>
+
+<section data-sec="uygulamalar · kaputun altında">
+  <h2>⚙️ Bilgisayarın kendi yığını: çağrı yığını <span class="en">call stack</span></h2>
+  <div class="demo" data-demo="callstack"></div>
+  <aside class="notes">Her fonksiyon çağrısı yığına bir “kare” ekler (parametreler, yerel değişkenler, dönüş adresi). Özyineleme bu yüzden mümkün: her fakt(n) kendi n’ini ayrı bir karede tutar. Ağaçlar dersinde aynı yığını BST işlemlerinde göreceğiz.</aside>
+</section>
+
+<section data-sec="uygulamalar">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · uygulamalar</div>
+    <div class="q"><code>a()</code> fonksiyonu <code>b()</code>’yi, <code>b()</code> de <code>c()</code>’yi çağırıyor. <code>c()</code> çalışırken çağrı yığınının tepesinden tabanına doğru sıra nedir?</div>
+    <div class="opts">
+      <button data-opt="A">a, b, c</button>
+      <button data-opt="B">c, b, a</button>
+      <button data-opt="C">b, c, a</button>
+      <button data-opt="D">Sadece c</button>
+    </div>
+    <div class="explain">Çağrılan her fonksiyon tepeye konur: önce a (taban), sonra b, en son c (tepe). c bitince pop edilir ve b kaldığı yerden devam eder. Hata ayıklayıcıların gösterdiği “call stack” penceresi de tam olarak budur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Oyunlarda</div>
+  <div class="sub">geri al · menü yığını · hedef kuyruğu · olay kuyruğu · kombo tamponu</div>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="on">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>↶ Geri al / yinele: iki yığın</h2>
+  <div class="demo" data-demo="undo"></div>
+  <aside class="notes">Birkaç hamle yapın, altın toplayın; sonra 3 kez geri alın (altınlar geri gelir), 1 kez yineleyin, sonra YENİ bir hamle yapın: yinele yığını silinir. Bu, her editörde (Word, Photoshop, Unity) gördükleri davranış.</aside>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>Komut deseni ile geri al <span class="en">command pattern</span></h2>
+  <div class="tabs short" style="font-size:.8em">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+interface ICommand            // "Yapılabilen ve geri alınabilen bir iş"
+{
+    void Do();
+    void Undo();
+}
+
+class MoveCommand : ICommand
+{
+    Transform unit; Vector3 delta;
+    public MoveCommand(Transform u, Vector3 d) { unit = u; delta = d; }
+    public void Do()   { unit.position += delta; }
+    public void Undo() { unit.position -= delta; }   // tersini yap
+}
+
+class History
+{
+    readonly Stack<ICommand> undo = new Stack<ICommand>();
+    readonly Stack<ICommand> redo = new Stack<ICommand>();
+
+    public void Run(ICommand c) { c.Do(); undo.Push(c); redo.Clear(); }
+    public void Undo() { if (undo.Count > 0) { var c = undo.Pop(); c.Undo(); redo.Push(c); } }
+    public void Redo() { if (redo.Count > 0) { var c = redo.Pop(); c.Do(); undo.Push(c); } }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class MoveCommand:                      # yapılabilen ve geri alınabilen iş
+    def __init__(self, unit, dx, dy):
+        self.unit, self.dx, self.dy = unit, dx, dy
+    def do(self):
+        self.unit.x += self.dx; self.unit.y += self.dy
+    def undo(self):
+        self.unit.x -= self.dx; self.unit.y -= self.dy
+
+class History:
+    def __init__(self):
+        self.undo_stack = []
+        self.redo_stack = []
+    def run(self, cmd):
+        cmd.do(); self.undo_stack.append(cmd); self.redo_stack.clear()
+    def undo(self):
+        if self.undo_stack:
+            cmd = self.undo_stack.pop(); cmd.undo(); self.redo_stack.append(cmd)
+    def redo(self):
+        if self.redo_stack:
+            cmd = self.redo_stack.pop(); cmd.do(); self.undo_stack.append(cmd)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class MoveCommand {                     // yapılabilen ve geri alınabilen iş
+  constructor(unit, dx, dy) { this.unit = unit; this.dx = dx; this.dy = dy; }
+  do()   { this.unit.x += this.dx; this.unit.y += this.dy; }
+  undo() { this.unit.x -= this.dx; this.unit.y -= this.dy; }
+}
+
+class History {
+  constructor() { this.undoStack = []; this.redoStack = []; }
+  run(cmd)  { cmd.do(); this.undoStack.push(cmd); this.redoStack.length = 0; }
+  undo()    { const c = this.undoStack.pop(); if (c) { c.undo(); this.redoStack.push(c); } }
+  redo()    { const c = this.redoStack.pop(); if (c) { c.do(); this.undoStack.push(c); } }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>interface ICommand</code>: “<code>Do</code> ve <code>Undo</code> metotları olan her şey” — hareket, silme, renk değiştirme… hepsi aynı yığına girebilir. Ayrıntılar: <i>Game Programming Patterns</i> · Command (Kaynaklar).</p>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>📋 Menü yığını: “Geri” düğmesi = pop</h2>
+  <div class="cols c46">
+    <div style="font-size:.92em">
+      <p>Oyun → Duraklat → Ayarlar → Ses ayarları…</p>
+      <ul>
+        <li>Yeni ekran açmak = <b>push</b></li>
+        <li>“Geri” / Esc = <b>pop</b> → bir önceki ekran tekrar görünür</li>
+        <li>Ekranda sadece <b>tepedeki</b> ekran girdi alır</li>
+      </ul>
+      <p class="mini">Tarayıcıların geri/ileri düğmeleri, mobil uygulamalardaki ekran geçişleri de aynı fikir (iki yığın: geri al/yinele gibi).</p>
+    </div>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class MenuStack : MonoBehaviour
+{
+    readonly Stack<GameObject> screens = new Stack<GameObject>();
+
+    public void Open(GameObject screen)
+    {
+        if (screens.Count > 0) screens.Peek().SetActive(false);   // alttakini gizle
+        screen.SetActive(true);
+        screens.Push(screen);
+    }
+
+    public void Back()                       // Esc ya da "Geri" düğmesi
+    {
+        if (screens.Count == 0) return;
+        screens.Pop().SetActive(false);      // tepedekini kapat
+        if (screens.Count > 0) screens.Peek().SetActive(true);    // öncekini göster
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+screens = []                       # menü yığını
+
+def open_screen(s):
+    if screens:
+        screens[-1].visible = False
+    s.visible = True
+    screens.append(s)
+
+def back():
+    if screens:
+        screens.pop().visible = False
+        if screens:
+            screens[-1].visible = True
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const screens = [];                // menü yığını
+
+function openScreen(s) {
+  if (screens.length) screens[screens.length - 1].visible = false;
+  s.visible = true;
+  screens.push(s);
+}
+
+function back() {
+  if (!screens.length) return;
+  screens.pop().visible = false;
+  if (screens.length) screens[screens.length - 1].visible = true;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>🪖 RTS: hedef kuyruğu <span class="en">waypoint queue</span></h2>
+  <div class="demo" data-demo="rts"></div>
+  <p class="mini">StarCraft, Age of Empires… Shift basılıyken tıklanan hedefler bir <b>kuyruğa</b> eklenir; birim onları <b>sırayla</b> gezer. Yığın kullansaydık? En son tıklanan yere önce giderdi! 😅</p>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>📨 Olay kuyruğu <span class="en">event queue</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p>Oyunun bir yerinde “düşman öldü” olur. Ses çalınmalı, başarım kontrol edilmeli, skor artmalı, ağ üzerinden diğer oyunculara bildirilmeli…</p>
+      <ul>
+        <li>Hepsini <b>o anda</b> yapmak yerine bir <b>olayı kuyruğa ekle</b></li>
+        <li>Karenin uygun bir yerinde kuyruktaki olayları <b>sırayla</b> işle</li>
+      </ul>
+      <p class="fragment">Faydası: kodun parçaları birbirini tanımak zorunda kalmaz (<b>gevşek bağlılık</b> <span class="en">decoupling</span>), ağır işler kareye yayılır, olaylar <b>geldiği sırayla</b> işlenir.</p>
+    </div>
+  <div class="tabs " style="font-size:.82em">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public struct GameEvent { public string Type; public Vector3 Pos; }
+
+public class EventBus : MonoBehaviour
+{
+    readonly Queue<GameEvent> events = new Queue<GameEvent>();
+
+    public void Post(GameEvent e) { events.Enqueue(e); }   // herkes olay atabilir
+
+    void LateUpdate()                         // karenin sonunda sırayla işle
+    {
+        while (events.Count > 0)
+        {
+            GameEvent e = events.Dequeue();
+            if (e.Type == "enemyDied") { PlaySound("pop", e.Pos); score += 10; }
+            if (e.Type == "coin")      { PlaySound("ding", e.Pos); }
+        }
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from collections import deque
+events = deque()
+
+def post(kind, pos):
+    events.append((kind, pos))        # enqueue
+
+def process_events():                 # her karenin sonunda çağrılır
+    while events:
+        kind, pos = events.popleft()  # dequeue
+        if kind == "enemy_died":
+            play_sound("pop", pos)
+        elif kind == "coin":
+            play_sound("ding", pos)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const events = [];
+let head = 0;                          // shift() yerine baş indeksi
+
+function post(kind, pos) { events.push({ kind, pos }); }
+
+function processEvents() {             // draw() sonunda çağrılır
+  while (head < events.length) {
+    const e = events[head++];
+    if (e.kind === "enemyDied") playSound("pop", e.pos);
+    if (e.kind === "coin") playSound("ding", e.pos);
+  }
+  events.length = 0; head = 0;         // kuyruğu sıfırla
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>🕹️ Dövüş oyunu girdi tamponu: dairesel tampon</h2>
+  <div class="demo" data-demo="ring" data-combo></div>
+  <aside class="notes">Street Fighter tarzı oyunlar son birkaç karedeki girdileri sabit boyutlu bir dairesel tamponda tutar. Yeni girdi gelince en eskisinin üzerine yazılır (bellek ayırma yok!). Her karede tamponun sonu bilinen kombolarla karşılaştırılır. ↓ ↘ → 👊 sırasıyla basın: Hadouken!</aside>
+</section>
+
+<section data-sec="oyunlarda · hikâye">
+  <h2>📜 Zamanı geri sarmak: Prince of Persia ve Braid</h2>
+  <div class="cols c64">
+    <div>
+      <p><i>Prince of Persia: The Sands of Time</i> (2003) ve <i>Braid</i> (2008): oyuncu zamanı <b>geri sarabilir</b>.</p>
+      <ul>
+        <li class="fragment">Her karede oyunun durumu (konumlar, hızlar…) kaydedilir.</li>
+        <li class="fragment">Sınırlı bellek: sadece son <i>k</i> saniye → <b>dairesel tampon</b>: yeni kayıt en eskinin üzerine yazar.</li>
+        <li class="fragment">Geri sarma: tampondan <b>en yeniden en eskiye</b> doğru oku → bu kez bir <b>yığın</b> gibi kullanılır (LIFO)!</li>
+      </ul>
+    </div>
+    <div class="box story fragment"><span class="bt">💡 Mühendislik notu</span>Braid’in yapımcısı Jonathan Blow, sınırsız geri sarma için tüm kareleri değil, sadece <b>değişen</b> bilgileri sıkıştırarak sakladığını anlatmıştır. Veri yapısı seçimi bir oyun mekaniğini mümkün kılıyor!</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Yığın mı, Kuyruk mu?</div>
+  <div class="sub">aynı algoritma, farklı kap → DFS ve BFS</div>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="done">oyunlarda</li><li class="on">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="DFS · BFS">
+  <h2>🪣 Boya kovası: bekleyen hücreleri nerede tutalım?</h2>
+  <div class="demo" data-demo="floodfill"></div>
+  <aside class="notes">Önce yığın ile çalıştırın: boya uzun, kıvrımlı yollar boyunca ilerler (derinlik öncelikli, DFS). Sonra kuyruk ile: başlangıçtan halkalar halinde yayılır (genişlik öncelikli, BFS). Kod tamamen aynı; sadece pop() yerine shift() (baştan çıkar). Haritaya tıklayıp başlangıcı değiştirin.</aside>
+</section>
+
+<section data-sec="DFS · BFS">
+  <h2>Tek satırlık fark</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from collections import deque
+
+def flood_fill(grid, sx, sy, use_stack):
+    box = deque([(sx, sy)])                  # bekleyen hücreler
+    while box:
+        if use_stack:
+            x, y = box.pop()                 # 📚 yığın: EN SON ekleneni al → DFS
+        else:
+            x, y = box.popleft()             # 🎟️ kuyruk: EN ÖNCE ekleneni al → BFS
+        if grid[y][x] != "boş":
+            continue
+        grid[y][x] = "boyalı"
+        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:   # 4 komşu
+            box.append((x + dx, y + dy))
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+void FloodFill(char[,] grid, int sx, int sy)
+{
+    var box = new Queue<(int x, int y)>();   // Stack<> yaparsan → DFS
+    box.Enqueue((sx, sy));
+    while (box.Count > 0)
+    {
+        var (x, y) = box.Dequeue();          // Stack ise: box.Pop()
+        if (grid[y, x] != '.') continue;
+        grid[y, x] = '#';
+        box.Enqueue((x + 1, y)); box.Enqueue((x - 1, y));
+        box.Enqueue((x, y + 1)); box.Enqueue((x, y - 1));
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function floodFill(grid, sx, sy, useStack) {
+  const box = [[sx, sy]];                    // bekleyen hücreler
+  while (box.length) {
+    const [x, y] = useStack ? box.pop()      // 📚 DFS
+                            : box.shift();   // 🎟️ BFS
+    if (grid[y][x] !== ".") continue;
+    grid[y][x] = "#";
+    box.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>(int x, int y)</code>: C# demeti <span class="en">tuple</span> — iki değeri tek paket olarak taşır. <code>var (x, y) = …</code> paketi açar.</p>
+</section>
+
+<section data-sec="DFS · BFS">
+  <h2>DFS ve BFS: oyun YZ’sinin kapısı 🚪</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">📚 Yığın → DFS</span>
+      <span class="en">depth-first search</span><br>Bir yolu sonuna kadar dener, çıkmaza girince geri döner. Labirent oluşturma (rastgele DFS ile mükemmel labirentler!), bulmaca çözme, “ulaşılabilir mi?” sorusu.
+    </div>
+    <div class="box game"><span class="bt">🎟️ Kuyruk → BFS</span>
+      <span class="en">breadth-first search</span><br>Başlangıçtan halka halka yayılır → her hücreye <b>en az adımla</b> ulaşır. Izgarada en kısa yol, “3 hamlede nerelere gidebilirim?” (taktik oyunlarda hareket alanı).
+    </div>
+  </div>
+  <p class="fragment">Graflar ve yol bulma derslerinde ikisini de ayrıntılı göreceğiz. Bir adım ötesi: kuyruk yerine <b>öncelik kuyruğu</b> → Dijkstra ve <b>A*</b>. 🎯</p>
+</section>
+
+<section data-sec="DFS · BFS">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · DFS · BFS</div>
+    <div class="q">Taktik bir oyunda bir birimin <b>en fazla 3 adımda</b> ulaşabileceği kareleri, en az adım sayılarıyla bulmak istiyoruz. Bekleyen kareleri nerede tutmalıyız?</div>
+    <div class="opts">
+      <button data-opt="A">Yığın (DFS)</button>
+      <button data-opt="B">Kuyruk (BFS)</button>
+      <button data-opt="C">Fark etmez</button>
+      <button data-opt="D">Sıralı dizi</button>
+    </div>
+    <div class="explain">Kuyruk, kareleri başlangıca <b>uzaklık sırasıyla</b> çıkarır: önce 1 adımdakiler, sonra 2, sonra 3. Bir kare ilk görüldüğünde en kısa mesafesi bilinir. DFS de tüm erişilebilir kareleri bulur ama bir kareye ilk ulaştığı yol en kısa olmayabilir.</div>
+  </div>
+</section>
+
+<section data-sec="diğer yapılar">
+  <h2>Akrabalar: çift uçlu kuyruk, torba, rastgele kuyruk</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>yapı</th><th>ne yapar?</th><th>🎮 örnek</th><th>hazır</th></tr>
+    <tr><td><b>Çift uçlu kuyruk</b> <span class="en">deque</span></td><td>iki uçtan ekle/çıkar</td><td>Yılan oyunu (başa ekle, sondan çıkar), “kayan pencere”</td><td><code>collections.deque</code> · <code>LinkedList&lt;T&gt;</code></td></tr>
+    <tr><td><b>Torba</b> <span class="en">bag</span></td><td>sadece ekle ve gez, sıra önemsiz</td><td>Sahnedeki tüm mermiler, envanter</td><td><code>List&lt;T&gt;</code> · <code>list</code></td></tr>
+    <tr><td><b>Rastgele kuyruk</b> <span class="en">randomized queue</span></td><td>rastgele bir elemanı çıkar</td><td>Desteden kart çekmek, loot torbası</td><td>(kendiniz: swap &amp; pop + rastgele indeks)</td></tr>
+    <tr><td><b>Öncelik kuyruğu</b> <span class="en">priority queue</span></td><td><b>en önemliyi</b> çıkar</td><td>A* açık listesi, olay zamanlayıcı</td><td>→ ileriki ders (heap)</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kaputun Altında</div>
+  <div class="sub">yığın belleği ve öbek belleği · stack overflow</div>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="done">oyunlarda</li><li class="done">yığın mı kuyruk mu?</li><li class="on">kaputun altında</li></ul>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ İki bellek bölgesi: yığın ve öbek <span class="en">stack vs heap</span></h2>
+  <div class="cols">
+    <div class="box low"><span class="bt">📚 Yığın belleği (stack)</span>
+      <ul style="font-size:.92em">
+        <li>Çağrı yığınının yaşadığı yer: parametreler, yerel değişkenler</li>
+        <li>Ayırma/serbest bırakma = yığın işaretçisini oynatmak → <b>çok hızlı</b></li>
+        <li>Küçük (genelde birkaç MB) → çok derin özyineleme: <b>stack overflow</b></li>
+        <li>C#’ta <code>int</code>, <code>float</code>, <code>Vector3</code> (struct) yerel değişkenleri burada</li>
+      </ul>
+    </div>
+    <div class="box prop"><span class="bt">🧱 Öbek belleği (heap)</span>
+      <ul style="font-size:.92em">
+        <li><code>new</code> ile oluşturulan nesneler: düğümler, listeler, <code>class</code> örnekleri</li>
+        <li>Büyük ve esnek, ama ayırmak daha yavaş</li>
+        <li>Temizliği çöp toplayıcı (GC) yapar → oyunlarda takılma riski</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fragment mini">Uyarı: “öbek” <span class="en">heap</span> bellek bölgesinin adı; ileride göreceğimiz <b>heap veri yapısı</b> (öncelik kuyruğu) ile isim benzerliği dışında ilgisi yok!</p>
+</section>
+
+<section data-sec="kaputun altında · hikâye">
+  <h2>📜 “Yığın” fikrinin kısa tarihi</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">1946 · Alan Turing</span>Alt programlardan dönüş adreslerini saklamak için “gömme” <span class="en">bury</span> ve “çıkarma” <span class="en">unbury</span> işlemlerini tanımladı.</div>
+      <div class="box story"><span class="bt">1957 · Bauer &amp; Samelson</span>Almanya’da “Kellerprinzip” (<b>kiler ilkesi</b>: en son konan en önce alınır) için patent aldılar; yığın kavramını formül hesaplamaya uyguladılar.</div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Bugün</span>Her işlemcide bir yığın işaretçisi yazmacı (<i>stack pointer</i>) ve <code>PUSH</code>/<code>POP</code> makine komutları var. Programcıların en büyük soru-cevap sitesinin adı da bu yığının taşmasından geliyor: <b>Stack Overflow</b>. 😄</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Yığın</b> (LIFO): push, pop, peek · <b>Kuyruk</b> (FIFO): enqueue, dequeue.</li>
+      <li><b>API</b> ile gerçekleme ayrı: bağlı liste, dinamik dizi, dairesel tampon.</li>
+      <li>Tuzaklar: <code>list.pop(0)</code> ve <code>shift()</code> O(N); kuyruk boşalınca <code>last = null</code>.</li>
+      <li>Klasikler: parantez kontrolü, iki yığınlı hesap, postfix, çağrı yığını.</li>
+    </ul>
+    <ul>
+      <li>🎮 Geri al/yinele (komut deseni), menü yığını, RTS hedef kuyruğu, olay kuyruğu, kombo tamponu, zamanı geri sarma.</li>
+      <li><b>Yığın → DFS</b>, <b>kuyruk → BFS</b>: aynı algoritma, farklı kap.</li>
+      <li>⚙️ Yığın belleği ve öbek belleği; stack overflow.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: Boş bir kuyrukta <code>enqueue 1, 2, 3; dequeue; enqueue 4; dequeue; dequeue</code> → çıkanlar? Aynısını yığınla yapın.</li>
+    <li><b>İki yığınla kuyruk</b> yazın: <code>enqueue</code> → giriş yığınına; <code>dequeue</code> → çıkış yığını boşsa girişteki her şeyi ona aktar. Neden amortize O(1)?</li>
+    <li>p5.js’te bir çizim programına <b>geri al</b> ekleyin: her fırça darbesi bir komut olsun.</li>
+    <li>Unity’de Esc ile çalışan bir <b>menü yığını</b> yapın (Duraklat → Ayarlar → Ses).</li>
+    <li>Boya kovası demosundaki haritayı kâğıda çizin; DFS ve BFS’nin ilk 10 hücresini numaralayın.</li>
+    <li>🤖 Bir YZ asistanından “C#’ta dairesel tampon” isteyin. Dolu ve boş durumlarını, başa sarmayı test edin. <code>head == tail</code> hem boş hem dolu anlamına gelebilir mi?</li>
+  </ol>
+  <aside class="notes">6. alıştırma: sadece head ve tail tutulursa “boş” ve “dolu” ayırt edilemez; çözüm count tutmak ya da bir hücreyi hep boş bırakmak.</aside>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=hVsNqhEthOk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/hVsNqhEthOk/hqdefault.jpg" alt=""><span><b>Stacks</b><br>CS50 Shorts (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=KcT3aVgrrpU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KcT3aVgrrpU/hqdefault.jpg" alt=""><span><b>Stacks in 3 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=D6gu-_tmEpQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/D6gu-_tmEpQ/hqdefault.jpg" alt=""><span><b>Queues in 3 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=XuCbpw6Bj1U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/XuCbpw6Bj1U/hqdefault.jpg" alt=""><span><b>Introduction to Queues</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=okr-XE8yTO8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/okr-XE8yTO8/hqdefault.jpg" alt=""><span><b>Array implementation of Queue (dairesel)</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=wjI1WNcIntg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/wjI1WNcIntg/hqdefault.jpg" alt=""><span><b>Data Structures: Stacks and Queues</b><br>HackerRank</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=A3ZUpyrnCbM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/A3ZUpyrnCbM/hqdefault.jpg" alt=""><span><b>Introduction to Stacks and Queues</b><br>CS Dojo</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=7ha78yWRDlE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7ha78yWRDlE/hqdefault.jpg" alt=""><span><b>Reverse Polish Notation and The Stack</b><br>Computerphile</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/13stacks/" target="_blank">algs4 · 1.3 Bags, Queues, and Stacks</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/13StacksAndQueues.pdf" target="_blank">Princeton ders slaytları: Stacks and Queues (PDF)</a></li>
+      <li><a href="https://gameprogrammingpatterns.com/command.html" target="_blank">Game Programming Patterns · Command</a> (geri al)</li>
+      <li><a href="https://gameprogrammingpatterns.com/event-queue.html" target="_blank">Game Programming Patterns · Event Queue</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://visualgo.net/en/list" target="_blank">VisuAlgo · Stack, Queue, Deque</a></li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/QueueArray.html" target="_blank">USFCA · dizi ile kuyruk (dairesel)</a></li>
+      <li><a href="https://docs.python.org/3/library/collections.html" target="_blank">Python · collections.deque</a></li>
+      <li><a href="../bagli-listeler/">Önceki deste: Bağlı Listeler</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #4a2a07 0%, #1c1036 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Arama Algoritmaları</div>
+    <div class="sub">Bir koleksiyonda aradığımızı nasıl hızlıca buluruz?</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../arama-algoritmalari/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/yigin.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

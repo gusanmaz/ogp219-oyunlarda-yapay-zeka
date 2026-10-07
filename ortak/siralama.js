@@ -547,5 +547,5 @@ a = _Dizi(_input)
   SL.register('.sortviz', SL.SortViz);
   SL.register('.race', SL.Race);
   SL.register('.trace', SL.Trace);
-  SL.register('.codelab:not(.treelab):not(.searchlab)', SL.SortLab);
+  SL.register('.codelab:not(.treelab):not(.searchlab):not(.lllab):not(.fnlab)', SL.SortLab);
 })();
