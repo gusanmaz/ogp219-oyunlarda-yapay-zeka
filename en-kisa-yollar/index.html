@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>En Kısa Yollar</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — En kısa yollar: gevşetme, Dijkstra, arazili haritada yol bulma, Dijkstra haritaları, A*’a köprü, DAG’de kritik yol, Bellman–Ford ve oyun ekonomisinde arbitraj. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d4a3a 0%, #1a1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · GRAFLAR</div>
+  <div class="ttl" style="font-size:80px">En Kısa Yollar</div>
+  <div class="sub"><i>Gevşetme, Dijkstra, DAG’ler, Bellman–Ford</i> — oyunlarda yol bulmanın kapısı</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlesp"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.4 Shortest Paths bölümünü temel alır. Bölüm 5’in ve algoritmalar kısmının son destesi; buradan Oyun Yapay Zekâsı bölümüne (A*, navmesh…) geçilecek. Arka planda arazili bir haritada Dijkstra dalgası: koyu yeşil = pahalı arazi; sonunda en ucuz yol kırmızı.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li><b>Temeller</b> — en kısa yollar ağacı, <b>gevşetme</b> <span class="en">relaxation</span></li>
+      <li><b>Dijkstra</b> — negatif olmayan ağırlıklar için klasik</li>
+      <li><b>Oyunda yol bulma</b> — arazi maliyeti, Dijkstra haritaları, A*’a köprü</li>
+      <li><b>DAG’ler</b> — doğrusal zaman; en uzun yol = kritik yol</li>
+      <li><b>Negatif ağırlıklar</b> — Bellman–Ford ve “sonsuz altın” açığı</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir birimin bataklıktan değil yoldan dolaşmasını sağlayan yol bulmayı, yüzlerce düşmanı tek bir hesapla yönlendiren “Dijkstra haritası”nı ve oyun ekonomisindeki ticaret açıklarını bulan algoritmayı anlayacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: KISA MI, UCUZ MU?</span>
+    <p class="big">Bir RTS biriminiz haritanın öbür ucuna gidecek. Düz gitse 20 kare ama 12’si bataklık (her biri 6 kat yavaş). Yoldan dolaşsa 30 kare, hepsi hızlı.</p>
+  </div>
+  <ul style="font-size:.95em">
+    <li class="fragment">BFS (Yönsüz Graflar destesi) <b>adım</b> sayar → bataklıktan geçer: 8 + 12×6 = <b>80</b> birim süre</li>
+    <li class="fragment">Yoldan: 30 × 1 = <b>30</b> birim süre</li>
+    <li class="fragment">Kenarların <b>ağırlığı</b> (süre, yakıt, tehlike) varsa “en kısa” = <b>toplam ağırlığı en küçük</b> yol. Bunun için yeni algoritmalar gerekiyor.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>edge-weighted digraph</td><td>kenar ağırlıklı yönlü graf</td><td>Her yönlü kenarın bir maliyeti var</td></tr>
+    <tr><td>shortest-path tree (SPT)</td><td>en kısa yollar ağacı</td><td>Kaynaktan herkese en kısa yolların birleşimi</td></tr>
+    <tr><td>distTo[] · edgeTo[]</td><td>uzaklık · son kenar</td><td>Şimdiye kadarki en iyi uzaklık · o yolun son kenarı</td></tr>
+    <tr><td>relaxation</td><td>gevşetme</td><td>“Bu kenarı kullanınca daha kısa olur mu?” kontrolü ve güncellemesi</td></tr>
+    <tr><td>negative cycle</td><td>negatif döngü</td><td>Ağırlıkları toplamı negatif olan döngü</td></tr>
+    <tr><td>critical path</td><td>kritik yol</td><td>Bir iş planındaki en uzun bağımlılık zinciri</td></tr>
+    <tr><td>heuristic</td><td>sezgisel tahmin</td><td>“Hedefe aşağı yukarı ne kadar kaldı?” (A*’ın sırrı)</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Temeller ve gevşetme</div>
+  <div class="sub">bütün en kısa yol algoritmalarının ortak hamlesi</div>
+  <ul class="agenda"><li class="on">temeller ve gevşetme</li><li class="">Dijkstra</li><li class="">oyunda yol bulma</li><li class="">DAG’ler ve kritik yol</li><li class="">negatif ağırlıklar</li></ul>
+</section>
+
+<section data-sec="temeller">
+  <h2>Problemin çeşitleri</h2>
+  <div class="cols">
+    <ul style="font-size:.9em">
+      <li><b>Tek kaynak</b>: s’den <b>herkese</b> (bu derste)</li>
+      <li><b>Kaynak–hedef</b>: s’den t’ye (oyunda en sık; aynı algoritma, t bulununca dur)</li>
+      <li><b>Tüm çiftler</b>: herkesten herkese (küçük haritalarda önceden hesaplanıp tabloda tutulur)</li>
+    </ul>
+    <table class="sum-t" style="font-size:18px">
+      <tr><th>ağırlıklar…</th><th>algoritma</th></tr>
+      <tr><td>hepsi eşit (1)</td><td>BFS</td></tr>
+      <tr><td>negatif değil</td><td><b>Dijkstra</b></td></tr>
+      <tr><td>herhangi, graf DAG</td><td>topolojik sırayla gevşet</td></tr>
+      <tr><td>negatif olabilir, negatif döngü yok</td><td>Bellman–Ford</td></tr>
+    </table>
+  </div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Gösterim: en kısa yollar ağacı</span>Princeton’ın fikri: s’den herkese en kısa yolların birleşimi bir <b>ağaçtır</b>. Onu iki dizi ile tutarız: <code>distTo[v]</code> (s’den v’ye en kısa uzaklık) ve <code>edgeTo[v]</code> (o yoldaki son kenar). Yol = edgeTo zincirini geriye izlemek (DFS/BFS’teki gibi!).</div>
+</section>
+
+<section data-sec="temeller">
+  <h2>Gevşetme <span class="en">relaxation</span> — kendiniz deneyin</h2>
+  <div class="demo" data-demo="relax"></div>
+  <p class="mini">Soru: “s’den w’ye, <b>v üzerinden</b> (v→w kenarıyla) gitmek şimdiki en iyi yoldan daha mı kısa?” Evetse güncelle. Kaydırıcılarla oynayın. Bütün algoritmalar sadece bu hamleyi farklı <b>sıralarda</b> yapar.</p>
+</section>
+
+<section data-sec="temeller">
+  <h2>Gevşetme — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <div class="box prop"><span class="bt">Önerme (en iyilik koşulu)</span><code>distTo[]</code> değerleri ancak ve ancak <b>hiçbir</b> kenar gevşetilemiyorsa (her v→w için <code>distTo[w] ≤ distTo[v] + ağırlık</code>) en kısa uzaklıklardır.</div>
+      <p class="mini">Genel algoritma: “Gevşetilebilen bir kenar kaldıkça gevşet.” Doğru ama yavaş olabilir. Dijkstra, DAG ve Bellman–Ford bu genel algoritmanın akıllı <b>sıralamalarıdır</b>.</p>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+INF = float("inf")                   # sonsuz: "henüz yol yok"
+
+def relax(v, w, weight, dist_to, edge_to):
+    if dist_to[v] + weight < dist_to[w]:   # v üzerinden daha kısa mı?
+        dist_to[w] = dist_to[v] + weight   # yeni en iyi uzaklık
+        edge_to[w] = v                     # oraya v'den geldik
+        return True                        # değişti
+    return False
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+const double INF = double.PositiveInfinity;
+
+static bool Relax(int v, int w, double weight, double[] distTo, int[] edgeTo)
+{
+    if (distTo[v] + weight < distTo[w])   // v üzerinden daha kısa mı?
+    {
+        distTo[w] = distTo[v] + weight;
+        edgeTo[w] = v;
+        return true;
+    }
+    return false;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Infinity: JS'te hazır "sonsuz" sayısı
+function relax(v, w, weight, distTo, edgeTo) {
+  if (distTo[v] + weight < distTo[w]) {   // v üzerinden daha kısa mı?
+    distTo[w] = distTo[v] + weight;
+    edgeTo[w] = v;
+    return true;
+  }
+  return false;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <p class="mini">🎒 Sonsuz (∞) neden işe yarar? ∞ + 5 = ∞ ve her sayı ∞’dan küçük → ilk bulunan yol her zaman kabul edilir. Tam sayı dizilerde ∞ yoksa çok büyük bir sayı (ör. <code>int.MaxValue / 2</code> — taşmasın diye yarısı!) kullanılır.</p>
+</section>
+
+<section data-sec="temeller">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · temeller</div>
+    <div class="q"><code>distTo[v] = 7</code>, <code>distTo[w] = 12</code>, v→w kenarının ağırlığı 4. v→w gevşetilince ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">distTo[w] 11 olur, edgeTo[w] = v</button>
+      <button data-opt="B">distTo[w] 12 kalır</button>
+      <button data-opt="C">distTo[v] 8 olur</button>
+      <button data-opt="D">distTo[w] 4 olur</button>
+    </div>
+    <div class="explain">7 + 4 = 11 &lt; 12 → v üzerinden gitmek daha kısa: <code>distTo[w] = 11</code>, <code>edgeTo[w] = v</code>. Gevşetme sadece kenarın <b>ucundaki</b> (w) değerleri değiştirir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Dijkstra</div>
+  <div class="sub">en yakın kesinleşmemiş düğümü al, oklarını gevşet</div>
+  <ul class="agenda"><li class="done">temeller ve gevşetme</li><li class="on">Dijkstra</li><li class="">oyunda yol bulma</li><li class="">DAG’ler ve kritik yol</li><li class="">negatif ağırlıklar</li></ul>
+</section>
+
+<section data-sec="Dijkstra">
+  <h2>Dijkstra’nın fikri</h2>
+  <div class="cols c64">
+    <ol style="font-size:.92em">
+      <li><code>distTo[s] = 0</code>, diğerleri ∞</li>
+      <li class="fragment">Henüz kesinleşmemiş düğümler arasından <b>distTo’su en küçük</b> olanı (v) seç → v artık <b>kesin</b></li>
+      <li class="fragment">v’nin bütün oklarını <b>gevşet</b></li>
+      <li class="fragment">Herkes kesinleşene kadar tekrarla</li>
+    </ol>
+    <div class="box story fragment"><span class="bt">BFS + öncelik kuyruğu</span>BFS’te kuyruk (FIFO) “en az adımlı”yı öne alıyordu. Dijkstra’da <b>öncelik kuyruğu</b> “en az maliyetli”yi öne alır. Tüm ağırlıklar 1 ise Dijkstra = BFS!<p class="mini">Prim ile kardeş: Prim “ağaca en yakın”ı, Dijkstra “kaynağa en yakın”ı seçer.</p></div>
+  </div>
+</section>
+
+<section data-sec="Dijkstra">
+  <h2>Dijkstra — iz tablosu</h2>
+  <div class="demo" data-demo="dijkstra"></div>
+  <p class="mini">Kitaptaki “tinyEWD”. Mor kesikli = PQ’da, yeşil = kesinleşti, mavi kenar = az önce gevşedi. Sonuç (0’dan): 2: .26, 4: .38, 7: .60, 5: .73, 3: .99, 1: 1.05, 6: 1.51. Başka bir kaynak için düğüme tıklayın.</p>
+</section>
+
+<section data-sec="Dijkstra">
+  <h2>Dijkstra — kod (ikili yığınla)</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-7|8-11|12-16"><script type="text/template">
+import heapq
+
+def dijkstra(G, s):                      # G.adj[v] = [(w, ağırlık), ...]
+    dist = [float("inf")] * G.V
+    edge_to = [-1] * G.V
+    dist[s] = 0
+    pq = [(0, s)]                        # (uzaklık, düğüm)
+    while pq:
+        d, v = heapq.heappop(pq)         # en yakın düğüm
+        if d > dist[v]:
+            continue                     # bayat kayıt: daha iyisi zaten bulundu
+        for w, wt in G.adj[v]:
+            if dist[v] + wt < dist[w]:   # gevşet
+                dist[w] = dist[v] + wt
+                edge_to[w] = v
+                heapq.heappush(pq, (dist[w], w))
+    return dist, edge_to
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static double[] Dijkstra(List<(int w, double wt)>[] adj, int s, int[] edgeTo)
+{
+    int V = adj.Length;
+    var dist = new double[V];
+    Array.Fill(dist, double.PositiveInfinity);
+    dist[s] = 0;
+    var pq = new PriorityQueue<int, double>();      // eleman: düğüm, öncelik: uzaklık
+    pq.Enqueue(s, 0);
+    while (pq.TryDequeue(out int v, out double d))
+    {
+        if (d > dist[v]) continue;                  // bayat kayıt
+        foreach (var (w, wt) in adj[v])
+        {
+            if (dist[v] + wt < dist[w])             // gevşet
+            {
+                dist[w] = dist[v] + wt;
+                edgeTo[w] = v;
+                pq.Enqueue(w, dist[w]);
+            }
+        }
+    }
+    return dist;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// MinHeap: Öncelik Kuyrukları destesindeki ikili yığın, [öncelik, değer]
+function dijkstra(adj, s) {                 // adj[v] = [[w, ağırlık], ...]
+  const V = adj.length;
+  const dist = new Array(V).fill(Infinity);
+  const edgeTo = new Array(V).fill(-1);
+  dist[s] = 0;
+  const pq = new MinHeap();
+  pq.push([0, s]);
+  while (pq.size > 0) {
+    const [d, v] = pq.pop();                // en yakın düğüm
+    if (d > dist[v]) continue;              // bayat kayıt
+    for (const [w, wt] of adj[v]) {
+      if (dist[v] + wt < dist[w]) {         // gevşet
+        dist[w] = dist[v] + wt;
+        edgeTo[w] = v;
+        pq.push([dist[w], w]);
+      }
+    }
+  }
+  return { dist, edgeTo };
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="Dijkstra">
+  <h2>🎒 “Bayat kayıt” hilesi ve indeksli PQ</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <p>Bir düğümün uzaklığı iyileşince PQ’daki eski kaydını <b>güncellemek</b> gerekir. İki yol:</p>
+      <ol>
+        <li><b>İndeksli öncelik kuyruğu</b> (Princeton, iz tablosundaki demo): PQ her düğümün nerede olduğunu bilir, önceliğini <b>düşürür</b> (decreaseKey). PQ’da en fazla V kayıt.</li>
+        <li class="fragment"><b>Tembel silme</b> (koddaki): yeni bir kayıt ekle, eskisini bırak. Eski kayıt çıkınca <code>d &gt; dist[v]</code> ile tanı ve atla. Python <code>heapq</code>, C# <code>PriorityQueue</code> decreaseKey desteklemediği için pratikte bu kullanılır.</li>
+      </ol>
+    </div>
+    <div class="box prop"><span class="bt">Önerme</span>Dijkstra, ağırlıklar <b>negatif değilse</b> en kısa yollar ağacını bulur. İkili yığınla süre <b>E log V</b>.
+      <p class="mini">Neden negatif olmamalı? Bir düğüm kesinleştiğinde “daha kısa bir yol bulunamaz” varsayıyoruz: geri kalan bütün yollar daha uzun bir yerden başlıyor ve kenar eklemek yolu <b>kısaltamaz</b>. Negatif kenar bu varsayımı yıkar.</p></div>
+  </div>
+</section>
+
+<section data-sec="Dijkstra">
+  <div class="box story" style="font-size:1em"><span class="bt">📜 Yirmi dakikalık algoritma</span>
+    <p>1956’da Amsterdam’da genç Edsger Dijkstra, yeni bir bilgisayarın gücünü halka göstermek için bir problem arıyordu: “Rotterdam’dan Groningen’e en kısa yol”.</p>
+    <p class="fragment">Kendi anlatımına göre nişanlısıyla alışverişteyken bir kafede oturdu ve algoritmayı <b>kâğıt kalem olmadan, yaklaşık yirmi dakikada</b> tasarladı. “Kâğıt kalemsiz tasarlamanın bir avantajı, kaçınılabilecek bütün karmaşıklıklardan kaçınmak zorunda kalmanızdır” dedi.</p>
+    <p class="fragment">Makalesini 1959’da yayımladı — 3 sayfa. Bugün telefonunuzdaki harita uygulamasından oyunlardaki A*’a kadar her yerde onun izi var.</p>
+  </div>
+</section>
+
+<section data-sec="Dijkstra">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · Dijkstra</div>
+    <div class="q">Bu grafta kaynak s: s→a (2), s→b (5), b→a (−4). Dijkstra a’nın uzaklığını kaç bulur, doğrusu kaç?</div>
+    <div class="opts">
+      <button data-opt="A">Dijkstra 2 bulur, doğrusu 1</button>
+      <button data-opt="B">İkisi de 1</button>
+      <button data-opt="C">İkisi de 2</button>
+      <button data-opt="D">Dijkstra 1 bulur, doğrusu 2</button>
+    </div>
+    <div class="explain">Dijkstra önce a’yı (2) kesinleştirir — b’den (5) küçük. Sonra b’yi işler ve b→a ile 5 − 4 = 1 bulur ama a çoktan “kesin” ilan edilmişti. Negatif kenar yüzünden yanlış! (Tembel sürüm bu küçük örnekte a’yı yeniden güncelleyebilir ama genelde garantisi yoktur.) Negatif ağırlıklar için Bellman–Ford.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Oyunda yol bulma</div>
+  <div class="sub">arazi maliyeti, Dijkstra haritaları ve A*’a köprü</div>
+  <ul class="agenda"><li class="done">temeller ve gevşetme</li><li class="done">Dijkstra</li><li class="on">oyunda yol bulma</li><li class="">DAG’ler ve kritik yol</li><li class="">negatif ağırlıklar</li></ul>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎮 Arazili harita: BFS vs Dijkstra</h2>
+  <div class="demo" data-demo="gridpath" data-c="36" data-r="13" data-cell="30"></div>
+  <p class="mini">Koyu yeşil = bataklık (6), sarı = orman (3), gri = yol (0,5). Karenin maliyeti = oraya <b>girmenin</b> maliyeti. Algoritmayı BFS yapın: adım sayısı azalır ama maliyet artar. Fırçayla bataklık/yol çizip tekrar arayın.</p>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎮 Dijkstra haritası: bir hesap, yüz düşman</h2>
+  <div class="cols c64">
+    <div style="font-size:.88em">
+      <p>Kaynak olarak <b>hedefi</b> (oyuncuyu) al, Dijkstra’yı <b>bütün</b> haritaya yay. Her karede “oyuncuya maliyet” yazar.</p>
+      <ul>
+        <li class="fragment">Her düşman sadece: “komşularımdan sayısı en küçük olana git” → yol bulma bitti! 200 düşman = 1 Dijkstra.</li>
+        <li class="fragment">Birden çok hedef (bütün can paketleri) = çok kaynaklı Dijkstra → “en yakın can paketine” harita.</li>
+        <li class="fragment"><b>Kaçış haritası</b>: değerleri −1,2 ile çarp, bir kez daha yay → korkan düşmanlar köşeye değil, açık alana kaçar (Brogue’un ünlü hilesi).</li>
+      </ul>
+      <p class="fragment mini">RTS’lerde aynı fikrin vektör hâli: <b>akış alanı</b> <span class="en">flow field</span> — Supreme Commander 2 gibi oyunlarda binlerce birim böyle yönlendirilir.</p>
+    </div>
+    <div class="box game"><span class="bt">Deneyin</span>Önceki slayttaki demoda algoritmayı <b>“Dijkstra haritası”</b> yapın: her karede hedefe olan maliyet yazacak. Herhangi bir kareden sayıların azaldığı yönü takip edin: hep hedefe varırsınız.</div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🔮 Köprü: Dijkstra’dan A*’a</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li>Dijkstra hedefin <b>nerede olduğunu bilmez</b>: kaynak etrafında bir daire gibi her yöne yayılır.</li>
+        <li class="fragment">A*: PQ önceliği = <code>distTo[v]</code> + <b>h(v)</b>, h = “hedefe kalan tahmini mesafe” (ör. kuş uçuşu). Arama hedefe doğru <b>eğilir</b>, çok daha az kare açar.</li>
+        <li class="fragment">h hiçbir zaman gerçeği <b>aşmazsa</b> A* yine en kısa yolu bulur. h = 0 ise A* = Dijkstra.</li>
+      </ul>
+    </div>
+    <div class="box game fragment"><span class="bt">Sonraki bölüm: Oyun Yapay Zekâsı</span>A*, navigasyon ağları (navmesh), yol düzeltme, hiyerarşik yol bulma, sürü davranışları, karar ağaçları… hepsi bu bölümde öğrendiğiniz graflar, öncelik kuyrukları ve hash tablolarının üstüne kurulu.<p class="mini">Red Blob Games’in A* rehberi (kaynaklarda) ileriye bakmak için mükemmel.</p></div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · oyunda</div>
+    <div class="q">Bir zombi oyununda 300 zombi aynı oyuncuyu kovalıyor. En verimli yol bulma yaklaşımı hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Her zombi için her karede ayrı Dijkstra</button>
+      <button data-opt="B">Oyuncudan başlayan TEK bir Dijkstra haritası; her zombi en küçük komşuya gider</button>
+      <button data-opt="C">Her zombi için DFS</button>
+      <button data-opt="D">Zombiler rastgele yürür</button>
+    </div>
+    <div class="explain">Hedef ortak olduğu için tek bir Dijkstra (oyuncu = kaynak) bütün zombilere yeter: 300 arama yerine 1. Oyuncu hareket ettikçe harita birkaç karede bir güncellenir. Roguelike’larda “Dijkstra map”, RTS’lerde “flow field” adıyla bilinir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">DAG’ler ve kritik yol</div>
+  <div class="sub">döngü yoksa topolojik sırayla tek geçiş</div>
+  <ul class="agenda"><li class="done">temeller ve gevşetme</li><li class="done">Dijkstra</li><li class="done">oyunda yol bulma</li><li class="on">DAG’ler ve kritik yol</li><li class="">negatif ağırlıklar</li></ul>
+</section>
+
+<section data-sec="DAG">
+  <h2>DAG’de en kısa yol: topolojik sırayla gevşet</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <ul>
+        <li>Düğümleri <b>topolojik sırayla</b> (Yönlü Graflar destesi) ele al, her birinin oklarını gevşet</li>
+        <li>Bir düğüme sıra gelince ona gelen <b>bütün</b> oklar zaten gevşetilmiş → değeri kesin</li>
+        <li class="fragment"><b>E + V</b> süre (Dijkstra’dan hızlı, PQ yok!)</li>
+        <li class="fragment"><b>Negatif ağırlıklarla da</b> çalışır</li>
+        <li class="fragment"><b>En uzun yol</b>: ağırlıkları eksi yap (ya da <code>&lt;</code> yerine <code>&gt;</code>). Genel graflarda imkânsız derecede zor olan problem, DAG’de kolay!</li>
+      </ul>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def acyclic_sp(G, s, order):        # order: topolojik sıra
+    dist = [float("inf")] * G.V
+    edge_to = [-1] * G.V
+    dist[s] = 0
+    for v in order:                 # sırayla, PQ'suz
+        for w, wt in G.adj[v]:
+            if dist[v] + wt < dist[w]:
+                dist[w] = dist[v] + wt
+                edge_to[w] = v
+    return dist, edge_to
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static double[] AcyclicSP(List<(int w, double wt)>[] adj, int s, List<int> order)
+{
+    var dist = new double[adj.Length];
+    Array.Fill(dist, double.PositiveInfinity);
+    dist[s] = 0;
+    foreach (int v in order)                  // topolojik sıra
+        foreach (var (w, wt) in adj[v])
+            if (dist[v] + wt < dist[w]) dist[w] = dist[v] + wt;
+    return dist;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function acyclicSP(adj, s, order) {         // order: topolojik sıra
+  const dist = new Array(adj.length).fill(Infinity);
+  dist[s] = 0;
+  for (const v of order)
+    for (const [w, wt] of adj[v])
+      if (dist[v] + wt < dist[w]) dist[w] = dist[v] + wt;
+  return dist;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="DAG">
+  <h2>🎮 Kritik yol: boss savaşına en hızlı hazırlık</h2>
+  <div class="demo" data-demo="cpm"></div>
+  <p class="mini">Her iş bir süre alıyor, bazıları başkalarını bekliyor; işçi sınırsız (paralel). En erken bitiş = başlangıçtan bitişe <b>en uzun</b> yol. Princeton’ın “paralel iş zamanlama” örneği; oyun stüdyolarında proje planlarında (ve RTS yapı sıralarında) aynısı.</p>
+</section>
+
+<section data-sec="DAG">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · DAG</div>
+    <div class="q">Kritik yoldaki bir iş 2 saniye gecikirse ne olur? Kritik yolda <b>olmayan</b> bir iş 2 saniye gecikirse?</div>
+    <div class="opts">
+      <button data-opt="A">İkisinde de toplam süre 2 sn uzar</button>
+      <button data-opt="B">Kritik yoldaki gecikme toplamı 2 sn uzatır; diğeri payı (boşluğu) kadar gecikebilir, çoğu zaman toplamı etkilemez</button>
+      <button data-opt="C">Hiçbiri toplamı etkilemez</button>
+      <button data-opt="D">Kritik yol dışındaki gecikme toplamı daha çok uzatır</button>
+    </div>
+    <div class="explain">Toplam süre = en uzun zincir. Kritik yoldaki her iş bu zincirin parçası → gecikmesi aynen yansır. Diğer işlerin bir “bolluk” payı vardır; gecikme bu payı aşmadıkça toplam değişmez. Proje yöneticilerinin dikkat ettiği yer tam bu kırmızı zincir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Negatif ağırlıklar</div>
+  <div class="sub">Bellman–Ford ve negatif döngüler</div>
+  <ul class="agenda"><li class="done">temeller ve gevşetme</li><li class="done">Dijkstra</li><li class="done">oyunda yol bulma</li><li class="done">DAG’ler ve kritik yol</li><li class="on">negatif ağırlıklar</li></ul>
+</section>
+
+<section data-sec="negatif">
+  <h2>Bellman–Ford</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <ul>
+        <li>V − 1 <b>tur</b> boyunca, her turda <b>bütün</b> kenarları gevşet</li>
+        <li class="fragment">Neden V − 1? En kısa yol en fazla V − 1 kenarlı; k. turdan sonra k kenarlı bütün yollar doğru</li>
+        <li class="fragment">Negatif kenarlarla çalışır; süre <b>E · V</b> (yavaş!). Pratikte: sadece bir önceki turda değişen düğümlerin kenarlarını gevşet (kuyruklu sürüm)</li>
+        <li class="fragment"><b>V. turda</b> hâlâ bir şey değişiyorsa → <b>negatif döngü</b> var: en kısa yol tanımsız (döngüde sonsuza kadar dönüp maliyeti −∞’a indirebilirsin)</li>
+      </ul>
+      <p class="mini">📜 Richard Bellman (1958), Lester Ford Jr. (1956). Bellman “dinamik programlama”nın da babası.</p>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def bellman_ford(V, edges, s):          # edges: (v, w, ağırlık)
+    dist = [float("inf")] * V
+    dist[s] = 0
+    for _ in range(V - 1):              # V-1 tur
+        for v, w, wt in edges:
+            if dist[v] + wt < dist[w]:
+                dist[w] = dist[v] + wt
+    for v, w, wt in edges:              # V. tur: hâlâ iyileşen var mı?
+        if dist[v] + wt < dist[w]:
+            return None                 # NEGATİF DÖNGÜ!
+    return dist
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static double[] BellmanFord(int V, List<(int v, int w, double wt)> edges, int s)
+{
+    var dist = new double[V];
+    Array.Fill(dist, double.PositiveInfinity);
+    dist[s] = 0;
+    for (int pass = 0; pass < V - 1; pass++)
+        foreach (var (v, w, wt) in edges)
+            if (dist[v] + wt < dist[w]) dist[w] = dist[v] + wt;
+    foreach (var (v, w, wt) in edges)
+        if (dist[v] + wt < dist[w]) return null;   // negatif döngü
+    return dist;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function bellmanFord(V, edges, s) {         // edges: [v, w, ağırlık]
+  const dist = new Array(V).fill(Infinity);
+  dist[s] = 0;
+  for (let pass = 0; pass < V - 1; pass++)
+    for (const [v, w, wt] of edges)
+      if (dist[v] + wt < dist[w]) dist[w] = dist[v] + wt;
+  for (const [v, w, wt] of edges)
+    if (dist[v] + wt < dist[w]) return null;   // negatif döngü
+  return dist;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="negatif">
+  <h2>💰 Oyun ekonomisinde arbitraj = negatif döngü</h2>
+  <div class="demo" data-demo="arbitrage"></div>
+  <p class="mini">Princeton’ın döviz arbitrajı örneğinin oyun hâli: NPC tüccarlarının takas oranları. Bir döngüde oranların çarpımı 1’den büyükse, oyuncu sonsuza kadar dönüp bedava altın basar — ekonomi çöker! Hile: −ln ile çarpımı toplama çeviririz; çarpım &gt; 1 ⇔ toplam &lt; 0 ⇔ negatif döngü.</p>
+</section>
+
+<section data-sec="negatif">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · negatif</div>
+    <div class="q">Bellman–Ford V − 1 tur sonunda bir tur daha yapıyor ve bir kenar hâlâ gevşiyor. Bu ne demektir?</div>
+    <div class="opts">
+      <button data-opt="A">Bir tur daha yapılmalı</button>
+      <button data-opt="B">Grafta kaynaktan ulaşılabilen bir negatif döngü var: en kısa yollar tanımsız</button>
+      <button data-opt="C">Algoritma hatalı</button>
+      <button data-opt="D">Graf bir DAG</button>
+    </div>
+    <div class="explain">Negatif döngü yoksa her en kısa yol en fazla V − 1 kenarlıdır ve V − 1 tur yeter. V. turda iyileşme olması, kenar sayısı arttıkça maliyetin azalmaya devam ettiğini, yani bir negatif döngü olduğunu gösterir. Oyun ekonomisinde: sonsuz para açığı!</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: Dijkstra</h2>
+  <div class="splab" data-lang="js">
+<textarea>
+// adj[v] = [[w, ağırlık], ...] (yönlü, ağırlıklar ≥ 0)
+// s'den her düğüme en kısa uzaklık dizisi (ulaşılamaz: Infinity)
+// Hazır: const pq = new MinHeap(); pq.push([uzaklık, düğüm]); pq.pop(); pq.size
+function dijkstra(V, adj, s) {
+  const dist = new Array(V).fill(Infinity);
+  dist[s] = 0;
+  const pq = new MinHeap();
+  pq.push([0, s]);
+  while (pq.size > 0) {
+    const [d, v] = pq.pop();
+    if (d > dist[v]) continue;
+    for (const [w, wt] of adj[v]) {
+      // TODO: gevşet — daha kısaysa dist[w]'yu güncelle ve PQ'ya ekle
+    }
+  }
+  return dist;
+}
+</textarea>
+    <div class="lab-tasks">TODO’yu doldurun (3 satır). Sonra <code>if (d &gt; dist[v]) continue;</code> satırını silin: sonuç değişiyor mu? Hız? (Doğru kalır ama bayat kayıtlar boşuna işlenir.)</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Dijkstra (Python)</h2>
+  <div class="splab" data-lang="python">
+<textarea>
+import heapq
+# adj[v] = [(w, ağırlık), ...]   —  en kısa uzaklık listesini döndür
+def dijkstra(V, adj, s):
+    dist = [float("inf")] * V
+    dist[s] = 0
+    pq = [(0, s)]
+    while pq:
+        d, v = heapq.heappop(pq)
+        for w, wt in adj[v]:
+            dist[w] = dist[v] + wt
+            heapq.heappush(pq, (dist[w], w))
+    return dist
+</textarea>
+    <div class="lab-tasks">Bu kod gevşetmeyi unutmuş: her komşunun uzaklığını <b>koşulsuz</b> eziyor — döngülü graflarda PQ hiç boşalmaz! Gevşetme koşulunu ekleyin; sonra bayat kayıtları atlayan satırı da ekleyin.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>algoritma</th><th>kısıt</th><th>tipik süre</th><th>en kötü</th><th>🎮 oyunda</th></tr>
+    <tr><td>BFS</td><td>ağırlıklar eşit</td><td>E + V</td><td>E + V</td><td>karo haritada adım</td></tr>
+    <tr><td>Dijkstra (ikili yığın)</td><td>ağırlıklar ≥ 0</td><td>E log V</td><td>E log V</td><td>arazili yol bulma, Dijkstra haritası</td></tr>
+    <tr><td>topolojik sıra</td><td>DAG</td><td>E + V</td><td>E + V</td><td>kritik yol, yapı sırası</td></tr>
+    <tr><td>Bellman–Ford (kuyruklu)</td><td>negatif döngü yok</td><td>E + V</td><td>E · V</td><td>ekonomi arbitraj kontrolü</td></tr>
+  </table>
+  <p class="mini">Hepsi aynı hamleyi (gevşetme) farklı sıralarda yapıyor. Kaynak: Sedgewick &amp; Wayne 4.4.</p>
+</section>
+
+<section data-sec="özet">
+  <h2>🏁 Algoritmalar bölümünün sonu</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <p>18 destede neler topladınız:</p>
+      <ul>
+        <li><b>Analiz</b>: büyüme hızları, ölçme, kare bütçesi</li>
+        <li><b>Temel yapılar</b>: dizi, bağlı liste, yığın, kuyruk, Union–Find</li>
+        <li><b>Sıralama &amp; arama</b>: ikili arama, 7 sıralama algoritması</li>
+        <li><b>Sembol tabloları</b>: BST, dengeli ağaçlar, kd-ağaçları, hash</li>
+        <li><b>Öncelik kuyrukları</b>: ikili yığın</li>
+        <li><b>Graflar</b>: DFS, BFS, topolojik sıra, MST, en kısa yollar</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">🎮 Sıradaki bölüm: Oyun Yapay Zekâsı</span>A* ve navigasyon ağları, sonlu durum makineleri ve davranış ağaçları (Yönlü Graflar + Ağaçlar!), minimax ve oyun ağaçları, Monte Carlo arama, sürü davranışları, etki haritaları… Her biri bu bölümde öğrendiğiniz bir veri yapısının üstüne kurulu.</div>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: tinyEWD’de 0’dan Dijkstra iz tablosunu çıkarın; sonuçları demo ile karşılaştırın.</li>
+    <li>Karo haritada 8 yönlü harekete izin verin; çapraz adımın maliyeti √2. Dijkstra’nın yolu nasıl değişir?</li>
+    <li>p5.js’te bir Dijkstra haritası yapın: fare = hedef; 100 “zombi” her karede en küçük komşuya gitsin.</li>
+    <li>“s’den t’ye en kısa yol” için Dijkstra’yı t kesinleşince durdurun. Ortalama kaç kare açılıyor? Sonra kuş uçuşu mesafeyi önceliğe ekleyin (ilk A*’ınız!) ve tekrar sayın.</li>
+    <li>Kendi oyununuzdaki bir “üretim zinciri” için DAG çizip kritik yolu bulun.</li>
+    <li>🤖 Bir YZ asistanından “Unity’de ızgarada Dijkstra” isteyin. PQ olarak ne kullandı? <code>List.Sort</code> ise her adımda N log N — neden kötü?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=GazC3A4OQTE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/GazC3A4OQTE/hqdefault.jpg" alt=""><span><b>Dijkstra’s Algorithm</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=_lHSawdgXpI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/_lHSawdgXpI/hqdefault.jpg" alt=""><span><b>Dijkstra’s algorithm in 3 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=obWXjtg0L64" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/obWXjtg0L64/hqdefault.jpg" alt=""><span><b>Bellman-Ford in 5 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=9REexHx0hDY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9REexHx0hDY/hqdefault.jpg" alt=""><span><b>A* vs Dijkstra pathfinding visualization</b><br>Borington</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=2ExLEY32RgM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/2ExLEY32RgM/hqdefault.jpg" alt=""><span><b>Applications of Dijkstra Maps in Roguelikes</b><br>IRDC</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Bspb9g9nTto" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Bspb9g9nTto/hqdefault.jpg" alt=""><span><b>Understanding Goal-Based Vector Field Pathfinding</b><br>Tuts+ Game Development</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/44sp/" target="_blank">algs4 · 4.4 Shortest Paths</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/44ShortestPaths.pdf" target="_blank">Princeton ders slaytları: Shortest Paths (PDF)</a></li>
+      <li><a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank">Red Blob Games · Introduction to A*</a> (sonraki bölüme hazırlık!)</li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://www.roguebasin.com/index.php/Dijkstra_Maps_Visualized" target="_blank">RogueBasin · Dijkstra Maps Visualized</a></li>
+      <li><a href="../mst/">Önceki deste: Minimum Yayılan Ağaçlar</a></li>
+      <li><a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #4a3a0d 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">BÖLÜM TAMAMLANDI 🏆</div>
+    <div class="ttl" style="font-size:60px">Sırada: Oyun Yapay Zekâsı</div>
+    <div class="sub">A*, navmesh, davranış ağaçları, minimax… Bu bölümdeki her yapı orada iş başında.</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../">DERS HARİTASI ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/graf.js"></script>
+<script src="../ortak/yonlu.js"></script>
+<script src="../ortak/sp.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
