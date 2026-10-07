@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sembol Tablosu Uygulamaları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Sembol tablosu uygulamaları: kümeler, sözlükler, yerelleştirme, sayaçlar, Zipf yasası, ters dizin, seyrek vektörler, Markov zinciriyle NPC repliği. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #2a0d4a 0%, #10223a 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · SEMBOL TABLOLARI</div>
+  <div class="ttl" style="font-size:64px">Sembol Tablosu Uygulamaları</div>
+  <div class="sub"><i>Kümeler, sözlükler, dizinler, seyrek vektörler</i> — hash ve BST iş başında</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlest"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.5 Applications bölümünü temel alır. Arka planda bir yerelleştirme tablosu: anahtarlar aynı kalıyor, değerler dil dil değişiyor. Bu destede yeni bir veri yapısı yok; önceki iki destenin yapılarıyla neler yapılabildiğini görüyoruz.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li><b>Kümeler</b> — “var mı?” sorusu: küfür filtresi, açılan bölümler <span class="en">set</span></li>
+      <li><b>Sözlükler</b> — anahtar → değer: yerelleştirme, eşya tabloları <span class="en">dictionary</span></li>
+      <li><b>Sayma</b> — kelime sıklığı, oyun analitiği, Zipf yasası</li>
+      <li><b>Dizinleme</b> — ters dizin: etiketle eşya arama <span class="en">inverted index</span></li>
+      <li><b>Seyrek vektörler</b> — çoğu sıfır olan devasa tablolar <span class="en">sparse vector</span></li>
+      <li><b>Oyunda</b> — Markov zinciriyle NPC repliği üretmek</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…oyununuzu 4 dile çevirecek tabloyu, sohbet filtresini, “ateş VE efsanevi” eşya aramasını ve kendi kendine konuşan bir NPC’yi birkaç satırla yazabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: HEPSİ AYNI SORU</span>
+    <p class="big">Bunların ortak noktası ne?</p>
+    <ul>
+      <li class="fragment">“Bu kullanıcı adı yasaklı mı?”</li>
+      <li class="fragment">“<code>menu.play</code> Almancada ne yazılacak?”</li>
+      <li class="fragment">“Bu maçta hangi silah kaç kez kullanıldı?”</li>
+      <li class="fragment">“Ateş etiketli eşyalar hangileri?”</li>
+    </ul>
+  </div>
+  <p class="fragment lead">Hepsi bir <b>sembol tablosu</b>: <code>put(anahtar, değer)</code> ve <code>get(anahtar)</code>. Değer bazen yok (küme), bazen sayı (sayaç), bazen liste (dizin).</p>
+  <p class="fragment mini">Hangi uygulama? <b>Hash tablosu</b> (sıra gerekmiyorsa, en hızlı) ya da <b>dengeli BST</b> (sıra gerekiyorsa). Bu destede ikisini de “hazır” kullanacağız: Python <code>dict/set</code>, C# <code>Dictionary/HashSet</code>, JS <code>Map/Set</code>.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>set</td><td>küme</td><td>Tekrarsız anahtarlar topluluğu; sadece “var mı?”</td></tr>
+    <tr><td>whitelist · blacklist</td><td>izin listesi · yasak listesi</td><td>Bir kümede olanlara izin ver / olanları engelle</td></tr>
+    <tr><td>dictionary · lookup</td><td>sözlük · arama</td><td>Anahtardan değere</td></tr>
+    <tr><td>localization (l10n)</td><td>yerelleştirme</td><td>Oyunu başka dillere/kültürlere uyarlamak</td></tr>
+    <tr><td>frequency counter</td><td>sıklık sayacı</td><td>anahtar → kaç kez görüldü</td></tr>
+    <tr><td>inverted index</td><td>ters dizin</td><td>kelime/etiket → geçtiği belgeler/eşyalar</td></tr>
+    <tr><td>sparse vector · matrix</td><td>seyrek vektör · matris</td><td>Çoğu elemanı sıfır olan; sadece doluları saklanır</td></tr>
+    <tr><td>Markov chain</td><td>Markov zinciri</td><td>Bir sonraki durumun sadece şimdikine bağlı olduğu rastgele süreç</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Kümeler</div>
+  <div class="sub"><i>sets</i> — sadece anahtar, değer yok</div>
+  <ul class="agenda"><li class="on">kümeler</li><li class="">sözlükler</li><li class="">sayma</li><li class="">dizinleme</li><li class="">seyrek vektörler</li><li class="">oyunda: Markov replikleri</li></ul>
+</section>
+
+<section data-sec="kümeler">
+  <h2>Küme API’si ve üç dildeki karşılığı</h2>
+  <div class="cols">
+    <table class="gloss" style="font-size:19px">
+      <tr><td>add(key)</td><td>ekle (zaten varsa hiçbir şey olmaz)</td></tr>
+      <tr><td>contains(key)</td><td>var mı?</td></tr>
+      <tr><td>remove(key)</td><td>çıkar</td></tr>
+      <tr><td>size()</td><td>kaç eleman?</td></tr>
+    </table>
+    <table class="sum-t" style="font-size:18px">
+      <tr><th>dil</th><th>hash tabanlı</th><th>BST tabanlı (sıralı)</th></tr>
+      <tr><td>Python</td><td><code>set</code></td><td>— (kütüphane: sortedcontainers)</td></tr>
+      <tr><td>C#</td><td><code>HashSet&lt;T&gt;</code></td><td><code>SortedSet&lt;T&gt;</code></td></tr>
+      <tr><td>JavaScript</td><td><code>Set</code></td><td>—</td></tr>
+    </table>
+  </div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🎮 Oyunda kümeler</span>Açılmış bölümler · kazanılmış başarımlar · ziyaret edilmiş kareler (flood fill ve gelecek destedeki graf aramaları!) · yasaklı kelimeler · bu karede zaten hasar almış düşmanlar (aynı patlama iki kez vurmasın).</div>
+</section>
+
+<section data-sec="kümeler">
+  <h2>Sohbet filtresi: yasak listesi</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+banned = {"aptal", "salak", "ezik"}       # küme (süslü parantez)
+
+def clean(message):
+    out = []
+    for w in message.split():             # boşluklardan böl
+        if w.lower() in banned:           # O(1): hash ile "var mı?"
+            out.append("***")
+        else:
+            out.append(w)
+    return " ".join(out)
+
+print(clean("Sen tam bir Aptal oldun"))   # Sen tam bir *** oldun
+
+# modern tek satır (üretici ifade + üçlü if):
+# " ".join("***" if w.lower() in banned else w for w in message.split())
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var banned = new HashSet<string> { "aptal", "salak", "ezik" };
+
+string Clean(string message)
+{
+    var outWords = new List<string>();
+    foreach (string w in message.Split(' '))
+    {
+        if (banned.Contains(w.ToLower()))  // O(1): hash ile "var mı?"
+            outWords.Add("***");
+        else
+            outWords.Add(w);
+    }
+    return string.Join(" ", outWords);
+}
+
+Console.WriteLine(Clean("Sen tam bir Aptal oldun"));
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const banned = new Set(["aptal", "salak", "ezik"]);
+
+function clean(message) {
+  const out = [];
+  for (const w of message.split(" ")) {
+    if (banned.has(w.toLowerCase()))     // O(1): hash ile "var mı?"
+      out.push("***");
+    else
+      out.push(w);
+  }
+  return out.join(" ");
+}
+
+// modern: message.split(" ").map(w => banned.has(w.toLowerCase()) ? "***" : w).join(" ")
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">⚠️ Türkçe tuzağı: C#/JS’te <code>"AYDIN".ToLower()</code> → “aydin” (noktalı i!) olabilir. Türkçe için <code>ToLower(new CultureInfo("tr-TR"))</code> / <code>toLocaleLowerCase("tr")</code>. Gerçek filtreler ayrıca “a.p.t.a.l”, “4ptal” gibi hileleri de yakalamak zorunda.</p>
+</section>
+
+<section data-sec="kümeler">
+  <h2>Küme işlemleri: birleşim, kesişim, fark</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>Ali ve Ayşe’nin kazandığı başarımlar:</p>
+      <ul>
+        <li><b>Kesişim</b> <span class="en">intersection</span>: ikisinin de kazandığı</li>
+        <li><b>Birleşim</b> <span class="en">union</span>: en az birinin kazandığı</li>
+        <li><b>Fark</b> <span class="en">difference</span>: Ali’de olup Ayşe’de olmayan → “Ayşe’ye ipucu ver!”</li>
+      </ul>
+      <p class="mini">Kesişimin maliyeti: küçük kümedeki her eleman için büyük kümede “var mı?” → hash ile ~küçük kümenin boyu kadar.</p>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+ali  = {"ilk kan", "ejder avcısı", "hazine", "hızlı koşucu"}
+ayse = {"ilk kan", "hazine", "barışçıl"}
+
+print(ali & ayse)    # kesişim: {'ilk kan', 'hazine'}
+print(ali | ayse)    # birleşim: 5 başarım
+print(ali - ayse)    # fark: {'ejder avcısı', 'hızlı koşucu'}
+
+# geleneksel kesişim (döngüyle):
+both = set()
+for a in ali:
+    if a in ayse:
+        both.add(a)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var ali  = new HashSet<string> { "ilk kan", "ejder avcısı", "hazine", "hızlı koşucu" };
+var ayse = new HashSet<string> { "ilk kan", "hazine", "barışçıl" };
+
+var both = new HashSet<string>(ali);   // kopya! (aşağıdakiler kümeyi DEĞİŞTİRİR)
+both.IntersectWith(ayse);              // kesişim
+
+var all = new HashSet<string>(ali);
+all.UnionWith(ayse);                   // birleşim
+
+var hint = new HashSet<string>(ali);
+hint.ExceptWith(ayse);                 // fark
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const ali  = new Set(["ilk kan", "ejder avcısı", "hazine", "hızlı koşucu"]);
+const ayse = new Set(["ilk kan", "hazine", "barışçıl"]);
+
+// geleneksel (her tarayıcıda):
+const both = new Set([...ali].filter(a => ayse.has(a)));   // kesişim
+const all  = new Set([...ali, ...ayse]);                   // birleşim
+const hint = new Set([...ali].filter(a => !ayse.has(a)));  // fark
+
+// yeni tarayıcılarda (2024+): ali.intersection(ayse), ali.union(ayse), ali.difference(ayse)
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kümeler">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · kümeler</div>
+    <div class="q">Bir patlama, alanındaki düşmanlara hasar veriyor. Aynı düşmanın birden fazla çarpışma kutusu var ve hasarı <b>bir kez</b> almalı. En uygun yapı hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Hasar alanları bir listeye ekleyip her seferinde listeyi baştan taramak</button>
+      <button data-opt="B">Bir küme: “zaten vuruldu mu?” sorusu O(1)</button>
+      <button data-opt="C">Sıralı bir dizi</button>
+      <button data-opt="D">Bir öncelik kuyruğu</button>
+    </div>
+    <div class="explain">Tam bir küme sorusu: “bu düşman bu patlamada <b>zaten</b> vuruldu mu?” <code>if (!hit.Contains(enemy)) { hit.Add(enemy); Damage(enemy); }</code>. Liste de çalışır ama her kontrol N; 200 düşmanlık patlamada 200² = 40.000 adım.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Sözlükler</div>
+  <div class="sub"><i>dictionary clients</i> — anahtardan değere</div>
+  <ul class="agenda"><li class="done">kümeler</li><li class="on">sözlükler</li><li class="">sayma</li><li class="">dizinleme</li><li class="">seyrek vektörler</li><li class="">oyunda: Markov replikleri</li></ul>
+</section>
+
+<section data-sec="sözlükler">
+  <h2>🎮 Yerelleştirme tablosu: CSV’den sözlüğe</h2>
+  <div class="demo" data-demo="lookup"></div>
+  <p class="mini">Anahtar ve değer sütunlarını değiştirin: aynı veri, farklı sözlükler. “tr” sütununu anahtar yapıp “İksir”i arayın — ya da “anahtar” → “de” yapıp Almanca oyunu açın. Anahtar sütunu olarak “en”i seçmek neden sorun olabilir?</p>
+</section>
+
+<section data-sec="sözlükler">
+  <h2>CSV’den sözlük kurmak — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+csv_text = """anahtar,tr,en
+menu.play,Oyna,Play
+hud.health,Can,Health"""
+
+tr = {}
+for line in csv_text.splitlines()[1:]:     # ilk satır başlık: atla
+    cols = line.split(",")
+    tr[cols[0]] = cols[1]                   # put(anahtar, Türkçe)
+
+# get — anahtar yoksa ne olsun?
+if "menu.play" in tr:                       # geleneksel
+    text = tr["menu.play"]
+else:
+    text = "??"
+text = tr.get("menu.play", "??")            # modern: varsayılan değerle
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var tr = new Dictionary<string, string>();
+foreach (string line in csvText.Split('\n').Skip(1))   // başlığı atla
+{
+    string[] cols = line.Split(',');
+    tr[cols[0]] = cols[1];                  // put(anahtar, Türkçe)
+}
+
+// get — anahtar yoksa tr["x"] HATA fırlatır (KeyNotFoundException)!
+string text;
+if (tr.TryGetValue("menu.play", out text))  // geleneksel güvenli yol
+    Console.WriteLine(text);
+else
+    Console.WriteLine("??");
+
+string t2 = tr.GetValueOrDefault("menu.play", "??");   // modern
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const tr = new Map();
+for (const line of csvText.split("\n").slice(1)) {    // başlığı atla
+  const cols = line.split(",");
+  tr.set(cols[0], cols[1]);                // put(anahtar, Türkçe)
+}
+
+// get — anahtar yoksa undefined döner
+let text;
+if (tr.has("menu.play")) text = tr.get("menu.play");  // geleneksel
+else text = "??";
+
+const t2 = tr.get("menu.play") ?? "??";   // modern: ?? = "soldaki yoksa sağdaki"
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>[1:]</code> / <code>.Skip(1)</code> / <code>.slice(1)</code>: ilk elemanı atla. Gerçek CSV’de virgül içeren metinler tırnakla yazılır (“Merhaba, yolcu”) — onlar için hazır CSV kütüphanesi kullanın.</p>
+</section>
+
+<section data-sec="sözlükler">
+  <div class="box low" style="font-size:.95em"><span class="bt">⚙️ Oyun verisi neden tablo tablo?</span>
+    <ul>
+      <li><b>Tasarımcılar</b> kod yazmadan dengeyi değiştirebilir: Excel/Google Sheets → CSV → oyun.</li>
+      <li class="fragment">Eşya, düşman, yetenek, diyalog… hepsi “ID → satır” sözlükleri. Unity’de ScriptableObject’ler ya da JSON dosyaları da aynı fikir.</li>
+      <li class="fragment">Ağ üzerinden “ejder kılıcı” yerine <b>ID</b> (örn. 1042) yollanır: daha az bayt, sunucu ID’yi sözlükte arar.</li>
+      <li class="fragment">Yerelleştirmede metin hiçbir zaman koda gömülmez: kodda sadece <code>"npc.greet"</code> anahtarı yaşar. Dil değişince <b>sadece sözlük</b> değişir.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="sözlükler">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · sözlükler</div>
+    <div class="q">Yerelleştirme tablosunu yanlışlıkla <b>“en”</b> sütununu anahtar yaparak kurdunuz. İngilizcede “Shield” iki farklı yerde (eşya adı ve yetenek adı) geçiyor. Ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">İki değer de saklanır</button>
+      <button data-opt="B">İkinci put birinciyi ezer: tablo eşya adını kaybeder</button>
+      <button data-opt="C">Program hata verir</button>
+      <button data-opt="D">Tablo otomatik olarak iki anahtar oluşturur</button>
+    </div>
+    <div class="explain">Sembol tablosunda her anahtarın <b>bir</b> değeri vardır; aynı anahtarla tekrar <code>put</code> eski değeri <b>günceller</b>. Bu yüzden yerelleştirmede anahtar dilden bağımsız, benzersiz bir ID olur: <code>item.shield</code>, <code>skill.shield</code>.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Sayma</div>
+  <div class="sub"><i>frequency counter</i> — anahtar → kaç kez</div>
+  <ul class="agenda"><li class="done">kümeler</li><li class="done">sözlükler</li><li class="on">sayma</li><li class="">dizinleme</li><li class="">seyrek vektörler</li><li class="">oyunda: Markov replikleri</li></ul>
+</section>
+
+<section data-sec="sayma">
+  <h2>Kelime sıklığı — kendiniz deneyin</h2>
+  <div class="demo" data-demo="freq"></div>
+</section>
+
+<section data-sec="sayma">
+  <h2>Sayaç kodu: geleneksel ve modern</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="3-8|10-12|14-16"><script type="text/template">
+words = ["ork", "goblin", "ork", "trol", "ork"]
+
+counts = {}                         # geleneksel
+for w in words:
+    if w in counts:
+        counts[w] += 1
+    else:
+        counts[w] = 1
+
+counts = {}                         # modern 1: get ile varsayılan 0
+for w in words:
+    counts[w] = counts.get(w, 0) + 1
+
+from collections import Counter     # modern 2: hazır sayaç
+c = Counter(words)
+print(c.most_common(2))             # [('ork', 3), ('goblin', 1)]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+string[] words = { "ork", "goblin", "ork", "trol", "ork" };
+
+var counts = new Dictionary<string, int>();      // geleneksel
+foreach (string w in words)
+{
+    if (counts.ContainsKey(w)) counts[w]++;
+    else counts[w] = 1;
+}
+
+var c2 = new Dictionary<string, int>();          // modern
+foreach (string w in words)
+    c2[w] = c2.GetValueOrDefault(w) + 1;         // yoksa 0
+
+// en sık: sırala ve ilkini al
+var top = counts.OrderByDescending(kv => kv.Value).First();
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const words = ["ork", "goblin", "ork", "trol", "ork"];
+
+const counts = new Map();                        // geleneksel
+for (const w of words) {
+  if (counts.has(w)) counts.set(w, counts.get(w) + 1);
+  else counts.set(w, 1);
+}
+
+const c2 = new Map();                            // modern
+for (const w of words) c2.set(w, (c2.get(w) ?? 0) + 1);
+
+// en sık: girişleri sayıya göre sırala
+const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="sayma">
+  <h2>Zipf yasası ve oyun analitiği</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>Her dilde en sık kelime, ikinciden ~<b>2 kat</b>, üçüncüden ~<b>3 kat</b> sık geçer: sıklık ≈ 1 / sıra. Türkçede “bir”, “ve”, “bu”…</p>
+      <ul>
+        <li class="fragment">Şaşırtıcı biçimde oyunlarda da: en çok kullanılan silah, en çok seçilen karakter, en çok ölünen yer… <b>az sayıda</b> şey <b>çoğu</b> kullanımı alır.</li>
+        <li class="fragment">Dengeleme ekibi tam olarak bu sayaçlara bakar: “Oyuncuların %60’ı aynı silahı seçiyorsa o silah fazla güçlü.”</li>
+      </ul>
+    </div>
+    <div class="box low fragment"><span class="bt">⚙️ Hangi sembol tablosu?</span>Sayarken binlerce <code>put</code>/<code>get</code> → <b>hash</b>. Sonuçları <b>alfabetik</b> yazdırmak istersek ya en sonda sıralarız ya da baştan <b>BST</b> (C# <code>SortedDictionary</code>) kullanırız. “En sık 10” için: hepsini sırala (N lg N) ya da 10’luk öncelik kuyruğu (Öncelik Kuyrukları destesi: N lg 10!).</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: canavar sayacı</h2>
+  <div class="stlab" data-task="count" data-lang="js">
+<textarea>
+// words: ["ork", "goblin", "ork", ...]
+// Her kelimenin kaç kez geçtiğini bir nesnede (ya da Map'te) döndür:
+// { ork: 2, goblin: 1 }
+function countWords(words) {
+  const counts = {};
+  for (const w of words) {
+    counts[w]++;
+  }
+  return counts;
+}
+</textarea>
+    <div class="lab-tasks">Çalıştırın: sayılar neden <code>NaN</code> çıkıyor? (İpucu: ilk görüşte <code>counts[w]</code> nedir? <code>undefined + 1</code> = ?) Düzeltin — önce geleneksel <code>if</code> ile, sonra <code>?? 0</code> ile.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Dizinleme</div>
+  <div class="sub"><i>indexing</i> — değer bir liste olunca</div>
+  <ul class="agenda"><li class="done">kümeler</li><li class="done">sözlükler</li><li class="done">sayma</li><li class="on">dizinleme</li><li class="">seyrek vektörler</li><li class="">oyunda: Markov replikleri</li></ul>
+</section>
+
+<section data-sec="dizinleme">
+  <h2>Ters dizin: etiketten eşyalara</h2>
+  <div class="demo" data-demo="invindex"></div>
+  <p class="mini">Normal tablo: eşya → etiketleri. <b>Ters</b> dizin: etiket → eşyalar. Arama motorlarının kalbi: kelime → içinde geçtiği sayfalar.</p>
+</section>
+
+<section data-sec="dizinleme">
+  <h2>Ters dizin kurmak — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+items = {
+    "Ateş Kılıcı":  ["silah", "ateş", "efsanevi"],
+    "Ejder Kalkanı": ["zırh", "ateş", "efsanevi"],
+    "Buz Asası":    ["silah", "buz"],
+}
+
+index = {}                              # etiket → eşya listesi
+for name, tags in items.items():        # (anahtar, değer) çiftleri
+    for t in tags:
+        if t not in index:              # geleneksel
+            index[t] = []
+        index[t].append(name)
+        # modern: index.setdefault(t, []).append(name)
+
+print(index["ateş"])                    # ['Ateş Kılıcı', 'Ejder Kalkanı']
+ates_ve_silah = set(index["ateş"]) & set(index["silah"])
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var index = new Dictionary<string, List<string>>();   // etiket → eşyalar
+foreach (var (name, tags) in items)                    // (anahtar, değer)
+{
+    foreach (string t in tags)
+    {
+        if (!index.ContainsKey(t))
+            index[t] = new List<string>();
+        index[t].Add(name);
+    }
+}
+
+// "ateş VE silah": kesişim
+var both = new HashSet<string>(index["ateş"]);
+both.IntersectWith(index["silah"]);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const index = new Map();                       // etiket → eşyalar
+for (const [name, tags] of Object.entries(items)) {
+  for (const t of tags) {
+    if (!index.has(t)) index.set(t, []);
+    index.get(t).push(name);
+  }
+}
+
+// "ateş VE silah": kesişim
+const silah = new Set(index.get("silah"));
+const both = index.get("ateş").filter(x => silah.has(x));
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Değer bir <b>liste</b> (ya da küme): <code>Dictionary&lt;string, List&lt;string&gt;&gt;</code> = “string’den string listesine sözlük”. <code>for name, tags in items.items()</code> / <code>foreach (var (name, tags) in items)</code> / <code>for (const [name, tags] of …)</code>: her çifti iki değişkene ayır.</p>
+</section>
+
+<section data-sec="dizinleme">
+  <h2>Dizinler her yerde</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Princeton örnekleri</span>
+      <ul>
+        <li><b>Dosya dizini</b>: kelime → içinde geçtiği dosyalar (Spotlight, Windows arama)</li>
+        <li><b>Kitap dizini</b> / konkordans: kelime → geçtiği sayfalar/konumlar</li>
+        <li><b>Arama motoru</b>: kelime → web sayfaları (milyarlarca!)</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">🎮 Oyunda</span>
+      <ul>
+        <li>Envanter / mağaza filtreleri (etiket → eşyalar)</li>
+        <li>Görev günlüğünde arama (kelime → görevler)</li>
+        <li>“Bu ses dosyası hangi seviyelerde kullanılıyor?” (varlık → sahneler) — oyun motorlarının “referans bul” özelliği</li>
+        <li>Yapay zekâ: “silah taşıyan düşmanlar” sorgusunu her karede taramak yerine dizinden okumak</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı: ters dizin (Python)</h2>
+  <div class="stlab" data-task="index" data-lang="python">
+<textarea>
+# items: {"Ateş Kılıcı": ["silah", "ateş"], ...}
+# Döndür: {"silah": ["Ateş Kılıcı", ...], "ateş": [...], ...}
+def build_index(items):
+    index = {}
+    for name, tags in items.items():
+        for t in tags:
+            index[t] = [name]
+    return index
+</textarea>
+    <div class="lab-tasks">Bu kod her etiket için sadece <b>son</b> eşyayı tutuyor. Neden? (İpucu: <code>index[t] = [name]</code> her seferinde ne yapıyor?) Düzeltin. Bonus: <code>setdefault</code> ya da <code>collections.defaultdict(list)</code> ile tek satıra indirin.</div>
+  </div>
+</section>
+
+<section data-sec="dizinleme">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 3 · dizinleme</div>
+    <div class="q">10.000 eşyalı bir mağazada “ateş” etiketli 200, “efsanevi” etiketli 50 eşya var. Ters dizin ve hash kümesiyle “ateş VE efsanevi” sorgusunun maliyeti yaklaşık nedir?</div>
+    <div class="opts">
+      <button data-opt="A">10.000 (her eşyaya bak)</button>
+      <button data-opt="B">200 × 50 = 10.000</button>
+      <button data-opt="C">~50 (küçük kümedeki her eleman için büyükte O(1) “var mı?”)</button>
+      <button data-opt="D">250</button>
+    </div>
+    <div class="explain">Küçük kümeyi (50) gez, her eleman için büyük kümede (hash) “var mı?” sor: ~50 işlem. Dizinsiz yaklaşım 10.000 eşyanın etiketlerine tek tek bakardı. İki listeyi iç içe döngüyle karşılaştırmak (B) en kötüsü.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Seyrek vektörler</div>
+  <div class="sub"><i>sparse vectors &amp; matrices</i> — sıfırları saklama</div>
+  <ul class="agenda"><li class="done">kümeler</li><li class="done">sözlükler</li><li class="done">sayma</li><li class="done">dizinleme</li><li class="on">seyrek vektörler</li><li class="">oyunda: Markov replikleri</li></ul>
+</section>
+
+<section data-sec="seyrek">
+  <h2>Çoğu sıfır olan devasa tablolar</h2>
+  <div class="demo" data-demo="sparse"></div>
+  <p class="mini">Doluluk kaydırıcısını oynatın. Sembol tablosu: <b>(satır, sütun) → değer</b>, sadece sıfır olmayanlar için. Sıfırları saklamak da onlarla çarpmak da israf.</p>
+</section>
+
+<section data-sec="seyrek">
+  <h2>Seyrek vektör — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <p>Princeton’ın <code>SparseVector</code>’ü: indeks → değer sembol tablosu.</p>
+      <ul>
+        <li><b>get(i)</b>: tabloda yoksa <b>0</b></li>
+        <li><b>put(i, 0)</b>: tablodan <b>sil</b> (sıfırları saklama!)</li>
+        <li><b>dot</b> (iç çarpım): sadece <b>dolu</b> indeksleri gez → maliyet ~ dolu eleman sayısı, N değil</li>
+      </ul>
+      <div class="box story"><span class="bt">📜 Google ve PageRank</span>Web, milyarlarca sayfalık bir matris: sayfa i → sayfa j bağlantısı. Her sayfa ortalama ~10 bağlantı verir. Yoğun matris imkânsız; seyrek matrisle Google her gün bunun üstünde çarpım yapar.</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class SparseVector:
+    def __init__(self, n):
+        self.n = n
+        self.st = {}                 # indeks → değer (sadece ≠ 0)
+
+    def put(self, i, x):
+        if x == 0:
+            self.st.pop(i, None)     # sıfırsa sil
+        else:
+            self.st[i] = x
+
+    def get(self, i):
+        return self.st.get(i, 0)     # yoksa 0
+
+    def dot(self, other):            # iç çarpım
+        total = 0
+        for i, x in self.st.items(): # sadece dolu indeksler!
+            total += x * other.get(i)
+        return total
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class SparseVector
+{
+    Dictionary<int, double> st = new Dictionary<int, double>();
+
+    public void Put(int i, double x)
+    {
+        if (x == 0) st.Remove(i);     // sıfırsa sil
+        else st[i] = x;
+    }
+
+    public double Get(int i)
+    {
+        return st.TryGetValue(i, out double x) ? x : 0;
+    }
+
+    public double Dot(SparseVector other)
+    {
+        double total = 0;
+        foreach (var kv in st)        // sadece dolu indeksler
+            total += kv.Value * other.Get(kv.Key);
+        return total;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class SparseVector {
+  constructor() { this.st = new Map(); }    // indeks → değer
+
+  put(i, x) {
+    if (x === 0) this.st.delete(i);          // sıfırsa sil
+    else this.st.set(i, x);
+  }
+
+  get(i) { return this.st.get(i) ?? 0; }     // yoksa 0
+
+  dot(other) {
+    let total = 0;
+    for (const [i, x] of this.st)            // sadece dolu indeksler
+      total += x * other.get(i);
+    return total;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="seyrek">
+  <h2>🎮 Oyunda seyrek yapılar</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">Dünya haritası</span>Minecraft benzeri sonsuz dünya: sadece <b>yüklenmiş</b> bölgeler (chunk) bir sözlükte: <code>(cx, cz) → Chunk</code>. Değiştirilmiş bloklar: <code>(x, y, z) → blok</code>. Boş gökyüzünü kimse saklamaz.</div>
+    <div class="box game"><span class="bt">Oyuncu × eşya matrisi</span>1 milyon oyuncu × 10.000 eşya = 10 milyar hücre, ama her oyuncunun ~50 eşyası var. “Bu oyuncuya ne önerelim?” sistemleri seyrek vektörlerle çalışır (iki oyuncunun envanter vektörlerinin iç çarpımı = benzerlik).</div>
+  </div>
+  <div class="box story fragment" style="margin-top:10px"><span class="bt">🔮 Sonraki destelere köprü</span>Bir <b>graf</b> da seyrek bir matristir: “düğüm i → düğüm j bağlantısı var mı?” Bir oyun haritasındaki 10.000 bölgenin her biri sadece birkaç komşuya bağlı. Graflarda kullanacağımız <b>komşuluk listeleri</b>, satır başına bir seyrek vektörden başka bir şey değil!</div>
+</section>
+
+<section data-sec="seyrek">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · seyrek</div>
+    <div class="q">10.000 × 10.000’lik bir matrisin her satırında ortalama 5 sıfır olmayan değer var. Seyrek gösterimle bir matris × vektör çarpımı yaklaşık kaç çarpma yapar?</div>
+    <div class="opts">
+      <button data-opt="A">10.000</button>
+      <button data-opt="B">50.000</button>
+      <button data-opt="C">100 milyon</button>
+      <button data-opt="D">5</button>
+    </div>
+    <div class="explain">Her satır için sadece dolu elemanlar: 10.000 satır × 5 = <b>50.000</b> çarpma. Yoğun gösterim 10.000² = 100 milyon çarpma yapar — 2.000 kat fazla, üstelik 800 MB bellek ister.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Oyunda: Markov replikleri</div>
+  <div class="sub">sembol tablosuyla “konuşan” bir NPC</div>
+  <ul class="agenda"><li class="done">kümeler</li><li class="done">sözlükler</li><li class="done">sayma</li><li class="done">dizinleme</li><li class="done">seyrek vektörler</li><li class="on">oyunda: Markov replikleri</li></ul>
+</section>
+
+<section data-sec="markov">
+  <h2>🗣️ Markov zinciriyle NPC repliği</h2>
+  <div class="demo" data-demo="markov"></div>
+  <p class="mini">Tablo: <b>son kelime(ler) → ardından gelen kelimeler listesi</b>. Üretirken sona bak, tablodan rastgele bir aday seç, ekle, tekrarla. “Önek uzunluğu 2” daha anlamlı ama kaynağa daha çok benzeyen cümleler üretir.</p>
+</section>
+
+<section data-sec="markov">
+  <h2>Markov üreteci — kod</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random
+
+def build(words):
+    table = {}                                # kelime → sonraki kelimeler
+    for i in range(len(words) - 1):
+        key, nxt = words[i], words[i + 1]
+        if key not in table:
+            table[key] = []
+        table[key].append(nxt)                # tekrarlar kalsın: sık olan sık seçilir
+    return table
+
+def generate(table, start, n):
+    out = [start]
+    for _ in range(n):                        # _ : "kullanmadığım sayaç"
+        nexts = table.get(out[-1])            # out[-1] = son eleman
+        if not nexts:
+            break                             # devamı yok
+        out.append(random.choice(nexts))      # rastgele bir aday
+    return " ".join(out)
+
+text = "Hey sen! Burada ne arıyorsun? Burası benim bölgem."
+print(generate(build(text.split()), "Hey", 10))
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var rng = new Random();
+
+Dictionary<string, List<string>> Build(string[] words)
+{
+    var table = new Dictionary<string, List<string>>();
+    for (int i = 0; i < words.Length - 1; i++)
+    {
+        if (!table.ContainsKey(words[i]))
+            table[words[i]] = new List<string>();
+        table[words[i]].Add(words[i + 1]);
+    }
+    return table;
+}
+
+string Generate(Dictionary<string, List<string>> table, string start, int n)
+{
+    var outWords = new List<string> { start };
+    for (int k = 0; k < n; k++)
+    {
+        if (!table.TryGetValue(outWords[^1], out var nexts)) break;  // ^1 = son
+        outWords.Add(nexts[rng.Next(nexts.Count)]);
+    }
+    return string.Join(" ", outWords);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function build(words) {
+  const table = new Map();
+  for (let i = 0; i < words.length - 1; i++) {
+    if (!table.has(words[i])) table.set(words[i], []);
+    table.get(words[i]).push(words[i + 1]);
+  }
+  return table;
+}
+
+function generate(table, start, n) {
+  const out = [start];
+  for (let k = 0; k < n; k++) {
+    const nexts = table.get(out[out.length - 1]);
+    if (!nexts) break;
+    out.push(nexts[Math.floor(Math.random() * nexts.length)]);
+  }
+  return out.join(" ");
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="markov">
+  <div class="box game" style="font-size:.95em"><span class="bt">🎮 Markov zincirleri oyunlarda</span>
+    <ul>
+      <li><b>İsim üretimi</b>: harf düzeyinde Markov (önek = son 2–3 harf) → “Tharogan”, “Eldrimel” gibi fantastik ama telaffuz edilebilir isimler. Birçok rogue-like ve strateji oyunu böyle yapar.</li>
+      <li class="fragment"><b>Müzik / seviye üretimi</b>: “bu karoyu hangi karo izler?” tablosu (Wave Function Collapse’ın uzak akrabası)</li>
+      <li class="fragment"><b>Oyuncu modelleme</b>: “oyuncu bu hamleden sonra genelde ne yapıyor?” → YZ rakip tahmin eder (dövüş oyunlarında “okuma”)</li>
+    </ul>
+    <p class="fragment mini">Büyük dil modelleri (ChatGPT gibi) bu fikrin <b>çok çok</b> gelişmiş hâli: “önceki kelimelere göre sonraki kelimenin olasılığı”. Ama tablo yerine milyarlarca parametreli bir sinir ağı kullanırlar.</p>
+  </div>
+</section>
+
+<section data-sec="markov">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · markov</div>
+    <div class="q">Markov tablosunu kurarken aynı sonraki kelimeyi listeye <b>tekrar tekrar</b> eklememizin (tekrarları silmememizin) amacı nedir?</div>
+    <div class="opts">
+      <button data-opt="A">Hiçbir amacı yok, bir hata</button>
+      <button data-opt="B">Sık gelen devamların rastgele seçimde daha sık çıkması (olasılığı korumak)</button>
+      <button data-opt="C">Listenin sıralı kalması</button>
+      <button data-opt="D">Hash çakışmalarını azaltmak</button>
+    </div>
+    <div class="explain">Listede “ejderha” 3 kez, “köy” 1 kez varsa rastgele seçimde “ejderha” %75 olasılıkla gelir — kaynak metindeki gibi. Bellekten tasarruf için liste yerine bir <b>sayaç</b> sözlüğü de tutulabilir (kelime → kaç kez), sonra ağırlıklı rastgele seçim yapılır (Arama destesindeki “loot tablosu”!).</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>uygulama</th><th>anahtar → değer</th><th>🎮 örnek</th><th>tipik seçim</th></tr>
+    <tr><td>küme</td><td>anahtar → (yok)</td><td>yasaklı kelimeler, vurulmuş düşmanlar</td><td>HashSet / set / Set</td></tr>
+    <tr><td>sözlük</td><td>anahtar → değer</td><td>yerelleştirme, eşya tablosu</td><td>Dictionary / dict / Map</td></tr>
+    <tr><td>sayaç</td><td>anahtar → sayı</td><td>silah kullanım analitiği</td><td>hash (+ en sonda sırala)</td></tr>
+    <tr><td>ters dizin</td><td>anahtar → liste/küme</td><td>etiketle eşya arama</td><td>hash + küme kesişimi</td></tr>
+    <tr><td>seyrek vektör</td><td>indeks → değer (≠ 0)</td><td>sonsuz dünya, öneri sistemi</td><td>hash</td></tr>
+    <tr><td>Markov tablosu</td><td>önek → sonraki listesi</td><td>NPC replikleri, isim üretimi</td><td>hash</td></tr>
+  </table>
+  <p class="mini">Sıra gerektiğinde (alfabetik çıktı, aralık, en küçük) hash yerine <b>dengeli BST</b> (SortedDictionary / SortedSet).</p>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kendi oyununuz için 3 dilli bir yerelleştirme CSV’si yazın; eksik çeviri varsa İngilizceye, o da yoksa anahtarın kendisine düşen bir <code>T(key)</code> fonksiyonu yazın.</li>
+    <li>Bir maç kaydındaki (silah adı listesi) en çok kullanılan 3 silahı bulun: (a) sözlük + sıralama, (b) <code>Counter.most_common</code>.</li>
+    <li>Envanter için “etiket1 VE etiket2 VE etiket3” sorgusu yazın. Kümeleri hangi sırayla kesiştirmek en hızlıdır?</li>
+    <li>Harf düzeyinde Markov ile 20 fantastik isim üretin (eğitim verisi: 30 Tolkien/ D&amp;D ismi). Önek uzunluğu 1, 2, 3 için sonuçları karşılaştırın.</li>
+    <li>Sonsuz bir 2B karo haritasını <code>(x, y) → karo</code> sözlüğüyle tutun. Oyuncu etrafındaki 20×20 alanı çizerken kaç sözlük araması yapılıyor?</li>
+    <li>🤖 Bir YZ asistanından “Python’da bir küfür filtresi” isteyin. Türkçe karakterleri (I/ı, İ/i) doğru ele alıyor mu? “4ptal” gibi hileleri?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=9oKpRTBfNXo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9oKpRTBfNXo/hqdefault.jpg" alt=""><span><b>Python Hash Sets Explained &amp; Demonstrated</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=fCn8zs912OE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/fCn8zs912OE/hqdefault.jpg" alt=""><span><b>The Zipf Mystery</b><br>Vsauce</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=JsJ_ZGMztVg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/JsJ_ZGMztVg/hqdefault.jpg" alt=""><span><b>Understanding inverted indexes</b><br>Olena’s Data &amp; Engineering Corner</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=9r8CmofnbAQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9r8CmofnbAQ/hqdefault.jpg" alt=""><span><b>Coding Challenge #42: Markov Chains</b><br>The Coding Train (p5.js!)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=640YMsTvelM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/640YMsTvelM/hqdefault.jpg" alt=""><span><b>How to Localize a Video Game (Unity)</b><br>AuroDev</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/35applications/" target="_blank">algs4 · 3.5 Searching Applications</a></li>
+      <li><a href="https://docs.python.org/3/library/collections.html" target="_blank">Python · collections (Counter, defaultdict)</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="../hash-tablolari/">Önceki deste: Hash Tabloları</a></li>
+      <li><a href="../dengeli-agaclar/">Dengeli Arama Ağaçları (SortedDictionary)</a></li>
+      <li><a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">BÖLÜM 5 ▶</div>
+    <div class="ttl" style="font-size:64px">Yönsüz Graflar</div>
+    <div class="sub">Haritalar, ağlar, labirentler: DFS, BFS ve oyun dünyasının iskeleti</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yonsuz-graflar/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/st.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

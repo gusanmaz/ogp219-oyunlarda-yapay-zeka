@@ -42,7 +42,7 @@ Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmü
 |---|------|-------|
 | 12 | [Öncelik Kuyrukları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/oncelik-kuyruklari/) | ✅ hazır |
 | 13 | [Hash Tabloları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/hash-tablolari/) | ✅ hazır |
-| 14 | Sembol Tablosu Uygulamaları | hazırlanıyor |
+| 14 | [Sembol Tablosu Uygulamaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/st-uygulamalari/) | ✅ hazır |
 
 **Bölüm 5 · Graflar**
 
@@ -83,6 +83,7 @@ ortak/              tüm destelerin ortak stil ve kodları
   geometri.js       süpürme doğrusu, kd-ağacı, aralık ağacı, sweep and prune, geometri laboratuvarı
   oncelik.js        ikili yığın, heapsort, en iyi k, zamanlayıcı, swim/sink laboratuvarı
   hash.js           string hash, ayrı zincirleme, doğrusal yoklama, uzaysal hash, hash laboratuvarı
+  st.js             kelime sıklığı, yerelleştirme, ters dizin, seyrek matris, Markov replikleri
 union-find/         01 · Union–Find
 algoritma-analizi/  02 · Algoritma analizi
 bagli-listeler/     03 · Bağlı listeler
@@ -96,6 +97,7 @@ dengeli-agaclar/    10 · Dengeli arama ağaçları
 bst-geometrik/      11 · BST’nin geometrik uygulamaları
 oncelik-kuyruklari/ 12 · Öncelik kuyrukları
 hash-tablolari/     13 · Hash tabloları
+st-uygulamalari/    14 · Sembol tablosu uygulamaları
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).
