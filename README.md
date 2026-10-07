@@ -14,7 +14,7 @@ Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmü
 
 | # | Konu | Durum |
 |---|------|-------|
-| 01 | Union–Find | hazırlanıyor |
+| 01 | [Union–Find](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/union-find/) | ✅ hazır |
 | 02 | Algoritma Analizi | hazırlanıyor |
 | 03 | [Bağlı Listeler](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/bagli-listeler/) | ✅ hazır |
 | 04 | [Yığınlar ve Kuyruklar](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yiginlar-kuyruklar/) | ✅ hazır |
@@ -75,6 +75,8 @@ ortak/              tüm destelerin ortak stil ve kodları
   arama.js          arama görselleştirmeleri ve ikili arama laboratuvarı
   liste.js          dizi ve bağlı liste görselleştirmeleri, liste laboratuvarı
   yigin.js          yığın ve kuyruk görselleştirmeleri, fonksiyon laboratuvarı
+  birlesim.js       union–find görselleştirmeleri, labirent, perkolasyon
+union-find/         01 · Union–Find
 yiginlar-kuyruklar/ 04 · Yığınlar ve kuyruklar
 bagli-listeler/     03 · Bağlı listeler
 arama-algoritmalari/ 05 · Arama algoritmaları

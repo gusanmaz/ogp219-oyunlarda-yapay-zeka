@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Union–Find</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Union–Find: dinamik bağlantı, quick-find, quick-union, ağırlıklandırma, yol sıkıştırma, labirent üretimi, perkolasyon, Go. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #2a1d5a 0%, #120c2c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · ALGORİTMALAR</div>
+  <div class="ttl" style="font-size:80px">Union–Find</div>
+  <div class="sub"><i>Dynamic connectivity</i> — “bu ikisi bağlı mı?” sorusunu ışık hızında cevaplamak</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titleuf"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 1.5 (Case Study: Union-Find) bölümünü ve Princeton’ın ilk dersini temel alır. Kitabın yaklaşımı: bir problem → basit bir çözüm → ölç → daha iyisini bul. Bu yaklaşım bütün dönem boyunca tekrar edecek.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.92em">
+      <li><b>Problem</b>: dinamik bağlantı — ne soruyoruz? <span class="en">dynamic connectivity</span></li>
+      <li><b>Quick-find</b>: hızlı soru, yavaş birleştirme</li>
+      <li><b>Quick-union</b>: hızlı birleştirme… ama ağaçlar uzarsa?</li>
+      <li><b>Ağırlıklandırma</b>: küçük ağacı büyüğün altına koy <span class="en">weighted</span></li>
+      <li><b>Yol sıkıştırma</b>: neredeyse sabit zaman <span class="en">path compression</span></li>
+      <li><b>Uygulamalar</b>: labirent üretimi, perkolasyon, Go taş grupları</li>
+      <li>⚙️ <b>Kaputun altında</b>: nesne yok, sadece tamsayı dizileri</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir oyunda <b>her seferinde farklı ama her zaman çözülebilir</b> labirentler üretebilecek ve “bu ikisi bağlı mı?” sorusunu milyonlarca nesne için bile anında cevaplayabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ZİNDAN KAPILARI</span>
+    <p class="big">Bir zindanda 10.000 oda var. Oyuncular kapıları birer birer açıyor.</p>
+    <p>Her kapı açıldıktan sonra soru: <b>“Giriş ile hazine odası arasında artık bir yol var mı?”</b></p>
+  </div>
+  <p class="fragment lead">Her seferinde tüm haritayı baştan mı tarayacağız? 10.000 kapı × 10.000 oda = 100 milyon adım… 😩</p>
+  <p class="fragment big">Bugünkü kahramanımız bu soruyu <span class="c-green">neredeyse tek adımda</span> cevaplıyor: <b>union–find</b>.</p>
+  <aside class="notes">Önemli nokta: kapılar ZAMANLA açılıyor (dinamik) ve sorular araya karışıyor. Sadece bir kez soracak olsaydık bir kez taramak yeterdi.</aside>
+</section>
+
+<section>
+  <h2>Oyunlarda union–find</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">🌀</div><b>Labirent üretimi</b>Her seferinde farklı, her zaman tam bir çözümü olan labirentler</div>
+    <div class="icon-card"><div class="ic">🏝️</div><b>Bölge tespiti</b>Prosedürel haritada adalar, mağaralar: tüm odalar bağlı mı?</div>
+    <div class="icon-card"><div class="ic">⚫</div><b>Taş grupları</b>Go, eşleştirme oyunları (match-3), balon patlatma</div>
+    <div class="icon-card"><div class="ic">🏗️</div><b>Yıkılabilir yapılar</b>Bu parça hâlâ zemine bağlı mı, yoksa düşmeli mi?</div>
+    <div class="icon-card"><div class="ic">🛡️</div><b>Klanlar ve ağlar</b>Oyuncu grupları birleşince aynı ittifakta mıyız?</div>
+    <div class="icon-card"><div class="ic">🌲</div><b>Minimum yayılan ağaç</b>Kruskal algoritmasının kalbi (graflar dersi)</div>
+  </div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>union(p, q)</td><td>birleştir</td><td>p ile q arasına bağlantı ekle</td></tr>
+    <tr><td>find(p)</td><td>bul</td><td>p’nin bileşeninin “temsilcisi” (kök) kim?</td></tr>
+    <tr><td>connected(p, q)</td><td>bağlı mı?</td><td>p’den q’ya bir yol var mı? → <code>find(p) == find(q)</code></td></tr>
+    <tr><td>connected component</td><td>bağlı bileşen</td><td>Birbirine bağlı nesnelerin en büyük grubu</td></tr>
+    <tr><td>root / parent</td><td>kök / ebeveyn</td><td>Ağacın tepesi / bir üstteki düğüm</td></tr>
+    <tr><td>weighted</td><td>ağırlıklı</td><td>Birleştirirken ağaç boyutlarını dikkate almak</td></tr>
+    <tr><td>path compression</td><td>yol sıkıştırma</td><td>find sırasında ağacı düzleştirmek</td></tr>
+    <tr><td>percolation</td><td>perkolasyon (sızma)</td><td>Bir malzemenin bir ucundan diğerine geçiş olması</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Dinamik Bağlantı</div>
+  <div class="sub"><i>dynamic connectivity</i> — bağlantılar zamanla geliyor, sorular araya karışıyor</div>
+  <ul class="agenda"><li class="on">problem: dinamik bağlantı</li><li class="">quick-find</li><li class="">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="problem">
+  <h2>Problem</h2>
+  <div class="cols c64">
+    <div>
+      <p>N nesne var: <b>0, 1, 2, …, N−1</b> (odalar, piksel, oyuncu…).</p>
+      <ul>
+        <li><code>union(p, q)</code>: p ile q arasına <b>bağlantı</b> ekle</li>
+        <li><code>connected(p, q)</code>: p ile q arasında (doğrudan ya da dolaylı) <b>yol</b> var mı?</li>
+      </ul>
+      <p class="fragment">“Bağlı olmak” şu kurallara uyar:</p>
+      <ul class="fragment" style="font-size:.9em">
+        <li>herkes kendisine bağlıdır</li>
+        <li>p, q’ya bağlıysa q da p’ye bağlıdır</li>
+        <li>p–q ve q–r bağlıysa p–r de bağlıdır (dolaylı yol!)</li>
+      </ul>
+      <p class="fragment mini">Bu kurallar bize nesneleri <b>bağlı bileşenlere</b> ayırmamızı sağlar: aynı bileşendekiler bağlı, farklıdakiler değil.</p>
+    </div>
+    <div class="box story"><span class="bt">🎒 Neden sayılar?</span>Nesneleri 0…N−1 diye numaralarsak <b>dizi indeksi</b> olarak kullanabiliriz → çok hızlı. Gerçek oyunda oda adlarını sayılara bir sözlükle (<code>Dictionary&lt;string, int&gt;</code>) çeviririz.</div>
+  </div>
+</section>
+
+<section data-sec="problem">
+  <h2>Dene: bağla ve sor</h2>
+  <div class="demo" data-demo="connect"></div>
+  <aside class="notes">Kitaptaki örnek sırayı tıklatın: 4-3, 3-8, 6-5, 9-4, 2-1, 8-9 (zaten bağlı!), 5-0, 7-2, 6-1. Aynı renk = aynı bileşen. 8-9 bağlantısının neden “zaten bağlı” dendiğini sorun: 8–3–4–9 yolu var.</aside>
+</section>
+
+<section data-sec="problem">
+  <h2>API: sözleşme</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+uf = UnionFind(10)          # 0..9, her biri kendi bileşeninde
+
+uf.union(4, 3)              # 4 ile 3'ü bağla
+uf.union(3, 8)
+print(uf.connected(4, 8))   # True  (4–3–8 yolu var)
+print(uf.connected(4, 5))   # False
+print(uf.count)             # bileşen sayısı: 8
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var uf = new UnionFind(10);         // 0..9, her biri kendi bileşeninde
+
+uf.Union(4, 3);                     // 4 ile 3'ü bağla
+uf.Union(3, 8);
+Debug.Log(uf.Connected(4, 8));      // True
+Debug.Log(uf.Connected(4, 5));      // False
+Debug.Log(uf.Count);                // 8
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const uf = new UnionFind(10);       // 0..9, her biri kendi bileşeninde
+
+uf.union(4, 3);                     // 4 ile 3'ü bağla
+uf.union(3, 8);
+console.log(uf.connected(4, 8));    // true
+console.log(uf.connected(4, 5));    // false
+console.log(uf.count);              // 8
+</script></code></pre>
+    </div>
+  </div>
+  <p>Bugün bu sınıfın <b>içini</b> dört farklı şekilde yazacağız ve hızlarını karşılaştıracağız. Kullanan kod hiç değişmeyecek (soyutlama!).</p>
+</section>
+
+<section data-sec="problem">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · problem</div>
+    <div class="q">10 nesne (0–9) ile başlıyoruz. Şu bağlantılar ekleniyor: <code>0–1, 2–3, 1–3, 4–5, 0–2</code>. Kaç bileşen kalır?</div>
+    <div class="opts">
+      <button data-opt="A">5</button>
+      <button data-opt="B">6</button>
+      <button data-opt="C">7</button>
+      <button data-opt="D">4</button>
+    </div>
+    <div class="explain">{0,1,2,3} (0–2 zaten 0–1–3–2 yoluyla bağlıydı, yeni bileşen birleştirmedi), {4,5}, {6}, {7}, {8}, {9} → <b>6</b>. Her “gerçek” birleştirme bileşen sayısını 1 azaltır: 10 − 4 = 6.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Quick-Find</div>
+  <div class="sub">hızlı soru, yavaş birleştirme</div>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="on">quick-find</li><li class="">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="quick-find">
+  <h2>Fikir: herkesin üzerinde bileşen numarası yazsın</h2>
+  <div class="cols c64">
+    <div>
+      <ul>
+        <li><code>id[i]</code> = i’nin <b>bileşen numarası</b></li>
+        <li><code>connected(p, q)</code>: <code>id[p] == id[q]</code> mi? → <b>2 erişim</b>, süper hızlı ⚡</li>
+        <li><code>union(p, q)</code>: id’si <code>id[p]</code> olan <b>herkesi</b> <code>id[q]</code> yap → tüm diziyi tara 🐌</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">🎮 Benzetme</span>Her oyuncunun tişörtünde takım rengi yazıyor. “Aynı takımda mıyız?” → tişörtlere bak. Ama iki takım birleşince bir takımın <b>bütün</b> oyuncularının tişörtünü değiştirmek gerekir!</div>
+  </div>
+</section>
+
+<section data-sec="quick-find">
+  <h2>Quick-find — animasyon</h2>
+  <div class="ufviz" data-alg="quickfind" data-n="10"></div>
+  <aside class="notes">Kitaptaki sırayı “▶ Kitaptaki sıradaki” ile adım adım izleyin. Her union’da tüm dizinin tarandığına dikkat edin (dizi erişimi sayacı).</aside>
+</section>
+
+<section data-sec="quick-find">
+  <h2>Quick-find — kod</h2>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class QuickFind:
+    def __init__(self, n):
+        self.id = list(range(n))       # id[i] = i  (herkes kendi bileşeninde)
+        self.count = n
+
+    def connected(self, p, q):
+        return self.id[p] == self.id[q]
+
+    def union(self, p, q):
+        pid, qid = self.id[p], self.id[q]
+        if pid == qid:
+            return                       # zaten bağlı
+        for i in range(len(self.id)):    # ⚠️ tüm diziyi tara
+            if self.id[i] == pid:
+                self.id[i] = qid
+        self.count -= 1
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class QuickFind
+{
+    int[] id;
+    public int Count;
+
+    public QuickFind(int n)
+    {
+        id = new int[n];
+        for (int i = 0; i < n; i++) id[i] = i;
+        Count = n;
+    }
+
+    public bool Connected(int p, int q) { return id[p] == id[q]; }
+
+    public void Union(int p, int q)
+    {
+        int pid = id[p], qid = id[q];
+        if (pid == qid) return;
+        for (int i = 0; i < id.Length; i++)   // ⚠️ tüm diziyi tara
+            if (id[i] == pid) id[i] = qid;
+        Count--;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class QuickFind {
+  constructor(n) {
+    this.id = Array.from({ length: n }, (_, i) => i);   // [0, 1, 2, ..., n-1]
+    this.count = n;
+  }
+  connected(p, q) { return this.id[p] === this.id[q]; }
+  union(p, q) {
+    const pid = this.id[p], qid = this.id[q];
+    if (pid === qid) return;
+    for (let i = 0; i < this.id.length; i++)   // ⚠️ tüm diziyi tara
+      if (this.id[i] === pid) this.id[i] = qid;
+    this.count--;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>list(range(n))</code> / <code>Array.from({ length: n }, (_, i) =&gt; i)</code>: “0’dan n−1’e kadar sayılardan oluşan liste”. İkincisi modern JS yazımı; geleneksel hali: boş dizi + <code>for</code> ile <code>push(i)</code>.</p>
+</section>
+
+<section data-sec="quick-find">
+  <div class="quiz" data-answer="D">
+    <div class="qhead">Quiz 2 · quick-find</div>
+    <div class="q">1 milyon nesne ve 1 milyon union işlemi. Quick-find kabaca kaç dizi erişimi yapar?</div>
+    <div class="opts">
+      <button data-opt="A">~1 milyon</button>
+      <button data-opt="B">~20 milyon</button>
+      <button data-opt="C">~1 milyar</button>
+      <button data-opt="D">~1 trilyon (10¹²)</button>
+    </div>
+    <div class="explain">Her union tüm diziyi (10⁶) tarar; 10⁶ union × 10⁶ = <b>10¹²</b>. Saniyede 10⁹ işlemle bile ~17 dakika — ve gerçek problemler (sosyal ağlar, büyük haritalar) bundan çok daha büyük. Kitabın uyarısı: <b>karesel algoritmalar büyümez</b> (bilgisayarlar hızlandıkça problemler de büyür).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Quick-Union</div>
+  <div class="sub">tembel yaklaşım: sadece kökleri bağla</div>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="on">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: bir diziyle ağaç çizmek <span class="en">parent array</span></h2>
+  <div class="cols">
+    <div>
+      <p>Ağaçlar dersinde düğümleri <b>nesnelerle</b> ve <code>left</code>/<code>right</code> referanslarıyla bağlamıştık. Burada daha basit bir yol var:</p>
+      <ul>
+        <li><code>id[i]</code> = i’nin <b>ebeveyninin</b> numarası</li>
+        <li>Kök: kendini gösteren düğüm (<code>id[r] == r</code>)</li>
+        <li>Kökü bulmak: ebeveyne çıkmaya devam et:</li>
+      </ul>
+      <pre class="mini-code" style="display:block"><div>while p != id[p]:</div><div>    p = id[p]</div></pre>
+    </div>
+    <svg viewBox="0 0 420 230" style="width:100%">
+      <g font-family="JetBrains Mono" font-size="15" text-anchor="middle">
+        <line x1="210" y1="40" x2="140" y2="110" stroke="var(--ink-2)" stroke-width="2"/><line x1="210" y1="40" x2="280" y2="110" stroke="var(--ink-2)" stroke-width="2"/><line x1="140" y1="110" x2="140" y2="180" stroke="var(--ink-2)" stroke-width="2"/>
+        <circle cx="210" cy="40" r="18" fill="var(--green)"/><text x="210" y="45" fill="#fff" font-weight="700">9</text>
+        <circle cx="140" cy="110" r="18" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="140" y="115" fill="var(--ink)" font-weight="700">4</text>
+        <circle cx="280" cy="110" r="18" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="280" y="115" fill="var(--ink)" font-weight="700">2</text>
+        <circle cx="140" cy="180" r="18" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="140" y="185" fill="var(--ink)" font-weight="700">3</text>
+        <text x="210" y="222" fill="var(--muted)" font-size="13">id[3] = 4 · id[4] = 9 · id[2] = 9 · id[9] = 9 (kök)</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-sec="quick-union">
+  <h2>Fikir: kökü kökün altına bağla</h2>
+  <div class="cols c64">
+    <div style="font-size:.92em">
+      <ul>
+        <li><code>find(p)</code>: p’nin <b>kökünü</b> bul (ebeveyne çıka çıka)</li>
+        <li><code>connected(p, q)</code>: kökler aynı mı?</li>
+        <li><code>union(p, q)</code>: p’nin kökünü, q’nun köküne bağla → <b>tek bir</b> dizi değeri değişir!</li>
+      </ul>
+    </div>
+    <div class="box warn"><span class="bt">😬 Ama…</span>Ağaçlar <b>uzun ve ince</b> olabilir. O zaman <code>find</code> çok yavaş: en kötü N adım. “😈 Kötü sıra” düğmesini deneyin!</div>
+  </div>
+</section>
+
+<section data-sec="quick-union">
+  <h2>Quick-union — animasyon</h2>
+  <div class="ufviz" data-alg="quickunion" data-n="10" data-worst="1"></div>
+  <aside class="notes">Önce kitaptaki sırayı, sonra “😈 Kötü sıra”yı deneyin: ağaç bir zincire dönüşüyor.</aside>
+</section>
+
+<section data-sec="quick-union">
+  <h2>Quick-union — kod</h2>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class QuickUnion:
+    def __init__(self, n):
+        self.id = list(range(n))       # id[i] = i'nin ebeveyni
+        self.count = n
+
+    def find(self, p):
+        while p != self.id[p]:         # kök kendini gösterir
+            p = self.id[p]             # ebeveyne çık
+        return p
+
+    def connected(self, p, q):
+        return self.find(p) == self.find(q)
+
+    def union(self, p, q):
+        i, j = self.find(p), self.find(q)
+        if i == j:
+            return
+        self.id[i] = j                 # p'nin kökü, q'nun köküne bağlandı
+        self.count -= 1
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class QuickUnion
+{
+    int[] id;
+    public int Count;
+
+    public QuickUnion(int n) { id = new int[n]; for (int i = 0; i < n; i++) id[i] = i; Count = n; }
+
+    public int Find(int p)
+    {
+        while (p != id[p]) p = id[p];   // ebeveyne çık
+        return p;
+    }
+
+    public bool Connected(int p, int q) { return Find(p) == Find(q); }
+
+    public void Union(int p, int q)
+    {
+        int i = Find(p), j = Find(q);
+        if (i == j) return;
+        id[i] = j;                      // kökü köke bağla
+        Count--;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class QuickUnion {
+  constructor(n) { this.id = Array.from({ length: n }, (_, i) => i); this.count = n; }
+  find(p) {
+    while (p !== this.id[p]) p = this.id[p];   // ebeveyne çık
+    return p;
+  }
+  connected(p, q) { return this.find(p) === this.find(q); }
+  union(p, q) {
+    const i = this.find(p), j = this.find(q);
+    if (i === j) return;
+    this.id[i] = j;                            // kökü köke bağla
+    this.count--;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="quick-union">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 3 · quick-union</div>
+    <div class="q">Quick-union’da <code>union(0,1)</code>, <code>union(0,2)</code>, …, <code>union(0,N−1)</code> sırasıyla yapılırsa ağacın yüksekliği ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">1</button>
+      <button data-opt="B">lg N</button>
+      <button data-opt="C">N − 1</button>
+      <button data-opt="D">N / 2</button>
+    </div>
+    <div class="explain">Her seferinde 0’ın <b>kökü</b> yeni gelenin altına bağlanır: 0→1, sonra (kök 1)→2, sonra (kök 2)→3… Tek kollu bir zincir oluşur: yükseklik N−1. Sonrasında <code>find(0)</code> N adım sürer. Quick-union’ın zayıf noktası: ağacın şeklini hiç düşünmüyor.</div>
+  </div>
+</section>
+
+<section data-sec="🧪 laboratuvar">
+  <h2>🧪 Kod laboratuvarı: find yaz</h2>
+  <div class="uflab" data-lang="js" data-task="find">
+<textarea>
+// parent: ebeveyn dizisi (parent[i] = i'nin ebeveyni, kök kendini gösterir)
+// GÖREV: p'nin KÖKÜNÜ döndür.
+function find(parent, p) {
+  // kodunu buraya yaz
+  return p;
+}
+</textarea>
+    <div class="lab-tasks">Laboratuvar senin <code>find</code>’ını kullanarak quick-union yapıyor (<code>parent[find(p)] = find(q)</code>) ve bağlantı sorularının cevaplarını kontrol ediyor. Tablodaki “en derin ağaç” sütununa da bak: “kötü sıra” testinde neden bu kadar derin?</div>
+  </div>
+  <aside class="notes">Çözüm: while (p !== parent[p]) p = parent[p]; return p;</aside>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Ağırlıklandırma</div>
+  <div class="sub"><i>weighted quick-union</i> — küçük ağaç, büyüğün altına</div>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="on">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="ağırlıklı">
+  <h2>Fikir: küçük ağacı büyüğün altına koy</h2>
+  <div class="cols c64">
+    <div style="font-size:.92em">
+      <ul>
+        <li>Her kök için ağacındaki düğüm sayısını tut: <code>sz[]</code></li>
+        <li>Birleştirirken <b>küçük</b> ağacın kökünü <b>büyük</b> ağacın köküne bağla</li>
+        <li>Böylece uzun zincirler oluşamaz</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">🎮 Benzetme</span>İki klan birleşiyor: 3 kişilik klan 300 kişilik klanın bayrağı altına girer, tersi değil. Değişmesi gereken “adres” sayısı az olur.</div>
+  </div>
+  <aside class="notes">“😈 Kötü sıra” düğmesine tekrar basın: quick-union’da yükseklik 9 olan sıra, ağırlıklı sürümde yükseklik 1 veriyor. Kitaptaki örnek sırayla da deneyin.</aside>
+</section>
+
+<section data-sec="ağırlıklı">
+  <h2>Ağırlıklı quick-union — animasyon</h2>
+  <div class="ufviz" data-alg="weighted" data-n="10" data-worst="1"></div>
+  <aside class="notes">“😈 Kötü sıra” düğmesine tekrar basın: quick-union’da yükseklik 9 olan sıra, ağırlıklı sürümde yükseklik 1 veriyor. Kitaptaki örnek sırayla da deneyin.</aside>
+</section>
+
+<section data-sec="ağırlıklı">
+  <h2>Ağırlıklı quick-union — kod (sadece birkaç satır fark)</h2>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-21|4|14-19"><script type="text/template">
+class WeightedQuickUnion:
+    def __init__(self, n):
+        self.id = list(range(n))
+        self.sz = [1] * n                  # her ağaçta başta 1 düğüm
+        self.count = n
+
+    def find(self, p):
+        while p != self.id[p]:
+            p = self.id[p]
+        return p
+
+    def union(self, p, q):
+        i, j = self.find(p), self.find(q)
+        if i == j:
+            return
+        if self.sz[i] < self.sz[j]:        # küçük ağacı büyüğün altına
+            self.id[i] = j
+            self.sz[j] += self.sz[i]
+        else:
+            self.id[j] = i
+            self.sz[i] += self.sz[j]
+        self.count -= 1
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public void Union(int p, int q)
+{
+    int i = Find(p), j = Find(q);
+    if (i == j) return;
+    if (sz[i] < sz[j]) { id[i] = j; sz[j] += sz[i]; }   // küçük → büyüğün altına
+    else               { id[j] = i; sz[i] += sz[j]; }
+    Count--;
+}
+// sz dizisi yapıcıda 1'lerle doldurulur: for (...) sz[i] = 1;
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+union(p, q) {
+  const i = this.find(p), j = this.find(q);
+  if (i === j) return;
+  if (this.sz[i] < this.sz[j]) { this.id[i] = j; this.sz[j] += this.sz[i]; }  // küçük → büyüğe
+  else { this.id[j] = i; this.sz[i] += this.sz[j]; }
+  this.count--;
+}
+// yapıcıda: this.sz = new Array(n).fill(1);
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ağırlıklı · matematik">
+  <h2>📐 Neden hızlı? Derinlik en fazla lg N</h2>
+  <div class="cols c64">
+    <div>
+      <p>Bir x düğümünün derinliği <b>ne zaman</b> artar? Sadece x’in ağacı, <b>kendisinden büyük ya da eşit</b> bir ağacın altına girdiğinde.</p>
+      <p class="fragment">O anda x’in içinde bulunduğu ağacın boyutu <b>en az iki katına</b> çıkar.</p>
+      <p class="fragment">1 düğümden başlayıp kaç kez iki katına çıkabilir? N’e ulaşana kadar: <b>en fazla lg N</b> kez. (Arama dersindeki “kaç kez yarıya?” sorusunun tersi!)</p>
+    </div>
+    <div class="box prop fragment"><span class="bt">Önerme</span>Ağırlıklı quick-union’da N düğümlü bir ağaçta her düğümün derinliği en fazla <b>lg N</b>’dir. Dolayısıyla <code>find</code>, <code>union</code> ve <code>connected</code> en kötü durumda ~lg N erişim yapar.
+      <p class="mini">N = 1 milyar → en fazla 30 adım. Quick-find’da 1 milyar!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ağırlıklı · deney">
+  <h2>🧪 Ölçelim: dört algoritma yarışıyor</h2>
+  <div class="demo" data-demo="ufexp"></div>
+  <aside class="notes">Quick-find, N 4 katına çıkınca ~16 kat yavaşlıyor (karesel). Quick-union rastgele girdilerde fena değil ama ağaçlar ağırlıklıdakinden derin. Ağırlıklı sürümlerde yükseklik lg N’in de altında. Bu deney bir sonraki dersin (algoritma analizi) habercisi: hipotez kur, ölç, doğrula.</aside>
+</section>
+
+<section data-sec="🧪 laboratuvar">
+  <h2>🧪 Kod laboratuvarı: ağırlıklı union</h2>
+  <div class="uflab" data-lang="js" data-task="weighted">
+<textarea>
+// parent: ebeveyn dizisi, size: her KÖKÜN ağacındaki düğüm sayısı
+function find(parent, p) {
+  while (p !== parent[p]) p = parent[p];
+  return p;
+}
+
+// GÖREV: p ve q'nun ağaçlarını birleştir.
+// Küçük ağacın kökü, büyük ağacın köküne bağlansın; size'ı güncelle.
+function union(parent, size, p, q) {
+  const i = find(parent, p);
+  const j = find(parent, q);
+  if (i === j) return;
+  parent[i] = j;      // ⚠️ şu an ağırlıksız!
+}
+</textarea>
+    <div class="lab-tasks">Şu anki kod doğru cevap veriyor ama ağaçlar derinleşiyor (laboratuvar uyaracak). Ağırlıklı hale getir: tüm testlerde “en derin ağaç ≤ lg N” olmalı.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Yol Sıkıştırma</div>
+  <div class="sub"><i>path compression</i> — her find ağacı biraz daha düzleştirsin</div>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="on">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="yol sıkıştırma">
+  <h2>Fikir: kökü bulurken yolu kısalt</h2>
+  <div class="cols c64">
+    <div style="font-size:.92em">
+      <p><code>find(p)</code> kökü ararken zaten yoldaki düğümlerin hepsinden geçiyor. Madem geçiyoruz, onları <b>köke yakınlaştıralım</b>!</p>
+      <ul>
+        <li><b>Tam sıkıştırma</b>: yoldaki her düğümü doğrudan köke bağla (iki geçiş)</li>
+        <li><b>Yarılama</b> <span class="en">path halving</span>: her düğümü <b>dedesine</b> bağla — tek satır kod!</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">💡 Kendini düzenleyen yapı</span>Bağlı listeler dersindeki “sık arananı öne al” fikri gibi: yapı, kullanıldıkça <b>kendini iyileştiriyor</b>.</div>
+  </div>
+</section>
+
+<section data-sec="yol sıkıştırma">
+  <h2>Yol sıkıştırma — animasyon</h2>
+  <div class="ufviz" data-alg="weighted-pc" data-n="10"></div>
+  <aside class="notes">Kitaptaki sırayı uygulayın, sonra connected(…) sorularıyla find çağırın: yoldaki düğümlerin dedelerine bağlandığını (turuncu) izleyin.</aside>
+</section>
+
+<section data-sec="yol sıkıştırma">
+  <h2>Yol sıkıştırma — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def find(self, p):                     # yarılama: tek satırlık ek
+    while p != self.id[p]:
+        self.id[p] = self.id[self.id[p]]   # p'yi dedesine bağla
+        p = self.id[p]
+    return p
+
+def find_full(self, p):                # tam sıkıştırma: iki geçiş
+    root = p
+    while root != self.id[root]:       # 1) kökü bul
+        root = self.id[root]
+    while p != root:                   # 2) yoldaki herkesi köke bağla
+        nxt = self.id[p]
+        self.id[p] = root
+        p = nxt
+    return root
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public int Find(int p)
+{
+    while (p != id[p])
+    {
+        id[p] = id[id[p]];   // yarılama: p'yi dedesine bağla
+        p = id[p];
+    }
+    return p;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+find(p) {
+  while (p !== this.id[p]) {
+    this.id[p] = this.id[this.id[p]];   // yarılama: p'yi dedesine bağla
+    p = this.id[p];
+  }
+  return p;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="yol sıkıştırma · matematik">
+  <h2>📐 Neredeyse sabit: lg* N ve Ackermann’ın tersi</h2>
+  <div class="cols c64">
+    <div>
+      <p>Ağırlıklandırma + yol sıkıştırma ile M işlem, ~M · lg* N sürer.</p>
+      <p><b>lg* N</b> (“log yıldız”): 1’e inene kadar kaç kez <b>logaritma</b> alabilirsin?</p>
+      <table class="sum-t" style="font-size:20px">
+        <tr><th>N</th><th>lg* N</th></tr>
+        <tr><td>2</td><td>1</td></tr><tr><td>16</td><td>3</td></tr><tr><td>65.536</td><td>4</td></tr>
+        <tr><td>2<sup>65536</sup> (evrendeki atomlardan çok, çok fazla)</td><td>5</td></tr>
+      </table>
+    </div>
+    <div class="box story"><span class="bt">📜 Bir sınırın hikâyesi</span>
+      1964’te Galler ve Fischer’in ortaya attığı bu yapının tam analizi on yıl sürdü. 1975’te <b>Robert Tarjan</b>, maliyetin aslında daha da yavaş büyüyen <b>ters Ackermann fonksiyonu</b> α(N) ile sınırlı olduğunu kanıtladı. 1989’da Fredman ve Saks da bundan iyisinin <b>imkânsız</b> olduğunu gösterdi.
+      <p class="mini">Pratikte: N ne olursa olsun işlem başına ≤ 5 adım. “Neredeyse sabit zaman.”</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Dört algoritmanın karnesi 📋</h2>
+  <table class="sum-t">
+    <tr><th>algoritma</th><th>başlatma</th><th>union</th><th>find / connected</th><th>M işlem, N nesne</th></tr>
+    <tr><td>quick-find</td><td>N</td><td class="no">N</td><td class="yes">1</td><td class="no">M · N</td></tr>
+    <tr><td>quick-union</td><td>N</td><td>ağaç yüksekliği*</td><td>ağaç yüksekliği</td><td class="no">M · N (en kötü)</td></tr>
+    <tr><td>ağırlıklı QU</td><td>N</td><td>lg N*</td><td>lg N</td><td>M · lg N</td></tr>
+    <tr><td>ağırlıklı QU + yol sıkıştırma</td><td>N</td><td class="yes">≈ 1*</td><td class="yes">≈ 1</td><td class="yes">≈ M (M · α(N))</td></tr>
+  </table>
+  <p class="mini">* kökleri bulma maliyeti dahil. 10⁹ union ve 10⁹ find: quick-find ile 30 yıl, ağırlıklı + yol sıkıştırma ile 6 saniye (kitaptaki tahmin). <b>İyi algoritma, süper bilgisayardan değerlidir.</b></p>
+</section>
+
+<section data-sec="🧪 laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python: yol sıkıştırmalı find</h2>
+  <div class="uflab" data-lang="python" data-task="compress">
+<textarea>
+# parent: ebeveyn listesi. Laboratuvar union'ı ağırlıklı yapıyor;
+# senin find'ın çağrılıyor.
+# GÖREV: kökü döndür VE yol sıkıştırma yap (yarılama ya da tam).
+def find(parent, p):
+    while p != parent[p]:
+        p = parent[p]
+    return p
+</textarea>
+    <div class="lab-tasks">Şu anki kod doğru ama sıkıştırma yapmıyor. Yarılama satırını ekle (<code>parent[p] = parent[parent[p]]</code>) ve “en derin ağaç” sütununun nasıl değiştiğine bak. Sonra iki geçişli tam sıkıştırmayı dene.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #07332a 0%, #3a0d33 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Uygulamalar</div>
+  <div class="sub">labirentler · perkolasyon · Go</div>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="done">yol sıkıştırma</li><li class="on">uygulamalar</li><li class="">kaputun altında</li></ul>
+</section>
+
+<section data-sec="uygulamalar · oyunda">
+  <h2>🌀 Labirent üretimi: rastgele Kruskal</h2>
+  <div class="demo" data-demo="maze"></div>
+  <aside class="notes">Başta her hücre ayrı bir bileşen ve aralarında duvar var. Duvarları rastgele sırayla ele al: iki taraf farklı bileşenlerdeyse duvarı yık ve union yap; zaten bağlılarsa yıkma (döngü olur). Sonuç “mükemmel labirent”: her iki hücre arasında TAM BİR yol. Bu, graflar dersindeki Kruskal minimum yayılan ağaç algoritmasının rastgele ağırlıklı halidir.</aside>
+</section>
+
+<section data-sec="uygulamalar · oyunda">
+  <h2>Labirent üretimi — kod</h2>
+  <div class="tabs " style="font-size:.82em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random
+
+def make_maze(cols, rows):
+    uf = UnionFind(cols * rows)            # hücre (x, y) → numara y * cols + x
+    walls = []
+    for y in range(rows):
+        for x in range(cols):
+            c = y * cols + x
+            if x < cols - 1: walls.append((c, c + 1))      # sağ duvar
+            if y < rows - 1: walls.append((c, c + cols))   # alt duvar
+    random.shuffle(walls)                  # duvarları rastgele sırala
+    passages = []
+    for a, b in walls:
+        if not uf.connected(a, b):         # farklı bileşenler → yık
+            uf.union(a, b)
+            passages.append((a, b))
+    return passages                        # açılan geçitler (cols*rows - 1 tane)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+List<(int, int)> MakeMaze(int cols, int rows)
+{
+    var uf = new UnionFind(cols * rows);
+    var walls = new List<(int a, int b)>();
+    for (int y = 0; y < rows; y++)
+        for (int x = 0; x < cols; x++)
+        {
+            int c = y * cols + x;
+            if (x < cols - 1) walls.Add((c, c + 1));
+            if (y < rows - 1) walls.Add((c, c + cols));
+        }
+    Shuffle(walls);                                  // Fisher–Yates
+    var passages = new List<(int, int)>();
+    foreach (var (a, b) in walls)
+        if (!uf.Connected(a, b)) { uf.Union(a, b); passages.Add((a, b)); }
+    return passages;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function makeMaze(cols, rows) {
+  const uf = new UnionFind(cols * rows);
+  const walls = [];
+  for (let y = 0; y < rows; y++)
+    for (let x = 0; x < cols; x++) {
+      const c = y * cols + x;
+      if (x < cols - 1) walls.push([c, c + 1]);
+      if (y < rows - 1) walls.push([c, c + cols]);
+    }
+  shuffle(walls);                                    // Fisher–Yates
+  const passages = [];
+  for (const [a, b] of walls)
+    if (!uf.connected(a, b)) { uf.union(a, b); passages.push([a, b]); }
+  return passages;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 2B ızgarayı tek boyuta indirmek: hücre (x, y) → <code>y * cols + x</code>. Union–find nesneleri 0…N−1 diye numaralanmış ister.</p>
+</section>
+
+<section data-sec="uygulamalar">
+  <h2>💧 Perkolasyon: su öbür tarafa sızar mı?</h2>
+  <div class="cols c64">
+    <div style="font-size:.92em">
+      <p>N×N bir ızgarada her hücre p olasılıkla <b>açık</b>. Üstten dökülen su, açık hücrelerden geçerek <b>alta ulaşabiliyor mu</b>?</p>
+      <ul>
+        <li>Gözenekli bir taştan su sızması, bir ormanda yangının yayılması, bir ağda bağlantı…</li>
+        <li class="fragment">Union–find ile: açık komşuları birleştir; üst sıraya sanal bir <b>üst</b> düğüm, alt sıraya sanal bir <b>alt</b> düğüm bağla → <code>connected(üst, alt)</code>?</li>
+      </ul>
+    </div>
+    <div class="box story fragment"><span class="bt">📜 Formülü yok!</span>Büyük N için keskin bir eşik var: p &lt; p* ise neredeyse hiç sızmaz, p &gt; p* ise neredeyse hep sızar. Ama p* için <b>bilinen bir formül yok</b>; fizikçiler değeri sadece bilgisayar <b>simülasyonuyla</b> biliyor: ≈ 0,5927. Hızlı bir union–find olmadan bu deneyleri yapmak imkânsız.</div>
+  </div>
+</section>
+
+<section data-sec="uygulamalar">
+  <h2>💧 Perkolasyon deneyi</h2>
+  <div class="demo" data-demo="percolation"></div>
+  <aside class="notes">“Yeni deney” ile tek bir rastgele deneyi izleyin: hücreler açıldıkça mavi su aşağı doğru ilerler. Sızdığı andaki açıklık oranı yaklaşık 0,59. Monte Carlo düğmesi 300 deneyi saniyeler içinde çalıştırır — Princeton’ın ilk ödevi tam olarak budur. Oyun bağlantısı: yıkılabilir yapılar (“bu parça hâlâ zemine bağlı mı?”), orman yangını yayılması, akan su/lav mekanikleri.</aside>
+</section>
+
+<section data-sec="uygulamalar · oyunda">
+  <h2>⚫ Go: taş grupları = bağlı bileşenler</h2>
+  <div class="demo" data-demo="go"></div>
+  <aside class="notes">Go’da aynı renkli komşu taşlar bir GRUP oluşturur; bir grubun tüm boş komşuları (özgürlükleri) dolarsa grup esir alınır. Gruplar union–find ile kolayca bulunur. Ama dikkat: esir alınan taşlar tahtadan KALKAR ve union–find SİLMEYİ desteklemez. Bu demo her hamlede union–find’ı baştan kuruyor (81 hücre için çok ucuz). Bu, union–find’ın en önemli sınırıdır.</aside>
+</section>
+
+<section data-sec="uygulamalar">
+  <h2>Başka nerelerde?</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">🪄</div><b>Sihirli değnek</b>Resim düzenleyicilerde aynı renkli bitişik pikselleri seçmek (bağlı bileşen etiketleme)</div>
+    <div class="icon-card"><div class="ic">🏝️</div><b>Prosedürel haritalar</b>“Tüm odalar girişe bağlı mı?” — değilse koridor ekle</div>
+    <div class="icon-card"><div class="ic">🏗️</div><b>Fizik / yıkım</b>Bir köprü parçası koparsa, hangi parçalar zemine bağlı kalır?</div>
+    <div class="icon-card"><div class="ic">🌲</div><b>Kruskal MST</b>En ucuz kablo/yol ağı — graflar dersinde</div>
+    <div class="icon-card"><div class="ic">🔬</div><b>Fizik ve kimya</b>Hoshen–Kopelman (1976): malzemelerdeki kümeleri saymak</div>
+    <div class="icon-card"><div class="ic">🧮</div><b>Derleyiciler</b>Tür eşitleme (tip çıkarımı), denklik sınıfları</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kaputun Altında</div>
+  <div class="sub">nesne yok, çöp yok: sadece tamsayı dizileri</div>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="done">yol sıkıştırma</li><li class="done">uygulamalar</li><li class="on">kaputun altında</li></ul>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ Neden bu kadar hızlı? Diziler!</h2>
+  <div class="cols">
+    <div class="box low"><span class="bt">⚙️ Bellek</span>
+      <ul style="font-size:.92em">
+        <li>Sadece iki <code>int</code> dizisi: <code>id[]</code> ve <code>sz[]</code> → N nesne için ~8N bayt</li>
+        <li>Düğüm <b>nesnesi</b> yok → çöp toplayıcıya iş yok (oyunlarda takılma yok)</li>
+        <li>Ağaçlar “işaretçi” yerine <b>indeksle</b> bağlı (bağlı listeler dersindeki boş liste gibi)</li>
+      </ul>
+    </div>
+    <div class="box warn"><span class="bt">⚠️ Sınırları</span>
+      <ul style="font-size:.92em">
+        <li><b>Silme yok</b>: bir bağlantıyı geri alamazsınız (Go demosunda baştan kurduk)</li>
+        <li><b>Yolu vermez</b>: “bağlı mı?” der ama “hangi yoldan?” demez → onun için graf aramaları (DFS/BFS) gerekir</li>
+        <li>Nesneler önceden numaralanmalı (gerekirse sözlükle)</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fragment center lead">Kitabın dersi: <b>hızlı algoritma &gt; hızlı bilgisayar</b>. Quick-find ile 30 yıl süren iş, doğru algoritmayla 6 saniye.</p>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Dinamik bağlantı</b>: union, find, connected, bileşenler.</li>
+      <li><b>Quick-find</b>: soru 1, birleştirme N → karesel.</li>
+      <li><b>Quick-union</b>: ağaçlar; dikkat edilmezse zincir olur.</li>
+      <li><b>Ağırlıklı</b>: küçük ağaç büyüğün altına → derinlik ≤ lg N.</li>
+    </ul>
+    <ul>
+      <li><b>Yol sıkıştırma</b>: neredeyse sabit (α(N) ≤ 5).</li>
+      <li>🎮 Kruskal ile labirentler, Go grupları, yıkım fiziği.</li>
+      <li>🔬 Perkolasyon: simülasyonla keşfedilen sabit.</li>
+      <li>⚙️ Sadece tamsayı dizileri; sınırlar: silme yok, yol yok.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: <code>9-0 3-4 5-8 7-2 2-1 5-7 0-3 4-2</code> bağlantıları için quick-find’ın <code>id[]</code> dizisini her adımda yazın. Sonra aynısını ağırlıklı quick-union için yapıp ormanı çizin.</li>
+    <li>Union–find sınıfına bir bileşenin <b>en büyük elemanını</b> döndüren <code>findMax(p)</code> ekleyin (ipucu: köklerde bir dizi daha tutun).</li>
+    <li>p5.js’te labirent üreticisini yazın; sonra labirentin <b>girişinden çıkışına</b> giden yolu bulmak için ne gerekir? (İpucu: yığınlar dersindeki DFS!)</li>
+    <li>Unity’de 10×10 bloktan bir duvar yapın; tıklanan blok yok olsun ve zemine bağlı olmayan bloklar düşsün (her tıklamada union–find’ı baştan kurun).</li>
+    <li>Perkolasyon demosunda N’i 10 ve 30 yaparak Monte Carlo deneyleri yapın: eşik değeri N’e bağlı mı?</li>
+    <li>🤖 Bir YZ asistanından “C#’ta union-find” isteyin. Ağırlıklandırma ve yol sıkıştırma var mı? Yoksa ekletin ve farkı ölçün.</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=ibjEGG7ylHk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ibjEGG7ylHk/hqdefault.jpg" alt=""><span><b>Union Find Introduction</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=0jNmHPfA_yE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0jNmHPfA_yE/hqdefault.jpg" alt=""><span><b>Union and Find Operations</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=VHRhJWacxis" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/VHRhJWacxis/hqdefault.jpg" alt=""><span><b>Union Find Path Compression</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=KbFlZYCpONw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KbFlZYCpONw/hqdefault.jpg" alt=""><span><b>Union Find Code</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=JZBQLXgSGfs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/JZBQLXgSGfs/hqdefault.jpg" alt=""><span><b>Union Find Kruskal’s Algorithm</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=ayW5B2W9hfo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ayW5B2W9hfo/hqdefault.jpg" alt=""><span><b>Union Find in 5 minutes</b><br>Potato Coders</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=wU6udHRIkcc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/wU6udHRIkcc/hqdefault.jpg" alt=""><span><b>Disjoint Sets — Weighted Union and Collapsing Find</b><br>Abdul Bari</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/15uf/" target="_blank">algs4 · 1.5 Case Study: Union-Find</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/15UnionFind.pdf" target="_blank">Princeton ders slaytları: Union-Find (PDF)</a></li>
+      <li><a href="https://coursera.cs.princeton.edu/algs4/assignments/percolation/specification.php" target="_blank">Princeton ödevi: Percolation</a></li>
+      <li><a href="https://weblog.jamisbuck.org/2011/1/3/maze-generation-kruskal-s-algorithm" target="_blank">Jamis Buck · Maze Generation: Kruskal’s Algorithm</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://visualgo.net/en/ufds" target="_blank">VisuAlgo · Union-Find Disjoint Sets</a></li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/DisjointSets.html" target="_blank">USFCA · Disjoint Sets görselleştirme</a></li>
+      <li><a href="../">Ders haritası (tüm desteler)</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #2a1d5a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Algoritma Analizi</div>
+    <div class="sub">“Ne kadar hızlı?” sorusuna bilimsel yöntemle cevap vermek</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../algoritma-analizi/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/birlesim.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
