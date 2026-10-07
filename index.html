@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OGP219 Oyunlarda Yapay Zekâ</title>
+<meta name="description" content="Anadolu Üniversitesi Oyun Geliştirme ve Programlama · OGP219 Oyunlarda Yapay Zekâ dersi: algoritmalar ve veri yapıları etkileşimli slaytları.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ortak/deck.css">
+<style>
+  body { margin: 0; font-family: "Source Sans 3", sans-serif; font-size: 18px; line-height: 1.5; }
+  .hero { background: radial-gradient(circle at 20% 10%, #3b1d7a 0%, #120c2c 55%, #07060f 100%); color: #f3f0ff; padding: 56px 16px 44px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  .hero .code { font: 13px "Press Start 2P", monospace; color: #ffd84d; letter-spacing: .05em; }
+  .hero h1 { font: 52px/1.05 "Bungee", sans-serif; margin: 16px 0 10px; text-shadow: 0 0 22px rgba(170,120,255,.6); }
+  .hero p { color: #c9c2ff; margin: 6px 0; max-width: 760px; }
+  .hero .uni { font-weight: 700; color: #fff; }
+  main { padding: 34px 0 60px; }
+  h2 { font-size: 26px; margin: 34px 0 6px; }
+  .lead { color: var(--ink-2); margin: 0 0 18px; }
+  .units { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .unit { display: grid; grid-template-columns: 56px 1fr auto; gap: 16px; align-items: center; background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .unit .no { font: 18px "Press Start 2P", monospace; color: var(--muted); text-align: center; }
+  .unit h3 { margin: 0; font-size: 21px; }
+  .unit h3 .en { font-size: 13px; }
+  .unit p { margin: 4px 0 0; color: var(--ink-2); font-size: 16px; }
+  .unit.ready { border-left: 6px solid var(--green); }
+  .unit.ready .no { color: var(--green); }
+  .unit.soon { opacity: .78; }
+  .unit.later { opacity: .55; }
+  .badge { font: 700 13px "Source Sans 3"; border-radius: 999px; padding: 4px 12px; white-space: nowrap; }
+  .badge.ok { background: var(--green); color: #fff; }
+  .badge.wip { background: color-mix(in srgb, var(--amber) 22%, var(--card)); color: var(--ink); border: 1px solid var(--amber); }
+  .badge.later { background: var(--card-2); color: var(--muted); }
+  a.go { display: inline-block; font-weight: 700; color: #fff; background: var(--blue); border-radius: 10px; padding: 8px 16px; text-decoration: none; border: none; white-space: nowrap; }
+  a.go:hover { filter: brightness(1.1); }
+  .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .part { font: 12px "Press Start 2P", monospace; color: var(--purple); margin: 26px 0 10px; letter-spacing: .05em; }
+  .keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+  .key { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; font-size: 16px; }
+  .key kbd { font: 700 14px "JetBrains Mono"; background: var(--card-2); border: 1px solid var(--rule); border-bottom-width: 3px; border-radius: 6px; padding: 1px 7px; margin-right: 6px; }
+  footer { color: var(--muted); font-size: 14px; padding: 24px 0 40px; border-top: 1px solid var(--rule); }
+  footer a, main a:not(.go) { color: var(--blue); }
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 34px; }
+    .unit { grid-template-columns: 1fr; gap: 8px; }
+    .unit .no { text-align: left; }
+    .actions { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema">🌙</button>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="code">OGP219 · DERS SLAYTLARI</div>
+    <h1>Oyunlarda Yapay Zekâ</h1>
+    <p class="uni">Anadolu Üniversitesi · Oyun Geliştirme ve Programlama</p>
+    <p>Oyun yapay zekâsı algoritmalarına geçmeden önce ihtiyaç duyacağımız temel <b>algoritmalar ve veri yapıları</b>: etkileşimli animasyonlar, tarayıcıda çalışan kod laboratuvarları, quizler ve oyunlardan örneklerle.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <h2>Ders haritası 🗺️</h2>
+  <p class="lead">Konu sırası Princeton’ın <a href="https://algs4.cs.princeton.edu/lectures/" target="_blank" rel="noopener">Algorithms (Sedgewick &amp; Wayne)</a> dersini temel alır; anlatım sadeleştirildi ve oyun örnekleriyle zenginleştirildi. Yeşil olanlar hazır.</p>
+
+  <div class="part">BÖLÜM 1 · TEMELLER</div>
+  <ol class="units">
+    <li class="unit soon"><div class="no">01</div><div><h3>Union–Find <span class="en">dynamic connectivity</span></h3><p>Dinamik bağlantı problemi · quick-find, quick-union, ağırlıklandırma, yol sıkıştırma · perkolasyon</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+    <li class="unit soon"><div class="no">02</div><div><h3>Algoritma Analizi <span class="en">analysis of algorithms</span></h3><p>Bilimsel yöntem: deney, hipotez, matematiksel model · büyüme mertebeleri · bellek kullanımı</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+    <li class="unit soon"><div class="no">03</div><div><h3>Bağlı Listeler <span class="en">linked lists</span></h3><p>Dizi ve bağlı liste: bellek düzeni, önbellek, ekleme/silme maliyetleri, dinamik diziler</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+    <li class="unit soon"><div class="no">04</div><div><h3>Yığınlar ve Kuyruklar <span class="en">stacks &amp; queues</span></h3><p>Yığın, kuyruk, torba · dizi ve bağlı liste ile gerçekleme · oyunlarda geri alma, olay kuyrukları</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+    <li class="unit soon"><div class="no">05</div><div><h3>Arama Algoritmaları <span class="en">searching</span></h3><p>Sıralı arama, ikili arama, sembol tabloları</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+  </ol>
+
+  <div class="part">BÖLÜM 2 · SIRALAMA</div>
+  <ol class="units" start="6">
+    <li class="unit ready"><div class="no">06</div><div><h3>Temel Sıralama Algoritmaları <span class="en">elementary sorts</span></h3><p>Selection, insertion, shellsort · kararlılık · karıştırma · y-sıralama, Tetris torbası, önbellek</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="siralama-temel/">Slaytlar ▶</a></div></li>
+    <li class="unit later"><div class="no">07</div><div><h3>Mergesort <span class="en">mergesort</span></h3><p>Böl ve fethet · N log N garantisi · alt sınır · aşağıdan yukarı mergesort</p></div><div class="actions"><span class="badge later">sonra</span></div></li>
+    <li class="unit later"><div class="no">08</div><div><h3>Quicksort <span class="en">quicksort</span></h3><p>Bölümleme · rastgeleleştirme · üç yollu quicksort · seçim (select)</p></div><div class="actions"><span class="badge later">sonra</span></div></li>
+  </ol>
+
+  <div class="part">BÖLÜM 3 · AĞAÇLAR VE ARAMA</div>
+  <ol class="units" start="9">
+    <li class="unit ready"><div class="no">09</div><div><h3>Ağaçlar ve İkili Arama Ağaçları <span class="en">trees &amp; BSTs</span></h3><p>Ağaç terimleri · gezinme · davranış ağaçları · ikili arama · BST · sıralı işlemler · silme · quadtree</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="agaclar-bst/">Slaytlar ▶</a></div></li>
+    <li class="unit soon"><div class="no">10</div><div><h3>Dengeli Arama Ağaçları <span class="en">balanced search trees</span></h3><p>2-3 ağaçları · kırmızı-siyah ağaçlar · B-ağaçları</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+    <li class="unit soon"><div class="no">11</div><div><h3>BST Uygulamaları <span class="en">geometric applications of BSTs</span></h3><p>Aralık arama · kd-ağaçları · aralık ağaçları · oyunlarda uzaysal sorgular</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+    <li class="unit soon"><div class="no">12</div><div><h3>Öncelik Kuyrukları <span class="en">priority queues · heaps</span></h3><p>İkili yığın (heap) · heapsort · olay kuyrukları · A*’ın açık listesi</p></div><div class="actions"><span class="badge wip">hazırlanıyor</span></div></li>
+  </ol>
+
+  <div class="part">BÖLÜM 4 · SONRASI</div>
+  <ol class="units" start="13">
+    <li class="unit later"><div class="no">13</div><div><h3>Hash Tabloları <span class="en">hash tables</span></h3><p>Hash fonksiyonları · ayrı zincirleme · doğrusal yoklama</p></div><div class="actions"><span class="badge later">sonra</span></div></li>
+    <li class="unit later"><div class="no">14</div><div><h3>Graflar <span class="en">graphs</span></h3><p>Yönsüz/yönlü graflar · DFS, BFS · en kısa yollar · yol bulma</p></div><div class="actions"><span class="badge later">sonra</span></div></li>
+  </ol>
+
+  <h2>Slaytlarda kısayollar ⌨️</h2>
+  <div class="keys">
+    <div class="key"><kbd>→</kbd><kbd>←</kbd> sonraki / önceki slayt</div>
+    <div class="key"><kbd>T</kbd> açık / koyu tema</div>
+    <div class="key"><kbd>Z</kbd> veya 🔍 kodu büyüt</div>
+    <div class="key"><kbd>S</kbd> konuşmacı notları</div>
+    <div class="key"><kbd>F</kbd> tam ekran</div>
+    <div class="key"><kbd>Esc</kbd> tüm slaytlara genel bakış</div>
+    <div class="key"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> kod laboratuvarında çalıştır</div>
+  </div>
+</main>
+
+<footer class="wrap">
+  İçerik; R. Sedgewick ve K. Wayne’in <a href="https://algs4.cs.princeton.edu/" target="_blank" rel="noopener"><i>Algorithms, 4th Edition</i></a> kitabının konu akışını izler. Slaytlar reveal.js ile hazırlanmıştır; animasyonlar ve kod laboratuvarları tarayıcıda çalışır (Python laboratuvarları için internet bağlantısı gerekir).
+</footer>
+
+<script>
+  (function () {
+    var btn = document.getElementById('themeBtn');
+    var sync = function () { btn.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙'; };
+    btn.addEventListener('click', function () {
+      var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = t;
+      try { localStorage.setItem('deck-theme', t); } catch (e) {}
+      sync();
+    });
+    sync();
+  })();
+</script>
+</body>
+</html>

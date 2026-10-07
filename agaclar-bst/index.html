@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ağaçlar ve BST</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Ağaçlar ve İkili Arama Ağaçları: terimler, gezinme, davranış ağaçları, ikili arama, BST, sıralı işlemler, silme. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış</div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0f4a3a 0%, #0c1d2c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · VERİ YAPILARI</div>
+  <div class="ttl" style="font-size:70px">Ağaçlar ve<br>İkili Arama Ağaçları</div>
+  <div class="sub"><i>Trees &amp; Binary Search Trees</i> — hiyerarşi · gezinme · davranış ağaçları · ikili arama · BST</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titletree"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.1 (Symbol Tables) ve 3.2 (Binary Search Trees) bölümlerini temel alır; başına genel ağaç kavramları, gezinme ve oyun YZ’sindeki davranış ağaçları eklendi. Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları. Arka planda rastgele anahtarlar bir BST’ye ekleniyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.9em">
+      <li><b>Ağaç nedir?</b> — kök, yaprak, derinlik… <span class="en">tree</span></li>
+      <li><b>Gezinme</b> ve oyun YZ’sinin yıldızı: <b>davranış ağaçları</b> <span class="en">traversal · behavior tree</span></li>
+      <li><b>Arama</b>: sıralı arama ve ikili arama <span class="en">binary search</span></li>
+      <li><b>İkili arama ağacı</b> <span class="en">binary search tree, BST</span></li>
+      <li><b>Şekil ve performans</b> — neden bazen çok hızlı, bazen çok yavaş?</li>
+      <li><b>Sıralı işlemler</b> — eşleştirme, skor tablosu <span class="en">ordered operations</span></li>
+      <li><b>Silme</b> <span class="en">deletion</span></li>
+      <li>⚙️ <b>Kaputun altında</b>: özyineleme, yığın taşması, bellek · 🌳 quadtree, BSP</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir NPC’nin “beynini” ağaç olarak çizebilecek, 1 milyon oyuncu arasından birini <b>20 adımda</b> bulmanın nasıl mümkün olduğunu açıklayabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA SORUSU</span>
+    <p class="big">Unity’de bir tankı döndürdünüz.<br>Taret ve namlu da onunla birlikte döndü. Neden?</p>
+    <p>Siz sadece <b>gövdeyi</b> döndürdünüz. Taretin dönmesi gerektiğini Unity nereden biliyor?</p>
+  </div>
+  <p class="fragment lead">Çünkü <b>Hierarchy</b> penceresinde taret, gövdenin <b>çocuğu</b>; namlu da taretin çocuğu.</p>
+  <p class="fragment big">Bu ebeveyn–çocuk yapısının adı: <span class="c-green">AĞAÇ</span> 🌳 <span class="en">tree</span></p>
+  <aside class="notes">Unity/Godot açıp bir sahnenin Hierarchy panelini göstermek çok etkili olur. Her oyun motoru sahneyi bir ağaç olarak tutar (scene graph).</aside>
+</section>
+
+<section>
+  <h2>Oyunlarda ağaçlar her yerde</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">🎬</div><b>Sahne grafiği</b> <span class="en">scene graph</span><br>Unity Hierarchy, Godot sahne ağacı</div>
+    <div class="icon-card"><div class="ic">🧠</div><b>Davranış ağacı</b> <span class="en">behavior tree</span><br>Halo, Unreal, Unity’deki NPC beyinleri</div>
+    <div class="icon-card"><div class="ic">🌲</div><b>Karar ağacı</b> <span class="en">decision tree</span><br>“Can az mı? → kaç, değilse → saldır”</div>
+    <div class="icon-card"><div class="ic">♟️</div><b>Oyun ağacı</b> <span class="en">game tree</span><br>Satranç/XOX yapay zekâsı: minimax</div>
+    <div class="icon-card"><div class="ic">🗺️</div><b>Uzaysal ağaçlar</b> <span class="en">quadtree · BSP</span><br>Çarpışma, görünürlük, Doom!</div>
+    <div class="icon-card"><div class="ic">🔍</div><b>Arama ağaçları</b> <span class="en">BST</span><br>Skor tablosu, eşleştirme, sözlükler</div>
+  </div>
+  <p class="fragment" style="margin-top:20px">Bugün hepsinin ortak temelini kuracağız. Oyun YZ dersinin geri kalanında bu ağaçların çoğuyla tekrar karşılaşacağız. 💪</p>
+</section>
+
+<section>
+  <h2>Mini sözlük (1/2)</h2>
+  <table class="gloss">
+    <tr><td>tree</td><td>ağaç</td><td>Düğümlerin ebeveyn–çocuk bağlarıyla bağlandığı, döngüsüz yapı</td></tr>
+    <tr><td>node</td><td>düğüm</td><td>Ağaçtaki her bir eleman (bir oyun nesnesi, bir anahtar…)</td></tr>
+    <tr><td>edge / link</td><td>kenar / bağlantı</td><td>İki düğüm arasındaki ebeveyn–çocuk bağı</td></tr>
+    <tr><td>root</td><td>kök</td><td>En üstteki, ebeveyni olmayan düğüm</td></tr>
+    <tr><td>parent / child</td><td>ebeveyn / çocuk</td><td>Bir üstteki / bir alttaki düğüm</td></tr>
+    <tr><td>sibling</td><td>kardeş</td><td>Aynı ebeveynin çocukları</td></tr>
+    <tr><td>leaf</td><td>yaprak</td><td>Çocuğu olmayan düğüm</td></tr>
+    <tr><td>subtree</td><td>alt ağaç</td><td>Bir düğüm ve onun altındaki her şey</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Mini sözlük (2/2)</h2>
+  <table class="gloss">
+    <tr><td>depth / height</td><td>derinlik / yükseklik</td><td>Köke uzaklık / en uzak yaprağa uzaklık (kenar sayısı)</td></tr>
+    <tr><td>binary tree</td><td>ikili ağaç</td><td>Her düğümün en fazla 2 çocuğu (sol, sağ) var</td></tr>
+    <tr><td>traversal</td><td>gezinme / dolaşma</td><td>Tüm düğümleri belli bir sırayla ziyaret etmek</td></tr>
+    <tr><td>recursion</td><td>özyineleme</td><td>Bir fonksiyonun kendini (daha küçük bir parça için) çağırması</td></tr>
+    <tr><td>call stack</td><td>çağrı yığını</td><td>Bilgisayarın “hangi fonksiyondayım?” listesi</td></tr>
+    <tr><td>symbol table</td><td>sembol tablosu</td><td>Anahtar → değer saklayan yapı (sözlük, <code>Dictionary</code>)</td></tr>
+    <tr><td>binary search</td><td>ikili arama</td><td>Sıralı veride her adımda yarısını atarak arama</td></tr>
+    <tr><td>BST</td><td>ikili arama ağacı</td><td>Solu küçük, sağı büyük olan ikili ağaç</td></tr>
+  </table>
+  <aside class="notes">“Depth” ve “height” en çok karıştırılan iki terim. Bir sonraki bölümdeki etkileşimli demoda ikisini de tıklayarak görecekler.</aside>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Ağaç Nedir?</div>
+  <div class="sub"><i>tree</i> — kök yukarıda, yapraklar aşağıda (evet, ters 🙃)</div>
+  <ul class="agenda"><li class="on">ağaç nedir?</li><li class="">gezinme &amp; davranış ağaçları</li><li class="">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="ağaç nedir?">
+  <h2>Tanım: ağaç <span class="en">tree</span></h2>
+  <div class="cols c64">
+    <div>
+      <ul>
+        <li>Düğümlerden ve onları bağlayan kenarlardan oluşur.</li>
+        <li>Tek bir <b>kök</b> vardır; kökün ebeveyni yoktur.</li>
+        <li>Kök hariç her düğümün <b>tam olarak bir</b> ebeveyni vardır.</li>
+        <li>Bu yüzden <b>döngü</b> <span class="en">cycle</span> yoktur: aşağı inerek başladığınız yere dönemezsiniz.</li>
+      </ul>
+      <p class="fragment mini">Bilgisayarcılar ağaçları hep <b>ters</b> çizer: kök en üstte, yapraklar en altta. 🙃 (Soy ağacı ve şirket şemaları gibi.)</p>
+    </div>
+    <svg viewBox="0 0 420 300" style="width:100%">
+      <g font-family="JetBrains Mono" font-size="15" text-anchor="middle">
+        <text x="105" y="22" fill="var(--green)" font-weight="700">✔ ağaç</text>
+        <line x1="105" y1="60" x2="55" y2="140" stroke="var(--ink-2)" stroke-width="2"/><line x1="105" y1="60" x2="155" y2="140" stroke="var(--ink-2)" stroke-width="2"/>
+        <line x1="155" y1="140" x2="120" y2="220" stroke="var(--ink-2)" stroke-width="2"/><line x1="155" y1="140" x2="190" y2="220" stroke="var(--ink-2)" stroke-width="2"/>
+        <circle cx="105" cy="60" r="20" fill="var(--amber)"/><text x="105" y="65">A</text>
+        <circle cx="55" cy="140" r="20" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="55" y="145" fill="var(--ink)">B</text>
+        <circle cx="155" cy="140" r="20" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="155" y="145" fill="var(--ink)">C</text>
+        <circle cx="120" cy="220" r="20" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="120" y="225" fill="var(--ink)">D</text>
+        <circle cx="190" cy="220" r="20" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="190" y="225" fill="var(--ink)">E</text>
+        <text x="105" y="270" fill="var(--muted)" font-size="12">A = kök</text><text x="105" y="288" fill="var(--muted)" font-size="12">B, D, E = yaprak</text>
+        <text x="320" y="22" fill="var(--red)" font-weight="700">✘ ağaç değil</text>
+        <line x1="320" y1="60" x2="270" y2="140" stroke="var(--ink-2)" stroke-width="2"/><line x1="320" y1="60" x2="370" y2="140" stroke="var(--ink-2)" stroke-width="2"/>
+        <line x1="270" y1="140" x2="320" y2="220" stroke="var(--red)" stroke-width="3"/><line x1="370" y1="140" x2="320" y2="220" stroke="var(--red)" stroke-width="3"/>
+        <circle cx="320" cy="60" r="20" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="320" y="65" fill="var(--ink)">A</text>
+        <circle cx="270" cy="140" r="20" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="270" y="145" fill="var(--ink)">B</text>
+        <circle cx="370" cy="140" r="20" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="370" y="145" fill="var(--ink)">C</text>
+        <circle cx="320" cy="220" r="20" fill="var(--red)"/><text x="320" y="225" fill="#fff">D</text>
+        <text x="320" y="270" fill="var(--muted)" font-size="12">D’nin iki ebeveyni var</text><text x="320" y="288" fill="var(--muted)" font-size="12">→ bu bir graf</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-sec="ağaç nedir?">
+  <h2>Terimleri keşfet: bir sahne ağacı 🎬</h2>
+  <div class="demo" data-demo="terms"></div>
+  <p class="mini">Bir düğüme (soldaki Hierarchy listesinde ya da çizimde) tıklayın. <b class="c-blue">Mavi çerçeve</b> = ebeveyn, <b class="c-green">yeşil çerçeve</b> = çocuklar, açık mavi zemin = alt ağaç.</p>
+  <aside class="notes">Önce “Sahne”ye (kök), sonra “Namlu”ya (yaprak, derinlik 3), sonra “Oyuncu”ya (yükseklik 2) tıklayın. Yükseklik ve derinliğin farkını vurgulayın: derinlik yukarıya, yükseklik aşağıya bakar.</aside>
+</section>
+
+<section data-sec="ağaç nedir?">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · ağaç nedir?</div>
+    <div class="q">Önceki slayttaki sahne ağacında <b>Namlu</b>’nun derinliği ve <b>Oyuncu</b>’nun yüksekliği kaçtır?</div>
+    <div class="opts">
+      <button data-opt="A">derinlik 3, yükseklik 2</button>
+      <button data-opt="B">derinlik 2, yükseklik 3</button>
+      <button data-opt="C">derinlik 4, yükseklik 3</button>
+      <button data-opt="D">derinlik 3, yükseklik 3</button>
+    </div>
+    <div class="explain">Namlu: Sahne → Oyuncu → Silah → Namlu = <b>3 kenar</b> (kökün derinliği 0). Oyuncu’dan en uzak yaprak Namlu: Oyuncu → Silah → Namlu = <b>2 kenar</b>. Derinlik köke doğru, yükseklik yapraklara doğru ölçülür.</div>
+  </div>
+</section>
+
+<section data-sec="ağaç nedir? · oyunda">
+  <h2>🎮 Sahne grafiği: dönüşümler ağaçtan aşağı akar <span class="en">scene graph</span></h2>
+  <div class="demo" data-demo="tank"></div>
+  <aside class="notes">1) Gövdeyi döndürün/kaydırın: taret onunla gelir. 2) “Taret, Gövde’nin çocuğu” kutusunu kaldırın: taret yerinde kalır. 3) “Hedefe kilitlen”i açıp gövdeyi döndürün: taret hep hedefe bakar. Bu, oyun YZ’sinde nişan almanın temeli: yerel açı = istenen dünya açısı − ebeveynin açısı.</aside>
+</section>
+
+<section data-sec="ağaç nedir?">
+  <h2>Ağacı gezmenin doğal yolu: özyineleme <span class="en">recursion</span></h2>
+  <div class="cols c64">
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def print_tree(node, depth=0):
+    print("  " * depth + node.name)     # 1) önce kendini yaz
+    for child in node.children:         # 2) sonra her çocuk için
+        print_tree(child, depth + 1)    #    AYNI işi tekrarla
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+void PrintTree(Transform node, int depth = 0)
+{
+    Debug.Log(new string(' ', depth * 2) + node.name);  // 1) kendini yaz
+    foreach (Transform child in node)                    // 2) her çocuk için
+        PrintTree(child, depth + 1);                     //    AYNI işi tekrarla
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function printTree(node, depth = 0) {
+  console.log('  '.repeat(depth) + node.name);   // 1) kendini yaz
+  for (const child of node.children)             // 2) her çocuk için
+    printTree(child, depth + 1);                 //    AYNI işi tekrarla
+}
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <div class="box story"><span class="bt">🪆 Matruşka</span>Her bebeğin içinde daha küçük bir bebek var. Her alt ağaç da kendi başına bir ağaç!</div>
+      <div class="box prop"><span class="bt">Özyinelemenin iki kuralı</span>
+        <ol><li><b>Temel durum</b> <span class="en">base case</span>: duracağın yer (çocuk yoksa döngü hiç dönmez).</li>
+        <li><b>Daha küçük problem</b>: kendini bir <b>alt ağaç</b> için çağır.</li></ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ağaç nedir? · kaputun altında">
+  <h2>⚙️ Özyineleme nasıl çalışır? Çağrı yığını <span class="en">call stack</span></h2>
+  <div class="cols">
+    <div>
+      <p>Geçen dönem <b>yığın</b> <span class="en">stack</span> veri yapısını gördük. Bilgisayar da her fonksiyon çağrısını bir yığına koyar:</p>
+      <ul>
+        <li class="fragment">Çağrı yapılınca → yığına <b>push</b> (yeni “kare” <span class="en">stack frame</span>: parametreler, yerel değişkenler, dönüş adresi)</li>
+        <li class="fragment">Fonksiyon bitince → yığından <b>pop</b>, kaldığı yere döner</li>
+        <li class="fragment">Yığının derinliği = <b>ağacın o anki derinliği</b></li>
+      </ul>
+    </div>
+    <div class="fragment">
+      <div class="stack-panel" style="max-width:380px;margin:0 auto;min-height:260px">
+        <div class="sp-title">Çağrı yığını — “Namlu” yazılırken</div>
+        <div class="sp-item top">print_tree(Namlu, 3)</div>
+        <div class="sp-item">print_tree(Silah, 2)</div>
+        <div class="sp-item">print_tree(Oyuncu, 1)</div>
+        <div class="sp-item">print_tree(Sahne, 0)</div>
+        <div class="sp-floor">yığının tabanı</div>
+      </div>
+      <p class="mini center">Yığın çok derinleşirse: <b class="c-red">stack overflow</b> (yığın taşması). Birazdan BST’de göreceğiz!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ağaç nedir?">
+  <h2>Her hiyerarşi ağaç değildir 🤔</h2>
+  <div class="cols c46">
+    <svg viewBox="0 0 440 280" style="width:100%">
+      <g font-family="Source Sans 3" font-size="15" text-anchor="middle" font-weight="700">
+        <line x1="110" y1="60" x2="220" y2="150" stroke="var(--red)" stroke-width="3"/><line x1="330" y1="60" x2="220" y2="150" stroke="var(--red)" stroke-width="3"/>
+        <line x1="220" y1="150" x2="220" y2="235" stroke="var(--ink-2)" stroke-width="2"/>
+        <rect x="40" y="40" width="140" height="40" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="110" y="65" fill="var(--ink)">⛏️ Madencilik</text>
+        <rect x="260" y="40" width="140" height="40" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="330" y="65" fill="var(--ink)">🔥 Ateş</text>
+        <rect x="140" y="130" width="160" height="40" rx="8" fill="var(--red)"/><text x="220" y="155" fill="#fff">⚒️ Bronz İşçiliği</text>
+        <rect x="150" y="215" width="140" height="40" rx="8" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="220" y="240" fill="var(--ink)">🗡️ Kılıç</text>
+      </g>
+    </svg>
+    <div>
+      <p>Strateji oyunlarındaki <b>teknoloji ağaçları</b> <span class="en">tech tree</span> (Civilization, Age of Empires…) adına rağmen çoğu zaman ağaç <b>değildir</b>: bir teknolojinin <b>iki ön koşulu</b> (iki ebeveyni) olabilir.</p>
+      <p class="fragment">Bu yapının adı <b>yönlü döngüsüz graf</b> <span class="en">directed acyclic graph, DAG</span>. Graflar dersinde göreceğiz.</p>
+      <p class="fragment mini">Ders: Bir şeye “ağaç” denmesi, onun matematiksel olarak ağaç olduğu anlamına gelmez. Tanımı kontrol edin: <b>her düğümün tek ebeveyni</b> var mı?</p>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Gezinme &amp; Davranış Ağaçları</div>
+  <div class="sub"><i>traversal · behavior trees</i> — ağacı hangi sırayla dolaşırız?</div>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="on">gezinme &amp; davranış ağaçları</li><li class="">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="gezinme">
+  <h2>İkili ağaç <span class="en">binary tree</span></h2>
+  <div class="cols c46">
+    <div>
+      <p>Her düğümün <b>en fazla iki</b> çocuğu var: <b>sol</b> <span class="en">left</span> ve <b>sağ</b> <span class="en">right</span>.</p>
+      <p>Çocuk yoksa bağlantı <code>null</code> (Python’da <code>None</code>).</p>
+      <div class="box low"><span class="bt">⚙️ Bellekte</span><code>left</code> ve <code>right</code> aslında birer <b>referans</b> <span class="en">reference</span> (adres, işaretçi). Düğümler bellekte yan yana durmaz; birbirini adresle “gösterir”.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Node:
+    def __init__(self, key, val=None):
+        self.key = key       # anahtar (neye göre sıralıyoruz)
+        self.val = val       # değer (sakladığımız bilgi)
+        self.left = None     # sol çocuk
+        self.right = None    # sağ çocuk
+        self.size = 1        # bu alt ağaçtaki düğüm sayısı
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Node
+{
+    public int Key;            // anahtar (gerçek kodda: TKey)
+    public string Val;         // değer   (gerçek kodda: TValue)
+    public Node Left, Right;   // çocuklar (yoksa null)
+    public int Size = 1;       // bu alt ağaçtaki düğüm sayısı
+    public Node(int key, string val) { Key = key; Val = val; }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Node {
+  constructor(key, val) {
+    this.key = key;      // anahtar (neye göre sıralıyoruz)
+    this.val = val;      // değer (sakladığımız bilgi)
+    this.left = null;    // sol çocuk
+    this.right = null;   // sağ çocuk
+    this.size = 1;       // bu alt ağaçtaki düğüm sayısı
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="gezinme">
+  <h2>Dört gezinme sırası <span class="en">traversal orders</span></h2>
+  <table class="sum-t" style="font-size:21px">
+    <tr><th>ad</th><th>sıra</th><th>akılda tutma</th><th>oyunda nerede?</th></tr>
+    <tr><td>preorder <span class="mini">(önce-sıra)</span></td><td><b>kök</b> → sol → sağ</td><td>“önce ben”</td><td>Hierarchy’yi yazdırmak, davranış ağacı <i>tick</i>’i</td></tr>
+    <tr><td>inorder <span class="mini">(iç-sıra)</span></td><td>sol → <b>kök</b> → sağ</td><td>“ben ortada”</td><td>BST’de anahtarları <b>sıralı</b> listelemek</td></tr>
+    <tr><td>postorder <span class="mini">(son-sıra)</span></td><td>sol → sağ → <b>kök</b></td><td>“önce çocuklar”</td><td>Klasör boyutu, nesneleri yok etmek (<code>Destroy</code>)</td></tr>
+    <tr><td>level-order <span class="mini">(seviye)</span></td><td>seviye seviye, soldan sağa</td><td>“kat kat”</td><td>En yakın çözüm (BFS), menülerde katman</td></tr>
+  </table>
+  <div class="tabs " style="margin-top:10px">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def preorder(x, visit):
+    if x is None: return       # temel durum
+    visit(x.key)               # KÖK
+    preorder(x.left, visit)    # sol
+    preorder(x.right, visit)   # sağ
+# inorder: visit satırı iki çağrının ARASINA, postorder: SONA taşınır
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+void Preorder(Node x, Action<int> visit)
+{
+    if (x == null) return;      // temel durum
+    visit(x.Key);               // KÖK
+    Preorder(x.Left, visit);    // sol
+    Preorder(x.Right, visit);   // sağ
+}
+// Inorder: visit satırı iki çağrının ARASINA, Postorder: SONA taşınır
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function preorder(x, visit) {
+  if (x === null) return;     // temel durum
+  visit(x.key);               // KÖK
+  preorder(x.left, visit);    // sol
+  preorder(x.right, visit);   // sağ
+}
+// inorder: visit satırı iki çağrının ARASINA, postorder: SONA taşınır
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gezinme">
+  <h2>Gezinme animasyonu — yığın ve kuyruk ile</h2>
+  <div class="travviz" data-tree="bal" data-kind="pre"></div>
+  <aside class="notes">Preorder/inorder/postorder çağrı YIĞINI ile (özyineleme), level-order KUYRUK ile çalışır — geçen dönemki yığın/kuyruk konusunun güzel bir uygulaması. Inorder seçince çıktının alfabetik olduğuna dikkat çekin: bu ağaç bir BST! Bunu Level 3’te açıklayacağız.</aside>
+</section>
+
+<section data-sec="gezinme">
+  <h2>Level-order: kuyruk ile gezinme <span class="en">queue · BFS</span></h2>
+  <div class="cols c64">
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from collections import deque
+
+def level_order(root, visit):
+    q = deque([root])            # kuyruğa kökü koy
+    while q:
+        x = q.popleft()          # öndekini çıkar (dequeue)
+        if x is None: continue
+        visit(x.key)
+        q.append(x.left)         # çocukları sona ekle (enqueue)
+        q.append(x.right)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+void LevelOrder(Node root, Action<int> visit)
+{
+    var q = new Queue<Node>();
+    q.Enqueue(root);
+    while (q.Count > 0)
+    {
+        Node x = q.Dequeue();
+        if (x == null) continue;
+        visit(x.Key);
+        q.Enqueue(x.Left);
+        q.Enqueue(x.Right);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function levelOrder(root, visit) {
+  const q = [root];
+  let head = 0;                  // shift() yerine indeks: shift O(N)!
+  while (head < q.length) {
+    const x = q[head++];
+    if (x === null) continue;
+    visit(x.key);
+    q.push(x.left, x.right);
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <div class="box game"><span class="bt">🎮 Oyunda</span>Level-order = <b>genişlik öncelikli arama</b> <span class="en">breadth-first search, BFS</span>. Izgarada yol bulmanın, “en az hamlede” çözümün temeli. Yol bulma dersinde döneceğiz!</div>
+      <div class="box low"><span class="bt">⚙️ JS notu</span><code>array.shift()</code> tüm elemanları bir sola kaydırır → O(N). Büyük kuyruklarda baş indeksi tutmak çok daha hızlı.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gezinme">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 2 · gezinme</div>
+    <div class="q">Bir oyun klasörünün toplam boyutunu hesaplamak istiyoruz: her klasörün boyutu = kendi dosyaları + <b>tüm alt klasörlerinin</b> boyutu. Hangi gezinme?</div>
+    <div class="opts">
+      <button data-opt="A">preorder (önce kök)</button>
+      <button data-opt="B">inorder</button>
+      <button data-opt="C">postorder (önce çocuklar)</button>
+      <button data-opt="D">level-order</button>
+    </div>
+    <div class="explain">Bir klasörün boyutunu bilmek için önce <b>bütün çocuklarının</b> boyutunu bilmek gerekir → çocuklar önce, kök en son: <b>postorder</b>. Aynı mantık: bir nesneyi yok etmeden (<code>Destroy</code>) önce çocuklarını yok etmek. Hierarchy’yi ekrana yazdırmak ise preorder’dır (önce ebeveyn).</div>
+  </div>
+</section>
+
+<section data-sec="davranış ağaçları">
+  <h2>🧠 Davranış ağacı <span class="en">behavior tree, BT</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>NPC’nin “beyni”: her karede (veya birkaç karede bir) <b>kökten başlayarak</b> gezilir (<b>tick</b>). Her düğüm <b>başarılı</b> <span class="en">success</span> ya da <b>başarısız</b> <span class="en">failure</span> döner.</p>
+      <table class="sum-t" style="font-size:19px">
+        <tr><th>düğüm</th><th>ne yapar?</th></tr>
+        <tr><td>? Seçici <span class="en">selector</span></td><td>Çocukları soldan sağa dener; <b>biri başarılı olunca durur</b> (“VEYA”)</td></tr>
+        <tr><td>→ Dizi <span class="en">sequence</span></td><td>Çocukları sırayla çalıştırır; <b>biri başarısız olunca durur</b> (“VE”)</td></tr>
+        <tr><td>◇ Koşul <span class="en">condition</span></td><td>Bir soru sorar: “Düşman görünüyor mu?”</td></tr>
+        <tr><td>▭ Eylem <span class="en">action</span></td><td>Bir şey yapar: ateş et, siper al, devriye gez</td></tr>
+      </table>
+    </div>
+    <div class="box story"><span class="bt">📜 Halo 2 (2004)</span>
+      Bungie’den Damian Isla, Halo 2’nin yapay zekâsını GDC 2005’te anlattı: düşmanların karmaşık davranışlarını düzenli tutmak için bir <b>davranış ağacı</b> kullanmışlardı. Bu konuşmadan sonra BT’ler sektörün standardı oldu; bugün Unreal Engine’in içinde hazır geliyor.
+    </div>
+  </div>
+</section>
+
+<section data-sec="davranış ağaçları · oyunda">
+  <h2>🎮 Canlı demo: bir nöbetçinin beyni</h2>
+  <div class="demo" data-demo="bt"></div>
+  <aside class="notes">Önce varsayılanla Tick: Saldır dizisi başarılı → Ateş et. Sonra canı 20 yapın: “Can > %30?” başarısız → Saldır dizisi başarısız → Seçici bir sonraki çocuğa geçer: Kaç → Siper al. Sonra “Düşman görünüyor”u kapatın: iki dizi de ilk koşulda düşer → Devriye gez. Gezinme sırası = preorder! İleri/Geri ile tek tek adımlayın.</aside>
+</section>
+
+<section data-sec="davranış ağaçları">
+  <h2>Davranış ağacı kodu — sadece iki küçük sınıf</h2>
+  <div class="tabs " style="font-size:.9em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Selector:                          # "?" — biri başarılı olana kadar dene
+    def __init__(self, *kids): self.kids = kids
+    def tick(self, npc):
+        return any(k.tick(npc) for k in self.kids)   # any() ilk True'da durur
+
+class Sequence:                          # "→" — biri başarısız olana kadar çalıştır
+    def __init__(self, *kids): self.kids = kids
+    def tick(self, npc):
+        return all(k.tick(npc) for k in self.kids)   # all() ilk False'ta durur
+
+brain = Selector(
+    Sequence(Cond(lambda n: n.sees_enemy), Cond(lambda n: n.hp > 30), Act(shoot)),
+    Sequence(Cond(lambda n: n.sees_enemy), Act(take_cover)),
+    Act(patrol))
+brain.tick(guard)                        # her karede (ya da 0.2 sn'de bir)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+interface IBTNode { bool Tick(Npc npc); }
+
+class Selector : IBTNode            // "?" — biri başarılı olana kadar dene
+{
+    readonly IBTNode[] kids;
+    public Selector(params IBTNode[] kids) { this.kids = kids; }
+    public bool Tick(Npc npc)
+    {
+        foreach (var k in kids) if (k.Tick(npc)) return true;
+        return false;
+    }
+}
+
+class Sequence : IBTNode            // "→" — biri başarısız olana kadar çalıştır
+{
+    readonly IBTNode[] kids;
+    public Sequence(params IBTNode[] kids) { this.kids = kids; }
+    public bool Tick(Npc npc)
+    {
+        foreach (var k in kids) if (!k.Tick(npc)) return false;
+        return true;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Selector {                          // "?" — biri başarılı olana kadar dene
+  constructor(...kids) { this.kids = kids; }
+  tick(npc) { return this.kids.some(k => k.tick(npc)); }   // some() ilk true'da durur
+}
+class Sequence {                          // "→" — biri başarısız olana kadar
+  constructor(...kids) { this.kids = kids; }
+  tick(npc) { return this.kids.every(k => k.tick(npc)); }  // every() ilk false'ta durur
+}
+
+const brain = new Selector(
+  new Sequence(new Cond(n => n.seesEnemy), new Cond(n => n.hp > 30), new Act(shoot)),
+  new Sequence(new Cond(n => n.seesEnemy), new Act(takeCover)),
+  new Act(patrol));
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Gerçek BT’lerde üçüncü bir durum da vardır: <b>çalışıyor</b> <span class="en">running</span> (ör. “yürüyor, henüz varmadı”). Unity’de hazır paketler, Unreal’da yerleşik editör var.</p>
+</section>
+
+<section data-sec="davranış ağaçları">
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 TARTIŞMA</span>
+    <ol>
+      <li class="fragment">Seçicinin çocuklarının <b>sırası</b> neden önemli? “Devriye gez”i en başa koysak ne olur?</li>
+      <li class="fragment">“Düşman görünüyor?” koşulu iki kez kontrol ediliyor. Pahalı bir koşul (ör. görüş ışını, <i>raycast</i>) olsaydı ne yapardınız?</li>
+      <li class="fragment">Bu ağacı <code>if / else</code> ile yazsaydık ne olurdu? 50 davranışlı bir boss için?</li>
+    </ol>
+  </div>
+  <aside class="notes">1) Seçicinin çocuk sırası = ÖNCELİK. Devriye hep başarılı olduğu için en başta olursa NPC asla saldırmaz/kaçmaz. 2) Sonucu bir “kara tahta”da (blackboard) önbelleğe almak. 3) İç içe if’ler okunmaz hale gelir; BT’de düğümler tasarımcı tarafından sürükle-bırak ile düzenlenebilir ve tekrar kullanılabilir.</aside>
+</section>
+
+<section data-sec="davranış ağaçları · video">
+  <h2>🎬 Ara: davranış ağaçları neden bu kadar yaygın?</h2>
+  <div class="cols c64">
+    <a class="vid" href="https://www.youtube.com/watch?v=6VBCXvfNlCM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/6VBCXvfNlCM/hqdefault.jpg" alt=""><span><b>Behaviour Trees: The Cornerstone of Modern Game AI</b><br>AI and Games (Tommy Thompson)</span></a>
+    <div>
+      <p>Oyun YZ’si üzerine en iyi kanallardan biri. Halo, Alien: Isolation gibi oyunlardan örneklerle BT’leri anlatıyor.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda “selector” ve “sequence” düğümlerini bizim demodaki renklerle eşleştirin. Hangi oyunda BT’nin <b>kaç seviye derin</b> olduğu söyleniyor?</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2f45 0%, #2a0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Arama</div>
+  <div class="sub"><i>searching</i> — 1 milyon kayıt içinde birini nasıl bulursun?</div>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="on">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="arama">
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: 20 SORU</span>
+    <p class="big">Aklınızdan dünyadaki herhangi bir insanı tutun.<br>Ben sadece <b>evet/hayır</b> soruları soracağım.</p>
+    <p>Kaç soruda bulabilirim? 100? 1000? 1 milyon?</p>
+  </div>
+  <p class="fragment lead">Her soru adayları <b>yarıya</b> indirirse: 2³³ ≈ 8,6 milyar ≥ dünya nüfusu → <b>33 soru</b> yeter!</p>
+  <p class="fragment mini">“Akinator” adlı ünlü oyun, aklınızdaki karakteri genellikle 20 civarı soruda bulur. Bu dersin sihirli kelimesi: <b>logaritma</b>.</p>
+</section>
+
+<section data-sec="arama">
+  <h2>Sembol tablosu: anahtar → değer <span class="en">symbol table</span></h2>
+  <div class="cols c46">
+    <div>
+      <p>İki temel işlem:</p>
+      <ul>
+        <li><code>put(key, val)</code> — ekle / güncelle</li>
+        <li><code>get(key)</code> — anahtarın değerini getir</li>
+      </ul>
+      <div class="box game"><span class="bt">🎮 Oyunda</span>
+        eşya adı → adet · oyuncu ID → profil · kelime → çeviri · durum adı → animasyon · ızgara hücresi → içindeki birimler
+      </div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+inventory = {}                  # dict = sembol tablosu
+inventory["iksir"] = 3          # put
+inventory["kılıç"] = 1
+print(inventory.get("iksir"))   # get → 3
+print("kalkan" in inventory)    # var mı? → False
+del inventory["kılıç"]          # sil
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var inventory = new Dictionary<string, int>();
+inventory["iksir"] = 3;                       // put
+inventory["kılıç"] = 1;
+Debug.Log(inventory["iksir"]);                // get → 3
+if (inventory.TryGetValue("kalkan", out int n)) { /* var */ }
+inventory.Remove("kılıç");                    // sil
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const inventory = new Map();
+inventory.set("iksir", 3);          // put
+inventory.set("kılıç", 1);
+console.log(inventory.get("iksir")); // get → 3
+console.log(inventory.has("kalkan")); // var mı? → false
+inventory.delete("kılıç");          // sil
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <p class="fragment">Bu hazır yapılar <b>nasıl</b> bu kadar hızlı? Bugün bir yöntemi (ağaçlar), ileride diğerini (hash tabloları) göreceğiz.</p>
+</section>
+
+<section data-sec="arama">
+  <h2>İki basit yöntem</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">1) Sıralı arama <span class="en">sequential search</span></span>
+      Anahtarları sırasız bir listede tut. Ararken <b>baştan sona</b> tek tek bak.
+      <p class="mini">Ekleme: sona ekle (hızlı) · Arama: en kötü <b>N</b> karşılaştırma</p>
+    </div>
+    <div class="box prop"><span class="bt">2) İkili arama <span class="en">binary search</span></span>
+      Anahtarları <b>sıralı</b> bir dizide tut. Ortadakine bak; aradığın küçükse sol yarıda, büyükse sağ yarıda ara.
+      <p class="mini">Arama: en kötü <b>~lg N</b> karşılaştırma · Ekleme: ???</p>
+    </div>
+  </div>
+  <div class="demo" data-demo="binsearch" data-n="15"></div>
+  <aside class="notes">Önce sıralı aramayla son elemanı arayın (15 karşılaştırma), sonra ikili arama (en fazla 4). Dizide olmayan bir sayı da deneyin: ikili aramanın “lo &gt; hi” ile durduğunu gösterin.</aside>
+</section>
+
+<section data-sec="arama">
+  <h2>İkili arama — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-11|2|3-4|5-8|9-10|11"><script type="text/template">
+def binary_search(a, key):           # a SIRALI olmalı!
+    lo, hi = 0, len(a) - 1
+    while lo <= hi:                  # aralık boş değilken
+        mid = lo + (hi - lo) // 2    # ortadaki indeks
+        if key < a[mid]:
+            hi = mid - 1             # sol yarıda ara
+        elif key > a[mid]:
+            lo = mid + 1             # sağ yarıda ara
+        else:
+            return mid               # bulundu
+    return -1                        # yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int BinarySearch(int[] a, int key)    // a SIRALI olmalı!
+{
+    int lo = 0, hi = a.Length - 1;
+    while (lo <= hi)
+    {
+        int mid = lo + (hi - lo) / 2;
+        if      (key < a[mid]) hi = mid - 1;   // sol yarı
+        else if (key > a[mid]) lo = mid + 1;   // sağ yarı
+        else return mid;                       // bulundu
+    }
+    return -1;                                 // yok
+}
+// Hazırı: Array.BinarySearch(a, key)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function binarySearch(a, key) {        // a SIRALI olmalı!
+  let lo = 0, hi = a.length - 1;
+  while (lo <= hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (key < a[mid]) hi = mid - 1;    // sol yarı
+    else if (key > a[mid]) lo = mid + 1; // sağ yarı
+    else return mid;                   // bulundu
+  }
+  return -1;                           // yok
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="fragment mini">Python’da hazırı: <code>bisect</code> modülü. Değişmez <span class="en">invariant</span>: “anahtar dizideyse, <code>a[lo…hi]</code> aralığındadır.”</p>
+</section>
+
+<section data-sec="arama · matematik">
+  <h2>📐 Logaritma: “kaç kez yarıya bölebilirim?” <span class="en">logarithm</span></h2>
+  <div class="demo" data-demo="log2"></div>
+  <div class="cols fragment">
+    <div class="box prop"><span class="bt">Tanım (basitçe)</span>\( \lg N = \log_2 N \) = N’i 1’e inene kadar kaç kez ikiye bölebilirsin. Ya da: 2’yi kaç kez çarparsan N olur? \( 2^{10} = 1024 \)</div>
+    <div class="box story"><span class="bt">🧠 Akılda tutma hilesi</span>\( 2^{10} \approx 1000 \) (bin) · \( 2^{20} \approx \) 1 milyon · \( 2^{30} \approx \) 1 milyar. Yani 1 milyar sıralı kayıtta ikili arama: <b>~30 adım</b>.</div>
+  </div>
+</section>
+
+<section data-sec="arama · oyun">
+  <h2>🎮 Sayı tahmin oyunu</h2>
+  <div class="demo" data-demo="guess"></div>
+  <p class="mini">Bilgisayar modunda 1–100 arası bir sayı tutun ve dürüst cevap verin. Bilgisayar ikili arama yapıyor: en fazla <b>7</b> tahminde bulur, çünkü \( 2^7 = 128 \ge 100 \).</p>
+  <aside class="notes">Önce bir öğrenciye “Sen tahmin et” modunu oynatın; sınıf tahmin sayısını tutsun. Sonra bilgisayar modunu gösterin. Mavi aralık her adımda yarıya iniyor.</aside>
+</section>
+
+<section data-sec="arama">
+  <div class="quiz" data-answer="D">
+    <div class="qhead">Quiz 3 · arama</div>
+    <div class="q">1.000.000 elemanlı <b>sıralı</b> bir dizide ikili arama en kötü durumda yaklaşık kaç karşılaştırma yapar?</div>
+    <div class="opts">
+      <button data-opt="A">~1.000.000</button>
+      <button data-opt="B">~500.000</button>
+      <button data-opt="C">~1.000</button>
+      <button data-opt="D">~20</button>
+    </div>
+    <div class="explain">\( 2^{20} \approx 1.048.576 \) → 20 kez yarıya bölünce tek eleman kalır. Sıralı arama ise en kötü 1.000.000 karşılaştırma yapardı: <b>50.000 kat</b> fark!</div>
+  </div>
+</section>
+
+<section data-sec="arama · kod">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 4 · arama · kod</div>
+    <div class="q">İkili arama kodunda <code>while (lo &lt;= hi)</code> yerine <code>while (lo &lt; hi)</code> yazarsak ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Hiçbir şey değişmez</button>
+      <button data-opt="B">Sonsuz döngüye girer</button>
+      <button data-opt="C">Bazen dizide <b>olan</b> bir anahtar için “yok” der</button>
+      <button data-opt="D">Dizi dışına taşar ve çöker</button>
+    </div>
+    <div class="explain">Aralık tek elemana indiğinde (<code>lo == hi</code>) döngü o elemana hiç bakmadan biter. Örn. <code>[7]</code> dizisinde 7’yi ararsak hemen −1 döner. Bu tür “bir eksik/bir fazla” hatalarına <b>off-by-one</b> hatası denir — ikili aramada çok yaygındır.</div>
+  </div>
+</section>
+
+<section data-sec="arama · hikâye">
+  <h2>📜 Basit görünen, yazması zor bir algoritma</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">1946 → 1962</span>Knuth’a göre ikili arama ilk kez 1946’da yayımlandı; ama <b>her N için doğru çalışan</b> ilk sürüm ancak 1962’de çıktı.</div>
+      <div class="box story"><span class="bt">%90</span>Jon Bentley, profesyonel programcılara ikili arama yazdırdığında çoğunun kodunda hata buldu (<i>Programming Pearls</i>).</div>
+      <div class="box story"><span class="bt">2006</span>Joshua Bloch: Java’nın kendi kütüphanesindeki ikili arama <b>9 yıl</b> boyunca hatalıydı! Hata: <code>mid = (lo + hi) / 2</code></div>
+    </div>
+    <div>
+  <div class="tabs ">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int mid = (lo + hi) / 2;       // ❌ lo + hi > 2.147.483.647 olursa
+                               //    sayı TAŞAR ve NEGATİF olur!
+int mid = lo + (hi - lo) / 2;  // ✅ taşma yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+mid = (lo + hi) // 2       # Python'da sorun yok: tamsayılar sınırsız büyür
+mid = lo + (hi - lo) // 2  # ama C#/C++/Java'ya geçince bu alışkanlık hayat kurtarır
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const mid = Math.floor((lo + hi) / 2); // sayılar 2^53'e kadar güvenli
+const mid2 = (lo + hi) >>> 1;          // ✅ yaygın hile (işaretsiz kaydırma)
+const mid3 = (lo + hi) >> 1;           // ❌ 2^31'i aşınca negatif olur!
+</script></code></pre>
+    </div>
+  </div>
+      <div class="box low"><span class="bt">⚙️ Tamsayı taşması <span class="en">integer overflow</span></span>C#’ta <code>int</code> 32 bittir: en büyük değer 2.147.483.647. Bir fazlası en küçük negatif sayıya “sarar”. Oyunlarda da çok görülür (efsane: Civilization’daki “nükleer Gandhi”).</div>
+    </div>
+  </div>
+  <aside class="notes">Nükleer Gandhi hikâyesi büyük ölçüde bir şehir efsanesidir (Sid Meier de bunu sonradan söyledi); bunu “efsane” olarak anlatın. Kaynak: Bloch’un 2006 Google Research blog yazısı (Kaynaklar slaytında).</aside>
+</section>
+
+<section data-sec="arama">
+  <h2>Peki ekleme? Sıralı dizinin bedeli</h2>
+  <div class="cols c64">
+    <div>
+      <p>Sıralı diziye yeni bir anahtar eklemek için ondan büyük olanların hepsini <b>bir sağa kaydırmak</b> gerekir — insertion sort’un tek adımı gibi!</p>
+      <table class="sum-t" style="font-size:21px">
+        <tr><th>yapı</th><th>arama</th><th>ekleme</th></tr>
+        <tr><td>sırasız liste (sıralı arama)</td><td class="no">N</td><td class="yes">1</td></tr>
+        <tr><td>sıralı dizi (ikili arama)</td><td class="yes">lg N</td><td class="no">N</td></tr>
+        <tr class="fragment"><td>❓ ikisinin de iyi yanı</td><td class="yes">lg N</td><td class="yes">lg N</td></tr>
+      </table>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Neden önemli?</span>1 milyon oyunculu bir skor tablosuna saniyede yüzlerce yeni skor geliyor. Her eklemede 500.000 elemanı kaydırmak = sunucu alarmı 🚨</div>
+  </div>
+  <p class="fragment big c-green">Çözüm: ikili aramanın “ortadakine bak, sola/sağa git” fikrini bir <b>ağaca</b> dönüştürmek → BST!</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #07332a 0%, #3a0d33 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">İkili Arama Ağacı</div>
+  <div class="sub"><i>binary search tree (BST)</i> — solum küçük, sağım büyük</div>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="on">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="BST">
+  <h2>Tanım: ikili arama ağacı <span class="en">BST</span></h2>
+  <div class="cols c46">
+    <div>
+      <p>Her düğüm bir <b>anahtar</b> (ve değer) taşır ve şu kurala uyar:</p>
+      <div class="box prop"><span class="bt">Simetrik sıra <span class="en">symmetric order</span></span>
+        Her düğümün anahtarı, <b>sol</b> alt ağacındaki tüm anahtarlardan <b>büyük</b>, <b>sağ</b> alt ağacındaki tüm anahtarlardan <b>küçüktür</b>.
+      </div>
+      <p class="fragment">Kök = ikili aramadaki “ortadaki eleman”. Sol alt ağaç = sol yarı, sağ alt ağaç = sağ yarı. 💡</p>
+      <p class="fragment mini">Dikkat: kural sadece çocuklar için değil, <b>tüm alt ağaç</b> için geçerli.</p>
+    </div>
+    <div class="bstviz" data-keys="S E A R C H X M P L" data-ops="get" data-w="700" data-h="330" data-nulls data-hint="Ağaçtan bir harf yazıp Ara’ya basın. Küçük noktalar = null bağlantılar."></div>
+  </div>
+</section>
+
+<section data-sec="BST">
+  <h2>Arama <span class="en">search / get</span>: ikili aramanın ağaç hali</h2>
+  <div class="cols c46">
+    <div>
+      <ol>
+        <li>Ağaç boşsa (<code>null</code>) → <b>yok</b> <span class="en">search miss</span></li>
+        <li>Anahtar köke eşitse → <b>bulundu</b> <span class="en">search hit</span></li>
+        <li>Küçükse → <b>sol</b> alt ağaçta ara</li>
+        <li>Büyükse → <b>sağ</b> alt ağaçta ara</li>
+      </ol>
+      <p class="fragment">Her adımda bir alt ağacı <b>tamamen</b> eleriz.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-11|2-3|4-5|6-7|8-9"><script type="text/template">
+def get(x, key):
+    if x is None:
+        return None                  # bulunamadı
+    if key < x.key:
+        return get(x.left, key)      # sol alt ağaçta ara
+    elif key > x.key:
+        return get(x.right, key)     # sağ alt ağaçta ara
+    else:
+        return x.val                 # bulundu!
+
+get(root, "H")                       # kullanım: kökten başla
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+string Get(Node x, int key)
+{
+    if (x == null) return null;                 // bulunamadı
+    if      (key < x.Key) return Get(x.Left, key);
+    else if (key > x.Key) return Get(x.Right, key);
+    else                  return x.Val;         // bulundu!
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function get(x, key) {
+  if (x === null) return null;                // bulunamadı
+  if (key < x.key) return get(x.left, key);   // sol alt ağaç
+  if (key > x.key) return get(x.right, key);  // sağ alt ağaç
+  return x.val;                               // bulundu!
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Java (kitap)">
+<pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
+private Value get(Node x, Key key) {
+    if (x == null) return null;
+    int cmp = key.compareTo(x.key);
+    if      (cmp < 0) return get(x.left, key);
+    else if (cmp > 0) return get(x.right, key);
+    else              return x.val;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="BST">
+  <h2>Arama animasyonu — çağrı yığını ile</h2>
+  <div class="bstviz" data-keys="S E A R C H X M P L" data-ops="get,min,max" data-stack data-default="H" data-h="340" data-hint="H’yi arayın, sonra ağaçta olmayan bir harf (ör. G) deneyin. Sağda özyinelemeli çağrılar yığına ekleniyor."></div>
+  <aside class="notes">Yığın panelinde her get çağrısının üst üste bindiğini gösterin. min/max: sürekli sola / sağa gitmek. Ağaçta olmayan bir anahtar için null’a kadar inildiğini gösterin.</aside>
+</section>
+
+<section data-sec="BST">
+  <h2>Ekleme <span class="en">insert / put</span>: ara, bulamadığın yere ekle</h2>
+  <div class="cols c46">
+    <div>
+      <ol>
+        <li>Önce <b>ara</b>.</li>
+        <li>Anahtar varsa → değerini <b>güncelle</b>.</li>
+        <li><code>null</code> bir bağlantıya ulaştıysan → oraya <b>yeni düğüm</b> koy.</li>
+      </ol>
+      <div class="box warn fragment"><span class="bt">⚠️ En önemli satır</span><code>x.left = put(x.left, …)</code><br>Özyineleme yeni (ya da aynı) alt ağacın kökünü <b>döndürür</b>; biz de bağlantıyı onunla <b>yeniden kurarız</b>. Böylece yeni düğüm ebeveynine bağlanmış olur.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-13|2-3|4-7|8-9|10-11"><script type="text/template">
+def put(x, key, val):
+    if x is None:
+        return Node(key, val)             # yeni düğüm
+    if key < x.key:
+        x.left = put(x.left, key, val)    # ← bağlantıyı yeniden kur
+    elif key > x.key:
+        x.right = put(x.right, key, val)
+    else:
+        x.val = val                       # anahtar var → güncelle
+    x.size = 1 + size(x.left) + size(x.right)
+    return x                              # bu alt ağacın kökü
+
+root = put(root, "S", 1)                  # kullanım
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node Put(Node x, int key, string val)
+{
+    if (x == null) return new Node(key, val);      // yeni düğüm
+    if      (key < x.Key) x.Left  = Put(x.Left,  key, val);
+    else if (key > x.Key) x.Right = Put(x.Right, key, val);
+    else                  x.Val = val;             // güncelle
+    x.Size = 1 + Size(x.Left) + Size(x.Right);
+    return x;
+}
+// root = Put(root, 42, "Ayşe");
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function put(x, key, val) {
+  if (x === null) return new Node(key, val);        // yeni düğüm
+  if (key < x.key)      x.left  = put(x.left, key, val);
+  else if (key > x.key) x.right = put(x.right, key, val);
+  else                  x.val = val;                // güncelle
+  x.size = 1 + size(x.left) + size(x.right);
+  return x;
+}
+// root = put(root, "S", 1);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Java (kitap)">
+<pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
+private Node put(Node x, Key key, Value val) {
+    if (x == null) return new Node(key, val, 1);
+    int cmp = key.compareTo(x.key);
+    if      (cmp < 0) x.left  = put(x.left,  key, val);
+    else if (cmp > 0) x.right = put(x.right, key, val);
+    else              x.val   = val;
+    x.size = 1 + size(x.left) + size(x.right);
+    return x;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="BST">
+  <h2>Ekleme animasyonu: S E A R C H E X A M P L E</h2>
+  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-stack data-seq="S E A R C H E X A M P L E" data-h="330" data-hint="▶ Sırayla ekle: kitaptaki klasik örnek. Ya da kendi harfinizi yazıp Ekle’ye basın (Enter)."></div>
+  <aside class="notes">Kitaptaki “BST construction” izinin aynısı. İkinci E ve ikinci A geldiğinde yeni düğüm OLUŞMAZ (değer güncellenir). Kendi harfleri ile ekleme yapın; dönüş (return) adımlarında yığından çıkılırken bağlantıların yeniden kurulduğunu gösterin.</aside>
+</section>
+
+<section data-sec="BST">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · BST</div>
+    <div class="q"><code>S E A R C H X M P L</code> ağacına (önceki slaytlardaki ağaç) <b>D</b> eklenirse nereye gider?</div>
+    <div class="opts">
+      <button data-opt="A">A’nın sol çocuğu</button>
+      <button data-opt="B">C’nin sağ çocuğu</button>
+      <button data-opt="C">E’nin sol çocuğu</button>
+      <button data-opt="D">H’nin sol çocuğu</button>
+    </div>
+    <div class="explain">D &lt; S → sola (E) · D &lt; E → sola (A) · D &gt; A → sağa (C) · D &gt; C → sağa: <b>null</b> → D, C’nin sağ çocuğu olur. Ekleme hep bir <b>null</b> bağlantıya, yani yaprak olarak yapılır.</div>
+  </div>
+</section>
+
+<section data-sec="BST · kod">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 6 · BST · kod</div>
+    <div class="q"><code>put</code> fonksiyonunda <code>x.left = put(x.left, key, val)</code> yerine sadece <code>put(x.left, key, val)</code> yazarsak ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Hiçbir şey; sonuç aynı</button>
+      <button data-opt="B">Yığın taşması</button>
+      <button data-opt="C">İlk anahtardan sonra eklenen düğümler (bir kısmı) <b>kaybolur</b></button>
+      <button data-opt="D">Ağaç ters (ayna) olur</button>
+    </div>
+    <div class="explain">Yeni düğüm oluşturulur ama <b>hiçbir ebeveyne bağlanmaz</b>: döndürülen değer çöpe gider. Sonra çöp toplayıcı onu siler. Kod laboratuvarında deneyin: “ağaçta 3 düğüm var ama 10 anahtar eklendi” mesajını göreceksiniz.</div>
+  </div>
+</section>
+
+<section data-sec="BST · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: put</h2>
+  <div class="treelab" data-lang="js" data-task="put" data-keys="S E A R C H E X A M P L E">
+<textarea>
+// Node: new Node(key) ile oluştur. Alanlar: key, left, right
+function put(node, key) {
+  if (node === null) return new Node(key);
+  if (key < node.key) {
+    node.left = put(node.left, key);
+  } else if (key > node.key) {
+    node.right = put(node.right, key);
+  }
+  return node;
+}
+</textarea>
+    <div class="lab-tasks"><b>Tahmin et → değiştir → çalıştır (Ctrl+Enter):</b>
+      <ol>
+        <li>5. satırda <code>node.left = </code> kısmını sil. Kaç düğüm kaldı?</li>
+        <li><code>&lt;</code> ile <code>&gt;</code>’yi yer değiştir (4. ve 6. satır). Ağaç neye benzedi?</li>
+        <li>9. satırı (<code>return node;</code>) sil.</li>
+        <li>Anahtarlar: <b>sıralı A…J</b> seç. Ağacın şekli?</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">1) Düğümler kaybolur (Quiz 6). 2) Ayna BST: büyükler solda — tutarlı ama tanıma ters. 3) put undefined döner → ağaç boş kalır. 4) Bağlı liste gibi tek kollu ağaç: yükseklik N−1 → Level 4’ün konusu.</aside>
+</section>
+
+<section data-sec="BST · laboratuvar">
+  <h2>🐍 Aynı laboratuvar — Python (ve bir yığın taşması deneyi)</h2>
+  <div class="treelab" data-lang="python" data-task="put" data-keys="S E A R C H E X A M P L E">
+<textarea>
+# Node(key) ile oluştur. Alanlar: key, left, right
+def put(node, key):
+    if node is None:
+        return Node(key)
+    if key < node.key:
+        node.left = put(node.left, key)
+    elif key > node.key:
+        node.right = put(node.right, key)
+    return node
+</textarea>
+    <div class="lab-tasks">Python tarayıcıda çalışır (ilk açılışta internet gerekir).
+      <ol>
+        <li>Önce S E A R C H E X A M P L E ile çalıştır.</li>
+        <li>Hazır listeden <b>1..1200 (çok derin!)</b> seç. Hata mesajını oku: neden?</li>
+        <li>Fonksiyonu <code>while</code> döngüsüyle (özyinelemesiz) yeniden yaz ve 1..1200’ü tekrar dene.</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">Sıralı 1..1200 eklemek 1199 derinliğinde bir ağaç üretir; özyinelemeli put her seviyede bir çağrı yapar ve Python'un özyineleme sınırına (~1000) takılır: RecursionError. Bu, “yığın taşması”nın canlı bir örneğidir. Özyinelemesiz sürüm sorunsuz çalışır (ama ağaç yine de kötü şekilli!).</aside>
+</section>
+
+<section data-sec="BST">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 7 · BST</div>
+    <div class="q">Bir BST’yi <b>inorder</b> (sol → kök → sağ) gezersek anahtarlar hangi sırayla çıkar?</div>
+    <div class="opts">
+      <button data-opt="A">Eklendikleri sırayla</button>
+      <button data-opt="B">Küçükten büyüğe <b>sıralı</b></button>
+      <button data-opt="C">Seviye seviye</button>
+      <button data-opt="D">Rastgele</button>
+    </div>
+    <div class="explain">Simetrik sıra kuralı yüzünden: önce soldaki (hepsi küçük) anahtarlar, sonra kök, sonra sağdakiler (hepsi büyük). Yani N anahtarı bir BST’ye ekleyip inorder gezmek bir <b>sıralama algoritmasıdır</b> (“tree sort”) — sıralama dersine selam! 👋</div>
+  </div>
+</section>
+
+<section data-sec="BST · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: inorder gezinme</h2>
+  <div class="treelab" data-lang="js" data-task="traverse" data-keys="S E A R C H X M P L">
+<textarea>
+// node: ağacın kökü (Node: key, left, right)
+// visit(key): bir anahtarı "ziyaret et" (çıktıya yaz)
+function inorder(node, visit) {
+  if (node === null) return;
+  inorder(node.left, visit);
+  visit(node.key);
+  inorder(node.right, visit);
+}
+</textarea>
+    <div class="lab-tasks"><b>Görevler:</b>
+      <ol>
+        <li>Çalıştır: çıktı sıralı mı?</li>
+        <li>6. satırı 5. satırın üstüne taşı. Laboratuvar hangi gezinme olduğunu söylüyor?</li>
+        <li>Postorder yap. Sonra 4. satırı (temel durum) sil — ne oldu?</li>
+        <li>Büyükten küçüğe yazdırmak için ne değiştirmelisin?</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">2) preorder. 3) Temel durum silinince node null iken node.left okunur → TypeError (Python’da AttributeError). 4) Önce sağ, sonra kök, sonra sol (ters inorder) → skor tablosunu büyükten küçüğe yazdırmak.</aside>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Şekil ve Performans</div>
+  <div class="sub">Aynı anahtarlar, farklı sıra → bambaşka ağaçlar</div>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="on">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="performans">
+  <h2>Ekleme sırası ağacın şeklini belirler</h2>
+  <div class="demo" data-demo="bstshape"></div>
+  <aside class="notes">Sağdaki sırayı “sıralı” yapın: ağaç tek kollu bir zincire, yani bağlı listeye dönüşür; yükseklik N−1. “Dengeli (ortanca önce)” seçince yükseklik ⌊lg N⌋ olur. Soldaki rastgele sıra genelde ikisinin arasında ama dengeliye çok daha yakın.</aside>
+</section>
+
+<section data-sec="performans">
+  <h2>Ne kadar hızlı? 📐</h2>
+  <div class="cols c46">
+    <div>
+      <p>Arama/ekleme maliyeti = kökten o düğüme <b>yol uzunluğu</b> (derinlik + 1).</p>
+      <ul>
+        <li><b>En iyi</b> (mükemmel dengeli): ~lg N</li>
+        <li><b>En kötü</b> (sıralı ekleme): N</li>
+        <li><b>Ortalama</b> (rastgele sırayla ekleme): ?</li>
+      </ul>
+      <div class="box prop fragment"><span class="bt">Önerme</span>
+        N farklı anahtar <b>rastgele sırayla</b> eklenirse, BST’de başarılı bir arama ortalama <b>~2 ln N ≈ 1,39 lg N</b> karşılaştırma yapar.
+        <p class="mini">Yani mükemmel dengeli ağaçtan sadece <b>%39</b> daha kötü! (Kanıtı kitapta; quicksort’un analiziyle aynı matematik.)</p>
+      </div>
+    </div>
+    <div class="demo" data-demo="depthexp"></div>
+  </div>
+  <aside class="notes">Deneyi çalıştırın: ölçülen ortalama karşılaştırma 2 ln N’ye yakın çıkar (küçük sabit terimler yüzünden biraz altında). Ortalama yükseklik de yaklaşık 3 lg N civarındadır. Sıralı eklemede ise yükseklik N−1: 1 milyon anahtarda 999.999!</aside>
+</section>
+
+<section data-sec="performans">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 8 · performans</div>
+    <div class="q">1’den 7’ye kadar anahtarları hangi sırayla eklersek <b>mükemmel dengeli</b> (yüksekliği 2 olan) bir BST elde ederiz?</div>
+    <div class="opts">
+      <button data-opt="A">1 2 3 4 5 6 7</button>
+      <button data-opt="B">4 2 6 1 3 5 7</button>
+      <button data-opt="C">7 6 5 4 3 2 1</button>
+      <button data-opt="D">4 1 2 3 5 6 7</button>
+    </div>
+    <div class="explain">Önce ortanca (4) kök olur, sonra her yarının ortancası (2 ve 6), sonra kalanlar. Bu “ortanca önce” sırası = ikili aramanın baktığı sıra! (D’de 1-2-3 zincir oluşturur.)</div>
+  </div>
+</section>
+
+<section data-sec="performans · oyunda">
+  <h2>⚠️ Oyunlarda tehlike: veri çoğu zaman <b>sıralı</b> gelir</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>Oyuncu ID’leri: 1, 2, 3, 4… (veritabanı otomatik artırır)</li>
+        <li>Zaman damgaları <span class="en">timestamp</span>: hep artar</li>
+        <li>Önceden sıralanmış dosyadan yüklenen seviye verisi</li>
+      </ul>
+      <p class="fragment">→ Düz bir BST bu verilerle <b>bağlı listeye</b> döner. Arama 1 milyon adım!</p>
+    </div>
+    <div>
+      <div class="box game fragment"><span class="bt">✅ Çözüm 1: dengeli ağaçlar</span>Kendini her eklemede yeniden düzenleyen ağaçlar: <b>2-3 ağacı</b>, <b>kırmızı-siyah ağaç</b> <span class="en">red-black tree</span>. En kötü durumda bile ~lg N. → <b>Sonraki ders!</b></div>
+      <div class="box story fragment"><span class="bt">✅ Çözüm 2: karıştır</span>Hepsi baştan biliniyorsa önce <b>Fisher–Yates</b> ile karıştır, sonra ekle (sıralama dersindeki karıştırma!).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="performans · kaputun altında">
+  <h2>⚙️ Derin ağaç + özyineleme = yığın taşması <span class="en">stack overflow</span></h2>
+  <div class="cols c46">
+    <div>
+      <p>Özyinelemeli <code>get/put</code> her seviyede yığına bir kare ekler. Yükseklik 100.000 olursa yığında 100.000 kare!</p>
+      <ul>
+        <li><b>Python</b>: varsayılan özyineleme sınırı ~1000 → <code>RecursionError</code></li>
+        <li><b>C#</b>: <code>StackOverflowException</code> <b>yakalanamaz</b> — program (oyun!) anında kapanır 💥</li>
+        <li><b>JavaScript</b>: <code>RangeError: Maximum call stack size exceeded</code></li>
+      </ul>
+      <p class="fragment">Çözüm: dengeli ağaç kullan ya da <b>döngüyle</b> (özyinelemesiz) yaz.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def get(root, key):          # özyinelemesiz: yığın büyümez
+    x = root
+    while x is not None:
+        if key < x.key:
+            x = x.left
+        elif key > x.key:
+            x = x.right
+        else:
+            return x.val
+    return None
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+string Get(Node root, int key)   // özyinelemesiz: yığın büyümez
+{
+    Node x = root;
+    while (x != null)
+    {
+        if      (key < x.Key) x = x.Left;
+        else if (key > x.Key) x = x.Right;
+        else return x.Val;
+    }
+    return null;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function get(root, key) {      // özyinelemesiz: yığın büyümez
+  let x = root;
+  while (x !== null) {
+    if (key < x.key) x = x.left;
+    else if (key > x.key) x = x.right;
+    else return x.val;
+  }
+  return null;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2b0d45 0%, #0f2a3d 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Sıralı İşlemler</div>
+  <div class="sub"><i>ordered operations</i> — BST’nin hash tablosuna karşı kozu</div>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="on">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="sıralı işlemler">
+  <h2>BST sadece “var mı?” sorusuna cevap vermez</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>işlem</th><th>ne döndürür?</th><th>🎮 oyunda</th></tr>
+    <tr><td><code>min()</code> / <code>max()</code></td><td>en küçük / en büyük anahtar</td><td>en düşük / en yüksek skor</td></tr>
+    <tr><td><code>floor(k)</code> <span class="mini">taban</span></td><td>≤ k olan en büyük anahtar</td><td>MMR’ı 1530 olan oyuncuya <b>alttan</b> en yakın rakip</td></tr>
+    <tr><td><code>ceiling(k)</code> <span class="mini">tavan</span></td><td>≥ k olan en küçük anahtar</td><td>…<b>üstten</b> en yakın rakip</td></tr>
+    <tr><td><code>rank(k)</code> <span class="mini">sıra</span></td><td>k’den küçük kaç anahtar var?</td><td>“Skor tablosunda kaçıncıyım?”</td></tr>
+    <tr><td><code>select(i)</code> <span class="mini">seç</span></td><td>i. sıradaki anahtar</td><td>“10. sıradaki oyuncu kim?”</td></tr>
+    <tr><td><code>keys(lo, hi)</code> <span class="mini">aralık</span></td><td>[lo, hi] arasındaki anahtarlar</td><td>“Seviyesi 20–25 arası oyuncular”</td></tr>
+  </table>
+  <div class="box story fragment"><span class="bt">🔑 Hash tablosu (Dictionary) bunları yapamaz!</span>Hash tabloları <code>get/put</code>’ta BST’den de hızlıdır, ama anahtarları <b>sırasız</b> saklar. “En yakın rakip” ya da “kaçıncıyım” sorusu için tüm tabloyu taramak gerekir. (Hash tabloları: ileriki bir ders.)</div>
+</section>
+
+<section data-sec="sıralı işlemler">
+  <h2>floor ve ceiling <span class="en">taban · tavan</span></h2>
+  <div class="cols c46">
+    <div>
+      <p><code>floor(k)</code>:</p>
+      <ul>
+        <li>k = kök → cevap kök</li>
+        <li>k &lt; kök → cevap <b>kesinlikle solda</b></li>
+        <li>k &gt; kök → kök bir <b>aday</b>; sağda ≤ k daha büyük biri varsa o, yoksa kök</li>
+      </ul>
+      <p class="mini">ceiling: aynısının ayna görüntüsü.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def floor(x, key):             # <= key olan EN BÜYÜK düğüm
+    if x is None:
+        return None
+    if key == x.key:
+        return x
+    if key < x.key:
+        return floor(x.left, key)      # cevap solda olmalı
+    t = floor(x.right, key)            # sağda daha iyisi var mı?
+    return t if t is not None else x   # yoksa x'in kendisi
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node Floor(Node x, int key)          // <= key olan EN BÜYÜK düğüm
+{
+    if (x == null) return null;
+    if (key == x.Key) return x;
+    if (key < x.Key) return Floor(x.Left, key);   // cevap solda
+    Node t = Floor(x.Right, key);                 // sağda daha iyisi?
+    return t ?? x;                                // yoksa x
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function floor(x, key) {             // <= key olan EN BÜYÜK düğüm
+  if (x === null) return null;
+  if (key === x.key) return x;
+  if (key < x.key) return floor(x.left, key);   // cevap solda
+  const t = floor(x.right, key);                // sağda daha iyisi?
+  return t !== null ? t : x;                    // yoksa x
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="sıralı işlemler · oyunda">
+  <h2>🎮 Eşleştirme sistemi <span class="en">matchmaking</span>: en yakın MMR</h2>
+  <div class="bstviz" data-type="num" data-keys="1500 1320 1710 1180 1420 1610 1850 1050 1260 1380 1470 1560 1660 1790 1950" data-ops="floor,ceil,get,put,rank" data-default="1530" data-h="330" data-hint="Bekleme odasındaki oyuncuların MMR puanları. 1530 puanlı yeni oyuncuya en yakın rakip? floor ve ceiling’i deneyin."></div>
+  <aside class="notes">floor(1530)=1500, ceiling(1530)=1560 → 1560 daha yakın (30 fark). Sadece ~4 karşılaştırma! Gerçek eşleştirme sistemleri bekleme süresi, gecikme (ping), bölge gibi başka kriterler de kullanır ama temel soru budur. Sonra “rank”: 1530 kaçıncı sıraya girerdi?</aside>
+</section>
+
+<section data-sec="sıralı işlemler">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 9 · sıralı işlemler</div>
+    <div class="q"><code>A C E H L M P R S X</code> anahtarlarını içeren bir BST’de <code>floor(G)</code> ve <code>ceiling(Q)</code> nedir?</div>
+    <div class="opts">
+      <button data-opt="A">floor(G) = H, ceiling(Q) = P</button>
+      <button data-opt="B">floor(G) = E, ceiling(Q) = R</button>
+      <button data-opt="C">floor(G) = G, ceiling(Q) = Q</button>
+      <button data-opt="D">floor(G) = E, ceiling(Q) = P</button>
+    </div>
+    <div class="explain">floor(G): G’den küçük ya da eşit olan en büyük anahtar → <b>E</b>. ceiling(Q): Q’dan büyük ya da eşit olan en küçük anahtar → <b>R</b>. Ağacın şekli cevabı değiştirmez; sadece kaç adımda bulunacağını değiştirir.</div>
+  </div>
+</section>
+
+<section data-sec="sıralı işlemler">
+  <h2>rank ve select: <code>size</code> alanının gücü</h2>
+  <div class="cols c46">
+    <div>
+      <p>Her düğüm kendi alt ağacının <b>boyutunu</b> tutar: <code>size(x) = 1 + size(sol) + size(sağ)</code> (put sırasında güncellenir).</p>
+      <p><b>rank(k)</b>: sağa her gittiğimizde “kök + sol alt ağacın tamamı” k’den küçüktür → ekle.</p>
+      <p><b>select(i)</b>: sol alt ağaçta <i>t</i> anahtar var. i &lt; t → sol; i &gt; t → sağ (i − t − 1); i = t → bulduk.</p>
+    </div>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def size(x):
+    return 0 if x is None else x.size
+
+def rank(x, key):              # key'den KÜÇÜK kaç anahtar var?
+    if x is None: return 0
+    if key < x.key:
+        return rank(x.left, key)
+    if key > x.key:
+        return 1 + size(x.left) + rank(x.right, key)
+    return size(x.left)
+
+def select(x, i):              # i. en küçük (0'dan sayarak)
+    t = size(x.left)
+    if i < t:  return select(x.left, i)
+    if i > t:  return select(x.right, i - t - 1)
+    return x
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int Size(Node x) => x == null ? 0 : x.Size;
+
+int Rank(Node x, int key)          // key'den KÜÇÜK kaç anahtar?
+{
+    if (x == null) return 0;
+    if (key < x.Key) return Rank(x.Left, key);
+    if (key > x.Key) return 1 + Size(x.Left) + Rank(x.Right, key);
+    return Size(x.Left);
+}
+
+Node Select(Node x, int i)         // i. en küçük (0'dan)
+{
+    int t = Size(x.Left);
+    if (i < t) return Select(x.Left, i);
+    if (i > t) return Select(x.Right, i - t - 1);
+    return x;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const size = x => (x === null ? 0 : x.size);
+
+function rank(x, key) {            // key'den KÜÇÜK kaç anahtar?
+  if (x === null) return 0;
+  if (key < x.key) return rank(x.left, key);
+  if (key > x.key) return 1 + size(x.left) + rank(x.right, key);
+  return size(x.left);
+}
+
+function select(x, i) {            // i. en küçük (0'dan)
+  const t = size(x.left);
+  if (i < t) return select(x.left, i);
+  if (i > t) return select(x.right, i - t - 1);
+  return x;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="sıralı işlemler · oyunda">
+  <h2>🎮 Skor tablosu: “Kaçıncıyım?” — rank ve select</h2>
+  <div class="bstviz" data-type="num" data-keys="500 250 750 120 380 620 880 60 190 310 440 560 690 810 950" data-ops="rank,select,range" data-sizes data-default="600" data-h="340" data-hint="Düğümlerin sağ üstündeki küçük sayı = alt ağaç boyutu (size). rank(600) ve select(4)’ü deneyin; aralık için iki sayı yazın (ör. 300 700)."></div>
+  <aside class="notes">rank'te açık mavi zemin, sayılan sol alt ağaçları gösterir. Tüm ağacı gezmeden, sadece kökten yaprağa bir yol boyunca sayarak cevap buluyoruz. Aralık (range) sorgusunda budanan (✂) alt ağaçlara dikkat çekin: 15 düğümün hepsine bakılmıyor.</aside>
+</section>
+
+<section data-sec="sıralı işlemler · gerçek dünya">
+  <h2>Aralık sorgusu ve gerçek skor tabloları</h2>
+  <div class="cols c46">
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def keys(x, lo, hi, out):
+    if x is None: return
+    if lo < x.key:                 # solda da aralıkta anahtar olabilir
+        keys(x.left, lo, hi, out)
+    if lo <= x.key <= hi:          # bu düğüm aralıkta
+        out.append(x.key)
+    if hi > x.key:                 # sağda da olabilir
+        keys(x.right, lo, hi, out)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+void Keys(Node x, int lo, int hi, List<int> outList)
+{
+    if (x == null) return;
+    if (lo < x.Key) Keys(x.Left, lo, hi, outList);     // sol
+    if (lo <= x.Key && x.Key <= hi) outList.Add(x.Key); // kendisi
+    if (hi > x.Key) Keys(x.Right, lo, hi, outList);    // sağ
+}
+// Hazırı: sortedSet.GetViewBetween(lo, hi)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function keys(x, lo, hi, out) {
+  if (x === null) return;
+  if (lo < x.key) keys(x.left, lo, hi, out);          // sol
+  if (lo <= x.key && x.key <= hi) out.push(x.key);    // kendisi
+  if (hi > x.key) keys(x.right, lo, hi, out);         // sağ
+}
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <p>İnorder gezinmenin <b>budanmış</b> <span class="en">pruned</span> hali: aralık dışında kalan alt ağaçlara hiç girmez.</p>
+      <div class="box story"><span class="bt">🏆 Gerçek dünyada</span>Mobil oyunların çoğu skor tablosunu Redis adlı veritabanındaki <b>sıralı kümelerle</b> <span class="en">sorted set</span> tutar. İçeride BST’ye benzer sıralı bir yapı (<i>skip list</i>) var: “kaçıncıyım?” sorusu milyonlarca oyuncuda bile ~lg N adımda cevaplanır.</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Silme</div>
+  <div class="sub"><i>deletion</i> — en zor kısım: iki çocuklu düğüm</div>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="done">sıralı işlemler</li><li class="on">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="silme">
+  <h2>Önce kolayı: en küçüğü sil <span class="en">deleteMin</span></h2>
+  <div class="cols c46">
+    <div>
+      <ol>
+        <li>Sol bağlantı <code>null</code> olana kadar <b>sola</b> git.</li>
+        <li>O düğümü, kendi <b>sağ çocuğuyla</b> değiştir (sağ çocuğu yoksa <code>null</code>).</li>
+        <li>Dönüşte <code>size</code>’ları güncelle.</li>
+      </ol>
+      <p class="mini">🎮 Örnek: zaman sırasına göre tutulan olay kuyruğundan en eski olayı çıkarmak.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def delete_min(x):
+    if x.left is None:
+        return x.right             # en küçük bu → yerine sağ çocuğu
+    x.left = delete_min(x.left)    # bağlantıyı yeniden kur
+    x.size = 1 + size(x.left) + size(x.right)
+    return x
+
+root = delete_min(root)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node DeleteMin(Node x)
+{
+    if (x.Left == null) return x.Right;    // en küçük bu
+    x.Left = DeleteMin(x.Left);            // bağlantıyı yeniden kur
+    x.Size = 1 + Size(x.Left) + Size(x.Right);
+    return x;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function deleteMin(x) {
+  if (x.left === null) return x.right;   // en küçük bu
+  x.left = deleteMin(x.left);            // bağlantıyı yeniden kur
+  x.size = 1 + size(x.left) + size(x.right);
+  return x;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="silme">
+  <h2>Hibbard silmesi: üç durum <span class="en">Hibbard deletion</span></h2>
+  <div class="cols c3">
+    <div class="box game"><span class="bt">Durum 1: yaprak</span>Çocuğu yok → ebeveynin bağlantısını <code>null</code> yap. Kolay!</div>
+    <div class="box prop"><span class="bt">Durum 2: tek çocuk</span>Çocuğunu ebeveyne bağla (deleteMin gibi).</div>
+    <div class="box warn"><span class="bt">Durum 3: iki çocuk</span>Yerine <b>ardılı</b> <span class="en">successor</span> koy: sağ alt ağacın <b>en küçüğü</b>. Ardılı da kendi yerinden deleteMin ile çıkar.</div>
+  </div>
+  <p class="fragment">Neden ardıl? Ardıl, silinen anahtardan büyük olan <b>en küçük</b> anahtar: soldakilerin hepsinden büyük, sağdakilerin hepsinden küçük → simetrik sıra korunur. ✔</p>
+</section>
+
+<section data-sec="silme">
+  <h2>Hibbard silmesi — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def delete(x, key):
+    if x is None: return None
+    if key < x.key:   x.left = delete(x.left, key)
+    elif key > x.key: x.right = delete(x.right, key)
+    else:
+        if x.right is None: return x.left    # durum 1 ve 2
+        if x.left is None:  return x.right
+        t = x                                # durum 3:
+        x = min_node(t.right)                #   ardıl = sağdaki en küçük
+        x.right = delete_min(t.right)        #   ardılı yerinden çıkar
+        x.left = t.left                      #   eski solu bağla
+    x.size = 1 + size(x.left) + size(x.right)
+    return x
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node Delete(Node x, int key)
+{
+    if (x == null) return null;
+    if      (key < x.Key) x.Left  = Delete(x.Left, key);
+    else if (key > x.Key) x.Right = Delete(x.Right, key);
+    else
+    {
+        if (x.Right == null) return x.Left;   // durum 1 ve 2
+        if (x.Left  == null) return x.Right;
+        Node t = x;                           // durum 3:
+        x = Min(t.Right);                     //   ardıl
+        x.Right = DeleteMin(t.Right);
+        x.Left = t.Left;
+    }
+    x.Size = 1 + Size(x.Left) + Size(x.Right);
+    return x;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function del(x, key) {
+  if (x === null) return null;
+  if (key < x.key) x.left = del(x.left, key);
+  else if (key > x.key) x.right = del(x.right, key);
+  else {
+    if (x.right === null) return x.left;   // durum 1 ve 2
+    if (x.left === null) return x.right;
+    const t = x;                           // durum 3:
+    x = min(t.right);                      //   ardıl
+    x.right = deleteMin(t.right);
+    x.left = t.left;
+  }
+  x.size = 1 + size(x.left) + size(x.right);
+  return x;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="silme">
+  <h2>Silme animasyonu</h2>
+  <div class="bstviz" data-keys="S E A R C H X M P L" data-ops="del,delmin,put,reset" data-default="E" data-h="350" data-nulls data-hint="Önce bir yaprak (L), sonra tek çocuklu bir düğüm (A), sonra iki çocuklu bir düğüm (E) silin. ↺ ile başa dönün."></div>
+  <aside class="notes">E silinince ardılı H olur (sağ alt ağaç R-H-M-P-L’nin en küçüğü). H’nin yerine onun sağ çocuğu M geçer. Kökü (S) silmeyi de deneyin.</aside>
+</section>
+
+<section data-sec="silme">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 10 · silme</div>
+    <div class="q"><code>S E A R C H X M P L</code> ağacında <b>E</b> (iki çocuklu) silinirse yerine hangi anahtar gelir?</div>
+    <div class="opts">
+      <button data-opt="A">A</button>
+      <button data-opt="B">C</button>
+      <button data-opt="C">H</button>
+      <button data-opt="D">R</button>
+    </div>
+    <div class="explain">E’nin sağ alt ağacı: R, H, M, P, L. Bunların en küçüğü (sürekli sola giderek): R → H → (H’nin solu boş) → <b>H</b>. H, E’nin yerine geçer; H’nin eski yerine sağ çocuğu M gelir.</div>
+  </div>
+</section>
+
+<section data-sec="silme · hikâye">
+  <h2>📜 Hibbard’ın küçük sırrı</h2>
+  <div class="cols c64">
+    <div>
+      <p>Hibbard silmesi (1962) hep <b>sağdaki ardılı</b> kullanır: simetrik değil.</p>
+      <p class="fragment">Rastgele ekleme + silme işlemleri <b>uzun süre</b> devam ederse ağaç yavaş yavaş dengesini kaybeder: ortalama derinlik ~lg N yerine <b>~√N</b>’e doğru kayar.</p>
+      <p class="fragment">Basit ve <b>her durumda verimli</b>, simetrik bir BST silme algoritması bulmak uzun yıllar <b>çözülemeyen bir problem</b> olarak kaldı; pratikte çözüm: dengeli ağaçlar.</p>
+    </div>
+    <div class="box ask fragment"><span class="bt">🤔 Sizce?</span>Silerken bir seferinde <b>ardılı</b>, bir seferinde <b>öncülü</b> <span class="en">predecessor</span> (soldaki en büyük) kullansak ne olur? Rastgele seçsek?</div>
+  </div>
+  <aside class="notes">Rastgele ardıl/öncül seçimi pratikte dengeyi büyük ölçüde korur. Asıl çözüm bir sonraki dersin konusu olan dengeli arama ağaçlarıdır (2-3 ağaçları, kırmızı-siyah ağaçlar).</aside>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kaputun Altında &amp; Ötesi</div>
+  <div class="sub">bellek · çöp toplayıcı · hazır yapılar · uzaysal ağaçlar</div>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="done">sıralı işlemler</li><li class="done">silme</li><li class="on">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ Ağaçlar bellekte: düğümler dağınık durur</h2>
+  <div class="cols">
+    <div>
+      <p>Her düğüm ayrı bir <b>nesne</b> <span class="en">object</span>: anahtar + değer + 2 referans + size + nesne başlığı <span class="en">object header</span>.</p>
+      <p>64-bit C#’ta küçük bir düğüm bile <b>~40–50 bayt</b>; bir <code>int</code> dizisinin elemanı ise 4 bayt.</p>
+      <p class="fragment">Düğümler bellekte <b>rastgele yerlerde</b> → kökten yaprağa her adım büyük ihtimalle bir <b>önbellek ıskası</b> <span class="en">cache miss</span> (sıralama dersindeki bağlı liste demosu!).</p>
+    </div>
+    <div>
+      <div class="box low fragment"><span class="bt">⚙️ B-ağaçları <span class="en">B-tree</span></span>Veritabanları ve dosya sistemleri her düğüme <b>yüzlerce anahtar</b> sığdırır; böylece her disk/önbellek okuması çok iş görür. Ağaç çok <b>basık</b> olur: 1 milyar kayıt → 3–4 seviye!</div>
+      <div class="box game fragment"><span class="bt">🎮 Oyun motorlarında</span>Fizik ve görüntüleme için kullanılan ağaçlar (ör. BVH) genellikle düğüm nesneleri yerine <b>düz dizilerde</b> saklanır — hem önbellek dostu hem çöp toplayıcıya yük yok.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ Nesne yerine dizi: işaretçi yerine indeks</h2>
+  <div class="cols c64">
+  <div class="tabs ">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Düğüm nesneleri yerine paralel diziler:
+// tek seferde ayrılır → GC'ye çöp yok, bellekte yan yana
+int[] key   = new int[MAX];
+int[] left  = new int[MAX];    // -1 = null
+int[] right = new int[MAX];
+int count = 0;
+
+int NewNode(int k)
+{
+    key[count] = k;
+    left[count] = right[count] = -1;
+    return count++;            // "işaretçi" artık bir indeks
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Düğüm nesneleri yerine paralel listeler
+key, left, right = [], [], []     # -1 = None
+
+def new_node(k):
+    key.append(k)
+    left.append(-1)
+    right.append(-1)
+    return len(key) - 1           # "işaretçi" artık bir indeks
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Typed array'ler: bellekte gerçekten yan yana duran sayılar
+const key   = new Int32Array(MAX);
+const left  = new Int32Array(MAX).fill(-1);   // -1 = null
+const right = new Int32Array(MAX).fill(-1);
+let count = 0;
+
+function newNode(k) {
+  key[count] = k;
+  return count++;               // "işaretçi" artık bir indeks
+}
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <p>Bu derste “Ağaçta derinlik deneyi” demosu 1 milyon düğümlük ağaçları tam olarak böyle kuruyor: milisaniyeler içinde! ⚡</p>
+      <div class="box low"><span class="bt">⚙️ Çöp toplayıcı (GC)</span>Oyun sırasında binlerce küçük <code>Node</code> nesnesi oluşturup atmak GC’yi tetikler → takılma <span class="en">stutter</span>. Unity’de dizi tabanlı yapılar ve <b>nesne havuzları</b> <span class="en">object pooling</span> bu yüzden çok yaygın.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Özet tablo 📋</h2>
+  <table class="sum-t">
+    <tr><th>yapı</th><th>arama (ort.)</th><th>ekleme (ort.)</th><th>en kötü</th><th>sıralı işlemler</th></tr>
+    <tr><td>sırasız liste (sıralı arama)</td><td>N/2</td><td>N <span class="mini">(önce ara)</span></td><td>N</td><td class="no">✘</td></tr>
+    <tr><td>sıralı dizi (ikili arama)</td><td>lg N</td><td>N/2</td><td>N</td><td class="yes">✔</td></tr>
+    <tr><td><b>BST</b></td><td>1,39 lg N</td><td>1,39 lg N</td><td class="no">N</td><td class="yes">✔</td></tr>
+    <tr class="fragment"><td>dengeli BST (kırmızı-siyah) <span class="mini">— sonraki ders</span></td><td>~lg N</td><td>~lg N</td><td class="yes">2 lg N</td><td class="yes">✔</td></tr>
+    <tr class="fragment"><td>hash tablosu <span class="mini">— ileriki ders</span></td><td>~1</td><td>~1</td><td>N</td><td class="no">✘</td></tr>
+  </table>
+  <p class="mini">Değerler karşılaştırma sayısıdır (~ anlamında).</p>
+</section>
+
+<section data-sec="gerçek dünya">
+  <h2>Hazır sıralı yapılar: arkalarında ağaç var</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>dil</th><th>sıralı sembol tablosu</th><th>içerde</th></tr>
+    <tr><td>C#</td><td><code>SortedDictionary&lt;K,V&gt;</code>, <code>SortedSet&lt;T&gt;</code></td><td>kırmızı-siyah ağaç</td></tr>
+    <tr><td>C++</td><td><code>std::map</code>, <code>std::set</code></td><td>kırmızı-siyah ağaç (yaygın uygulamalar)</td></tr>
+    <tr><td>Java</td><td><code>TreeMap</code>, <code>TreeSet</code></td><td>kırmızı-siyah ağaç</td></tr>
+    <tr><td>Python</td><td>yerleşik yok → <code>sortedcontainers</code> kütüphanesi</td><td>sıralı listeler</td></tr>
+    <tr><td>JavaScript</td><td>yerleşik yok → kendiniz yazın (ya da kütüphane)</td><td>—</td></tr>
+  </table>
+  <div class="box story fragment"><span class="bt">🐧 Bilgisayarınızın kalbinde bir ağaç</span>Linux çekirdeğinin işlemci zamanlayıcısı, çalışmayı bekleyen programları bir <b>kırmızı-siyah ağaçta</b> tutar ve hep en az işlemci zamanı almış olanı (en soldaki düğüm, yani <code>min</code>) seçer.</div>
+</section>
+
+<section data-sec="oyunda · uzaysal ağaçlar">
+  <h2>🎮 Uzaysal ağaçlar: quadtree <span class="en">spatial partitioning</span></h2>
+  <div class="demo" data-demo="quadtree"></div>
+  <p class="mini">Fareyi haritada gezdirin. <b>Quadtree</b>: kalabalık bölgeleri 4 çeyreğe bölmeye devam eden bir ağaç (her düğümün 4 çocuğu). Menzil sorgusu, menzille kesişmeyen kutuların <b>tamamını</b> atlar — BST’deki aralık sorgusunun 2 boyutlu hali!</p>
+  <aside class="notes">N’i 3000’e çıkarın: kaba kuvvet 3000 kontrol, quadtree birkaç düzine. Sıralama dersindeki “en yakın düşman” demosunun büyük ölçekli çözümü budur. 3D’de 8 çocuklu hali: octree. The Coding Train’in p5.js ile quadtree videoları Kaynaklar’da.</aside>
+</section>
+
+<section data-sec="oyunda · hikâye">
+  <h2>📜 Doom (1993) ve BSP ağaçları</h2>
+  <div class="cols c64">
+    <div>
+      <p>1993’te sıradan bir PC, 3D görünen bir labirenti saniyede onlarca kez çizemiyordu. Hangi duvar hangisinin önünde?</p>
+      <p class="fragment">John Carmack, akademik bir makalede gördüğü <b>ikili uzay bölümleme</b> <span class="en">binary space partitioning, BSP</span> fikrini kullandı: harita, bir duvar çizgisiyle <b>önü</b> ve <b>arkası</b> diye ikiye bölünür, her parça yine bölünür… → bir <b>ikili ağaç</b>!</p>
+      <p class="fragment">Ağaç, harita yüklenmeden <b>önce</b> bir kez hesaplanır. Oyun sırasında oyuncunun konumuna göre ağacı gezmek, duvarları <b>yakından uzağa</b> sıralı verir — sıralama dersindeki ressam algoritmasının tersi!</p>
+    </div>
+    <div class="box game fragment"><span class="bt">🌳 Oyun motorlarındaki ağaçlar</span>
+      <ul style="font-size:.95em">
+        <li><b>BSP</b>: Doom, Quake</li>
+        <li><b>Quadtree / Octree</b>: arazi, çarpışma</li>
+        <li><b>BVH</b>: fizik, ışın izleme</li>
+        <li><b>Davranış ağaçları</b>: YZ</li>
+        <li><b>Oyun ağacı + minimax</b>: satranç, XOX</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="köprü">
+  <h2>♟️ Bir sonraki büyük ağaç: oyun ağacı <span class="en">game tree</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>XOX’ta her düğüm bir tahta durumu, her çocuk olası bir hamle. Kök = boş tahta.</p>
+      <ul>
+        <li class="fragment">Tüm XOX oyunları: <b>255.168</b> farklı oyun (yaprak). Bilgisayar hepsini gezebilir → <b>asla kaybetmez</b>.</li>
+        <li class="fragment">Satrançta ağaç evrendeki atomlardan büyük. 1997’de Deep Blue, Kasparov’u yenerken saniyede ~200 milyon pozisyon değerlendiriyordu — ve yine de ağacın küçük bir kısmını.</li>
+      </ul>
+    </div>
+    <div class="box ask fragment"><span class="bt">🔜 Yakında</span><b>Minimax</b>: “Ben en iyi hamlemi yaparım, rakip de kendi en iyisini yapar” varsayımıyla oyun ağacını <b>postorder</b> gezmek. Oyun YZ’sinin klasiği!</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Ağaç</b>: kök, ebeveyn, çocuk, yaprak, derinlik, yükseklik.</li>
+      <li><b>Özyineleme</b> ve <b>çağrı yığını</b>; çok derin → yığın taşması.</li>
+      <li><b>Gezinme</b>: pre / in / post (yığın), level-order (kuyruk).</li>
+      <li><b>Davranış ağacı</b>: seçici, dizi, koşul, eylem — preorder tick.</li>
+    </ul>
+    <ul>
+      <li><b>İkili arama</b>: lg N; logaritma = “kaç kez yarıya?”</li>
+      <li><b>BST</b>: get/put ~1,39 lg N (rastgele), en kötü N.</li>
+      <li><b>Sıralı işlemler</b>: floor, ceiling, rank, select, aralık.</li>
+      <li><b>Silme</b>: Hibbard, ardıl.</li>
+      <li>⚙️ Bellek, önbellek, GC · 🎮 quadtree, BSP, minimax.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: <code>E A S Y Q U E S T I O N</code> anahtarlarını sırayla boş bir BST’ye ekleyin. Ağacı çizin; yüksekliği nedir? Pre/in/post-order çıktıları?</li>
+    <li>Unity’de: bir sahnedeki tüm nesneleri girintili yazdıran <code>PrintTree</code>’yi çalıştırın; sonra her nesnenin <b>derinliğini</b> ve sahnenin <b>yüksekliğini</b> hesaplayın.</li>
+    <li>Davranış ağacı demosuna “Mermi yoksa → şarjör değiştir” davranışını ekleyecek şekilde ağacı kâğıda çizin. Yeni düğüm nereye girmeli?</li>
+    <li>p5.js’te tıklanan noktalara x koordinatına göre bir BST kuran ve ağacı ekrana çizen küçük bir program yazın. Soldan sağa tıklarsanız ne olur?</li>
+    <li>Kod laboratuvarında <code>put</code>’u <b>özyinelemesiz</b> yazın ve 1..1200 ile test edin.</li>
+    <li>🤖 Bir YZ asistanından “C#’ta BST floor fonksiyonu” isteyin. Kodu bu derste gördüğümüzle karşılaştırın; boş ağaç ve “anahtar yok” durumlarını test edin.</li>
+  </ol>
+  <aside class="notes">1. alıştırma kitaptaki Exercise 3.2.1’in uyarlaması.</aside>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=pYT9F8_LFTM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/pYT9F8_LFTM/hqdefault.jpg" alt=""><span><b>Data structures: Binary Search Tree</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=COZK7NATh4k" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/COZK7NATh4k/hqdefault.jpg" alt=""><span><b>Binary search tree — Implementation</b><br>mycodeschool (C/C++)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=gcULXE7ViZw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/gcULXE7ViZw/hqdefault.jpg" alt=""><span><b>Delete a node from Binary Search Tree</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=mtvbVLK5xDQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/mtvbVLK5xDQ/hqdefault.jpg" alt=""><span><b>Binary Search Trees (BST) Explained in Animated Demo</b><br>Programming and Math Tutorials</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=T98PIp4omUA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/T98PIp4omUA/hqdefault.jpg" alt=""><span><b>Binary Search</b><br>CS50 Shorts (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=MFhxShGxHWc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/MFhxShGxHWc/hqdefault.jpg" alt=""><span><b>Binary Search Algorithm in 100 Seconds</b><br>Fireship</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=6VBCXvfNlCM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/6VBCXvfNlCM/hqdefault.jpg" alt=""><span><b>Behaviour Trees: The Cornerstone of Modern Game AI</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=OJxEcs0w_kE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/OJxEcs0w_kE/hqdefault.jpg" alt=""><span><b>Coding Challenge #98: Quadtree</b><br>The Coding Train (p5.js!)</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/31elementary/" target="_blank">algs4 · 3.1 Symbol Tables</a> ve <a href="https://algs4.cs.princeton.edu/32bst/" target="_blank">3.2 Binary Search Trees</a></li>
+      <li>Princeton ders slaytları: <a href="https://algs4.cs.princeton.edu/lectures/keynote/31ElementarySymbolTables.pdf" target="_blank">Symbol Tables</a> · <a href="https://algs4.cs.princeton.edu/lectures/keynote/32BinarySearchTrees.pdf" target="_blank">BSTs</a></li>
+      <li><a href="https://www.coursera.org/learn/algorithms-part1" target="_blank">Coursera · Algorithms Part I</a> (Sedgewick)</li>
+      <li><a href="https://research.google/blog/extra-extra-read-all-about-it-nearly-all-binary-searches-and-mergesorts-are-broken/" target="_blank">Joshua Bloch · Nearly All Binary Searches… Are Broken (2006)</a></li>
+      <li><a href="https://www.gamedeveloper.com/programming/gdc-2005-proceeding-handling-complexity-in-the-halo-2-ai" target="_blank">Damian Isla · Handling Complexity in the Halo 2 AI (GDC 2005)</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://visualgo.net/en/bst" target="_blank">VisuAlgo · BST</a> — kendi ağacınızı kurun</li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/BST.html" target="_blank">USFCA · BST görselleştirme</a> ve <a href="https://www.cs.usfca.edu/~galles/visualization/Search.html" target="_blank">ikili arama</a></li>
+      <li><a href="https://thecodingtrain.com/quadtree" target="_blank">The Coding Train · Quadtree (p5.js)</a></li>
+      <li><a href="https://twobithistory.org/2019/11/06/doom-bsp.html" target="_blank">Two-Bit History · Doom ve BSP</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.sorteddictionary-2" target="_blank">.NET · SortedDictionary</a> · <a href="https://docs.unity3d.com/ScriptReference/Transform.html" target="_blank">Unity · Transform (hiyerarşi)</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Dengeli Arama Ağaçları</div>
+    <div class="sub">2-3 ağaçları ve kırmızı-siyah ağaçlar: en kötü durumda bile ~lg N</div>
+    <div class="hp" style="align-self:center">SAVE GAME? ▢ EVET ▢ EVET</div>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/agac.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

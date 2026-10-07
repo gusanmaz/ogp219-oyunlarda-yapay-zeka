@@ -1,0 +1,1831 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Temel Sıralama Algoritmaları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ dersi — Hafta 1: Temel sıralama algoritmaları (selection, insertion, shellsort, karıştırma). Etkileşimli reveal.js ders notu.">
+<script>
+  // Tema: önce kayıtlı tercih, yoksa işletim sistemi tercihi
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış</div>
+
+<div class="reveal"><div class="slides">
+
+<!-- =============================================================== -->
+<!-- AÇILIŞ                                                           -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3b1d7a 0%, #120c2c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:40px">OYUNLARDA YAPAY ZEKÂ · TEMEL ALGORİTMALAR</div>
+  <div class="ttl" style="font-size:78px">Temel Sıralama<br>Algoritmaları</div>
+  <div class="sub"><i>Elementary Sorts</i> — selection · insertion · shellsort · shuffling</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlebars"></div>
+  <aside class="notes">
+    Bu deste Sedgewick &amp; Wayne'in "Algorithms, 4th ed." kitabının 2.1 bölümünü (Elementary Sorts) temel alır; matematik sadeleştirildi, örnekler oyunlardan seçildi.
+    Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları. Arka plandaki çubuklar insertion sort ile sürekli sıralanıyor — öğrencilere "bu ne yapıyor?" diye sorabilirsiniz; ders sonunda cevabı bilecekler.
+  </aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.95em">
+      <li><b>Oyunun kuralları</b> — sıralama nedir, neyi sayarız? <span class="en">rules of the game</span></li>
+      <li><b>Selection sort</b> — en küçüğü seç <span class="en">seçmeli sıralama</span></li>
+      <li><b>Insertion sort</b> — kart dizer gibi <span class="en">eklemeli sıralama</span></li>
+      <li>⭐ <b>Yan görev:</b> 2D oyunlarda çizim sırası</li>
+      <li><b>Shellsort</b> — uzaktan atlayarak sırala</li>
+      <li><b>Arena</b> — hangisi daha hızlı, neden?</li>
+      <li><b>Kararlılık</b> — envanter ve skor tabloları <span class="en">stability</span></li>
+      <li>🎁 <b>Bonus:</b> karıştırma (Tetris, kart oyunları) <span class="en">shuffling</span></li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…“bu oyun neden takılıyor?”, “bu düşman listesini her karede sıralamalı mıyım?” gibi sorulara <b>sayıyla</b> cevap verebileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Oyun YZ dersinde neden sıralama?</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">🧭</div><b>A* yol bulma</b>“En umut verici düğüm hangisi?” → sürekli sıralı tutulan bir liste</div>
+    <div class="icon-card"><div class="ic">🎯</div><b>Hedef seçme</b>En yakın / en zayıf düşmanı bul → “en küçüğü seç”</div>
+    <div class="icon-card"><div class="ic">🧠</div><b>Utility AI</b>Her eylemi puanla, en iyisini seç (veya ilk 3’ü)</div>
+    <div class="icon-card"><div class="ic">🖼️</div><b>Çizim sırası</b>Kim önde, kim arkada? Her karede sıralama</div>
+    <div class="icon-card"><div class="ic">💥</div><b>Çarpışma tespiti</b>Fizik motorları nesneleri x’e göre sıralar</div>
+    <div class="icon-card"><div class="ic">🃏</div><b>Rastgelelik</b>Deste karıştırma, Tetris torbası, loot</div>
+  </div>
+  <p class="fragment" style="margin-top:22px">Algoritmalar = oyun YZ’sinin <b>kas sistemi</b>. Önce temel hareketleri öğreneceğiz. 💪</p>
+  <aside class="notes">Her kutuya ders boyunca geri döneceğiz. Bugün özellikle hedef seçme, çizim sırası ve karıştırma için somut demolar var.</aside>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA SORUSU</span>
+    <p class="big">Elinize karışık 7 iskambil kartı verildi.<br>Onları <u>nasıl</u> sıralarsınız?</p>
+    <p>30 saniye düşünün. Yaptığınız şeyi <b>adım adım</b> tarif edebilir misiniz?</p>
+  </div>
+  <p class="fragment lead">Çoğumuz şöyle yapar: soldan başlarız, her yeni kartı soldaki <b>zaten sıralı</b> kartların arasında doğru yere <b>sokarız</b>.</p>
+  <p class="fragment big">Tebrikler — az önce <span class="c-red">insertion sort</span> yaptınız. 🎉</p>
+  <aside class="notes">Öğrencilerden birine gerçekten 7 kart verip tahtada yaptırabilirsiniz. Bazıları "en küçüğü bulup başa koyarım" der — bu da selection sort! İki stratejiyi de not edin, ders boyunca bunlara geri döneceğiz.</aside>
+</section>
+
+<section>
+  <h2>“Algoritma” kelimesi nereden geliyor?</h2>
+  <p>Yıl ~820, Bağdat. Matematikçi <b>el-Harezmî</b> iki ünlü kitap yazar:</p>
+  <div class="cols">
+    <div class="box prop"><span class="bt">📘 1. kitap: Hint rakamlarıyla hesap</span>Bugün kullandığımız <b>0–9 rakamlarıyla</b> toplama, çarpma, bölme nasıl yapılır? <b>Adım adım</b> anlatır.</div>
+    <div class="box game"><span class="bt">📗 2. kitap: “el-Cebr”</span>Denklem çözmeyi anlatır. Adı bugünkü <b>cebir</b> kelimesine dönüşür <span class="en">algebra</span>.</div>
+  </div>
+  <p class="fragment">Avrupalılar 1. kitabı Latinceye çevirirken yazarın adını <b>“Algoritmi”</b> diye yazar. Zamanla “Harezmî’nin yöntemi” = adım adım hesap yapma yolu anlamına gelir:</p>
+  <div class="name-chain fragment">
+    <span>el-Harezmî</span><i>→</i><span>Algoritmi <small>(Latince)</small></span><i>→</i><span>algorism</span><i>→</i><span class="on">algoritma</span>
+  </div>
+  <div class="box story fragment"><span class="bt">📜 Tanım</span>
+    <b>Algoritma</b>: Bir problemi çözmek için <b>adım adım</b> izlenen, <b>açık</b> ve <b>sonu olan</b> talimatlar listesi. Yemek tarifi gibi — ama bilgisayar “göz kararı” anlamaz, her adım net olmalı.
+  </div>
+  <aside class="notes">Kısa tutun: amaç, "algoritma" kelimesinin bir insan adından geldiğini ve "adım adım yöntem" demek olduğunu göstermek. Harezmî bugünkü Özbekistan'daki Harezm bölgesindendir; Bağdat'taki Beytü'l-Hikme (Bilgelik Evi) adlı bilim merkezinde çalışmıştır.</aside>
+</section>
+
+<section>
+  <h2>Algoritma ve veri yapısı</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">⚙️ Algoritma <span class="en">algorithm</span></span>
+      <p>Veri üzerinde yapılan <b>işlem</b>: sırala, ara, en kısa yolu bul…</p>
+      <p class="mini">Mutfak benzetmesi: <b>tarif</b></p>
+    </div>
+    <div class="box game"><span class="bt">📦 Veri yapısı <span class="en">data structure</span></span>
+      <p>Verinin bellekte <b>nasıl düzenlendiği</b>: dizi, liste, yığın, ağaç…</p>
+      <p class="mini">Mutfak benzetmesi: <b>dolabın düzeni</b></p>
+    </div>
+  </div>
+  <p class="fragment">İkisi birbirinden ayrılmaz: dolap dağınıksa en iyi tarif bile yavaş kalır. Bugünkü veri yapımız en temel olanı: <b>dizi</b> <span class="en">array</span>.</p>
+  <p class="fragment big c-purple">Programlar = Algoritmalar + Veri Yapıları</p>
+  <p class="fragment mini">— Niklaus Wirth’in 1976 tarihli ünlü kitabının adı (<i>Algorithms + Data Structures = Programs</i>).</p>
+</section>
+
+<section>
+  <h2>Mini sözlük (1/2)</h2>
+  <table class="gloss">
+    <tr><td>sort / sorting</td><td>sıralama</td><td>Elemanları bir kurala göre (küçükten büyüğe vb.) dizmek</td></tr>
+    <tr><td>array</td><td>dizi</td><td>Bellekte yan yana duran, indeksle erişilen elemanlar: <code>a[0], a[1], …</code></td></tr>
+    <tr><td>key</td><td>anahtar</td><td>Neye göre sıraladığımız: can puanı, mesafe, skor…</td></tr>
+    <tr><td>compare</td><td>karşılaştırma</td><td>“a[i], a[j]’den küçük mü?” sorusu</td></tr>
+    <tr><td>exchange / swap</td><td>yer değiştirme / takas</td><td>İki elemanın yerini değiştirmek</td></tr>
+    <tr><td>in-place</td><td>yerinde</td><td>Ek dizi kullanmadan, aynı dizi içinde sıralamak</td></tr>
+    <tr><td>inner / outer loop</td><td>iç / dış döngü</td><td>İç içe iki <code>for</code> — sıralamanın kalbi</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Mini sözlük (2/2)</h2>
+  <table class="gloss">
+    <tr><td>invariant</td><td>değişmez</td><td>Algoritma boyunca hep doğru kalan özellik (“solum hep sıralı”)</td></tr>
+    <tr><td>best / worst / average case</td><td>en iyi / en kötü / ortalama durum</td><td>Hangi girdide ne kadar sürer?</td></tr>
+    <tr><td>cost model</td><td>maliyet modeli</td><td>Hızı neyi sayarak ölçeceğimiz (biz: karşılaştırma ve yer değiştirme)</td></tr>
+    <tr><td>inversion</td><td>ters çift</td><td>Yanlış sırada duran eleman çifti</td></tr>
+    <tr><td>stable</td><td>kararlı</td><td>Eşit anahtarlıların eski sırası korunur</td></tr>
+    <tr><td>adaptive</td><td>uyarlanabilir</td><td>Girdi zaten “az bozuksa” daha hızlı çalışır</td></tr>
+    <tr><td>shuffle</td><td>karıştırma</td><td>Sıralamanın tersi: rastgele ama adil dizmek</td></tr>
+  </table>
+  <aside class="notes">Terimlerin İngilizcelerini özellikle vurgulayın: dokümantasyon, Stack Overflow, Unity forumları, YZ araçlarına yazdıkları istemler (prompt) hep İngilizce olacak.</aside>
+</section>
+
+<!-- =============================================================== -->
+<!-- LEVEL 0 — OYUNUN KURALLARI                                       -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Oyunun Kuralları</div>
+  <div class="sub"><i>rules of the game</i></div>
+  <ul class="agenda">
+    <li class="on">oyunun kuralları</li><li>selection sort</li><li>insertion sort</li><li>yan görev: çizim sırası</li>
+    <li>shellsort</li><li>arena: karşılaştırma</li><li>kararlılık</li><li>bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="oyunun kuralları">
+  <h2>Sıralama problemi</h2>
+  <div class="cols">
+    <div>
+      <p><b>Girdi:</b> N elemanlı bir dizi</p>
+      <p><b>Çıktı:</b> Aynı elemanlar, ama her eleman bir sonrakinden <b>küçük ya da eşit</b>:</p>
+      <p class="formula center" style="font-size:1.25em">\( a[0] \le a[1] \le \dots \le a[N-1] \)</p>
+      <p class="fragment">Neyi sıraladığımız önemli değil — yeter ki <b>iki elemanı karşılaştırabilelim</b>.</p>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Oyunda girdiler</span>
+      <ul>
+        <li>Düşmanlar → <b>mesafeye</b> göre</li>
+        <li>Skor tablosu → <b>puana</b> göre</li>
+        <li>Envanter → <b>nadirliğe</b> göre</li>
+        <li>Sprite’lar → <b>y koordinatına</b> göre</li>
+        <li>A* düğümleri → <b>f = g + h</b> değerine göre</li>
+      </ul>
+      <p class="mini">Kalın yazılanlar sıralama <b>anahtarı</b> <span class="en">key</span>.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunun kuralları">
+  <h2>“Neye göre?” — karşılaştırıcı <span class="en">comparator / callback</span></h2>
+  <p>Hazır sıralama fonksiyonlarına <b>nasıl karşılaştıracağını</b> biz söyleriz. Başka bir fonksiyona verdiğimiz bu küçük fonksiyona <b>geri çağırma</b> <span class="en">callback</span> denir; burada görevi <b>karşılaştırıcı</b> <span class="en">comparator</span> olmak.</p>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim>
+enemies.sort(key=lambda e: e.hp)              # canı az olan önce
+enemies.sort(key=lambda e: e.hp, reverse=True) # canı çok olan önce
+leaderboard.sort(key=lambda p: (-p.score, p.time))  # önce puan, eşitse süre
+</code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim>
+enemies.Sort((x, y) => x.hp.CompareTo(y.hp));     // canı az olan önce
+enemies.Sort((x, y) => y.hp.CompareTo(x.hp));     // canı çok olan önce
+// CompareTo: negatif → x önce, 0 → eşit, pozitif → y önce
+</code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim>
+enemies.sort((x, y) => x.hp - y.hp);   // canı az olan önce
+enemies.sort((x, y) => y.hp - x.hp);   // canı çok olan önce
+</code></pre>
+    </div>
+  </div>
+  <p class="fragment mini">Sıralama algoritması, anahtarın ne olduğunu <b>bilmez</b>; sadece “şu ikisinden hangisi önce?” diye sorar. Bu yüzden aynı algoritma her şeyi sıralayabilir.</p>
+</section>
+
+<section data-sec="oyunun kuralları">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 1 · JavaScript tuzağı</div>
+    <div class="q">p5.js’te <code>[10, 9, 1, 100].sort()</code> ne döndürür?</div>
+    <div class="opts">
+      <button data-opt="A"><code>[1, 9, 10, 100]</code></button>
+      <button data-opt="B"><code>[100, 10, 9, 1]</code></button>
+      <button data-opt="C"><code>[1, 10, 100, 9]</code></button>
+      <button data-opt="D">Hata verir</button>
+    </div>
+    <div class="explain">Karşılaştırıcı vermezseniz JavaScript elemanları <b>metin</b> olarak sıralar: <code>"1" &lt; "10" &lt; "100" &lt; "9"</code> (sözlük sırası <span class="en">lexicographic order</span>). Doğrusu: <code>arr.sort((x, y) =&gt; x - y)</code>. Bu hata gerçek projelerde çok yaşanır!</div>
+  </div>
+</section>
+
+<section data-sec="oyunun kuralları · kaputun altında">
+  <h2>Dizi bellekte nasıl durur? ⚙️</h2>
+  <p>Dizi = bellekte <b>yan yana</b> duran, <b>aynı boyutta</b> kutular. Bu yüzden <code>a[i]</code>’nin adresi tek bir hesapla bulunur:</p>
+  <div class="demo" data-demo="memory"></div>
+  <div class="box low fragment"><span class="bt">⚙️ Kaputun altında: işaretçi <span class="en">pointer</span></span>
+    Adres tutan değişkene <b>işaretçi</b> denir. C’de <code>a[i]</code> aslında <code>*(a + i)</code> demektir. C#’ta <code>class</code> nesneleri dizide <b>referans</b> (işaretçi) olarak durur; <code>struct</code>’lar ise doğrudan, yan yana.
+  </div>
+  <aside class="notes">Eleman türünü "Vector3" ve "referans" yapıp farkı gösterin. Bu, ileride "neden struct dizisi daha hızlı gezilir" ve "swap neyi kopyalar" sorularının temeli.</aside>
+</section>
+
+<section data-sec="oyunun kuralları">
+  <h2>Maliyet modeli: sadece iki işlem <span class="en">cost model</span></h2>
+  <p>Sedgewick’in kuralı: sıralama algoritmalarımız diziye sadece <b>iki yardımcı fonksiyonla</b> dokunur:</p>
+  <div class="cols">
+    <div class="box prop"><span class="bt"><code>less(v, w)</code></span>v, w’den küçük mü? → <b>karşılaştırma</b> <span class="en">compare</span></div>
+    <div class="box warn"><span class="bt"><code>exch(a, i, j)</code></span>a[i] ile a[j]’yi takasla → <b>yer değiştirme</b> <span class="en">exchange</span></div>
+  </div>
+  <p class="fragment"><b>Neden?</b></p>
+  <ol>
+    <li class="fragment"><b>Sayabilmek için:</b> Hız = kaç karşılaştırma + kaç yer değiştirme. Saniye bilgisayara göre değişir, bu sayılar değişmez.</li>
+    <li class="fragment"><b>Genellik için:</b> <code>less</code>’i değiştirirsek aynı kod sayı, metin, düşman, sprite… her şeyi sıralar.</li>
+  </ol>
+</section>
+
+<section data-sec="oyunun kuralları">
+  <h2>less ve exch kodu</h2>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim>
+def less(v, w):
+    return v < w
+
+def exch(a, i, j):
+    a[i], a[j] = a[j], a[i]     # Python'un "demet" (tuple) takası
+</code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim><script type="text/template">
+static bool Less<T>(T v, T w) where T : IComparable<T>
+    => v.CompareTo(w) < 0;
+
+static void Exch<T>(T[] a, int i, int j)
+{
+    T t = a[i];      // 1) yedeğe al
+    a[i] = a[j];     // 2) üzerine yaz
+    a[j] = t;        // 3) yedeği geri koy
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim><script type="text/template">
+function less(v, w) {
+  return v < w;
+}
+
+function exch(a, i, j) {
+  const t = a[i];  // 1) yedeğe al
+  a[i] = a[j];     // 2) üzerine yaz
+  a[j] = t;        // 3) yedeği geri koy
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Java (kitaptaki)">
+<pre><code class="language-java" data-trim><script type="text/template">
+private static boolean less(Comparable v, Comparable w)
+{  return v.compareTo(w) < 0;  }
+
+private static void exch(Comparable[] a, int i, int j)
+{  Comparable t = a[i]; a[i] = a[j]; a[j] = t;  }
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Not: Bu slaytlardaki canlı editörlerde görselleştirme için <code>less(a, i, j)</code> biçimini (değer yerine <b>indeks</b>) kullanacağız.</p>
+</section>
+
+<section data-sec="oyunun kuralları">
+  <h2>Takas neden üç adım? 🥤 <span class="en">swap</span></h2>
+  <p>a bardağında kola, b bardağında ayran var. Yerlerini değiştirmek (<b>takas</b> <span class="en">swap</span>) istiyoruz. Üçüncü boş bardak = <b>geçici değişken</b> <span class="en">temporary variable, temp</span>.</p>
+  <div class="demo" data-demo="swapcups"></div>
+  <aside class="notes">Önce "Yanlış yöntem"i gösterin: a = b dediğimiz anda kola kaybolur. Sonra doğru yöntem. Ardından gelen quiz bunu pekiştirir.</aside>
+</section>
+
+<section data-sec="oyunun kuralları">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · Takas</div>
+    <div class="q"><code>a = 5</code>, <code>b = 8</code>. Şu iki satır çalışınca ne olur?<br><code>a = b</code><br><code>b = a</code></div>
+    <div class="opts">
+      <button data-opt="A">a = 8, b = 5 (takas oldu)</button>
+      <button data-opt="B">a = 8, b = 8</button>
+      <button data-opt="C">a = 5, b = 5</button>
+      <button data-opt="D">a = 5, b = 8 (hiçbir şey değişmedi)</button>
+    </div>
+    <div class="explain">İlk satırda a’nın eski değeri (5) <b>kaybolur</b>. İkinci satırda b, a’nın <i>yeni</i> değerini (8) alır. Bu yüzden geçici değişken <code>temp</code> gerekir — ya da Python/C#’taki demet takası: <code>a, b = b, a</code> / <code>(a, b) = (b, a)</code>.</div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- LEVEL 1 — SELECTION SORT                                         -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Selection Sort</div>
+  <div class="sub">Seçmeli sıralama — “En küçüğü bul, başa koy. Tekrarla.”</div>
+  <ul class="agenda">
+    <li class="done">oyunun kuralları</li><li class="on">selection sort</li><li>insertion sort</li><li>yan görev: çizim sırası</li>
+    <li>shellsort</li><li>arena: karşılaştırma</li><li>kararlılık</li><li>bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="selection sort">
+  <h2>Fikir: en küçüğü seç <span class="en">selection sort</span></h2>
+  <div class="cols c64">
+    <div>
+      <ol>
+        <li>Dizinin tamamında <b>en küçük</b> elemanı bul.</li>
+        <li>Onu <b>ilk</b> elemanla takasla.</li>
+        <li>Kalan kısımda (2. elemandan itibaren) en küçüğü bul, <b>ikinci</b> elemanla takasla.</li>
+        <li>Dizi bitene kadar devam et.</li>
+      </ol>
+      <p class="fragment">Her turda kalanlar arasından en küçüğü <b>seçiyoruz</b> → adı buradan.</p>
+    </div>
+    <div class="box game"><span class="bt">🏀 Gündelik hayattan</span>
+      Beden dersinde boy sırasına girmek: Öğretmen önce sınıftaki <b>en kısa</b> kişiyi bulup en öne koyar, sonra kalanlardan en kısayı ikinci sıraya…
+    </div>
+  </div>
+</section>
+
+<section data-sec="selection sort">
+  <h2>İz tablosu <span class="en">trace</span> — S O R T E X A M P L E</h2>
+  <div class="trace" data-alg="selection" data-values="S O R T E X A M P L E"></div>
+  <div class="trace-legend">
+    <b class="r">kırmızı</b> = a[min] (bulunan en küçük) · <b>siyah</b> = en küçüğü bulmak için bakılanlar · <b class="g">gri</b> = son yerine yerleşmiş
+  </div>
+  <aside class="notes">Kitaptaki klasik izin aynısı. Ok tuşuyla satır satır ilerleyin. Her satırda soru sorun: "Siyahlar arasında en küçük harf hangisi?" Öğrenciler kırmızıyı tahmin etsin, sonra satırı açın.</aside>
+</section>
+
+<section data-sec="selection sort">
+  <h2>Selection sort — animasyon</h2>
+  <div class="sortviz" data-alg="selection" data-n="14" data-speed="6" data-h="290"></div>
+  <div class="legend-bar">
+    <span style="--c:var(--bar-cmp)">karşılaştırılan</span><span style="--c:var(--bar-min)">şu anki en küçük (min)</span>
+    <span style="--c:var(--bar-swap)">takaslanan</span><span style="--c:var(--bar-final)">son yerinde</span>
+  </div>
+  <aside class="notes">Hız düşükken adım adım gösterin; sonra N'i 100'e çıkarıp hızı artırın. Girdiyi "Sıralı" yapıp tekrar oynatın — hâlâ aynı sayıda karşılaştırma yapıyor! Bu, birkaç slayt sonraki quizin cevabı.</aside>
+</section>
+
+<section data-sec="selection sort">
+  <h2>Selection sort — kod</h2>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-8|3|4|5-7|8">
+def selection_sort(a):
+    n = len(a)
+    for i in range(n):                   # i: doldurulacak yer
+        min_i = i                        # şimdilik en küçük a[i]
+        for j in range(i + 1, n):        # sağ tarafı tara
+            if a[j] < a[min_i]:
+                min_i = j                # daha küçüğünü bulduk
+        a[i], a[min_i] = a[min_i], a[i]  # takas (exch)
+</code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public static void SelectionSort(int[] a)
+{
+    int n = a.Length;
+    for (int i = 0; i < n; i++)
+    {
+        int min = i;
+        for (int j = i + 1; j < n; j++)
+            if (a[j] < a[min]) min = j;
+        (a[i], a[min]) = (a[min], a[i]);   // takas
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function selectionSort(a) {
+  const n = a.length;
+  for (let i = 0; i < n; i++) {
+    let min = i;
+    for (let j = i + 1; j < n; j++)
+      if (a[j] < a[min]) min = j;
+    [a[i], a[min]] = [a[min], a[i]];
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Java (kitap)">
+<pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
+public static void sort(Comparable[] a)
+{
+    int N = a.length;
+    for (int i = 0; i < N; i++)
+    {
+        int min = i;
+        for (int j = i+1; j < N; j++)
+            if (less(a[j], a[min])) min = j;
+        exch(a, i, min);
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <aside class="notes">Python sekmesinde ok tuşuyla satırlar sırayla vurgulanır. 🔍 düğmesi (veya Z tuşu) kodu tam ekranda büyütür.</aside>
+</section>
+
+<section data-sec="selection sort">
+  <h2>Değişmez <span class="en">invariant</span>: neden doğru çalışıyor?</h2>
+  <div class="inv-pic">
+    <div class="fin" style="flex:4">son yerinde (bir daha dokunulmaz)</div>
+    <div class="unk" style="flex:6">henüz bakılmadı — ama hiçbiri soldakilerden küçük değil</div>
+  </div>
+  <div class="inv-arrow" style="margin-left:39%">↑ i</div>
+  <p>Her turun başında şu iki cümle <b>hep doğrudur</b>:</p>
+  <ol>
+    <li><b>i’nin solundaki</b> elemanlar sıralı ve <b>son yerlerinde</b>.</li>
+    <li><b>i’nin sağında</b> soldakilerden küçük eleman <b>yok</b>.</li>
+  </ol>
+  <p class="fragment">Döngü bitince i = N → tüm dizi “solda” → <b>sıralı</b>. ✔ <span class="mini">(Buna “doğruluk kanıtı” denir <span class="en">proof of correctness</span>.)</span></p>
+  <div class="box story fragment"><span class="bt">💡 Neden önemli?</span>Değişmez, kodu yazarken “bu döngü ne iş yapıyor?” sorusunun cevabıdır. YZ’ye kod yazdırdığınızda da kodun doğru olup olmadığını <b>böyle</b> kontrol edersiniz.</div>
+</section>
+
+<section data-sec="selection sort">
+  <h2>Kaç karşılaştırma? 📐 <span class="en">number of compares</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>Tur 0’da N−1, tur 1’de N−2, … son turda 0 karşılaştırma:</p>
+      <p class="formula">\( (N-1) + (N-2) + \dots + 1 + 0 = \frac{N(N-1)}{2} \sim \frac{N^2}{2} \)</p>
+      <div class="demo" data-demo="gauss"></div>
+    </div>
+    <div class="box prop"><span class="bt">Önerme A</span>
+      Selection sort, N elemanlı bir dizide <b>~N²/2 karşılaştırma</b> ve <b>N yer değiştirme</b> yapar.
+      <div class="spacer"></div>
+      <span class="bt" style="color:var(--ink-2)">Kanıt (fikir)</span>
+      <span class="mini">Soldaki tabloda her satır bir tur, her mavi kare bir karşılaştırma. Mavi kareler karenin yarısı ≈ N²/2. Her turda tam 1 takas → N takas.</span>
+    </div>
+  </div>
+  <aside class="notes">"~" (tilde) işaretini burada tanıtın: "yaklaşık olarak, büyük N için baskın terim". Gauss hilesi düğmesiyle iki üçgenin dikdörtgen yaptığını gösterin.</aside>
+</section>
+
+<section data-sec="selection sort · hikâye">
+  <h2>Küçük Gauss ve 1’den 100’e 📜</h2>
+  <div class="cols c64">
+    <div>
+      <p>Anlatılan hikâyeye göre (biraz süslenmiş olabilir 😉): 1780’lerde bir öğretmen, sınıfı oyalamak için “1’den 100’e kadar sayıları toplayın” der.</p>
+      <p>Küçük <b>Carl Friedrich Gauss</b> birkaç saniyede cevabı yazar: <b>5050</b>.</p>
+      <p class="fragment">Hilesi: sayıları <b>çift çift</b> eşlemek.</p>
+      <p class="fragment center">1+100 = 2+99 = 3+98 = … = 101 &nbsp; → &nbsp; 50 çift × 101 = <b>5050</b></p>
+    </div>
+    <div class="box prop fragment"><span class="bt">Genel formül</span>
+      <p class="center">\( 1 + 2 + \dots + n = \dfrac{n(n+1)}{2} \)</p>
+      <p class="mini">Selection sort’ta n = N−1 alırsak: \( \frac{(N-1)N}{2} \). Algoritma analizinde en çok karşılaşacağınız toplam bu!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="selection sort">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 3 · Selection sort</div>
+    <div class="q">Dizi <b>zaten sıralıysa</b> selection sort N = 1000 için yaklaşık kaç karşılaştırma yapar?</div>
+    <div class="opts">
+      <button data-opt="A">0 — zaten sıralı</button>
+      <button data-opt="B">~1.000 (N)</button>
+      <button data-opt="C">~500.000 (N²/2)</button>
+      <button data-opt="D">~1.000.000 (N²)</button>
+    </div>
+    <div class="explain">Selection sort girdiye <b>kördür</b>: “en küçük hangisi?” sorusunu cevaplamak için her turda kalanların <b>hepsine</b> bakmak zorunda. Sıralı, ters, rastgele fark etmez: 999·1000/2 = 499.500 karşılaştırma. (Animasyon slaytında “Sıralı” girdiyle deneyin!)</div>
+  </div>
+</section>
+
+<section data-sec="selection sort">
+  <h2>Selection sort’un karakteri</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">😴 Girdiye kör <span class="en">insensitive to input</span></span>
+      Önceki turlardan hiçbir şey öğrenmez. Sıralı diziyi sıralamak, rastgele diziyi sıralamak kadar sürer.
+    </div>
+    <div class="box game"><span class="bt">🚚 En az veri hareketi <span class="en">minimal data movement</span></span>
+      Tam olarak <b>N takas</b> — N’e göre doğrusal <span class="en">linear</span>. Bildiğimiz hiçbir sıralama algoritması bundan azıyla yetinmez.
+    </div>
+  </div>
+  <p class="fragment">Peki az takas <b>ne zaman</b> önemli? → Takaslanan şey <b>büyük</b> ya da yazmak <b>pahalıysa</b>. (Birazdan: “kaputun altında”)</p>
+</section>
+
+<section data-sec="selection sort · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: selection sort</h2>
+  <div class="codelab" data-lang="js" data-n="12">
+<textarea>
+// less(a, i, j): a[i] < a[j] mi?    exch(a, i, j): takasla
+function sort(a) {
+  const n = a.length;
+  for (let i = 0; i < n; i++) {
+    let min = i;
+    for (let j = i + 1; j < n; j++) {
+      if (less(a, j, min)) min = j;
+    }
+    exch(a, i, min);
+  }
+}
+</textarea>
+    <div class="lab-tasks"><b>Önce tahmin et, sonra çalıştır (Ctrl+Enter):</b>
+      <ol>
+        <li>7. satırda <code>less(a, j, min)</code> yerine <code>less(a, min, j)</code> yaz.</li>
+        <li>6. satırda <code>j = i + 1</code> yerine <code>j = 0</code> yaz. Ne bozuldu?</li>
+        <li>7. satırı <code>if (less(a, j, i)) exch(a, i, j);</code> yap, 9. satırı sil. Hâlâ sıralıyor mu? Kaç takas?</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">1) Büyükten küçüğe sıralar (en büyüğü seçer). 2) Sıralanmış kısım yeniden karıştırılır; dizi genelde sıralı çıkmaz. 3) Hâlâ doğru sıralar ama takas sayısı N yerine ~N²/4'e çıkar: "en küçüğü bulmadan" her daha küçük gördüğünde takaslıyor. Bu, selection sort'un "önce bul, sonra bir kez takasla" fikrinin değerini gösterir.</aside>
+</section>
+
+<section data-sec="selection sort · laboratuvar">
+  <h2>🐍 Aynı laboratuvar — Python</h2>
+  <div class="codelab" data-lang="python" data-n="12">
+<textarea>
+# less(a, i, j): a[i] < a[j] mi?    exch(a, i, j): takasla
+def sort(a):
+    n = len(a)
+    for i in range(n):
+        min_i = i
+        for j in range(i + 1, n):
+            if less(a, j, min_i):
+                min_i = j
+        exch(a, i, min_i)
+        print("tur", i, "→", list(a))
+</textarea>
+    <div class="lab-tasks">Python tarayıcıda çalışır (Pyodide, ilk açılışta internet gerekir). <code>print</code> çıktısı sağ altta görünür.
+      <ol><li><code>print</code> satırını kullanarak her turdan sonra dizinin halini izle. İz tablosuyla karşılaştır.</li>
+      <li><code>a[i], a[min_i] = a[min_i], a[i]</code> ile kendin takasla — yazma (write) sayacı ne gösteriyor?</li></ol>
+    </div>
+  </div>
+</section>
+
+<section data-sec="selection sort · kaputun altında">
+  <h2>⚙️ Takas ettiğimiz şey ne kadar büyük?</h2>
+  <div class="cols">
+    <div>
+      <p>C#’ta (Unity) iki tür nesne vardır:</p>
+      <ul>
+        <li><code>struct</code> (değer tipi <span class="en">value type</span>): dizide <b>verinin kendisi</b> durur. Takas = tüm baytları kopyalamak.</li>
+        <li><code>class</code> (referans tipi <span class="en">reference type</span>): dizide sadece <b>adres</b> (8 bayt) durur. Takas = 2 adresi kopyalamak.</li>
+      </ul>
+      <p class="fragment">200 baytlık bir <code>struct EnemyData</code> dizisini sıralarken her takas ~400 bayt taşır. Selection sort’un “sadece N takas” özelliği burada parlar. ✨</p>
+    </div>
+    <div class="box low fragment"><span class="bt">⚙️ Profesyonel numara: indeksleri sırala <span class="en">indirect sort</span></span>
+      Büyük verileri yerinden oynatma! Onun yerine <code>int[] order = {0,1,2,…}</code> gibi küçük bir <b>indeks dizisini</b> sırala; karşılaştırırken <code>data[order[i]]</code>’ye bak.
+      <p class="mini">Aynı fikir: flash bellek/EEPROM (yazma ömrü sınırlı), robot kolu ile kutu taşımak, ağ üzerinden veri…</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="selection sort · oyunda">
+  <h2>🎮 İç döngü = en yakın düşmanı bulmak</h2>
+  <div class="demo" data-demo="nearest"></div>
+  <p class="mini">Haritaya tıklayarak büyücüyü taşıyın. Selection sort’un tek bir turu = “en yakın düşman”. K tur = “en yakın K düşman”.</p>
+  <aside class="notes">Kilit mesaj: Sadece en yakını istiyorsanız TÜM listeyi sıralamayın! N karşılaştırma yeter; tam sıralama N²/2. N=40 için 40'a karşı 780. Oyunda bu her karede (saniyede 60 kez) her düşman için yapılıyorsa fark devasa.</aside>
+</section>
+
+<section data-sec="selection sort · oyunda">
+  <h2>🎮 Hepsini sıralamaya gerek var mı?</h2>
+  <div class="cols">
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def find_nearest(enemies, me):
+    best, best_d = None, float('inf')
+    for e in enemies:                  # selection sort'un iç döngüsü!
+        dx, dy = e.x - me.x, e.y - me.y
+        d = dx * dx + dy * dy          # karekök almaya gerek yok
+        if d < best_d:
+            best_d, best = d, e
+    return best
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Enemy FindNearest(List<Enemy> enemies, Vector3 me)
+{
+    Enemy best = null;
+    float bestD = float.MaxValue;
+    foreach (var e in enemies)       // selection sort'un iç döngüsü!
+    {
+        float d = (e.transform.position - me).sqrMagnitude;
+        if (d < bestD) { bestD = d; best = e; }
+    }
+    return best;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function findNearest(enemies, me) {
+  let best = null, bestD = Infinity;
+  for (const e of enemies) {         // selection sort'un iç döngüsü!
+    const dx = e.x - me.x, dy = e.y - me.y;
+    const d = dx * dx + dy * dy;     // dist() yerine: karekök yok
+    if (d < bestD) { bestD = d; best = e; }
+  }
+  return best;
+}
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <div class="box game"><span class="bt">🧠 Utility AI</span>Her eylem (saldır, kaç, iyileş) bir puan alır; NPC <b>en yüksek puanlıyı</b> seçer → tek tur, N karşılaştırma.</div>
+      <div class="box low"><span class="bt">⚙️ <code>sqrMagnitude</code> neden?</span>Mesafeleri <b>karşılaştırırken</b> karekök almaya gerek yok: a &lt; b ⇔ a² &lt; b². Karekök pahalı bir işlemdir — her karede yüzlerce kez yapılıyorsa fark eder.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="selection sort · video">
+  <h2>🎬 Ara: Selection sort dansı</h2>
+  <div class="cols c64">
+    <a class="vid" href="https://www.youtube.com/watch?v=Ns4TPTC8whw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Ns4TPTC8whw/hqdefault.jpg" alt="Select-sort with Gypsy folk dance"><span><b>Select-sort with Gypsy folk dance</b><br>AlgoRythmics (Sapientia Üniversitesi, Romanya)</span></a>
+    <div>
+      <p>Dansçıların sırtındaki numaralar dizi elemanları. Şapkalı dansçı = <b>min</b> işaretçisi.</p>
+      <p class="box ask"><span class="bt">🤔 İzlerken say</span>Kaç kez <b>takas</b> oldu? Önerme A ile uyuşuyor mu?</p>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- LEVEL 2 — INSERTION SORT                                          -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Insertion Sort</div>
+  <div class="sub">Eklemeli sıralama — “Sıradakini al, solundaki sıralı kısımda yerine sok.”</div>
+  <ul class="agenda">
+    <li class="done">oyunun kuralları</li><li class="done">selection sort</li><li class="on">insertion sort</li><li>yan görev: çizim sırası</li>
+    <li>shellsort</li><li>arena: karşılaştırma</li><li>kararlılık</li><li>bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>Fikir: kart dizer gibi <span class="en">insertion sort</span></h2>
+  <div class="demo" data-demo="cards"></div>
+  <aside class="notes">Isınma sorusundaki kart dizme stratejisinin aynısı. "Otomatik"e basmadan önce öğrencilere her adımda "kart nereye gidecek?" diye sorun.</aside>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>İz tablosu — S O R T E X A M P L E</h2>
+  <div class="trace" data-alg="insertion" data-values="S O R T E X A M P L E"></div>
+  <div class="trace-legend">
+    <b class="r">kırmızı</b> = a[j] (yeni eklenen, yerine oturdu) · <b>siyah</b> = bir sağa kaydırılanlar · <b class="g">gri</b> = yerinden oynamayanlar
+  </div>
+  <aside class="notes">Selection'ın iziyle karşılaştırın: burada gri elemanlar "son yerlerinde" DEĞİL, sadece bu turda oynamadılar. Örneğin A en sonda geliyor ve herkesi kaydırıyor.</aside>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>Insertion sort — animasyon</h2>
+  <div class="sortviz" data-alg="insertion" data-n="14" data-speed="6" data-h="290"></div>
+  <div class="legend-bar">
+    <span style="--c:var(--bar-cmp)">karşılaştırılan</span><span style="--c:var(--bar-swap)">takaslanan</span>
+    <span style="--c:var(--bar-sorted)">sıralı ama son yerinde olmayabilir</span><span style="--c:var(--bar-final)">bitti</span>
+  </div>
+  <aside class="notes">Girdi = "Neredeyse sıralı" ve "Ters sıralı" ile oynatın. Karşılaştırma sayılarını tahtaya yazın; birkaç slayt sonra formüllerle karşılaştıracağız.</aside>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>Insertion sort — kod</h2>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-6|2|3-4|5-6">
+def insertion_sort(a):
+    for i in range(1, len(a)):            # a[i]'yi solundakilere ekle
+        j = i
+        while j > 0 and a[j] < a[j - 1]:  # solundaki daha büyükse…
+            a[j], a[j - 1] = a[j - 1], a[j]  # …takasla, bir sola geç
+            j -= 1
+</code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public static void InsertionSort(int[] a)
+{
+    for (int i = 1; i < a.Length; i++)
+        for (int j = i; j > 0 && a[j] < a[j - 1]; j--)
+            (a[j], a[j - 1]) = (a[j - 1], a[j]);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function insertionSort(a) {
+  for (let i = 1; i < a.length; i++)
+    for (let j = i; j > 0 && a[j] < a[j - 1]; j--)
+      [a[j], a[j - 1]] = [a[j - 1], a[j]];
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Java (kitap)">
+<pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
+public static void sort(Comparable[] a)
+{
+    int N = a.length;
+    for (int i = 1; i < N; i++)
+        for (int j = i; j > 0 && less(a[j], a[j-1]); j--)
+            exch(a, j, j-1);
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="fragment">Dikkat: iç döngü, solundaki eleman <b>küçük</b> çıktığı anda <b>durur</b>. Bütün sihir bu erken durmada. ✨</p>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>Değişmez <span class="en">invariant</span></h2>
+  <div class="inv-pic">
+    <div class="srt" style="flex:4">sıralı (ama son yerinde olmayabilir)</div>
+    <div class="unk" style="flex:6">henüz bakılmadı</div>
+  </div>
+  <div class="inv-arrow" style="margin-left:39%">↑ i</div>
+  <ul>
+    <li><b>i’nin solundaki</b> elemanlar <b>kendi aralarında</b> sıralı.</li>
+    <li>i’nin sağındaki elemanlara <b>hiç bakılmadı</b>.</li>
+  </ul>
+  <div class="cols fragment">
+    <div class="box prop"><span class="bt">Selection</span>Sol taraf <b>son halinde</b>. Sağa bakmadan bitemez.</div>
+    <div class="box game"><span class="bt">Insertion</span>Sol taraf <b>geçici</b>. Ama sağa hiç bakmadığı için <b>yeni gelen</b> elemanları da sıralayabilir → çevrimiçi <span class="en">online</span> algoritma.</div>
+  </div>
+  <aside class="notes">"Online" özelliği oyunlarda değerli: skor tablosuna yeni skor gelince sadece onu yerine sokmak yeter.</aside>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>Kaç karşılaştırma? Girdiye bağlı!</h2>
+  <div class="box prop"><span class="bt">Önerme B</span>
+    Rastgele sıralı, anahtarları farklı N elemanlı bir dizide insertion sort <b>ortalama ~N²/4</b> karşılaştırma ve ~N²/4 takas yapar.
+    <b>En kötü</b> durumda (ters sıralı) ~N²/2 ve ~N²/2; <b>en iyi</b> durumda (sıralı) N−1 karşılaştırma ve 0 takas.
+  </div>
+  <div class="demo" data-demo="insertcases"></div>
+  <p class="fragment mini">Ortalama neden N²/4? Rastgele dizide yeni eleman, sıralı kısmın ortalama <b>yarısı</b> kadar sola yürür: en kötünün (N²/2) yarısı.</p>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>Ters çift <span class="en">inversion</span> 🔁</h2>
+  <p><b>Ters çift</b>: dizide <b>yanlış sırada</b> duran her (soldaki, sağdaki) çift. Örn. <code>E A</code> bir ters çifttir.</p>
+  <div class="demo" data-demo="inversions" data-n="8"></div>
+  <aside class="notes">Önce bir öğrenciyi tahtaya çağırıp kutulara tıklatarak (komşu takası) diziyi sıralatın. Takas sayısı her zaman başlangıçtaki kırmızı yay sayısına eşit çıkar: her komşu takası tam olarak BİR ters çifti düzeltir. Sonra "Insertion sort yapsın" ile otomatik.</aside>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>Insertion sort’un gizli gücü</h2>
+  <div class="box prop"><span class="bt">Önerme C</span>
+    Insertion sort’un <b>takas</b> sayısı = dizideki <b>ters çift</b> sayısı.<br>
+    <b>Karşılaştırma</b> sayısı: en az ters çift sayısı, en fazla ters çift sayısı + (N − 1).
+  </div>
+  <p class="fragment"><b>Kısmen sıralı</b> <span class="en">partially sorted</span> dizi: ters çift sayısı N ile orantılı (az) olan dizi. Örnekler:</p>
+  <ul>
+    <li class="fragment">Her eleman, son yerine <b>yakın</b> (kareden kareye biraz kayan sprite’lar 👀)</li>
+    <li class="fragment">Büyük sıralı diziye <b>birkaç yeni</b> eleman eklenmiş (yeni skorlar)</li>
+    <li class="fragment">Sadece birkaç eleman <b>yanlış yerde</b></li>
+  </ul>
+  <p class="fragment big c-green">Kısmen sıralı dizide insertion sort ≈ doğrusal (N) zamanda çalışır!</p>
+</section>
+
+<section data-sec="insertion sort">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 4 · Ters çiftler</div>
+    <div class="q">Hangisinde insertion sort <b>daha az</b> takas yapar ve kaç takas?<br>
+      <code>X = [1, 2, 3, 5, 4, 6, 7, 8]</code> &nbsp; <code>Y = [8, 7, 6, 5, 4, 3, 2, 1]</code></div>
+    <div class="opts">
+      <button data-opt="A">X: 1 takas (Y: 28 takas)</button>
+      <button data-opt="B">X: 4 takas (Y: 8 takas)</button>
+      <button data-opt="C">İkisi de aynı: 28 takas</button>
+      <button data-opt="D">Y: 0 takas, çünkü simetrik</button>
+    </div>
+    <div class="explain">X’te tek ters çift var: (5, 4). Y’de <b>her</b> çift ters: 8·7/2 = 28. Selection sort ise ikisinde de 8·7/2 = 28 karşılaştırma yapardı — girdiye kör!</div>
+  </div>
+</section>
+
+<section data-sec="insertion sort · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: insertion sort</h2>
+  <div class="codelab" data-lang="js" data-n="12">
+<textarea>
+function sort(a) {
+  const n = a.length;
+  for (let i = 1; i < n; i++) {
+    for (let j = i; j > 0 && less(a, j, j - 1); j--) {
+      exch(a, j, j - 1);
+    }
+  }
+}
+</textarea>
+    <div class="lab-tasks"><b>Tahmin et → değiştir → çalıştır:</b>
+      <ol>
+        <li>4. satırda <code>j &gt; 0</code> yerine <code>j &gt;= 0</code> yaz. Hata mesajı ne diyor, neden?</li>
+        <li><code>&amp;&amp; less(…)</code> kısmını döngüden çıkar, içeriye <code>if (less(a, j, j - 1)) exch(a, j, j - 1);</code> yaz. Girdi = <b>Sıralı</b> iken karşılaştırma sayısı?</li>
+        <li><code>less(a, j, j - 1)</code> yerine <code>!less(a, j - 1, j)</code> (yani ≤) yaz. Girdi = <b>Az farklı değer</b>. Takas sayısı ne oldu?</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">1) j=0 iken less(a, 0, -1) çağrılır → indeks dizinin dışında. 2) Hâlâ doğru sıralar ama erken durma kaybolur: sıralı girdide bile ~N²/2 karşılaştırma → uyarlanabilirlik gitti. 3) Eşit elemanları da takaslar → gereksiz takas + KARARLILIK bozulur (Level 5'te göreceğiz).</aside>
+</section>
+
+<section data-sec="insertion sort">
+  <h2>İyileştirme: takas yerine kaydır <span class="en">half exchanges</span></h2>
+  <div class="cols">
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def insertion_sort_shift(a):
+    for i in range(1, len(a)):
+        v = a[i]                  # eleman elimizde
+        j = i
+        while j > 0 and a[j - 1] > v:
+            a[j] = a[j - 1]       # büyükleri sağa kaydır
+            j -= 1
+        a[j] = v                  # boşluğa yerleştir
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public static void InsertionSortShift(int[] a)
+{
+    for (int i = 1; i < a.Length; i++)
+    {
+        int v = a[i];             // eleman elimizde
+        int j = i;
+        for (; j > 0 && a[j - 1] > v; j--)
+            a[j] = a[j - 1];      // büyükleri sağa kaydır
+        a[j] = v;                 // boşluğa yerleştir
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function insertionSortShift(a) {
+  for (let i = 1; i < a.length; i++) {
+    const v = a[i];             // eleman elimizde
+    let j = i;
+    for (; j > 0 && a[j - 1] > v; j--)
+      a[j] = a[j - 1];          // büyükleri sağa kaydır
+    a[j] = v;                   // boşluğa yerleştir
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <p>Kartı elimize alıyoruz, büyük kartları bir sağa <b>kaydırıyoruz</b>, kartı açılan boşluğa koyuyoruz.</p>
+      <p>Takas = 3 atama. Kaydırma = 1 atama. → Dizi erişimi yaklaşık <b>yarıya</b> iner.</p>
+      <div class="box ask fragment"><span class="bt">🧪 Dene</span>Bu sürümü JavaScript laboratuvarına yaz (<code>a[j] = a[j - 1]</code> atamalarını da görselleştirir). “yazma” sayacına bak!</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="insertion sort · gerçek dünya">
+  <h2>N² bir algoritma… dünyanın en hızlı kütüphanelerinde? 🤯</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>Kütüphane</th><th>Ana algoritma</th><th>Küçük parçalar için</th></tr>
+    <tr><td>Python <code>list.sort()</code></td><td>Timsort</td><td><b>(ikili) insertion sort</b> — ~32–64 elemanlık parçalar</td></tr>
+    <tr><td>C# <code>Array.Sort</code> (.NET)</td><td>Introsort (quicksort + heapsort)</td><td><b>insertion sort</b> — ≤ 16 eleman</td></tr>
+    <tr><td>Chrome V8 (2018 öncesi)</td><td>Quicksort</td><td><b>insertion sort</b> — ≤ 10 eleman</td></tr>
+    <tr><td>C++ <code>std::sort</code> (yaygın uygulamalar)</td><td>Introsort</td><td><b>insertion sort</b> — ~16 eleman</td></tr>
+  </table>
+  <p class="fragment"><b>Neden?</b> Küçük N’de N² ile N log N arasındaki fark önemsiz; insertion sort’un <b>ek yükü yok</b>, kodu minicik ve belleğe <b>komşu komşu</b> erişiyor → CPU önbelleği çok sever.</p>
+  <p class="fragment mini">Ders: “Büyük-O” her şey değildir. Sabitler ve donanım da önemli. → Sonraki slayt.</p>
+  <aside class="notes">Kaynak: .NET Array.Sort belgeleri ("If the partition size is less than or equal to 16 elements, it uses an insertion sort algorithm"), CPython listsort.txt, V8 blog "Getting things sorted in V8" (2018).</aside>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ Bellek hiyerarşisi: her “okuma” eşit değil <span class="en">memory hierarchy</span></h2>
+  <p class="mini">Klasik “her programcının bilmesi gereken gecikmeler” (Jeff Dean / Peter Norvig). İnsan ölçeği: <b>1 ns = 1 saniye</b> olsaydı…</p>
+  <table class="lat">
+    <tr><td>L1 önbellek okuma</td><td>0,5 ns</td><td>yarım saniye — göz kırpmak</td><td class="barcell"><div class="lb" style="width:2%"></div></td></tr>
+    <tr><td>L2 önbellek okuma</td><td>7 ns</td><td>7 saniye — bir yudum çay</td><td class="barcell"><div class="lb" style="width:12%"></div></td></tr>
+    <tr><td>Ana bellek (RAM)</td><td>100 ns</td><td>1,5 dakika — çay demlemek</td><td class="barcell"><div class="lb" style="width:26%"></div></td></tr>
+    <tr><td>SSD’den rastgele okuma</td><td>~150 µs</td><td>~2 gün</td><td class="barcell"><div class="lb" style="width:52%"></div></td></tr>
+    <tr><td>Hard diskte arama</td><td>10 ms</td><td>~4 ay</td><td class="barcell"><div class="lb" style="width:72%"></div></td></tr>
+    <tr><td>Paket: Kaliforniya → Hollanda → geri</td><td>150 ms</td><td>~5 yıl</td><td class="barcell"><div class="lb" style="width:92%"></div></td></tr>
+  </table>
+  <p class="fragment">CPU, RAM’den tek bayt istemez: <b>64 baytlık</b> bir bloğu (önbellek satırı <span class="en">cache line</span>) birden getirir. Komşu elemanlar “bedavaya” gelir.</p>
+  <aside class="notes">Çubuklar logaritmik ölçekte. Güncel interaktif sürüm kaynaklar slaytında (colin-scott.github.io). Sayılar donanıma göre değişir; önemli olan büyüklük sıraları.</aside>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ Önbellek <span class="en">cache</span> simülasyonu: dizi vs bağlı liste <span class="en">linked list</span></h2>
+  <div class="demo" data-demo="cache"></div>
+  <p class="mini">Her hücre bir bellek adresi, her satır (8 hücre) bir önbellek satırı. Önbellek sadece 3 satır tutabiliyor. Dizi elemanları <b>yan yana</b>; bağlı liste düğümleri belleğe <b>dağılmış</b> (her düğüm bir sonrakinin adresini tutar).</p>
+  <aside class="notes">Önce diziyi gezin: 16 erişimde sadece 2–3 ıska. Sonra listeyi: neredeyse her erişim ıska. Insertion sort dizide hep komşuya (j-1) baktığı için önbellek dostudur. Ayrıca oyun motorlarındaki "Data-Oriented Design" / Unity DOTS fikrinin özü budur.</aside>
+</section>
+
+<section data-sec="kaputun altında · hikâye">
+  <h2>📜 Stack Overflow’un en ünlü sorusu</h2>
+  <div class="cols c64">
+    <div>
+      <p class="lead">“Neden <b>sıralı</b> bir diziyi işlemek, sıralı olmayanı işlemekten <b>daha hızlı</b>?” (2012)</p>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+for x in data:          # data: 0..255 arası rastgele sayılar
+    if x >= 128:        # ← CPU bu cevabı TAHMİN etmeye çalışır
+        total += x
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+foreach (int x in data)     // data: 0..255 arası rastgele sayılar
+    if (x >= 128)           // ← CPU bu cevabı TAHMİN etmeye çalışır
+        total += x;
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+for (const x of data)       // data: 0..255 arası rastgele sayılar
+  if (x >= 128)             // ← CPU bu cevabı TAHMİN etmeye çalışır
+    total += x;
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C++ (orijinal)">
+<pre><code class="language-cpp" data-trim data-line-numbers><script type="text/template">
+for (unsigned c = 0; c < arraySize; ++c)
+    if (data[c] >= 128)     // ← CPU bu cevabı TAHMİN etmeye çalışır
+        sum += data[c];
+</script></code></pre>
+    </div>
+  </div>
+      <p>Aynı C++ kodu, <code>data</code> önceden sıralanınca ~<b>6 kat</b> hızlandı!</p>
+    </div>
+    <div class="box low"><span class="bt">⚙️ Dal tahmini <span class="en">branch prediction</span></span>
+      CPU, <code>if</code>’in sonucunu beklemeden tahmin edip devam eder. Sıralı veride tahmin hep tutar (önce hep “hayır”, sonra hep “evet”). Rastgele veride %50 yanılır ve her yanılgıda boru hattını <span class="en">pipeline</span> boşaltır.
+      <p class="mini">Ünlü cevaptaki benzetme: tren makasçısı, trenin hangi yöne gideceğini <b>tahmin edip</b> makası önceden çevirir.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="insertion sort · video">
+  <h2>🎬 Ara: Insertion sort dansı</h2>
+  <div class="cols c64">
+    <a class="vid" href="https://www.youtube.com/watch?v=ROalU379l3U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ROalU379l3U/hqdefault.jpg" alt="Insert-sort with Romanian folk dance"><span><b>Insert-sort with Romanian folk dance</b><br>AlgoRythmics</span></a>
+    <div>
+      <p>Bir dansçı öne çıkar ve kendinden büyük olanları geçerek sola doğru “dans eder” → iç döngü.</p>
+      <div class="box ask"><span class="bt">🤔 Karşılaştır</span>Selection dansıyla karşılaştırın: Hangisinde dansçılar daha çok yer değiştiriyor? Hangisinde daha çok “bakışma” (karşılaştırma) var?</div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- YAN GÖREV — ÇİZİM SIRASI                                           -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">⭐ SIDE QUEST</div>
+  <div class="ttl">Kim Önde Çizilir?</div>
+  <div class="sub">2D oyunlarda çizim sırası — insertion sort’un oyundaki süper gücü</div>
+  <ul class="agenda">
+    <li class="done">oyunun kuralları</li><li class="done">selection sort</li><li class="done">insertion sort</li><li class="on">yan görev: çizim sırası</li>
+    <li>shellsort</li><li>arena: karşılaştırma</li><li>kararlılık</li><li>bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="yan görev">
+  <h2>Ressam algoritması <span class="en">painter’s algorithm</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>Tepeden bakışlı (top-down) 2D oyunlar (Stardew Valley, Zelda benzeri…): ekranın <b>altına yakın</b> olan nesne kameraya daha yakındır → <b>önde</b> çizilmeli.</p>
+      <p>Ressam gibi çiziyoruz: <b>önce uzaktakiler</b> (y’si büyük), sonra yakındakiler üstüne.</p>
+      <p class="fragment big">→ Her karede nesneleri <b>y’ye göre sırala</b>, sırayla çiz.</p>
+      <p class="fragment">Saniyede <b>60 kare</b> × yüzlerce nesne. Hangi sıralama algoritması? 🤔</p>
+    </div>
+    <div class="box game"><span class="bt">🎨 Aynı fikir 3D’de</span>
+      Yarı saydam nesneler (cam, duman, parçacık) derinlik tamponuyla doğru çizilemez; motorlar onları kameraya uzaklığa göre <b>arkadan öne</b> sıralayıp çizer.
+    </div>
+  </div>
+</section>
+
+<section data-sec="yan görev">
+  <h2>🎮 Canlı demo: y-sıralama</h2>
+  <div class="demo" data-demo="ysort"></div>
+  <aside class="notes">
+    1) "Sıralama yok" ile başlayın: karakterler ağaçların arkasında/önünde yanlış görünür.
+    2) "Selection (her karede sıfırdan)": doğru görünür ama karşılaştırma ≈ N²/2. N'i 400'e çıkarın.
+    3) "Insertion (önceki karenin sırası)": karşılaştırma ≈ N! Çünkü bir karede karakterler çok az hareket eder → dizi neredeyse sıralı.
+    4) Hareket hızını artırın: ters çift sayısı artar, maliyet de artar.
+  </aside>
+</section>
+
+<section data-sec="yan görev">
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 TARTIŞMA</span>
+    <ol>
+      <li class="fragment">Demoda “önceki karenin sırası” ile insertion sort neden bu kadar ucuz?</li>
+      <li class="fragment">Karakterler <b>çok hızlı</b> hareket ederse ne olur?</li>
+      <li class="fragment">Oyunun <b>ilk karesinde</b> ne olur? Ya bir sahne geçişinde (ışınlanma)?</li>
+      <li class="fragment">Ağaçlar hiç hareket etmiyor. Bunu nasıl kullanabiliriz?</li>
+    </ol>
+  </div>
+  <aside class="notes">
+    1) Önceki karenin sırası neredeyse doğru → ters çift az → ~N karşılaştırma (Önerme C).
+    2) Daha çok ters çift → maliyet N²'ye doğru artar.
+    3) İlk karede sıra rastgele → ~N²/4. Tek seferlik maliyet; sonraki kareler ucuz.
+    4) Statik nesneleri bir kere sıralayıp ayrı tutmak (statik / dinamik katman) — gerçek motorlar bunu yapar.
+  </aside>
+</section>
+
+<section data-sec="yan görev">
+  <h2>Zamansal tutarlılık <span class="en">temporal coherence</span></h2>
+  <p>Oyun dünyası kareden kareye <b>çok az</b> değişir. Önceki karenin cevabı, bu karenin cevabına <b>çok yakındır</b>.</p>
+  <div class="cols">
+    <div class="box game"><span class="bt">💥 Sweep and Prune (fizik motorları)</span>
+      <p>Çarpışma adayı çiftleri bulmak için her nesnenin kutusu x eksenine izdüşürülür ve uç noktalar <b>sıralanır</b>. Sadece aralıkları çakışan çiftler detaylı kontrol edilir.</p>
+      <p class="mini">Uç noktalar her karede biraz kayar → <b>insertion sort</b> ile güncellenir (ör. Bullet fizik motorundaki “axis sweep” yaklaşımı).</p>
+    </div>
+    <svg viewBox="0 0 480 250" style="width:100%">
+      <g font-family="JetBrains Mono" font-size="14">
+        <rect x="30" y="30" width="120" height="60" rx="8" fill="var(--s1)" opacity=".8"/><text x="90" y="65" fill="#fff" text-anchor="middle">A</text>
+        <rect x="110" y="100" width="110" height="55" rx="8" fill="var(--s2)" opacity=".8"/><text x="165" y="132" fill="#fff" text-anchor="middle">B</text>
+        <rect x="300" y="40" width="130" height="70" rx="8" fill="var(--s3)" opacity=".8"/><text x="365" y="80" fill="#fff" text-anchor="middle">C</text>
+        <line x1="10" x2="470" y1="200" y2="200" stroke="var(--ink-2)" stroke-width="2"/>
+        <line x1="30" x2="150" y1="185" y2="185" stroke="var(--s1)" stroke-width="6"/>
+        <line x1="110" x2="220" y1="215" y2="215" stroke="var(--s2)" stroke-width="6"/>
+        <line x1="300" x2="430" y1="185" y2="185" stroke="var(--s3)" stroke-width="6"/>
+        <text x="130" y="242" fill="var(--red)" text-anchor="middle">A–B çakışıyor → kontrol et</text>
+        <text x="365" y="242" fill="var(--muted)" text-anchor="middle">C yalnız → atla</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-sec="yan görev · unity">
+  <h2>Kodda y-sıralama: Unity · pygame · p5.js</h2>
+  <div class="tabs" style="font-size:.8em">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class DepthSorter : MonoBehaviour
+{
+    public List<SpriteRenderer> sprites;
+    // Karşılaştırıcıyı BİR KEZ oluştur → her karede yeni nesne yok (çöp yok)
+    static readonly Comparison<SpriteRenderer> byY =
+        (p, q) => q.transform.position.y.CompareTo(p.transform.position.y);
+
+    void LateUpdate()
+    {
+        InsertionSort(sprites, byY);            // önceki karenin sırası neredeyse doğru
+        for (int i = 0; i < sprites.Count; i++)
+            sprites[i].sortingOrder = i;        // büyük numara = önde
+    }
+
+    static void InsertionSort<T>(List<T> a, Comparison<T> cmp)
+    {
+        for (int i = 1; i < a.Count; i++)
+            for (int j = i; j > 0 && cmp(a[j], a[j - 1]) < 0; j--)
+                (a[j], a[j - 1]) = (a[j - 1], a[j]);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python (pygame)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# draw_list: önceki karenin sırasıyla tutulan sprite listesi
+def insertion_sort_by_y(a):
+    for i in range(1, len(a)):
+        j = i
+        while j > 0 and a[j].rect.bottom < a[j - 1].rect.bottom:
+            a[j], a[j - 1] = a[j - 1], a[j]
+            j -= 1
+
+def draw(screen):
+    insertion_sort_by_y(draw_list)    # neredeyse sıralı → çok hızlı
+    for s in draw_list:               # yukarıdakiler (uzak) önce çizilir
+        screen.blit(s.image, s.rect)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// things: önceki karenin sırasıyla tutulan nesne dizisi
+function insertionSortByY(a) {
+  for (let i = 1; i < a.length; i++)
+    for (let j = i; j > 0 && a[j].y < a[j - 1].y; j--)
+      [a[j], a[j - 1]] = [a[j - 1], a[j]];
+}
+
+function draw() {
+  background(220);
+  insertionSortByY(things);   // neredeyse sıralı → çok hızlı
+  for (const t of things) t.show();   // yukarıdakiler (uzak) önce
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Not: Gerçek projede Unity bunu sizin için yapabilir (2D: <i>Transparency Sort Axis</i> = (0, 1, 0); Godot: <i>Y Sort</i>). Ama arkasındaki fikir tam olarak bu.</p>
+</section>
+
+<section data-sec="kaputun altında">
+  <h2>⚙️ Çöp toplayıcı <span class="en">garbage collector</span> ve takılan oyunlar</h2>
+  <div class="cols">
+    <div>
+      <p>C#, Python, JavaScript’te yeni nesneler oluşturursunuz; kullanılmayanları <b>çöp toplayıcı</b> (GC) arada bir temizler.</p>
+      <p>Belediye çöp kamyonu gibi: geldiğinde <b>sokak birkaç saniye durur</b>. Oyunda bu, ekranın bir anlığına donması demek <span class="en">GC spike / stutter</span>.</p>
+      <p class="fragment">60 FPS’te bir karenin süresi: <b>16,6 ms</b>. 5 ms’lik bir GC duraklaması o karenin üçte birini yer.</p>
+    </div>
+  <div class="tabs fragment">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+void Update()   // saniyede 60 kez!
+{
+    // ❌ Her karede yeni liste + yeni nesneler → çöp
+    var sorted = enemies.OrderBy(e => e.dist).ToList();
+
+    // ✅ Var olan listeyi YERİNDE sırala,
+    //    karşılaştırıcı önceden hazır (static readonly)
+    enemies.Sort(byDistance);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def update():   # saniyede 60 kez!
+    # ❌ her karede YENİ bir liste üretir → çöp
+    ordered = sorted(enemies, key=lambda e: e.dist)
+
+    # ✅ var olan listeyi YERİNDE sıralar
+    enemies.sort(key=by_dist)   # by_dist önceden tanımlı fonksiyon
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function draw() {   // saniyede 60 kez!
+  // ❌ her karede YENİ bir dizi + yeni fonksiyon nesnesi → çöp
+  const ordered = [...enemies].sort((a, b) => a.dist - b.dist);
+
+  // ✅ var olan diziyi YERİNDE sırala, karşılaştırıcı önceden hazır
+  enemies.sort(byDist);
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">LINQ OrderBy her çağrıda yeni koleksiyon ve yardımcı nesneler üretir. Değişken yakalayan (capturing) lambda'lar da her çağrıda yeni delegate nesnesi üretebilir. Unity Profiler'daki "GC Alloc" sütununu gösterebilirsiniz. "Yerinde (in-place) sıralama" terimini burada tekrar hatırlatın.</aside>
+</section>
+
+<!-- =============================================================== -->
+<!-- LEVEL 3 — SHELLSORT                                               -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2f45 0%, #2a0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Shellsort</div>
+  <div class="sub">Önce uzaktan kaba ayar, sonra yakından ince ayar</div>
+  <ul class="agenda">
+    <li class="done">oyunun kuralları</li><li class="done">selection sort</li><li class="done">insertion sort</li><li class="done">yan görev: çizim sırası</li>
+    <li class="on">shellsort</li><li>arena: karşılaştırma</li><li>kararlılık</li><li>bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="shellsort">
+  <h2>Insertion sort’un zayıf noktası 🐌</h2>
+  <p>En küçük eleman dizinin <b>en sonundaysa</b>, ona yer açmak için herkes teker teker kayar: <b>N−1</b> takas, hep <b>birer adım</b>.</p>
+  <div class="sortviz" data-alg="insertion" data-input="lastsmall" data-n="30" data-speed="20" data-controls="n" data-h="230"></div>
+  <p class="fragment">Fikir: Elemanlar <b>uzak mesafelere</b> tek hamlede atlayabilseydi? 🦘</p>
+</section>
+
+<section data-sec="shellsort">
+  <h2>h-sıralı dizi <span class="en">h-sorted array</span></h2>
+  <p>Aralarında <b>h adım</b> olan elemanlar (her renk bir grup) kendi aralarında sıralıysa dizi <b>h-sıralıdır</b>.</p>
+  <div class="demo" data-demo="hsort"></div>
+  <aside class="notes">h=4 ile başlayın: 4 renkli grup var. "h-sırala"ya basınca her renk kendi içinde sıralanır, ama dizinin tamamı sıralı değil. Sonra h=1 seçin: 1-sıralı = tamamen sıralı. "13 → 4 → 1 sırayla" düğmesi Shellsort'u adım adım uygular.</aside>
+</section>
+
+<section data-sec="shellsort">
+  <h2>Shellsort fikri</h2>
+  <ol>
+    <li>Büyük bir h seç; diziyi <b>h-sırala</b> (her grup için insertion sort, h adımlı atlayarak).</li>
+    <li>h’yi küçült, tekrarla.</li>
+    <li>Son olarak <b>h = 1</b>: normal insertion sort.</li>
+  </ol>
+  <div class="cols fragment">
+    <div class="box game"><span class="bt">Neden hızlı?</span>
+      Büyük h: gruplar kısa → ucuz. Elemanlar uzağa atlar.<br>
+      Küçük h: dizi artık <b>kısmen sıralı</b> → insertion sort’un sevdiği durum!
+    </div>
+    <div class="box story"><span class="bt">📜 Adı nereden geliyor?</span>
+      Türkçe kaynaklarda bazen “kabuk sıralaması” denir — ama kabukla ilgisi yok! 🐚 Algoritmayı 1959’da yayımlayan <b>Donald L. Shell</b>’in soyadı.
+    </div>
+  </div>
+</section>
+
+<section data-sec="shellsort">
+  <h2>İz: S H E L L S O R T E X A M P L E</h2>
+  <div class="trace" data-alg="shell" data-values="S H E L L S O R T E X A M P L E"></div>
+  <div class="trace-legend"><b class="r">kırmızı</b> = bu h-turunda yeri değişen elemanlar</div>
+  <p class="fragment mini center">h dizisi: 13 → 4 → 1 (Knuth’un “3x+1” dizisi: 1, 4, 13, 40, 121, 364, …)</p>
+</section>
+
+<section data-sec="shellsort">
+  <h2>Shellsort — animasyon</h2>
+  <div class="sortviz" data-alg="shell" data-n="60" data-speed="40" data-controls="n,input,hseq" data-h="270"></div>
+  <p class="mini">Alttaki renkli şerit: aynı renk = aynı h-grubu. h dizisini değiştirip karşılaştırma sayısını izleyin.</p>
+</section>
+
+<section data-sec="shellsort">
+  <h2>Shellsort — kod</h2>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-13|3-5|6-12|7-11">
+def shell_sort(a):
+    n = len(a)
+    h = 1
+    while h < n // 3:
+        h = 3 * h + 1               # 1, 4, 13, 40, 121, ...
+    while h >= 1:
+        for i in range(h, n):       # h adımlı insertion sort
+            j = i
+            while j >= h and a[j] < a[j - h]:
+                a[j], a[j - h] = a[j - h], a[j]
+                j -= h
+        h //= 3                     # bir sonraki (daha küçük) h
+    # h = 1 turu bittiğinde dizi sıralı
+</code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public static void ShellSort(int[] a)
+{
+    int n = a.Length, h = 1;
+    while (h < n / 3) h = 3 * h + 1;     // 1, 4, 13, 40, ...
+    while (h >= 1)
+    {
+        for (int i = h; i < n; i++)
+            for (int j = i; j >= h && a[j] < a[j - h]; j -= h)
+                (a[j], a[j - h]) = (a[j - h], a[j]);
+        h /= 3;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function shellSort(a) {
+  const n = a.length;
+  let h = 1;
+  while (h < Math.floor(n / 3)) h = 3 * h + 1;   // 1, 4, 13, 40, ...
+  for (; h >= 1; h = Math.floor(h / 3))
+    for (let i = h; i < n; i++)
+      for (let j = i; j >= h && a[j] < a[j - h]; j -= h)
+        [a[j], a[j - h]] = [a[j - h], a[j]];
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="fragment">Insertion sort’tan farkı: <code>1</code> yerine <code>h</code> yazmak + dışarıda bir döngü. Sadece birkaç satır! 😮</p>
+</section>
+
+<section data-sec="shellsort">
+  <h2>Shellsort ne kadar hızlı? 📐</h2>
+  <div class="box prop"><span class="bt">Önerme D</span>
+    3x+1 dizisiyle Shellsort, en kötü durumda \( O(N^{3/2}) \) karşılaştırma yapar.
+  </div>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>N</th><th>N²/2 (selection)</th><th>N<sup>3/2</sup> (shellsort, en kötü)</th><th>oran</th></tr>
+    <tr><td>1.000</td><td>500.000</td><td>31.623</td><td>~16×</td></tr>
+    <tr><td>1.000.000</td><td>500 milyar</td><td>1 milyar</td><td>~500×</td></tr>
+  </table>
+  <div class="box story fragment"><span class="bt">📜 60 yıllık bilmece</span>
+    Shellsort’un <b>ortalama</b> performansının tam formülü hâlâ bilinmiyor! En iyi h dizisi de bilinmiyor. Basit görünen bir algoritma, matematikçiler için hâlâ açık bir problem.
+  </div>
+  <p class="fragment mini">Gerçek hayatta: kodu çok kısa ve ek bellek istemediği için gömülü sistemlerde (ör. uClibc’nin <code>qsort</code>’u) ve bzip2 sıkıştırma programında kullanıldı.</p>
+</section>
+
+<section data-sec="shellsort">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · Shellsort</div>
+    <div class="q">h dizisi sadece <code>[1]</code> olursa Shellsort neye dönüşür? Son h neden <b>1 olmak zorunda</b>?</div>
+    <div class="opts">
+      <button data-opt="A">Selection sort’a; son h 1 olmasa da olur</button>
+      <button data-opt="B">Insertion sort’a; 1 olmazsa komşu elemanlar hiç karşılaştırılmayabilir</button>
+      <button data-opt="C">Bubble sort’a; 1 olunca daha hızlı olur</button>
+      <button data-opt="D">Hiçbir şeye; h = 1 çalışmaz</button>
+    </div>
+    <div class="explain">h = 1 turu, düz insertion sort’tur. Örneğin son h = 2 olsaydı dizi sadece “2-sıralı” olurdu: <code>[1, 0, 3, 2]</code> 2-sıralıdır ama sıralı değildir!</div>
+  </div>
+</section>
+
+<section data-sec="shellsort · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: shellsort</h2>
+  <div class="codelab" data-lang="js" data-n="80" data-speed="80">
+<textarea>
+function sort(a) {
+  const n = a.length;
+  let h = 1;
+  while (h < Math.floor(n / 3)) h = 3 * h + 1;  // 1, 4, 13, 40…
+  while (h >= 1) {
+    for (let i = h; i < n; i++) {
+      for (let j = i; j >= h && less(a, j, j - h); j -= h) {
+        exch(a, j, j - h);
+      }
+    }
+    h = Math.floor(h / 3);
+  }
+}
+</textarea>
+    <div class="lab-tasks"><b>Deneyler (N = 80, Rastgele):</b> karşılaştırma sayısını not et, sonra:
+      <ol>
+        <li>4. satırı <code>while (h * 2 &lt; n) h = h * 2;</code>, 11. satırı <code>h = Math.floor(h / 2);</code> yap (2’nin kuvvetleri). Daha mı iyi?</li>
+        <li>5. satırda <code>h &gt;= 1</code> yerine <code>h &gt; 1</code> yaz. Ne oldu?</li>
+        <li>4. satırı silip sadece h = 1 bırak. Karşılaştırma sayısı = insertion sort’unki mi?</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">1) 2'nin kuvvetleri genelde daha kötü: tek ve çift pozisyonlar h=1'e kadar hiç karşılaşmaz. 2) Son h=1 turu yapılmaz → dizi sıralı olmayabilir. 3) Evet, bire bir insertion sort.</aside>
+</section>
+
+<section data-sec="shellsort · video">
+  <h2>🎬 Ara: Shellsort dansı</h2>
+  <div class="cols c64">
+    <a class="vid" href="https://www.youtube.com/watch?v=CmPA7zE8mx0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/CmPA7zE8mx0/hqdefault.jpg" alt="Shell-sort with Hungarian (Székely) folk dance"><span><b>Shell-sort with Hungarian (Székely) folk dance</b><br>AlgoRythmics</span></a>
+    <div>
+      <p>Dansçılar önce <b>uzaktaki</b> partnerleriyle eşleşir (büyük h), sonra giderek yakındakilerle (h küçülür).</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda hangi h değerleri kullanılıyor? Son turda kaç takas oluyor — neden bu kadar az?</div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- LEVEL 4 — ARENA                                                   -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Arena</div>
+  <div class="sub">Üç algoritma, aynı dizi. Kim kazanır?</div>
+  <ul class="agenda">
+    <li class="done">oyunun kuralları</li><li class="done">selection sort</li><li class="done">insertion sort</li><li class="done">yan görev: çizim sırası</li>
+    <li class="done">shellsort</li><li class="on">arena: karşılaştırma</li><li>kararlılık</li><li>bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="arena">
+  <h2>🏁 Yarış! Önce tahmin edin</h2>
+  <div class="race" data-n="60"></div>
+  <aside class="notes">Her girdi türü için önce sınıfa oylama yaptırın (el kaldırma): "Rastgele: kim kazanır? Sıralı? Ters?" Sıralı girdide insertion anında biter, selection ise sonuna kadar çalışır. Shellsort ters girdide çok iyi.</aside>
+</section>
+
+<section data-sec="arena">
+  <h2>N büyüdükçe ne olur? 📈 <span class="en">order of growth</span></h2>
+  <div class="demo" data-demo="growth"></div>
+  <p class="mini">Fareyi grafiğin üzerinde gezdirin. Süreler, saniyede 1 milyar karşılaştırma yapan hayali bir bilgisayar için.</p>
+  <aside class="notes">N en fazla = 1 milyon yapın: selection sort ~8 dakika, N log N ~20 ms. 1 milyar: selection yüzlerce yıl! Bir sonraki dersin (mergesort / quicksort) motivasyonu bu.</aside>
+</section>
+
+<section data-sec="arena">
+  <h2>Küçük terimleri neden atıyoruz? <span class="en">tilde notation</span></h2>
+  <p>\( \dfrac{N(N-1)}{2} = \dfrac{N^2}{2} - \dfrac{N}{2} \) &nbsp; → &nbsp; büyük N için \( \sim \dfrac{N^2}{2} \) yazarız. “~” = “yaklaşık, baskın terim”.</p>
+  <div class="demo" data-demo="tilde"></div>
+  <div class="box prop fragment"><span class="bt">Büyük-O ile ilişkisi <span class="en">Big-O</span></span>
+    Sedgewick tilde (~) kullanır çünkü <b>sabiti</b> korur (N²/2 ile N²/4 farklıdır). Büyük-O sabiti de atar: ikisi de \( O(N^2) \). İş görüşmelerinde Büyük-O sorulur; ikisini de tanıyın.
+  </div>
+</section>
+
+<section data-sec="arena · deney">
+  <h2>🧪 Bilimsel yöntem: iki katına çıkarma deneyi <span class="en">doubling test</span></h2>
+  <div class="cols c46">
+    <div>
+      <p>Formül tahminimiz doğru mu? <b>Ölçelim!</b></p>
+      <p>N’i iki katına çıkar, süre kaç katına çıkıyor?</p>
+      <ul>
+        <li>Süre ~ N² ise → oran ≈ 2² = <b>4</b></li>
+        <li>Süre ~ N<sup>1.5</sup> ise → oran ≈ 2<sup>1.5</sup> ≈ <b>2,8</b></li>
+        <li>Süre ~ N ise → oran ≈ <b>2</b></li>
+      </ul>
+      <p class="mini">Genel kural: \( b = \log_2(\text{oran}) \) → süre \( \sim N^b \)</p>
+    </div>
+    <div class="demo" data-demo="doubling"></div>
+  </div>
+  <aside class="notes">Bu ölçüm gerçekten bu bilgisayarda yapılıyor. Insertion için oran 4'e yaklaşmalı (küçük N'de gürültülü olabilir). Shellsort ~2.3–2.8, hazır sort ~2.1 civarı çıkar. Sedgewick'in kitabındaki "DoublingTest" fikri.</aside>
+</section>
+
+<section data-sec="arena">
+  <h2>Özet tablo 📋</h2>
+  <table class="sum-t">
+    <tr><th>algoritma</th><th>en iyi</th><th>ortalama</th><th>en kötü</th><th>takas</th><th>yerinde</th><th>kararlı</th><th>uyarlanabilir</th></tr>
+    <tr><td>Selection</td><td>N²/2</td><td>N²/2</td><td>N²/2</td><td><b>N</b></td><td class="yes">✔</td><td class="no">✘</td><td class="no">✘</td></tr>
+    <tr><td>Insertion</td><td><b>N</b></td><td>N²/4</td><td>N²/2</td><td>= ters çift</td><td class="yes">✔</td><td class="yes">✔</td><td class="yes">✔</td></tr>
+    <tr><td>Shellsort (3x+1)</td><td>N log N</td><td>? (deneysel)</td><td>N<sup>3/2</sup></td><td>—</td><td class="yes">✔</td><td class="no">✘</td><td class="yes">✔</td></tr>
+    <tr class="fragment"><td>Bubble (erken çıkışlı)</td><td>N</td><td>N²/2</td><td>N²/2</td><td>= ters çift</td><td class="yes">✔</td><td class="yes">✔</td><td class="yes">✔</td></tr>
+  </table>
+  <p class="mini">Değerler karşılaştırma sayısıdır (~ anlamında). “Kararlı” sütununu birazdan açıklayacağız.</p>
+</section>
+
+<section data-sec="arena · hikâye">
+  <h2>📜 Peki ya Bubble Sort?</h2>
+  <div class="cols c64">
+    <div>
+      <p><b>Kabarcık sıralaması</b> <span class="en">bubble sort</span>: komşuları karşılaştır, yanlışsa takasla; büyükler “kabarcık gibi” sona yükselir. En çok bilinen sıralama… ama en kötülerinden biri.</p>
+      <div class="box story"><span class="bt">🎤 2007, Google</span>
+        CEO Eric Schmidt, başkan adayı Barack Obama’ya şaka yollu sorar: <i>“Bir milyon 32-bitlik tamsayıyı sıralamanın en verimli yolu nedir?”</i><br>
+        Obama: <i>“I think the <b>bubble sort</b> would be the wrong way to go.”</i> 😄
+      </div>
+      <p class="mini">Donald Knuth: “Bubble sort’un, akılda kalıcı bir adı olması dışında önerilecek hiçbir yanı yok gibi görünüyor.”</p>
+    </div>
+    <div style="display:grid;gap:12px;justify-items:end">
+      <a class="vid sm" href="https://www.youtube.com/watch?v=k4RRi_ntQc8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/k4RRi_ntQc8/hqdefault.jpg" alt="Obama bubble sort"><span><b>Barack Obama — Computer Science Question</b></span></a>
+      <a class="vid sm" href="https://www.youtube.com/watch?v=lyZQPjUT5B4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/lyZQPjUT5B4/hqdefault.jpg" alt="Bubble-sort dance"><span><b>Bubble-sort with Hungarian folk dance</b> — AlgoRythmics</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- LEVEL 5 — KARARLILIK                                              -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #2b0d45 0%, #0f2a3d 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kararlılık</div>
+  <div class="sub"><i>stability</i> — eşitler arasında adalet</div>
+  <ul class="agenda">
+    <li class="done">oyunun kuralları</li><li class="done">selection sort</li><li class="done">insertion sort</li><li class="done">yan görev: çizim sırası</li>
+    <li class="done">shellsort</li><li class="done">arena: karşılaştırma</li><li class="on">kararlılık</li><li>bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="kararlılık">
+  <h2>Kararlı sıralama <span class="en">stable sort</span></h2>
+  <p>Bir sıralama, <b>anahtarı eşit</b> <span class="en">equal keys</span> olan elemanların <b>önceki göreli sırasını koruyorsa</b> kararlıdır.</p>
+  <div class="cols">
+    <div class="box game"><span class="bt">🏆 Skor tablosu</span>
+      <p>İki oyuncu 900 puan aldı. Kural: “Eşitlikte <b>önce bitiren</b> önde.”</p>
+      <p>Çözüm: Önce <b>bitirme zamanına</b> göre sırala, sonra <b>puana</b> göre <b>kararlı</b> sırala. Puanı eşit olanlar zaman sırasını korur!</p>
+    </div>
+    <table class="sum-t" style="font-size:20px">
+      <tr><th>oyuncu</th><th>puan</th><th>bitirme</th></tr>
+      <tr><td>Ayşe</td><td>950</td><td>4:12</td></tr>
+      <tr><td>Mert</td><td class="c-blue">900</td><td class="c-blue">3:58</td></tr>
+      <tr><td>Zeynep</td><td class="c-blue">900</td><td class="c-blue">4:30</td></tr>
+      <tr><td>Can</td><td>720</td><td>3:10</td></tr>
+    </table>
+  </div>
+  <p class="fragment">Kararsız bir algoritma Zeynep’i Mert’in önüne koyabilir — oyuncular forumda isyan eder. 😤</p>
+</section>
+
+<section data-sec="kararlılık · oyunda">
+  <h2>🎮 Envanter: “İsme göre”, sonra “Nadirliğe göre”</h2>
+  <div class="demo" data-demo="stability"></div>
+  <aside class="notes">Sırayla: ↺, 1·İsme göre, 2·Insertion → her nadirlik grubunda isimler A→Z kalır. Sonra ↺, 1·İsme göre, 2·Selection → bazı gruplarda isim sırası bozulur. Selection'ın uzun mesafeli takasları, eşit elemanları birbirinin üzerinden atlatır.</aside>
+</section>
+
+<section data-sec="kararlılık">
+  <h2>Selection sort neden kararsız?</h2>
+  <p>Anahtar = harf. Alt indis sadece “kimin önce geldiğini” takip etmek için: <code>B₁ B₂ A</code></p>
+  <table class="trace-t" style="font-size:34px;margin:20px 0">
+    <tr><td style="color:var(--muted);font-size:18px;text-align:left">başlangıç</td><td class="blk">B₁</td><td class="blk">B₂</td><td class="red">A</td></tr>
+    <tr class="fragment"><td style="color:var(--muted);font-size:18px;text-align:left">i=0: min = A → a[0] ile takas</td><td class="red">A</td><td class="blk">B₂</td><td class="c-red">B₁</td></tr>
+    <tr class="fragment"><td style="color:var(--muted);font-size:18px;text-align:left">sonuç</td><td>A</td><td class="c-red">B₂</td><td class="c-red">B₁</td></tr>
+  </table>
+  <p class="fragment">Uzak mesafeli takas, B₁’i B₂’nin <b>üzerinden atlattı</b>. Insertion sort sadece <b>komşu</b> takası yapar ve eşitleri asla takaslamaz (<code>&lt;</code> kullanır, <code>≤</code> değil) → kararlı.</p>
+</section>
+
+<section data-sec="kararlılık">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 6 · Kararlılık</div>
+    <div class="q">Hangileri kararlıdır?</div>
+    <div class="opts">
+      <button data-opt="A">Hepsi: selection, insertion, shellsort</button>
+      <button data-opt="B">Selection ve insertion</button>
+      <button data-opt="C">Sadece insertion</button>
+      <button data-opt="D">Sadece shellsort</button>
+    </div>
+    <div class="explain"><b>Selection</b>: uzak takas → kararsız. <b>Shellsort</b>: h adımlı atlamalar eşitlerin sırasını bozabilir → kararsız. <b>Insertion</b>: sadece komşu takası, eşitleri takaslamaz → kararlı. (Laboratuvarda <code>&lt;</code> yerine <code>≤</code> kullanırsanız insertion da kararsızlaşır!)</div>
+  </div>
+</section>
+
+<section data-sec="kararlılık · gerçek dünya">
+  <h2>Kullandığınız dil kararlı mı sıralıyor? ⚠️</h2>
+  <table class="sum-t" style="font-size:21px">
+    <tr><th>Dil / fonksiyon</th><th>kararlı?</th><th>not</th></tr>
+    <tr><td>Python <code>sorted()</code>, <code>list.sort()</code></td><td class="yes">✔</td><td>Timsort — garanti</td></tr>
+    <tr><td>JavaScript <code>Array.prototype.sort</code></td><td class="yes">✔</td><td>ES2019’dan beri garanti</td></tr>
+    <tr><td>C# LINQ <code>OrderBy</code> / <code>ThenBy</code></td><td class="yes">✔</td><td>kararlı ama <b>yeni koleksiyon</b> üretir (GC!)</td></tr>
+    <tr><td>C# <code>Array.Sort</code>, <code>List&lt;T&gt;.Sort</code></td><td class="no">✘</td><td>introsort — eşitlerin sırası <b>garanti değil</b></td></tr>
+  </table>
+  <div class="box warn fragment"><span class="bt">🐞 Unity’de klasik hata</span>
+    <code>List.Sort</code> ile puana göre sıralanan skor tablosunda eşit puanlılar her yenilemede <b>yer değiştirip titreyebilir</b>. Çözüm: karşılaştırıcıya ikinci anahtar ekleyin (<code>score</code> eşitse <code>time</code>’a bak) ya da kararlı bir sıralama kullanın.
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- BONUS — KARIŞTIRMA                                                -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="linear-gradient(135deg, #07332a 0%, #3a0d33 100%)">
+  <div class="lv">🎁 BONUS LEVEL</div>
+  <div class="ttl">Karıştırma</div>
+  <div class="sub"><i>shuffling</i> — sıralamanın tersi: rastgele ama <b>adil</b></div>
+  <ul class="agenda">
+    <li class="done">oyunun kuralları</li><li class="done">selection sort</li><li class="done">insertion sort</li><li class="done">yan görev: çizim sırası</li>
+    <li class="done">shellsort</li><li class="done">arena: karşılaştırma</li><li class="done">kararlılık</li><li class="on">bonus: karıştırma</li>
+  </ul>
+</section>
+
+<section data-sec="karıştırma">
+  <h2>Knuth karıştırması <span class="en">Fisher–Yates / Knuth shuffle</span></h2>
+  <div class="cols c46">
+    <div>
+      <p><b>Adil</b> <span class="en">uniform</span> karıştırma: her sıralanış (permütasyon <span class="en">permutation</span>) <b>eşit olasılıkla</b> çıkmalı.</p>
+      <p>Fikir: soldan sağa git; i. adımda <b>0…i</b> arasından rastgele birini seç, a[i] ile takasla.</p>
+      <p class="fragment">Tek tur, N takas → doğrusal zaman. Selection sort’un “rastgele” kardeşi gibi!</p>
+      <p class="mini fragment">1938’de Fisher &amp; Yates kâğıt-kalemle; 1964’te Durstenfeld bilgisayar için; Knuth “The Art of Computer Programming” ile yaydı.</p>
+    </div>
+    <div class="tabs">
+      <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers>
+import random
+
+def shuffle(a):
+    for i in range(len(a)):
+        r = random.randint(0, i)    # 0..i (i dahil!)
+        a[i], a[r] = a[r], a[i]
+</code></pre>
+      </div>
+      <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static readonly System.Random rng = new System.Random();
+
+public static void Shuffle<T>(IList<T> a)
+{
+    for (int i = 0; i < a.Count; i++)
+    {
+        int r = rng.Next(i + 1);        // 0..i
+        (a[i], a[r]) = (a[r], a[i]);
+    }
+}
+</script></code></pre>
+      </div>
+      <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function shuffle(a) {
+  for (let i = 0; i < a.length; i++) {
+    const r = Math.floor(Math.random() * (i + 1)); // 0..i
+    [a[i], a[r]] = [a[r], a[i]];
+  }
+}
+</script></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="karıştırma · deney">
+  <h2>🎲 Deney: hangi karıştırma adil?</h2>
+  <div class="demo" data-demo="shuffle"></div>
+  <p class="mini">Her çubuk bir permütasyonun kaç kez çıktığını gösterir. Adil karıştırmada hepsi kesikli “beklenen” çizgisine yakın olmalı. Çubukların üzerine gelince sayıyı görürsünüz.</p>
+  <aside class="notes">Saf yöntemde N=3 için 3³ = 27 eşit olasılıklı yol var ama 6 permütasyon var; 27, 6'ya bölünmez → bazıları kaçınılmaz olarak daha sık çıkar. Sort+random karşılaştırıcı ise sıralama algoritmasının iç yapısına bağlı olarak yanlı çıkar.</aside>
+</section>
+
+<section data-sec="karıştırma · hikâye">
+  <h2>📜 Karıştırma hatalarının gerçek bedeli</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">🃏 1999 — Çevrimiçi poker</span>
+      Bir poker yazılımı karıştırma algoritmasını “güvenilirlik” için web sitesinde yayınladı. Güvenlik araştırmacıları iki hata buldu: (1) yukarıdaki <b>saf</b> yöntem, (2) rastgele sayı üreteci <span class="en">random number generator, RNG</span> gece yarısından beri geçen <b>milisaniye</b> ile başlatılıyordu (<i>tohum</i> <span class="en">seed</span>).<br>
+      Sonuç: kendi 5 kartlarını görüp sunucu saatiyle eşleştirerek <b>herkesin kartlarını</b> gerçek zamanlı hesapladılar.
+    </div>
+    <div class="box story"><span class="bt">🗳️ 2010 — Tarayıcı seçim ekranı</span>
+      AB kararıyla Windows kullanıcılarına 5 tarayıcıyı <b>rastgele</b> sırada gösteren bir ekran sunuldu. Kod: <code>sort(() =&gt; 0.5 - Math.random())</code>.<br>
+      Analizler sıralamanın <b>adil olmadığını</b> gösterdi: bazı tarayıcılar belirli konumlarda çok daha sık çıkıyordu. Kod sonradan Fisher–Yates ile düzeltildi.
+    </div>
+  </div>
+  <p class="mini">Kaynaklar: “How We Learned to Cheat at Online Poker” (Arkin ve ark., 1999); Rob Weir, “Doing the Microsoft Shuffle” (2010).</p>
+</section>
+
+<section data-sec="karıştırma · oyunda">
+  <h2>🎮 Tetris’in “7-torba” sistemi <span class="en">7-bag randomizer</span></h2>
+  <div class="cols c64">
+    <div class="demo" data-demo="tetris"></div>
+    <div>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random
+PIECES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L']
+
+def next_bag():
+    bag = PIECES[:]       # 7 parçanın kopyası
+    random.shuffle(bag)   # Fisher–Yates
+    return bag            # sırayla dağıt
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static readonly char[] Pieces = { 'I', 'O', 'T', 'S', 'Z', 'J', 'L' };
+
+static List<char> NextBag()
+{
+    var bag = new List<char>(Pieces);   // 7 parçanın kopyası
+    Shuffle(bag);                       // Fisher–Yates (önceki slayt)
+    return bag;                         // sırayla dağıt
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const PIECES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+function nextBag() {
+  const bag = PIECES.slice();   // 7 parçanın kopyası
+  shuffle(bag);                 // Fisher–Yates (önceki slayt)
+  return bag;                   // sırayla dağıt
+}
+</script></code></pre>
+    </div>
+  </div>
+      <p class="mini">Tamamen rastgele seçimde “I” parçası onlarca parça boyunca gelmeyebilir 😩. Modern Tetris oyunları torbayı karıştırıp sırayla dağıtır: iki “I” arasında <b>en fazla 12</b> parça olabilir.</p>
+    </div>
+  </div>
+  <aside class="notes">Oyun tasarımında "adil rastgelelik" (pseudo-random distribution) çok yaygın: loot tablolarında acıma sayacı (pity timer), kart oyunlarında deste, roguelike'larda oda havuzu.</aside>
+</section>
+
+<section data-sec="karıştırma">
+  <div class="quiz" data-answer="D">
+    <div class="qhead">Quiz 7 · Karıştırma</div>
+    <div class="q"><code>arr.sort(() =&gt; Math.random() - 0.5)</code> neden kötü bir karıştırmadır?</div>
+    <div class="opts">
+      <button data-opt="A">Çok yavaştır, ama sonuç adildir</button>
+      <button data-opt="B">Sadece sayı dizilerinde çalışır</button>
+      <button data-opt="C">Hiçbir zaman diziyi değiştirmez</button>
+      <button data-opt="D">Karşılaştırıcı tutarsız; sonuç algoritmanın iç yapısına göre yanlı olur</button>
+    </div>
+    <div class="explain">Sıralama algoritmaları karşılaştırıcının <b>tutarlı</b> olduğunu varsayar (a&lt;b ve b&lt;c ise a&lt;c). Rastgele cevaplar bu varsayımı bozar; bazı permütasyonlar daha olası hale gelir (deneyde gördünüz). Ayrıca N log N, Fisher–Yates’in N’inden yavaştır.</div>
+  </div>
+</section>
+
+<!-- =============================================================== -->
+<!-- FİNAL — OYUN YZ'YE KÖPRÜ                                          -->
+<!-- =============================================================== -->
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">STAGE CLEAR ✔</div>
+  <div class="ttl">Oyun YZ’sine Köprü</div>
+  <div class="sub">Bugün öğrendiklerimiz önümüzdeki haftalarda nerede karşımıza çıkacak?</div>
+</section>
+
+<section data-sec="köprü">
+  <h2>A* yol bulmaya bir bakış 🧭</h2>
+  <div class="cols c64">
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|4-7|9"><script type="text/template">
+# Naif A* "açık liste": düğümleri f değerine göre SIRALI tut
+def push(open_list, node):
+    open_list.append(node)
+    j = len(open_list) - 1
+    while j > 0 and open_list[j].f < open_list[j - 1].f:
+        open_list[j], open_list[j - 1] = open_list[j - 1], open_list[j]
+        j -= 1          # ← insertion sort'un TEK adımı!
+
+# en umut verici düğüm her zaman: open_list[0]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Naif A* "açık liste": düğümleri F değerine göre SIRALI tut
+void Push(List<Node> open, Node node)
+{
+    open.Add(node);
+    for (int j = open.Count - 1; j > 0 && open[j].F < open[j - 1].F; j--)
+        (open[j], open[j - 1]) = (open[j - 1], open[j]);  // insertion sort'un TEK adımı!
+}
+// en umut verici düğüm her zaman: open[0]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Naif A* "açık liste": düğümleri f değerine göre SIRALI tut
+function push(open, node) {
+  open.push(node);
+  for (let j = open.length - 1; j > 0 && open[j].f < open[j - 1].f; j--)
+    [open[j], open[j - 1]] = [open[j - 1], open[j]];  // insertion sort'un TEK adımı!
+}
+// en umut verici düğüm her zaman: open[0]
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <p>A*, her adımda <b>f değeri en küçük</b> düğümü seçer (selection sort’un iç döngüsü!).</p>
+      <p>Listeyi sıralı tutmak için her yeni düğümü <b>yerine sokarız</b> (insertion sort’un bir adımı).</p>
+      <div class="box ask fragment"><span class="bt">🤔 Ama…</span>Her ekleme O(N). Binlerce düğümde yavaşlar. Daha iyisi: <b>öncelik kuyruğu</b> <span class="en">priority queue / binary heap</span> → ekleme ve çıkarma O(log N). <b>Yakında!</b></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Maliyet modeli:</b> karşılaştırma + takas say, saniye değil.</li>
+      <li><b>Selection:</b> ~N²/2 karşılaştırma, girdiye kör; ama sadece N takas.</li>
+      <li><b>Insertion:</b> ters çift kadar takas; neredeyse sıralı veride ≈ N. Küçük dizilerin kralı.</li>
+      <li><b>Shellsort:</b> uzaktan h-sıralama + insertion → N<sup>3/2</sup>.</li>
+    </ul>
+    <ul>
+      <li><b>~ notasyonu</b> ve <b>iki katına çıkarma deneyi</b>.</li>
+      <li><b>Kararlılık:</b> çok anahtarlı sıralama için şart.</li>
+      <li><b>Fisher–Yates:</b> adil karıştırmanın tek doğru yolu.</li>
+      <li>⚙️ önbellek, işaretçi, dal tahmini, GC: <b>donanım da önemli</b>.</li>
+      <li>🎮 Oyunlar: en yakın hedef, y-sıralama, envanter, Tetris torbası.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.9em">
+    <li><b>Bubble sort</b>’u son slayttaki laboratuvarda yazın, erken çıkış (<code>swapped</code>) ekleyin. Sıralı / ters / rastgele girdide insertion sort ile karşılaştırın.</li>
+    <li>p5.js’te <b>y-sıralama</b> yapan küçük bir sahne yazın (ağaçlar + hareket eden karakter). Her karede kaç karşılaştırma yaptığınızı ekrana yazdırın.</li>
+    <li>Unity’de 10 oyunculu bir <b>skor tablosu</b>: puan eşitse önce bitiren önde. Hem <code>List.Sort</code> + ikinci anahtar, hem kararlı insertion sort ile yapın.</li>
+    <li>Kağıt-kalem: <code>E A S Y Q U E S T I O N</code> dizisi için selection ve insertion sort’un <b>iz tablosunu</b> çıkarın. Kaç ters çift var?</li>
+    <li>🤖 Bir YZ asistanından “C#’ta insertion sort” isteyin. Kodun <b>değişmezini</b> bulun ve doğru olduğunu kendi cümlelerinizle açıklayın.</li>
+  </ol>
+  <aside class="notes">4. alıştırma kitaptaki Exercise 2.1.1 / 2.1.2'nin uyarlaması (Sedgewick EASYQUESTION örneği). 5. alıştırma, "kodu YZ yazar ama kavramı siz anlamalısınız" mesajını pekiştirir.</aside>
+</section>
+
+<section data-sec="serbest laboratuvar">
+  <h2>🧪 Serbest laboratuvar</h2>
+  <div class="codelab" data-lang="js" data-n="20" data-speed="20">
+<textarea>
+// Serbest alan: bubble sort'u inceleyin ya da kendi algoritmanızı yazın!
+// less(a, i, j), exch(a, i, j), a[i] = ..., print(...) kullanılabilir.
+function sort(a) {
+  const n = a.length;
+  for (let i = 0; i < n - 1; i++) {
+    for (let j = 0; j < n - 1 - i; j++) {
+      if (less(a, j + 1, j)) exch(a, j, j + 1);
+    }
+  }
+}
+</textarea>
+    <div class="lab-tasks"><b>Fikirler:</b> erken çıkış ekle · çift yönlü bubble (cocktail sort) · “gnome sort” · ters çift sayan fonksiyon yaz ve <code>print</code> ile yazdır.</div>
+  </div>
+</section>
+
+<section data-sec="serbest laboratuvar">
+  <h2>🐍 Serbest laboratuvar — Python</h2>
+  <div class="codelab" data-lang="python" data-n="12">
+<textarea>
+# Insertion sort'un "kaydırmalı" sürümünü yazın.
+# a[j] = ... atamaları da görselleştirilir.
+def sort(a):
+    for i in range(1, len(a)):
+        j = i
+        while j > 0 and less(a, j, j - 1):
+            exch(a, j, j - 1)
+            j -= 1
+</textarea>
+    <div class="lab-tasks">İpucu: <code>v = a[i]</code> ile elemanı al, büyükleri <code>a[j] = a[j - 1]</code> ile kaydır, sonra <code>a[j] = v</code>. Yazma sayısını takaslı sürümle karşılaştır.</div>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=kPRA0W1kECg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/kPRA0W1kECg/hqdefault.jpg" alt=""><span><b>15 Sorting Algorithms in 6 Minutes</b><br>Timo Bingmann — sesli görselleştirme</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=kgBjXUE_Nwc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/kgBjXUE_Nwc/hqdefault.jpg" alt=""><span><b>Getting Sorted &amp; Big O Notation</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=3hH8kTHFw2A" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/3hH8kTHFw2A/hqdefault.jpg" alt=""><span><b>Selection Sort</b><br>CS50 Shorts (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=DFG-XuyPYUQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/DFG-XuyPYUQ/hqdefault.jpg" alt=""><span><b>Insertion Sort</b><br>CS50 (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=g-PGLbMth_g" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/g-PGLbMth_g/hqdefault.jpg" alt=""><span><b>Selection sort in 3 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=JU767SDMDvA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/JU767SDMDvA/hqdefault.jpg" alt=""><span><b>Insertion sort in 2 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=i-SKeOcBwko" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/i-SKeOcBwko/hqdefault.jpg" alt=""><span><b>Insertion sort algorithm</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=ROalU379l3U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ROalU379l3U/hqdefault.jpg" alt=""><span><b>AlgoRythmics</b> dans serisi<br>(insertion, selection, shell, bubble…)</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/21elementary/" target="_blank">algs4 · 2.1 Elementary Sorts</a> — kitabın bölüm sayfası</li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/21ElementarySorts.pdf" target="_blank">Princeton ders slaytları (PDF)</a></li>
+      <li><a href="https://www.coursera.org/learn/algorithms-part1" target="_blank">Coursera · Algorithms Part I</a> — Sedgewick’in ücretsiz video dersleri</li>
+      <li><a href="https://bost.ocks.org/mike/algorithms/" target="_blank">Mike Bostock · Visualizing Algorithms</a> ve <a href="https://bost.ocks.org/mike/shuffle/" target="_blank">Fisher–Yates Shuffle</a></li>
+      <li><a href="https://colin-scott.github.io/personal_website/research/interactive_latency.html" target="_blank">Gecikme sayıları (interaktif, yıllara göre)</a></li>
+      <li><a href="https://tetris.wiki/Random_Generator" target="_blank">TetrisWiki · Random Generator (7-bag)</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://visualgo.net/en/sorting" target="_blank">VisuAlgo · Sorting</a> — adım adım, kendi dizinizle</li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/ComparisonSort.html" target="_blank">USFCA · Comparison Sort görselleştirme</a></li>
+      <li><a href="https://www.toptal.com/developers/sorting-algorithms" target="_blank">Toptal · Sorting Algorithms Animations</a> — girdi türlerine göre yarış</li>
+      <li><a href="https://coddy.tech/visualize/tr/sorting" target="_blank">coddy.tech · Türkçe sıralama görselleştirmesi</a></li>
+      <li><a href="https://www.datamation.com/applications/how-to-cheat-at-online-poker-a-study-in-software-security/" target="_blank">Online poker karıştırma hatası (1999)</a></li>
+      <li><a href="http://www.robweir.com/blog/2010/02/microsoft-random-browser-ballot.html" target="_blank">Rob Weir · Doing the Microsoft Shuffle (2010)</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.array.sort" target="_blank">.NET Array.Sort belgeleri</a> (introsort, kararsızlık)</li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3b1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:70px">Mergesort &amp; Quicksort</div>
+    <div class="sub">N² duvarını yıkıyoruz: böl ve fethet <i>(divide and conquer)</i> → N log N</div>
+    <div class="hp" style="align-self:center">SAVE GAME? ▢ EVET ▢ EVET</div>
+  </div>
+</section>
+
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/siralama.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
