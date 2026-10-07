@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Öncelik Kuyrukları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Öncelik kuyrukları: API, ikili yığın, swim, sink, heapsort, olay zamanlayıcıları, en iyi k, olay güdümlü benzetim, A* açık listesi. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a2a0d 0%, #1c1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · ÖNCELİK KUYRUKLARI</div>
+  <div class="ttl" style="font-size:76px">Öncelik Kuyrukları</div>
+  <div class="sub"><i>İkili yığın, heapsort, zamanlayıcılar</i> — “en önemli olan önce”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titleheap"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 2.4 Priority Queues bölümünü temel alır (olay güdümlü simülasyon: 6.1). Arka planda bir max-yığın: yeni sayılar en alta eklenip yukarı yüzüyor, arada bir kök (en büyük) çıkarılıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.86em">
+      <li><b>API ve basit uygulamalar</b> — sırasız ve sıralı dizi</li>
+      <li><b>İkili yığın</b> — tam ikili ağaç, dizi içinde! <span class="en">binary heap</span></li>
+      <li><b>swim</b> — eklenen eleman yukarı yüzer</li>
+      <li><b>sink</b> — kök çıkarılınca yenisi aşağı batar</li>
+      <li><b>Heapsort</b> — yerinde, en kötü durumda bile N lg N</li>
+      <li><b>Oyunda</b> — zamanlayıcılar, en iyi k skor, olay güdümlü simülasyon, A*’a hazırlık</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…“3,2 saniye sonra patla”, “5 saniye sonra kalkanı kapat” gibi binlerce zamanlayıcıyı her karede tek tek kontrol etmeden yönetebilecek ve yol bulma algoritması A*’ın kalbindeki veri yapısını tanıyor olacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ACİL SERVİS</span>
+    <p class="big">Hastanede acil servise sırayla hastalar geliyor. Doktor boşalınca kimi çağırmalı?</p>
+  </div>
+  <ul style="font-size:.95em">
+    <li class="fragment"><b>Yığın</b> <span class="en">stack</span>: en son geleni → olmaz 😬</li>
+    <li class="fragment"><b>Kuyruk</b> <span class="en">queue</span>: ilk geleni → adil ama kalp krizi beklerken parmak kesiği muayene ediliyor 😬</li>
+    <li class="fragment"><b>Öncelik kuyruğu</b> <span class="en">priority queue</span>: <b>en acil</b> olanı! Ve sürekli yeni hastalar geliyor.</li>
+  </ul>
+  <p class="fragment lead">🎮 Kule savunması: “hangi düşmana ateş edeyim?” → en tehlikeli · RTS: “hangi işi önce yapayım?” · Zamanlayıcı: “hangi olayın zamanı ilk gelecek?”</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>priority queue (PQ)</td><td>öncelik kuyruğu</td><td>En büyük (ya da en küçük) anahtarı hızla çıkaran yapı</td></tr>
+    <tr><td>insert · delMax · delMin</td><td>ekle · en büyüğü / küçüğü çıkar</td><td>PQ’nun iki temel işlemi</td></tr>
+    <tr><td>complete binary tree</td><td>tam ikili ağaç</td><td>Son seviye hariç dolu; son seviye soldan sağa dolar</td></tr>
+    <tr><td>binary heap</td><td>ikili yığın</td><td>Diziye yerleştirilmiş, yığın düzenli tam ikili ağaç</td></tr>
+    <tr><td>heap order</td><td>yığın düzeni</td><td>Her ebeveyn çocuklarından büyük-eşit</td></tr>
+    <tr><td>swim · sink</td><td>yüzdürme · batırma</td><td>Diğer adları: <i>sift up · sift down</i>, <i>bubble up · down</i></td></tr>
+    <tr><td>heapify · heapsort</td><td>yığın kurma · yığın sıralaması</td><td>Diziyi yerinde yığına çevirme · yığınla sıralama</td></tr>
+    <tr><td>event-driven simulation</td><td>olay güdümlü benzetim</td><td>Zamanı karelerle değil, olaydan olaya atlayarak ilerletmek</td></tr>
+  </table>
+  <p class="mini">⚠️ “Yığın” kelimesi Türkçede iki şey için kullanılıyor: <b>stack</b> (Yığınlar ve Kuyruklar destesi) ve <b>heap</b> (bu deste). Bellekteki “heap” (GC’nin yönettiği alan) ise üçüncü, ilgisiz bir anlam! Karışmasın diye İngilizcesini de söyleyeceğiz.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">API ve basit uygulamalar</div>
+  <div class="sub">ne istiyoruz, ilk akla gelen yollar ne kadar iyi?</div>
+  <ul class="agenda"><li class="on">API ve basit uygulamalar</li><li class="">ikili yığın</li><li class="">swim: ekleme</li><li class="">sink: en büyüğü çıkarma</li><li class="">heapsort</li><li class="">oyunda öncelik kuyrukları</li></ul>
+</section>
+
+<section data-sec="API">
+  <h2>Öncelik kuyruğu API’si</h2>
+  <div class="cols">
+    <table class="gloss" style="font-size:20px">
+      <tr><td>MaxPQ()</td><td colspan="2">boş öncelik kuyruğu oluştur</td></tr>
+      <tr><td>insert(v)</td><td colspan="2">v anahtarını ekle</td></tr>
+      <tr><td>delMax()</td><td colspan="2">en büyük anahtarı <b>çıkar</b> ve döndür</td></tr>
+      <tr><td>max()</td><td colspan="2">en büyüğü döndür (çıkarmadan)</td></tr>
+      <tr><td>isEmpty() · size()</td><td colspan="2">boş mu? · kaç eleman?</td></tr>
+    </table>
+    <div>
+      <div class="box story"><span class="bt">MinPQ</span>Aynısının ayna görüntüsü: <code>delMin()</code>, <code>min()</code>. Zamanlayıcılarda ve yol bulmada <b>MinPQ</b> kullanılır (“en erken zaman”, “en kısa yol”).</div>
+      <div class="box game"><span class="bt">🎮 Anahtar = öncelik</span>Kule savunması: anahtar = düşmanın çıkışa yakınlığı. Zamanlayıcı: anahtar = olay zamanı. Skor tablosu: anahtar = skor.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="API">
+  <h2>Örnek istemci: en iyi M skor</h2>
+  <div class="cols c64">
+    <div style="font-size:.9em">
+      <p>1 milyar maç oynandı (N). En yüksek <b>M = 10</b> skoru bul. Hepsini belleğe sığdıramıyoruz bile!</p>
+      <table class="sum-t" style="font-size:20px">
+        <tr><th>yöntem</th><th>süre</th><th>bellek</th></tr>
+        <tr><td>hepsini sırala</td><td>N lg N</td><td class="c-red">N</td></tr>
+        <tr><td>basit PQ (dizi)</td><td class="c-red">N M</td><td>M</td></tr>
+        <tr><td><b>ikili yığın</b></td><td class="c-green"><b>N lg M</b></td><td class="c-green"><b>M</b></td></tr>
+      </table>
+    </div>
+    <div class="box story fragment"><span class="bt">Fikir</span>M elemanlı bir <b>MIN</b>-yığın tut. Yeni skor, yığının en küçüğünden büyükse: en küçüğü at, yeniyi ekle. Yığında her an “şimdiye kadarki en iyi M” var. (Birazdan canlı göreceğiz!)</div>
+  </div>
+</section>
+
+<section data-sec="API">
+  <h2>İlk akla gelen iki uygulama</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Sırasız dizi <span class="en">unordered array</span></span>
+      <ul><li><b>insert</b>: sona ekle → <b>1</b></li><li><b>delMax</b>: hepsine bakıp en büyüğü bul → <b class="c-red">N</b></li></ul>
+      <p class="mini">Tembel: işi son ana bırakır.</p></div>
+    <div class="box story"><span class="bt">Sıralı dizi <span class="en">ordered array</span></span>
+      <ul><li><b>insert</b>: doğru yere yerleştir (kaydır) → <b class="c-red">N</b></li><li><b>delMax</b>: sondakini al → <b>1</b></li></ul>
+      <p class="mini">Hevesli: işi hemen yapar.</p></div>
+  </div>
+  <table class="sum-t fragment" style="font-size:21px;margin-top:10px">
+    <tr><th>uygulama</th><th>insert</th><th>delMax</th><th>max</th></tr>
+    <tr><td>sırasız dizi</td><td>1</td><td class="c-red">N</td><td class="c-red">N</td></tr>
+    <tr><td>sıralı dizi</td><td class="c-red">N</td><td>1</td><td>1</td></tr>
+    <tr><td><b>hedef</b></td><td class="c-green"><b>lg N</b></td><td class="c-green"><b>lg N</b></td><td class="c-green"><b>1</b></td></tr>
+  </table>
+</section>
+
+<section data-sec="API">
+  <h2>Ölçüm: N ekle + N çıkar</h2>
+  <div class="demo" data-demo="pqbench"></div>
+  <p class="mini">Basit uygulamalar ~N² (N 4 katına çıkınca süre ~16 katı). İkili yığın N lg N: 1 milyon eleman bile göz açıp kapayıncaya kadar.</p>
+</section>
+
+<section data-sec="API">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 1 · API</div>
+    <div class="q">Bir RTS’de saniyede 100 yeni iş ekleniyor ve 100 iş çıkarılıyor. Sıralı dizi ile yapılan öncelik kuyruğunda 10.000 iş varken bir <code>insert</code> en kötü durumda kaç eleman kaydırır?</div>
+    <div class="opts">
+      <button data-opt="A">1</button>
+      <button data-opt="B">~14 (lg 10.000)</button>
+      <button data-opt="C">~10.000</button>
+      <button data-opt="D">~100</button>
+    </div>
+    <div class="explain">Sıralı dizide yeni eleman en başa gidecekse, arkasındaki <b>herkes</b> bir sağa kaymalı: ~N = 10.000 kaydırma. İkili yığında ekleme en fazla ~lg N = 14 karşılaştırma.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">İkili yığın</div>
+  <div class="sub"><i>binary heap</i> — dizi içinde yaşayan bir ağaç</div>
+  <ul class="agenda"><li class="done">API ve basit uygulamalar</li><li class="on">ikili yığın</li><li class="">swim: ekleme</li><li class="">sink: en büyüğü çıkarma</li><li class="">heapsort</li><li class="">oyunda öncelik kuyrukları</li></ul>
+</section>
+
+<section data-sec="ikili yığın">
+  <h2>Tam ikili ağaç <span class="en">complete binary tree</span></h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li>Son seviye hariç <b>bütün seviyeler dolu</b></li>
+        <li>Son seviye <b>soldan sağa</b> dolar</li>
+        <li class="fragment">N düğümlü tam ikili ağacın yüksekliği: <b>⌊lg N⌋</b>. (Seviye her inişte 2 katına çıkar.) N = 1 milyon → yükseklik 19</li>
+        <li class="fragment">Şekli <b>sadece N’ye</b> bağlı! Ekleme sırası şekli değiştirmez (BST’nin aksine)</li>
+      </ul>
+    </div>
+    <div><svg viewBox="0 0 480 210" style="width:100%;max-width:480px" font-family="JetBrains Mono"><line x1="326" y1="24" x2="154" y2="78" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="154" y1="78" x2="69" y2="132" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="69" y1="132" x2="26" y2="186" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="69" y1="132" x2="112" y2="186" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="154" y1="78" x2="240" y2="132" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="240" y1="132" x2="197" y2="186" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="240" y1="132" x2="283" y2="186" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="326" y1="24" x2="411" y2="78" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="411" y1="78" x2="368" y2="132" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="411" y1="78" x2="454" y2="132" style="stroke:var(--ink-2)" stroke-width="2"/><circle cx="26" cy="186" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="192" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><circle cx="69" cy="132" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="69" y="138" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">P</text><circle cx="112" cy="186" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="112" y="192" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">I</text><circle cx="154" cy="78" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="154" y="84" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">S</text><circle cx="197" cy="186" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="197" y="192" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">H</text><circle cx="240" cy="132" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="240" y="138" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">N</text><circle cx="283" cy="186" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="283" y="192" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">G</text><circle cx="326" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="326" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">T</text><circle cx="368" cy="132" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="368" y="138" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">O</text><circle cx="411" cy="78" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="411" y="84" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">R</text><circle cx="454" cy="132" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="454" y="138" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text></svg>
+      <p class="mini center">11 düğümlü tam ikili ağaç: son seviyede soldan 4 yer dolu.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ikili yığın">
+  <h2>Yığın düzeni ve dizi temsili</h2>
+  <div class="demo" data-demo="heapviz" data-ops="" data-h="230"></div>
+  <div class="cols" style="margin-top:6px">
+    <div class="box prop"><span class="bt">Yığın düzeni <span class="en">heap order</span></span>Her düğüm çocuklarından <b>büyük ya da eşit</b>. → En büyük anahtar <b>kökte</b>: <code>a[1]</code>.</div>
+    <div class="box story"><span class="bt">Dizi hâli</span>Düğümleri seviye seviye, soldan sağa diziye yaz. <b>Hiç bağlantı (işaretçi) yok!</b> k’nın çocukları <b>2k</b> ve <b>2k+1</b>, ebeveyni <b>k/2</b>.</div>
+  </div>
+</section>
+
+<section data-sec="ikili yığın">
+  <h2>🎒 Ön bilgi: 1’den başlayan indeks ve tam sayı bölmesi</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <ul>
+        <li><code>a[0]</code>’ı <b>boş bırakıyoruz</b>: yığın <code>a[1]</code>’den başlar. Böylece formüller çok sade olur.</li>
+        <li><b>Tam sayı bölmesi</b> <span class="en">integer division</span>: 5 / 2 = 2 (kalan atılır)
+          <ul class="mini"><li>Python: <code>k // 2</code> (tek <code>/</code> ondalık verir: 2.5!)</li><li>C#: <code>k / 2</code> (int / int → int)</li><li>JavaScript: <code>Math.floor(k / 2)</code> ya da <code>k &gt;&gt; 1</code> (bit kaydırma: “ikiye böl”)</li></ul></li>
+      </ul>
+    </div>
+    <table class="sum-t" style="font-size:21px">
+      <tr><th>k</th><th>ebeveyn k/2</th><th>sol 2k</th><th>sağ 2k+1</th></tr>
+      <tr><td>1 (kök)</td><td>—</td><td>2</td><td>3</td></tr>
+      <tr><td>2</td><td>1</td><td>4</td><td>5</td></tr>
+      <tr><td>5</td><td>2</td><td>10</td><td>11</td></tr>
+      <tr><td>6</td><td>3</td><td>12</td><td>13</td></tr>
+      <tr><td>11</td><td>5</td><td>22</td><td>23</td></tr>
+    </table>
+  </div>
+  <p class="mini">0’dan başlasaydık: çocuklar <code>2k+1</code>, <code>2k+2</code>, ebeveyn <code>(k−1)/2</code>. Çalışır ama formüller daha karışık. Heapsort kodunda bu sürümü de göreceğiz.</p>
+</section>
+
+<section data-sec="ikili yığın">
+  <div class="box low" style="font-size:.95em"><span class="bt">⚙️ Neden dizi? Düşük seviye kazançlar</span>
+    <ul>
+      <li><b>İşaretçi yok</b>: BST düğümünde anahtar + 2 bağlantı (64 bitte 16 bayt fazladan). Yığında sadece anahtar.</li>
+      <li class="fragment"><b>Önbellek dostu</b>: üst seviyeler dizinin başında, birbirine yakın → sık kullanılan kısım önbellekte kalır.</li>
+      <li class="fragment"><b>GC dostu</b>: tek bir dizi; binlerce küçük düğüm nesnesi yok → çöp toplayıcıya iş yok, oyunda takılma yok.</li>
+      <li class="fragment"><b>Çocuk bulma = çarpma</b>: <code>2k</code> işlemcide bir bit kaydırma kadar ucuz.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="ikili yığın">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · ikili yığın</div>
+    <div class="q">1’den başlayan bir ikili yığında <code>a[9]</code>’un ebeveyni ve çocukları hangi indekslerde?</div>
+    <div class="opts">
+      <button data-opt="A">ebeveyn 4, çocuklar 18 ve 19</button>
+      <button data-opt="B">ebeveyn 4.5, çocuklar 18 ve 19</button>
+      <button data-opt="C">ebeveyn 3, çocuklar 10 ve 11</button>
+      <button data-opt="D">ebeveyn 8, çocuklar 10 ve 11</button>
+    </div>
+    <div class="explain">Ebeveyn = 9 / 2 = <b>4</b> (tam sayı bölmesi, kalan atılır). Çocuklar 2·9 = <b>18</b> ve 2·9+1 = <b>19</b>. B şıkkı Python’da <code>/</code> kullanınca yapılan klasik hata: indeks ondalık olamaz → <code>//</code> kullanın.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">swim: ekleme</div>
+  <div class="sub">yeni eleman sona eklenir, ebeveyninden büyük oldukça yukarı yüzer</div>
+  <ul class="agenda"><li class="done">API ve basit uygulamalar</li><li class="done">ikili yığın</li><li class="on">swim: ekleme</li><li class="">sink: en büyüğü çıkarma</li><li class="">heapsort</li><li class="">oyunda öncelik kuyrukları</li></ul>
+</section>
+
+<section data-sec="swim">
+  <h2>Yukarı yüzdürme <span class="en">swim · sift up</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>Bir düğüm ebeveyninden <b>büyük</b> oldu (yığın düzeni bozuldu):</p>
+      <ol><li>Ebeveyniyle <b>yer değiştir</b></li><li>Hâlâ yeni ebeveyninden büyükse tekrarla</li><li>Kökte ya da ebeveyninden küçükse dur</li></ol>
+      <div class="box story"><span class="bt">😄 Peter ilkesi</span>Princeton’ın şakası: “Herkes yetersiz kalacağı seviyeye kadar terfi eder.” Düğüm, patronundan daha iyi olduğu sürece terfi ediyor!</div>
+      <p class="mini"><b>insert</b> = sona ekle + swim. En fazla <b>1 + lg N</b> karşılaştırma.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-4|2|3|4|6-8"><script type="text/template">
+def swim(a, k):
+    while k > 1 and a[k // 2] < a[k]:     # ebeveynden büyük mü?
+        a[k // 2], a[k] = a[k], a[k // 2] # yer değiştir
+        k = k // 2                         # bir seviye yukarı
+
+def insert(a, key):         # a[0] kullanılmıyor, a[1..n] yığın
+    a.append(key)           # 1) sona ekle
+    swim(a, len(a) - 1)     # 2) yukarı yüzdür
+
+heap = [None]               # a[0] boş
+for x in [5, 9, 2, 7]:
+    insert(heap, x)
+print(heap[1])              # 9: en büyük kökte
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// a[0] kullanılmıyor; yığın a[1..n]
+static void Swim(List<int> a, int k)
+{
+    while (k > 1 && a[k / 2] < a[k])       // ebeveynden büyük mü?
+    {
+        (a[k / 2], a[k]) = (a[k], a[k / 2]);  // yer değiştir
+        k = k / 2;                           // bir seviye yukarı
+    }
+}
+
+static void Insert(List<int> a, int key)
+{
+    a.Add(key);              // 1) sona ekle
+    Swim(a, a.Count - 1);    // 2) yukarı yüzdür
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// a[0] kullanılmıyor; yığın a[1..n]
+function swim(a, k) {
+  while (k > 1 && a[k >> 1] < a[k]) {        // ebeveynden büyük mü?
+    [a[k >> 1], a[k]] = [a[k], a[k >> 1]];   // yer değiştir
+    k = k >> 1;                              // bir seviye yukarı
+  }
+}
+
+function insert(a, key) {
+  a.push(key);              // 1) sona ekle
+  swim(a, a.length - 1);    // 2) yukarı yüzdür
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="swim">
+  <h2>Ekleme — kendiniz deneyin</h2>
+  <div class="demo" data-demo="heapviz" data-ops="insert" data-default="S" data-h="250"></div>
+  <p class="mini">S’yi ekleyin: önce en sona (a[12]) gelir, sonra ebeveynleriyle karşılaştırılarak yukarı yüzer. Hem ağaçta hem dizide izleyin. Sonra Z, sonra B deneyin.</p>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: swim yaz</h2>
+  <div class="heaplab" data-task="swim" data-lang="js">
+<textarea>
+// a[1..n] bir MAX-yığın; a[k] az önce eklendi (a[0] kullanılmıyor).
+// a[k], ebeveyninden BÜYÜK olduğu sürece onunla yer değiştirsin.
+// Ebeveyn: Math.floor(k / 2)  (ya da k >> 1)
+function swim(a, k) {
+  // ...
+}
+</textarea>
+    <div class="lab-tasks">Test: rastgele sayıları senin <code>swim</code>’inle tek tek yığına ekleyip sonra hepsini sırayla çıkarıyoruz; büyükten küçüğe çıkmalılar. Sonra <code>k &gt; 1</code> koşulunu silip ne olduğunu görün (ipucu: <code>a[0]</code>).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">sink: en büyüğü çıkarma</div>
+  <div class="sub">kök son elemanla yer değiştirir, yeni kök aşağı batar</div>
+  <ul class="agenda"><li class="done">API ve basit uygulamalar</li><li class="done">ikili yığın</li><li class="done">swim: ekleme</li><li class="on">sink: en büyüğü çıkarma</li><li class="">heapsort</li><li class="">oyunda öncelik kuyrukları</li></ul>
+</section>
+
+<section data-sec="sink">
+  <h2>Aşağı batırma <span class="en">sink · sift down</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>Bir düğüm çocuklarından <b>küçük</b> oldu:</p>
+      <ol><li>Çocuklarından <b>büyük olanı</b> seç</li><li>Onunla yer değiştir</li><li>Çocukları ondan küçükse ya da yaprağa geldiyse dur</li></ol>
+      <div class="box story"><span class="bt">😄 Güç savaşı</span>“Patron yetersiz kaldı: astlarından daha iyi olanı onun yerine terfi eder, patron bir kademe düşer.”</div>
+      <p class="mini"><b>delMax</b> = kökü sakla + son elemanı köke koy + sink. En fazla <b>2 lg N</b> karşılaştırma (her seviyede 2: iki çocuğu kıyasla, büyüğü ebeveynle kıyasla).</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|3-5|6-7|8-9|11-17"><script type="text/template">
+def sink(a, k, n):
+    while 2 * k <= n:                   # en az bir çocuğu var mı?
+        j = 2 * k                       # sol çocuk
+        if j < n and a[j] < a[j + 1]:   # sağ çocuk daha büyükse
+            j += 1                      # onu seç
+        if a[k] >= a[j]:                # çocuklardan büyükse: yerinde
+            break
+        a[k], a[j] = a[j], a[k]         # yer değiştir
+        k = j                           # bir seviye aşağı
+
+def del_max(a):
+    n = len(a) - 1
+    top = a[1]                          # en büyük kökte
+    a[1] = a[n]                         # son elemanı köke taşı
+    a.pop()                             # sonu sil
+    sink(a, 1, n - 1)                   # yeni kökü batır
+    return top
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static void Sink(List<int> a, int k, int n)
+{
+    while (2 * k <= n)                        // en az bir çocuk var mı?
+    {
+        int j = 2 * k;                        // sol çocuk
+        if (j < n && a[j] < a[j + 1]) j++;    // sağ daha büyükse onu seç
+        if (a[k] >= a[j]) break;              // yerinde
+        (a[k], a[j]) = (a[j], a[k]);          // yer değiştir
+        k = j;                                // bir seviye aşağı
+    }
+}
+
+static int DelMax(List<int> a)
+{
+    int n = a.Count - 1;
+    int top = a[1];                           // en büyük kökte
+    a[1] = a[n];                              // son elemanı köke taşı
+    a.RemoveAt(n);                            // sonu sil
+    Sink(a, 1, n - 1);                        // yeni kökü batır
+    return top;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function sink(a, k, n) {
+  while (2 * k <= n) {                        // en az bir çocuk var mı?
+    let j = 2 * k;                            // sol çocuk
+    if (j < n && a[j] < a[j + 1]) j++;        // sağ daha büyükse onu seç
+    if (a[k] >= a[j]) break;                  // yerinde
+    [a[k], a[j]] = [a[j], a[k]];              // yer değiştir
+    k = j;                                    // bir seviye aşağı
+  }
+}
+
+function delMax(a) {
+  const n = a.length - 1;
+  const top = a[1];                           // en büyük kökte
+  a[1] = a[n];                                // son elemanı köke taşı
+  a.pop();                                    // sonu sil
+  sink(a, 1, n - 1);                          // yeni kökü batır
+  return top;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="sink">
+  <h2>İkili yığın — oyun alanı</h2>
+  <div class="demo" data-demo="heapviz" data-ops="insert,del,book,random" data-default="S" data-h="250"></div>
+  <p class="mini">Kitaptaki diziyi oynatın (* = delMax): ekleme yukarı yüzdürür, çıkarma aşağı batırır. Mor kesikli = karşılaştırılan çocuklar. ◀ Geri / İleri ▶ ile adım adım gidin.</p>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 Yığın kodundaki yeni ifadeler</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>a[k], a[j] = a[j], a[k]</td><td>takas <span class="en">swap</span> (Python)</td><td>Sağ taraf önce değerlendirilir, sonra aynı anda atanır. C#: <code>(a[k], a[j]) = (a[j], a[k]);</code> (tuple) · JS: <code>[a[k], a[j]] = [a[j], a[k]];</code> (dizi ayrıştırma)</td></tr>
+    <tr><td>j &lt; n and a[j] &lt; a[j+1]</td><td>kısa devre + sınır</td><td>Önce <code>j &lt; n</code>: sağ çocuk <b>var mı</b>? Yoksa <code>a[j+1]</code>’e hiç bakılmaz → dizi dışına çıkma hatası olmaz</td></tr>
+    <tr><td>while 2 * k &lt;= n</td><td>“çocuğu var mı?”</td><td>Sol çocuk 2k; n’den büyükse k bir yaprak</td></tr>
+    <tr><td>a.pop() · RemoveAt · pop()</td><td>sondan silme</td><td>Dizinin sonundan silmek O(1): kaydırma yok</td></tr>
+  </table>
+  <p class="mini">Takasın geleneksel (üç adımlı) hâli:</p>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+tmp = a[k]       # 1) birini kenara koy
+a[k] = a[j]      # 2) ötekini onun yerine yaz
+a[j] = tmp       # 3) kenara koyduğunu geri yaz
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int tmp = a[k];  // 1) birini kenara koy
+a[k] = a[j];     // 2) ötekini onun yerine yaz
+a[j] = tmp;      // 3) kenara koyduğunu geri yaz
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const tmp = a[k]; // 1) birini kenara koy
+a[k] = a[j];      // 2) ötekini onun yerine yaz
+a[j] = tmp;       // 3) kenara koyduğunu geri yaz
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="sink">
+  <h2>Sonuç: lg N garantisi</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>N anahtarlı ikili yığında <b>insert</b> en fazla <b>1 + lg N</b>, <b>delMax</b> en fazla <b>2 lg N</b> karşılaştırma yapar.<p class="mini">Çünkü tam ikili ağacın yüksekliği ⌊lg N⌋ ve her iki işlem tek bir kök–yaprak yolu boyunca ilerler.</p></div>
+    <table class="sum-t" style="font-size:20px">
+      <tr><th>uygulama</th><th>insert</th><th>delMax</th><th>max</th></tr>
+      <tr><td>sırasız dizi</td><td>1</td><td>N</td><td>N</td></tr>
+      <tr><td>sıralı dizi</td><td>N</td><td>1</td><td>1</td></tr>
+      <tr><td><b>ikili yığın</b></td><td class="c-green"><b>lg N</b></td><td class="c-green"><b>lg N</b></td><td class="c-green"><b>1</b></td></tr>
+      <tr><td>d-li yığın</td><td>log<sub>d</sub> N</td><td>d log<sub>d</sub> N</td><td>1</td></tr>
+      <tr><td>Fibonacci yığını</td><td>1</td><td>lg N *</td><td>1</td></tr>
+    </table>
+  </div>
+  <p class="mini">* amortize (ortalama). Fibonacci yığını teoride çok iyi ama pratikte karmaşık ve yavaş; oyunlarda ikili (ya da 4-lü) yığın kullanılır. C#’ın <code>PriorityQueue</code>’su 4-lü bir yığındır: daha sığ ağaç, daha az önbellek ıskası.</p>
+</section>
+
+<section data-sec="sink">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · sink</div>
+    <div class="q">Max-yığında <code>delMax</code> sırasında yeni kök iki çocuğuyla karşılaştırılıyor. Neden <b>büyük</b> çocukla yer değiştiriyoruz?</div>
+    <div class="opts">
+      <button data-opt="A">Daha hızlı olduğu için</button>
+      <button data-opt="B">Küçük çocuk yukarı çıksaydı, büyük kardeşinin ebeveyni olur ve yığın düzeni bozulurdu</button>
+      <button data-opt="C">Sol çocuk her zaman büyük olduğu için</button>
+      <button data-opt="D">Fark etmez, ikisi de olur</button>
+    </div>
+    <div class="explain">Yukarı çıkan çocuk, diğer çocuğun da ebeveyni olur. Ebeveyn çocuklarından büyük-eşit olmalı → yukarı ancak <b>ikisinin büyüğü</b> çıkabilir. C yanlış: yığında kardeşler arasında bir sıra yok.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Heapsort</div>
+  <div class="sub">yerinde ve en kötü durumda bile N lg N</div>
+  <ul class="agenda"><li class="done">API ve basit uygulamalar</li><li class="done">ikili yığın</li><li class="done">swim: ekleme</li><li class="done">sink: en büyüğü çıkarma</li><li class="on">heapsort</li><li class="">oyunda öncelik kuyrukları</li></ul>
+</section>
+
+<section data-sec="heapsort">
+  <h2>Heapsort: iki aşama</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">1) Yığın kurma <span class="en">heap construction</span></span>Diziyi <b>yerinde</b> max-yığına çevir. Akıllı yol: sağdan sola, yaprak <b>olmayan</b> her düğümü batır (k = N/2 … 1). Yapraklar zaten 1 elemanlı yığın!
+      <p class="mini">Toplam en fazla <b>2N</b> karşılaştırma — N kez insert’ten (N lg N) daha iyi.</p></div>
+    <div class="box story"><span class="bt">2) Sıralama <span class="en">sortdown</span></span>Kök (en büyük) ile son elemanı takasla → en büyük <b>son yerinde</b>. Yığını 1 küçült, kökü batır. Tekrarla.
+      <p class="mini">delMax gibi; ama çıkan eleman, yığının boşalttığı yere yazılıyor. <b>Ek dizi yok!</b></p></div>
+  </div>
+</section>
+
+<section data-sec="heapsort">
+  <h2>Heapsort — adım adım</h2>
+  <div class="demo" data-demo="heapviz" data-ops="heapify,sort" data-init="S O R T E X A M P L E" data-note="Başlangıç dizisi: S O R T E X A M P L E — henüz yığın DEĞİL (ör. O &lt; T ve R &lt; X: ebeveyn çocuğundan küçük)." data-h="240"></div>
+  <p class="mini">“Yığın kur” sadece 1. aşamayı, “Heapsort” iki aşamayı birlikte oynatır. Dizide <b class="c-green">yeşil</b> hücreler son yerine oturmuş elemanlar; ağaçta sadece yığında kalanlar görünür.</p>
+</section>
+
+<section data-sec="heapsort">
+  <h2>Heapsort — kod (0’dan başlayan indeksle)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|11-14|15-18"><script type="text/template">
+def sink(a, k, n):              # 0 tabanlı: çocuklar 2k+1 ve 2k+2
+    while 2 * k + 1 < n:
+        j = 2 * k + 1
+        if j + 1 < n and a[j] < a[j + 1]:
+            j += 1
+        if a[k] >= a[j]:
+            break
+        a[k], a[j] = a[j], a[k]
+        k = j
+
+def heapsort(a):
+    n = len(a)
+    for k in range(n // 2 - 1, -1, -1):   # 1) yığın kur: n/2-1, ..., 1, 0
+        sink(a, k, n)
+    while n > 1:                          # 2) sırala
+        n -= 1
+        a[0], a[n] = a[n], a[0]           # en büyük → son yerine
+        sink(a, 0, n)                     # kalan yığını onar
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static void Sink(int[] a, int k, int n)      // 0 tabanlı
+{
+    while (2 * k + 1 < n)
+    {
+        int j = 2 * k + 1;
+        if (j + 1 < n && a[j] < a[j + 1]) j++;
+        if (a[k] >= a[j]) break;
+        (a[k], a[j]) = (a[j], a[k]);
+        k = j;
+    }
+}
+
+static void HeapSort(int[] a)
+{
+    int n = a.Length;
+    for (int k = n / 2 - 1; k >= 0; k--)     // 1) yığın kur
+        Sink(a, k, n);
+    while (n > 1)                            // 2) sırala
+    {
+        n--;
+        (a[0], a[n]) = (a[n], a[0]);
+        Sink(a, 0, n);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function sink(a, k, n) {                     // 0 tabanlı
+  while (2 * k + 1 < n) {
+    let j = 2 * k + 1;
+    if (j + 1 < n && a[j] < a[j + 1]) j++;
+    if (a[k] >= a[j]) break;
+    [a[k], a[j]] = [a[j], a[k]];
+    k = j;
+  }
+}
+
+function heapsort(a) {
+  let n = a.length;
+  for (let k = Math.floor(n / 2) - 1; k >= 0; k--)   // 1) yığın kur
+    sink(a, k, n);
+  while (n > 1) {                                    // 2) sırala
+    n--;
+    [a[0], a[n]] = [a[n], a[0]];
+    sink(a, 0, n);
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>range(n // 2 - 1, -1, -1)</code>: (başla, dur, adım) → n/2−1’den başla, <b>−1’e gelmeden dur</b>, birer birer <b>azal</b>. Geleneksel hâli: <code>k = n // 2 - 1</code> · <code>while k &gt;= 0: … k -= 1</code></p>
+</section>
+
+<section data-sec="heapsort">
+  <h2>Çubuklarla heapsort</h2>
+  <div class="sortviz" data-alg="heap" data-n="40" data-speed="25" data-controls="n,input" data-h="280"></div>
+  <p class="mini">Önce yığın kurma: dizi “testere dişi” gibi görünür (büyükler başta). Sonra en büyük çubuklar tek tek sona gider.</p>
+</section>
+
+
+
+<section data-sec="heapsort">
+  <h2>Yarış: mergesort vs quicksort vs heapsort</h2>
+  <div class="race" data-n="100" data-algs="merge,quick,heap"></div>
+  <p class="mini">Karşılaştırma ve dizi erişimi sayaçlarına bakın. Heapsort’un erişimleri dizinin bir başına bir sonuna “zıplıyor”: önbellek için kötü haber.</p>
+</section>
+
+<section data-sec="heapsort">
+  <h2>Heapsort neden her yerde değil?</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>Heapsort <b>yerinde</b> çalışır ve <b>en kötü durumda</b> en fazla <b>2 N lg N</b> karşılaştırma yapar.
+      <p class="mini">Mergesort: N lg N ama <b>ek N bellek</b>. Quicksort: yerinde ama en kötü <b>N²</b>. Heapsort ikisinin de zayıflığından kurtulan tek klasik algoritma!</p></div>
+    <div class="box warn"><span class="bt">⚠️ Ama pratikte…</span>
+      <ul>
+        <li><b>Önbellek düşmanı</b>: k → 2k atlamaları dizide uzak yerlere gider</li>
+        <li>İç döngüsü quicksort’unkinden uzun</li>
+        <li><b>Kararlı değil</b></li>
+      </ul>
+      <p class="mini">Bu yüzden C#’ın <code>Array.Sort</code>’u ve C++’ın <code>std::sort</code>’u <b>introsort</b> kullanır: quicksort ile başla, özyineleme çok derinleşirse <b>heapsort’a geç</b> (Quicksort destesi). Heapsort = sigorta poliçesi.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="heapsort">
+  <h2>Sıralama karnesi</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>algoritma</th><th>yerinde?</th><th>kararlı?</th><th>en kötü</th><th>ortalama</th><th>en iyi</th><th>not</th></tr>
+    <tr><td>selection</td><td>✔</td><td></td><td>N²/2</td><td>N²/2</td><td>N²/2</td><td>N takas</td></tr>
+    <tr><td>insertion</td><td>✔</td><td>✔</td><td>N²/2</td><td>N²/4</td><td>N</td><td>küçük ya da neredeyse sıralı N</td></tr>
+    <tr><td>shell</td><td>✔</td><td></td><td>?</td><td>?</td><td>N</td><td>kısa kod, alt kuadratik</td></tr>
+    <tr><td>merge</td><td></td><td>✔</td><td>N lg N</td><td>N lg N</td><td>½ N lg N</td><td>garanti + kararlı</td></tr>
+    <tr><td>quick</td><td>✔</td><td></td><td>N²/2</td><td>1,39 N lg N</td><td>N lg N</td><td>pratikte en hızlı</td></tr>
+    <tr><td>3 yollu quick</td><td>✔</td><td></td><td>N²/2</td><td>1,39 N lg N</td><td>N</td><td>tekrar eden anahtarlar</td></tr>
+    <tr><td><b>heap</b></td><td>✔</td><td></td><td><b>2 N lg N</b></td><td>2 N lg N</td><td>N lg N</td><td>garanti + yerinde</td></tr>
+  </table>
+  <p class="mini">Kaynak: Sedgewick &amp; Wayne 2.4/2.5. Hepsini bu derste animasyonlarıyla gördünüz! 🏆</p>
+</section>
+
+<section data-sec="heapsort">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 4 · heapsort</div>
+    <div class="q">Heapsort’un yığın kurma aşamasında neden <code>k = N/2</code>’den başlayıp geriye doğru gidiyoruz?</div>
+    <div class="opts">
+      <button data-opt="A">Çünkü N/2’den sonraki indeksler yaprak; tek elemanlı alt ağaçlar zaten birer yığın</button>
+      <button data-opt="B">Çünkü dizinin ikinci yarısı zaten sıralı</button>
+      <button data-opt="C">Çünkü N/2 ortanca elemandır</button>
+      <button data-opt="D">Rastgele bir seçim</button>
+    </div>
+    <div class="explain">2k &gt; N olan her k’nın çocuğu yok → yaprak. Yapraklar kendi başlarına geçerli bir yığın. Sağdan sola giderek her düğümü batırdığımızda, altındaki iki alt ağaç <b>zaten yığın</b> olmuş oluyor; sink bu ikisini birleştirir.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı: sink düzelt (Python)</h2>
+  <div class="heaplab" data-task="sink" data-lang="python">
+<textarea>
+# a[1..n] (a[0] kullanılmıyor). a[k]'yı aşağı batır.
+def sink(a, k, n):
+    while 2 * k <= n:
+        j = 2 * k
+        if a[k] >= a[j]:
+            break
+        a[k], a[j] = a[j], a[k]
+        k = j
+</textarea>
+    <div class="lab-tasks">Test: senin <code>sink</code>’inle önce yığın kuruyoruz, sonra heapsort yapıyoruz. Bu kod <b>bazı</b> testlerde yanlış sonuç veriyor. Hangi satır eksik? (İpucu: iki çocuktan hangisiyle karşılaştırmalı?) Bonus: <code>k = j</code> satırını silin — ne oluyor?</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Oyunda öncelik kuyrukları</div>
+  <div class="sub">zamanlayıcılar, en iyi k, olay güdümlü benzetim, A*</div>
+  <ul class="agenda"><li class="done">API ve basit uygulamalar</li><li class="done">ikili yığın</li><li class="done">swim: ekleme</li><li class="done">sink: en büyüğü çıkarma</li><li class="done">heapsort</li><li class="on">oyunda öncelik kuyrukları</li></ul>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎮 Olay zamanlayıcısı <span class="en">timer / scheduler</span></h2>
+  <div class="demo" data-demo="timers"></div>
+  <p class="mini">MIN-yığın, anahtar = olayın zamanı. Her karede: “kökteki olayın zamanı geldi mi?” Gelmediyse diğer binlerce olaya <b>bakmaya bile gerek yok</b>. ⏭ ile bir sonraki olaya atlayın.</p>
+</section>
+
+<section data-sec="oyunda">
+  <h2>Zamanlayıcı — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// .NET 6+ : PriorityQueue<eleman, öncelik>  (MIN-yığın)
+var timers = new PriorityQueue<string, float>();
+timers.Enqueue("bomba patlar", 3.2f);
+timers.Enqueue("kalkan biter", 5.0f);
+timers.Enqueue("düşman doğar", 1.5f);
+
+void Update(float now)                        // her karede
+{
+    // kökteki olayın zamanı geldi mi? (gelmediyse hiçbirininki gelmemiştir)
+    while (timers.TryPeek(out string ev, out float t) && t <= now)
+    {
+        timers.Dequeue();                     // kökü çıkar (delMin)
+        Console.WriteLine(now + ": " + ev);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import heapq                       # Python'un hazır MIN-yığını
+
+timers = []                        # sıradan bir liste
+heapq.heappush(timers, (3.2, "bomba patlar"))   # (öncelik, olay)
+heapq.heappush(timers, (5.0, "kalkan biter"))
+heapq.heappush(timers, (1.5, "düşman doğar"))
+
+def update(now):                   # her karede
+    while timers and timers[0][0] <= now:       # kök = en erken olay
+        t, ev = heapq.heappop(timers)           # delMin
+        print(now, ":", ev)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JS'te hazır PQ yok → bu destedeki swim/sink ile küçük bir MinPQ
+class MinPQ {
+  constructor() { this.a = [null]; }                 // a[0] boş
+  get size() { return this.a.length - 1; }
+  peek() { return this.a[1]; }
+  push(t, ev) { this.a.push({ t, ev }); /* swim (t'ye göre, küçük yukarı) */ }
+  pop() { /* kökü al, son elemanı köke koy, sink */ }
+}
+
+const timers = new MinPQ();
+timers.push(3.2, "bomba patlar");
+
+function update(now) {                               // her karede
+  while (timers.size > 0 && timers.peek().t <= now) {
+    const { ev } = timers.pop();
+    console.log(now + ": " + ev);
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎒 Ön bilgi: (öncelik, eleman) çiftleri</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <ul>
+        <li>Python’da <b>demet</b> <span class="en">tuple</span> <code>(3.2, "bomba")</code> karşılaştırılırken önce <b>ilk</b> elemana bakılır; eşitse ikinciye. Bu yüzden önceliği başa koyarız.</li>
+        <li class="fragment">⚠️ İki olayın zamanı eşitse Python ikinci elemanları karşılaştırmaya çalışır. Olaylar nesneyse <b>hata</b>! Çözüm: araya bir sayaç koy: <code>(zaman, sayaç, olay)</code></li>
+        <li class="fragment"><code>heapq</code> sadece <b>MIN</b>-yığın. Max gerekiyorsa önceliği eksi yap: <code>(-skor, oyuncu)</code></li>
+        <li class="fragment"><code>timers[0]</code> = kök = en küçük (çıkarmadan bakmak: peek)</li>
+      </ul>
+    </div>
+    <div class="box low"><span class="bt">⚙️ Hangi dilde ne var?</span>
+      <ul style="font-size:17px">
+        <li><b>Python</b>: <code>heapq</code> (min; liste üzerinde fonksiyonlar)</li>
+        <li><b>C#</b>: <code>PriorityQueue&lt;T,P&gt;</code> (.NET 6+, 4-lü min-yığın). Unity’nin .NET sürümünde bulunmayabilir → kendi yığınınızı yazın</li>
+        <li><b>C++</b>: <code>std::priority_queue</code> (varsayılan <b>max</b>)</li>
+        <li><b>Java</b>: <code>PriorityQueue</code> (min)</li>
+        <li><b>JavaScript</b>: yok — kendiniz yazarsınız</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🏆 Akıştan en iyi k skor</h2>
+  <div class="demo" data-demo="topk" data-k="5" data-n="22"></div>
+  <p class="mini">Skorlar tek tek geliyor. 5 elemanlı MIN-yığın: kök = “en iyi 5’in en kötüsü” = giriş barajı. Barajı geçemeyen skor hemen atılır.</p>
+</section>
+
+<section data-sec="oyunda">
+  <h2>Olay güdümlü benzetim <span class="en">event-driven simulation</span></h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <p>Bilardo topları (ya da gaz molekülleri) çarpışıyor:</p>
+      <ul>
+        <li><b>Zaman güdümlü</b>: her karede (dt) her çift için “çarpıştı mı?” → N² iş / kare. dt büyükse hızlı toplar <b>birbirinin içinden geçer</b> (tünelleme), küçükse çok yavaş.</li>
+        <li class="fragment"><b>Olay güdümlü</b>: her çift ve her duvar için <b>gelecekteki çarpışma zamanını</b> hesapla, MinPQ’ya koy. Zamanı doğrudan <b>sıradaki çarpışmaya</b> atla!</li>
+        <li class="fragment">Çarpışan toplar için yeni tahminler eklenir; artık geçersiz olan eski tahminler çıkarılınca atlanır.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">📜 Princeton 6.1</span>Kitabın “CollisionSystem” örneği: binlerce parçacık, MinPQ ile. Fizikte <b>Boltzmann dağılımını</b> bilgisayarda görmek için kullanılır.</div>
+      <div class="box game fragment"><span class="bt">🎮 Oyunda</span>Bilardo/golf oyunlarının fiziği, sıra tabanlı stratejide “inisiyatif” sırası, RTS sunucusunda gelecekteki olaylar… Hepsinde “bir sonraki ne zaman?” sorusu → MinPQ.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <div class="box game" style="font-size:.98em"><span class="bt">🎮 Gelecek bölüm için kanca: A* yol bulma</span>
+    <p>Oyunlardaki yol bulmanın kralı <b>A*</b> algoritması bir <b>açık liste</b> <span class="en">open list</span> tutar: “keşfedilmeyi bekleyen kareler”. Her adımda <b>en umut verici</b> kareyi (tahmini toplam maliyeti <b>en küçük</b>) seçer.</p>
+    <p class="fragment">“En küçüğü seç, yenilerini ekle, tekrar et” → bu tam olarak bir <b>MinPQ</b>! Açık listeyi sıradan bir listeyle tutan bir A* büyük haritada saniyeler sürer; ikili yığınla milisaniyeler.</p>
+    <p class="fragment mini">Önce “En Kısa Yollar” destesinde Dijkstra’yı (A*’ın atası) MinPQ ile göreceğiz; A*’ın kendisi Oyun Yapay Zekâsı bölümünde.</p>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 5 · oyunda</div>
+    <div class="q">Bir oyunda 50.000 zamanlanmış olay var. Her karede “zamanı gelen olay var mı?” sorusu MIN-yığınla kaç karşılaştırma gerektirir (zamanı gelen yoksa)?</div>
+    <div class="opts">
+      <button data-opt="A">1</button>
+      <button data-opt="B">~16 (lg 50.000)</button>
+      <button data-opt="C">25.000</button>
+      <button data-opt="D">50.000</button>
+    </div>
+    <div class="explain">Sadece köke bakmak yeter: <code>min()</code> = <code>a[1]</code>. Kökteki olayın zamanı gelmediyse, ondan sonraki <b>hiçbirinin</b> zamanı gelmemiştir. Olay çıkarmak ise lg N ≈ 16 karşılaştırma. Sırasız bir listede her karede 50.000 olaya bakmak gerekirdi!</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Öncelik kuyruğu</b>: insert + delMax (ya da delMin).</li>
+      <li>Basit diziler: bir işlem 1, öteki <b>N</b>.</li>
+      <li><b>İkili yığın</b>: tam ikili ağaç, dizide; k’nın çocukları 2k, 2k+1.</li>
+      <li><b>swim</b> (ekleme) ve <b>sink</b> (çıkarma): ikisi de <b>lg N</b>.</li>
+    </ul>
+    <ul>
+      <li><b>Heapsort</b>: yerinde + en kötü N lg N; introsort’un sigortası.</li>
+      <li>🎮 Zamanlayıcılar: kökte en yakın olay.</li>
+      <li>🎮 En iyi k: k elemanlı MIN-yığın, bellek k.</li>
+      <li>🎮 Olay güdümlü benzetim, A*’ın açık listesi.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: boş bir max-yığına <code>E A S Y Q U E S T I O N</code> ekleyin; her adımda diziyi yazın. Sonra 3 kez delMax yapın.</li>
+    <li>Dizide sıralı olarak duran bir dizi (<code>[9, 8, 7, …]</code>) her zaman max-yığın mıdır? Peki <code>[1, 2, 3, …]</code>?</li>
+    <li>Unity’de (ya da p5.js’te) bir zamanlayıcı sistemi yazın: <code>Schedule(delay, action)</code>. 10.000 zamanlayıcıyla listeye karşı yığını ölçün.</li>
+    <li>Bir yığına <code>change(k, yeniÖncelik)</code> işlemi eklemek isteseydiniz (ör. düşmanın tehdit puanı değişti) neye ihtiyaç duyardınız? (İpucu: “eleman şu an dizinin neresinde?” — “indeksli öncelik kuyruğu”)</li>
+    <li>Heapsort’u <code>[1, 1, 1, …, 1]</code> (hepsi eşit) dizisinde çalıştırın. Karşılaştırma sayısı ne olur?</li>
+    <li>🤖 Bir YZ asistanından Python’da “en yakın 10 düşmanı” bulan kod isteyin. <code>sorted</code> mı, <code>heapq.nsmallest</code> mi kullandı? Farkı nedir?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=0wPlzMU-k00" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0wPlzMU-k00/hqdefault.jpg" alt=""><span><b>Heaps in 3 minutes — Intro</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=2DmK_H7IdTo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/2DmK_H7IdTo/hqdefault.jpg" alt=""><span><b>Heap sort in 4 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=AE5I0xACpZs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/AE5I0xACpZs/hqdefault.jpg" alt=""><span><b>What Is a Binary Heap?</b><br>Spanning Tree</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=-WEku8ZnynU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/-WEku8ZnynU/hqdefault.jpg" alt=""><span><b>Binary Heaps for Priority Queues</b><br>Algorithms with Attitude</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=B7hVxCmfPtM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/B7hVxCmfPtM/hqdefault.jpg" alt=""><span><b>Lecture 4: Heaps and Heap Sort</b><br>MIT OpenCourseWare</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=FLDheVUjns0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/FLDheVUjns0/hqdefault.jpg" alt=""><span><b>Billiard models and event-driven simulations</b><br>MIT 18.S191 · David P. Sanders</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/24pq/" target="_blank">algs4 · 2.4 Priority Queues</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/24PriorityQueues.pdf" target="_blank">Princeton ders slaytları: Priority Queues (PDF)</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/61event/" target="_blank">algs4 · 6.1 Event-Driven Simulation</a></li>
+      <li><a href="https://docs.python.org/3/library/heapq.html" target="_blank">Python · heapq</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.priorityqueue-2" target="_blank">.NET · PriorityQueue&lt;TElement,TPriority&gt;</a></li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/Heap.html" target="_blank">USFCA · Heap görselleştirmesi</a></li>
+      <li><a href="https://visualgo.net/en/heap" target="_blank">VisuAlgo · Binary Heap</a></li>
+      <li><a href="../bst-geometrik/">Önceki deste: BST’nin Geometrik Uygulamaları</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Hash Tabloları</div>
+    <div class="sub">Sıra gerekmiyorsa daha da hızlı: ortalama sabit zamanda arama</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../hash-tablolari/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/agac.js"></script>
+<script src="../ortak/siralama.js"></script>
+<script src="../ortak/mergesort.js"></script>
+<script src="../ortak/quicksort.js"></script>
+<script src="../ortak/oncelik.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

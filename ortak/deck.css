@@ -592,3 +592,21 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .geo-side { flex: 1; min-width: 0; font-size: 20px; }
 .geo-side .mini { font-size: 16px; }
 .ll-chip.hit { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* ---------- öncelik kuyrukları ---------- */
+.hp-arr { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; font-family: "JetBrains Mono", monospace; }
+.hp-cell { min-width: 40px; text-align: center; border: 2px solid var(--rule); border-radius: 7px; background: var(--card); padding: 1px 4px; }
+.hp-cell i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
+.hp-cell b { font-size: 18px; }
+.hp-cell.zero { opacity: .4; }
+.hp-cell.sorted { background: var(--green); border-color: var(--green); color: #fff; }
+.hp-cell.sorted i { color: #fff; }
+.hp-cell.cur { background: var(--amber); border-color: var(--amber); color: #111; }
+.hp-cell.new, .hp-cell.found { border-color: var(--green); box-shadow: 0 0 0 2px var(--green) inset; }
+.hp-cell.del { border-color: var(--red); box-shadow: 0 0 0 2px var(--red) inset; }
+.hp-cell.cand { border-color: var(--purple); border-style: dashed; }
+.hp-stream { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0 8px; }
+.hp-stream .ll-chip { font-size: 15px; padding: 1px 7px; }
+.hp-stream .ll-chip.cur { background: var(--amber); border-color: var(--amber); color: #111; }
+.hp-stream .ll-chip.past { opacity: .4; }
+.tm-log { flex: 1; min-width: 0; font-size: 17px; line-height: 1.5; }
