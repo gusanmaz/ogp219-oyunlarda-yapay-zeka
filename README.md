@@ -20,7 +20,7 @@ Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmü
 | 04 | [Yığınlar ve Kuyruklar](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yiginlar-kuyruklar/) | ✅ hazır |
 | 05 | [Arama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/arama-algoritmalari/) | ✅ hazır |
 
-**Bölüm 2 · Siralama**
+**Bölüm 2 · Sıralama**
 
 | # | Konu | Durum |
 |---|------|-------|
