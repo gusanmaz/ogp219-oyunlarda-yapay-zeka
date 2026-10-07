@@ -183,6 +183,136 @@
   </div>
 </section>
 
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: sınıf ve nesne <span class="en">class &amp; object</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.8em">
+      <ul>
+        <li><b>Sınıf</b> <span class="en">class</span> = kalıp, plan. “Bir düşmanın <b>adı</b> ve <b>canı</b> olur.”</li>
+        <li><b>Nesne</b> <span class="en">object · instance</span> = kalıptan üretilmiş somut bir düşman: Ork (can 30), Goblin (can 12)…</li>
+        <li><b>Alan</b> <span class="en">field · attribute</span> = nesnenin taşıdığı bilgi: <code>hp</code>, <code>name</code></li>
+        <li><b>Nokta</b> = “-nin”: <code>ork.hp</code> → “ork’un canı”</li>
+        <li><b>Yapıcı</b> <span class="en">constructor</span> = nesne üretilirken çalışan fonksiyon (<code>__init__</code> / <code>constructor</code>)</li>
+      </ul>
+      <div class="box game"><span class="bt">🎮 Unity’de</span>Her script bir sınıftır: <code>public class Enemy : MonoBehaviour</code>. Inspector’da gördüğünüz kutular, o sınıfın alanlarıdır.</div>
+    </div>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Enemy:                        # sınıf = kalıp
+    def __init__(self, name, hp):   # yapıcı: yeni nesne üretilirken çalışır
+        self.name = name            # self = "bu nesnenin"
+        self.hp = hp
+
+ork = Enemy("Ork", 30)              # nesne = kalıptan üretilen örnek
+goblin = Enemy("Goblin", 12)
+enemies = [ork, goblin, Enemy("Ejder", 300)]   # nesnelerden liste
+
+print(ork.hp)                       # 30   → "ork'un canı"
+print(enemies[1].name)              # Goblin
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Enemy                              // sınıf = kalıp
+{
+    public string Name;                  // alan (field)
+    public int Hp;
+
+    public Enemy(string name, int hp)    // yapıcı (constructor)
+    {
+        Name = name;
+        Hp = hp;
+    }
+}
+
+var ork = new Enemy("Ork", 30);          // new → yeni nesne üret
+var enemies = new List<Enemy>();         // Enemy'lerden oluşan liste
+enemies.Add(ork);
+enemies.Add(new Enemy("Goblin", 12));
+Debug.Log(ork.Hp);                       // 30
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Enemy {                         // sınıf = kalıp
+  constructor(name, hp) {             // yapıcı: new ile çağrılır
+    this.name = name;                 // this = "bu nesnenin"
+    this.hp = hp;
+  }
+}
+
+const ork = new Enemy("Ork", 30);     // new → yeni nesne üret
+const enemies = [ork, new Enemy("Goblin", 12), new Enemy("Ejder", 300)];
+console.log(ork.hp);                  // 30
+
+// p5.js'te sık görülen kısa yol: nesne sabiti (sınıfsız)
+const slime = { name: "Slime", hp: 5 };
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">Öğrencilerin çoğu sınıfları “ezberden” kullanıyor ama kavram oturmamış olabilir. Kalıp–kurabiye benzetmesi işe yarar: sınıf kurabiye kalıbı, nesneler kurabiyeler; her kurabiyenin kendi “hp”si var.</aside>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: fonksiyonu değer olarak vermek ve lambda <span class="en">lambda · arrow function</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.8em">
+      <p>Hazır <code>sort</code> fonksiyonu düşmanları <b>neye göre</b> sıralayacağını bilemez. Ona bunu söyleyen <b>küçük bir fonksiyon</b> veririz.</p>
+      <ol>
+        <li class="fragment">Önce normal, <b>isimli</b> bir fonksiyon yazıp <b>adını</b> veririz (parantezsiz!).</li>
+        <li class="fragment">Bu fonksiyon tek satırlıksa, isim vermeden yerinde yazabiliriz: <b>lambda</b> <span class="en">anonymous function</span>. JavaScript’te adı <b>ok fonksiyonu</b> <span class="en">arrow function</span>.</li>
+      </ol>
+      <div class="box prop fragment"><span class="bt">Okuma kılavuzu</span>
+        <code>lambda e: e.hp</code> → “bir <b>e</b> al, <b>e.hp</b> döndür”<br>
+        <code>(x, y) =&gt; x.hp - y.hp</code> → “<b>x</b> ve <b>y</b> al, <b>x.hp − y.hp</b> döndür”
+      </div>
+    </div>
+  <div class="tabs">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def hp_of(e):                   # bir düşman al...
+    return e.hp                 # ...canını döndür
+
+enemies.sort(key=hp_of)         # fonksiyonun ADINI veriyoruz (parantez yok!)
+
+# Aynı şeyin kısa yazımı: lambda = isimsiz, tek satırlık fonksiyon
+enemies.sort(key=lambda e: e.hp)
+#                       ↑     ↑
+#               parametre     döndürülen değer
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int ByHp(Enemy x, Enemy y)            // iki düşmanı karşılaştır
+{
+    return x.Hp.CompareTo(y.Hp);      // negatif: x önce
+}                                     // 0: eşit, pozitif: y önce
+
+enemies.Sort(ByHp);                   // metodun ADINI veriyoruz
+
+// Kısa yazım: lambda ifadesi   (parametreler) => sonuç
+enemies.Sort((x, y) => x.Hp.CompareTo(y.Hp));
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function byHp(x, y) {      // negatif: x önce, 0: eşit, pozitif: y önce
+  return x.hp - y.hp;
+}
+
+enemies.sort(byHp);        // fonksiyonun ADINI veriyoruz (parantez yok!)
+
+// Kısa yazım: ok fonksiyonu   (parametreler) => sonuç
+enemies.sort((x, y) => x.hp - y.hp);
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">Python’un key fonksiyonu TEK eleman alır (“neye göre?”), C#/JS karşılaştırıcısı İKİ eleman alır (“hangisi önce?”). Bu farkı vurgulayın. Başka bir fonksiyona parametre olarak verilen fonksiyona “callback” (geri çağırma) denir.</aside>
+</section>
+
 <section data-sec="oyunun kuralları">
   <h2>“Neye göre?” — karşılaştırıcı <span class="en">comparator / callback</span></h2>
   <p>Hazır sıralama fonksiyonlarına <b>nasıl karşılaştıracağını</b> biz söyleriz. Başka bir fonksiyona verdiğimiz bu küçük fonksiyona <b>geri çağırma</b> <span class="en">callback</span> denir; burada görevi <b>karşılaştırıcı</b> <span class="en">comparator</span> olmak.</p>
@@ -263,8 +393,13 @@ def exch(a, i, j):
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim><script type="text/template">
+// Geleneksel yazım:
 static bool Less<T>(T v, T w) where T : IComparable<T>
-    => v.CompareTo(w) < 0;
+{
+    return v.CompareTo(w) < 0;
+}
+// Modern kısa yazım (=> ile tek satırlık gövde), aynı anlam:
+// static bool Less<T>(T v, T w) where T : IComparable<T> => v.CompareTo(w) < 0;
 
 static void Exch<T>(T[] a, int i, int j)
 {
@@ -297,7 +432,8 @@ private static void exch(Comparable[] a, int i, int j)
 </script></code></pre>
     </div>
   </div>
-  <p class="mini">Not: Bu slaytlardaki canlı editörlerde görselleştirme için <code>less(a, i, j)</code> biçimini (değer yerine <b>indeks</b>) kullanacağız.</p>
+  <p class="mini">🎒 C# sekmesindeki <code>&lt;T&gt;</code>: <b>generic</b> — “her tür için” yazılmış fonksiyon; <code>where T : IComparable&lt;T&gt;</code> = “T karşılaştırılabilir bir tür olmalı”. Şimdilik <code>T</code> yerine <code>int</code> düşünebilirsiniz.<br>
+  Not: Canlı editörlerde görselleştirme için <code>less(a, i, j)</code> biçimini (değer yerine <b>indeks</b>) kullanacağız.</p>
 </section>
 
 <section data-sec="oyunun kuralları">
@@ -317,7 +453,7 @@ private static void exch(Comparable[] a, int i, int j)
       <button data-opt="C">a = 5, b = 5</button>
       <button data-opt="D">a = 5, b = 8 (hiçbir şey değişmedi)</button>
     </div>
-    <div class="explain">İlk satırda a’nın eski değeri (5) <b>kaybolur</b>. İkinci satırda b, a’nın <i>yeni</i> değerini (8) alır. Bu yüzden geçici değişken <code>temp</code> gerekir — ya da Python/C#’taki demet takası: <code>a, b = b, a</code> / <code>(a, b) = (b, a)</code>.</div>
+    <div class="explain">İlk satırda a’nın eski değeri (5) <b>kaybolur</b>. İkinci satırda b, a’nın <i>yeni</i> değerini (8) alır. Bu yüzden geçici değişken <code>temp</code> gerekir — ya da tek satırlık takas: Python <code>a, b = b, a</code> · C# <code>(a, b) = (b, a);</code> · JavaScript <code>[a, b] = [b, a];</code> — üçü de arka planda geçici bir değer kullanır.</div>
   </div>
 </section>
 
@@ -634,6 +770,18 @@ function findNearest(enemies, me) {
       <div class="box low"><span class="bt">⚙️ <code>sqrMagnitude</code> neden?</span>Mesafeleri <b>karşılaştırırken</b> karekök almaya gerek yok: a &lt; b ⇔ a² &lt; b². Karekök pahalı bir işlemdir — her karede yüzlerce kez yapılıyorsa fark eder.</div>
     </div>
   </div>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 Önceki koddaki yeni ifadeler</h2>
+  <table class="gloss">
+    <tr><td>for e in enemies</td><td>listeyi gez</td><td>“enemies listesindeki her <b>e</b> için…” — Python <code>for … in</code>, C# <code>foreach (var e in …)</code>, JS <code>for (const e of …)</code></td></tr>
+    <tr><td>float('inf') · float.MaxValue · Infinity</td><td>“sonsuz”</td><td>En küçüğü ararken başlangıç değeri: ilk bakılan her mesafe bundan küçük çıkar</td></tr>
+    <tr><td>best = None / null</td><td>“henüz yok”</td><td>Hiçbir nesneyi göstermeyen değişken. Liste boşsa fonksiyon <code>None</code>/<code>null</code> döndürür</td></tr>
+    <tr><td>e.transform.position</td><td>Unity: konum</td><td>Nesnenin sahnedeki konumu: bir <code>Vector3</code> (x, y, z)</td></tr>
+    <tr><td>(a - b).sqrMagnitude</td><td>Unity: mesafe²</td><td>İki konum arasındaki vektörün uzunluğunun <b>karesi</b> (karekök yok → hızlı)</td></tr>
+    <tr><td>List&lt;Enemy&gt;</td><td>C#: liste</td><td>Sadece <code>Enemy</code> nesneleri tutabilen liste. <code>&lt;&gt;</code> içindeki tür = elemanların türü</td></tr>
+  </table>
 </section>
 
 <section data-sec="selection sort · video">
@@ -1109,6 +1257,20 @@ function draw() {
   <p class="mini">Not: Gerçek projede Unity bunu sizin için yapabilir (2D: <i>Transparency Sort Axis</i> = (0, 1, 0); Godot: <i>Y Sort</i>). Ama arkasındaki fikir tam olarak bu.</p>
 </section>
 
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 Önceki koddaki yeni ifadeler</h2>
+  <table class="gloss" style="font-size:20px">
+    <tr><td>: MonoBehaviour</td><td>Unity</td><td>“Bu sınıf bir Unity bileşenidir” — nesneye eklenebilir, <code>Update</code>/<code>LateUpdate</code> gibi metotları Unity çağırır</td></tr>
+    <tr><td>LateUpdate()</td><td>Unity</td><td>Her karede, tüm <code>Update</code>’lerden <b>sonra</b> çağrılır (herkes hareket etti → şimdi sırala)</td></tr>
+    <tr><td>static readonly</td><td>C#</td><td><code>static</code>: tüm nesneler için <b>tek</b> kopya · <code>readonly</code>: bir kez atanır, değişmez</td></tr>
+    <tr><td>Comparison&lt;T&gt;</td><td>C#</td><td>“İki <code>T</code> alıp <code>int</code> döndüren fonksiyon” türü. Lambda’yı bir değişkende saklamamızı sağlar</td></tr>
+    <tr><td>InsertionSort&lt;T&gt;(…)</td><td>C# generic</td><td>Her tür liste için çalışan tek fonksiyon (<code>T</code> = “herhangi bir tür”)</td></tr>
+    <tr><td>sortingOrder</td><td>Unity</td><td>SpriteRenderer’ın çizim sırası: büyük sayı önde çizilir</td></tr>
+    <tr><td>screen.blit / rect.bottom</td><td>pygame</td><td>Resmi ekrana çiz / sprite’ın alt kenarının y’si (ayaklar)</td></tr>
+    <tr><td>draw()</td><td>p5.js</td><td>p5.js her karede (saniyede ~60 kez) kendiliğinden çağırır</td></tr>
+  </table>
+</section>
+
 <section data-sec="kaputun altında">
   <h2>⚙️ Çöp toplayıcı <span class="en">garbage collector</span> ve takılan oyunlar</h2>
   <div class="cols">
@@ -1116,6 +1278,7 @@ function draw() {
       <p>C#, Python, JavaScript’te yeni nesneler oluşturursunuz; kullanılmayanları <b>çöp toplayıcı</b> (GC) arada bir temizler.</p>
       <p>Belediye çöp kamyonu gibi: geldiğinde <b>sokak birkaç saniye durur</b>. Oyunda bu, ekranın bir anlığına donması demek <span class="en">GC spike / stutter</span>.</p>
       <p class="fragment">60 FPS’te bir karenin süresi: <b>16,6 ms</b>. 5 ms’lik bir GC duraklaması o karenin üçte birini yer.</p>
+      <p class="mini fragment">🎒 <code>OrderBy(e =&gt; e.dist)</code>: C# LINQ, sıralanmış <b>yeni</b> bir dizi üretir · <code>sorted(...)</code>: Python, <b>yeni</b> liste döndürür (<code>.sort()</code> ise yerinde sıralar) · <code>[...enemies]</code>: JS “yayma” <span class="en">spread</span> ile dizinin kopyası.</p>
     </div>
   <div class="tabs fragment">
     <div class="tab" data-label="C# (Unity)">
@@ -1557,6 +1720,7 @@ function shuffle(a) {
       </div>
     </div>
   </div>
+  <p class="mini">🎒 Rastgele sayılar: Python <code>random.randint(0, i)</code> → 0…i (<b>i dahil</b>) · C# <code>rng.Next(i + 1)</code> → 0…i (üst sınır <b>hariç</b>) · JS <code>Math.random()</code> → 0 ≤ x &lt; 1 ondalıklı sayı, bu yüzden <code>Math.floor(Math.random() * (i + 1))</code> → 0…i.</p>
 </section>
 
 <section data-sec="karıştırma · deney">

@@ -178,6 +178,130 @@
   <aside class="notes">1) Gövdeyi döndürün/kaydırın: taret onunla gelir. 2) “Taret, Gövde’nin çocuğu” kutusunu kaldırın: taret yerinde kalır. 3) “Hedefe kilitlen”i açıp gövdeyi döndürün: taret hep hedefe bakar. Bu, oyun YZ’sinde nişan almanın temeli: yerel açı = istenen dünya açısı − ebeveynin açısı.</aside>
 </section>
 
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: sınıf ve nesne <span class="en">class &amp; object</span></h2>
+  <div class="cols c46">
+    <div>
+      <ul>
+        <li><b>Sınıf</b> <span class="en">class</span> = kalıp: “Her oyun nesnesinin bir <b>adı</b> ve <b>çocukları</b> olur.”</li>
+        <li><b>Nesne</b> <span class="en">object</span> = kalıptan üretilen somut örnek: “Tank”, “Taret”…</li>
+        <li><b>Alan</b> <span class="en">field</span> = nesnenin bilgisi: <code>name</code>, <code>children</code></li>
+        <li><b>Yapıcı</b> <span class="en">constructor</span> = nesne üretilirken çalışan fonksiyon</li>
+        <li><code>self</code> (Python) / <code>this</code> (C#, JS) = “şu an üretilen / kullanılan nesne”</li>
+        <li>Nokta = “-nin”: <code>tank.name</code> → “tank’ın adı”</li>
+      </ul>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class GameObject:                     # sınıf = kalıp
+    def __init__(self, name):         # yapıcı
+        self.name = name              # alan: ad
+        self.children = []            # alan: çocuklar (boş liste)
+
+tank = GameObject("Tank")             # nesne üret
+turret = GameObject("Taret")
+tank.children.append(turret)          # taret, tankın çocuğu oldu
+print(tank.children[0].name)          # Taret
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class GameObj                              // sınıf = kalıp
+{
+    public string Name;                    // alan: ad
+    public List<GameObj> Children = new List<GameObj>();  // alan: çocuklar
+
+    public GameObj(string name) { Name = name; }          // yapıcı
+}
+
+var tank = new GameObj("Tank");            // new → nesne üret
+var turret = new GameObj("Taret");
+tank.Children.Add(turret);                 // taret, tankın çocuğu oldu
+Debug.Log(tank.Children[0].Name);          // Taret
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class GameObject {                    // sınıf = kalıp
+  constructor(name) {                 // yapıcı: new ile çağrılır
+    this.name = name;                 // alan: ad
+    this.children = [];               // alan: çocuklar (boş dizi)
+  }
+}
+
+const tank = new GameObject("Tank");  // new → nesne üret
+const turret = new GameObject("Taret");
+tank.children.push(turret);           // taret, tankın çocuğu oldu
+console.log(tank.children[0].name);   // Taret
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">Kalıp–kurabiye benzetmesi: sınıf kurabiye kalıbı, nesneler kurabiyeler. Unity’de her script bir sınıftır; sahnedeki her nesne bir nesnedir (GameObject). Unity’nin kendi sınıfının adı da GameObject — biz örnekte aynı fikri sade bir sınıfla yazdık.</aside>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: referans ve <code>null</code> <span class="en">reference · null</span></h2>
+  <div class="cols">
+    <div>
+      <p>Bir değişken nesnenin <b>kendisini</b> değil, nerede durduğunu (<b>adresini</b>) tutar: bir <b>ok</b> gibi düşünün.</p>
+      <ul>
+        <li class="fragment"><code>b = a</code> yeni nesne <b>üretmez</b>: iki ok aynı nesneyi gösterir. <code>b</code> üzerinden yapılan değişiklik <code>a</code>’da da görünür!</li>
+        <li class="fragment"><code>None</code> / <code>null</code> = ok <b>hiçbir şeyi göstermiyor</b>. Ağaçta “çocuk yok” demek.</li>
+        <li class="fragment"><code>null</code> bir nesnenin alanına erişmeye çalışmak → <b>hata</b> (<code>NullReferenceException</code> — Unity’nin en meşhur hatası 😅)</li>
+      </ul>
+      <svg viewBox="0 0 420 120" style="width:100%;max-width:420px" class="fragment">
+        <g font-family="JetBrains Mono" font-size="15">
+          <rect x="10" y="15" width="50" height="34" rx="6" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="35" y="38" text-anchor="middle" fill="var(--ink)">a</text>
+          <rect x="10" y="70" width="50" height="34" rx="6" fill="var(--card)" stroke="var(--ink-2)" stroke-width="2"/><text x="35" y="93" text-anchor="middle" fill="var(--ink)">b</text>
+          <line x1="60" y1="32" x2="205" y2="55" stroke="var(--blue)" stroke-width="2.5"/><line x1="60" y1="87" x2="205" y2="65" stroke="var(--blue)" stroke-width="2.5"/>
+          <rect x="205" y="35" width="150" height="50" rx="10" fill="var(--amber)"/><text x="280" y="66" text-anchor="middle" fill="#111" font-weight="700">Node "X"</text>
+        </g>
+      </svg>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+a = Node("S")
+b = a                 # yeni düğüm YOK: b de aynı düğümü gösterir
+b.key = "X"
+print(a.key)          # X  ← a da değişti!
+
+a.left = Node("E")    # a'nın sol bağlantısı yeni bir düğümü gösterir
+print(a.right)        # None → sağ çocuk yok
+print(a.right.key)    # ❌ HATA: None'ın key alanı olmaz
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Node a = new Node("S");
+Node b = a;              // yeni düğüm YOK: b de aynı düğümü gösterir
+b.Key = "X";
+Debug.Log(a.Key);        // X  ← a da değişti!
+
+a.Left = new Node("E");  // sol bağlantı yeni düğümü gösterir
+Debug.Log(a.Right == null);  // True → sağ çocuk yok
+Debug.Log(a.Right.Key);  // ❌ NullReferenceException
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const a = new Node("S");
+const b = a;             // yeni düğüm YOK: b de aynı düğümü gösterir
+b.key = "X";
+console.log(a.key);      // X  ← a da değişti!
+
+a.left = new Node("E");  // sol bağlantı yeni düğümü gösterir
+console.log(a.right);    // null → sağ çocuk yok
+console.log(a.right.key); // ❌ TypeError: null'ın özelliği okunamaz
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">Ağaçlar, bağlı listeler, graflar: hepsi “düğümler birbirini referansla gösterir” fikrine dayanır. Bu slayt, bundan sonraki her şeyin temeli. C#’ta struct’lar (Vector3 gibi) bu kuralın istisnasıdır: kopyalanır (sıralama dersindeki değer tipi / referans tipi slaytı).</aside>
+</section>
+
 <section data-sec="ağaç nedir?">
   <h2>Ağacı gezmenin doğal yolu: özyineleme <span class="en">recursion</span></h2>
   <div class="cols c64">
@@ -195,7 +319,7 @@ def print_tree(node, depth=0):
 void PrintTree(Transform node, int depth = 0)
 {
     Debug.Log(new string(' ', depth * 2) + node.name);  // 1) kendini yaz
-    foreach (Transform child in node)                    // 2) her çocuk için
+    foreach (Transform child in node)                    // 2) her çocuk için (Unity: Transform'u gezmek = çocuklarını gezmek)
         PrintTree(child, depth + 1);                     //    AYNI işi tekrarla
 }
 </script></code></pre>
@@ -322,6 +446,64 @@ class Node {
   </div>
 </section>
 
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: fonksiyonu parametre olarak vermek <span class="en">callback</span></h2>
+  <div class="cols c46">
+    <div>
+      <p>Gezinme fonksiyonu her düğümde <b>ne yapılacağını</b> bilmek zorunda değil. Bunu ona bir <b>fonksiyon</b> vererek söyleriz: ekrana yaz, listeye ekle, say…</p>
+      <p>Başka bir fonksiyona parametre olarak verilen fonksiyona <b>geri çağırma</b> <span class="en">callback</span> denir.</p>
+      <div class="box prop"><span class="bt">Okuma kılavuzu</span>
+        Fonksiyonun <b>adını</b> parantezsiz verirsek fonksiyonun kendisini veririz: <code>visit = print</code>. Parantezle yazarsak (<code>print()</code>) onu hemen <b>çalıştırmış</b> oluruz.
+        <p class="mini"><code>lambda k: out.append(k)</code> / <code>k =&gt; out.push(k)</code>: “bir k al, onu listeye ekle” diyen isimsiz fonksiyon <span class="en">lambda · arrow function</span>.</p>
+      </div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def show(key):                   # sıradan bir fonksiyon
+    print("ziyaret:", key)
+
+preorder(root, show)             # fonksiyonun ADINI veriyoruz (parantez yok)
+preorder(root, print)            # hazır print de olur
+
+out = []
+def collect(key):                # anahtarları listeye toplayan fonksiyon
+    out.append(key)
+preorder(root, collect)
+
+preorder(root, lambda key: out.append(key))   # aynısı, lambda ile tek satırda
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+void Show(int key) { Debug.Log("ziyaret: " + key); }
+
+Preorder(root, Show);            // metodun ADINI veriyoruz
+
+// Action<int> = "int alan, bir şey döndürmeyen fonksiyon" türü
+var outList = new List<int>();
+Preorder(root, outList.Add);     // listenin Add metodu da olur
+
+Preorder(root, key => outList.Add(key));   // aynısı, lambda ile
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function show(key) { console.log("ziyaret:", key); }
+
+preorder(root, show);            // fonksiyonun ADINI veriyoruz
+
+const out = [];
+function collect(key) { out.push(key); }
+preorder(root, collect);
+
+preorder(root, key => out.push(key));   // aynısı, ok fonksiyonu ile
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
 <section data-sec="gezinme">
   <h2>Dört gezinme sırası <span class="en">traversal orders</span></h2>
   <table class="sum-t" style="font-size:21px">
@@ -380,7 +562,7 @@ function preorder(x, visit) {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-from collections import deque
+from collections import deque   # deque: iki ucundan da hızlı ekleme/çıkarma yapılan kuyruk
 
 def level_order(root, visit):
     q = deque([root])            # kuyruğa kökü koy
@@ -396,7 +578,7 @@ def level_order(root, visit):
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 void LevelOrder(Node root, Action<int> visit)
 {
-    var q = new Queue<Node>();
+    var q = new Queue<Node>();   // Node'lardan oluşan hazır kuyruk
     q.Enqueue(root);
     while (q.Count > 0)
     {
@@ -472,18 +654,28 @@ function levelOrder(root, visit) {
 
 <section data-sec="davranış ağaçları">
   <h2>Davranış ağacı kodu — sadece iki küçük sınıf</h2>
-  <div class="tabs " style="font-size:.9em">
+  <div class="tabs " style="font-size:.64em">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 class Selector:                          # "?" — biri başarılı olana kadar dene
-    def __init__(self, *kids): self.kids = kids
+    def __init__(self, *kids):           # *kids: istediğin kadar çocuk ver
+        self.kids = kids
     def tick(self, npc):
-        return any(k.tick(npc) for k in self.kids)   # any() ilk True'da durur
+        for k in self.kids:              # geleneksel yazım
+            if k.tick(npc):
+                return True              # biri başarılı → dur
+        return False
+        # modern tek satır: return any(k.tick(npc) for k in self.kids)
 
 class Sequence:                          # "→" — biri başarısız olana kadar çalıştır
-    def __init__(self, *kids): self.kids = kids
+    def __init__(self, *kids):
+        self.kids = kids
     def tick(self, npc):
-        return all(k.tick(npc) for k in self.kids)   # all() ilk False'ta durur
+        for k in self.kids:
+            if not k.tick(npc):
+                return False             # biri başarısız → dur
+        return True
+        # modern tek satır: return all(k.tick(npc) for k in self.kids)
 
 brain = Selector(
     Sequence(Cond(lambda n: n.sees_enemy), Cond(lambda n: n.hp > 30), Act(shoot)),
@@ -521,13 +713,23 @@ class Sequence : IBTNode            // "→" — biri başarısız olana kadar �
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-class Selector {                          // "?" — biri başarılı olana kadar dene
-  constructor(...kids) { this.kids = kids; }
-  tick(npc) { return this.kids.some(k => k.tick(npc)); }   // some() ilk true'da durur
+class Selector {                     // "?" — biri başarılı olana kadar dene
+  constructor(...kids) { this.kids = kids; }   // ...kids: istediğin kadar çocuk
+  tick(npc) {
+    for (const k of this.kids)       // geleneksel yazım
+      if (k.tick(npc)) return true;  // biri başarılı → dur
+    return false;
+    // modern tek satır: return this.kids.some(k => k.tick(npc));
+  }
 }
-class Sequence {                          // "→" — biri başarısız olana kadar
+class Sequence {                     // "→" — biri başarısız olana kadar
   constructor(...kids) { this.kids = kids; }
-  tick(npc) { return this.kids.every(k => k.tick(npc)); }  // every() ilk false'ta durur
+  tick(npc) {
+    for (const k of this.kids)
+      if (!k.tick(npc)) return false; // biri başarısız → dur
+    return true;
+    // modern tek satır: return this.kids.every(k => k.tick(npc));
+  }
 }
 
 const brain = new Selector(
@@ -538,6 +740,18 @@ const brain = new Selector(
     </div>
   </div>
   <p class="mini">Gerçek BT’lerde üçüncü bir durum da vardır: <b>çalışıyor</b> <span class="en">running</span> (ör. “yürüyor, henüz varmadı”). Unity’de hazır paketler, Unreal’da yerleşik editör var.</p>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 Davranış ağacı kodundaki yeni ifadeler</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>interface IBTNode</td><td>C# arayüz</td><td>“<code>Tick</code> metodu olan her şey.” <code>Selector</code>, <code>Sequence</code>, <code>Cond</code>, <code>Act</code> farklı sınıflar ama hepsi bu sözü verir → hepsi ağaçta düğüm olabilir</td></tr>
+    <tr><td>*kids · params · ...kids</td><td>değişken sayıda parametre</td><td><code>Selector(a, b, c)</code> gibi istediğin kadar çocuk ver; fonksiyonun içinde hepsi bir liste/dizi olarak gelir</td></tr>
+    <tr><td>Cond(lambda n: n.hp &gt; 30)</td><td>koşulu fonksiyonla vermek</td><td>“bir NPC al, canı 30’dan büyük mü söyle.” Koşul düğümü bu fonksiyonu her tick’te çağırır (callback)</td></tr>
+    <tr><td>Selector(Sequence(…), …)</td><td>iç içe nesne</td><td>Nesneleri iç içe üretmek = <b>ağacı kurmak</b>. Girintiler ağacın şeklini gösterir</td></tr>
+    <tr><td>any() · all()</td><td>Python (modern)</td><td><code>any</code>: “en az biri True mu?”, ilk True’da durur · <code>all</code>: “hepsi True mu?”, ilk False’ta durur</td></tr>
+    <tr><td>some() · every()</td><td>JS (modern)</td><td>Dizinin <code>any</code> / <code>all</code> karşılıkları; içlerine bir ok fonksiyonu verilir</td></tr>
+  </table>
 </section>
 
 <section data-sec="davranış ağaçları">
@@ -624,6 +838,7 @@ inventory.delete("kılıç");          // sil
     </div>
   </div>
   </div>
+  <p class="mini">🎒 <code>dict</code> · <code>Dictionary&lt;string, int&gt;</code> · <code>Map</code>: anahtar → değer çiftleri. C#’taki <code>TryGetValue("kalkan", out int n)</code>: “varsa değerini <code>n</code>’ye yaz ve <code>true</code> döndür”.</p>
   <p class="fragment">Bu hazır yapılar <b>nasıl</b> bu kadar hızlı? Bugün bir yöntemi (ağaçlar), ileride diğerini (hash tabloları) göreceğiz.</p>
 </section>
 
@@ -909,7 +1124,7 @@ def put(x, key, val):
         x.right = put(x.right, key, val)
     else:
         x.val = val                       # anahtar var → güncelle
-    x.size = 1 + size(x.left) + size(x.right)
+    x.size = 1 + size(x.left) + size(x.right)   # size(x): x yoksa 0, varsa x.size
     return x                              # bu alt ağacın kökü
 
 root = put(root, "S", 1)                  # kullanım
@@ -1229,6 +1444,18 @@ function get(root, key) {      // özyinelemesiz: yığın büyümez
   <div class="box story fragment"><span class="bt">🔑 Hash tablosu (Dictionary) bunları yapamaz!</span>Hash tabloları <code>get/put</code>’ta BST’den de hızlıdır, ama anahtarları <b>sırasız</b> saklar. “En yakın rakip” ya da “kaçıncıyım” sorusu için tüm tabloyu taramak gerekir. (Hash tabloları: ileriki bir ders.)</div>
 </section>
 
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: aynı şeyin iki yazılışı — geleneksel ve modern</h2>
+  <p>Bundan sonraki kodlarda önce <b>geleneksel</b> (<code>if</code>/<code>for</code>) yazımı göreceksiniz; yorum satırlarında da sık karşılaşacağınız <b>modern kısa</b> yazımı.</p>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>ne yapar?</th><th>geleneksel</th><th>modern</th></tr>
+    <tr><td>koşula göre iki değerden birini seç <span class="en">ternary</span></td><td><code>if t is not None:</code> <code>return t</code><br><code>else:</code> <code>return x</code></td><td>Python: <code>return t if t is not None else x</code><br>C#/JS: <code>return t != null ? t : x;</code></td></tr>
+    <tr><td>“soldaki null ise sağdakini al” <span class="en">null-coalescing</span></td><td><code>if (t != null) return t;</code><br><code>return x;</code></td><td>C#: <code>return t ?? x;</code><br>JS: <code>return t ?? x;</code></td></tr>
+    <tr><td>tek satırlık metot gövdesi</td><td><code>int Size(Node x) {</code><br><code>&nbsp;&nbsp;if (x == null) return 0;</code><br><code>&nbsp;&nbsp;return x.Size; }</code></td><td>C#: <code>int Size(Node x) =&gt; x == null ? 0 : x.Size;</code><br>JS: <code>const size = x =&gt; x === null ? 0 : x.size;</code></td></tr>
+  </table>
+  <p class="mini">İkisi de aynı makine işini yapar; modern yazım sadece daha kısa. Okuyabilmeniz yeterli — yazarken hangisi size daha açık geliyorsa onu kullanın.</p>
+</section>
+
 <section data-sec="sıralı işlemler">
   <h2>floor ve ceiling <span class="en">taban · tavan</span></h2>
   <div class="cols c46">
@@ -1252,7 +1479,10 @@ def floor(x, key):             # <= key olan EN BÜYÜK düğüm
     if key < x.key:
         return floor(x.left, key)      # cevap solda olmalı
     t = floor(x.right, key)            # sağda daha iyisi var mı?
-    return t if t is not None else x   # yoksa x'in kendisi
+    if t is not None:
+        return t
+    return x                           # yoksa x'in kendisi
+    # modern: return t if t is not None else x
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -1263,7 +1493,9 @@ Node Floor(Node x, int key)          // <= key olan EN BÜYÜK düğüm
     if (key == x.Key) return x;
     if (key < x.Key) return Floor(x.Left, key);   // cevap solda
     Node t = Floor(x.Right, key);                 // sağda daha iyisi?
-    return t ?? x;                                // yoksa x
+    if (t != null) return t;
+    return x;                                     // yoksa x
+    // modern: return t ?? x;
 }
 </script></code></pre>
     </div>
@@ -1274,7 +1506,9 @@ function floor(x, key) {             // <= key olan EN BÜYÜK düğüm
   if (key === x.key) return x;
   if (key < x.key) return floor(x.left, key);   // cevap solda
   const t = floor(x.right, key);                // sağda daha iyisi?
-  return t !== null ? t : x;                    // yoksa x
+  if (t !== null) return t;
+  return x;                                     // yoksa x
+  // modern: return t ?? x;
 }
 </script></code></pre>
     </div>
@@ -1313,8 +1547,10 @@ function floor(x, key) {             // <= key olan EN BÜYÜK düğüm
   <div class="tabs " style="font-size:.85em">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def size(x):
-    return 0 if x is None else x.size
+def size(x):                   # alt ağaçtaki düğüm sayısı
+    if x is None:
+        return 0
+    return x.size
 
 def rank(x, key):              # key'den KÜÇÜK kaç anahtar var?
     if x is None: return 0
@@ -1333,7 +1569,11 @@ def select(x, i):              # i. en küçük (0'dan sayarak)
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-int Size(Node x) => x == null ? 0 : x.Size;
+int Size(Node x)                   // alt ağaçtaki düğüm sayısı
+{
+    if (x == null) return 0;
+    return x.Size;                 // modern: int Size(Node x) => x == null ? 0 : x.Size;
+}
 
 int Rank(Node x, int key)          // key'den KÜÇÜK kaç anahtar?
 {
@@ -1354,7 +1594,10 @@ Node Select(Node x, int i)         // i. en küçük (0'dan)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const size = x => (x === null ? 0 : x.size);
+function size(x) {                 // alt ağaçtaki düğüm sayısı
+  if (x === null) return 0;
+  return x.size;                   // modern: const size = x => (x === null ? 0 : x.size);
+}
 
 function rank(x, key) {            // key'den KÜÇÜK kaç anahtar?
   if (x === null) return 0;
