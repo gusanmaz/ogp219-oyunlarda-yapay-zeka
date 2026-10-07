@@ -63,6 +63,12 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 - Tarayıcıda çalışan JavaScript ve Python (Pyodide) kod laboratuvarları
 - A/B/C/D quizler, konuşmacı notları (`S`)
 
+**Bölüm 6–11 · Oyun Yapay Zekâsı**
+
+| # | Konu | Durum |
+|---|------|-------|
+| Y0 | [Oyun YZ’si İçin Hazırlık](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-hazirlik/) | ✅ hazır |
+
 ## Klasör yapısı
 
 ```
@@ -88,6 +94,7 @@ ortak/              tüm destelerin ortak stil ve kodları
   yonlu.js          topolojik sıralama, döngü tespiti, Kosaraju, çöp toplayıcı, yönlü graf laboratuvarı
   mst.js            kesme özelliği, Kruskal, Prim, prosedürel zindan, MST laboratuvarı
   sp.js             gevşetme, Dijkstra, arazili harita, kritik yol, Bellman–Ford arbitraj, Dijkstra laboratuvarı
+  oyunai.js         oyun YZ’si simülasyon motoru: vektörler, dünya döngüsü, simlab, ailab
 union-find/         01 · Union–Find
 algoritma-analizi/  02 · Algoritma analizi
 bagli-listeler/     03 · Bağlı listeler
@@ -106,6 +113,7 @@ yonsuz-graflar/     15 · Yönsüz graflar
 yonlu-graflar/      16 · Yönlü graflar
 mst/                17 · Minimum yayılan ağaçlar
 en-kisa-yollar/     18 · En kısa yollar
+yz-hazirlik/        Y0 · Oyun YZ’si için hazırlık (vektörler, zaman)
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

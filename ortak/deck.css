@@ -671,3 +671,14 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .mst-list > div.in { color: var(--green); font-weight: 700; }
 .mst-list > div.out { color: var(--muted); text-decoration: line-through; }
 .mst-list > div.cur { background: color-mix(in srgb, var(--amber) 30%, transparent); }
+
+/* ---------- oyun YZ’si: dünya simülasyonu ---------- */
+.world-canvas { display: block; max-width: 100%; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
+.simlab-world canvas { display: block; max-width: 100%; border: 1px solid var(--rule); border-radius: 10px; }
+.simlab-world .sv-transport { margin-top: 4px; }
+.prereq { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0; }
+.prereq a, .prereq span { border: 2px solid var(--green); border-radius: 999px; padding: 3px 12px; font-weight: 700; font-size: 17px; text-decoration: none; color: var(--ink); background: var(--card); }
+.prereq .opt { border-style: dashed; border-color: var(--muted); }
+.libtable td:first-child { white-space: nowrap; }
+.paper { border-left: 4px solid var(--purple); padding: 4px 10px; margin: 6px 0; background: color-mix(in srgb, var(--purple) 8%, var(--card)); border-radius: 0 8px 8px 0; font-size: .82em; }
+.paper b { color: var(--purple); }

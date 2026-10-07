@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oyun YZ’si İçin Hazırlık</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Hazırlık: vektörler, nokta ve çapraz çarpım, görüş konisi, açılar, delta time, oyun döngüsü, Unity ve p5.js iskeleti. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d3a4a 0%, #1a1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · BÖLÜM 6</div>
+  <div class="ttl" style="font-size:70px">Oyun YZ’si İçin Hazırlık</div>
+  <div class="sub"><i>Vektörler, nokta çarpım, delta time, oyun döngüsü</i> — NPC’lerin konuştuğu dil</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlevec"></div>
+  <aside class="notes">Bu deste oyun yapay zekâsı bölümünün ön koşul destesidir; haftalık planda yer almaz ama sonraki bütün destelerde (steering, algılama, A*, grup YZ’si) kullanılan matematik ve oyun döngüsü kavramlarını toplar. Arka planda vektörlerle hareket eden oklar hareketli bir hedefi kovalıyor.</aside>
+</section>
+
+<section>
+  <h2>Yeni bölüme hoş geldiniz: Oyun Yapay Zekâsı 🎮🤖</h2>
+  <div class="cols c64">
+    <div style="font-size:.86em">
+      <p>18 destede algoritma ve veri yapılarını öğrendiniz. Şimdi onları <b>NPC’lere hayat vermek</b> için kullanacağız:</p>
+      <ul>
+        <li><b>Karar verme</b>: FSM, davranış ağaçları, fayda (utility), GOAP, oyun ağaçları</li>
+        <li><b>Hareket</b>: yönlendirme (steering), A*, NavMesh, sürüler</li>
+        <li><b>Algı ve taktik</b>: görüş, işitme, hafıza; siper ve kuşatma</li>
+        <li><b>Öğrenen ve üreten YZ</b>: pekiştirmeli öğrenme, LLM’li NPC’ler, prosedürel üretim, üretken YZ, zorluk ayarı</li>
+        <li><b>Mühendislik</b>: hata ayıklama, performans, proje</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">Her destede neler var?</span>
+      <ul style="font-size:.86em">
+        <li>🎯 ön koşullar</li><li>📖 kavram + basit matematik</li><li>💻 C# (Unity), JS (p5.js), Python kod</li><li>🕹️ oynanabilir demo + kod laboratuvarı</li><li>🎮 hangi oyunda, nasıl kullanıldı (gerçek hikâyeler)</li><li>🧰 kütüphaneler: nasıl eklenir, ne yapar, ne yapmaz</li><li>🤖 YZ kod asistanıyla çalışırken dikkat</li><li>🚀 proje ve araştırma önerileri</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Bölümün yol haritası 🗺️</h2>
+  <svg viewBox="0 0 1180 430" style="width:100%" font-family="Source Sans 3"><defs><marker id="rm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs><g><rect x="10" y="190" width="120" height="46" rx="9" style="fill:var(--card);stroke:var(--amber)" stroke-width="2.5"/><text x="70.0" y="211" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y0 Hazırlık</text><text x="70.0" y="229" text-anchor="middle" font-size="13" style="fill:var(--muted)">vektör, zaman</text></g><g><rect x="160" y="190" width="120" height="46" rx="9" style="fill:var(--card);stroke:var(--amber)" stroke-width="2.5"/><text x="220.0" y="211" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y1 Giriş</text><text x="220.0" y="229" text-anchor="middle" font-size="13" style="fill:var(--muted)">ajan, NPC</text></g><g><rect x="330" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="405.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y2 FSM</text><text x="405.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">durumlar</text></g><g><rect x="498" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="573.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y3 Davranış ağ.</text><text x="573.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">ağaçlar</text></g><line x1="480" y1="40" x2="496" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="666" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="741.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y4 Utility</text><text x="741.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">skorlar</text></g><line x1="648" y1="40" x2="664" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="834" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="909.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y5 GOAP</text><text x="909.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">planlama</text></g><line x1="816" y1="40" x2="832" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="1002" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="1077.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y6 Oyun ağaçları</text><text x="1077.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">minimax</text></g><line x1="984" y1="40" x2="1000" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="405.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y7 Steering</text><text x="405.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">kuvvetler</text></g><g><rect x="498" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="573.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y8 A*</text><text x="573.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">graflar + PQ</text></g><line x1="480" y1="130" x2="496" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="666" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="741.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y9 NavMesh</text><text x="741.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">Unity</text></g><line x1="648" y1="130" x2="664" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="834" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="909.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y10 Grup YZ</text><text x="909.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">sürü</text></g><line x1="816" y1="130" x2="832" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="200" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--red)" stroke-width="2.5"/><text x="405.0" y="221" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y11 Algılama</text><text x="405.0" y="239" text-anchor="middle" font-size="13" style="fill:var(--muted)">görüş, ses</text></g><g><rect x="498" y="200" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--red)" stroke-width="2.5"/><text x="573.0" y="221" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y12 Taktik</text><text x="573.0" y="239" text-anchor="middle" font-size="13" style="fill:var(--muted)">siper, etki h.</text></g><line x1="480" y1="220" x2="496" y2="220" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="220" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="405.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y13 Öğrenme</text><text x="405.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">RL, ML-Agents</text></g><g><rect x="498" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="573.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y14 LLM NPC</text><text x="573.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">diyalog</text></g><line x1="480" y1="310" x2="496" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="666" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="741.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y15 PCG</text><text x="741.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">üretim</text></g><line x1="648" y1="310" x2="664" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="834" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="909.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y16 Üretken YZ</text><text x="909.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">görsel, ses</text></g><line x1="816" y1="310" x2="832" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="1002" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="1077.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y17 Zorluk</text><text x="1077.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">DDA</text></g><line x1="984" y1="310" x2="1000" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="370" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--teal)" stroke-width="2.5"/><text x="405.0" y="391" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y18 Performans</text><text x="405.0" y="409" text-anchor="middle" font-size="13" style="fill:var(--muted)">debug, LOD</text></g><g><rect x="498" y="370" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--teal)" stroke-width="2.5"/><text x="573.0" y="391" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y19 Proje</text><text x="573.0" y="409" text-anchor="middle" font-size="13" style="fill:var(--muted)">prototip</text></g><line x1="480" y1="390" x2="496" y2="390" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="390" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="130" y1="210" x2="158" y2="210" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/></svg>
+  <p class="mini">Sıra, resmî haftalık planı izler ama <b>ön koşulları en aza indirmek</b> için yeniden düzenlendi: karar verme konuları bir arada, A* steering’den sonra (hareket bilgisini kullanır), taktik YZ algılamadan sonra. Her destenin başında “🎯 bilmeniz gerekenler” slaytı var.</p>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><span class="">p5.js temelleri (setup/draw)</span><span class="">biraz C#</span></div>
+  <div class="prereq"><a class="opt" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar (oyun döngüsü örnekleri)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu deste bölümün “sıfır noktası”. Lise matematiği (koordinat düzlemi, Pisagor, sinüs/kosinüs) yeter; geri kalanını burada adım adım kuruyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bütün formülleri ezberlemeniz gerekmiyor. Her vektör işleminin <b>oyundaki anlamını</b> (mesafe, yön, “önümde mi?”, “sola mı sağa mı?”) anlamanız yeterli; kodu Unity ve p5.js zaten hazır veriyor.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>vector · magnitude</td><td>vektör · büyüklük (uzunluk)</td><td>Yönü ve büyüklüğü olan nicelik: (x, y)</td></tr>
+    <tr><td>normalize · unit vector</td><td>normalleştirmek · birim vektör</td><td>Uzunluğu 1 olan, sadece yön taşıyan vektör</td></tr>
+    <tr><td>dot product</td><td>nokta (iç) çarpım</td><td>İki yönün ne kadar aynı olduğunu söyleyen sayı</td></tr>
+    <tr><td>cross product</td><td>çapraz (dış) çarpım</td><td>2B’de: hedef solda mı sağda mı?</td></tr>
+    <tr><td>radian · degree</td><td>radyan · derece</td><td>π radyan = 180°</td></tr>
+    <tr><td>game loop · frame</td><td>oyun döngüsü · kare</td><td>Girdi → güncelle → çiz, saniyede onlarca kez</td></tr>
+    <tr><td>delta time (dt)</td><td>kare süresi</td><td>Önceki kareden bu yana geçen süre (saniye)</td></tr>
+    <tr><td>lerp (linear interpolation)</td><td>doğrusal ara değer</td><td>İki değer arasında t oranında bir nokta</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Vektörler</div>
+  <div class="sub">konum, yön, hız: hepsi bir ok</div>
+  <ul class="agenda"><li class="on">vektörler</li><li class="">nokta ve çapraz çarpım</li><li class="">açılar</li><li class="">zaman ve oyun döngüsü</li><li class="">hareket ve hassasiyet</li><li class="">Unity ve p5.js iskeleti</li><li class="">araçlar ve YZ asistanı</li></ul>
+</section>
+
+<section data-sec="vektörler">
+  <h2>Oyunda her şey bir vektör</h2>
+  <div class="cols">
+    <ul style="font-size:.9em">
+      <li><b>Konum</b> <span class="en">position</span>: “orijinden buraya ok”: (3, 2)</li>
+      <li><b>Hız</b> <span class="en">velocity</span>: “her saniye bu kadar kay”: (120, 0) piksel/sn</li>
+      <li><b>Yön</b> <span class="en">direction</span>: sadece nereye — uzunluğu 1</li>
+      <li><b>Kuvvet / ivme</b>: hızı değiştiren ok (steering destesi!)</li>
+    </ul>
+    <div class="box game"><span class="bt">🎮 Bir NPC’nin her karede sorduğu sorular</span>
+      <ul style="font-size:.9em">
+        <li>Oyuncu ne kadar uzakta? → <b>çıkarma + uzunluk</b></li>
+        <li>Hangi yöne gitmeliyim? → <b>normalize</b></li>
+        <li>Oyuncu önümde mi, arkamda mı? → <b>nokta çarpım</b></li>
+        <li>Sola mı sağa mı döneyim? → <b>çapraz çarpım</b></li>
+      </ul>
+      <p class="mini">Bu destenin tamamı bu dört sorunun cevabı.</p></div>
+  </div>
+</section>
+
+<section data-sec="vektörler">
+  <h2>Vektör oyun alanı — kendiniz deneyin</h2>
+  <div class="demo" data-demo="vecplay" data-mode="add"></div>
+</section>
+
+<section data-sec="vektörler">
+  <h2>Mesafe ve yön — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity'de hazır: Vector2 / Vector3
+Vector3 toPlayer = player.position - transform.position;  // benden oyuncuya ok
+float distance  = toPlayer.magnitude;                       // uzunluk
+Vector3 dir     = toPlayer.normalized;                      // sadece yön (uzunluk 1)
+
+if (distance < 10f)
+    transform.position += dir * speed * Time.deltaTime;    // ona doğru yürü
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js'te hazır: p5.Vector (createVector)
+let toPlayer = p5.Vector.sub(player.pos, enemy.pos);  // benden oyuncuya ok
+let distance = toPlayer.mag();                         // uzunluk
+let dir = toPlayer.copy().normalize();                 // sadece yön
+
+if (distance < 300) {
+  enemy.pos.add(dir.mult(speed * deltaTime / 1000));   // p5'te deltaTime milisaniye!
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def sub(a, b):  return (a[0] - b[0], a[1] - b[1])
+def length(v):  return math.hypot(v[0], v[1])        # √(x² + y²)
+def normalize(v):
+    L = length(v)
+    return (v[0] / L, v[1] / L) if L > 0 else (0, 0)  # 0'a bölme yok!
+
+to_player = sub(player_pos, enemy_pos)
+distance = length(to_player)
+direction = normalize(to_player)
+# pygame kullanırsanız hazırı var: pygame.math.Vector2
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Unity’de <code>Vector3</code> bir <b>yapı</b> <span class="en">struct</span>: atayınca kopyalanır (referans değil!). <code>transform.position.x = 5;</code> çalışmaz — önce kopyayı alıp değiştirip geri atarsınız.</p>
+</section>
+
+<section data-sec="vektörler">
+  <h2>🎒 Ön bilgi: iki koordinat sistemi</h2>
+  <div class="cols">
+    <svg viewBox="0 0 520 230" style="width:100%" font-family="JetBrains Mono">
+      <g><rect x="10" y="10" width="230" height="200" rx="8" style="fill:var(--card);stroke:var(--rule)"/><text x="125" y="32" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--ink)">p5.js / ekran / Canvas</text>
+      <line x1="30" y1="55" x2="200" y2="55" style="stroke:var(--red)" stroke-width="3"/><text x="205" y="60" font-size="12" style="fill:var(--red)">+x</text>
+      <line x1="30" y1="55" x2="30" y2="190" style="stroke:var(--green)" stroke-width="3"/><text x="38" y="195" font-size="12" style="fill:var(--green)">+y ↓</text><circle cx="30" cy="55" r="5" style="fill:var(--ink)"/><text x="40" y="75" font-size="11" style="fill:var(--muted)">(0,0) sol üst</text></g>
+      <g><rect x="280" y="10" width="230" height="200" rx="8" style="fill:var(--card);stroke:var(--rule)"/><text x="395" y="32" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--ink)">Unity (2B / 3B)</text>
+      <line x1="320" y1="180" x2="480" y2="180" style="stroke:var(--red)" stroke-width="3"/><text x="485" y="185" font-size="12" style="fill:var(--red)">+x</text>
+      <line x1="320" y1="180" x2="320" y2="50" style="stroke:var(--green)" stroke-width="3"/><text x="300" y="46" font-size="12" style="fill:var(--green)">+y ↑</text><circle cx="320" cy="180" r="5" style="fill:var(--ink)"/>
+      <line x1="320" y1="180" x2="380" y2="130" style="stroke:var(--blue)" stroke-width="3"/><text x="385" y="128" font-size="12" style="fill:var(--blue)">+z (ileri)</text></g>
+    </svg>
+    <ul style="font-size:.86em">
+      <li>p5.js’te <b>y aşağı</b> artar; Unity’de <b>yukarı</b>.</li>
+      <li>Unity 3B’de zemin <b>x–z</b> düzlemi; y yükseklik. 3B bir oyunda 2B YZ yazarken <code>y</code>’yi sıfırlamayı unutmayın: <code>toPlayer.y = 0;</code></li>
+      <li>Açılar: Unity <code>transform.eulerAngles</code> <b>derece</b>; <code>Mathf.Sin/Cos</code> ve p5 varsayılanı <b>radyan</b>.</li>
+      <li class="mini">YZ asistanları bu farkları sık karıştırır: “p5.js” ya da “Unity 2D, y yukarı” diye açıkça yazın.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="vektörler">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 1 · vektörler</div>
+    <div class="q">Düşman (2, 3) noktasında, oyuncu (5, 7) noktasında. Aralarındaki mesafe kaç birimdir?</div>
+    <div class="opts">
+      <button data-opt="A">3</button>
+      <button data-opt="B">4</button>
+      <button data-opt="C">5</button>
+      <button data-opt="D">7</button>
+    </div>
+    <div class="explain">Fark vektörü (5 − 2, 7 − 3) = (3, 4). Uzunluğu √(3² + 4²) = √25 = <b>5</b>. Klasik 3-4-5 üçgeni: Pisagor oyunlarda her karede binlerce kez çalışır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Nokta ve çapraz çarpım</div>
+  <div class="sub">“önümde mi?” ve “solumda mı?”</div>
+  <ul class="agenda"><li class="done">vektörler</li><li class="on">nokta ve çapraz çarpım</li><li class="">açılar</li><li class="">zaman ve oyun döngüsü</li><li class="">hareket ve hassasiyet</li><li class="">Unity ve p5.js iskeleti</li><li class="">araçlar ve YZ asistanı</li></ul>
+</section>
+
+<section data-sec="nokta çarpım">
+  <h2>Nokta çarpım <span class="en">dot product</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p class="formula">\( a \cdot b = a_x b_x + a_y b_y = |a|\,|b|\cos\theta \)</p>
+      <ul>
+        <li>İki <b>birim</b> vektör için sonuç = aradaki açının <b>kosinüsü</b></li>
+        <li><b>1</b>: aynı yön · <b>0</b>: dik · <b>−1</b>: zıt yön</li>
+        <li class="fragment">Sadece çarpma ve toplama: <b>çok ucuz</b> (karekök, sinüs yok)</li>
+      </ul>
+    </div>
+    <div class="demo" data-demo="vecplay" data-mode="dot"></div>
+  </div>
+</section>
+
+<section data-sec="nokta çarpım">
+  <h2>🎮 Görüş konisi: nöbetçi beni görüyor mu?</h2>
+  <div class="demo" data-demo="fovdot"></div>
+  <p class="mini">Kural: <code>dot(ileri, normalize(hedef − ben)) ≥ cos(FOV / 2)</code> <b>ve</b> mesafe ≤ menzil. (Gerçek oyunlarda bir de duvar kontrolü — ışın atma — var: Algılama destesi.)</p>
+</section>
+
+<section data-sec="nokta çarpım">
+  <h2>Görüş konisi — kod</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public bool CanSee(Transform target, float fovDegrees, float range)
+{
+    Vector3 toTarget = target.position - transform.position;
+    if (toTarget.magnitude > range) return false;            // çok uzak
+
+    float cosHalf = Mathf.Cos(fovDegrees * 0.5f * Mathf.Deg2Rad);
+    float dot = Vector3.Dot(transform.forward, toTarget.normalized);
+    return dot >= cosHalf;                                   // açının içinde mi?
+}
+// Kısayol: Vector3.Angle(transform.forward, toTarget) <= fov / 2
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function canSee(guard, target, fovDegrees, range) {
+  const toTarget = p5.Vector.sub(target.pos, guard.pos);
+  if (toTarget.mag() > range) return false;               // çok uzak
+
+  const cosHalf = cos(radians(fovDegrees / 2));
+  const forward = p5.Vector.fromAngle(guard.heading);     // bakış yönü (birim)
+  const d = forward.dot(toTarget.copy().normalize());
+  return d >= cosHalf;                                    // açının içinde mi?
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def in_fov(guard, forward, target, fov_deg, rng):
+    dx, dy = target[0] - guard[0], target[1] - guard[1]
+    d = math.hypot(dx, dy)
+    if d > rng:
+        return False                         # çok uzak
+    if d == 0:
+        return True                          # tam üstünde
+    fl = math.hypot(forward[0], forward[1])
+    cos_angle = (forward[0] * dx + forward[1] * dy) / (fl * d)
+    return cos_angle >= math.cos(math.radians(fov_deg / 2))
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Neden <code>cos(FOV/2)</code>? Koni ileri yönün <b>iki yanına</b> FOV/2 kadar açılır. Açıyı hesaplamak (acos) yerine kosinüsleri karşılaştırmak daha hızlıdır: açı büyüdükçe kosinüs küçülür.</p>
+</section>
+
+<section data-sec="çapraz çarpım">
+  <h2>Çapraz çarpım: sola mı, sağa mı?</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p class="formula">\( a \times b = a_x b_y - a_y b_x \) (2B’de tek sayı)</p>
+      <ul>
+        <li>İşareti, b’nin a’nın hangi tarafında olduğunu söyler</li>
+        <li>🎮 Taret / araç YZ’si: “hedef solumda → sola dön”</li>
+        <li>3B’de iki vektöre <b>dik</b> üçüncü bir vektör verir: yüzey normali, “yukarı” yönü</li>
+      </ul>
+      <div class="box warn"><span class="bt">⚠️ İşaret tuzağı</span>Ekran (y aşağı) ile Unity (y yukarı) arasında sol/sağ yer değiştirir. Emin değilseniz <b>test edin</b>: hedefi bilerek sola koyup işarete bakın.</div>
+    </div>
+    <div class="demo" data-demo="vecplay" data-mode="cross"></div>
+  </div>
+</section>
+
+<section data-sec="nokta çarpım">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · nokta çarpım</div>
+    <div class="q">NPC’nin ileri yönü (1, 0). Normalize edilmiş “oyuncuya yön” vektörü (−0,8; 0,6). Nokta çarpım ne söyler?</div>
+    <div class="opts">
+      <button data-opt="A">0,6 — oyuncu önünde</button>
+      <button data-opt="B">−0,8 — oyuncu arkasında (90°’den büyük açı)</button>
+      <button data-opt="C">0 — oyuncu tam yanında</button>
+      <button data-opt="D">1 — oyuncu tam karşısında</button>
+    </div>
+    <div class="explain">1·(−0,8) + 0·0,6 = <b>−0,8</b>. Negatif → açı 90°’den büyük → oyuncu NPC’nin arkasında. Bu bilgi “sırttan bıçaklama” (backstab) mekaniğinde kullanılır: dot &lt; −0,7 ise kritik vuruş!</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: görüş konisinde mi?</h2>
+  <div class="ailab" data-lab="infov" data-lang="js">
+<textarea>
+// guard, forward, target: [x, y] dizileri. fovDeg: derece, range: menzil.
+// Hedef menzil içinde VE görüş açısının içindeyse true döndür.
+function inFov(guard, forward, target, fovDeg, range) {
+  const dx = target[0] - guard[0];
+  const dy = target[1] - guard[1];
+  const d = Math.hypot(dx, dy);
+  if (d > range) return false;
+  const dot = forward[0] * dx + forward[1] * dy;   // TODO: normalize?
+  return dot >= Math.cos(fovDeg / 2);              // TODO: derece mi radyan mı?
+}
+</textarea>
+    <div class="lab-tasks">İki hata var: (1) vektörler normalize edilmeden karşılaştırılıyor, (2) <code>Math.cos</code> radyan ister. Bonus: hedef tam nöbetçinin üstündeyse (d = 0) ne olur? NaN’ı engelleyin.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python</h2>
+  <div class="ailab" data-lab="infov" data-lang="python">
+<textarea>
+import math
+# guard, forward, target: [x, y] listeleri
+def in_fov(guard, forward, target, fov_deg, rng):
+    dx = target[0] - guard[0]
+    dy = target[1] - guard[1]
+    # TODO: menzil kontrolü
+    # TODO: açı kontrolü (nokta çarpım + cos)
+    return True
+</textarea>
+    <div class="lab-tasks">Fonksiyonu baştan yazın. İpucu: önceki slayttaki Python kodu. <code>math.radians</code>, <code>math.cos</code>, <code>math.hypot</code> işinize yarar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Açılar</div>
+  <div class="sub">derece, radyan, atan2 ve döndürme</div>
+  <ul class="agenda"><li class="done">vektörler</li><li class="done">nokta ve çapraz çarpım</li><li class="on">açılar</li><li class="">zaman ve oyun döngüsü</li><li class="">hareket ve hassasiyet</li><li class="">Unity ve p5.js iskeleti</li><li class="">araçlar ve YZ asistanı</li></ul>
+</section>
+
+<section data-sec="açılar">
+  <h2>Açılar: bakış yönünü bulmak</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <ul>
+        <li><b>atan2(y, x)</b>: bir vektörün açısı (−π … π). “Hedefe dönmek için hangi açıya bakmalıyım?”</li>
+        <li>Açıdan yön: <code>(cos θ, sin θ)</code></li>
+        <li>Derece ↔ radyan: <code>rad = deg × π / 180</code></li>
+        <li class="fragment"><b>Açı farkı tuzağı</b>: 350° ile 10° arası fark 340° değil, <b>20°</b>! Farkı hep −180…180 aralığına getirin (Unity: <code>Mathf.DeltaAngle</code>)</li>
+        <li class="fragment">Unity 3B’de dönüşler <b>quaternion</b>: <code>Quaternion.LookRotation(dir)</code> ve <code>Quaternion.RotateTowards</code> kullanın, açılarla uğraşmayın</li>
+      </ul>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// 2B: hedefe dön (sprite sağa bakıyorsa)
+Vector2 d = target.position - transform.position;
+float angle = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+transform.rotation = Quaternion.Euler(0, 0, angle);
+
+// 3B: saniyede en fazla 180° dönerek hedefe bak
+Quaternion want = Quaternion.LookRotation(dir3);
+transform.rotation = Quaternion.RotateTowards(
+    transform.rotation, want, 180f * Time.deltaTime);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: hedefe dön
+const d = p5.Vector.sub(target, enemy.pos);
+enemy.heading = atan2(d.y, d.x);          // radyan
+
+// saniyede en fazla 3 radyan dönerek
+let diff = atan2(sin(want - enemy.heading),
+                 cos(want - enemy.heading));   // -PI..PI arası fark
+const maxTurn = 3 * deltaTime / 1000;
+enemy.heading += constrain(diff, -maxTurn, maxTurn);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def angle_to(src, dst):
+    return math.atan2(dst[1] - src[1], dst[0] - src[0])
+
+def angle_diff(a, b):                # b - a, -pi..pi aralığında
+    d = b - a
+    while d > math.pi:  d -= 2 * math.pi
+    while d < -math.pi: d += 2 * math.pi
+    return d
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="açılar">
+  <div class="box low" style="font-size:.95em"><span class="bt">⚙️ Performans notu: karekök almayın</span>
+    <p>“Oyuncu 10 birimden yakın mı?” sorusu için <code>distance &lt; 10</code> yerine <code>distanceSquared &lt; 100</code> yazın. Uzunluk √ ister; karşılaştırmada iki tarafın karesini almak sonucu değiştirmez.</p>
+    <ul>
+      <li>Unity: <code>(a - b).sqrMagnitude &lt; r * r</code></li>
+      <li>p5.js: <code>p5.Vector.sub(a, b).magSq() &lt; r * r</code></li>
+      <li>Python: <code>dx*dx + dy*dy &lt; r*r</code></li>
+    </ul>
+    <p class="mini">1000 düşman × 60 kare = saniyede 60.000 karekökten kurtuldunuz. (Öncelik Kuyrukları ve En Kısa Yollar destelerindeki “karşılaştırmak için kök gerekmez” fikri.)</p>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Zaman ve oyun döngüsü</div>
+  <div class="sub">delta time: her bilgisayarda aynı hız</div>
+  <ul class="agenda"><li class="done">vektörler</li><li class="done">nokta ve çapraz çarpım</li><li class="done">açılar</li><li class="on">zaman ve oyun döngüsü</li><li class="">hareket ve hassasiyet</li><li class="">Unity ve p5.js iskeleti</li><li class="">araçlar ve YZ asistanı</li></ul>
+</section>
+
+<section data-sec="zaman">
+  <h2>Oyun döngüsü <span class="en">game loop</span></h2>
+  <div class="cols c46">
+    <svg viewBox="0 0 420 300" style="width:100%;max-width:420px" font-family="Source Sans 3">
+      <defs><marker id="gl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <g font-size="16" font-weight="700" text-anchor="middle">
+        <rect x="140" y="10" width="140" height="50" rx="10" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="210" y="41" style="fill:var(--ink)">1) Girdi</text>
+        <rect x="260" y="125" width="150" height="50" rx="10" style="fill:var(--card);stroke:var(--amber)" stroke-width="3"/><text x="335" y="148" style="fill:var(--ink)">2) Güncelle</text><text x="335" y="166" font-size="12" font-weight="400" style="fill:var(--muted)">YZ burada düşünür!</text>
+        <rect x="140" y="240" width="140" height="50" rx="10" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="210" y="271" style="fill:var(--ink)">3) Çiz</text>
+        <rect x="10" y="125" width="150" height="50" rx="10" style="fill:var(--card);stroke:var(--muted)" stroke-width="2" stroke-dasharray="5 4"/><text x="85" y="156" font-size="13" style="fill:var(--muted)">bekle (vsync)</text>
+      </g>
+      <path d="M285,40 C340,50 350,90 345,122" fill="none" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#gl)"/>
+      <path d="M340,178 C340,230 320,255 283,262" fill="none" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#gl)"/>
+      <path d="M137,262 C90,250 80,215 84,178" fill="none" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#gl)"/>
+      <path d="M84,122 C85,70 100,45 137,38" fill="none" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#gl)"/>
+    </svg>
+    <div style="font-size:.86em">
+      <ul>
+        <li>Saniyede 30–144 kez döner. Her tura <b>kare</b> <span class="en">frame</span> denir.</li>
+        <li>60 FPS → bir karenin bütçesi <b>16,6 ms</b>. YZ, fizik, çizim, ses… hepsi bu sürede!</li>
+        <li>Unity: <code>Update()</code> her karede, <code>FixedUpdate()</code> sabit aralıkla (fizik, varsayılan 0,02 sn), <code>LateUpdate()</code> çizimden hemen önce (kamera).</li>
+        <li>p5.js: <code>draw()</code> her karede. Python/pygame: kendi <code>while</code> döngünüz.</li>
+      </ul>
+      <p class="mini">Algoritma Analizi destesindeki “kare bütçesi” demosunu hatırlayın.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="zaman">
+  <h2>Delta time — kendiniz deneyin</h2>
+  <div class="demo" data-demo="dtdemo"></div>
+  <p class="mini">Önce “deltaTime kullan” kapalıyken izleyin: 144 FPS’lik bilgisayardaki top yarışı açık ara kazanıyor. Kutuyu işaretleyin: ikisi aynı hızda koşar. Kural: <b>“kare başına” değil, “saniye başına” düşünün</b> ve dt ile çarpın.</p>
+</section>
+
+<section data-sec="zaman">
+  <h2>📜 Gerçek hikâyeler: kare hızına bağlı oyun mantığı</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Dark Souls II (PC, 2014–2015)</span>Silahların aşınması <b>kare sayısına</b> bağlı yazılmıştı. Konsolda 30 FPS’te sorun yoktu; 60 FPS’te çalışan PC sürümünde silahlar <b>iki kat hızlı</b> aşındı (özellikle cesetlere vurunca). Yaklaşık bir yıl sonra bir yamayla düzeltildi.</div>
+    <div class="box story"><span class="bt">Need for Speed Rivals (PC, 2013)</span>Simülasyon 30 FPS’e kilitliydi. Oyuncular ayar dosyasından kilidi kaldırınca <b>bütün oyun iki kat hızlandı</b>: arabalar, polisler, fizik. Topluluk, simülasyon hızını ayrı bir parametreyle 60’a eşitleyerek çözdü.</div>
+  </div>
+  <p class="mini" style="margin-top:8px">Ders: YZ zamanlayıcıları (“3 saniye sonra saldır”), soğuma süreleri, hareket hızları — hepsi <b>saniye</b> cinsinden olmalı. Kaynaklar: PC Gamer haberi ve Blur Busters forum başlığı (okuma listesinde).</p>
+</section>
+
+<section data-sec="zaman">
+  <h2>Gizli tuzak: lerp ile yumuşatma</h2>
+  <div class="demo" data-demo="lerpdemo"></div>
+  <p class="mini">Çok sevilen <code>x = lerp(x, hedef, 0.1)</code> “her karede yolun %10’unu git” demek → yüksek FPS’te daha hızlı yaklaşır. Doğrusu: <code>1 − exp(−hız × dt)</code> oranı. Jonas Tyroller’ın “Dear Game Developers, Stop Messing This Up!” videosu tam bu konu (kaynaklarda).</p>
+</section>
+
+<section data-sec="zaman">
+  <h2>Kare hızından bağımsız kod</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class Follower : MonoBehaviour
+{
+    public Transform target;
+    public float speed = 5f;        // birim / SANİYE
+    public float smoothing = 6f;    // ne kadar çabuk yetişsin
+
+    void Update()
+    {
+        // 1) sabit hızla yürü
+        transform.position = Vector3.MoveTowards(
+            transform.position, target.position, speed * Time.deltaTime);
+
+        // 2) ya da yumuşak takip (kamera gibi) — kare hızından bağımsız
+        float t = 1f - Mathf.Exp(-smoothing * Time.deltaTime);
+        // transform.position = Vector3.Lerp(transform.position, target.position, t);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+let pos, target;
+const speed = 200;       // piksel / SANİYE
+const smoothing = 6;
+
+function draw() {
+  const dt = deltaTime / 1000;          // p5: milisaniye → saniye
+  // yumuşak takip
+  const t = 1 - Math.exp(-smoothing * dt);
+  pos.x = lerp(pos.x, target.x, t);
+  pos.y = lerp(pos.y, target.y, t);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math, pygame
+
+clock = pygame.time.Clock()
+speed, smoothing = 200, 6
+while running:
+    dt = clock.tick(60) / 1000.0        # en fazla 60 FPS, dt saniye
+    t = 1 - math.exp(-smoothing * dt)
+    pos.x += (target.x - pos.x) * t
+    pos.y += (target.y - pos.y) * t
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="zaman">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · zaman</div>
+    <div class="q">Bir düşman <code>Update()</code> içinde <code>transform.position += dir * 0.1f;</code> ile hareket ediyor. 30 FPS ve 120 FPS’lik iki bilgisayarda ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">İkisinde de aynı hızda gider</button>
+      <button data-opt="B">120 FPS’te 4 kat hızlı gider</button>
+      <button data-opt="C">30 FPS’te 4 kat hızlı gider</button>
+      <button data-opt="D">Oyun çöker</button>
+    </div>
+    <div class="explain">Kare başına 0,1 birim: 30 FPS’te saniyede 3, 120 FPS’te saniyede <b>12</b> birim. Doğrusu <code>dir * speed * Time.deltaTime</code>: o zaman ikisi de saniyede <code>speed</code> kadar gider.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Hareket ve hassasiyet</div>
+  <div class="sub">hedefe yürümek ve kayan nokta tuzakları</div>
+  <ul class="agenda"><li class="done">vektörler</li><li class="done">nokta ve çapraz çarpım</li><li class="done">açılar</li><li class="done">zaman ve oyun döngüsü</li><li class="on">hareket ve hassasiyet</li><li class="">Unity ve p5.js iskeleti</li><li class="">araçlar ve YZ asistanı</li></ul>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: hedefe yürü</h2>
+  <div class="simlab" data-sim="follow" data-fns="moveToward" data-lang="js">
+<textarea>
+// pos, target: [x, y].  speed: piksel/saniye.  dt: saniye.
+// Hedefe doğru speed*dt kadar yürü ve yeni konumu [x, y] döndür.
+function moveToward(pos, target, speed, dt) {
+  const dx = target[0] - pos[0];
+  const dy = target[1] - pos[1];
+  return [pos[0] + dx * dt, pos[1] + dy * dt];
+}
+</textarea>
+    <div class="lab-tasks">Bu kod hedefe gidiyor ama hız <b>mesafeye bağlı</b> (uzaktayken roket, yakınken kaplumbağa). Yönü normalize edip <code>speed * dt</code> kadar yürüyün. Hedefi geçmesin (adım ≥ mesafe ise doğrudan hedefe konun) ve mesafe 0 iken NaN üretmesin. Çalıştırınca fareyi sağdaki kutuda gezdirin.</div>
+  </div>
+</section>
+
+<section data-sec="hassasiyet">
+  <h2>📜 Kayan nokta <span class="en">floating point</span> hikâyeleri</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Minecraft “Far Lands” (2010–2011)</span>Merkezden ~12,5 milyon blok uzaklaşınca arazi üretiminin gürültü fonksiyonu hassasiyet kaybından dev, delikli “duvar”lar üretiyordu. Bir oyuncu (KurtJMac) yıllarca oraya <b>yürüyerek</b> gitmeyi yayınladı. Beta 1.8’de arazi üreteci değişince kayboldu.</div>
+    <div class="box story"><span class="bt">Kerbal Space Program “Derin Uzay Krakeni”</span>Gemi Güneş’ten çok uzaklaşınca parçaların konumları tek duyarlıklı (float) sayılarla yeterince hassas hesaplanamıyor, gemi görünmez bir canavar saldırmış gibi parçalanıyordu. Çözüm: <b>kayan orijin</b> <span class="en">floating origin</span> — oyuncu belli bir mesafe gidince bütün dünyayı kaydırıp oyuncuyu tekrar (0, 0, 0)’a almak.</div>
+  </div>
+  <div class="box low" style="margin-top:8px"><span class="bt">⚙️ YZ kodu için ders</span><code>if (pos == target)</code> asla yazmayın: iki float neredeyse hiç tam eşit olmaz. <code>if ((pos - target).sqrMagnitude &lt; 0.01f)</code> gibi bir tolerans <span class="en">epsilon</span> kullanın. Büyük açık dünya oyunlarında (100 km+) YZ’nin konumları da kayan orijinden etkilenir.</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Unity ve p5.js iskeleti</div>
+  <div class="sub">YZ kodu nereye yazılır?</div>
+  <ul class="agenda"><li class="done">vektörler</li><li class="done">nokta ve çapraz çarpım</li><li class="done">açılar</li><li class="done">zaman ve oyun döngüsü</li><li class="done">hareket ve hassasiyet</li><li class="on">Unity ve p5.js iskeleti</li><li class="">araçlar ve YZ asistanı</li></ul>
+</section>
+
+<section data-sec="iskelet">
+  <h2>Unity’de bir NPC betiğinin yaşamı</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <ol>
+        <li><code>Awake()</code>: nesne yaratılınca (bileşenleri bul: <code>GetComponent</code>)</li>
+        <li><code>Start()</code>: ilk kareden önce bir kez</li>
+        <li><code>Update()</code>: her kare — <b>karar ver</b></li>
+        <li><code>FixedUpdate()</code>: sabit aralık — <b>fizik ile hareket</b> (Rigidbody)</li>
+        <li><code>OnTriggerEnter</code>: biri tetik alanına girdi (“duydum!”)</li>
+        <li><code>OnDestroy()</code>: yok edilirken temizlik</li>
+      </ol>
+      <div class="box story"><span class="bt">🎒 Ön bilgi</span><b>GameObject</b> = sahnedeki nesne; <b>Component</b> = ona takılan yetenek (Transform, Rigidbody, sizin betiğiniz). <code>public</code> alanlar Inspector’da görünür: tasarımcı hızı kod açmadan ayarlar.</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+using UnityEngine;
+
+public class Guard : MonoBehaviour      // her betik bir bileşen
+{
+    public Transform player;            // Inspector'dan sürükle-bırak
+    public float speed = 3f;
+    [SerializeField] float viewRange = 8f;   // private ama Inspector'da
+
+    Rigidbody rb;
+
+    void Awake()  { rb = GetComponent<Rigidbody>(); }
+
+    void Update()
+    {
+        // KARAR: oyuncuyu görüyor muyum? (her karede)
+    }
+
+    void FixedUpdate()
+    {
+        // HAREKET: fizikle (sabit adım)
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: sınıf + setup/draw
+class Guard {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.speed = 120;              // piksel/saniye
+  }
+  think(player) { /* karar */ }
+  move(dt)      { /* hareket */ }
+  show()        { circle(this.pos.x, this.pos.y, 20); }
+}
+
+let guard;
+function setup() { createCanvas(800, 600); guard = new Guard(100, 100); }
+function draw() {
+  background(30);
+  const dt = deltaTime / 1000;
+  guard.think(player); guard.move(dt); guard.show();
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import pygame
+
+class Guard:
+    def __init__(self, x, y):
+        self.pos = pygame.math.Vector2(x, y)
+        self.speed = 120
+    def think(self, player): pass     # karar
+    def move(self, dt): pass          # hareket
+    def draw(self, screen):
+        pygame.draw.circle(screen, (200, 80, 80), self.pos, 10)
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+clock, guard, running = pygame.time.Clock(), Guard(100, 100), True
+while running:
+    dt = clock.tick(60) / 1000
+    for e in pygame.event.get():
+        if e.type == pygame.QUIT: running = False
+    guard.think(None); guard.move(dt)
+    screen.fill((30, 30, 30)); guard.draw(screen); pygame.display.flip()
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="iskelet">
+  <h2>İyi bir YZ kodu düzeni: beyin ve kaslar</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <ul>
+        <li><b>Algılama</b> <span class="en">perception</span>: “ne görüyorum, ne duyuyorum?” → bilgileri bir <b>kara tahtaya</b> <span class="en">blackboard</span> yaz</li>
+        <li><b>Karar</b> <span class="en">decision</span>: “ne yapmalıyım?” → FSM, davranış ağacı, utility…</li>
+        <li><b>Hareket</b> <span class="en">movement</span>: “oraya nasıl giderim?” → steering, A*, NavMesh</li>
+        <li><b>Animasyon/ses</b>: yapılanı göster</li>
+      </ul>
+      <p class="mini">Bu katmanlara ayırmak, örneğin karar sistemini FSM’den davranış ağacına çevirirken hareket kodunu hiç değiştirmemenizi sağlar. Ian Millington’ın “AI for Games” kitabındaki model.</p>
+    </div>
+    <div class="box low"><span class="bt">⚙️ Zamanlama hileleri</span>
+      <ul style="font-size:.88em">
+        <li>Karar her karede değil, <b>saniyede 5–10 kez</b> verilebilir (insan da o kadar hızlı karar vermez) → Performans destesi</li>
+        <li>Unity <b>Coroutine</b>: <code>yield return new WaitForSeconds(0.5f);</code> ile “yarım saniye bekle, sonra tekrar düşün”</li>
+        <li>Rastgele küçük gecikmeler: 20 düşmanın aynı karede aynı şeyi yapması robotik görünür</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2e0d3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Araçlar ve YZ asistanı</div>
+  <div class="sub">hazır kütüphaneler, kaynaklar, projeler</div>
+  <ul class="agenda"><li class="done">vektörler</li><li class="done">nokta ve çapraz çarpım</li><li class="done">açılar</li><li class="done">zaman ve oyun döngüsü</li><li class="done">hareket ve hassasiyet</li><li class="done">Unity ve p5.js iskeleti</li><li class="on">araçlar ve YZ asistanı</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/ScriptReference/Vector3.html" target="_blank" rel="noopener"><b>UnityEngine.Vector2/3, Mathf</b></a></td><td>Unity (C#)</td><td>Hazır vektör ve matematik; Quaternion ile dönüşler. Her Unity projesinde var</td><td>Ek kurulum yok</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.mathematics@1.3/manual/index.html" target="_blank" rel="noopener"><b>Unity.Mathematics</b></a></td><td>Unity (C#)</td><td>float2/float3, math.dot… Burst derleyicisi ve Job System ile çok hızlı (binlerce ajan)</td><td>Package Manager → “Mathematics”</td></tr><tr><td><a href="https://p5js.org/reference/p5/p5.Vector/" target="_blank" rel="noopener"><b>p5.Vector</b></a></td><td>p5.js (JS)</td><td>createVector, add, sub, mag, normalize, dot, cross, heading</td><td>p5.js ile gelir</td></tr><tr><td><a href="https://www.pygame.org/docs/ref/math.html" target="_blank" rel="noopener"><b>pygame.math.Vector2</b></a></td><td>Python</td><td>Vektör sınıfı + oyun döngüsü, çizim, girdi</td><td><code>pip install pygame</code></td></tr><tr><td><a href="https://numpy.org/" target="_blank" rel="noopener"><b>NumPy</b></a></td><td>Python</td><td>Binlerce vektör üzerinde toplu işlem (sürü simülasyonları, ML)</td><td><code>pip install numpy</code></td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/tutorials/math/vector_math.html" target="_blank" rel="noopener"><b>Godot Vector2/3</b></a></td><td>Godot (GDScript/C#)</td><td>Unity’ye benzer API; ücretsiz, açık kaynak motor</td><td>Motorla gelir</td></tr>
+  </table>
+  <p class="mini">Kendi vektör sınıfınızı yazmak öğrenmek için iyidir; gerçek projede motorun hazır sınıfını kullanın — test edilmiş ve hızlıdır.</p>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li><code>Time.deltaTime</code> unutulmuş ya da iki kez çarpılmış</li><li>Sıfır vektörü normalize etmek (NaN, nesne kaybolur)</li><li>Derece/radyan karışıklığı (<code>Mathf.Cos(90)</code>)</li><li>Fizikli nesneyi <code>transform.position</code> ile ışınlamak (Rigidbody’yi bozar)</li><li>Lerp’i kare hızına bağlı kullanmak</li><li>Unity 3B’de y’yi sıfırlamadan yatay mesafe hesaplamak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, 3D, C#. Bir Guard bileşeni yaz: oyuncu 10 birim içinde ve 90° görüş konisindeyse ona saniyede 3 birim hızla yürüsün, y eksenini yok saysın, dönüşü saniyede en fazla 180° olsun. deltaTime kullan, sıfır vektör durumunu kontrol et, kodu satır satır Türkçe yorumla.”</p><ul class="mini"><li>Motoru ve sürümü yazın (Unity 6, 2D / 3D)</li><li>Koordinat sistemini söyleyin (y yukarı mı aşağı mı?)</li><li>Hızların birimini isteyin (birim/saniye) ve deltaTime ile çarpılmasını şart koşun</li><li>Kodu çalıştırıp kenar durumlarını deneyin: hedef tam üstteyken, çok hızlıyken</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Fareyi izleyen taret</b> — p5.js’te bir taret, atan2 ile fareye dönsün; dönüş hızı sınırlı olsun (saniyede 90°).</li><li><b class="c-green">[kolay]</b> <b>Görüş konili nöbetçi</b> — Dönen bir nöbetçi; fare konisine girince kırmızı olsun. FOV ve menzil kaydırıcıyla ayarlansın.</li><li><b class="c-amber">[orta]</b> <b>Sırttan bıçaklama</b> — Oyuncu düşmanın arkasından (dot &lt; −0,7) vurursa 3 kat hasar. Unity’de 3B, y yok sayılarak.</li><li><b class="c-amber">[orta]</b> <b>FPS testi</b> — Aynı sahneyi 30 ve 144 FPS’e kilitleyip (Application.targetFrameRate) hareket ve zamanlayıcıların aynı kaldığını gösteren bir test yazın.</li><li><b class="c-purple">[araştırma]</b> <b>Kayan orijin</b> — KSP’nin Krakensbane sistemini ve Unity’de floating origin uygulamalarını araştırıp 1 sayfalık özet yazın.</li><li><b class="c-purple">[araştırma]</b> <b>Freya Holmér serisi</b> — “Math for Game Devs” serisinin ilk iki bölümünü izleyip öğrendiğiniz 5 vektör hilesini oyun örnekleriyle sunun.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>soru</th><th>araç</th><th>Unity</th><th>p5.js</th></tr>
+    <tr><td>ne kadar uzak?</td><td>çıkarma + uzunluk</td><td><code>(b-a).magnitude</code></td><td><code>p5.Vector.dist(a,b)</code></td></tr>
+    <tr><td>hangi yöne?</td><td>normalize</td><td><code>v.normalized</code></td><td><code>v.normalize()</code></td></tr>
+    <tr><td>önümde mi? görüyor mu?</td><td>nokta çarpım</td><td><code>Vector3.Dot</code></td><td><code>a.dot(b)</code></td></tr>
+    <tr><td>sola mı sağa mı?</td><td>çapraz çarpım</td><td><code>Vector3.Cross</code></td><td><code>a.cross(b)</code></td></tr>
+    <tr><td>hangi açı?</td><td>atan2</td><td><code>Mathf.Atan2</code></td><td><code>atan2</code> / <code>v.heading()</code></td></tr>
+    <tr><td>her bilgisayarda aynı hız</td><td>delta time</td><td><code>Time.deltaTime</code></td><td><code>deltaTime / 1000</code></td></tr>
+  </table>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=MOYiVLEnhrw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/MOYiVLEnhrw/hqdefault.jpg" alt=""><span><b>Vectors &amp; Dot Product • Math for Game Devs [1]</b><br>Freya Holmér</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=XiwEyopOMqg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/XiwEyopOMqg/hqdefault.jpg" alt=""><span><b>Spaces &amp; Cross Product • Math for Game Devs [2]</b><br>Freya Holmér</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=1NLekEd770w" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/1NLekEd770w/hqdefault.jpg" alt=""><span><b>Trigonometry • Math for Game Devs [3]</b><br>Freya Holmér</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=LyGKycYT2v0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/LyGKycYT2v0/hqdefault.jpg" alt=""><span><b>Dot products and duality</b><br>3Blue1Brown</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=6FmmF5ncYxI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/6FmmF5ncYxI/hqdefault.jpg" alt=""><span><b>Nature of Code: Vectors</b><br>The Coding Train (p5.js!)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=yGhfUcPjXuE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/yGhfUcPjXuE/hqdefault.jpg" alt=""><span><b>Dear Game Developers, Stop Messing This Up! (lerp &amp; dt)</b><br>Jonas Tyroller</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=QfSAzyYnCXo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/QfSAzyYnCXo/hqdefault.jpg" alt=""><span><b>Time.deltaTime EXPLAINED</b><br>Darko Unity</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=JAF5vvRvtFY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/JAF5vvRvtFY/hqdefault.jpg" alt=""><span><b>How to use a Dot Product For AI Detection</b><br>Learn2CreateGames</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://natureofcode.com/vectors/" target="_blank" rel="noopener">The Nature of Code — Vectors (ücretsiz kitap)</a> — Daniel Shiffman, p5.js ile</li><li><a href="https://docs.unity3d.com/ScriptReference/Time-deltaTime.html" target="_blank" rel="noopener">Unity: Time.deltaTime</a></li><li><a href="https://docs.unity3d.com/Manual/execution-order.html" target="_blank" rel="noopener">Unity: olay fonksiyonlarının sırası</a> — Awake, Update, FixedUpdate…</li><li><a href="https://gafferongames.com/post/fix_your_timestep/" target="_blank" rel="noopener">Glenn Fiedler: Fix Your Timestep!</a> — sabit adımlı simülasyonun klasiği</li></ul>
+    <ul class="reflist"><li><a href="https://www.pcgamer.com/dark-souls-2s-next-patch-will-fix-weapon-durability-bug/" target="_blank" rel="noopener">PC Gamer: Dark Souls 2 weapon durability bug</a></li><li><a href="https://forums.blurbusters.com/viewtopic.php?p=646" target="_blank" rel="noopener">Blur Busters forum: NFS Rivals capped @30fps on PC</a> — oyuncuların hız iki katına çıkınca yaşadıkları</li><li><a href="https://minecraft.wiki/w/Far_Lands" target="_blank" rel="noopener">Minecraft Wiki: Far Lands</a></li><li><a href="https://wiki.kerbalspaceprogram.com/wiki/Deep_Space_Kraken" target="_blank" rel="noopener">KSP Wiki: Deep Space Kraken</a></li><li><a href="https://docs.godotengine.org/en/stable/tutorials/math/vector_math.html" target="_blank" rel="noopener">Godot: Vector math</a> — motor bağımsız güzel bir özet</li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Oyun Yapay Zekâsına Giriş</div>
+    <div class="sub">Ajan, NPC, zorluk ayarı — ve oyun YZ’si neden “akıllı” değil “eğlenceli” olmalı?</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-giris/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
