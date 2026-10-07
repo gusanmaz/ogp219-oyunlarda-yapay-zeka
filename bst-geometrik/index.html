@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BST’nin Geometrik Uygulamaları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — BST’nin geometrik uygulamaları: 1B aralık arama, süpürme doğrusu, kd-ağaçları, en yakın komşu, aralık arama ağaçları, AABB, sweep and prune. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d3a4a 0%, #1c1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · ARAMA AĞAÇLARI</div>
+  <div class="ttl" style="font-size:64px">BST’nin Geometrik Uygulamaları</div>
+  <div class="sub"><i>Aralık arama, süpürme doğrusu, kd-ağaçları, aralık ağaçları</i> — oyun dünyasında “yakınımda ne var?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlekd"></div>
+  <aside class="notes">Sedgewick &amp; Wayne’in “Geometric Applications of BSTs” dersini (algs4 ders slaytları, 9.9 / kitapta 3.3 ve 6. bölümün geometri kısımları) temel alır. Arka planda bir 2d-ağacı kuruluyor: kırmızı çizgiler x’e göre (dikey), mavi çizgiler y’ye göre (yatay) bölmeler.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.86em">
+      <li><b>1B aralık arama</b> — “kameranın gördüğü x aralığında kim var?”</li>
+      <li><b>Doğru parçası kesişimi</b> — süpürme doğrusu fikri <span class="en">sweep line</span></li>
+      <li><b>kd-ağaçları</b> — 2B aralık arama: RTS seçim kutusu</li>
+      <li><b>En yakın komşu</b> — “en yakın düşman kim?”</li>
+      <li><b>Aralık arama ağaçları</b> — zaman aralıkları, vuruş pencereleri</li>
+      <li><b>Çarpışma: geniş faz</b> — AABB, sweep and prune, fizik motorları</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…Unity’nin fizik ayarlarındaki “Broadphase Type: Sweep and Prune” seçeneğinin ne olduğunu ve 10.000 birimlik bir RTS’de “menzilimde kim var?” sorusunun nasıl hızlı yanıtlandığını bileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: SEÇİM KUTUSU</span>
+    <p class="big">Bir RTS’de haritada 10.000 birim var. Oyuncu fareyle bir kutu çiziyor. Hangi birimler kutunun içinde?</p>
+  </div>
+  <p class="fragment lead">Kolay: her birime tek tek bak → 10.000 kontrol. Tamam, bir kez yapılırsa sorun değil.</p>
+  <p class="fragment lead">Ama yapay zekâ her karede, <b>her birim için</b> “menzilimdeki düşmanlar kim?” diye soruyor: 10.000 × 10.000 = <b>100 milyon</b> kontrol, saniyede 60 kez. 😱</p>
+  <p class="fragment big">Bugünün sorusu: “içinde ne var?” sorusunu <b>her şeye bakmadan</b> nasıl yanıtlarız?</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>range search · range count</td><td>aralık arama · aralık sayma</td><td>Bir aralıktaki anahtarları bul · say</td></tr>
+    <tr><td>orthogonal</td><td>dik / eksenlere paralel</td><td>Yatay ve dikey çizgiler, eksene hizalı kutular</td></tr>
+    <tr><td>sweep line · event</td><td>süpürme doğrusu · olay</td><td>Düzlemi soldan sağa tarayan hayali çizgi · çizginin durduğu noktalar</td></tr>
+    <tr><td>kd-tree (2d-tree)</td><td>kd-ağacı</td><td>Sırayla x’e ve y’ye göre bölen BST</td></tr>
+    <tr><td>nearest neighbor</td><td>en yakın komşu</td><td>Bir noktaya en yakın nokta</td></tr>
+    <tr><td>pruning</td><td>budama</td><td>Sonuç içeremeyeceği belli olan alt ağaca hiç girmemek</td></tr>
+    <tr><td>interval</td><td>aralık</td><td>[başlangıç, bitiş] çifti: zaman, x aralığı…</td></tr>
+    <tr><td>AABB · broad phase</td><td>eksene hizalı kutu · geniş faz</td><td>Çarpışma adaylarını hızlıca eleyen ilk aşama</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">1B aralık arama</div>
+  <div class="sub"><i>1d range search</i> — bir doğru üzerindeki noktalar</div>
+  <ul class="agenda"><li class="on">1B aralık arama</li><li class="">doğru parçası kesişimi</li><li class="">kd-ağaçları</li><li class="">en yakın komşu</li><li class="">aralık arama ağaçları</li><li class="">çarpışma: geniş faz</li></ul>
+</section>
+
+<section data-sec="1B aralık arama">
+  <h2>Problem: bir eksen üzerindeki noktalar</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>Sıralı sembol tablosuna iki yeni işlem:</p>
+      <ul>
+        <li><b>Aralık sayma</b> <span class="en">range count</span>: <code>lo</code> ile <code>hi</code> arasında kaç anahtar var?</li>
+        <li><b>Aralık arama</b> <span class="en">range search</span>: bu anahtarlar hangileri?</li>
+      </ul>
+      <svg viewBox="0 0 520 70" style="width:100%;max-width:520px">
+        <line x1="10" y1="40" x2="510" y2="40" style="stroke:var(--ink-2)" stroke-width="2"/>
+        <rect x="170" y="22" width="200" height="36" rx="6" style="fill:var(--green);opacity:.2"/>
+        <g style="fill:var(--ink)"><circle cx="40" cy="40" r="6" style="fill:var(--ink-2)"/><circle cx="95" cy="40" r="6" style="fill:var(--ink-2)"/><circle cx="150" cy="40" r="6" style="fill:var(--ink-2)"/><circle cx="190" cy="40" r="6" style="fill:var(--green)"/><circle cx="240" cy="40" r="6" style="fill:var(--green)"/><circle cx="285" cy="40" r="6" style="fill:var(--green)"/><circle cx="330" cy="40" r="6" style="fill:var(--green)"/><circle cx="360" cy="40" r="6" style="fill:var(--green)"/><circle cx="420" cy="40" r="6" style="fill:var(--ink-2)"/><circle cx="470" cy="40" r="6" style="fill:var(--ink-2)"/></g>
+        <text x="170" y="16" font-size="13" font-family="JetBrains Mono" text-anchor="middle" style="fill:var(--ink)">lo</text>
+        <text x="370" y="16" font-size="13" font-family="JetBrains Mono" text-anchor="middle" style="fill:var(--ink)">hi</text>
+      </svg>
+    </div>
+    <div class="box game"><span class="bt">🎮 2B yan kaydırmalı oyun (side-scroller)</span>Düşmanlar x konumlarına göre tutuluyor. Kamera <code>[kameraX, kameraX + 1280]</code> aralığını görüyor. Hangi düşmanları güncelleyip çizelim? Ekran dışındakiler “uyusun”.<p class="mini">Aynı soru: “skor tablosunda 1500–1600 MMR arasındaki oyuncular”, “şu iki zaman damgası arasındaki olaylar”.</p></div>
+  </div>
+</section>
+
+<section data-sec="1B aralık arama">
+  <h2>Hangi yapı?</h2>
+  <table class="sum-t" style="font-size:22px">
+    <tr><th>yapı</th><th>ekleme</th><th>aralık sayma</th><th>aralık arama</th></tr>
+    <tr><td>sırasız dizi</td><td>1</td><td class="c-red">N</td><td class="c-red">N</td></tr>
+    <tr><td>sıralı dizi</td><td class="c-red">N</td><td>lg N</td><td>R + lg N</td></tr>
+    <tr><td><b>dengeli BST</b></td><td class="c-green"><b>lg N</b></td><td class="c-green"><b>lg N</b></td><td class="c-green"><b>R + lg N</b></td></tr>
+  </table>
+  <p class="mini">N = toplam anahtar, R = aralıktaki anahtar sayısı (cevabın boyutu). R’yi yazdırmak zaten R adım sürer; bundan iyisi olamaz.</p>
+  <div class="box story fragment"><span class="bt">Neden aralık sayma lg N?</span><code>rank(k)</code> = k’dan küçük anahtar sayısı. O hâlde: <b>sayı = rank(hi) − rank(lo)</b> (+1, hi tablodaysa). İki rank çağrısı = iki kez lg N. Hiçbir anahtara tek tek bakmadan saydık!</div>
+</section>
+
+<section data-sec="1B aralık arama">
+  <h2>Aralık sayma — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <ul>
+        <li><code>rank</code>: Arama Algoritmaları destesindeki ikili arama — bulamazsa <code>lo</code> = “kendisinden küçüklerin sayısı”</li>
+        <li>Sıralı dizide ya da BST’de (Ağaçlar destesindeki <code>rank</code>) aynı fikir</li>
+      </ul>
+      <div class="box bgk"><span class="bt">🎒 Örnek</span><code>a = [10, 20, 30, 40, 50]</code>, aralık [15, 40]:<br>rank(40) = 3, rank(15) = 1 → 3 − 1 = 2, 40 dizide olduğu için +1 → <b>3</b> (20, 30, 40) ✔</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def rank(a, key):              # a sıralı; key'den küçüklerin sayısı
+    lo, hi = 0, len(a) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if key < a[mid]:
+            hi = mid - 1
+        elif key > a[mid]:
+            lo = mid + 1
+        else:
+            return mid
+    return lo
+
+def range_count(a, lo, hi):
+    count = rank(a, hi) - rank(a, lo)
+    if hi in a:                # (BST'de: contains(hi))
+        count += 1
+    return count
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int Rank(int[] a, int key)   // a sıralı
+{
+    int lo = 0, hi = a.Length - 1;
+    while (lo <= hi)
+    {
+        int mid = lo + (hi - lo) / 2;
+        if (key < a[mid]) hi = mid - 1;
+        else if (key > a[mid]) lo = mid + 1;
+        else return mid;
+    }
+    return lo;
+}
+
+static int RangeCount(int[] a, int lo, int hi)
+{
+    int count = Rank(a, hi) - Rank(a, lo);
+    int r = Rank(a, hi);
+    if (r < a.Length && a[r] == hi) count++;   // hi dizide mi?
+    return count;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function rank(a, key) {            // a sıralı
+  let lo = 0, hi = a.length - 1;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (key < a[mid]) hi = mid - 1;
+    else if (key > a[mid]) lo = mid + 1;
+    else return mid;
+  }
+  return lo;
+}
+
+function rangeCount(a, lo, hi) {
+  let count = rank(a, hi) - rank(a, lo);
+  const r = rank(a, hi);
+  if (r < a.length && a[r] === hi) count++;   // hi dizide mi?
+  return count;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="1B aralık arama">
+  <h2>BST’de aralık arama: kamera penceresi</h2>
+  <div class="bstviz" data-type="num" data-keys="640 300 980 140 450 820 1150 60 220 380 560 720 900 1060 1240" data-ops="range,rank" data-sizes data-default="400 1000" data-h="320" data-hint="Düşmanların x konumları. Kamera [400, 1000] aralığını görüyor: Aralık’a basın. Hangi alt ağaçlara HİÇ girilmediğine dikkat!"></div>
+  <aside class="notes">Algoritma: x düğümünde: lo &lt; x.key ise sola in; aralıktaysa x’i raporla; x.key &lt; hi ise sağa in. Aralığın dışında kalan alt ağaçlara girilmez. Süre: R + lg N (dengeli ağaçta).</aside>
+</section>
+
+<section data-sec="1B aralık arama">
+  <h2>Aralık arama — kural</h2>
+  <div class="cols">
+    <div>
+      <p>Düğüm <code>x</code>’te:</p>
+      <ol>
+        <li class="fragment"><code>lo &lt; x.key</code> ise → <b>sola</b> in (solda aralığa düşen olabilir)</li>
+        <li class="fragment"><code>lo ≤ x.key ≤ hi</code> ise → <b>x’i raporla</b></li>
+        <li class="fragment"><code>x.key &lt; hi</code> ise → <b>sağa</b> in</li>
+      </ol>
+      <p class="fragment mini">Koşul tutmuyorsa o alt ağaca <b>hiç girmeyiz</b>: içindeki anahtarların hepsi aralığın dışında. Bu fikrin adı <b>budama</b> <span class="en">pruning</span> — bu dersin her algoritmasında karşımıza çıkacak!</p>
+    </div>
+    <div class="box prop fragment"><span class="bt">Önerme</span>Dengeli bir BST’de aralık arama <b>R + lg N</b> ile orantılı süre alır.<p class="mini">Sadece iki “sınır yolu” (lo’ya ve hi’ye giden yollar, ≤ lg N’er düğüm) ve aralığın içindeki R düğüm ziyaret edilir.</p></div>
+  </div>
+</section>
+
+<section data-sec="1B aralık arama">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · 1B aralık arama</div>
+    <div class="q">1 milyon düşmanın x konumları dengeli bir BST’de. Kamera aralığında 50 düşman var. Aralık arama yaklaşık kaç düğüm ziyaret eder?</div>
+    <div class="opts">
+      <button data-opt="A">~50</button>
+      <button data-opt="B">~50 + 2 × 20 = ~90</button>
+      <button data-opt="C">~500.000</button>
+      <button data-opt="D">1 milyon</button>
+    </div>
+    <div class="explain">R + (iki sınır yolu): 50 sonuç + her biri ~lg 10⁶ ≈ 20 düğümlük iki yol. Bir milyonun yanında <b>~90</b> düğüm! Sırasız dizide 1 milyonun hepsine bakmak gerekirdi.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Doğru parçası kesişimi</div>
+  <div class="sub"><i>orthogonal line segment intersection</i> — süpürme doğrusu</div>
+  <ul class="agenda"><li class="done">1B aralık arama</li><li class="on">doğru parçası kesişimi</li><li class="">kd-ağaçları</li><li class="">en yakın komşu</li><li class="">aralık arama ağaçları</li><li class="">çarpışma: geniş faz</li></ul>
+</section>
+
+<section data-sec="doğru parçası kesişimi">
+  <h2>Problem: yatay ve dikey parçaların kesişimleri</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>N tane yatay ya da dikey doğru parçası. <b>Bütün</b> kesişim noktalarını bul.</p>
+      <ul>
+        <li class="fragment">Kaba kuvvet: her yatayı her dikeyle dene → <b>~N²/4</b> test</li>
+        <li class="fragment">N = 1 milyon → 250 milyar test 😱</li>
+      </ul>
+      <p class="fragment mini">Kolaylık için: hiçbir iki uç noktanın x’i (ya da y’si) aynı değil diyelim. (Gerçek kodda eşitlikler dikkatle ele alınır.)</p>
+    </div>
+    <div class="box game"><span class="bt">🎮 Tron ışık motosikletleri</span>Her motosiklet arkasında <b>yatay ve dikey</b> çizgilerden oluşan bir iz bırakır. Kim kimin izine çarptı? Izgara tabanlı haritalarda duvar–lazer kesişimleri, PCB/devre editörleri, 2B seviye editöründe çakışan duvarlar… aynı problem.</div>
+  </div>
+</section>
+
+<section data-sec="doğru parçası kesişimi">
+  <h2>Fikir: soldan sağa <b>süpür</b></h2>
+  <div class="cols c64">
+    <ol style="font-size:.9em">
+      <li>Bütün x koordinatlarını <b>sırala</b>: bunlar <b>olaylar</b> <span class="en">events</span></li>
+      <li class="fragment">Dikey bir çizgi soldan sağa ilerlesin. Her olayda dur:</li>
+      <li class="fragment"><b>Yatay parçanın sol ucu</b> → y’sini BST’ye <b>ekle</b></li>
+      <li class="fragment"><b>Yatay parçanın sağ ucu</b> → y’sini BST’den <b>sil</b></li>
+      <li class="fragment"><b>Dikey parça</b> [y1, y2] → BST’de <b>1B aralık arama</b>! Bulunan her y bir kesişim.</li>
+    </ol>
+    <div class="box story fragment"><span class="bt">💡 Sihir</span>2B bir problemi, bir sürü <b>1B</b> probleme çevirdik. BST her an “süpürme doğrusunu kesen yatay parçaları” tutuyor.</div>
+  </div>
+</section>
+
+<section data-sec="doğru parçası kesişimi">
+  <h2>Süpürme doğrusu — animasyon</h2>
+  <div class="demo" data-demo="sweep"></div>
+  <p class="mini">Kesikli kırmızı = süpürme doğrusu · <b style="color:var(--blue)">mavi kalın</b> = BST’deki (aktif) yataylar · sarı = şu anki olay · yeşil şerit = aralık sorgusu · kırmızı nokta = kesişim.</p>
+</section>
+
+<section data-sec="doğru parçası kesişimi">
+  <h2>Süpürme doğrusu — analiz</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>Süpürme doğrusu algoritması N dik doğru parçasının R kesişimini <b>N lg N + R</b> ile orantılı sürede bulur.</div>
+    <div class="box proof"><span class="bt">Kanıt</span>
+      <ul>
+        <li>Olayları sıralamak: <b>N lg N</b></li>
+        <li>Her yatay için bir ekleme + bir silme: <b>N lg N</b></li>
+        <li>Her dikey için bir aralık arama: <b>N lg N + R</b></li>
+      </ul>
+    </div>
+  </div>
+  <p class="fragment lead">N = 1 milyon: 250 milyar test yerine ~20 milyon adım. <b>~10.000 kat</b> fark.</p>
+</section>
+
+<section data-sec="doğru parçası kesişimi">
+  <div class="box story" style="font-size:.95em"><span class="bt">📜 Sedgewick’in favori hikâyesi: çip tasarımı ve Moore yasası</span>
+    <p>1970’lerde çip tasarımcıları devre çizimlerindeki hataları (çakışan iletkenler) kaba kuvvetle, yani <b>N²</b> ile kontrol ediyordu.</p>
+    <p class="fragment">Moore yasası: transistör sayısı her ~2 yılda bir <b>2 katına</b> çıkar. Bilgisayarlar da 2 kat hızlanır. Ama N² algoritma 2 kat büyük çipte <b>4 kat</b> iş yapar → kontrol süresi <b>her nesilde 2 katına</b> çıkar!</p>
+    <p class="fragment">Süpürme doğrusu (N lg N) ile bu sorun çözüldü: hızlı bilgisayarlar daha büyük çipleri yetişerek kontrol edebildi. <b>İyi algoritma = daha iyi donanımın kapısı.</b></p>
+  </div>
+</section>
+
+<section data-sec="doğru parçası kesişimi">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · doğru parçası kesişimi</div>
+    <div class="q">Süpürme doğrusu algoritmasında BST’de <b>ne</b> tutulur?</div>
+    <div class="opts">
+      <button data-opt="A">Bütün parçaların x koordinatları</button>
+      <button data-opt="B">Şu an süpürme doğrusunu kesen yatay parçaların y koordinatları</button>
+      <button data-opt="C">Bulunan kesişim noktaları</button>
+      <button data-opt="D">Dikey parçaların uzunlukları</button>
+    </div>
+    <div class="explain">BST “aktif” yatayları tutar: sol ucu geçilmiş ama sağ ucu henüz gelmemiş olanlar. Bir dikey parça gelince, sadece bunlarla kesişebilir → y aralığında 1B arama yeter. x’ler BST’de değil, olay sırası olarak sıralanır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">kd-ağaçları</div>
+  <div class="sub"><i>2d-trees</i> — düzlemi sırayla x’e ve y’ye göre böl</div>
+  <ul class="agenda"><li class="done">1B aralık arama</li><li class="done">doğru parçası kesişimi</li><li class="on">kd-ağaçları</li><li class="">en yakın komşu</li><li class="">aralık arama ağaçları</li><li class="">çarpışma: geniş faz</li></ul>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>2B aralık arama</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>Düzlemde N nokta. Eksenlere hizalı bir dikdörtgenin içindekileri bul (ya da say).</p>
+      <ul>
+        <li>🎮 RTS seçim kutusu</li>
+        <li>🎮 Mini harita: kamera dikdörtgenindeki birimleri çiz</li>
+        <li>🎮 Yapay zekâ: “şu bölgede kaç düşman var?” (tehdit haritası)</li>
+        <li>Veritabanı: “yaşı 20–30 <b>ve</b> geliri 40–60 bin olanlar” (2 boyut!)</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">İlk fikir: ızgara <span class="en">grid</span></span>Haritayı M × M kareye böl, her karede o karedeki noktaların listesi. Sorguda sadece dikdörtgenin değdiği karelere bak.
+      <p class="fragment"><b>Sorun: kümelenme</b> <span class="en">clustering</span>. MMO’da oyuncuların çoğu şehirde toplanır: birkaç kare binlerce oyuncu, geri kalan binlerce kare bomboş. Kare boyutunu ne seçerseniz seçin biri kötü olur.</p>
+      <p class="fragment mini">Izgara (ve “uzamsal hash”) noktalar <b>düzgün dağılmışsa</b> çok iyidir — Hash Tabloları destesinde tekrar göreceğiz.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>2d-ağacı: verilere uyum sağlayan bölme</h2>
+  <div class="cols c64">
+    <ul style="font-size:.9em">
+      <li>Bir BST, ama anahtar <b>nokta</b></li>
+      <li><b>Çift derinlik</b> (0, 2, 4…): <b class="c-red">x</b>’e göre karşılaştır → noktadan geçen <b class="c-red">dikey</b> çizgi: sol / sağ</li>
+      <li><b>Tek derinlik</b> (1, 3, 5…): <b style="color:var(--blue)">y</b>’ye göre karşılaştır → <b style="color:var(--blue)">yatay</b> çizgi: üst / alt</li>
+      <li class="fragment">Her düğüm, düzlemin bir <b>dikdörtgen bölgesine</b> karşılık gelir ve onu ikiye böler</li>
+      <li class="fragment">Kalabalık yerlerde bölgeler küçülür, boş yerlerde büyük kalır → <b>kümelenmeye uyum</b> 🎉</li>
+    </ul>
+    <div class="box low"><span class="bt">⚙️ “k” neden?</span><b>k</b>-boyutlu ağaç: 3B oyunlarda x, y, z sırayla (3d-ağacı). Derinlik <code>d</code>’de <code>d % k</code> numaralı koordinata göre bölünür.</div>
+  </div>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>2d-ağacı oyun alanı: ekleme</h2>
+  <div class="demo" data-demo="kdtree" data-mode="insert" data-n="0"></div>
+  <p class="mini">Sol tarafa tıklayarak nokta ekleyin (ya da “Örnek sorgu”). Notlar her karşılaştırmayı anlatıyor; sağda aynı noktaların BST görünümü.</p>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>🎒 Ön bilgi: nokta sınıfı ve varsayılan parametre</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <ul>
+        <li><code>Point</code>: x ve y’yi bir arada tutan küçük sınıf (p5.js’teki <code>createVector</code> gibi)</li>
+        <li><code>p.x</code> = “p noktasının x’i”</li>
+        <li><b>Varsayılan parametre</b> <span class="en">default parameter</span>: <code>vertical=True</code> → çağıran vermezse True kabul edilir. İlk çağrı <code>insert(root, p)</code> kökte dikey başlar</li>
+        <li><code>not vertical</code> / <code>!vertical</code>: her seviyede yön değişir (True → False → True…)</li>
+        <li><code>% </code> (mod): <code>d % 2 == 0</code> → d çift mi? (k boyutta <code>d % k</code>)</li>
+      </ul>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+class KdNode:
+    def __init__(self, p, vertical):
+        self.p = p                # nokta
+        self.vertical = vertical  # True: x'e göre böl (dikey çizgi)
+        self.left = None          # sol (ya da üst) taraf
+        self.right = None         # sağ (ya da alt) taraf
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Point
+{
+    public double X, Y;
+    public Point(double x, double y) { X = x; Y = y; }
+}
+
+class KdNode
+{
+    public Point P;               // nokta
+    public bool Vertical;         // true: x'e göre böl (dikey çizgi)
+    public KdNode Left, Right;    // sol/üst · sağ/alt
+    public KdNode(Point p, bool vertical) { P = p; Vertical = vertical; }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Point {
+  constructor(x, y) { this.x = x; this.y = y; }
+}
+
+class KdNode {
+  constructor(p, vertical) {
+    this.p = p;                 // nokta
+    this.vertical = vertical;   // true: x'e göre böl (dikey çizgi)
+    this.left = null;           // sol (ya da üst) taraf
+    this.right = null;          // sağ (ya da alt) taraf
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>2d-ağacına ekleme — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>BST’nin <code>put</code>’u ile aynı iskelet. Tek fark: hangi koordinatı karşılaştıracağımız <b>derinliğe göre değişir</b>.</p>
+      <div class="box story"><span class="bt">Benzerlik</span>BST: <code>key &lt; x.key</code><br>2d-ağacı: <code>p.x &lt; x.p.x</code> <b>ya da</b> <code>p.y &lt; x.p.y</code></div>
+      <p class="mini">Uyarı: 2d-ağacı kendini dengelemez. Rastgele noktalarda yüksekliği ~lg N civarındadır; noktalar sıralı gelirse (ör. hepsi bir çizgi üzerinde) BST gibi bozulabilir.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def insert(x, p, vertical=True):
+    if x is None:
+        return KdNode(p, vertical)
+    if vertical:
+        go_left = p.x < x.p.x      # dikey çizginin solunda mı?
+    else:
+        go_left = p.y < x.p.y      # yatay çizginin üstünde mi?
+    if go_left:
+        x.left = insert(x.left, p, not vertical)
+    else:
+        x.right = insert(x.right, p, not vertical)
+    return x
+
+root = None
+root = insert(root, Point(0.7, 0.2))
+root = insert(root, Point(0.5, 0.4))
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static KdNode Insert(KdNode x, Point p, bool vertical = true)
+{
+    if (x == null) return new KdNode(p, vertical);
+    bool goLeft;
+    if (vertical) goLeft = p.X < x.P.X;     // dikey çizginin solunda mı?
+    else          goLeft = p.Y < x.P.Y;     // yatay çizginin üstünde mi?
+    if (goLeft) x.Left = Insert(x.Left, p, !vertical);
+    else        x.Right = Insert(x.Right, p, !vertical);
+    return x;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function insert(x, p, vertical = true) {
+  if (x === null) return new KdNode(p, vertical);
+  let goLeft;
+  if (vertical) goLeft = p.x < x.p.x;       // dikey çizginin solunda mı?
+  else          goLeft = p.y < x.p.y;       // yatay çizginin üstünde mi?
+  if (goLeft) x.left = insert(x.left, p, !vertical);
+  else        x.right = insert(x.right, p, !vertical);
+  return x;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>2d-ağacında aralık arama</h2>
+  <div class="cols c64">
+    <div style="font-size:.9em">
+      <p>Sorgu dikdörtgeni <code>q</code>. Düğüm <code>x</code>’te:</p>
+      <ol>
+        <li class="fragment">x’in <b>bölgesi</b> q ile <b>kesişmiyorsa</b> → bu alt ağaçta aradığımız nokta olamaz → <b>BUDA</b> ✂️</li>
+        <li class="fragment">x’in noktası q’nun içindeyse → <b>raporla</b></li>
+        <li class="fragment">Sol ve sağ alt ağaçlarda <b>özyinelemeyle</b> ara</li>
+      </ol>
+      <p class="fragment mini">Bölge = düğümün sorumlu olduğu dikdörtgen (kök: bütün harita). Ekleme sırasında ebeveynin bölgesinden hesaplanıp düğümde saklanır.</p>
+    </div>
+    <div class="box prop fragment"><span class="bt">Önerme</span>Tipik süre: <b>R + lg N</b>.<p class="mini">En kötü durum (noktalar dengeli dağılmışken bile): <b>R + √N</b> — yine N’den çok daha iyi.</p></div>
+  </div>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>Aralık arama — kendiniz deneyin</h2>
+  <div class="demo" data-demo="kdtree" data-mode="range" data-n="24"></div>
+  <p class="mini">Sol tarafta fareyle dikdörtgen çizin. Gri gölgeli bölgeler <b>budanan</b> alt ağaçlar: oradaki noktalara hiç bakılmadı. Sayaçta kaba kuvvetle karşılaştırın.</p>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>🎒 Ön bilgi: dikdörtgen sınıfı</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <p>Eksene hizalı dikdörtgen <span class="en">axis-aligned rectangle</span>: 4 sayı yeter.</p>
+      <ul>
+        <li><code>contains(p)</code>: nokta içeride mi? → x <b>ve</b> y aralıkta mı</li>
+        <li><code>intersects(r)</code>: iki dikdörtgen kesişiyor mu? → x aralıkları kesişiyor <b>ve</b> y aralıkları kesişiyor</li>
+      </ul>
+      <div class="box bgk"><span class="bt">🎒 İki aralık ne zaman kesişmez?</span>Biri ötekinin tamamen <b>solunda</b> ya da tamamen <b>sağında</b>ysa: <code>a.max &lt; b.min</code> veya <code>b.max &lt; a.min</code>. Tersini alınca (De Morgan): kesişir ⇔ <code>a.min ≤ b.max</code> <b>ve</b> <code>b.min ≤ a.max</code>.</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Rect:
+    def __init__(self, xmin, ymin, xmax, ymax):
+        self.xmin = xmin
+        self.ymin = ymin
+        self.xmax = xmax
+        self.ymax = ymax
+
+    def contains(self, p):
+        return (self.xmin <= p.x <= self.xmax and
+                self.ymin <= p.y <= self.ymax)
+
+    def intersects(self, r):
+        return (self.xmin <= r.xmax and r.xmin <= self.xmax and
+                self.ymin <= r.ymax and r.ymin <= self.ymax)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Rect
+{
+    public double XMin, YMin, XMax, YMax;
+    public Rect(double x0, double y0, double x1, double y1)
+    { XMin = x0; YMin = y0; XMax = x1; YMax = y1; }
+
+    public bool Contains(Point p)
+    {
+        return XMin <= p.X && p.X <= XMax &&
+               YMin <= p.Y && p.Y <= YMax;
+    }
+
+    public bool Intersects(Rect r)
+    {
+        return XMin <= r.XMax && r.XMin <= XMax &&
+               YMin <= r.YMax && r.YMin <= YMax;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Rect {
+  constructor(xmin, ymin, xmax, ymax) {
+    this.xmin = xmin; this.ymin = ymin;
+    this.xmax = xmax; this.ymax = ymax;
+  }
+  contains(p) {
+    return this.xmin <= p.x && p.x <= this.xmax &&
+           this.ymin <= p.y && p.y <= this.ymax;
+  }
+  intersects(r) {
+    return this.xmin <= r.xmax && r.xmin <= this.xmax &&
+           this.ymin <= r.ymax && r.ymin <= this.ymax;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <p class="mini">🎒 Python’daki <code>a &lt;= b &lt;= c</code> zinciri = <code>a &lt;= b and b &lt;= c</code>. C#/JS’te bu kısa yazım yok, iki karşılaştırma <code>&amp;&amp;</code> ile birleştirilir.</p>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>Aralık arama — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def range_search(x, q, found):        # q: sorgu dikdörtgeni (Rect)
+    if x is None:
+        return
+    if not x.rect.intersects(q):      # bölge sorguyla kesişmiyor
+        return                        # → BUDA: bu alt ağaca hiç girme
+    if q.contains(x.p):
+        found.append(x.p)             # nokta içeride: listeye ekle
+    range_search(x.left, q, found)
+    range_search(x.right, q, found)
+
+found = []
+range_search(root, Rect(0.2, 0.2, 0.6, 0.5), found)
+print(len(found), "birim seçildi")
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static void RangeSearch(KdNode x, Rect q, List<Point> found)
+{
+    if (x == null) return;
+    if (!x.Rect.Intersects(q)) return;      // BUDA
+    if (q.Contains(x.P)) found.Add(x.P);    // nokta içeride
+    RangeSearch(x.Left, q, found);
+    RangeSearch(x.Right, q, found);
+}
+
+var found = new List<Point>();
+RangeSearch(root, new Rect(0.2, 0.2, 0.6, 0.5), found);
+Console.WriteLine(found.Count + " birim seçildi");
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function rangeSearch(x, q, found) {
+  if (x === null) return;
+  if (!x.rect.intersects(q)) return;        // BUDA
+  if (q.contains(x.p)) found.push(x.p);     // nokta içeride
+  rangeSearch(x.left, q, found);
+  rangeSearch(x.right, q, found);
+}
+
+const found = [];
+rangeSearch(root, new Rect(0.2, 0.2, 0.6, 0.5), found);
+console.log(found.length + " birim seçildi");
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>found</code> listesi her özyinelemeli çağrıya <b>aynı liste</b> (referans) olarak verilir: hepsi aynı listeye ekler. Sonuçları toplamanın en basit yolu.</p>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · kd-ağaçları</div>
+    <div class="q">2d-ağacında aralık arama yaparken bir alt ağaç <b>ne zaman</b> budanır?</div>
+    <div class="opts">
+      <button data-opt="A">Alt ağaçtaki nokta sayısı azsa</button>
+      <button data-opt="B">Alt ağacın bölgesi sorgu dikdörtgeniyle kesişmiyorsa</button>
+      <button data-opt="C">Düğümün noktası sorgu dikdörtgeninin dışındaysa</button>
+      <button data-opt="D">Derinlik tek sayıysa</button>
+    </div>
+    <div class="explain">Bölge kesişmiyorsa içindeki <b>hiçbir</b> nokta sorguda olamaz → güvenle atlarız. C bir tuzak: düğümün kendi noktası dışarıda olabilir ama bölgesi sorguyla kesişiyorsa alt ağaçlarında içeride noktalar olabilir — inmek zorundayız.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">En yakın komşu</div>
+  <div class="sub"><i>nearest neighbor</i> — “en yakın düşman kim?”</div>
+  <ul class="agenda"><li class="done">1B aralık arama</li><li class="done">doğru parçası kesişimi</li><li class="done">kd-ağaçları</li><li class="on">en yakın komşu</li><li class="">aralık arama ağaçları</li><li class="">çarpışma: geniş faz</li></ul>
+</section>
+
+<section data-sec="en yakın komşu">
+  <h2>Oyun yapay zekâsının en sık sorusu</h2>
+  <div class="cols">
+    <ul style="font-size:.9em">
+      <li>🎯 Kule savunması: kule <b>en yakın</b> düşmana ateş eder</li>
+      <li>⛏️ RTS: işçi <b>en yakın</b> maden / depo</li>
+      <li>❤️ Bot: canı azsa <b>en yakın</b> sağlık paketi</li>
+      <li>🧲 Mıknatıs: <b>en yakın</b> altınlar oyuncuya uçar</li>
+      <li>🤖 Makine öğrenmesi: k-en yakın komşu (kNN) sınıflandırma</li>
+    </ul>
+    <div class="box warn"><span class="bt">Kaba kuvvet</span>Her nokta için mesafe hesapla, en küçüğünü al → <b>N</b> mesafe hesabı. 1.000 kule × 10.000 düşman × 60 FPS = saniyede <b>600 milyon</b> mesafe hesabı.</div>
+  </div>
+  <div class="box low fragment" style="margin-top:10px"><span class="bt">⚙️ Küçük hile: karekök alma</span>Sadece <b>karşılaştırıyorsak</b> √ gerekmez: <code>dx² + dy²</code> küçükse mesafe de küçüktür. Unity’de <code>Vector3.sqrMagnitude</code> tam bu yüzden var — karekök pahalıdır.</div>
+</section>
+
+<section data-sec="en yakın komşu">
+  <h2>2d-ağacında en yakın komşu</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li>Şimdiye kadarki <b>en iyi</b> aday ve uzaklığı <code>best</code> (başta ∞)</li>
+      <li class="fragment">Düğüm x’te: x’in <b>bölgesinin</b> sorguya en kısa uzaklığı ≥ <code>best</code> ise → orada daha yakın nokta <b>olamaz</b> → <b>BUDA</b> ✂️</li>
+      <li class="fragment">x’in noktası daha yakınsa → yeni en iyi</li>
+      <li class="fragment">Önce sorgunun bulunduğu <b>taraftaki</b> alt ağaca in (orada yakın nokta bulma ihtimali yüksek → <code>best</code> çabuk küçülür → daha çok budama)</li>
+      <li class="fragment">Sonra diğer tarafa (muhtemelen budanacak)</li>
+    </ol>
+    <div class="box game fragment"><span class="bt">🎮 Sezgi</span>“Şu ana kadar bulduğum en yakın düşman 50 metrede. Şu oda bana en az 80 metre uzakta. Odaya bakmama gerek yok!”</div>
+  </div>
+</section>
+
+<section data-sec="en yakın komşu">
+  <h2>En yakın komşu — kendiniz deneyin</h2>
+  <div class="demo" data-demo="kdtree" data-mode="nearest" data-n="24"></div>
+  <p class="mini">Sol tarafta bir yere tıklayın. Mor kesikli çember = şimdiki en iyi uzaklık; çember küçüldükçe daha çok bölge budanır. Sayaçtaki “mesafe hesabı”nı N ile karşılaştırın.</p>
+</section>
+
+<section data-sec="en yakın komşu">
+  <h2>En yakın komşu — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-4|6-10|11-12|13-16|17-23"><script type="text/template">
+import math
+
+def dist(a, b):
+    return math.hypot(a.x - b.x, a.y - b.y)     # √(dx² + dy²)
+
+def nearest(x, q, best):              # best: şu ana kadarki en iyi düğüm
+    if x is None:
+        return best
+    if best is not None and x.rect.distance_to(q) >= dist(best.p, q):
+        return best                   # BUDA: bölge daha uzakta
+    if best is None or dist(x.p, q) < dist(best.p, q):
+        best = x                      # yeni en iyi
+    if x.vertical:
+        q_on_left = q.x < x.p.x
+    else:
+        q_on_left = q.y < x.p.y
+    if q_on_left:                     # önce sorgunun olduğu taraf
+        best = nearest(x.left, q, best)
+        best = nearest(x.right, q, best)
+    else:
+        best = nearest(x.right, q, best)
+        best = nearest(x.left, q, best)
+    return best
+
+target = nearest(root, tower_pos, None)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static double Dist(Point a, Point b)
+{
+    double dx = a.X - b.X, dy = a.Y - b.Y;
+    return Math.Sqrt(dx * dx + dy * dy);
+}
+
+static KdNode Nearest(KdNode x, Point q, KdNode best)
+{
+    if (x == null) return best;
+    if (best != null && x.Rect.DistanceTo(q) >= Dist(best.P, q))
+        return best;                                   // BUDA
+    if (best == null || Dist(x.P, q) < Dist(best.P, q))
+        best = x;                                      // yeni en iyi
+    bool qOnLeft;
+    if (x.Vertical) qOnLeft = q.X < x.P.X;
+    else            qOnLeft = q.Y < x.P.Y;
+    KdNode first  = qOnLeft ? x.Left : x.Right;        // önce sorgunun tarafı
+    KdNode second = qOnLeft ? x.Right : x.Left;
+    best = Nearest(first, q, best);
+    best = Nearest(second, q, best);
+    return best;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function dist(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);        // √(dx² + dy²)
+}
+
+function nearest(x, q, best) {
+  if (x === null) return best;
+  if (best !== null && x.rect.distanceTo(q) >= dist(best.p, q))
+    return best;                                  // BUDA
+  if (best === null || dist(x.p, q) < dist(best.p, q))
+    best = x;                                     // yeni en iyi
+  let qOnLeft;
+  if (x.vertical) qOnLeft = q.x < x.p.x;
+  else            qOnLeft = q.y < x.p.y;
+  const first  = qOnLeft ? x.left : x.right;      // önce sorgunun tarafı
+  const second = qOnLeft ? x.right : x.left;
+  best = nearest(first, q, best);
+  best = nearest(second, q, best);
+  return best;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 En yakın komşu kodundaki yeni ifadeler</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>math.hypot · Math.hypot</td><td>hipotenüs</td><td><code>√(dx² + dy²)</code>: Pisagor. C#’ta <code>Math.Sqrt(dx*dx + dy*dy)</code></td></tr>
+    <tr><td>rect.distance_to(q)</td><td>bölgeye uzaklık</td><td>Dikdörtgenin q’ya en yakın noktasına uzaklık; q içerdeyse 0. Hesap: <code>dx = max(xmin − q.x, 0, q.x − xmax)</code>, dy benzer, sonra hypot</td></tr>
+    <tr><td>best = nearest(…, best)</td><td>değer taşıma</td><td>En iyi aday her çağrıya verilir, (belki güncellenmiş olarak) geri döner. Global değişken gerekmez</td></tr>
+    <tr><td>a ? b : c</td><td>üçlü işleç <span class="en">ternary</span></td><td>“a doğruysa b, değilse c”. Geleneksel hâli: <code>if (qOnLeft) first = x.Left; else first = x.Right;</code></td></tr>
+    <tr><td>best is None or …</td><td>kısa devre</td><td>best None ise ikinci kısım (<code>best.p</code>) hiç çalışmaz → null hatası olmaz</td></tr>
+  </table>
+</section>
+
+<section data-sec="en yakın komşu">
+  <h2>Ölçüm: kaba kuvvet vs 2d-ağacı</h2>
+  <div class="demo" data-demo="nnbench"></div>
+  <div class="cols" style="margin-top:8px">
+    <div class="box prop"><span class="bt">Önerme</span>Tipik durumda en yakın komşu araması <b>lg N</b> civarında düğüm ziyaret eder. En kötü durumda (çok kötü dağılım) N.</div>
+    <div class="box low"><span class="bt">⚙️ Küçük N’de sürpriz</span>N = 1.000’de kaba kuvvet ağaçla <b>başa baş</b> (hatta hızlı) olabilir: düz bir dizide art arda gezinmek önbellek dostu ve dallanmasız. Ağaç ancak N büyüyünce açık ara kazanır. <b>Ölçmeden karar verme!</b></div>
+  </div>
+</section>
+
+<section data-sec="en yakın komşu">
+  <h2>Akrabalar ve tarihçe 📜</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">1975 · Jon Bentley</span>kd-ağacını “Multidimensional binary search trees used for associative searching” makalesiyle tanıttı. Bentley sonra “Programming Pearls” kitabıyla da ünlendi.</div>
+    <div class="box game"><span class="bt">🎮 1993 · DOOM ve BSP ağacı</span>John Carmack, DOOM’un seviyelerini <b>BSP ağacı</b> <span class="en">binary space partitioning</span> ile önceden böldü: kd-ağacının kuzeni, ama bölme çizgileri <b>duvarlar boyunca</b>, her yönde olabilir. Oyun, ağacı gezerek duvarları önden arkaya doğru sırada çizebildi — 1993 bilgisayarlarında akıcı 3B!</div>
+  </div>
+  <ul style="font-size:.85em;margin-top:10px">
+    <li><b>Quadtree</b> (Ağaçlar destesi): her düğüm 4’e böler, kd-ağacı 2’ye. <b>Octree</b>: 3B’de 8’e.</li>
+    <li><b>Işın izleme</b> <span class="en">ray tracing</span>: sahnedeki üçgenler kd-ağacı ya da BVH’de tutulur — “bu ışın hangi üçgene çarpar?”</li>
+  </ul>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Aralık arama ağaçları</div>
+  <div class="sub"><i>interval search trees</i> — [başlangıç, bitiş] aralıkları</div>
+  <ul class="agenda"><li class="done">1B aralık arama</li><li class="done">doğru parçası kesişimi</li><li class="done">kd-ağaçları</li><li class="done">en yakın komşu</li><li class="on">aralık arama ağaçları</li><li class="">çarpışma: geniş faz</li></ul>
+</section>
+
+<section data-sec="aralık arama ağaçları">
+  <h2>Problem: aralıklar kümesi</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>Anahtarlar artık <b>aralık</b>: <code>[lo, hi]</code>. İşlemler:</p>
+      <ul>
+        <li>aralık ekle / sil</li>
+        <li>verilen bir aralıkla <b>kesişen bir</b> aralık bul</li>
+        <li>kesişen <b>bütün</b> aralıkları bul</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">🎮 Oyunda aralıklar</span>
+      <ul>
+        <li>Dövüş oyunu: saldırının <b>aktif kareleri</b> (ör. 12–15. kareler). Rakibin kaçınma penceresiyle çakışıyor mu?</li>
+        <li>Buff / debuff süreleri: “t = 42,5 sn’de hangi etkiler aktif?”</li>
+        <li>Ritim oyunu: notaların zaman pencereleri</li>
+        <li>Sunucu: oda / maç <b>rezervasyonları</b> çakışıyor mu?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="aralık arama ağaçları">
+  <h2>Fikir: BST + alt ağaçtaki en büyük bitiş</h2>
+  <div class="cols c64">
+    <ul style="font-size:.9em">
+      <li>BST’nin anahtarı: aralığın <b>sol ucu</b> (lo)</li>
+      <li class="fragment">Her düğüme bir alan daha: <code>max</code> = bu alt ağaçtaki aralıkların <b>en büyük sağ ucu</b></li>
+      <li class="fragment">Eklerken yol üstündeki <code>max</code>’ları güncelle (gerekirse büyüt)</li>
+      <li class="fragment"><b>Arama kuralı</b> (kesişen bir aralık):
+        <ol>
+          <li>x kesişiyorsa → bulundu ✔</li>
+          <li>sol alt ağaç boşsa → sağa</li>
+          <li>sol alt ağacın <code>max</code>’ı &lt; sorgunun lo’su → sağa</li>
+          <li>yoksa → sola</li>
+        </ol></li>
+    </ul>
+    <div class="box story fragment"><span class="bt">Neden max?</span>“Solda biten en son aralık bile sorgudan <b>önce</b> bitiyorsa, solda kesişen olamaz.” Tek bir sayıyla koca alt ağacı budadık. Bu tür ek bilgi taşıyan ağaçlara <b>genişletilmiş</b> <span class="en">augmented</span> ağaç denir (BST destesindeki <code>size</code> gibi).</div>
+  </div>
+</section>
+
+<section data-sec="aralık arama ağaçları">
+  <h2>Aralık arama ağacı — kendiniz deneyin</h2>
+  <div class="demo" data-demo="interval" data-h="220"></div>
+  <p class="mini">Üstte zaman çizelgesi, altta ağaç. Düğümün sağ üstündeki küçük sayı = <b>max</b>. Sorguları deneyin: <code>23 25</code> (bulunur), <code>11 13</code> (yok), <code>9 9</code>.</p>
+</section>
+
+<section data-sec="aralık arama ağaçları">
+  <h2>Neden “sola gidince sağa bakmaya gerek yok”?</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>Arama sola gittiyse ve solda kesişen aralık <b>yoksa</b>, sağda da yoktur.</div>
+    <div class="box proof"><span class="bt">Kanıt</span>
+      <ul>
+        <li class="fragment">Sola gittik → solda <code>max ≥ lo</code> olan bir aralık var: <code>[c, max]</code></li>
+        <li class="fragment">O aralık sorguyla kesişmiyor → tek yol: sorgudan sonra başlıyor: <code>c &gt; hi</code></li>
+        <li class="fragment">Sağ alt ağaçtaki her aralığın sol ucu (BST sırası!) <code>≥ c &gt; hi</code></li>
+        <li class="fragment">→ sağdakilerin hepsi sorgudan <b>sonra</b> başlıyor → kesişen yok. ∎</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fragment lead">Sonuç: arama tek bir yol boyunca iner → dengeli ağaçta <b>lg N</b>. Bütün kesişenleri bulmak: <b>R lg N</b>.</p>
+</section>
+
+<section data-sec="aralık arama ağaçları">
+  <h2>Kesişen bir aralık bul — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def intersects(a_lo, a_hi, b_lo, b_hi):
+    return a_lo <= b_hi and b_lo <= a_hi
+
+def search(x, lo, hi):                    # [lo, hi] ile kesişen bir aralık
+    while x is not None:
+        if intersects(x.lo, x.hi, lo, hi):
+            return x                      # bulundu
+        if x.left is None:
+            x = x.right
+        elif x.left.max < lo:             # soldakilerin hepsi erken bitiyor
+            x = x.right
+        else:
+            x = x.left
+    return None                           # yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static bool Intersects(int aLo, int aHi, int bLo, int bHi)
+{
+    return aLo <= bHi && bLo <= aHi;
+}
+
+static IntervalNode Search(IntervalNode x, int lo, int hi)
+{
+    while (x != null)
+    {
+        if (Intersects(x.Lo, x.Hi, lo, hi)) return x;   // bulundu
+        if (x.Left == null) x = x.Right;
+        else if (x.Left.Max < lo) x = x.Right;          // soldakiler erken bitiyor
+        else x = x.Left;
+    }
+    return null;                                        // yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function intersects(aLo, aHi, bLo, bHi) {
+  return aLo <= bHi && bLo <= aHi;
+}
+
+function search(x, lo, hi) {
+  while (x !== null) {
+    if (intersects(x.lo, x.hi, lo, hi)) return x;   // bulundu
+    if (x.left === null) x = x.right;
+    else if (x.left.max < lo) x = x.right;          // soldakiler erken bitiyor
+    else x = x.left;
+  }
+  return null;                                      // yok
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="aralık arama ağaçları">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · aralık arama ağaçları</div>
+    <div class="q"><code>[3, 5]</code> ve <code>[5, 9]</code> aralıkları (uçlar dahil) kesişir mi? Peki <code>[3, 5]</code> ve <code>[6, 9]</code>?</div>
+    <div class="opts">
+      <button data-opt="A">İkisi de kesişir</button>
+      <button data-opt="B">Birincisi kesişir, ikincisi kesişmez</button>
+      <button data-opt="C">Birincisi kesişmez, ikincisi kesişir</button>
+      <button data-opt="D">İkisi de kesişmez</button>
+    </div>
+    <div class="explain">Kural: <code>a.lo ≤ b.hi</code> ve <code>b.lo ≤ a.hi</code>. [3,5]–[5,9]: 3 ≤ 9 ✔, 5 ≤ 5 ✔ → <b>kesişir</b> (5. noktada değiyorlar). [3,5]–[6,9]: 6 ≤ 5 ✗ → kesişmez. Dövüş oyununda “değmek” vuruş sayılır mı? Bu bir tasarım kararı: &lt; ile ≤ arasındaki fark!</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Çarpışma: geniş faz</div>
+  <div class="sub"><i>broad phase</i> — AABB, dikdörtgen kesişimi, sweep and prune</div>
+  <ul class="agenda"><li class="done">1B aralık arama</li><li class="done">doğru parçası kesişimi</li><li class="done">kd-ağaçları</li><li class="done">en yakın komşu</li><li class="done">aralık arama ağaçları</li><li class="on">çarpışma: geniş faz</li></ul>
+</section>
+
+<section data-sec="çarpışma">
+  <h2>Fizik motorunda çarpışma iki aşamadır</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ol>
+        <li><b>Geniş faz</b> <span class="en">broad phase</span>: her nesneyi saran eksene hizalı kutular (<b>AABB</b>) ile “çarpışıyor <b>olabilecek</b>” çiftleri hızlıca bul</li>
+        <li><b>Dar faz</b> <span class="en">narrow phase</span>: sadece bu aday çiftler için gerçek şekillerle (çokgen, kapsül, ağ) pahalı ve kesin test</li>
+      </ol>
+      <p class="fragment">N nesne → N²/2 çift. 2.000 nesne = <b>2 milyon</b> çift, her karede! Geniş fazın görevi bunu birkaç yüz adaya indirmek.</p>
+    </div>
+    <div class="box bgk"><span class="bt">🎒 AABB <span class="en">axis-aligned bounding box</span></span>Nesneyi saran, kenarları eksenlere <b>paralel</b> en küçük kutu. İki AABB çakışır ⇔ <b>x aralıkları</b> kesişir <b>ve</b> <b>y aralıkları</b> kesişir. Yani: iki tane 1B aralık testi! (2d-ağacındaki <code>intersects</code> ile aynı.)
+      <svg viewBox="0 0 300 110" style="width:100%;max-width:300px;margin-top:6px">
+        <ellipse cx="80" cy="55" rx="55" ry="30" transform="rotate(-20 80 55)" style="fill:var(--blue);opacity:.35"/>
+        <rect x="25" y="17" width="110" height="76" style="fill:none;stroke:var(--blue)" stroke-width="2" stroke-dasharray="5 4"/>
+        <polygon points="170,30 260,20 280,90 190,95" style="fill:var(--green);opacity:.35"/>
+        <rect x="170" y="20" width="110" height="75" style="fill:none;stroke:var(--green)" stroke-width="2" stroke-dasharray="5 4"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section data-sec="çarpışma">
+  <h2>Dikdörtgen kesişimi: süpürme + aralık ağacı</h2>
+  <div class="cols c64">
+    <div style="font-size:.9em">
+      <p>Princeton’ın çözümü: Level 1’deki süpürme doğrusunun aynısı!</p>
+      <ul>
+        <li>Olaylar: dikdörtgenlerin sol ve sağ kenarlarının x’leri (sıralı)</li>
+        <li class="fragment">Sol kenar → önce dikdörtgenin y aralığıyla kesişenleri <b>aralık arama ağacında</b> ara, sonra y aralığını ağaca <b>ekle</b></li>
+        <li class="fragment">Sağ kenar → y aralığını ağaçtan <b>sil</b></li>
+      </ul>
+    </div>
+    <div class="box prop fragment"><span class="bt">Önerme</span>N dikdörtgenin R kesişen çiftini bulmak: <b>N lg N + R lg N</b>.</div>
+  </div>
+</section>
+
+<section data-sec="çarpışma">
+  <h2>Oyunların favorisi: sweep and prune (SAP)</h2>
+  <div class="cols">
+    <ol style="font-size:.88em">
+      <li>Kutuları sol kenarlarına (<code>xmin</code>) göre <b>sırala</b></li>
+      <li class="fragment">Soldan sağa süpür, bir <b>aktif liste</b> tut: x aralığı hâlâ süren kutular</li>
+      <li class="fragment">Yeni kutu gelince: sağ kenarı geride kalanları aktif listeden <b>at</b> (prune), kalanlarla <b>y</b> testi yap</li>
+    </ol>
+    <div class="box game fragment"><span class="bt">🎮 Gizli silah: kare tutarlılığı</span>Nesneler bir karede çok az hareket eder <span class="en">temporal coherence</span>. Önceki karenin sırası <b>neredeyse sıralı</b> → <b>insertion sort</b> neredeyse doğrusal çalışır! (Temel Sıralama destesindeki “neredeyse sıralı girdi” sorusunun cevabı buydu.)</div>
+  </div>
+</section>
+
+<section data-sec="çarpışma">
+  <h2>Sweep and prune — canlı</h2>
+  <div class="demo" data-demo="sap"></div>
+  <p class="mini">Kutu sayısını artırın, yöntemi değiştirin: “çift testi” sayacı kaba kuvvette N²/2, SAP’ta çok daha az. Altta x eksenine izdüşümler. “insertion sort kaydırma” her karede ne kadar küçük?</p>
+</section>
+
+<section data-sec="çarpışma">
+  <h2>Gerçek motorlar ne kullanıyor?</h2>
+  <div class="cols">
+    <ul style="font-size:.88em">
+      <li><b>Unity 3B</b> (PhysX): Project Settings → Physics → <b>Broadphase Type</b>: <i>Sweep and Prune</i>, <i>Multibox Pruning</i>, <i>Automatic Box Pruning</i></li>
+      <li><b>Unity 2B</b> ve birçok 2B oyun (Box2D): <b>dinamik AABB ağacı</b> — kutuların kutularından oluşan, dengelenen bir ikili ağaç</li>
+      <li><b>Bullet</b> (Blender, birçok oyun): <code>btAxisSweep3</code> (SAP) ya da dinamik AABB ağacı</li>
+      <li><b>Godot</b>, <b>Unreal (Chaos)</b>: AABB ağaçları ve ızgaralar</li>
+    </ul>
+    <div class="box low"><span class="bt">⚙️ Neden tek bir “en iyi” yok?</span>
+      <ul>
+        <li>Nesneler <b>hareketli</b> mi, statik mi?</li>
+        <li>Boyutları benzer mi (ızgara iyi) yoksa çok farklı mı (ağaç iyi)?</li>
+        <li>Hep aynı eksende mi kümeleniyorlar (SAP kötüleşir: hepsi aynı x’te!)</li>
+      </ul>
+      <p class="mini">Bu yüzden motorlar seçenek sunar; profil çıkarıp ölçmek gerekir (Analiz destesi!).</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="çarpışma">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · çarpışma</div>
+    <div class="q">Sweep and prune, kutuları her karede sıralarken neden <b>insertion sort</b> kullanmayı tercih eder?</div>
+    <div class="opts">
+      <button data-opt="A">Çünkü en kötü durumda en hızlı sıralama odur</button>
+      <button data-opt="B">Çünkü kutular bir karede az hareket ettiği için dizi neredeyse sıralıdır ve insertion sort bu durumda neredeyse doğrusaldır</button>
+      <button data-opt="C">Çünkü kararsızdır</button>
+      <button data-opt="D">Çünkü ek bellek kullanır</button>
+    </div>
+    <div class="explain">Insertion sort’un maliyeti ~ N + (ters sıralı çift sayısı). Bir karede sadece birkaç kutu birbirinin önüne geçer → çok az takas. Quicksort ya da mergesort her karede baştan N lg N öderdi. Doğru algoritma = <b>verinin özelliğine</b> uygun algoritma.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: iki aralık kesişiyor mu?</h2>
+  <div class="geolab" data-task="interval" data-lang="js">
+<textarea>
+// GÖREV: a = [lo, hi] ve b = [lo, hi] kapalı aralıkları kesişiyor mu?
+// (Uçların değmesi de kesişme sayılır.)  true / false döndür.
+function intersects(a, b) {
+  // ipucu: ne zaman kesişMEZ? Sonra tersini al.
+  return a[0] < b[0] && b[0] < a[1];
+}
+</textarea>
+    <div class="lab-tasks">Verilen kod yanlış. Önce <b>çalıştırıp</b> hangi testte patladığına bakın. Sonra doğru kuralı yazın. Bonus: aynı şeyi “kesişmeme” koşulunun tersi olarak <code>!(a[1] &lt; b[0] || b[1] &lt; a[0])</code> biçiminde yazın — ikisi neden aynı? (De Morgan)</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — AABB çakışması (Python)</h2>
+  <div class="geolab" data-task="aabb" data-lang="python">
+<textarea>
+# a ve b: Rect nesneleri (a.xmin, a.ymin, a.xmax, a.ymax)
+# İki kutu çakışıyor mu? (Kenarların değmesi de çakışma sayılır.)
+def overlaps(a, b):
+    x_ok = a.xmin <= b.xmax and b.xmin <= a.xmax
+    y_ok = False   # TODO: y için aynısını yaz
+    return x_ok or y_ok
+</textarea>
+    <div class="lab-tasks">İki hata var: <code>y_ok</code> eksik ve son satırdaki mantık işleci yanlış. (İpucu: iki kutu ancak <b>her iki</b> eksende de üst üste biniyorsa çakışır.) Unity’deki <code>Bounds.Intersects</code> ve p5.js çarpışma kütüphaneleri tam olarak bunu yapar.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>problem</th><th>çözüm</th><th>tipik süre</th><th>🎮 oyunda</th></tr>
+    <tr><td>1B aralık arama</td><td>BST (rank, range)</td><td>R + lg N</td><td>kamera penceresi, MMR aralığı</td></tr>
+    <tr><td>dik doğru parçası kesişimi</td><td>süpürme + BST</td><td>N lg N + R</td><td>Tron izleri, duvarlar</td></tr>
+    <tr><td>2B aralık arama</td><td>2d-ağacı</td><td>R + lg N</td><td>seçim kutusu, mini harita</td></tr>
+    <tr><td>en yakın komşu</td><td>2d-ağacı + budama</td><td>lg N</td><td>en yakın düşman / kaynak</td></tr>
+    <tr><td>1B aralık kesişimi</td><td>aralık arama ağacı</td><td>R lg N</td><td>vuruş pencereleri, buff’lar</td></tr>
+    <tr><td>dikdörtgen kesişimi</td><td>süpürme + aralık ağacı / SAP</td><td>N lg N + R lg N</td><td>fizik motoru geniş faz</td></tr>
+  </table>
+  <p class="mini">Ortak fikir: <b>budama</b> — cevabı içeremeyecek bölgeye hiç bakma. Ve <b>süpürme</b> — 2B problemi bir dizi 1B probleme çevir.</p>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: (0.7, 0.2), (0.5, 0.4), (0.2, 0.3), (0.4, 0.7), (0.9, 0.6) noktalarını sırayla bir 2d-ağacına ekleyin; bölmeleri çizin.</li>
+    <li>p5.js’te 2.000 rastgele “düşman” ve fareyi izleyen bir “kule” yapın. En yakın düşmanı önce kaba kuvvetle, sonra 2d-ağacıyla bulun; FPS’i karşılaştırın.</li>
+    <li>RTS seçim kutusunu 2d-ağacıyla yazın. Birimler hareket ediyorsa ağacı ne sıklıkla yeniden kurmalısınız?</li>
+    <li>Aralık arama ağacına “<b>bütün</b> kesişenleri bul” işlemini ekleyin (ipucu: her iki alt ağaca da gerektiğinde inen özyineleme).</li>
+    <li>SAP demosunda bütün kutuları aynı dikey şeritte toplayın (hepsi aynı x’te). Ne oluyor? Neden?</li>
+    <li>🤖 Bir YZ asistanına “Unity’de 5.000 birim için en yakın düşmanı verimli bul” deyin. Hangi yapıyı önerdi (ızgara, kd-ağacı, Physics.OverlapSphere)? Neden?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=BK5x7IUTIyU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/BK5x7IUTIyU/hqdefault.jpg" alt=""><span><b>K-d Trees</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Glp7THUpGow" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Glp7THUpGow/hqdefault.jpg" alt=""><span><b>KD-Tree Nearest Neighbor Data Structure</b><br>Stable Sort</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=OJxEcs0w_kE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/OJxEcs0w_kE/hqdefault.jpg" alt=""><span><b>Coding Challenge #98.1: Quadtree</b><br>The Coding Train (p5.js!)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=hYMZsMMlubg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/hYMZsMMlubg/hqdefault.jpg" alt=""><span><b>Why Doom is Awesome: Binary Space Partitioning</b><br>ShreddedNerd</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=U9RsOcPYnP4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/U9RsOcPYnP4/hqdefault.jpg" alt=""><span><b>Doom’un Gizli Ağacı (Türkçe)</b><br>Sezai Kumru</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=8C3_ZKy4KkA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/8C3_ZKy4KkA/hqdefault.jpg" alt=""><span><b>Sweep-Line Algorithm for Line Segment Intersection</b><br>Philipp Kindermann</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=3HECgXaR_2U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/3HECgXaR_2U/hqdefault.jpg" alt=""><span><b>Sweep And Prune</b><br>Dennis Morgovan</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=D1b7q2TMrWY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/D1b7q2TMrWY/hqdefault.jpg" alt=""><span><b>Augmented Data Structures: Interval Trees</b><br>Jaya Krishna</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/99GeometricSearch.pdf" target="_blank">Princeton ders slaytları: Geometric Applications of BSTs (PDF)</a></li>
+      <li><a href="https://coursera.cs.princeton.edu/algs4/assignments/kdtree/specification.php" target="_blank">Princeton ödevi: Kd-Trees</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/92search/" target="_blank">algs4 · 9.2 Geometric Search</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://box2d.org/files/ErinCatto_DynamicBVH_Full.pdf" target="_blank">Erin Catto (Box2D) · Dynamic Bounding Volume Hierarchies (GDC)</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/Sweep_and_prune" target="_blank">Wikipedia · Sweep and prune</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/Binary_space_partitioning" target="_blank">Wikipedia · Binary space partitioning (DOOM)</a></li>
+      <li><a href="../dengeli-agaclar/">Önceki deste: Dengeli Arama Ağaçları</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Öncelik Kuyrukları</div>
+    <div class="sub">İkili yığın, heapsort, olay zamanlayıcıları — ve A*’ın açık listesi</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../oncelik-kuyruklari/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/agac.js"></script>
+<script src="../ortak/geometri.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

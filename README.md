@@ -34,7 +34,7 @@ Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmü
 |---|------|-------|
 | 09 | [Ağaçlar ve İkili Arama Ağaçları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/agaclar-bst/) | ✅ hazır |
 | 10 | [Dengeli Arama Ağaçları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/dengeli-agaclar/) | ✅ hazır |
-| 11 | BST’nin Geometrik Uygulamaları | hazırlanıyor |
+| 11 | [BST’nin Geometrik Uygulamaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/bst-geometrik/) | ✅ hazır |
 
 **Bölüm 4 · Önceli̇k Kuyruklari Ve Hash**
 
@@ -80,16 +80,18 @@ ortak/              tüm destelerin ortak stil ve kodları
   mergesort.js      mergesort görselleştirmeleri, birleştirme laboratuvarı
   quicksort.js      quicksort, üç yollu bölümleme, quickselect, bölümleme laboratuvarı
   dengeli.js        2-3 ağacı, kırmızı-siyah BST, döndürme, B-ağacı hesaplayıcı, döndürme laboratuvarı
-quicksort/          08 · Quicksort
-mergesort/          07 · Mergesort
-algoritma-analizi/  02 · Algoritma analizi
+  geometri.js       süpürme doğrusu, kd-ağacı, aralık ağacı, sweep and prune, geometri laboratuvarı
 union-find/         01 · Union–Find
-yiginlar-kuyruklar/ 04 · Yığınlar ve kuyruklar
+algoritma-analizi/  02 · Algoritma analizi
 bagli-listeler/     03 · Bağlı listeler
+yiginlar-kuyruklar/ 04 · Yığınlar ve kuyruklar
 arama-algoritmalari/ 05 · Arama algoritmaları
 siralama-temel/     06 · Temel sıralama algoritmaları
+mergesort/          07 · Mergesort
+quicksort/          08 · Quicksort
 agaclar-bst/        09 · Ağaçlar ve ikili arama ağaçları
 dengeli-agaclar/    10 · Dengeli arama ağaçları
+bst-geometrik/      11 · BST’nin geometrik uygulamaları
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

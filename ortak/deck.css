@@ -585,3 +585,10 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .node23.hot > span { background: var(--red); color: #fff; }
 .node23.ok > span { background: var(--green); color: #fff; }
 .redlink { color: var(--red); font-weight: 800; }
+
+/* ---------- geometrik uygulamalar ---------- */
+.geo-row { display: flex; gap: 12px; align-items: flex-start; }
+.geo-row > canvas { flex: none; }
+.geo-side { flex: 1; min-width: 0; font-size: 20px; }
+.geo-side .mini { font-size: 16px; }
+.ll-chip.hit { background: var(--green); color: #fff; border-color: var(--green); }
