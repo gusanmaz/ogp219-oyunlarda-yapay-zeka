@@ -682,3 +682,5 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .libtable td:first-child { white-space: nowrap; }
 .paper { border-left: 4px solid var(--purple); padding: 4px 10px; margin: 6px 0; background: color-mix(in srgb, var(--purple) 8%, var(--card)); border-radius: 0 8px 8px 0; font-size: .82em; }
 .paper b { color: var(--purple); }
+.vec-info.below { font-size: 16px; display: flex; flex-wrap: wrap; gap: 0 18px; }
+.vec-info.below p { margin: 4px 0; }

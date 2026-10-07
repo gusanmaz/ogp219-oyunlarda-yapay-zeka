@@ -5,6 +5,7 @@
   const D = window.DEMOS, V = SL.V;
   const T = () => SL.theme();
   const f1 = x => (Math.round(x * 10) / 10).toFixed(1), f2 = x => (Math.round(x * 100) / 100).toFixed(2);
+  const pf = x => (x < 0 ? `(${f1(x)})` : f1(x));   // negatifleri parantezle yaz
 
   /* ---------- Başlık: vektör okları uçuşan alan ---------- */
   D.titlevec = function (root) {
@@ -51,7 +52,7 @@
         html = `<p><b class="c-blue">a</b> = ${vs(A)}<br><b class="c-green">b</b> = ${vs(B)}<br><b style="color:var(--purple)">a + b</b> = ${vs(s)}</p><p class="mini">Uç uca ekle: önce a kadar git, sonra b kadar. 🎮 konum = konum + hız</p>`;
       } else if (mode === 'sub') {
         const d = V.sub(B, A); arr(O, pa, t.blue, 'a (ben)'); arr(O, pb, t.green, 'b (hedef)'); arr(pa, pb, t.red, 'b − a');
-        html = `<p><b class="c-red">b − a</b> = ${vs(d)}</p><p>Uzunluk |b − a| = √(${f1(d.x)}² + ${f1(d.y)}²) = <b>${f2(V.len(d))}</b></p><p class="mini">“Benden hedefe giden ok”. Uzunluğu = aradaki mesafe. 🎮 Her NPC’nin ilk sorusu!</p>`;
+        html = `<p><b class="c-red">b − a</b> = ${vs(d)}</p><p>Uzunluk |b − a| = √(${pf(d.x)}² + ${pf(d.y)}²) = <b>${f2(V.len(d))}</b></p><p class="mini">“Benden hedefe giden ok”. Uzunluğu = aradaki mesafe. 🎮 Her NPC’nin ilk sorusu!</p>`;
       } else if (mode === 'norm') {
         const n = V.norm(A); ctx.save(); ctx.strokeStyle = t.muted; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(O.x, O.y, S, 0, 7); ctx.stroke(); ctx.restore();
         arr(O, pa, t.blue, 'a'); arr(O, toPx(n), t.amber, 'â', { w: 5 });
@@ -61,20 +62,22 @@
         const proj = V.mul(V.norm(A), d / (V.len(A) || 1));
         arr(O, pa, t.blue, 'a'); arr(O, pb, t.green, 'b');
         ctx.save(); ctx.strokeStyle = t.amber; ctx.lineWidth = 6; ctx.globalAlpha = 0.7; const pp = toPx(proj); ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(pp.x, pp.y); ctx.stroke(); ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(pb.x, pb.y); ctx.lineTo(pp.x, pp.y); ctx.stroke(); ctx.restore();
-        html = `<p>a · b = ${f1(A.x)}·${f1(B.x)} + ${f1(A.y)}·${f1(B.y)} = <b>${f2(d)}</b></p><p>Aradaki açı: <b>${f1(ang)}°</b> (cos = ${f2(cos)})</p><p><b class="${d > 0 ? 'c-green' : d < 0 ? 'c-red' : ''}">${d > 0 ? 'Pozitif: aynı yöne bakıyorlar (önümde)' : d < 0 ? 'Negatif: zıt yönlerde (arkamda)' : 'Sıfır: dik (tam yanımda)'}</b></p><p class="mini">Sarı = b’nin a üzerindeki gölgesi (izdüşüm).</p>`;
+        html = `<p>a · b = ${pf(A.x)}·${pf(B.x)} + ${pf(A.y)}·${pf(B.y)} = <b>${f2(d)}</b></p><p>Aradaki açı: <b>${f1(ang)}°</b> (cos = ${f2(cos)})</p><p><b class="${d > 0 ? 'c-green' : d < 0 ? 'c-red' : ''}">${d > 0 ? 'Pozitif: aynı yöne bakıyorlar (önümde)' : d < 0 ? 'Negatif: zıt yönlerde (arkamda)' : 'Sıfır: dik (tam yanımda)'}</b></p><p class="mini">Sarı = b’nin a üzerindeki gölgesi (izdüşüm).</p>`;
       } else {
         const cr = V.cross(A, B); arr(O, pa, t.blue, 'a (bakış)'); arr(O, pb, t.green, 'b (hedef)');
-        html = `<p>a × b = ${f1(A.x)}·${f1(B.y)} − ${f1(A.y)}·${f1(B.x)} = <b>${f2(cr)}</b></p><p><b>${cr > 0 ? 'Pozitif → b, a’nın SAĞINDA (ekran koordinatında y aşağı)' : cr < 0 ? 'Negatif → b, a’nın SOLUNDA' : 'Sıfır → aynı doğru üzerinde'}</b></p><p class="mini">2B çapraz çarpım tek bir sayı verir: işareti “sola mı sağa mı dönmeliyim?” sorusunun cevabı. (Unity’de y yukarı olduğu için işaretler ters!)</p>`;
+        html = `<p>a × b = ${pf(A.x)}·${pf(B.y)} − ${pf(A.y)}·${pf(B.x)} = <b>${f2(cr)}</b></p><p><b>${cr > 0 ? 'Pozitif → b, a’nın SAĞINDA (ekran koordinatında y aşağı)' : cr < 0 ? 'Negatif → b, a’nın SOLUNDA' : 'Sıfır → aynı doğru üzerinde'}</b></p><p class="mini">2B çapraz çarpım tek bir sayı verir: işareti “sola mı sağa mı dönmeliyim?” sorusunun cevabı. (Unity’de y yukarı olduğu için işaretler ters!)</p>`;
       }
-      [[pa, t.blue], [pb, t.green]].forEach(([p, col]) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, 7); ctx.fill(); });
+      [[pa, t.blue], [pb, t.green]].forEach(([p, col]) => { ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(p.x, p.y, 13, 0, 7); ctx.stroke(); ctx.setLineDash([]); });
       info.innerHTML = html + '<p class="mini">Ok uçlarını (noktaları) fareyle sürükleyin.</p>';
     };
     const pick = e => { const r = c.getBoundingClientRect(), p = V.v(((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height); return p; };
-    c.addEventListener('mousedown', e => { const p = pick(e); drag = V.dist(p, toPx(A)) < 18 ? 'A' : V.dist(p, toPx(B)) < 18 ? 'B' : null; });
+    c.addEventListener('mousedown', e => { const p = pick(e); drag = V.dist(p, toPx(A)) < 20 ? 'A' : V.dist(p, toPx(B)) < 20 ? 'B' : null; });
     c.addEventListener('mousemove', e => { if (!drag) return; const u = toU(pick(e)); if (drag === 'A') A = u; else B = u; draw(); });
     window.addEventListener('mouseup', () => (drag = null));
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, el('label', { class: 'ctl' }, 'İşlem ', select({ add: 'toplama a + b', sub: 'çıkarma b − a (mesafe)', norm: 'normalize (yön)', dot: 'nokta çarpım a · b', cross: 'çapraz çarpım a × b' }, mode, v => { mode = v; draw(); }))), el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, c), info));
+    const narrow = !!root.closest('.cols');   // iki sütunlu slaytta açıklamayı tuvalin altına koy
+    if (narrow) info.classList.add('below');
+    root.append(el('div', { class: 'sv-controls' }, el('label', { class: 'ctl' }, 'İşlem ', select({ add: 'toplama a + b', sub: 'çıkarma b − a (mesafe)', norm: 'normalize (yön)', dot: 'nokta çarpım a · b', cross: 'çapraz çarpım a × b' }, mode, v => { mode = v; draw(); }))), narrow ? el('div', null, c, info) : el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, c), info));
     draw(); SL.onTheme(draw);
   };
 

@@ -54,7 +54,11 @@
     ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = o.w || 2.5; if (o.dash) ctx.setLineDash(o.dash);
     ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x - u.x * h * 0.6, to.y - u.y * h * 0.6); ctx.stroke(); ctx.setLineDash([]);
     ctx.beginPath(); ctx.moveTo(to.x, to.y); ctx.lineTo(to.x - u.x * h - u.y * h * 0.5, to.y - u.y * h + u.x * h * 0.5); ctx.lineTo(to.x - u.x * h + u.y * h * 0.5, to.y - u.y * h - u.x * h * 0.5); ctx.closePath(); ctx.fill();
-    if (o.label) SL.drawLabel(ctx, o.label, to.x + u.x * 12, to.y + u.y * 12, col);
+    if (o.label) {   // etiketi okun yönünde ucun ÖTESİNE, yöne göre hizalayarak koy
+      const gap = o.labelGap || 20, lx = to.x + u.x * gap, ly = to.y + u.y * gap;
+      const align = u.x > 0.35 ? 'left' : u.x < -0.35 ? 'right' : 'center';
+      SL.drawLabel(ctx, o.label, lx, ly + (align === 'center' ? (u.y > 0 ? 8 : -8) : 0), col, { align });
+    }
     ctx.restore();
   };
   SL.drawLabel = function (ctx, txt, x, y, col, o = {}) {
