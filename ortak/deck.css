@@ -610,3 +610,25 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .hp-stream .ll-chip.cur { background: var(--amber); border-color: var(--amber); color: #111; }
 .hp-stream .ll-chip.past { opacity: .4; }
 .tm-log { flex: 1; min-width: 0; font-size: 17px; line-height: 1.5; }
+
+/* ---------- hash tabloları ---------- */
+.ch-view { display: flex; flex-direction: column; gap: 4px; font-family: "JetBrains Mono", monospace; font-size: 16px; margin: 6px 0; }
+.ch-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 2px 6px; border-radius: 8px; }
+.ch-row.on { background: color-mix(in srgb, var(--amber) 18%, transparent); }
+.ch-idx { display: inline-block; min-width: 34px; text-align: center; font-weight: 700; border: 2px solid var(--ink-2); border-radius: 6px; background: var(--card); }
+.ch-arrow, .ch-link { color: var(--muted); }
+.ch-view .ll-chip { font-size: 15px; padding: 1px 8px; }
+.ll-chip.cur { background: var(--amber); border-color: var(--amber); color: #111; }
+.ll-chip.past { opacity: .45; }
+.lp-view { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; margin: 8px 0; font-family: "JetBrains Mono", monospace; }
+.lp-view.small { grid-template-columns: repeat(8, minmax(0, 1fr)); font-size: 12px; }
+.lp-cell { border: 2px solid var(--rule); border-radius: 6px; text-align: center; min-height: 46px; background: var(--card); overflow: hidden; }
+.lp-cell i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
+.lp-cell b { font-size: 12px; word-break: break-all; }
+.lp-cell.cl0 { background: color-mix(in srgb, var(--blue) 22%, var(--card)); }
+.lp-cell.cl1 { background: color-mix(in srgb, var(--purple) 22%, var(--card)); }
+.lp-cell.cl2 { background: color-mix(in srgb, var(--teal) 22%, var(--card)); }
+.lp-cell.cur { border-color: var(--amber); box-shadow: 0 0 0 2px var(--amber) inset; }
+.lp-cell.past { opacity: .55; }
+.lp-cell.found { border-color: var(--green); box-shadow: 0 0 0 3px var(--green) inset; }
+.lp-cell.miss { border-color: var(--red); box-shadow: 0 0 0 3px var(--red) inset; }

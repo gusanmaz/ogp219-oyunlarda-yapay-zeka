@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hash Tabloları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Hash tabloları: hash fonksiyonları, ayrı zincirleme, doğrusal yoklama, kümelenme, hash taşkını, uzaysal hash, Zobrist hash. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d3a4a 0%, #10223a 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · SEMBOL TABLOLARI</div>
+  <div class="ttl" style="font-size:80px">Hash Tabloları</div>
+  <div class="sub"><i>Anahtarı doğrudan dizi indeksine çevir</i> — ortalamada sabit zamanda arama</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlehash"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.4 Hash Tables bölümünü temel alır. Arka planda eşya adları hash değerlerine göre 16 kovaya düşüyor; aynı kovaya düşenler üst üste biniyor (zincir).</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li><b>Hash fonksiyonları</b> — anahtardan sayıya <span class="en">hash function</span></li>
+      <li><b>Ayrı zincirleme</b> — çakışanlar aynı kovada bir listede <span class="en">separate chaining</span></li>
+      <li><b>Doğrusal yoklama</b> — çakışırsan yandaki boş yere <span class="en">linear probing</span></li>
+      <li><b>Gerçek dünyada</b> — Python dict, C# Dictionary, hash saldırıları</li>
+      <li><b>Oyunda</b> — uzaysal hash, Zobrist hash, <code>Animator.StringToHash</code></li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…Python’daki <code>dict</code>’in, C#’taki <code>Dictionary</code>’nin içini bilecek; 10.000 parçacığın çarpışmasını “ızgara hash’i” ile nasıl hızlandıracağınızı ve satranç motorlarının aynı pozisyonu nasıl tanıdığını anlayacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: EŞYA VERİTABANI</span>
+    <p class="big">Oyununuzda 100.000 eşya var. Oyuncu “Ejder Kılıcı”nı alınca eşyanın verisini bulmanız lazım.</p>
+  </div>
+  <ul style="font-size:.95em">
+    <li class="fragment">Sıralı dizi + ikili arama / dengeli BST: ~lg 100.000 ≈ <b>17</b> karşılaştırma. Fena değil.</li>
+    <li class="fragment">Eşyaların ID’si 0…99.999 ise: <code>items[id]</code> → <b>1 adım</b>! Dizi indeksi en hızlı arama.</li>
+    <li class="fragment">Ama anahtar bir <b>isim</b> (string), bir <b>koordinat</b>, bir <b>oyun durumu</b> olursa?</li>
+  </ul>
+  <p class="fragment big">Fikir: <b>her anahtarı bir dizi indeksine çeviren</b> bir fonksiyon yaz → <b>hash</b>.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>hash function</td><td>hash (özet) fonksiyonu</td><td>Anahtarı 0…M−1 arası bir tam sayıya çevirir</td></tr>
+    <tr><td>hash table</td><td>hash tablosu</td><td>Anahtarları hash değerine göre dizide tutan sembol tablosu</td></tr>
+    <tr><td>collision</td><td>çakışma</td><td>İki farklı anahtarın aynı indekse düşmesi</td></tr>
+    <tr><td>bucket</td><td>kova</td><td>Dizinin bir hücresi</td></tr>
+    <tr><td>separate chaining</td><td>ayrı zincirleme</td><td>Her kovada bir bağlı liste</td></tr>
+    <tr><td>open addressing · linear probing</td><td>açık adresleme · doğrusal yoklama</td><td>Çakışınca dizide bir sonraki boş yere bak</td></tr>
+    <tr><td>load factor α</td><td>doluluk oranı</td><td>N / M: tablo ne kadar dolu?</td></tr>
+    <tr><td>resize / rehash</td><td>büyütme / yeniden hash’leme</td><td>Tabloyu büyütüp herkesi yeni yerine taşımak</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Hash fonksiyonları</div>
+  <div class="sub">anahtar → tam sayı → dizi indeksi</div>
+  <ul class="agenda"><li class="on">hash fonksiyonları</li><li class="">ayrı zincirleme</li><li class="">doğrusal yoklama</li><li class="">gerçek dünyada hash</li><li class="">oyunda hash</li></ul>
+</section>
+
+<section data-sec="hash fonksiyonları">
+  <h2>İyi bir hash fonksiyonu</h2>
+  <div class="cols">
+    <ol style="font-size:.95em">
+      <li class="fragment"><b>Tutarlı</b> <span class="en">deterministic</span>: aynı anahtar → hep aynı sayı</li>
+      <li class="fragment"><b>Hızlı</b>: aramanın kendisinden pahalı olmamalı</li>
+      <li class="fragment"><b>Düzgün dağıtır</b> <span class="en">uniform</span>: anahtarları kovalara eşit yayar</li>
+    </ol>
+    <div class="box warn fragment"><span class="bt">⚠️ Kötü örnekler</span>
+      <ul>
+        <li>Telefon numarasının <b>ilk 3 hanesi</b> → herkes 0532’de 😅 (son 3 hane çok daha iyi)</li>
+        <li>Oyuncu adının <b>ilk harfi</b> → “A” ve “M” kovaları tıklım tıklım, “Ğ” boş</li>
+        <li>Koordinat için <code>x + y</code> → (1, 2) ve (2, 1) hep çakışır</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box story fragment"><span class="bt">Varsayım <span class="en">uniform hashing assumption</span></span>Analizlerde, her anahtarın M kovadan birine <b>eşit olasılıkla ve bağımsız</b> düştüğünü varsayacağız. Gerçek fonksiyonlar buna “yeterince” yaklaşır.</div>
+</section>
+
+<section data-sec="hash fonksiyonları">
+  <h2>🎒 Ön bilgi: mod alma <code>%</code> ve negatif sayılar</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li><code>a % M</code> = a’nın M’ye bölümünden kalan → her zaman <b>0…M−1</b> arası… <b>mı</b>?</li>
+        <li class="fragment">⚠️ <b>C#, Java, JavaScript</b>: <code>-7 % 3 == -1</code> → <b>negatif</b> indeks → dizi dışı hatası!</li>
+        <li class="fragment"><b>Python</b>: <code>-7 % 3 == 2</code> → hep pozitif ✔</li>
+        <li class="fragment">Çözüm: işaret bitini sil: <code>(h &amp; 0x7fffffff) % M</code><br><span class="mini"><code>&amp;</code> = bit düzeyinde VE; <code>0x7fffffff</code> = en soldaki (işaret) biti 0, diğerleri 1 olan sayı</span></li>
+      </ul>
+    </div>
+    <div class="box low"><span class="bt">⚙️ Neden M asal sayı?</span>M = 100 seçerseniz <code>h % 100</code> sadece son 2 basamağa bakar; anahtarlarda bir düzen varsa (hep 0 ile biten skorlar!) kovalar dengesiz dolar. <b>Asal</b> M, h’nin tüm bitlerini işe katar.
+      <p class="mini">Hızlı tablolar ise M’yi 2’nin kuvveti seçip <code>h &amp; (M − 1)</code> yapar (bölmeden çok daha hızlı) ama o zaman hash fonksiyonunun iyi karıştırması şarttır.</p></div>
+  </div>
+</section>
+
+<section data-sec="hash fonksiyonları">
+  <h2>String hash: her karakter işe karışsın</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <p><b>Horner yöntemi</b>: stringi 31 tabanında bir “sayı” gibi oku:</p>
+      <p class="formula">\( h = s_0 \cdot 31^{L-1} + s_1 \cdot 31^{L-2} + \dots + s_{L-1} \)</p>
+      <p>Her adımda: <code>h = 31 · h + karakter_kodu</code>. Java’nın <code>String.hashCode()</code>’u tam olarak budur.</p>
+      <div class="box story"><span class="bt">📜 Java 1.1’in hatası</span>Hız için uzun stringlerde sadece <b>her 8. karakteri</b> kullandılar. Web adresleri (hep “http://www…” ile başlar) korkunç çakıştı. Java 1.2’de düzeltildi: <b>bütün</b> karakterler.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def hash_str(s, M):
+    h = 0
+    for ch in s:
+        h = (31 * h + ord(ch)) % M   # ord: karakterin kodu
+    return h
+
+print(hash_str("iksir", 97))
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int HashStr(string s, int M)
+{
+    int h = 0;
+    foreach (char ch in s)
+        h = (31 * h + ch) % M;       // char → sayı otomatik
+    return h;
+}
+
+// Hazırı: "iksir".GetHashCode()  (negatif olabilir!)
+int i = ("iksir".GetHashCode() & 0x7fffffff) % 97;
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function hashStr(s, M) {
+  let h = 0;
+  for (const ch of s)
+    h = (31 * h + ch.charCodeAt(0)) % M;   // karakterin kodu
+  return h;
+}
+
+console.log(hashStr("iksir", 97));
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="hash fonksiyonları">
+  <h2>String hash — kendiniz deneyin</h2>
+  <div class="demo" data-demo="hashfn" data-default="iksir" data-m="97"></div>
+  <p class="mini">Tek harf değiştirin (“iksir” → “iksır”): indeks tamamen değişir. İyi bir hash fonksiyonu benzer anahtarları <b>dağıtır</b>.</p>
+</section>
+
+<section data-sec="hash fonksiyonları">
+  <h2>🎒 Ön bilgi: kendi sınıfınızı anahtar yapmak</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <p>Hash tablosu iki şey sorar: “<b>hash’in ne?</b>” ve “<b>bu ikisi eşit mi?</b>”</p>
+      <ul>
+        <li>C#: <code>GetHashCode()</code> + <code>Equals()</code></li>
+        <li>Python: <code>__hash__</code> + <code>__eq__</code></li>
+        <li><b>Kural</b>: eşit iki nesnenin hash’i <b>aynı</b> olmalı. (Tersi gerekmez: farklı nesneler çakışabilir.)</li>
+      </ul>
+      <div class="box warn"><span class="bt">⚠️ JavaScript tuzağı</span><code>Map</code> nesneleri <b>kimliğe</b> göre karşılaştırır: <code>map.set([3,4], "ork")</code> sonra <code>map.get([3,4])</code> → <b>undefined</b>! (İki ayrı dizi.) Izgara koordinatları için anahtarı <b>string</b> yapın: <code>`${x},${y}`</code> ya da tek sayı: <code>x * 100003 + y</code>.</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+struct Cell                              // ızgara hücresi
+{
+    public int X, Y;
+    public Cell(int x, int y) { X = x; Y = y; }
+
+    public override bool Equals(object o)
+    {
+        return o is Cell c && c.X == X && c.Y == Y;
+    }
+    public override int GetHashCode()
+    {
+        return 31 * X + Y;               // (1,2) ile (2,1) farklı
+    }
+}
+
+var map = new Dictionary<Cell, string>();
+map[new Cell(3, 4)] = "ork";
+Console.WriteLine(map[new Cell(3, 4)]);  // ork ✔
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Cell:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+    def __hash__(self):
+        return hash((self.x, self.y))  # demetin hazır hash'i
+
+grid = {}
+grid[Cell(3, 4)] = "ork"
+print(grid[Cell(3, 4)])                # ork ✔
+
+# daha kısası: demeti doğrudan anahtar yap
+grid2 = {(3, 4): "ork"}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const map = new Map();
+map.set([3, 4], "ork");
+console.log(map.get([3, 4]));         // undefined ❌ (farklı dizi!)
+
+const key = (x, y) => x + "," + y;    // "3,4"
+map.set(key(3, 4), "ork");
+console.log(map.get(key(3, 4)));      // ork ✔
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="hash fonksiyonları">
+  <h2>Çakışmalar kaçınılmaz: doğum günü problemi 🎂</h2>
+  <div class="demo" data-demo="birthday"></div>
+  <p class="mini">23 kişilik bir sınıfta iki kişinin aynı gün doğmuş olma ihtimali %50’den fazla! M = 365 kovaya ~24 anahtar atınca ilk çakışma gelir. <b>Sonuç</b>: çakışmaları önlemeye çalışmak boşuna — onları <b>idare etmeliyiz</b>.</p>
+</section>
+
+<section data-sec="hash fonksiyonları">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · hash fonksiyonları</div>
+    <div class="q">C#’ta <code>int i = key.GetHashCode() % M;</code> satırının gizli tehlikesi ne?</div>
+    <div class="opts">
+      <button data-opt="A">Hiç tehlikesi yok</button>
+      <button data-opt="B">GetHashCode negatif olabilir → i negatif olur → dizi dışı hatası</button>
+      <button data-opt="C">M asal değilse derlenmez</button>
+      <button data-opt="D">Her seferinde farklı sonuç verir</button>
+    </div>
+    <div class="explain">C# (ve Java, JS) negatif sayının modunu <b>negatif</b> verir. Çözüm: <code>(key.GetHashCode() &amp; 0x7fffffff) % M</code>. (Python’da <code>%</code> hep pozitif döner.) Not: <code>Math.Abs(h) % M</code> da neredeyse çalışır ama <code>int.MinValue</code> için patlar!</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Ayrı zincirleme</div>
+  <div class="sub"><i>separate chaining</i> — her kovada bir bağlı liste</div>
+  <ul class="agenda"><li class="done">hash fonksiyonları</li><li class="on">ayrı zincirleme</li><li class="">doğrusal yoklama</li><li class="">gerçek dünyada hash</li><li class="">oyunda hash</li></ul>
+</section>
+
+<section data-sec="ayrı zincirleme">
+  <h2>Fikir: M tane bağlı liste</h2>
+  <div class="cols c64">
+    <ul style="font-size:.92em">
+      <li>M kovalı bir dizi; her kova bir <b>bağlı liste</b> (Bağlı Listeler destesi!)</li>
+      <li class="fragment"><b>put</b>: <code>i = hash(key) % M</code>; i. listede ara; yoksa <b>başına</b> ekle</li>
+      <li class="fragment"><b>get</b>: sadece i. listede ara</li>
+      <li class="fragment">Çakışan anahtarlar aynı listede <b>sorunsuz</b> yaşar</li>
+    </ul>
+    <div class="box game fragment"><span class="bt">🎮 Benzetme: posta kutuları</span>Apartmanda 7 posta kutusu var, 40 daire. Her mektup daire numarası % 7 kutusuna atılır. Mektubunu arayan sadece <b>kendi kutusunu</b> karıştırır: ortalama 40/7 ≈ 6 mektup.</div>
+  </div>
+</section>
+
+<section data-sec="ayrı zincirleme">
+  <h2>Ayrı zincirleme — kendiniz deneyin</h2>
+  <div class="demo" data-demo="chainviz" data-m="7" data-n="10" data-default="iksir"></div>
+  <p class="mini">Bir eşya adı yazıp put / get deneyin. “40 eşya” ile zincir uzunluklarına bakın: hepsi N/M civarında mı? M’yi değiştirin.</p>
+</section>
+
+<section data-sec="ayrı zincirleme">
+  <h2>Ayrı zincirleme — kod</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-5|7-8|10-18|20-25"><script type="text/template">
+class Node:
+    def __init__(self, key, val, next):
+        self.key = key
+        self.val = val
+        self.next = next
+
+M = 97
+table = [None] * M                  # M tane boş zincir
+
+def put(key, val):
+    i = hash(key) % M               # Python'da % hep 0..M-1
+    x = table[i]
+    while x is not None:            # zincirde var mı?
+        if x.key == key:
+            x.val = val             # varsa güncelle
+            return
+        x = x.next
+    table[i] = Node(key, val, table[i])   # yoksa BAŞINA ekle
+
+def get(key):
+    x = table[hash(key) % M]
+    while x is not None:
+        if x.key == key:
+            return x.val
+        x = x.next
+    return None
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Node
+{
+    public string Key; public int Val; public Node Next;
+    public Node(string k, int v, Node n) { Key = k; Val = v; Next = n; }
+}
+
+const int M = 97;
+Node[] table = new Node[M];
+
+int Index(string key) => (key.GetHashCode() & 0x7fffffff) % M;
+
+void Put(string key, int val)
+{
+    int i = Index(key);
+    for (Node x = table[i]; x != null; x = x.Next)
+        if (x.Key == key) { x.Val = val; return; }   // güncelle
+    table[i] = new Node(key, val, table[i]);         // başına ekle
+}
+
+int? Get(string key)
+{
+    for (Node x = table[Index(key)]; x != null; x = x.Next)
+        if (x.Key == key) return x.Val;
+    return null;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Node {
+  constructor(key, val, next) { this.key = key; this.val = val; this.next = next; }
+}
+
+const M = 97;
+const table = new Array(M).fill(null);
+
+function put(key, val) {
+  const i = hashStr(key, M);
+  for (let x = table[i]; x !== null; x = x.next)
+    if (x.key === key) { x.val = val; return; }   // güncelle
+  table[i] = new Node(key, val, table[i]);        // başına ekle
+}
+
+function get(key) {
+  for (let x = table[hashStr(key, M)]; x !== null; x = x.next)
+    if (x.key === key) return x.val;
+  return null;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>[None] * M</code>: M tane None’dan oluşan liste · <code>int?</code> (C#): “int ya da null” · <code>for (x = baş; x != null; x = x.next)</code>: bağlı listede gezinmenin kısa yazımı.</p>
+</section>
+
+<section data-sec="ayrı zincirleme">
+  <h2>Analiz: zincirler ne kadar uzun?</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>Düzgün hash varsayımıyla, N anahtar ve M kovalı bir tabloda bir zincirdeki anahtar sayısı <b>N/M</b>’ye çok yakın olur (çok yüksek olasılıkla).
+      <p class="mini">Arama maliyeti ≈ 1 + N/M. M ≈ N/4 seçersek → zincirler ~4 uzunlukta → <b>sabit zaman</b>!</p></div>
+    <div class="box story"><span class="bt">M nasıl seçilir?</span>
+      <ul>
+        <li>M çok büyük → boş kovalar, bellek israfı</li>
+        <li>M çok küçük → uzun zincirler, yavaş arama</li>
+        <li class="fragment">Bilmiyorsak: <b>büyüt</b>! N/M belli bir sınırı aşınca M’yi 2 katına çıkar, herkesi yeniden hash’le (Yığınlar destesindeki dinamik dizi gibi: ortalamada eleman başına sabit iş)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box low fragment" style="margin-top:10px"><span class="bt">⚙️ Java’nın sigortası</span>Java’nın <code>HashMap</code>’i bir zincir <b>8</b>’i geçerse o zinciri bir <b>kırmızı-siyah ağaca</b> çevirir (Dengeli Ağaçlar destesi!) → en kötü durumda bile lg N.</div>
+</section>
+
+<section data-sec="ayrı zincirleme">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · ayrı zincirleme</div>
+    <div class="q">10.000 eşya, M = 2.500 kovalı ayrı zincirlemeli bir tabloda. Bir <code>get</code> ortalama yaklaşık kaç anahtarla karşılaştırma yapar?</div>
+    <div class="opts">
+      <button data-opt="A">1</button>
+      <button data-opt="B">~4</button>
+      <button data-opt="C">~14 (lg 10.000)</button>
+      <button data-opt="D">~2.500</button>
+    </div>
+    <div class="explain">Ortalama zincir uzunluğu N/M = 10.000 / 2.500 = <b>4</b>. Bulma: zincirin ortasına kadar (~2), bulamama: zincirin tamamı (~4). Dengeli BST’nin ~14’ünden iyi — ve N büyüdükçe M’yi de büyütürsek sabit kalır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Doğrusal yoklama</div>
+  <div class="sub"><i>linear probing</i> — dolu mu? bir sağa bak</div>
+  <ul class="agenda"><li class="done">hash fonksiyonları</li><li class="done">ayrı zincirleme</li><li class="on">doğrusal yoklama</li><li class="">gerçek dünyada hash</li><li class="">oyunda hash</li></ul>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <h2>Açık adresleme: listeler olmadan</h2>
+  <div class="cols c64">
+    <ul style="font-size:.92em">
+      <li>Tek bir dizi (M &gt; N). Her hücrede <b>en fazla bir</b> anahtar.</li>
+      <li class="fragment"><b>put</b>: <code>i = hash % M</code>. Dolu mu? → <code>i + 1</code>, <code>i + 2</code>… ilk <b>boş</b> hücreye koy (sona gelince başa sar)</li>
+      <li class="fragment"><b>get</b>: aynı yoldan yürü. Anahtarı bulursan ✔; <b>boş hücreye</b> gelirsen → yok</li>
+      <li class="fragment">Tablo <b>asla dolmamalı</b> (sonsuz döngü!) → doluluk ½’yi geçince büyüt</li>
+    </ul>
+    <div class="box game fragment"><span class="bt">🎮 Benzetme: otopark</span>Bilet numaranız hangi yeri gösteriyorsa oraya park edin; doluysa bir sonrakine… Arabanızı ararken de aynı yerden başlayıp boş yere gelene kadar yürürsünüz. (Knuth bunu gerçekten “park etme problemi” diye inceledi!)</div>
+  </div>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <h2>Doğrusal yoklama — kendiniz deneyin</h2>
+  <div class="demo" data-demo="probeviz" data-m="16" data-alpha="0.25" data-default="iksir"></div>
+  <p class="mini">Aynı renkli bitişik bloklar = <b>küme</b> <span class="en">cluster</span>. “⅞ dolu” ile tabloda olmayan bir anahtarı (ör. “pizza”) arayın: kaç yoklama? Sonra “α &gt; ½ olunca büyüt”ü açıp put yapın.</p>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <h2>Doğrusal yoklama — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>İki paralel dizi: <code>keys[]</code> ve <code>vals[]</code>. Bağlantı yok, düğüm nesnesi yok.</p>
+      <div class="box low"><span class="bt">⚙️ Önbellek kazancı</span>Yoklama <b>yan yana</b> hücrelere bakar → hepsi aynı önbellek satırında. Zincirleme ise her adımda bellekte başka yere atlar. Bu yüzden modern hızlı tablolar (Python dict, Google’ın “Swiss table”ı, Rust HashMap) <b>açık adresleme</b> kullanır.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="5-13|7|11|15-21"><script type="text/template">
+M = 16
+keys = [None] * M
+vals = [None] * M
+
+def put(key, val):
+    i = hash(key) % M
+    while keys[i] is not None:      # dolu hücreleri geç
+        if keys[i] == key:
+            vals[i] = val           # varsa güncelle
+            return
+        i = (i + 1) % M             # bir sağa (sonda başa sar)
+    keys[i] = key
+    vals[i] = val
+
+def get(key):
+    i = hash(key) % M
+    while keys[i] is not None:
+        if keys[i] == key:
+            return vals[i]
+        i = (i + 1) % M
+    return None                     # boş hücre: yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int M = 16;
+string[] keys = new string[16];
+int[] vals = new int[16];
+
+void Put(string key, int val)
+{
+    int i = Index(key);
+    while (keys[i] != null)
+    {
+        if (keys[i] == key) { vals[i] = val; return; }
+        i = (i + 1) % M;                 // bir sağa, sonda başa
+    }
+    keys[i] = key; vals[i] = val;
+}
+
+int? Get(string key)
+{
+    for (int i = Index(key); keys[i] != null; i = (i + 1) % M)
+        if (keys[i] == key) return vals[i];
+    return null;                         // boş hücre: yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+let M = 16;
+const keys = new Array(M).fill(null);
+const vals = new Array(M).fill(null);
+
+function put(key, val) {
+  let i = hashStr(key, M);
+  while (keys[i] !== null) {
+    if (keys[i] === key) { vals[i] = val; return; }
+    i = (i + 1) % M;                    // bir sağa, sonda başa
+  }
+  keys[i] = key; vals[i] = val;
+}
+
+function get(key) {
+  for (let i = hashStr(key, M); keys[i] !== null; i = (i + 1) % M)
+    if (keys[i] === key) return vals[i];
+  return null;                          // boş hücre: yok
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <h2>Kümelenme: zenginler daha da zenginleşir</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li>Büyük bir kümeye düşen yeni anahtar kümenin <b>sonuna</b> kadar yürür ve kümeyi <b>bir büyütür</b></li>
+        <li class="fragment">Büyük küme → daha çok anahtar ona düşer → daha da büyür</li>
+        <li class="fragment">İki küme arasındaki tek boş hücre dolunca iki küme <b>birleşir</b></li>
+      </ul>
+      <div class="box story fragment"><span class="bt">📜 1963 · Donald Knuth</span>Genç Knuth doğrusal yoklamanın ortalama maliyetini hesapladı. Kendi anlattığına göre bu, onun “algoritma analizi” alanına girişiydi — ve bu alanın doğuşlarından biri.</div>
+    </div>
+    <div class="box prop"><span class="bt">Önerme (Knuth)</span>Doluluk α = N/M iken ortalama yoklama sayısı:
+      <p class="formula">bulma: \( \tfrac12\left(1 + \tfrac{1}{1-\alpha}\right) \) &nbsp; bulamama: \( \tfrac12\left(1 + \tfrac{1}{(1-\alpha)^2}\right) \)</p>
+      <p class="mini">α = ½ → bulma ~1,5, bulamama ~2,5. α → 1 olunca <b>patlar</b>: α = 0,95’te bulamama ~200!</p></div>
+  </div>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <h2>Deney: Knuth haklı mı?</h2>
+  <div class="demo" data-demo="clusters"></div>
+  <p class="mini">Kural: doğrusal yoklamalı tabloyu en fazla <b>yarı dolu</b> tutun. Büyütme (resize) bunu otomatik sağlar.</p>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <div class="box warn" style="font-size:1em"><span class="bt">⚠️ SİLME TUZAĞI</span>
+    <p>Doğrusal yoklamada bir anahtarı sadece <code>keys[i] = None</code> yaparak silemezsiniz!</p>
+    <p class="fragment">Neden? Arama “boş hücreye gelince dur” diyor. Ortaya açılan delik, kümenin sağındaki anahtarları <b>kayıp</b> gösterir.</p>
+    <p class="fragment"><b>Çözümler</b>: (1) Silinen hücreden sonra kümenin geri kalanını <b>yeniden ekle</b> (Princeton’ın yolu). (2) Hücreye “<b>mezar taşı</b>” <span class="en">tombstone</span> koy: “burada biri vardı, aramaya devam et”.</p>
+  </div>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · doğrusal yoklama</div>
+    <div class="q">Doğrusal yoklamalı bir tabloda arama, aranan anahtarı bulamadan <b>boş</b> bir hücreye geldi. Bu ne demek?</div>
+    <div class="opts">
+      <button data-opt="A">Tablo bozuk</button>
+      <button data-opt="B">Anahtar tabloda yok — olsaydı bu boş hücreden önce bir yerde olurdu</button>
+      <button data-opt="C">Anahtar bir sonraki kümede olabilir, aramaya devam etmeli</button>
+      <button data-opt="D">Tablo dolu, büyütmek gerek</button>
+    </div>
+    <div class="explain">put da aynı yoldan yürür ve <b>ilk boş hücreye</b> yerleştirir. Anahtar eklenmiş olsaydı, en geç bu boş hücreye konmuş olurdu. Bu yüzden boş hücre = “yok”. (Silmenin neden dikkat istediğinin sebebi de bu.)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Gerçek dünyada hash</div>
+  <div class="sub">diller ne kullanıyor, saldırılar, hash mi BST mi?</div>
+  <ul class="agenda"><li class="done">hash fonksiyonları</li><li class="done">ayrı zincirleme</li><li class="done">doğrusal yoklama</li><li class="on">gerçek dünyada hash</li><li class="">oyunda hash</li></ul>
+</section>
+
+<section data-sec="gerçek dünya">
+  <h2>Dillerin hazır hash tabloları</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>dil</th><th>yapı</th><th>içeride</th></tr>
+    <tr><td>Python</td><td><code>dict</code>, <code>set</code></td><td>açık adresleme (karışık yoklama dizisiyle); 3.7’den beri ekleme sırasını korur</td></tr>
+    <tr><td>C#</td><td><code>Dictionary&lt;K,V&gt;</code>, <code>HashSet&lt;T&gt;</code></td><td>ayrı zincirleme — ama düğümler değil <b>diziler</b> içinde (kova dizisi + kayıt dizisi); M asal</td></tr>
+    <tr><td>Java</td><td><code>HashMap</code></td><td>ayrı zincirleme; uzun zincir → kırmızı-siyah ağaç</td></tr>
+    <tr><td>C++</td><td><code>std::unordered_map</code></td><td>ayrı zincirleme (standart bunu dolaylı olarak gerektirir)</td></tr>
+    <tr><td>JavaScript</td><td><code>Map</code>, <code>Set</code>, nesneler</td><td>motorun işi (V8: ekleme sırasını koruyan hash tablosu)</td></tr>
+    <tr><td>Rust / Abseil</td><td><code>HashMap</code> / Swiss table</td><td>açık adresleme + SIMD ile 16 hücreye birden bakma</td></tr>
+  </table>
+  <p class="mini">Hepsi büyütmeyi otomatik yapar. Siz sadece <code>map[key] = value</code> yazarsınız — ama içeride bu derste gördüğünüz fikirler çalışır.</p>
+</section>
+
+<section data-sec="gerçek dünya">
+  <h2>Hash taşkını saldırısı <span class="en">hash flooding</span> 💣</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li>Düzgün hash varsayımı = “anahtarlar <b>rastgele</b> gibi davranır”.</li>
+        <li class="fragment">Peki saldırgan, <b>hepsi aynı kovaya düşen</b> binlerce anahtar gönderirse? → tek bir dev zincir → her işlem N → sunucu kilitlenir.</li>
+        <li class="fragment">Java’nın string hash’i bilindiği için bu anahtarları üretmek kolay (ör. “Aa” ve “BB” aynı hash’e sahip!)</li>
+      </ul>
+    </div>
+    <div class="box story fragment"><span class="bt">📜 2011 · 28C3</span>Klink ve Wälde, PHP, Java, Python, Ruby… web sunucularını tek bir POST isteğiyle dakikalarca meşgul ettiler. Sonuç: diller hash fonksiyonuna <b>rastgele bir tohum</b> eklendi. Python 3.3’ten beri her çalıştırmada <code>hash("iksir")</code> <b>farklı</b> çıkar!</div>
+  </div>
+  <div class="box game fragment" style="margin-top:8px"><span class="bt">🎮 Oyunda</span>Çok oyunculu oyun sunucusu, oyuncudan gelen string’leri (sohbet, isim, eşya etiketi) hash tablosuna koyuyorsa aynı saldırıya açıktır. Bir de: Python’da <code>hash()</code> değerini <b>kayıt dosyasına yazmayın</b> — bir sonraki çalıştırmada farklı olacak!</div>
+</section>
+
+<section data-sec="gerçek dünya">
+  <h2>Hash tablosu mu, dengeli BST mi?</h2>
+  <div class="cols">
+    <table class="sum-t" style="font-size:19px">
+      <tr><th>yapı</th><th>arama (en kötü)</th><th>arama (ortalama)</th><th>sıralı işlemler</th></tr>
+      <tr><td>kırmızı-siyah BST</td><td class="c-green">2 lg N</td><td>~lg N</td><td class="c-green">✔ min, floor, rank, aralık</td></tr>
+      <tr><td>ayrı zincirleme</td><td class="c-red">N *</td><td class="c-green">~3–5</td><td class="c-red">✘</td></tr>
+      <tr><td>doğrusal yoklama</td><td class="c-red">N *</td><td class="c-green">~3–5</td><td class="c-red">✘</td></tr>
+    </table>
+    <div style="font-size:.86em">
+      <div class="box story"><span class="bt">Hash tablosu seç…</span>…sadece “var mı / değeri ne?” soruyorsan: envanter, eşya veritabanı, oyuncu ID → oyuncu, önbellek.</div>
+      <div class="box story"><span class="bt">Dengeli BST seç…</span>…sıra lazımsa (“en yüksek skor”, “şu andan sonraki ilk olay”, “1500–1600 MMR arası”) ya da en kötü durum garantisi şartsa.</div>
+    </div>
+  </div>
+  <p class="mini">* Düzgün hash varsayımı altında olasılığı çok çok düşük. Ama saldırgan varsa (önceki slayt)…</p>
+</section>
+
+<section data-sec="gerçek dünya">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 4 · gerçek dünya</div>
+    <div class="q">Hangi oyun özelliği için hash tablosu <b>yerine</b> dengeli BST (SortedDictionary) seçmek daha mantıklıdır?</div>
+    <div class="opts">
+      <button data-opt="A">Eşya adından eşya verisine ulaşmak</button>
+      <button data-opt="B">Oyuncu ID’sinden oyuncu nesnesine ulaşmak</button>
+      <button data-opt="C">“Puanı 1500 ile 1600 arasında olan oyuncuları listele”</button>
+      <button data-opt="D">Bir kelimenin küfür listesinde olup olmadığını kontrol etmek</button>
+    </div>
+    <div class="explain">Aralık sorgusu bir <b>sıralı işlem</b>: hash tablosu anahtarları rastgele dağıttığı için “1500 ile 1600 arası” sorusuna ancak hepsine bakarak cevap verebilir. Diğer üçü sadece “bu anahtar var mı / değeri ne?” → hash tablosu ideal.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Oyunda hash</div>
+  <div class="sub">uzaysal hash, Zobrist hash, StringToHash</div>
+  <ul class="agenda"><li class="done">hash fonksiyonları</li><li class="done">ayrı zincirleme</li><li class="done">doğrusal yoklama</li><li class="done">gerçek dünyada hash</li><li class="on">oyunda hash</li></ul>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎮 Uzaysal hash ızgarası <span class="en">spatial hashing</span></h2>
+  <div class="demo" data-demo="spatialhash"></div>
+  <p class="mini">Her nesne bulunduğu hücreye (anahtar = hücre koordinatı) konur. Bir nesne sadece kendi hücresi ve 8 komşusundakilerle test edilir. Fareyi bir parçacığın üstüne getirin: sarı 3×3 alan. Hücre boyutunu değiştirip test sayısına bakın.</p>
+</section>
+
+<section data-sec="oyunda">
+  <h2>Uzaysal hash — neden ızgara dizisi değil de <b>hash</b>?</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li>Sonsuz (ya da çok büyük) dünya: 1 milyon × 1 milyon hücrelik dizi sığmaz</li>
+        <li class="fragment">Ama <b>dolu</b> hücre sayısı en fazla N → sadece dolu hücreleri bir hash tablosunda tut</li>
+        <li class="fragment">Anahtar: <code>(hx, hy)</code> → tek sayı: <code>hx * 100003 + hy</code> ya da string <code>"hx,hy"</code></li>
+        <li class="fragment">Hücre boyutu ≈ nesne çapı: daha küçükse nesne birçok hücreye taşar, daha büyükse hücre başına çok nesne</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">🎮 Nerede?</span>
+      <ul>
+        <li>Parçacık sistemleri, sürü (boids) simülasyonları</li>
+        <li>MMO’da “çevremdeki oyunculara mesaj gönder” (ilgi alanı yönetimi)</li>
+        <li>Matthias Müller’in “Ten Minute Physics” videosu: binlerce topun çarpışması tam bu yöntemle (kaynaklarda)</li>
+      </ul>
+      <p class="mini">BST’nin Geometrik Uygulamaları destesindeki ızgara ↔ kd-ağacı tartışmasını hatırlayın: düzgün dağılımda ızgara/hash rakipsiz; kümelenmede ağaçlar.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>♟️ Zobrist hash: oyun YZ’sinin hafızası</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <p>Satranç motoru aynı pozisyona <b>farklı hamle sıralarıyla</b> defalarca ulaşır. Her seferinde yeniden düşünmek israf → pozisyonların değerini bir hash tablosunda sakla: <b>transpozisyon tablosu</b>.</p>
+      <ul>
+        <li>Her (taş, kare) çifti için bir <b>rastgele 64 bit sayı</b> üret (bir kez)</li>
+        <li>Pozisyonun hash’i = tahtadaki taşların sayılarının <b>XOR</b>’u</li>
+        <li class="fragment">Hamle yapınca baştan hesaplama! Sadece: <code>h ^= Z[taş][eski] ^ Z[taş][yeni]</code> → <b>2 işlem</b></li>
+      </ul>
+      <p class="mini">📜 Albert Zobrist, 1970 — aslında Go programı için. Bugün Stockfish dahil bütün satranç motorlarında.</p>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random
+
+PIECES, SQUARES = 12, 64            # 6 taş × 2 renk, 64 kare
+Z = [[random.getrandbits(64) for sq in range(SQUARES)]
+     for p in range(PIECES)]        # bir kez üret
+
+def full_hash(board):               # board[sq] = taş no ya da None
+    h = 0
+    for sq in range(SQUARES):
+        if board[sq] is not None:
+            h ^= Z[board[sq]][sq]   # ^ = XOR
+    return h
+
+def move(h, piece, frm, to):        # artımlı güncelleme
+    h ^= Z[piece][frm]              # taşı eski kareden "çıkar"
+    h ^= Z[piece][to]               # yeni kareye "koy"
+    return h
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+ulong[,] Z = new ulong[12, 64];
+var rng = new System.Random(2024);
+for (int p = 0; p < 12; p++)
+    for (int sq = 0; sq < 64; sq++)
+        Z[p, sq] = (ulong)rng.NextInt64();   // .NET 6+
+
+ulong Move(ulong h, int piece, int from, int to)
+{
+    h ^= Z[piece, from];     // eski kareden çıkar
+    h ^= Z[piece, to];       // yeni kareye koy
+    return h;
+}
+
+var tt = new Dictionary<ulong, int>();   // pozisyon → değer
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// 64 bit için BigInt (sonundaki n)
+const rnd64 = () => BigInt(Math.floor(Math.random() * 2 ** 32)) << 32n
+                  | BigInt(Math.floor(Math.random() * 2 ** 32));
+const Z = Array.from({ length: 12 }, () =>
+          Array.from({ length: 64 }, rnd64));
+
+function move(h, piece, from, to) {
+  h ^= Z[piece][from];    // eski kareden çıkar
+  h ^= Z[piece][to];      // yeni kareye koy
+  return h;
+}
+
+const tt = new Map();     // pozisyon hash'i → değer
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 Zobrist kodundaki yeni ifadeler</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>a ^ b · h ^= x</td><td>XOR (özel veya)</td><td>Bitler farklıysa 1. Sihirli özelliği: <code>x ^ x = 0</code> → aynı sayıyı iki kez XOR’lamak geri alır. Bu yüzden “çıkar” ve “koy” aynı işlem!</td></tr>
+    <tr><td>[[… for sq in …] for p in …]</td><td>iç içe liste üreteci</td><td>12 satır × 64 sütunluk tablo. Geleneksel: iki iç içe <code>for</code> ile boş listeye <code>append</code></td></tr>
+    <tr><td>random.getrandbits(64)</td><td>64 bitlik rastgele sayı</td><td>0 … 2⁶⁴−1</td></tr>
+    <tr><td>ulong · BigInt · 32n</td><td>64 bit işaretsiz tam sayı</td><td>C#’ta <code>ulong</code>; JS’te normal sayılar 53 bitte hassasiyet kaybeder → <code>BigInt</code> (sayının sonuna <code>n</code>)</td></tr>
+    <tr><td>&lt;&lt; 32n · |</td><td>bit kaydırma · bit VEYA</td><td>İki 32 bitlik parçayı yan yana yapıştırıp 64 bit yapmak</td></tr>
+  </table>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎮 Unity: string yerine hash</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>Animator parametreleri isimle ayarlanır: <code>animator.SetBool("isRunning", true)</code>. Her çağrıda string’in hash’i hesaplanır!</p>
+      <p class="fragment">Unity’nin önerisi: hash’i <b>bir kez</b> hesapla, sakla, int ile çağır. Aynı fikir: <code>Shader.PropertyToID</code>.</p>
+      <div class="box low fragment"><span class="bt">⚙️ Neden hızlı?</span>İki int’i karşılaştırmak tek işlemci komutu; iki string’i karşılaştırmak karakter karakter döngü. Saniyede 60 kare × 500 karakter × birkaç parametre…</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class Player : MonoBehaviour
+{
+    // static readonly: program boyunca bir kez hesaplanır
+    static readonly int RunHash = Animator.StringToHash("isRunning");
+    static readonly int HitHash = Animator.StringToHash("hit");
+
+    Animator anim;
+
+    void Start() { anim = GetComponent<Animator>(); }
+
+    void Update()
+    {
+        bool running = Input.GetAxis("Horizontal") != 0;
+        anim.SetBool(RunHash, running);      // string yok, int var
+        if (Input.GetButtonDown("Fire1"))
+            anim.SetTrigger(HitHash);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Aynı fikir: sık kullanılan string'leri bir kez sayıya çevir
+PARAMS = {}                      # isim → numara
+
+def param_id(name):
+    if name not in PARAMS:
+        PARAMS[name] = len(PARAMS)   # ilk görüşte numara ver
+    return PARAMS[name]
+
+RUN = param_id("isRunning")      # bir kez
+HIT = param_id("hit")
+
+values = [False] * 16            # parametre değerleri dizide
+values[RUN] = True               # string karşılaştırması yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Aynı fikir: string → numara sözlüğü (interning)
+const PARAMS = new Map();
+
+function paramId(name) {
+  if (!PARAMS.has(name)) PARAMS.set(name, PARAMS.size);
+  return PARAMS.get(name);
+}
+
+const RUN = paramId("isRunning");   // bir kez
+const values = new Array(16).fill(false);
+values[RUN] = true;
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 5 · oyunda</div>
+    <div class="q">Zobrist hash’te bir taş hareket ettiğinde neden bütün tahtayı yeniden taramaya gerek yok?</div>
+    <div class="opts">
+      <button data-opt="A">Çünkü XOR’un tersi yine XOR’dur: eski kareninkini XOR’layınca çıkar, yenininkini XOR’layınca eklenir</button>
+      <button data-opt="B">Çünkü satranç tahtası küçüktür</button>
+      <button data-opt="C">Çünkü hash tablosu bunu otomatik yapar</button>
+      <button data-opt="D">Çünkü rastgele sayılar sıralıdır</button>
+    </div>
+    <div class="explain"><code>x ^ x = 0</code>: aynı sayıyı iki kez XOR’lamak etkisini siler. Hash, taşların sayılarının XOR’u olduğu için bir taşı “çıkarmak” ve “koymak” birer XOR. 64 kareyi gezmek yerine 2 işlem — saniyede milyonlarca pozisyon inceleyen motorlar için hayati.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: doğrusal yoklamada get</h2>
+  <div class="hashlab" data-task="get" data-lang="js">
+<textarea>
+// keys[] ve vals[]: doğrusal yoklamalı tablo (M = keys.length).
+// hash(key, M) hazır: 0..M-1 arası indeks verir.
+// Anahtarı bul ve değerini döndür; yoksa null.
+function get(keys, vals, key) {
+  const M = keys.length;
+  let i = hash(key, M);
+  while (keys[i] != null) {
+    if (keys[i] === key) return vals[i];
+    i = i + 1;
+  }
+  return null;
+}
+</textarea>
+    <div class="lab-tasks">Bu kod çoğu zaman çalışır ama bazı testlerde yanlış sonuç verir. Hangi durumda? (İpucu: küme dizinin <b>sonuna</b> taşarsa nereden devam eder?) Bonus: döngü koşulunu <code>keys[i] !== null</code> yapsaydık ne olurdu?</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — string hash (Python)</h2>
+  <div class="hashlab" data-task="hash" data-lang="python">
+<textarea>
+# Horner yöntemiyle string hash:  h = (31 * h + ord(karakter)) % M
+def hash_str(s, M):
+    h = 0
+    for ch in s:
+        h = h + ord(ch)
+    return h % M
+</textarea>
+    <div class="lab-tasks">Bu kod sadece karakter kodlarını topluyor: “ok” ile “ko” aynı hash’i alır! Horner formülünü uygulayın (her adımda <code>% M</code> alarak). Sonra <code>print(hash_str("ok", 97), hash_str("ko", 97))</code> ile farkı görün.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Hash fonksiyonu</b>: tutarlı, hızlı, düzgün. String için Horner (31).</li>
+      <li>C#/JS’te <code>%</code> negatif olabilir → <code>&amp; 0x7fffffff</code>.</li>
+      <li><b>Ayrı zincirleme</b>: kova = bağlı liste; maliyet ~N/M.</li>
+      <li><b>Doğrusal yoklama</b>: tek dizi, önbellek dostu; α ≤ ½ tut; silme dikkat.</li>
+    </ul>
+    <ul>
+      <li>Çakışma kaçınılmaz (doğum günü); <b>büyütme</b> ile sabit ortalama.</li>
+      <li>Hash taşkını → rastgele tohumlu hash.</li>
+      <li>Sıra lazımsa <b>BST</b>, değilse <b>hash</b>.</li>
+      <li>🎮 Uzaysal hash, Zobrist, StringToHash.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: M = 5, <code>hash(k) = k % 5</code>. 12, 7, 22, 3, 17 anahtarlarını (a) ayrı zincirlemeyle, (b) doğrusal yoklamayla (M = 10, <code>k % 10</code>) ekleyin.</li>
+    <li>Java’da <code>"Aa".hashCode() == "BB".hashCode()</code>. Neden? Bunu kullanarak aynı hash’e sahip 4 farklı 4 harfli string üretin.</li>
+    <li>p5.js’te 3.000 parçacıklı bir sürü (boids) simülasyonunda komşu aramayı uzaysal hash ile yazın; FPS’i kaba kuvvetle karşılaştırın.</li>
+    <li>Tic-tac-toe için Zobrist hash yazın (2 taş × 9 kare) ve minimax’ta tekrar eden pozisyonları sayın.</li>
+    <li>Python’da iki ayrı çalıştırmada <code>print(hash("iksir"))</code> yazdırın. Aynı mı? <code>PYTHONHASHSEED=0</code> ile tekrar deneyin.</li>
+    <li>🤖 Bir YZ asistanına “C#’ta Vector2Int’i Dictionary anahtarı yapınca performans” sorun. GetHashCode’un nasıl yazıldığını inceleyin.</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=9oKpRTBfNXo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9oKpRTBfNXo/hqdefault.jpg" alt=""><span><b>Python Hash Sets Explained &amp; Demonstrated</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=KyUTuwz_b7Q" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KyUTuwz_b7Q/hqdefault.jpg" alt=""><span><b>Hash Tables and Hash Functions</b><br>Computer Science Lessons</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=FsfRsGFHuv4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/FsfRsGFHuv4/hqdefault.jpg" alt=""><span><b>Learn Hash Tables in 13 minutes</b><br>Bro Code</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=KtT_cgMzHx8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KtT_cgMzHx8/hqdefault.jpg" alt=""><span><b>Check your intuition: The birthday problem</b><br>TED-Ed</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=D2M8jTtKi44" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/D2M8jTtKi44/hqdefault.jpg" alt=""><span><b>Finding collisions among thousands of objects blazing fast</b><br>Ten Minute Physics</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=ncHmEUmJZf4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ncHmEUmJZf4/hqdefault.jpg" alt=""><span><b>Designing a Fast, Efficient, Cache-friendly Hash Table</b><br>CppCon 2017 · Matt Kulukundis</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/34hash/" target="_blank">algs4 · 3.4 Hash Tables</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/34HashTables.pdf" target="_blank">Princeton ders slaytları: Hash Tables (PDF)</a></li>
+      <li><a href="https://matthias-research.github.io/pages/tenMinutePhysics/index.html" target="_blank">Ten Minute Physics (uzaysal hash kodu)</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/OpenHash.html" target="_blank">USFCA · Ayrı zincirleme görselleştirmesi</a></li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/ClosedHash.html" target="_blank">USFCA · Açık adresleme görselleştirmesi</a></li>
+      <li><a href="https://visualgo.net/en/hashtable" target="_blank">VisuAlgo · Hash Table</a></li>
+      <li><a href="../oncelik-kuyruklari/">Önceki deste: Öncelik Kuyrukları</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:56px">Sembol Tablosu Uygulamaları</div>
+    <div class="sub">Kümeler, sözlükler, dizinler, seyrek vektörler — hash ve BST’yi iş başında görelim</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../st-uygulamalari/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/hash.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
