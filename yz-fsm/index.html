@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sonlu Durum Makineleri</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Sonlu durum makineleri: durumlar, geçişler, nöbetçi FSM’i, switch / State pattern / geçiş tablosu, titreme ve histerezis, hiyerarşik ve yığınlı FSM, Doom, Metal Gear Solid 2, Hollow Knight, Unity Animator, UnityHFSM, XState, transitions. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d2a5a 0%, #1a1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 2</div>
+  <div class="ttl" style="font-size:70px">Sonlu Durum Makineleri</div>
+  <div class="sub"><i>Durumlar, geçişler, hiyerarşik FSM</i> — NPC beyninin en klasik hâli</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlefsm"></div>
+  <aside class="notes">Haftalık plandaki 2. hafta: sonlu durum makineleri (FSM); durumlar, geçişler ve hiyerarşik FSM. Arka planda bir nöbetçinin durumları arasında dolaşan jeton.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.86em">
+      <li><b>Durum ve geçiş</b> — trafik ışığından Pac-Man’e</li>
+      <li><b>Bir nöbetçi tasarlayalım</b> — canlı FSM</li>
+      <li><b>Kod: üç yol</b> — switch, durum sınıfları, geçiş tablosu</li>
+      <li><b>Sorunlar</b> — titreme, durum patlaması, spagetti</li>
+      <li><b>Hiyerarşik ve yığınlı FSM</b> — durumların içinde durumlar</li>
+      <li><b>Gerçek oyunlarda</b> — Doom, Metal Gear, Hollow Knight, Unity Animator</li>
+      <li><b>Kütüphaneler</b> — UnityHFSM, PlayMaker, StateTree, XState, transitions</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…devriye gezen, ses duyunca araştıran, sizi görünce kovalayan ve canı azalınca kaçan bir düşman tasarlayabilecek, onu üç farklı şekilde kodlayabilecek ve bir FSM kütüphanesini projenize ekleyebileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: BİR GİZLİLİK OYUNUNDAKİ NÖBETÇİYİ ANLATIN</span>
+    <p class="big">“Normalde <b>devriye</b> gezer. Bir <b>ses</b> duyarsa gidip bakar. Sizi <b>görürse</b> kovalar, yaklaşınca <b>ateş</b> eder. Canı azalırsa <b>kaçar</b>.”</p>
+  </div>
+  <ul style="font-size:.95em">
+    <li class="fragment">Kalın kelimeler: nöbetçinin <b>durumları</b> — aynı anda sadece birindedir.</li>
+    <li class="fragment">“-ırsa / -erse” ile başlayan kısımlar: <b>geçişler</b> ve koşulları.</li>
+    <li class="fragment">Tebrikler: az önce bir <b>sonlu durum makinesi</b> tasarladınız. Kodun geri kalanı bu cümlenin tercümesi.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık</a><a class="" href="../yz-giris/">Y1 · Giriş</a></div>
+  <div class="prereq"><a class="opt" href="../yonlu-graflar/">Yönlü Graflar (FSM bir yönlü graftır)</a><a class="opt" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar (yığınlı FSM)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>FSM’nin diyagramı bir yönlü graftır: düğümler durumlar, oklar geçişler. Yığınlı FSM ise bildiğimiz yığını kullanır. Ama ikisi de şart değil; burada sıfırdan anlatıyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>FSM’yi anlamak için kod gerekmez: kâğıda yuvarlaklar ve oklar çizmek yeter. Unity Animator, PlayMaker gibi görsel araçlarla kod yazmadan da FSM kurabilirsiniz (son bölüm).</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>finite state machine (FSM)</td><td>sonlu durum makinesi</td><td>Sonlu sayıda durum + aralarındaki geçişler</td></tr>
+    <tr><td>state</td><td>durum</td><td>Karakterin o anki “modu”: devriye, saldırı…</td></tr>
+    <tr><td>transition · condition</td><td>geçiş · koşul</td><td>Bir durumdan diğerine ok · okun ne zaman izleneceği</td></tr>
+    <tr><td>event</td><td>olay</td><td>Geçişi tetikleyen anlık bilgi: “ses duyuldu”</td></tr>
+    <tr><td>entry / exit action</td><td>giriş / çıkış eylemi</td><td>Duruma girerken / çıkarken bir kez yapılan iş</td></tr>
+    <tr><td>hierarchical FSM (HFSM)</td><td>hiyerarşik FSM</td><td>Durumların içinde alt durum makineleri</td></tr>
+    <tr><td>pushdown automaton</td><td>yığınlı otomat</td><td>Durumları yığında tutan, “önceki duruma dön” bilen FSM</td></tr>
+    <tr><td>hysteresis</td><td>histerezis (gecikme)</td><td>Girmek ve çıkmak için farklı eşikler: titremeyi önler</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Durum ve geçiş</div>
+  <div class="sub">trafik ışığından Pac-Man’e</div>
+  <ul class="agenda"><li class="on">durum ve geçiş</li><li class="">bir nöbetçi tasarlayalım</li><li class="">kod: üç yol</li><li class="">sorunlar ve çözümler</li><li class="">hiyerarşik ve yığınlı FSM</li><li class="">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="durum ve geçiş">
+  <h2>Her yerde durum makineleri</h2>
+  <div class="cols">
+    <svg viewBox="0 0 520 250" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="ta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <g font-size="18" font-weight="700" text-anchor="middle">
+        <circle cx="90" cy="120" r="48" style="fill:#2ec27e;stroke:#2ec27e"/><text x="90" y="126" fill="#fff">YEŞİL</text>
+        <circle cx="260" cy="120" r="48" style="fill:#f5a524;stroke:#f5a524"/><text x="260" y="126" fill="#111">SARI</text>
+        <circle cx="430" cy="120" r="48" style="fill:#ff3b3b;stroke:#ff3b3b"/><text x="430" y="126" fill="#fff">KIRMIZI</text>
+      </g>
+      <line x1="140" y1="120" x2="207" y2="120" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ta)"/><text x="172" y="108" text-anchor="middle" font-size="14" style="fill:var(--muted)">30 sn</text>
+      <line x1="310" y1="120" x2="377" y2="120" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ta)"/><text x="342" y="108" text-anchor="middle" font-size="14" style="fill:var(--muted)">4 sn</text>
+      <path d="M420,170 C380,240 140,240 100,172" fill="none" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ta)"/><text x="260" y="232" text-anchor="middle" font-size="14" style="fill:var(--muted)">30 sn</text>
+    </svg>
+    <ul style="font-size:.9em">
+      <li><b>Sonlu</b> sayıda durum: 3</li>
+      <li>Aynı anda <b>tek</b> aktif durum</li>
+      <li>Oklar: <b>geçişler</b>; üstündeki yazı: <b>koşul</b></li>
+      <li class="fragment">Diğer örnekler: kapı (açık/kapalı/kilitli), içecek makinesi, asansör, oyun menüleri, karakter animasyonları (dur/yürü/koş/zıpla)</li>
+      <li class="fragment">🎒 Bir FSM diyagramı = <b>yönlü graf</b> (Yönlü Graflar destesi): düğüm = durum, kenar = geçiş</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="durum ve geçiş">
+  <h2>Pac-Man hayaletleri bir FSM’dir</h2>
+  <div class="cols">
+    <svg viewBox="0 0 560 280" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="pa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <g font-size="17" font-weight="700" text-anchor="middle">
+        <rect x="20" y="40" width="150" height="54" rx="27" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="95" y="73" style="fill:var(--ink)">DAĞIL</text>
+        <rect x="380" y="40" width="150" height="54" rx="27" style="fill:var(--card);stroke:var(--red)" stroke-width="3"/><text x="455" y="73" style="fill:var(--ink)">KOVALA</text>
+        <rect x="200" y="190" width="150" height="54" rx="27" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="275" y="223" style="fill:var(--ink)">KORKU</text>
+      </g>
+      <g font-size="13" text-anchor="middle" style="fill:var(--muted)">
+        <line x1="172" y1="58" x2="376" y2="58" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#pa)"/><text x="275" y="50">7 sn geçti</text>
+        <line x1="378" y1="80" x2="174" y2="80" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#pa)"/><text x="275" y="98">20 sn geçti</text>
+        <line x1="110" y1="96" x2="225" y2="188" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#pa)"/><text x="130" y="150">güç hapı</text>
+        <line x1="440" y1="96" x2="325" y2="188" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#pa)"/><text x="430" y="150">güç hapı</text>
+        <path d="M350,230 C470,250 520,150 470,98" fill="none" style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#pa)"/><text x="520" y="215">süre bitti</text>
+      </g>
+    </svg>
+    <ul style="font-size:.88em">
+      <li>Y1’deki demo: zamanlayıcıyla <b>DAĞIL ↔ KOVALA</b> geçişi</li>
+      <li>Güç hapı → <b>KORKU</b> (rastgele yürü, mavi ol)</li>
+      <li>Her durumda <b>farklı hedef</b> kuralı çalışır</li>
+      <li class="fragment">Aslında bir de “yenildi → evine dön” durumu var. FSM’ler büyüdükçe diyagram karışır — birazdan göreceğiz.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="durum ve geçiş">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · durum ve geçiş</div>
+    <div class="q">Bir FSM’de aynı anda kaç durum aktif olabilir?</div>
+    <div class="opts">
+      <button data-opt="A">Bir tane</button>
+      <button data-opt="B">Koşulu doğru olan hepsi</button>
+      <button data-opt="C">İki: bir önceki ve şu anki</button>
+      <button data-opt="D">Geçiş sayısı kadar</button>
+    </div>
+    <div class="explain">Düz bir FSM’de her an <b>tek</b> bir durum aktiftir: nöbetçi ya devriyededir ya kovalamaktadır. Aynı anda “yürü + nişan al” gibi şeyler gerekirse <b>birden fazla FSM</b> (katmanlar) ya da hiyerarşik FSM kullanılır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Bir nöbetçi tasarlayalım</div>
+  <div class="sub">beş durum, sekiz geçiş</div>
+  <ul class="agenda"><li class="done">durum ve geçiş</li><li class="on">bir nöbetçi tasarlayalım</li><li class="">kod: üç yol</li><li class="">sorunlar ve çözümler</li><li class="">hiyerarşik ve yığınlı FSM</li><li class="">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="nöbetçi">
+  <h2>Nöbetçinin geçiş tablosu</h2>
+  <div class="cols c64">
+    <table class="sum-t" style="font-size:18px">
+      <tr><th>şu anki durum</th><th>koşul</th><th>yeni durum</th></tr>
+      <tr><td><i>her durum</i></td><td>can &lt; 30</td><td><b class="c-green">KAÇ</b></td></tr>
+      <tr><td>DEVRİYE</td><td>oyuncuyu görüyor</td><td>KOVALA</td></tr>
+      <tr><td>DEVRİYE</td><td>ses duydu</td><td>ŞÜPHE</td></tr>
+      <tr><td>ŞÜPHE</td><td>oyuncuyu görüyor</td><td>KOVALA</td></tr>
+      <tr><td>ŞÜPHE</td><td>4 sn geçti</td><td>DEVRİYE</td></tr>
+      <tr><td>KOVALA</td><td>göremiyor</td><td>ŞÜPHE (son görülen yere git)</td></tr>
+      <tr><td>KOVALA</td><td>mesafe &lt; 60</td><td>SALDIR</td></tr>
+      <tr><td>SALDIR</td><td>göremiyor / mesafe &gt; <b>90</b></td><td>ŞÜPHE / KOVALA</td></tr>
+      <tr><td>KAÇ</td><td>can &gt; 70</td><td>DEVRİYE</td></tr>
+    </table>
+    <div class="box story"><span class="bt">Her durumda ne yapar?</span>
+      <ul style="font-size:.86em">
+        <li><b>DEVRİYE</b>: yol noktaları arasında yürü</li>
+        <li><b>ŞÜPHE</b>: sesin geldiği yere git, etrafa bak</li>
+        <li><b>KOVALA</b>: oyuncuya koş</li>
+        <li><b>SALDIR</b>: dur, nişan al, ateş et</li>
+        <li><b>KAÇ</b>: oyuncudan uzaklaş, iyileş</li>
+      </ul>
+      <p class="mini">Tablonun sırası önemli: “can &lt; 30” kuralı <b>önce</b> kontrol edilir. Saldırıya 60’ta girip ancak 90’da çıkmasının sebebi birazdan (“titreme”).</p></div>
+  </div>
+</section>
+
+<section data-sec="nöbetçi">
+  <h2>Nöbetçi FSM — canlı</h2>
+  <div class="demo" data-demo="guardfsm"></div>
+</section>
+
+<section data-sec="nöbetçi">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol>
+      <li>Nöbetçinin arkasında bir yere tıklayın (ses). ŞÜPHE durumuna geçip oraya gidiyor mu?</li>
+      <li>Görüş konisine girin, sonra bir duvarın arkasına saklanın. KOVALA → ŞÜPHE geçişini izleyin: <b>son gördüğü yere</b> gidiyor.</li>
+      <li>Yaklaşıp SALDIR’a geçirin, sonra iki kez “ateş et”. Can 30’un altına düşünce hangi durumda olursa olsun KAÇ’a geçiyor mu?</li>
+      <li>▶| 1 kare düğmesiyle tek tek ilerleyin: sağdaki diyagramda kırmızı ok = az önce kullanılan geçiş.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Kod: üç yol</div>
+  <div class="sub">switch · durum sınıfları · geçiş tablosu</div>
+  <ul class="agenda"><li class="done">durum ve geçiş</li><li class="done">bir nöbetçi tasarlayalım</li><li class="on">kod: üç yol</li><li class="">sorunlar ve çözümler</li><li class="">hiyerarşik ve yığınlı FSM</li><li class="">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>Yol 1: enum + switch</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public enum GuardState { Patrol, Suspicious, Chase, Attack, Flee }
+
+public class Guard : MonoBehaviour
+{
+    GuardState state = GuardState.Patrol;
+    float timeInState;
+
+    void Update()
+    {
+        timeInState += Time.deltaTime;
+        GuardState next = state;
+
+        if (hp < 30 && state != GuardState.Flee) next = GuardState.Flee;   // her durumdan
+        else switch (state)
+        {
+            case GuardState.Patrol:
+                Patrol();                                   // DAVRAN
+                if (SeesPlayer()) next = GuardState.Chase;  // GEÇİŞLER
+                else if (heardNoise) next = GuardState.Suspicious;
+                break;
+            case GuardState.Chase:
+                MoveTo(player.position);
+                if (!SeesPlayer()) next = GuardState.Suspicious;
+                else if (DistToPlayer() < 2f) next = GuardState.Attack;
+                break;
+            // ... Suspicious, Attack, Flee
+        }
+        if (next != state) { state = next; timeInState = 0; }
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Guard {
+  constructor() { this.state = "PATROL"; this.timeInState = 0; this.hp = 100; }
+
+  update(dt) {
+    this.timeInState += dt;
+    let next = this.state;
+    if (this.hp < 30 && this.state !== "FLEE") next = "FLEE";
+    else switch (this.state) {
+      case "PATROL":
+        this.patrol(dt);
+        if (this.seesPlayer()) next = "CHASE";
+        else if (this.heardNoise) next = "SUSPICIOUS";
+        break;
+      case "CHASE":
+        this.moveTo(player.pos, dt);
+        if (!this.seesPlayer()) next = "SUSPICIOUS";
+        else if (this.distToPlayer() < 60) next = "ATTACK";
+        break;
+      // ...
+    }
+    if (next !== this.state) { this.state = next; this.timeInState = 0; }
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Guard:
+    def __init__(self):
+        self.state = "PATROL"
+        self.time_in_state = 0
+        self.hp = 100
+
+    def update(self, dt):
+        self.time_in_state += dt
+        nxt = self.state
+        if self.hp < 30 and self.state != "FLEE":
+            nxt = "FLEE"
+        elif self.state == "PATROL":
+            self.patrol(dt)
+            if self.sees_player():
+                nxt = "CHASE"
+            elif self.heard_noise:
+                nxt = "SUSPICIOUS"
+        elif self.state == "CHASE":
+            self.move_to(player_pos, dt)
+            if not self.sees_player():
+                nxt = "SUSPICIOUS"
+            elif self.dist_to_player() < 60:
+                nxt = "ATTACK"
+        # ...
+        if nxt != self.state:
+            self.state, self.time_in_state = nxt, 0
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>enum</code>: sabit isimlerden oluşan tür — yazım hatası yapınca derleyici yakalar (<code>"CAHSE"</code> gibi string hataları sessizce bug olur!). Python’da <code>enum.Enum</code>, JS’te sabit nesne kullanılabilir.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: arayüz ve çok biçimlilik</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <ul>
+        <li><b>Arayüz</b> <span class="en">interface</span>: “bu metotlara sahip olacağım” sözü. <code>IState</code>: Enter, Update, Exit</li>
+        <li>Her durum bu sözü veren <b>ayrı bir sınıf</b>: <code>PatrolState</code>, <code>ChaseState</code>…</li>
+        <li><b>Çok biçimlilik</b> <span class="en">polymorphism</span>: nöbetçi sadece <code>current.Update()</code> der; hangi sınıfın kodu çalışacağına nesnenin türü karar verir</li>
+        <li>Python ve JS’te “arayüz” zorunlu değil: aynı isimli metotları yazmak yeter (<b>ördek tipleme</b> <span class="en">duck typing</span>: “ördek gibi vaklıyorsa ördektir”)</li>
+      </ul>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public interface IState
+{
+    void Enter();
+    void Update();
+    void Exit();
+}
+
+public class PatrolState : IState
+{
+    public void Enter()  { Debug.Log("Devriyeye başladım"); }
+    public void Update() { /* yol noktalarında yürü */ }
+    public void Exit()   { }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JS'te arayüz yok: aynı metotlara sahip sınıflar yeter
+class PatrolState {
+  enter()  { console.log("Devriyeye başladım"); }
+  update() { /* yol noktalarında yürü */ }
+  exit()   {}
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class PatrolState:                 # aynı metot adları = aynı "arayüz"
+    def enter(self):
+        print("Devriyeye başladım")
+    def update(self):
+        pass                       # yol noktalarında yürü
+    def exit(self):
+        pass
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Yol 2: durum sınıfları <span class="en">State pattern</span></h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class StateMachine
+{
+    IState current;
+
+    public void ChangeState(IState next)
+    {
+        current?.Exit();       // eski durumdan çık (null değilse)
+        current = next;
+        current.Enter();       // yeniye gir
+    }
+    public void Update() { current?.Update(); }
+}
+
+public class ChaseState : IState
+{
+    readonly Guard g;
+    public ChaseState(Guard guard) { g = guard; }
+    public void Enter()  { g.PlayBark("Orada!"); }        // giriş eylemi: bir kez
+    public void Update()
+    {
+        g.MoveTo(g.player.position);
+        if (!g.SeesPlayer()) g.fsm.ChangeState(new SuspiciousState(g));
+        else if (g.DistToPlayer() < 2f) g.fsm.ChangeState(new AttackState(g));
+    }
+    public void Exit() { }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class StateMachine {
+  constructor(owner) { this.owner = owner; this.current = null; }
+  change(next) {
+    if (this.current) this.current.exit(this.owner);
+    this.current = next;
+    this.current.enter(this.owner);
+  }
+  update(dt) { if (this.current) this.current.update(this.owner, dt); }
+}
+
+const ChaseState = {
+  enter(g)  { g.bark("Orada!"); },
+  update(g, dt) {
+    g.moveTo(player.pos, dt);
+    if (!g.seesPlayer()) g.fsm.change(SuspiciousState);
+    else if (g.distToPlayer() < 60) g.fsm.change(AttackState);
+  },
+  exit(g) {}
+};
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class StateMachine:
+    def __init__(self, owner):
+        self.owner, self.current = owner, None
+
+    def change(self, nxt):
+        if self.current:
+            self.current.exit(self.owner)
+        self.current = nxt
+        self.current.enter(self.owner)
+
+    def update(self, dt):
+        if self.current:
+            self.current.update(self.owner, dt)
+
+class ChaseState:
+    def enter(self, g):  g.bark("Orada!")
+    def update(self, g, dt):
+        g.move_to(player_pos, dt)
+        if not g.sees_player():
+            g.fsm.change(SuspiciousState())
+        elif g.dist_to_player() < 60:
+            g.fsm.change(AttackState())
+    def exit(self, g): pass
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Artı: her durum kendi dosyasında, giriş/çıkış eylemleri temiz. Eksi: geçişler sınıfların içine dağılmış — bütün resmi görmek zor.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>Yol 3: geçiş tablosu (veri güdümlü)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class Transition
+{
+    public string from, to;
+    public Func<Guard, bool> condition;   // "koşul" = bool döndüren fonksiyon
+    public Transition(string f, string t, Func<Guard, bool> c) { from = f; to = t; condition = c; }
+}
+
+List<Transition> table = new List<Transition> {
+    new Transition("*",       "Flee",  g => g.hp < 30),
+    new Transition("Patrol",  "Chase", g => g.SeesPlayer()),
+    new Transition("Patrol",  "Suspicious", g => g.heardNoise),
+    new Transition("Chase",   "Attack", g => g.DistToPlayer() < 2f),
+    new Transition("Flee",    "Patrol", g => g.hp > 70),
+};
+
+string Step(string state, Guard g)
+{
+    foreach (var t in table)                        // sırayla: ilk uyan kazanır
+        if ((t.from == state || (t.from == "*" && state != t.to)) && t.condition(g))
+            return t.to;
+    return state;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const table = [
+  { from: "*",       to: "FLEE",   when: g => g.hp < 30 },
+  { from: "PATROL",  to: "CHASE",  when: g => g.seesPlayer() },
+  { from: "PATROL",  to: "SUSPICIOUS", when: g => g.heardNoise },
+  { from: "CHASE",   to: "ATTACK", when: g => g.distToPlayer() < 60 },
+  { from: "FLEE",    to: "PATROL", when: g => g.hp > 70 },
+];
+
+function step(state, g) {
+  for (const t of table) {                       // sırayla: ilk uyan kazanır
+    const fromOk = t.from === state || (t.from === "*" && state !== t.to);
+    if (fromOk && t.when(g)) return t.to;
+  }
+  return state;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+table = [
+    ("*",      "FLEE",   lambda g: g.hp < 30),
+    ("PATROL", "CHASE",  lambda g: g.sees_player()),
+    ("PATROL", "SUSPICIOUS", lambda g: g.heard_noise),
+    ("CHASE",  "ATTACK", lambda g: g.dist_to_player() < 60),
+    ("FLEE",   "PATROL", lambda g: g.hp > 70),
+]
+
+def step(state, g):
+    for frm, to, cond in table:          # sırayla: ilk uyan kazanır
+        from_ok = frm == state or (frm == "*" and state != to)
+        if from_ok and cond(g):
+            return to
+    return state
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Artı: bütün davranış <b>tek bir tabloda</b>; tasarımcı (hatta bir JSON/CSV dosyası) değiştirebilir. Bu, PlayMaker ve Unity Animator gibi görsel editörlerin arkasındaki fikir.</p>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 FSM kodundaki yeni ifadeler</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>current?.Exit()</td><td>C# null-koşullu çağrı</td><td>“current null değilse Exit’i çağır”. Geleneksel: <code>if (current != null) current.Exit();</code></td></tr>
+    <tr><td>Func&lt;Guard, bool&gt;</td><td>C# fonksiyon türü</td><td>“Guard alıp bool döndüren fonksiyon” tutan değişken</td></tr>
+    <tr><td>g =&gt; g.hp &lt; 30 · lambda g: g.hp &lt; 30</td><td>lambda / ok fonksiyonu</td><td>Adsız minik fonksiyon: “g’yi al, g.hp &lt; 30 sonucunu döndür”. Geleneksel: <code>bool LowHp(Guard g) { return g.hp &lt; 30; }</code> yazıp adını vermek</td></tr>
+    <tr><td>for frm, to, cond in table</td><td>demet açma</td><td>Tablodaki her satırı üç değişkene ayır</td></tr>
+    <tr><td>readonly Guard g</td><td>salt okunur alan</td><td>Yapıcıda bir kez atanır, sonra değişmez</td></tr>
+    <tr><td>"*"</td><td>joker</td><td>Bizim kuralımız: “her durumdan”</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: nöbetçinin beynini yaz</h2>
+  <div class="simlab" data-sim="guard" data-fns="nextState" data-lang="js">
+<textarea>
+// state: "DEVRIYE" | "SUPHE" | "KOVALA" | "SALDIR" | "KAC"
+// s: { seesPlayer, dist, hp, heardNoise, timeInState }
+// Geçiş tablosuna göre yeni durumu döndür.
+function nextState(state, s) {
+  if (state === "DEVRIYE") {
+    if (s.seesPlayer) return "KOVALA";
+    if (s.heardNoise) return "SUPHE";
+  }
+  if (state === "KOVALA") {
+    if (s.dist < 60) return "SALDIR";
+  }
+  // TODO: SUPHE, SALDIR, KAC ve "can < 30 → KAC (her durumdan)"
+  return state;
+}
+</textarea>
+    <div class="lab-tasks">Tablodaki 9 kuralı tamamlayın (saldırıdan çıkış eşiği 90!). Çalıştırınca önce testler, sonra sağdaki canlı simülasyon sizin fonksiyonunuzla çalışır. Bilerek bir hata yapın (ör. KOVALA’dan çıkışı silin): nöbetçi nasıl davranıyor?</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python</h2>
+  <div class="ailab" data-lab="guardfsm" data-lang="python">
+<textarea>
+# state: "DEVRIYE" | "SUPHE" | "KOVALA" | "SALDIR" | "KAC"
+# s: sözlük {"sees_player", "dist", "hp", "heard_noise", "time_in_state"}
+def next_state(state, s):
+    if state == "DEVRIYE":
+        if s["sees_player"]:
+            return "KOVALA"
+    return state
+</textarea>
+    <div class="lab-tasks">Geçiş tablosunun tamamını Python’la yazın. İpucu: önce “can &lt; 30 ve durum KAC değilse → KAC” kuralı; sonra her durum için bir <code>if/elif</code> bloğu. Eşikler: saldırıya giriş &lt; 60, saldırıdan çıkış &gt; 90, şüphe süresi 4 sn, iyileşme &gt; 70.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Sorunlar ve çözümler</div>
+  <div class="sub">titreme, durum patlaması, spagetti</div>
+  <ul class="agenda"><li class="done">durum ve geçiş</li><li class="done">bir nöbetçi tasarlayalım</li><li class="done">kod: üç yol</li><li class="on">sorunlar ve çözümler</li><li class="">hiyerarşik ve yığınlı FSM</li><li class="">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="sorunlar">
+  <h2>Titreme <span class="en">oscillation / flicker</span></h2>
+  <div class="demo" data-demo="guardfsm" data-memory="0"></div>
+  <p class="mini">Bu kopyada “algı hafızası” kapalı. Oyuncuyu (fareyi) tam konisinin kenarında tutun: KOVALA ↔ ŞÜPHE arasında saniyede birkaç kez gidip geliyor (“son 5 sn’de geçiş” sayacı). Kutuyu açın: nöbetçi oyuncuyu 1,2 sn “hatırlıyor” ve titreme biter.</p>
+</section>
+
+<section data-sec="sorunlar">
+  <h2>Titremeye üç çare</h2>
+  <div class="cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="box story"><span class="bt">1) Histerezis</span>Girmek ve çıkmak için <b>farklı eşikler</b>: “10 m’den yakınsa kovalamaya başla, 15 m’den uzaksa vazgeç.” Arada kalan 5 m: tampon bölge. (Termostatlar da böyle çalışır.)</div>
+    <div class="box story"><span class="bt">2) Hafıza</span>“Gördüm” bilgisini bir süre sakla: son görülme zamanı + konum. Algılama destesinde ayrıntılı (Y11).</div>
+    <div class="box story"><span class="bt">3) Minimum süre</span>Bir duruma girince en az 0,5 sn kal (<code>timeInState</code>). İnsan da saniyede 10 kez fikir değiştirmez.</div>
+  </div>
+  <p class="mini" style="margin-top:8px">Y1’deki kural: fikir değiştiren NPC, oyuncunun gözünde “bozuk YZ”dir. Titreme, yapay aptallığın en yaygın kaynağı.</p>
+</section>
+
+<section data-sec="sorunlar">
+  <h2>Durum patlaması ve spagetti</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <p>Tasarımcı yeni istekler getiriyor:</p>
+      <ul>
+        <li>“Mermisi bitince <b>şarjör değiştirsin</b>” → hangi durumlardan? Kovalarken, saldırırken, kaçarken… her birine ok</li>
+        <li>“<b>Yaralı</b> hâlde yürüyüş animasyonu farklı olsun” → Devriye-yaralı, Kovala-yaralı, … durum sayısı <b>ikiye katlanır</b></li>
+        <li>“Telefon çalınca konuşsun, sonra <b>kaldığı yerden</b> devam etsin” → nereden geldiğini nasıl bilecek?</li>
+      </ul>
+      <p class="fragment">N durumlu bir FSM’de olası geçiş sayısı ~N². 20 durumda diyagram bir <b>spagetti tabağına</b> döner.</p>
+    </div>
+    <div class="box warn fragment"><span class="bt">Çareler (sonraki bölüm ve desteler)</span>
+      <ul style="font-size:.9em">
+        <li><b>Hiyerarşi</b>: durumları gruplara topla (HFSM)</li>
+        <li><b>Yığın</b>: “öncekine dön” (pushdown)</li>
+        <li><b>Paralel FSM’ler</b>: hareket ve silahı ayrı makinelerde yönet</li>
+        <li>Büyük karakterlerde: <b>davranış ağaçları</b> (Y3) ve <b>utility</b> (Y4)</li>
+      </ul></div>
+  </div>
+</section>
+
+<section data-sec="sorunlar">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · sorunlar</div>
+    <div class="q">Nöbetçi “oyuncu 8 m’den yakınsa KOVALA, değilse DEVRİYE” kuralıyla çalışıyor ve oyuncu tam 8 m civarında dururken saniyede onlarca kez durum değiştiriyor. En uygun çözüm hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Eşiği 9 m yapmak</button>
+      <button data-opt="B">Histerezis: 8 m’den yakınsa kovala, 12 m’den uzaklaşırsa vazgeç</button>
+      <button data-opt="C">Update’i daha seyrek çağırmak</button>
+      <button data-opt="D">Durumları rastgele seçmek</button>
+    </div>
+    <div class="explain">Tek eşik nerede olursa olsun sorun o çizgide tekrarlanır (A). Seyrek güncelleme titremeyi yavaşlatır ama çözmez (C). İki farklı eşik, arada bir tampon bölge bırakır: girmek ve çıkmak için farklı koşullar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Hiyerarşik ve yığınlı FSM</div>
+  <div class="sub">durumların içinde durumlar, “öncekine dön”</div>
+  <ul class="agenda"><li class="done">durum ve geçiş</li><li class="done">bir nöbetçi tasarlayalım</li><li class="done">kod: üç yol</li><li class="done">sorunlar ve çözümler</li><li class="on">hiyerarşik ve yığınlı FSM</li><li class="">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="HFSM">
+  <h2>Hiyerarşik FSM <span class="en">HFSM</span></h2>
+  <div class="cols c64">
+    <svg viewBox="0 0 640 300" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="ha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <rect x="10" y="20" width="270" height="200" rx="18" style="fill:color-mix(in srgb, var(--blue) 10%, var(--card));stroke:var(--blue)" stroke-width="3"/><text x="30" y="46" font-size="18" font-weight="700" style="fill:var(--blue)">BARIŞ</text>
+      <rect x="350" y="20" width="280" height="200" rx="18" style="fill:color-mix(in srgb, var(--red) 10%, var(--card));stroke:var(--red)" stroke-width="3"/><text x="370" y="46" font-size="18" font-weight="700" style="fill:var(--red)">SAVAŞ</text>
+      <g font-size="16" font-weight="700" text-anchor="middle">
+        <rect x="40" y="80" width="100" height="40" rx="20" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="90" y="105" style="fill:var(--ink)">Devriye</text>
+        <rect x="160" y="150" width="100" height="40" rx="20" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="210" y="175" style="fill:var(--ink)">Şüphe</text>
+        <rect x="380" y="80" width="100" height="40" rx="20" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="430" y="105" style="fill:var(--ink)">Kovala</text>
+        <rect x="500" y="150" width="100" height="40" rx="20" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="550" y="175" style="fill:var(--ink)">Saldır</text>
+        <rect x="245" y="245" width="150" height="44" rx="22" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="320" y="273" style="fill:var(--green)">KAÇ</text>
+      </g>
+      <line x1="282" y1="90" x2="346" y2="90" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ha)"/><text x="314" y="80" text-anchor="middle" font-size="12" style="fill:var(--muted)">görüyor</text>
+      <line x1="346" y1="130" x2="282" y2="130" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ha)"/><text x="314" y="150" text-anchor="middle" font-size="12" style="fill:var(--muted)">kaybetti</text>
+      <line x1="320" y1="222" x2="320" y2="242" style="stroke:var(--green)" stroke-width="2.5" marker-end="url(#ha)"/><text x="410" y="236" font-size="12" style="fill:var(--green)">can &lt; 30 (iki üst durumdan da)</text>
+    </svg>
+    <div style="font-size:.86em">
+      <ul>
+        <li>Her durum kendi içinde <b>bir FSM</b> olabilir</li>
+        <li>Üst seviyedeki geçiş (BARIŞ → SAVAŞ) içerideki <b>bütün</b> alt durumlar için geçerli: oklar azalır</li>
+        <li>“Can &lt; 30 → KAÇ” artık 5 ok değil, <b>2</b> ok (ya da en üst seviyede 1)</li>
+        <li class="fragment">Game AI Pro’daki örnek: <b>gece bekçisi</b> kasa ile kapı arasında devriye gezer. “Telefon çaldı → konuş → devriyeye dön” durumunu her devriye durumuna ayrı ayrı eklemek yerine, devriyeyi tek bir üst durum yaparsınız.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="HFSM">
+  <h2>Yığınlı FSM <span class="en">pushdown automaton</span></h2>
+  <div class="demo" data-demo="pushdown"></div>
+  <div class="cols" style="margin-top:8px">
+    <p style="font-size:.86em">Durumları bir <b>yığında</b> tut (Yığınlar destesi!): yeni bir kesinti üste <b>eklenir</b> (push), bitince <b>çıkarılır</b> (pop) ve karakter otomatik olarak <b>kaldığı yerden</b> devam eder. Düz FSM tek bir değişken tuttuğu için nereden geldiğini unutur.</p>
+    <div class="box game"><span class="bt">🎮 Nerede?</span>Oyun menüleri (ana menü → ayarlar → ses → geri, geri), duraklatma ekranı, diyaloglar, “kesinti” davranışları (yaralanma animasyonu, el bombasından kaçma).</div>
+  </div>
+</section>
+
+<section data-sec="HFSM">
+  <h2>Yığınlı FSM — kod</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public class StackFSM
+{
+    readonly Stack<IState> stack = new Stack<IState>();
+
+    public void Push(IState s)              // kesinti: üste koy
+    {
+        if (stack.Count > 0) stack.Peek().Exit();   // (istersen "Pause")
+        stack.Push(s);
+        s.Enter();
+    }
+
+    public void Pop()                       // bitti: öncekine dön
+    {
+        stack.Pop().Exit();
+        if (stack.Count > 0) stack.Peek().Enter();  // (istersen "Resume")
+    }
+
+    public void Update() { if (stack.Count > 0) stack.Peek().Update(); }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class StackFSM {
+  constructor() { this.stack = []; }
+  push(s) {
+    const top = this.stack[this.stack.length - 1];
+    if (top) top.exit();
+    this.stack.push(s); s.enter();
+  }
+  pop() {
+    this.stack.pop().exit();
+    const top = this.stack[this.stack.length - 1];
+    if (top) top.enter();
+  }
+  update(dt) { const top = this.stack[this.stack.length - 1]; if (top) top.update(dt); }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class StackFSM:
+    def __init__(self):
+        self.stack = []
+    def push(self, s):
+        if self.stack:
+            self.stack[-1].exit()
+        self.stack.append(s)
+        s.enter()
+    def pop(self):
+        self.stack.pop().exit()
+        if self.stack:
+            self.stack[-1].enter()
+    def update(self, dt):
+        if self.stack:
+            self.stack[-1].update(dt)
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>Peek()</code> / <code>stack[-1]</code>: yığının tepesine çıkarmadan bakmak. Python’da <code>[-1]</code> = son eleman.</p>
+</section>
+
+<section data-sec="HFSM">
+  <div class="cols">
+    <div class="box story"><span class="bt">📜 Statecharts (Harel, 1987)</span>David Harel, hiyerarşi, paralel bölgeler ve geçmiş (history: “en son hangi alt durumdaydım?”) özelliklerini bir araya getirip <b>statechart</b> notasyonunu tanımladı — ilk uygulaması bir savaş uçağının arayüzüydü. Bugün UML durum diyagramları ve JavaScript’teki XState kütüphanesi bu fikirlerden gelir.</div>
+    <div class="box low"><span class="bt">⚙️ Paralel FSM’ler</span>Bir karakterin <b>aynı anda</b> birkaç makinesi olabilir: hareket FSM’si (yürü/koş/çömel), silah FSM’si (hazır/ateş/şarjör), animasyon FSM’si. Birbirlerine mesaj gönderirler. Böylece “yürürken şarjör değiştir” için ayrı bir durum gerekmez — durum patlamasının çaresi.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Gerçek oyunlarda FSM</div>
+  <div class="sub">Doom, Metal Gear, Hollow Knight, Unity Animator</div>
+  <ul class="agenda"><li class="done">durum ve geçiş</li><li class="done">bir nöbetçi tasarlayalım</li><li class="done">kod: üç yol</li><li class="done">sorunlar ve çözümler</li><li class="done">hiyerarşik ve yığınlı FSM</li><li class="on">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>📜 Doom (1993): kaynak kodda bir FSM</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C (Doom, info.c)">
+<pre><code class="language-c" data-trim data-line-numbers><script type="text/template">
+// id Software'in 1997'de yayımladığı Doom kaynak kodundan (linuxdoom-1.10/info.c)
+// { sprite, kare, süre (tic, 1/35 sn), eylem, SONRAKİ durum }
+{SPR_TROO,0,10,{A_Look},S_TROO_STND2,0,0},     // S_TROO_STND : bekle, etrafa bak
+{SPR_TROO,1,10,{A_Look},S_TROO_STND,0,0},      // S_TROO_STND2
+{SPR_TROO,0,3,{A_Chase},S_TROO_RUN2,0,0},      // S_TROO_RUN1 : oyuncuyu kovala
+// ... S_TROO_RUN2..8 (A_Chase) ...
+{SPR_TROO,4,8,{A_FaceTarget},S_TROO_ATK2,0,0}, // S_TROO_ATK1 : dön, nişan al
+{SPR_TROO,5,8,{A_FaceTarget},S_TROO_ATK3,0,0}, // S_TROO_ATK2
+{SPR_TROO,6,6,{A_TroopAttack},S_TROO_RUN1,0,0},// S_TROO_ATK3 : ateş topu at, kovalamaya dön
+{SPR_TROO,7,2,{NULL},S_TROO_PAIN2,0,0},        // S_TROO_PAIN : acı çek
+{SPR_TROO,7,2,{A_Pain},S_TROO_RUN1,0,0},       // S_TROO_PAIN2
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Aynı fikir C#'ta: her durum = görüntü + süre + eylem + sonraki durum
+record MonsterState(string sprite, int tics, Action<Monster> action, string next);
+
+var imp = new Dictionary<string, MonsterState> {
+    ["STND"]  = new("TROO_A", 10, m => m.Look(),       "STND2"),
+    ["STND2"] = new("TROO_B", 10, m => m.Look(),       "STND"),
+    ["RUN1"]  = new("TROO_A", 3,  m => m.Chase(),      "RUN2"),
+    ["ATK1"]  = new("TROO_E", 8,  m => m.FaceTarget(), "ATK2"),
+    ["ATK3"]  = new("TROO_G", 6,  m => m.FireBall(),   "RUN1"),
+};
+// Look() oyuncuyu görürse state = "RUN1" yapar; Chase() yakınsa "ATK1" yapar.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Aynı fikir Python'da: tablo = sözlük
+imp = {
+    "STND":  ("TROO_A", 10, "look",        "STND2"),
+    "STND2": ("TROO_B", 10, "look",        "STND"),
+    "RUN1":  ("TROO_A", 3,  "chase",       "RUN2"),
+    "ATK1":  ("TROO_E", 8,  "face_target", "ATK2"),
+    "ATK3":  ("TROO_G", 6,  "fire_ball",   "RUN1"),
+}
+# Her tic'te süre azalır; 0 olunca "sonraki" duruma geçilir.
+# Eylem fonksiyonları (look, chase) kendileri de durumu değiştirebilir.
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Doom’un Imp’i: animasyon kareleri ile YZ durumları <b>aynı tabloda</b>. <code>A_Look</code> oyuncuyu görünce “görme durumu”na, <code>A_Chase</code> yakın mesafede saldırı durumuna geçirir (p_enemy.c). 30 yıllık kod, bugün okuduğunuz FSM’nin aynısı.</p>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>Oyunlardan FSM örnekleri</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">Metal Gear Solid 2 (2001)</span>Nöbetçilerin bütün üssü kapsayan alarm evreleri: <b>Sızma</b> (normal) → <b>Alarm</b> (görüldünüz, ekranda geri sayım) → <b>Kaçış</b> (sizi arıyorlar) → <b>Dikkat</b> (tetikte devriye) → normal. Ekrandaki sayaç oyuncuya FSM’nin <b>hangi durumda</b> olduğunu açıkça gösterir.</div>
+    <div class="box game"><span class="bt">Hollow Knight · Hearthstone</span>Team Cherry, Hollow Knight’ın düşman ve boss davranışlarını Unity için görsel bir FSM aracı olan <b>PlayMaker</b> ile kurdu (mod yapımcıları bu FSM’leri düzenler). Blizzard da Hearthstone’daki birçok olayı PlayMaker ile yaptı: sanatçılar kod yazmadan etkileşim kurabildi.</div>
+  </div>
+  <div class="cols" style="margin-top:8px">
+    <div class="box game"><span class="bt">Half-Life (1998)</span>Askerler “görev planları” (schedule) ve durumlardan oluşan bir FSM ile çalışır; bir koşul bozulunca plan kesilir ve yenisi seçilir. AI and Games’in “The AI of Half-Life” videosu ayrıntılı anlatıyor.</div>
+    <div class="box story"><span class="bt">Final Fantasy XV (2016)</span>Karakter YZ’si davranış ağaçları ile durum makinelerini <b>birleştirir</b>: büyük resim FSM, her durumun içi davranış ağacı (Game AI Pro 3, 11. bölüm). Gerçek projelerde teknikler karışır.</div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>Unity Animator da bir FSM</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <ul>
+        <li>Animator Controller: kutular = <b>durumlar</b> (Idle, Walk, Attack), oklar = <b>geçişler</b>, parametreler (Speed, IsAttacking) = <b>koşullar</b></li>
+        <li>Bir duruma <b>StateMachineBehaviour</b> betiği eklenebilir: <code>OnStateEnter</code>, <code>OnStateUpdate</code>, <code>OnStateExit</code></li>
+        <li class="fragment">⚠️ Tartışmalı: YZ mantığını Animator’a koymak hızlıdır ama animasyon ve karar <b>birbirine karışır</b>. Çoğu ekip kararı ayrı bir FSM’de verip Animator’a sadece parametre gönderir (<code>animator.SetBool("IsChasing", true)</code>).</li>
+      </ul>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Animator'daki "Chase" durumuna eklenen betik
+public class ChaseBehaviour : StateMachineBehaviour
+{
+    Transform player;
+
+    public override void OnStateEnter(Animator animator, AnimatorStateInfo info, int layer)
+    {
+        player = GameObject.FindWithTag("Player").transform;   // bir kez
+    }
+
+    public override void OnStateUpdate(Animator animator, AnimatorStateInfo info, int layer)
+    {
+        var self = animator.transform;
+        self.position = Vector3.MoveTowards(self.position, player.position, 3f * Time.deltaTime);
+        float d = Vector3.Distance(self.position, player.position);
+        animator.SetBool("InRange", d < 2f);       // geçiş koşulunu güncelle
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js'te Animator yok: animasyonu durum adına göre seç
+const anims = { PATROL: walkFrames, CHASE: runFrames, ATTACK: attackFrames };
+
+function drawGuard(g) {
+  const frames = anims[g.state];               // durum → animasyon
+  const f = frames[floor(frameCount / 6) % frames.length];
+  image(f, g.pos.x, g.pos.y);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# pygame: durum → sprite listesi
+anims = {"PATROL": walk_frames, "CHASE": run_frames, "ATTACK": attack_frames}
+
+def draw_guard(screen, g, frame_count):
+    frames = anims[g.state]
+    img = frames[(frame_count // 6) % len(frames)]
+    screen.blit(img, g.pos)
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · oyunlarda</div>
+    <div class="q">Metal Gear Solid 2’nin “Alarm → Kaçış → Dikkat → Sızma” evrelerinin ekranda bir sayaçla gösterilmesinin YZ tasarımı açısından en önemli faydası nedir?</div>
+    <div class="opts">
+      <button data-opt="A">İşlemciyi rahatlatmak</button>
+      <button data-opt="B">Oyuncuya YZ’nin hangi durumda olduğunu açıkça göstererek kararlarını planlamasını sağlamak</button>
+      <button data-opt="C">Nöbetçileri daha akıllı yapmak</button>
+      <button data-opt="D">Hiçbir faydası yok, süs</button>
+    </div>
+    <div class="explain">Y1’deki ders: oyuncunun anlamadığı YZ “rastgele” görünür. Durumu görünür kılmak (sayaç, müzik, nöbetçi replikleri) oyuncuya bilgiye dayalı karar verdirir ve YZ’yi adil hissettirir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2e0d3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">hazır araçlar: ne yapar, nasıl eklenir</div>
+  <ul class="agenda"><li class="done">durum ve geçiş</li><li class="done">bir nöbetçi tasarlayalım</li><li class="done">kod: üç yol</li><li class="done">sorunlar ve çözümler</li><li class="done">hiyerarşik ve yığınlı FSM</li><li class="done">gerçek oyunlarda FSM</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/ScriptReference/StateMachineBehaviour.html" target="_blank" rel="noopener"><b>Animator + StateMachineBehaviour</b></a></td><td>Unity</td><td>Görsel FSM; animasyon için tasarlandı, YZ için sınırlı</td><td>Hazır (Window → Animation → Animator)</td></tr><tr><td><a href="https://github.com/Inspiaaa/UnityHFSM" target="_blank" rel="noopener"><b>UnityHFSM</b></a></td><td>Unity (C#)</td><td>Kodla hiyerarşik FSM; hafif, ücretsiz, açık kaynak. Görsel editörü yok</td><td>Package Manager → Add from Git URL: <code>https://github.com/Inspiaaa/UnityHFSM.git#upm</code></td></tr><tr><td><a href="https://github.com/dotnet-state-machine/stateless" target="_blank" rel="noopener"><b>Stateless</b></a></td><td>C# (.NET, Unity)</td><td>Akıcı (fluent) API ile durum makinesi; hiyerarşi, korumalı geçişler. Oyun dışı projelerde de yaygın</td><td>NuGet; Unity’de DLL kopyalama</td></tr><tr><td><a href="https://hutonggames.com/" target="_blank" rel="noopener"><b>PlayMaker</b></a></td><td>Unity</td><td>Görsel FSM ile oyun mantığı (Hollow Knight, Hearthstone). Kod bilmeden üretim; büyük projede okunabilirlik zorlaşır</td><td>Asset Store (ücretli)</td></tr><tr><td><a href="https://paradoxnotion.com/" target="_blank" rel="noopener"><b>NodeCanvas</b></a></td><td>Unity</td><td>FSM + davranış ağacı + diyalog ağacı tek pakette</td><td>Asset Store (ücretli)</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine" target="_blank" rel="noopener"><b>StateTree</b></a></td><td>Unreal Engine 5</td><td>FSM ile davranış ağacının karışımı; Epic’in yeni önerilen aracı</td><td>Eklenti olarak etkinleştir</td></tr><tr><td><a href="https://github.com/limbonaut/limboai" target="_blank" rel="noopener"><b>LimboAI</b></a></td><td>Godot 4</td><td>Hiyerarşik FSM + davranış ağacı, görsel editör</td><td>AssetLib ya da GitHub</td></tr><tr><td><a href="https://github.com/statelyai/xstate" target="_blank" rel="noopener"><b>XState</b></a></td><td>JavaScript</td><td>Statechart’lar: hiyerarşi, paralel durumlar, görselleştirici (Stately)</td><td><code>npm install xstate</code></td></tr><tr><td><a href="https://github.com/pytransitions/transitions" target="_blank" rel="noopener"><b>transitions · python-statemachine</b></a></td><td>Python</td><td>Hafif FSM; tetikleyiciler, koşullar, giriş/çıkış geri çağırmaları</td><td><code>pip install transitions</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>Aynı nöbetçi, üç kütüphaneyle</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (UnityHFSM)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+using UnityEngine;
+using UnityHFSM;                        // paket eklendikten sonra
+
+public class Guard : MonoBehaviour
+{
+    StateMachine fsm;
+
+    void Start()
+    {
+        fsm = new StateMachine();
+        fsm.AddState("Patrol", onLogic: state => Patrol());
+        fsm.AddState("Chase",  onLogic: state => MoveTo(player.position));
+        fsm.AddState("Attack", onLogic: state => Shoot());
+
+        fsm.AddTransition("Patrol", "Chase",  transition => SeesPlayer());
+        fsm.AddTransition("Chase",  "Patrol", transition => !SeesPlayer());
+        fsm.AddTwoWayTransition("Chase", "Attack", transition => DistToPlayer() < 2f);
+
+        fsm.SetStartState("Patrol");
+        fsm.Init();
+    }
+
+    void Update() { fsm.OnLogic(); }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (XState)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+import { createMachine, createActor } from "xstate";
+
+const guardMachine = createMachine({
+  id: "guard",
+  initial: "patrol",
+  states: {
+    patrol: { on: { SEE_PLAYER: "chase", HEAR_NOISE: "suspicious" } },
+    suspicious: { on: { SEE_PLAYER: "chase" }, after: { 4000: "patrol" } },  // 4 sn sonra
+    chase: { on: { LOST_PLAYER: "suspicious", IN_RANGE: "attack" } },
+    attack: { on: { OUT_OF_RANGE: "chase" } },
+  },
+});
+
+const guard = createActor(guardMachine);
+guard.subscribe(snapshot => console.log("durum:", snapshot.value));
+guard.start();
+guard.send({ type: "HEAR_NOISE" });     // durum: suspicious
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python (transitions)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from transitions import Machine         # pip install transitions
+
+class Guard:
+    pass
+
+g = Guard()
+machine = Machine(model=g, states=["devriye", "suphe", "kovala", "saldir"],
+                  initial="devriye")
+
+# tetikleyici (olay) adı, kaynak durum(lar), hedef durum
+machine.add_transition("ses_duydu", "devriye", "suphe")
+machine.add_transition("oyuncuyu_gordu", ["devriye", "suphe"], "kovala")
+machine.add_transition("yaklasti", "kovala", "saldir")
+
+g.ses_duydu()           # tetikleyiciler nesneye METOT olarak eklenir
+print(g.state)          # suphe
+g.oyuncuyu_gordu()
+print(g.state)          # kovala
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Fark: UnityHFSM <b>koşul</b> güdümlü (her karede kontrol eder), XState ve transitions <b>olay</b> güdümlü (bir şey olunca siz haber verirsiniz). Oyunlarda ikisi de yaygın.</p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Projenize FSM eklerken: adım adım</h2>
+  <div class="cols">
+    <ol style="font-size:.86em">
+      <li><b>Kâğıtta çizin</b>: durumlar, oklar, koşullar. Tabloya dökün (bu destedeki gibi).</li>
+      <li><b>Algıyı ayırın</b>: <code>SeesPlayer()</code>, <code>HeardNoise</code> gibi fonksiyonlar FSM’nin dışında hesaplansın.</li>
+      <li><b>Önce en basit hâli</b>: enum + switch ile 2–3 durum. Çalıştığını görün.</li>
+      <li><b>Hata ayıklama görselleri</b>: NPC’nin başına durum adını yazın (Unity: <code>OnDrawGizmos</code> / <code>Handles.Label</code>). Bu destedeki demolar gibi.</li>
+      <li>Büyüdükçe: durum sınıflarına ya da bir kütüphaneye (UnityHFSM) geçin.</li>
+      <li><b>Animasyonla bağ</b>: FSM karar verir, Animator’a parametre gönderir.</li>
+    </ol>
+    <div class="box low"><span class="bt">⚙️ Performans</span>FSM çok ucuzdur: her karede sadece aktif durumun kodu ve onun birkaç koşulu çalışır. Pahalı olan <b>koşulların kendisi</b> (görüş ışını, yol bulma). Onları her karede değil, saniyede birkaç kez hesaplayın (Y18).</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Her karede <code>new ChaseState()</code> üretmek (GC çöpü — durumları bir kez oluşturup saklayın)</li><li>Enter/Exit’i unutmak: animasyon, ses, zamanlayıcı sıfırlanmıyor</li><li>“Her durumdan” geçişleri her duruma kopyalamak</li><li>String durum adlarında yazım hatası (enum kullanın)</li><li>Karar mantığını Animator geçişlerine gömmek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir Guard için enum + switch ile FSM yaz: durumlar Patrol, Suspicious, Chase, Attack, Flee. Geçiş tablosu şu: [tabloyu yapıştır]. Kovalamaya başlama mesafesi 8, bırakma mesafesi 12 olsun (histerezis). Her durum değişiminde Debug.Log yaz ve OnDrawGizmos ile durum adını karakterin üstüne çiz. Durum değişince Animator’a "State" int parametresi gönder.”</p><ul class="mini"><li>Durum ve geçiş tablosunu isteğe <b>siz</b> yazın; asistana tasarımı değil kodu yaptırın</li><li>Hangi yolu istediğinizi söyleyin (enum+switch / State pattern / UnityHFSM)</li><li>Her geçişte <code>Debug.Log</code> ile durum yazdırmasını isteyin</li><li>Titreme önlemini (histerezis, minimum süre) açıkça isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Trafik ışığı + yaya</b> — p5.js’te trafik ışığı FSM’i ve ışığa uyan yayalar. Bonus: yaya butonu (olay güdümlü geçiş).</li><li><b class="c-green">[kolay]</b> <b>Pac-Man modları</b> — Y1’deki Pac-Man demosuna korku modunu ve “yenildi → evine dön” durumunu ekleyin; diyagramını çizin.</li><li><b class="c-amber">[orta]</b> <b>Gizlilik oyunu</b> — Unity’de 3 nöbetçili bir oda: bu destedeki FSM + görüş konisi + MGS tarzı alarm evreleri (bütün nöbetçileri etkileyen global FSM).</li><li><b class="c-amber">[orta]</b> <b>Yığınlı menü</b> — Oyununuzun menülerini yığınlı FSM ile yazın (ana menü → ayarlar → ses → geri).</li><li><b class="c-red">[zor]</b> <b>HFSM boss</b> — Üç fazlı bir boss: her faz bir üst durum, içinde 3–4 saldırı durumu. UnityHFSM ya da LimboAI ile.</li><li><b class="c-purple">[araştırma]</b> <b>Doom’u okuyun</b> — Doom kaynak kodunda (info.c, p_enemy.c) bir canavarın bütün durumlarını çıkarıp diyagramını çizin. A_Chase hangi koşullarda saldırıya geçiriyor?</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>FSM</b>: sonlu durum + geçişler; her an tek durum.</li>
+      <li>Tasarım: önce tablo/diyagram, sonra kod.</li>
+      <li>Kod: <b>enum+switch</b> (basit), <b>durum sınıfları</b> (düzenli), <b>geçiş tablosu</b> (veri güdümlü).</li>
+      <li><b>Titreme</b>: histerezis, hafıza, minimum süre.</li>
+    </ul>
+    <ul>
+      <li><b>Durum patlaması</b> → HFSM, yığınlı FSM, paralel FSM’ler.</li>
+      <li>Gerçek oyunlar: Doom, MGS2, Half-Life, Hollow Knight, FFXV.</li>
+      <li>Araçlar: Animator, UnityHFSM, PlayMaker, StateTree, LimboAI, XState, transitions.</li>
+      <li>Sonraki: <b>davranış ağaçları</b> — büyük karakterler için daha modüler bir yol.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=JyF0oyarz4U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/JyF0oyarz4U/hqdefault.jpg" alt=""><span><b>The AI of Half-Life: Finite State Machines</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=-ZP2Xm-mY4E" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/-ZP2Xm-mY4E/hqdefault.jpg" alt=""><span><b>An introduction to FSMs and the state pattern</b><br>The Shaggy Dev</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=8lZ53Sx5oc0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/8lZ53Sx5oc0/hqdefault.jpg" alt=""><span><b>How NES Games Use State Machines For Everything</b><br>NesHacker</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=3hXkdARwREo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/3hXkdARwREo/hqdefault.jpg" alt=""><span><b>How to Make a State Machine for Enemy AI (Unity)</b><br>LlamAcademy</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Vt8aZDPzRjI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Vt8aZDPzRjI/hqdefault.jpg" alt=""><span><b>How to Program in Unity: State Machines Explained</b><br>iHeartGameDev</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=464ILICI1hY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/464ILICI1hY/hqdefault.jpg" alt=""><span><b>HFSM for Unity – Hierarchical Finite State Machine</b><br>ApexionGame</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=CZvfuNfdc1M" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/CZvfuNfdc1M/hqdefault.jpg" alt=""><span><b>Which AI Behavior Framework Should You Use?</b><br>LlamAcademy</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=AxTvFs7ku34" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/AxTvFs7ku34/hqdefault.jpg" alt=""><span><b>Metal Gear Solid 2: Alert / Evasion / Caution</b><br>oyun kaydı</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Harel 1987</b> · <a href="https://www.wisdom.weizmann.ac.il/~harel/SCANNED.PAPERS/Statecharts.pdf" target="_blank" rel="noopener">Statecharts: A Visual Formalism for Complex Systems</a> <i>(Science of Computer Programming 8(3))</i><br>Hiyerarşi, paralellik ve geçmiş: HFSM’nin akademik temeli.</div><div class="paper"><b>Anguelov, Humphreys, Mark 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter04_Behavior_Selection_Algorithms.pdf" target="_blank" rel="noopener">Behavior Selection Algorithms</a> <i>(Game AI Pro, Bölüm 4)</i><br>FSM, HFSM, BT, utility, GOAP, HTN karşılaştırması; gece bekçisi örneği.</div><div class="paper"><b>Lim 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter12_A_Reusable_Light-Weight_Finite-State_Machine.pdf" target="_blank" rel="noopener">A Reusable, Light-Weight Finite-State Machine</a> <i>(Game AI Pro 3, Bölüm 12)</i><br>Üretimde kullanılan, veri güdümlü hafif bir FSM tasarımı.</div><div class="paper"><b>Shirakami vd. 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter11_A_Character_Decision-Making_System_for_FINAL_FANTASY_XV_by_Combining_Behavior_Trees_and_State_Machines.pdf" target="_blank" rel="noopener">A Character Decision-Making System for FINAL FANTASY XV by Combining Behavior Trees and State Machines</a> <i>(Game AI Pro 3, Bölüm 11)</i><br>AAA bir oyunda FSM ile davranış ağaçlarının birlikte kullanımı.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener">Robert Nystrom: Game Programming Patterns — State</a> — ücretsiz; HFSM ve yığınlı FSM dahil, harika anlatım</li><li><a href="https://github.com/id-Software/DOOM/blob/master/linuxdoom-1.10/info.c" target="_blank" rel="noopener">Doom kaynak kodu: info.c (durum tablosu)</a></li><li><a href="https://github.com/id-Software/DOOM/blob/master/linuxdoom-1.10/p_enemy.c" target="_blank" rel="noopener">Doom kaynak kodu: p_enemy.c (A_Look, A_Chase)</a></li></ul>
+    <ul class="reflist"><li><a href="https://docs.unity3d.com/ScriptReference/StateMachineBehaviour.html" target="_blank" rel="noopener">Unity: StateMachineBehaviour</a></li><li><a href="https://docs.unity3d.com/Manual/class-AnimatorController.html" target="_blank" rel="noopener">Unity: Animator Controller</a></li><li><a href="https://github.com/Inspiaaa/UnityHFSM" target="_blank" rel="noopener">UnityHFSM (README: kurulum ve örnekler)</a></li><li><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine" target="_blank" rel="noopener">Unreal: StateTree</a></li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Davranış Ağaçları</div>
+    <div class="sub">Halo 2’den Unreal’a: selector, sequence, decorator ve kara tahta</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-davranis-agaclari/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

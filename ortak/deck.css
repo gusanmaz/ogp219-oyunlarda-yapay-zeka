@@ -686,3 +686,8 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .vec-info.below p { margin: 4px 0; }
 .pac-side { font-size: 16px; }
 .pac-rule { margin: 4px 0; line-height: 1.3; }
+.fsm-diag { min-height: 200px; }
+.fsm-log { font: 13px/1.5 "JetBrains Mono", monospace; color: var(--ink-2); margin-top: 6px; }
+.pd-stack { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; max-width: 260px; }
+.pd-stack > div { border: 2px solid var(--purple); border-radius: 8px; padding: 6px 12px; font-weight: 700; background: var(--card); text-align: center; }
+.pd-stack > div.top { background: var(--purple); color: #fff; }
