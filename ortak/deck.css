@@ -684,3 +684,5 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .paper b { color: var(--purple); }
 .vec-info.below { font-size: 16px; display: flex; flex-wrap: wrap; gap: 0 18px; }
 .vec-info.below p { margin: 4px 0; }
+.pac-side { font-size: 16px; }
+.pac-rule { margin: 4px 0; line-height: 1.3; }

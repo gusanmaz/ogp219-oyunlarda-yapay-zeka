@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oyun Yapay Zekâsına Giriş</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Giriş: oyun YZ’si ile akademik YZ, ajan ve NPC, Pac-Man hayaletleri, zekâ yanılsaması (Halo, F.E.A.R.), zorluk ayarı (RE4, Mario Kart, Left 4 Dead, Alien: Isolation), Nükleer Gandi efsanesi, araçlar. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #2a1a5a 0%, #10223a 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 1</div>
+  <div class="ttl" style="font-size:64px">Oyun Yapay Zekâsına Giriş</div>
+  <div class="sub"><i>Ajan, NPC, zorluk ayarı</i> — oyun YZ’si “akıllı” değil, <b>eğlenceli</b> olmak zorunda</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlepac"></div>
+  <aside class="notes">Haftalık plandaki 1. hafta: oyun yapay zekâsına giriş; ajan kavramı, NPC, zorluk ayarı; oyun YZ’sinin akademik YZ’den farkı. Arka planda 1980 Pac-Man’in dört hayaleti kendi hedefleme kurallarıyla oynuyor (kesikli çizgiler hedef kareleri).</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.86em">
+      <li><b>Oyun YZ’si nedir?</b> — akademik YZ’den farkı</li>
+      <li><b>Ajan ve NPC</b> — algıla → düşün → davran</li>
+      <li><b>Vaka: Pac-Man</b> — dört basit kural, dört kişilik</li>
+      <li><b>Zekâ yanılsaması</b> — Halo, F.E.A.R., The Sims’ten dersler</li>
+      <li><b>Zorluk ayarı ve hile</b> — RE4, Mario Kart, Left 4 Dead, “Nükleer Gandi”</li>
+      <li><b>Kısa tarih</b> — 1980’den LLM’li NPC’lere</li>
+      <li><b>Bölümün araçları</b> — motorlar, kütüphaneler, kitaplar, kanallar</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir oyundaki YZ’yi izleyip “bu nasıl çalışıyor olabilir?” diye analiz edebilecek, dört satırlık kurallardan nasıl “kişilik” çıktığını görecek ve bir düşmanın zorluğunu ayarlayan düğmeleri tanıyacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: MÜKEMMEL DÜŞMAN</span>
+    <p class="big">Bir FPS’te düşmanlar <b>hiç ıskalamıyor</b>, duvarların arkasını görüyor, tepki süreleri 0 ms. Teknik olarak “en zeki” YZ bu. Oyun nasıl olur?</p>
+  </div>
+  <ul style="font-size:.95em">
+    <li class="fragment">İlk karşılaşmada ölürsünüz. Her seferinde. 😩</li>
+    <li class="fragment">Satrançta Stockfish’e karşı oynamak gibi: kazanma şansınız yok → <b>eğlence de yok</b>.</li>
+    <li class="fragment">Oyun YZ’sinin işi kazanmak değil, <b>iyi bir rakip / iyi bir oyun deneyimi</b> olmak. Çoğu zaman “güzelce kaybetmek”.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektörler, oyun döngüsü)</a></div>
+  <div class="prereq"><a class="opt" href="../yonsuz-graflar/">Graflar (ileride yol bulma için)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu deste çoğunlukla kavramsal. Pac-Man örneğinde iki vektör işlemi (toplama ve mesafe) kullanacağız; Y0’daki “vektör oyun alanı” yeterli.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu destenin büyük kısmı <b>hikâye ve analiz</b>: oyunları YZ gözlüğüyle izlemeyi öğreniyoruz. Kod laboratuvarları isteğe bağlı.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>agent</td><td>ajan</td><td>Ortamını algılayıp karar veren ve eylem yapan varlık</td></tr>
+    <tr><td>NPC (non-player character)</td><td>oyuncu olmayan karakter</td><td>Bilgisayarın yönettiği her karakter: düşman, köylü, yoldaş</td></tr>
+    <tr><td>bot</td><td>bot</td><td>Oyuncu yerine oynayan YZ (çok oyunculu oyunlarda, testlerde)</td></tr>
+    <tr><td>difficulty · DDA</td><td>zorluk · dinamik zorluk ayarı</td><td><i>dynamic difficulty adjustment</i>: zorluğun oyuncuya göre kendiliğinden değişmesi</td></tr>
+    <tr><td>AI director</td><td>YZ yönetmeni</td><td>Tek tek karakterleri değil, oyunun temposunu yöneten YZ</td></tr>
+    <tr><td>bark</td><td>bağırış / replik</td><td>NPC’nin durumunu belli eden kısa ses: “El bombası!”</td></tr>
+    <tr><td>emergent behavior</td><td>ortaya çıkan davranış</td><td>Basit kuralların etkileşiminden doğan, kimsenin tek tek yazmadığı davranış</td></tr>
+    <tr><td>artificial stupidity</td><td>yapay aptallık</td><td>Duvara yürümek gibi yanılsamayı bozan bariz hatalar</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Oyun YZ’si nedir?</div>
+  <div class="sub">akıllı olmak değil, deneyim yaratmak</div>
+  <ul class="agenda"><li class="on">oyun YZ’si nedir?</li><li class="">ajan ve NPC</li><li class="">vaka: Pac-Man hayaletleri</li><li class="">zekâ yanılsaması</li><li class="">zorluk ayarı ve hile</li><li class="">kısa tarih</li><li class="">bölümün araçları</li></ul>
+</section>
+
+<section data-sec="nedir">
+  <h2>Akademik YZ ile oyun YZ’si</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th></th><th>akademik YZ</th><th>oyun YZ’si</th></tr>
+    <tr><td>amaç</td><td>en iyi sonuç: kazan, doğru sınıflandır</td><td><b>oyuncuya istenen deneyimi</b> yaşat (gerilim, eğlence, güç hissi)</td></tr>
+    <tr><td>başarı ölçütü</td><td>doğruluk, kazanma oranı</td><td>oyuncu inanıyor mu, eğleniyor mu?</td></tr>
+    <tr><td>bütçe</td><td>saatler, GPU kümeleri</td><td>bir karede <b>1–3 ms</b>, onlarca karakter</td></tr>
+    <tr><td>hile</td><td>kabul edilmez</td><td>serbest — <b>yakalanmadıkça</b></td></tr>
+    <tr><td>kontrol</td><td>öğrenen, öngörülemez</td><td>tasarımcı <b>kontrol</b> edebilmeli, hatayı tekrar üretebilmeli</td></tr>
+    <tr><td>kaybetmek</td><td>başarısızlık</td><td>çoğu zaman <b>görevin ta kendisi</b></td></tr>
+  </table>
+  <p class="mini">Kevin Dill (Game AI Pro, 1. bölüm): “Oyun YZ’si tek bir şey için vardır: geliştiricilerin oyuncuya etkileyici bir deneyim sunmasını sağlamak.”</p>
+</section>
+
+<section data-sec="nedir">
+  <h2>Tasarımcı kontrolü ↔ özerklik</h2>
+  <svg viewBox="0 0 1100 230" style="width:100%" font-family="Source Sans 3">
+    <defs><linearGradient id="spg" x1="0" x2="1"><stop offset="0" style="stop-color:var(--blue)"/><stop offset="1" style="stop-color:var(--red)"/></linearGradient>
+    <marker id="spa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+    <rect x="40" y="95" width="1020" height="16" rx="8" fill="url(#spg)" opacity=".85"/>
+    <line x1="40" y1="140" x2="1060" y2="140" style="stroke:var(--ink-2)" stroke-width="2" marker-start="url(#spa)" marker-end="url(#spa)"/>
+    <text x="40" y="170" font-size="18" font-weight="700" style="fill:var(--blue)">tasarımcı kontrolü · öngörülebilir</text>
+    <text x="1060" y="170" text-anchor="end" font-size="18" font-weight="700" style="fill:var(--red)">özerklik · şaşırtıcı</text>
+    <g font-size="17" font-weight="700" text-anchor="middle" style="fill:var(--ink)">
+      <text x="90" y="80">senaryo</text><text x="250" y="80">kurallar</text><text x="400" y="80">FSM</text><text x="550" y="80">davranış ağacı</text><text x="710" y="80">utility</text><text x="850" y="80">planlama (GOAP)</text><text x="990" y="80">makine öğrenmesi</text>
+    </g>
+    <g font-size="13" text-anchor="middle" style="fill:var(--muted)">
+      <text x="90" y="50">WoW boss’ları</text><text x="250" y="50">Pac-Man</text><text x="400" y="50">Doom, Metal Gear</text><text x="550" y="50">Halo 2, Unreal</text><text x="710" y="50">The Sims</text><text x="850" y="50">F.E.A.R.</text><text x="990" y="50">Forza Drivatar</text>
+    </g>
+    <text x="550" y="215" text-anchor="middle" font-size="14" style="fill:var(--muted)">Kaynak: Kevin Dill, “What Is Game AI?”, Game AI Pro (2013), Şekil 1.1’den uyarlandı</text>
+  </svg>
+  <p class="mini">Bu bölümün karar verme desteleri tam bu çizgi boyunca soldan sağa ilerliyor. Sağa gittikçe karakter daha “kendi kafasına göre” davranır ama tasarımcının istediği deneyimi garanti etmek zorlaşır.</p>
+</section>
+
+<section data-sec="nedir">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · nedir</div>
+    <div class="q">Bir korku oyununda canavar YZ’si oyuncuyu her zaman 10 saniyede yakalayabilecek kadar “iyi”. Oyun YZ’si açısından en doğru yorum hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Mükemmel: akıllı YZ = iyi YZ</button>
+      <button data-opt="B">Kötü: amaç gerilim yaratmak; canavar yakalayabilecekken bazen <b>yakalamamalı</b></button>
+      <button data-opt="C">Canavarı tamamen kaldırmak gerekir</button>
+      <button data-opt="D">Fark etmez, oyuncular zaten fark etmez</button>
+    </div>
+    <div class="explain">Korku oyununun deneyimi “kıl payı kurtulmak”. Alien: Isolation’ın yönetmen YZ’si tam bunun için canavarı oyuncuya ara sıra yönlendirir ama sürekli dibinde tutmaz (birazdan anlatacağız).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Ajan ve NPC</div>
+  <div class="sub">algıla → düşün → davran</div>
+  <ul class="agenda"><li class="done">oyun YZ’si nedir?</li><li class="on">ajan ve NPC</li><li class="">vaka: Pac-Man hayaletleri</li><li class="">zekâ yanılsaması</li><li class="">zorluk ayarı ve hile</li><li class="">kısa tarih</li><li class="">bölümün araçları</li></ul>
+</section>
+
+<section data-sec="ajan">
+  <h2>Ajan döngüsü <span class="en">sense–think–act</span></h2>
+  <div class="cols c64">
+    <svg viewBox="0 0 640 300" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="aa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <rect x="10" y="20" width="620" height="170" rx="16" style="fill:var(--card-2);stroke:var(--rule)"/><text x="30" y="45" font-size="15" font-weight="700" style="fill:var(--muted)">AJAN (NPC)</text>
+      <g font-size="19" font-weight="700" text-anchor="middle">
+        <rect x="40" y="70" width="160" height="90" rx="12" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="120" y="108" style="fill:var(--ink)">ALGILA</text><text x="120" y="134" font-size="13" font-weight="400" style="fill:var(--muted)">görüş, ses, hafıza</text>
+        <rect x="240" y="70" width="160" height="90" rx="12" style="fill:var(--card);stroke:var(--amber)" stroke-width="3"/><text x="320" y="108" style="fill:var(--ink)">DÜŞÜN</text><text x="320" y="134" font-size="13" font-weight="400" style="fill:var(--muted)">FSM, BT, utility…</text>
+        <rect x="440" y="70" width="160" height="90" rx="12" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="520" y="108" style="fill:var(--ink)">DAVRAN</text><text x="520" y="134" font-size="13" font-weight="400" style="fill:var(--muted)">yürü, ateş et, konuş</text>
+      </g>
+      <line x1="202" y1="115" x2="236" y2="115" style="stroke:var(--ink-2)" stroke-width="3" marker-end="url(#aa)"/><line x1="402" y1="115" x2="436" y2="115" style="stroke:var(--ink-2)" stroke-width="3" marker-end="url(#aa)"/>
+      <rect x="10" y="230" width="620" height="56" rx="14" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="320" y="264" text-anchor="middle" font-size="19" font-weight="700" style="fill:var(--ink)">OYUN DÜNYASI (oyuncu, harita, diğer NPC’ler)</text>
+      <path d="M520,162 C540,205 540,215 520,228" fill="none" style="stroke:var(--ink-2)" stroke-width="3" marker-end="url(#aa)"/><path d="M120,228 C100,210 100,195 120,163" fill="none" style="stroke:var(--ink-2)" stroke-width="3" marker-end="url(#aa)"/>
+    </svg>
+    <div style="font-size:.86em">
+      <p>Russell &amp; Norvig’in tanımı: <b>ajan</b>, ortamını <b>algılayıcılarla</b> algılayan ve ona <b>eylemcilerle</b> etki eden her şeydir.</p>
+      <ul>
+        <li>Oyunda “algılayıcı” = oyun durumundan okunan bilgi (çoğu zaman <b>sınırlandırılmış</b>: duvarın arkasını görmemeli!)</li>
+        <li>Bu döngü her karede (ya da saniyede birkaç kez) döner</li>
+        <li>Y0’daki “beyin ve kaslar” düzeni bu döngünün kod hâli</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ajan">
+  <h2>Oyunlarda YZ’nin işleri</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">Karakter YZ’si</span>
+      <ul style="font-size:.9em">
+        <li><b>Düşmanlar</b>: devriye, kovalama, saklanma</li>
+        <li><b>Yoldaşlar</b>: takip, yardım, “önüme geçme!”</li>
+        <li><b>Kalabalık / köylüler</b>: canlı dünya hissi</li>
+        <li><b>Rakipler</b>: yarış, strateji, dövüş oyunu botları</li>
+      </ul></div>
+    <div class="box story"><span class="bt">Karakter olmayan YZ</span>
+      <ul style="font-size:.9em">
+        <li><b>Yönetmen</b>: tempo, düşman dalgaları (Left 4 Dead)</li>
+        <li><b>Prosedürel üretim</b>: harita, görev, müzik</li>
+        <li><b>Zorluk ayarı ve eşleştirme</b> (matchmaking)</li>
+        <li><b>Test botları</b>: oyunu binlerce kez oynayıp hata arar</li>
+        <li><b>Analitik / oyuncu modelleme</b>: oyuncu nerede sıkılıyor?</li>
+      </ul></div>
+  </div>
+  <p class="mini">Yannakakis &amp; Togelius’un “Artificial Intelligence and Games” kitabı alanı üç ana başlıkta toplar: <b>oyun oynamak</b>, <b>içerik üretmek</b>, <b>oyuncuyu modellemek</b>. Bu bölüm üçüne de değiniyor.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Vaka: Pac-Man hayaletleri</div>
+  <div class="sub">dört basit kural, dört kişilik (1980)</div>
+  <ul class="agenda"><li class="done">oyun YZ’si nedir?</li><li class="done">ajan ve NPC</li><li class="on">vaka: Pac-Man hayaletleri</li><li class="">zekâ yanılsaması</li><li class="">zorluk ayarı ve hile</li><li class="">kısa tarih</li><li class="">bölümün araçları</li></ul>
+</section>
+
+<section data-sec="Pac-Man">
+  <h2>Pac-Man (Namco, 1980): kişilikli hayaletler</h2>
+  <div class="cols c64">
+    <div style="font-size:.88em">
+      <p>Tasarımcı Toru Iwatani her hayalete farklı bir “karakter” vermek istedi. Japonca takma adları bunu anlatır:</p>
+      <table class="gloss" style="font-size:17px">
+        <tr><td style="color:#ff3b3b">Blinky</td><td>Oikake (kovalayan)</td><td>doğrudan Pac-Man’e</td></tr>
+        <tr><td style="color:#ff8fd8">Pinky</td><td>Machibuse (pusu kuran)</td><td>Pac-Man’in 4 kare önüne</td></tr>
+        <tr><td style="color:#34e0ff">Inky</td><td>Kimagure (kaprisli)</td><td>Blinky ile birlikte kıskaç</td></tr>
+        <tr><td style="color:#ffb347">Clyde</td><td>Otoboke (aptalı oynayan)</td><td>yaklaşınca kaçar</td></tr>
+      </table>
+    </div>
+    <div class="box story"><span class="bt">Tek bir hareket kuralı</span>Her hayalet bir <b>hedef kare</b> seçer. Her kavşakta, gidebileceği yönlerden hedefe <b>kuş uçuşu en yakın</b> olanı seçer. Geri dönemez. Eşitlikte sıra: yukarı, sol, aşağı, sağ.
+      <p class="mini">Bütün “kişilik” farkı sadece hedef karenin nasıl seçildiğinde! Kaynak: Jamey Pittman, “The Pac-Man Dossier”.</p></div>
+  </div>
+</section>
+
+<section data-sec="Pac-Man">
+  <h2>Dört hayalet — canlı simülasyon</h2>
+  <div class="demo" data-demo="pacman"></div>
+</section>
+
+<section data-sec="Pac-Man">
+  <h2>Modlar ve 1980’den kalan bir hata</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <ul>
+        <li><b>Dağıl</b> <span class="en">scatter</span>: her hayalet kendi köşesine gider (oyuncuya nefes aldırır)</li>
+        <li><b>Kovala</b> <span class="en">chase</span>: kişilik kuralları</li>
+        <li>1. seviyede: 7 sn dağıl → 20 sn kovala → … Mod değişince hepsi <b>geri döner</b> (oyuncuya ipucu!)</li>
+        <li><b>Korku</b> <span class="en">frightened</span>: güç hapı yenince rastgele dolaşır</li>
+      </ul>
+      <p class="mini">Bu bir <b>sonlu durum makinesi</b>: bir sonraki destenin konusu.</p>
+    </div>
+    <div class="box warn"><span class="bt">🐛 Taşma hatası</span>Pac-Man <b>yukarı</b> bakarken Pinky’nin hedefi “4 yukarı” değil “4 yukarı <b>ve 4 sola</b>” çıkar (Inky’nin ara noktası da 2 sola kayar). Neden? Yön, 8 bitlik bir sayı çiftinde saklanıyordu; “yukarı” için yapılan hesap taşınca sol bileşene de sızdı.
+      <p class="mini">Hata hiç düzeltilmedi; usta oyuncular Pinky’yi kandırmak için kullanır. Demodaki “1980 taşma hatası” kutusunu kapatıp farkı görün.</p></div>
+  </div>
+</section>
+
+<section data-sec="Pac-Man">
+  <h2>Hedef kareleri — kod</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Vector2Int Target(Ghost g, Vector2Int pac, Vector2Int pacDir, Vector2Int blinky)
+{
+    switch (g.name)
+    {
+        case "Blinky": return pac;                          // doğrudan
+        case "Pinky":  return pac + pacDir * 4;             // 4 kare önü
+        case "Inky":
+            Vector2Int mid = pac + pacDir * 2;              // 2 kare önü
+            return mid + (mid - blinky);                    // Blinky'den oraya okun 2 katı
+        default:                                            // Clyde
+            float d = Vector2Int.Distance(g.tile, pac);
+            return d >= 8 ? pac : g.scatterCorner;          // yaklaşınca köşesine kaç
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function target(ghost, pac, pacDir, blinky) {
+  if (ghost.name === "Blinky") return pac;
+  if (ghost.name === "Pinky") return [pac[0] + 4 * pacDir[0], pac[1] + 4 * pacDir[1]];
+  if (ghost.name === "Inky") {
+    const mid = [pac[0] + 2 * pacDir[0], pac[1] + 2 * pacDir[1]];
+    return [2 * mid[0] - blinky[0], 2 * mid[1] - blinky[1]];
+  }
+  // Clyde
+  const d = Math.hypot(ghost.tile[0] - pac[0], ghost.tile[1] - pac[1]);
+  return d >= 8 ? pac : ghost.corner;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def target(ghost, pac, pac_dir, blinky):
+    if ghost["name"] == "Blinky":
+        return pac
+    if ghost["name"] == "Pinky":
+        return (pac[0] + 4 * pac_dir[0], pac[1] + 4 * pac_dir[1])
+    if ghost["name"] == "Inky":
+        mid = (pac[0] + 2 * pac_dir[0], pac[1] + 2 * pac_dir[1])
+        return (2 * mid[0] - blinky[0], 2 * mid[1] - blinky[1])
+    d = math.dist(ghost["tile"], pac)          # Clyde
+    return pac if d >= 8 else ghost["corner"]
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>switch</code> / <code>if</code> zinciri: hangi hayalet olduğuna göre farklı kural. <code>mid + (mid − blinky)</code> = Blinky’den <code>mid</code>’e giden ok, bir kez daha <code>mid</code>’in ötesine uzatılır.</p>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: Inky’nin hedefi</h2>
+  <div class="ailab" data-lab="inky" data-lang="js">
+<textarea>
+// pac: [x, y] Pac-Man'in karesi, dir: "up" | "down" | "left" | "right"
+// blinky: [x, y]. Inky'nin hedef karesini [x, y] olarak döndür (taşma hatası YOK).
+function inkyTarget(pac, dir, blinky) {
+  const D = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const d = D[dir];
+  const mid = [pac[0] + 2 * d[0], pac[1] + 2 * d[1]];   // 2 kare önü
+  return mid;   // TODO: Blinky'den mid'e giden oku mid'in ötesine uzat
+}
+</textarea>
+    <div class="lab-tasks">Hedef = <code>mid + (mid − blinky)</code>. Kâğıt üzerinde bir örnekle deneyin: Pac-Man (10, 10) sağa bakıyor, Blinky (8, 10) → mid (12, 10) → hedef (16, 10). Bonus: 1980 hatasını ekleyin (yön “up” ise mid’in x’inden 2 çıkarın).</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Clyde (Python)</h2>
+  <div class="ailab" data-lab="clyde" data-lang="python">
+<textarea>
+import math
+# clyde, pac, corner: [x, y] kareleri.
+# Clyde, Pac-Man'e 8 kare veya daha uzaktaysa Pac-Man'i, daha yakınsa köşesini hedefler.
+def clyde_target(clyde, pac, corner):
+    d = abs(clyde[0] - pac[0]) + abs(clyde[1] - pac[1])
+    if d > 8:
+        return pac
+    return corner
+</textarea>
+    <div class="lab-tasks">İki hata var: (1) mesafe kuş uçuşu (Öklid) olmalı, Manhattan değil — <code>math.hypot</code> kullanın; (2) “8 veya daha uzak” için <code>&gt;=</code> gerekir. Neden bu küçük farklar önemli? Hayalet yanlış anda kaçar, oyuncular “Clyde garip davranıyor” der.</div>
+  </div>
+</section>
+
+<section data-sec="Pac-Man">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · Pac-Man</div>
+    <div class="q">Pac-Man hayaletlerinin “kişilikleri” teknik olarak nereden geliyor?</div>
+    <div class="opts">
+      <button data-opt="A">Her birinin ayrı bir sinir ağı var</button>
+      <button data-opt="B">Hepsi aynı hareket kuralını kullanıyor; farklı olan sadece hedef karenin seçilme kuralı</button>
+      <button data-opt="C">Rastgele hareket ediyorlar, oyuncular kişilik hayal ediyor</button>
+      <button data-opt="D">Her birinin farklı hızı var</button>
+    </div>
+    <div class="explain">Hareket kuralı ortak (kavşakta hedefe en yakın yön). Kişilik = hedef seçimi: doğrudan, 4 kare önü, kıskaç, yaklaşınca kaç. Basit kuralların etkileşimi karmaşık görünen davranışlar üretir: <b>ortaya çıkan davranış</b>. (Hayaletler korku modunda gerçekten rastgele dolaşır.)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Zekâ yanılsaması</div>
+  <div class="sub">oyuncunun fark etmediği zekâ, yoktur</div>
+  <ul class="agenda"><li class="done">oyun YZ’si nedir?</li><li class="done">ajan ve NPC</li><li class="done">vaka: Pac-Man hayaletleri</li><li class="on">zekâ yanılsaması</li><li class="">zorluk ayarı ve hile</li><li class="">kısa tarih</li><li class="">bölümün araçları</li></ul>
+</section>
+
+<section data-sec="yanılsama">
+  <h2>📜 Halo (2001): sağlam düşman = akıllı düşman?</h2>
+  <div class="cols c64">
+    <div style="font-size:.88em">
+      <p>Bungie’den Chris Butcher ve Jaime Griesemer GDC 2002’de “The Illusion of Intelligence” konuşmasında oyun testi sonuçlarını paylaştı. Davranışı <b>aynı</b>, sadece canı farklı düşmanlar:</p>
+      <table class="sum-t" style="font-size:18px">
+        <tr><th></th><th>“çok zeki”</th><th>“biraz zeki”</th></tr>
+        <tr><td>zayıf düşman</td><td>%8</td><td>%72</td></tr>
+        <tr><td>güçlü düşman</td><td><b>%43</b></td><td>%57</td></tr>
+      </table>
+      <p class="mini">Oyuncular uzun yaşayan düşmanı daha uzun izledi → davranışını fark etti → “akıllı” dedi.</p>
+    </div>
+    <div class="box game"><span class="bt">Grunt’lar kaçıyor!</span>Elite (lider) ölünce küçük Grunt’ların kaçması planlanmıştı. Test oyuncuları <b>fark etmedi</b>. Bungie ipuçlarını abarttıkça abarttı: sonunda her Grunt, kollarını havaya kaldırıp çığlık atarak ve çoğu zaman “Lider öldü, kaç!” diye bağırarak kaçtı.
+      <p class="mini">Ders: davranışı <b>oyuncuya göstermek</b>, davranışı yazmak kadar önemli.</p></div>
+  </div>
+</section>
+
+<section data-sec="yanılsama">
+  <h2>📜 F.E.A.R. (2005): “Söylemediyse olmamıştır”</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <p>Jeff Orkin (Game AI Pro 2, 2. bölüm): asker NPC’ler ne yaptıklarını birbirlerine <b>anlatan</b> kısa diyaloglar kurar:</p>
+      <ul>
+        <li>Vurulan yerine bir başkası sorar: “Durumun ne?” — “Vuruldum!” → oyuncu isabet ettiğini anlar</li>
+        <li>Saklanınca: “Gören var mı?” — “Ağacın arkasında!”</li>
+        <li>Kımıldamayan asker: “Çık oradan!” — “Gidecek yerim yok!” → hata gibi görünen durum <b>açıklanır</b></li>
+        <li>Son kalan: “Takviye lazım!” → aslında kodda takviye sistemi <b>yoktu</b></li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Ucuz ama etkili hileler</span>
+      <ul style="font-size:.9em">
+        <li><b>Kafa çevirme</b>: iki düşmana bir saniye bakıp sonra birine saldırmak “tarttı” izlenimi verir (Steve Rabin)</li>
+        <li><b>Düşünce baloncukları</b>: The Sims’in ihtiyaç ikonları</li>
+        <li><b>Şaşkın ikonu</b>: Creatures (1996), fikrini değiştiren yaratığın başına “?” koyardı — kararsızlık hata değil “bilinçli” görünsün diye</li>
+      </ul></div>
+  </div>
+</section>
+
+<section data-sec="yanılsama">
+  <div class="cols">
+    <div class="box warn"><span class="bt">⚠️ Yapay aptallık <span class="en">artificial stupidity</span></span>
+      <ul style="font-size:.9em">
+        <li>Duvara doğru yürümeye devam etmek, bir köşeye takılmak</li>
+        <li>Ateş eden oyuncuyu görmezden gelmek</li>
+        <li>Saniyede üç kez fikir değiştirip titremek</li>
+        <li>Yoldaşın kapıyı tıkaması, oyuncunun önüne geçip ateş hattına girmesi</li>
+      </ul>
+      <p class="mini">Tek bir bariz hata, saatlerce kurulan yanılsamayı yıkar. Oyun YZ’sinde ilk iş: <b>aptalca görünmemek</b>.</p></div>
+    <div class="box story"><span class="bt">📜 “Liquid AI” (1997)</span>EA, Madden NFL 98’in YZ’sini “sıvı gibi akan” <i>Liquid AI</i> diye tanıttı. Rakip NFL GameDay 98’in ekibi bir dergi röportajında alay etti: “Liquid AI, GameDay’i görünce EA’nın bacağından aşağı akan şeydir.” 😅
+      <p class="mini">Beklenti yönetimi önemli: YZ’yi övüp teslim edemezseniz geri teper. (Steve Rabin, Game AI Pro 3, 1. bölüm)</p></div>
+  </div>
+</section>
+
+<section data-sec="yanılsama">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · yanılsama</div>
+    <div class="q">Testlerde oyuncular, kuşatma (flanking) yapan düşmanlarınızı fark etmiyor. En ucuz ve etkili çözüm hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Kuşatma algoritmasını daha karmaşık hâle getirmek</button>
+      <button data-opt="B">Düşmanların kuşatmaya giderken “Sağdan dolaşıyorum!” gibi bağırmasını sağlamak (bark)</button>
+      <button data-opt="C">Kuşatmayı tamamen kaldırmak</button>
+      <button data-opt="D">Düşmanları daha hızlı yapmak</button>
+    </div>
+    <div class="explain">F.E.A.R.’ın dersi: oyuncunun fark etmediği zekâ yoktur. Bir ses kaydı ve basit bir tetikleyici, aylarca süren algoritma iyileştirmesinden daha çok “akıllı YZ” algısı yaratır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Zorluk ayarı ve hile</div>
+  <div class="sub">düğmeler, gizli sistemler, efsaneler</div>
+  <ul class="agenda"><li class="done">oyun YZ’si nedir?</li><li class="done">ajan ve NPC</li><li class="done">vaka: Pac-Man hayaletleri</li><li class="done">zekâ yanılsaması</li><li class="on">zorluk ayarı ve hile</li><li class="">kısa tarih</li><li class="">bölümün araçları</li></ul>
+</section>
+
+<section data-sec="zorluk">
+  <h2>Zorluk düğmeleri — kendiniz ayarlayın</h2>
+  <div class="demo" data-demo="turret"></div>
+  <p class="mini">Fareyi alanın içinde gezdirerek mermilerden kaçın. Tepki süresi, nişan hatası ve atış hızı “zorluk” düğmeleridir; algoritma aynı kalır. “Hareketini tahmin et” akıllıca; “hile yap” (duvar arkasını görmek) ise oyuncuya <b>haksız</b> gelir.</p>
+</section>
+
+<section data-sec="zorluk">
+  <h2>Gizli dinamik zorluk: üç örnek</h2>
+  <div class="cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="box story"><span class="bt">Resident Evil 4 (2005)</span>Oyunun gizli bir <b>derece</b> sistemi var (1–10). İyi nişan alıp az hasar alırsanız düşmanlar daha çok vurur ve saldırganlaşır; sık ölürseniz kolaylaşır. Capcom resmî olarak duyurmadı; oyuncular ve hız koşucuları kodu inceleyerek buldu.</div>
+    <div class="box story"><span class="bt">Mario Kart</span>“Lastik bant” <span class="en">rubber banding</span>: geride kalan bilgisayar sürücüleri hızlanır, öndekiler yavaşlar; dağıtılan eşyalar da sıranıza bağlıdır (sondakine güçlüler). Yarış hep sıkışık kalır — ama birinci gidenler “haksızlık” diye kızar.</div>
+    <div class="box story"><span class="bt">Crash Bandicoot (1996)</span>Yönetmen Jason Rubin’e göre: üst üste ölen oyuncuya ekstra koruyucu maske, kayalar biraz daha yavaş, daha çok meyve… Oyuncu çoğu zaman fark etmez — amaç da bu.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Daha fazlası: Y17 “Zorluk Ayarı ve Oyuncu Modelleme” destesi. Robin Hunicke’nin 2005 makalesi “The Case for Dynamic Difficulty Adjustment in Games” akademik başlangıç noktası.</p>
+</section>
+
+<section data-sec="zorluk">
+  <h2>YZ yönetmeni: oyunun temposunu yöneten YZ</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">Left 4 Dead (Valve, 2008)</span>Michael Booth’un <b>AI Director</b>’ı her oyuncu için bir “duygusal yoğunluk” değeri tutar: hasar aldıkça, yakında zombi öldükçe artar. Yoğunluk zirveye çıkınca yönetmen bir süre <b>dinlenme</b> verir (yeni sürü göndermez); düşünce yeniden gerilimi yükseltir. Zombilerin, eşyaların ve hatta müziğin nerede/ne zaman çıkacağı her oyunda farklıdır.
+      <p class="mini">Korku filmlerindeki “gerilim–rahatlama” dalgası. Kaynak: Booth, “The AI Systems of Left 4 Dead” (2009).</p></div>
+    <div class="box game"><span class="bt">Alien: Isolation (2014)</span>“İki beyin”: <b>yönetmen</b> YZ oyuncunun yerini hep bilir ve bir <b>tehdit göstergesi</b> <span class="en">menace gauge</span> tutar. Gösterge çok yükselince uzaylıyı uzaklaştırır, çok düşünce oyuncunun bölgesine “ipucu” verir. Uzaylının kendi YZ’si ise oyuncunun yerini <b>bilmez</b>: duyar, görür, arar.
+      <p class="mini">Hile ile adalet arasındaki ince çizgi: yönetmen bilir ama av (uzaylı) bilmez.</p></div>
+  </div>
+</section>
+
+<section data-sec="zorluk">
+  <h2>📜 “Nükleer Gandi”: ünlü bir hata… ki aslında hiç olmadı</h2>
+  <div class="cols c64">
+    <div style="font-size:.86em">
+      <p><b>Efsane:</b> İlk Civilization’da (1991) Gandi’nin saldırganlık değeri 1’di. Demokrasiye geçen liderin saldırganlığı 2 azalıyordu. 1 − 2 = −1… ama değer <b>8 bitlik işaretsiz</b> sayıda (0–255) tutulduğundan <b>255</b>’e “taştı” ve barışçı Gandi nükleer silah delisi oldu.</p>
+      <p class="fragment"><b>Gerçek:</b> Bu hikâye 2012 civarında internette yayıldı. 2020’de Sid Meier anı kitabında böyle bir hatanın ilk oyunda <b>imkânsız</b> olduğunu söyledi. Civilization V’in (2010) tasarımcıları ise Gandi’nin nükleer silah eğilimini <b>bilerek</b> en üst düzeye ayarlamıştı — bir şaka olarak. Sonraki oyunlarda da göndermeler var.</p>
+    </div>
+    <div class="box low fragment"><span class="bt">⚙️ Neden yine de iyi bir ders?</span>Efsane yanlış ama anlattığı hata <b>çok gerçek</b>: işaretsiz bir sayıdan büyük bir sayı çıkarınca “sarar” <span class="en">wrap around</span>. Arama Algoritmaları destesindeki ikili arama taşması (<code>(lo + hi) / 2</code>) ile aynı aile.
+      <p class="mini">C#’ta <code>byte b = 1; b -= 2;</code> → 255. Python’da tam sayılar taşmaz; JS’te <code>Uint8Array</code> sarar. Oyun YZ’sindeki “kişilik” değerlerini <b>sınırlandırın</b> (clamp).</p></div>
+  </div>
+</section>
+
+<section data-sec="zorluk">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 4 · zorluk</div>
+    <div class="q">Hangisi oyuncunun gözünde en “haksız” hile olur?</div>
+    <div class="opts">
+      <button data-opt="A">Kolay modda düşmanların biraz daha az isabet etmesi</button>
+      <button data-opt="B">Yarış oyununda gerideki rakiplerin hafifçe hızlanması</button>
+      <button data-opt="C">Düşmanın duvarın arkasındaki oyuncuyu görüp duvardan ateş etmesi</button>
+      <button data-opt="D">Strateji oyununda zor seviyede YZ’nin biraz kaynak bonusu alması</button>
+    </div>
+    <div class="explain">Oyuncunun <b>görebildiği</b> ve oyunun kurallarını açıkça çiğneyen hileler en kötüsüdür. Gizli kolaylıklar (A) ve sıkışık yarış (B) çoğu zaman fark edilmez; kaynak bonusu (D) birçok strateji oyununda açıkça zorluk ayarı olarak yazılır (Civilization’ın zorluk seviyeleri gibi).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kısa tarih</div>
+  <div class="sub">1980’den LLM’li NPC’lere</div>
+  <ul class="agenda"><li class="done">oyun YZ’si nedir?</li><li class="done">ajan ve NPC</li><li class="done">vaka: Pac-Man hayaletleri</li><li class="done">zekâ yanılsaması</li><li class="done">zorluk ayarı ve hile</li><li class="on">kısa tarih</li><li class="">bölümün araçları</li></ul>
+</section>
+
+<section data-sec="tarih">
+  <h2>Oyun YZ’sinin dönüm noktaları</h2>
+  <table class="sum-t" style="font-size:16px">
+    <tr><th>yıl</th><th>oyun / olay</th><th>yenilik</th><th>bu bölümde</th></tr>
+    <tr><td>1980</td><td>Pac-Man</td><td>kişilikli hayaletler, modlar</td><td>Y1, Y2</td></tr>
+    <tr><td>1996</td><td>Creatures</td><td>sinir ağlı, öğrenen yaratıklar</td><td>Y13</td></tr>
+    <tr><td>1998</td><td>Half-Life · Thief</td><td>takım YZ’si · görüş/ses ile gizlilik</td><td>Y11, Y12</td></tr>
+    <tr><td>2000</td><td>The Sims</td><td>ihtiyaçlar + “akıllı nesneler” (fayda)</td><td>Y4</td></tr>
+    <tr><td>2001</td><td>Black &amp; White</td><td>oyuncunun eğittiği yaratık</td><td>Y13</td></tr>
+    <tr><td>2004</td><td>Halo 2</td><td>davranış ağaçları yaygınlaşıyor</td><td>Y3</td></tr>
+    <tr><td>2005</td><td>F.E.A.R.</td><td>hedef yönelimli planlama (GOAP)</td><td>Y5</td></tr>
+    <tr><td>2008</td><td>Left 4 Dead</td><td>YZ yönetmeni</td><td>Y17</td></tr>
+    <tr><td>2014</td><td>Alien: Isolation · Shadow of Mordor</td><td>iki beyinli canavar · Nemesis sistemi</td><td>Y11, Y17</td></tr>
+    <tr><td>2016–2019</td><td>AlphaGo · OpenAI Five · AlphaStar</td><td>derin pekiştirmeli öğrenme insanı yeniyor</td><td>Y6, Y13</td></tr>
+    <tr><td>2022</td><td>Gran Turismo Sophy</td><td>şampiyonları yenen yarış YZ’si (Nature)</td><td>Y13</td></tr>
+    <tr><td>2023–</td><td>Generative Agents · LLM’li NPC demoları</td><td>dil modelleriyle konuşan, plan yapan karakterler</td><td>Y14, Y16</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2e0d3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Bölümün araçları</div>
+  <div class="sub">motorlar, kütüphaneler, kitaplar, kanallar</div>
+  <ul class="agenda"><li class="done">oyun YZ’si nedir?</li><li class="done">ajan ve NPC</li><li class="done">vaka: Pac-Man hayaletleri</li><li class="done">zekâ yanılsaması</li><li class="done">zorluk ayarı ve hile</li><li class="done">kısa tarih</li><li class="on">bölümün araçları</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/index.html" target="_blank" rel="noopener"><b>Unity AI Navigation</b></a></td><td>Unity</td><td>NavMesh, ajanlar, engeller, bağlantılar (Y9). Hazır yol bulma</td><td>Package Manager → AI Navigation</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html" target="_blank" rel="noopener"><b>Unity Behavior</b></a></td><td>Unity 6</td><td>Görsel davranış ağacı editörü (Y3)</td><td>Package Manager → Behavior</td></tr><tr><td><a href="https://github.com/Unity-Technologies/ml-agents" target="_blank" rel="noopener"><b>Unity ML-Agents</b></a></td><td>Unity + Python</td><td>Pekiştirmeli öğrenme ile ajan eğitimi (Y13)</td><td>paket + <code>pip install mlagents</code></td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/artificial-intelligence-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Engine AI</b></a></td><td>Unreal (C++/Blueprint)</td><td>Davranış ağaçları, StateTree, EQS, AI Perception, MassAI</td><td>Motorla gelir</td></tr><tr><td><a href="https://github.com/limbonaut/limboai" target="_blank" rel="noopener"><b>Godot Navigation + LimboAI / Beehave</b></a></td><td>Godot</td><td>Yol bulma motorda; davranış ağacı ve durum makinesi eklentileri</td><td>AssetLib’den eklenti</td></tr><tr><td><a href="https://github.com/Mugen87/yuka" target="_blank" rel="noopener"><b>Yuka</b></a></td><td>JavaScript</td><td>Tarayıcı oyunları için steering, FSM, hedef tabanlı ajanlar, algılama, yol bulma</td><td><code>npm install yuka</code></td></tr><tr><td><a href="https://github.com/libgdx/gdx-ai" target="_blank" rel="noopener"><b>gdx-ai</b></a></td><td>Java (libGDX)</td><td>Steering, davranış ağaçları, A*, mesajlaşma — öğretici kaynak kodu</td><td>Gradle bağımlılığı</td></tr>
+  </table>
+  <p class="mini">Her destede o konunun kütüphanelerini ayrıntılı (nasıl eklenir, ne yapar, ne yapmaz) ele alacağız. Kural: önce kavramı küçük bir örnekle kendiniz yazın, sonra hazır aracı kullanın — hata ayıklarken içini bilmek hayat kurtarır.</p>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📚 Bölümün temel kaynakları</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Kitaplar</span>
+      <ul style="font-size:.86em">
+        <li><b>Yannakakis &amp; Togelius</b>, <i>Artificial Intelligence and Games</i> (Springer, 2. baskı 2025) — akademik bakış; 1. baskı ücretsiz PDF olarak sitede</li>
+        <li><b>Ian Millington</b>, <i>AI for Games</i> (3. baskı, 2019) — algoritmaların “ders kitabı”</li>
+        <li><b>Steve Rabin (ed.)</b>, <i>Game AI Pro</i> 1–3 + Online — sektördeki geliştiricilerin yazdığı 150’den fazla bölüm, <b>ücretsiz</b></li>
+        <li><b>Daniel Shiffman</b>, <i>The Nature of Code</i> — p5.js ile ajanlar ve steering, ücretsiz</li>
+      </ul></div>
+    <div class="box game"><span class="bt">İzleme listesi</span>
+      <ul style="font-size:.86em">
+        <li><b>AI and Games</b> (Tommy Thompson): oyunların YZ’sini anlatan YouTube kanalı — bu bölümün en iyi arkadaşı</li>
+        <li><b>GDC Vault — AI Summit</b> konuşmaları (birçoğu YouTube’da ücretsiz)</li>
+        <li><b>Game Maker’s Toolkit</b>: tasarım açısından YZ</li>
+        <li><b>The Coding Train</b>: p5.js ile otonom ajanlar</li>
+      </ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Mükemmel nişancı: hata payı ve tepki süresi yok</li><li>Oyuncunun yerini her zaman bilen “hileci” YZ</li><li>Her karede pahalı hesaplar (Find, raycast yağmuru)</li><li>Kararını saniyede defalarca değiştiren titrek YZ</li><li>Test edilemeyen, rastgeleliği tohumsuz (seed) kod</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#, 2D üstten görünüm. Bir taret yaz: oyuncuyu sadece görüş hattı açıksa (Physics2D.Raycast) görsün, tepki süresi (0,3 sn) ve nişan hatası (derece) Inspector’dan ayarlanabilsin, saniyede en fazla 2 atış yapsın. Zorluk ayarı için bu üç değeri bir ScriptableObject’te topla.”</p><ul class="mini"><li>Oyunun türünü ve istenen <b>deneyimi</b> yazın (“gerilimli ama adil”)</li><li>YZ’nin neyi bilip neyi bilmemesi gerektiğini belirtin (duvar arkası, oyuncunun canı)</li><li>Zorluk değerlerini Inspector’dan ayarlanabilir istemeyi unutmayın</li><li>Kodu küçük parçalarla isteyin ve her birini oyunda test edin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Pac-Man hayaletleri</b> — p5.js’te bu destedeki labirent ve dört hedefleme kuralıyla bir Pac-Man klonu. Bonus: korku modu.</li><li><b class="c-green">[kolay]</b> <b>YZ analizi</b> — Sevdiğiniz bir oyunun düşmanlarını 30 dk izleyip “algıla–düşün–davran” şemasını çizin; hangi zekâ yanılsaması hilelerini kullanıyor?</li><li><b class="c-amber">[orta]</b> <b>Zorluk düğmeleri</b> — Taret demosunu Unity’ye taşıyın; üç zorluk seviyesini ScriptableObject ile tanımlayın ve 5 arkadaşınızla test edin.</li><li><b class="c-amber">[orta]</b> <b>Mini AI Director</b> — Bir hayatta kalma oyununda “yoğunluk” değeri tutup düşman dalgalarının zamanlamasını buna göre ayarlayın.</li><li><b class="c-purple">[araştırma]</b> <b>Halo deneyini tekrarlayın</b> — Davranışı aynı, canı farklı iki düşman yapın; 10 kişiye “ne kadar zeki?” anketi uygulayıp sonuçları Halo verisiyle karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Efsane mi gerçek mi?</b> — Nükleer Gandi benzeri bir oyun efsanesini (ör. Pac-Man’in 256. seviye hatası) kaynaklarıyla araştırıp sunun.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Oyun YZ’sinin amacı <b>deneyim</b>: eğlence, gerilim, adil bir rakip.</li>
+      <li><b>Ajan</b>: algıla → düşün → davran döngüsü.</li>
+      <li>Pac-Man: basit kurallar + farklı hedefler = kişilik.</li>
+      <li><b>Zekâ yanılsaması</b>: fark ettirmek, yazmak kadar önemli (Halo, F.E.A.R.).</li>
+    </ul>
+    <ul>
+      <li>Zorluk düğmeleri: tepki süresi, isabet, hız, hile.</li>
+      <li>Gizli DDA: RE4, Mario Kart, Crash; yönetmen YZ: L4D, Alien: Isolation.</li>
+      <li>Efsanelere dikkat: Nükleer Gandi (ama taşma hatası gerçek!).</li>
+      <li>Araçlar: Unity, Unreal, Godot, Yuka; kaynaklar: Game AI Pro, AI and Games.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=Llt3DYdLtuA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Llt3DYdLtuA/hqdefault.jpg" alt=""><span><b>How Four Pac-Man Ghosts Got Four Different Brains</b><br>WiseBites</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=ICwzQ0_RCcQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ICwzQ0_RCcQ/hqdefault.jpg" alt=""><span><b>Pac-Man Ghost AI Explained</b><br>Chariot Rider</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=9bbhJi0NBkk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9bbhJi0NBkk/hqdefault.jpg" alt=""><span><b>What Makes Good AI?</b><br>Game Maker’s Toolkit</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=76kZtNaetx0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/76kZtNaetx0/hqdefault.jpg" alt=""><span><b>Halo | The Illusion of Intelligence | GDC ’02</b><br>Butcher &amp; Griesemer (yeniden yükleme)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Nt1XmiDwxhY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Nt1XmiDwxhY/hqdefault.jpg" alt=""><span><b>The AI of Alien: Isolation</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=0th5ecqe_4A" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0th5ecqe_4A/hqdefault.jpg" alt=""><span><b>How Left 4 Dead’s AI Director Works</b><br>Fezezen</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=0JV-kMYLYCo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0JV-kMYLYCo/hqdefault.jpg" alt=""><span><b>MK64’s Rubber Band Powered AI</b><br>ShimiDia</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=GbptbbiKaj8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/GbptbbiKaj8/hqdefault.jpg" alt=""><span><b>Artificial Intelligence for Games — An Introduction</b><br>King’s Institute for AI</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Dill 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter01_What_is_Game_AI.pdf" target="_blank" rel="noopener">What Is Game AI?</a> <i>(Game AI Pro, Bölüm 1)</i><br>Bu destenin felsefesi: deneyim, tasarımcı kontrolü, yapay aptallık.</div><div class="paper"><b>Rabin 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter01_The_Illusion_of_Intelligence.pdf" target="_blank" rel="noopener">The Illusion of Intelligence</a> <i>(Game AI Pro 3, Bölüm 1)</i><br>Oyuncular neden kandırılmaya hazır; altı somut yanılsama hilesi.</div><div class="paper"><b>Hunicke 2005</b> · <a href="https://dl.acm.org/doi/10.1145/1178477.1178573" target="_blank" rel="noopener">The Case for Dynamic Difficulty Adjustment in Games</a> <i>(ACM ACE 2005)</i><br>Half-Life üzerinde DDA (Hamlet sistemi): akademik DDA’nın başlangıcı.</div><div class="paper"><b>Yannakakis &amp; Togelius 2025</b> · <a href="https://gameaibook.org/" target="_blank" rel="noopener">Artificial Intelligence and Games (2. baskı)</a> <i>(Springer)</i><br>Alanın akademik haritası: oynamak, üretmek, oyuncuyu modellemek; LLM’ler ve etik.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://pacman.holenet.info/" target="_blank" rel="noopener">Jamey Pittman: The Pac-Man Dossier</a> — hayaletlerin bütün kuralları</li><li><a href="https://www.gameaipro.com/" target="_blank" rel="noopener">Game AI Pro (ücretsiz bölümler)</a></li><li><a href="https://www.readkong.com/page/the-ai-systems-of-left-4-dead-michael-booth-valve-9664541" target="_blank" rel="noopener">Michael Booth: The AI Systems of Left 4 Dead (slaytlar)</a></li><li><a href="https://www.gamedeveloper.com/design/the-perfect-organism-the-ai-of-alien-isolation" target="_blank" rel="noopener">Game Developer: The Perfect Organism — The AI of Alien: Isolation</a> — Tommy Thompson</li></ul>
+    <ul class="reflist"><li><a href="https://www.engadget.com/2015-06-03-resident-evil-4-difficulty.html" target="_blank" rel="noopener">Engadget: Resident Evil 4 secretly adjusted its difficulty</a></li><li><a href="https://www.engadget.com/2011-07-14-half-minute-halo-an-interview-with-jaime-griesemer.html" target="_blank" rel="noopener">Engadget: Half-Minute Halo — Jaime Griesemer röportajı</a> — “30 saniyelik eğlence”</li><li><a href="https://en.wikipedia.org/wiki/Nuclear_Gandhi" target="_blank" rel="noopener">Wikipedia: Nuclear Gandhi</a> — efsanenin tarihi ve Sid Meier’in açıklaması</li><li><a href="https://en.wikipedia.org/wiki/Dynamic_game_difficulty_balancing" target="_blank" rel="noopener">Wikipedia: Dynamic game difficulty balancing</a> — Crash Bandicoot ve diğer örnekler</li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Sonlu Durum Makineleri</div>
+    <div class="sub">Devriye → şüphe → saldırı → kaç: NPC beyninin en klasik hâli</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-fsm/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

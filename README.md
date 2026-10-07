@@ -68,6 +68,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | # | Konu | Durum |
 |---|------|-------|
 | Y0 | [Oyun YZ’si İçin Hazırlık](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-hazirlik/) | ✅ hazır |
+| Y1 | [Oyun Yapay Zekâsına Giriş](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-giris/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -114,6 +115,7 @@ yonlu-graflar/      16 · Yönlü graflar
 mst/                17 · Minimum yayılan ağaçlar
 en-kisa-yollar/     18 · En kısa yollar
 yz-hazirlik/        Y0 · Oyun YZ’si için hazırlık (vektörler, zaman)
+yz-giris/           Y1 · Oyun YZ’sine giriş (ajan, Pac-Man, zorluk)
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).
