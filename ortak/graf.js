@@ -64,7 +64,9 @@
       G.edges.forEach(e => {
         const st = es[e.id], [x1, y1] = G.pos[e.v], [x2, y2] = G.pos[e.w];
         const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
-        const ax = x1 + ux * r, ay = y1 + uy * r, bx = x2 - ux * (r + (G.directed ? 3 : 0)), by = y2 - uy * (r + (G.directed ? 3 : 0));
+        const off = v => { const lab = G.name(v); if (lab.length <= 2) return r; const hw = lab.length * 4.6 + 8, hh = r - 2; return Math.min(Math.abs(ux) > 1e-6 ? hw / Math.abs(ux) : 1e9, Math.abs(uy) > 1e-6 ? hh / Math.abs(uy) : 1e9); };
+        const oa = off(e.v), ob = off(e.w);
+        const ax = x1 + ux * oa, ay = y1 + uy * oa, bx = x2 - ux * (ob + (G.directed ? 3 : 0)), by = y2 - uy * (ob + (G.directed ? 3 : 0));
         const w = st === 'path' || st === 'mst' || st === 'tree' ? 4.5 : st === 'cur' ? 4 : st ? 3 : 1.8;
         const op = st === 'dim' ? 0.18 : st === 'cross' ? 0.5 : 1;
         // ters yönlü kenar varsa biraz kavisli çiz

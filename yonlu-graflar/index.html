@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yönlü Graflar</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Yönlü graflar: erişilebilirlik, çöp toplayıcı (mark-and-sweep), topolojik sıralama (teknoloji ağacı), Kahn algoritması, döngü tespiti, güçlü bileşenler (Kosaraju–Sharir), soft-lock. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3a2a0d 0%, #10223a 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · GRAFLAR</div>
+  <div class="ttl" style="font-size:80px">Yönlü Graflar</div>
+  <div class="sub"><i>Tek yönlü kapılar, teknoloji ağaçları, görev zincirleri</i> — oklar önemli!</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titledigraph"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.2 Directed Graphs bölümünü temel alır. Arka planda yönlü kenarlar boyunca akan ışıklar: her kenar tek yönlü.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li><b>Terimler</b> — yönlü kenar, giriş/çıkış derecesi <span class="en">digraph</span></li>
+      <li><b>Erişilebilirlik</b> — DFS yine iş başında; bonus: <b>çöp toplayıcı</b> nasıl çalışır?</li>
+      <li><b>Topolojik sıralama</b> — teknoloji ağacında araştırma sırası</li>
+      <li><b>Döngü tespiti</b> — kilitlenen görev zincirini bulmak</li>
+      <li><b>Güçlü bileşenler</b> — oyuncu bir yere sıkışıp kalabilir mi?</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…Civilization’daki teknoloji ağacını doğru sırayla araştıran, görev bağımlılıklarındaki ölümcül hataları bulan ve “oyuncu bu odaya girerse bir daha çıkamaz mı?” (soft-lock) sorusunu yanıtlayan kodu anlayacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: TEK YÖNLÜ</span>
+    <ul>
+      <li>Bir uçurumdan <b>aşağı</b> atlayabilirsiniz ama yukarı tırmanamazsınız.</li>
+      <li class="fragment">“Bronz”u araştırmadan “Demir”i araştıramazsınız; tersi değil.</li>
+      <li class="fragment">Takip ettiğiniz yayıncı sizi takip etmek zorunda değil.</li>
+      <li class="fragment">Düşman YZ’si “devriye”den “saldırı”ya geçebilir ama “ölü”den “devriye”ye dönemez.</li>
+    </ul>
+  </div>
+  <p class="fragment lead">Hepsinde kenarların bir <b>yönü</b> var: v → w, w → v demek değil. Yönsüz graf algoritmalarının çoğu çalışmaya devam ediyor — ama yeni ve çok faydalı sorular da doğuyor.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>digraph · directed edge</td><td>yönlü graf · yönlü kenar</td><td>v → w: v’den w’ye gidilir (tersi değil)</td></tr>
+    <tr><td>outdegree · indegree</td><td>çıkış / giriş derecesi</td><td>Düğümden çıkan / düğüme giren ok sayısı</td></tr>
+    <tr><td>reachable</td><td>erişilebilir</td><td>v’den w’ye yönlü bir yol var</td></tr>
+    <tr><td>DAG</td><td>yönlü döngüsüz graf</td><td><i>directed acyclic graph</i>: hiç yönlü döngü yok</td></tr>
+    <tr><td>topological order</td><td>topolojik sıra</td><td>Her ok soldan sağa gidecek şekilde düğümleri dizmek</td></tr>
+    <tr><td>postorder</td><td>sonsıra</td><td>DFS’de düğümlerin <b>bitme</b> sırası</td></tr>
+    <tr><td>strongly connected</td><td>güçlü bağlı</td><td>v’den w’ye <b>ve</b> w’den v’ye yol var</td></tr>
+    <tr><td>garbage collection</td><td>çöp toplama</td><td>Ulaşılamayan nesnelerin belleğini otomatik geri almak</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Terimler</div>
+  <div class="sub">yönlü graf ve API’si</div>
+  <ul class="agenda"><li class="on">terimler</li><li class="">erişilebilirlik ve çöp toplayıcı</li><li class="">topolojik sıralama</li><li class="">döngü tespiti</li><li class="">güçlü bileşenler</li></ul>
+</section>
+
+<section data-sec="terimler">
+  <h2>🎮 Oyunlarda yönlü graflar</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>sistem</th><th>düğüm</th><th>v → w kenarı</th></tr>
+    <tr><td>Metroidvania / platform haritası</td><td>bölge</td><td>v’den w’ye geçilebilir (tek yönlü kapı, uçurum, portal)</td></tr>
+    <tr><td>Teknoloji / yetenek ağacı</td><td>teknoloji</td><td>v, w’nin ön koşulu</td></tr>
+    <tr><td>Görev zinciri</td><td>görev</td><td>v bitmeden w açılmaz</td></tr>
+    <tr><td>YZ sonlu durum makinesi (FSM)</td><td>durum (devriye, saldırı…)</td><td>v’den w’ye geçiş kuralı</td></tr>
+    <tr><td>Diyalog ağacı</td><td>replik</td><td>bu seçenek → şu replik</td></tr>
+    <tr><td>Bellek (çalışma zamanı)</td><td>nesne</td><td>v, w’ye bir referans tutuyor</td></tr>
+  </table>
+</section>
+
+<section data-sec="terimler">
+  <h2>Yönlü graf sınıfı</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <p>Yönsüz <code>Graph</code>’tan <b>tek</b> fark: <code>addEdge(v, w)</code> sadece <code>adj[v]</code>’ye ekler.</p>
+      <ul>
+        <li><code>adj[v]</code> = v’den <b>çıkan</b> oklar</li>
+        <li>Toplam kayıt: E (yönsüzde 2E)</li>
+        <li><code>reverse()</code>: bütün okları çevir — “v’ye kim geliyor?” sorusu ve güçlü bileşenler için</li>
+      </ul>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Digraph:
+    def __init__(self, V):
+        self.V = V
+        self.E = 0
+        self.adj = [[] for v in range(V)]
+
+    def add_edge(self, v, w):
+        self.adj[v].append(w)       # SADECE v → w
+        self.E += 1
+
+    def reverse(self):              # bütün oklar ters
+        R = Digraph(self.V)
+        for v in range(self.V):
+            for w in self.adj[v]:
+                R.add_edge(w, v)
+        return R
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Digraph
+{
+    public int V, E;
+    public List<int>[] Adj;
+    public Digraph(int v)
+    {
+        V = v; Adj = new List<int>[v];
+        for (int i = 0; i < v; i++) Adj[i] = new List<int>();
+    }
+    public void AddEdge(int v, int w) { Adj[v].Add(w); E++; }   // sadece v → w
+
+    public Digraph Reverse()
+    {
+        var R = new Digraph(V);
+        for (int v = 0; v < V; v++)
+            foreach (int w in Adj[v]) R.AddEdge(w, v);
+        return R;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Digraph {
+  constructor(V) {
+    this.V = V; this.E = 0;
+    this.adj = Array.from({ length: V }, () => []);
+  }
+  addEdge(v, w) { this.adj[v].push(w); this.E++; }   // sadece v → w
+  reverse() {
+    const R = new Digraph(this.V);
+    for (let v = 0; v < this.V; v++)
+      for (const w of this.adj[v]) R.addEdge(w, v);
+    return R;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="terimler">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · terimler</div>
+    <div class="q">Bir yönlü grafta bütün düğümlerin <b>çıkış</b> derecelerinin toplamı neye eşittir?</div>
+    <div class="opts">
+      <button data-opt="A">2E</button>
+      <button data-opt="B">E</button>
+      <button data-opt="C">V</button>
+      <button data-opt="D">giriş derecelerinin toplamının iki katı</button>
+    </div>
+    <div class="explain">Her okun tam bir başlangıç noktası var → çıkış dereceleri toplamı = <b>E</b>. Aynı şekilde giriş dereceleri toplamı da E. (Yönsüz grafta her kenar iki uca birden sayılıyordu: 2E.)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Erişilebilirlik ve çöp toplayıcı</div>
+  <div class="sub">DFS ve BFS yönlü graflarda da aynen çalışır</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="on">erişilebilirlik ve çöp toplayıcı</li><li class="">topolojik sıralama</li><li class="">döngü tespiti</li><li class="">güçlü bileşenler</li></ul>
+</section>
+
+<section data-sec="erişilebilirlik">
+  <h2>Yönlü DFS — iz tablosu</h2>
+  <div class="demo" data-demo="gsearch" data-graph="tinyDG" data-alg="dfs" data-algsel data-src="0" data-w="620" data-h="340" data-speed="2"></div>
+  <p class="mini">Kitaptaki “tinyDG”. Kod yönsüz DFS ile <b>birebir aynı</b>: sadece okların yönünde ilerler. 0’dan başlayınca 6, 7, 8, 9… hiç işaretlenmez: oralara 0’dan <b>ok yönünde</b> yol yok. Düğüme tıklayıp başka kaynaklar deneyin (ör. 6 ya da 7).</p>
+</section>
+
+<section data-sec="erişilebilirlik">
+  <h2>♻️ Çöp toplayıcı: erişilebilirliğin en meşhur uygulaması</h2>
+  <div class="demo" data-demo="gcviz"></div>
+  <p class="mini">Düğüm = bellekteki nesne, ok = referans. Kökler: global/static değişkenler ve o an çalışan fonksiyonların yerel değişkenleri. <b>İşaretle</b> <span class="en">mark</span>: köklerden DFS. <b>Süpür</b> <span class="en">sweep</span>: işaretsiz her nesneyi sil. (1960, John McCarthy, Lisp)</p>
+</section>
+
+<section data-sec="erişilebilirlik">
+  <div class="box low" style="font-size:.95em"><span class="bt">⚙️ Oyunlarda GC neden önemli?</span>
+    <ul>
+      <li>C#, Java, JavaScript, Python: hepsinde çöp toplayıcı var. Unity C# betikleri de öyle.</li>
+      <li class="fragment">İşaretleme sırasında programın (bir kısmı) durur → oyunda <b>takılma</b> (GC spike). 16,6 ms’lik kare bütçesinde 5 ms’lik bir GC fark edilir!</li>
+      <li class="fragment">Çözüm: her karede yeni nesne <b>üretme</b> <span class="en">allocation</span>. Mermi, partikül, düşman → <b>nesne havuzu</b> <span class="en">object pool</span> (Bağlı Listeler destesi!). <code>string</code> birleştirmeyi ve LINQ’yu <code>Update()</code> içinde azalt.</li>
+      <li class="fragment"><b>Referans sayma</b> (Python’un ana yöntemi, Swift, C++ <code>shared_ptr</code>): her nesne kendisine kaç ok geldiğini sayar, 0 olunca silinir. Hızlı ama <b>döngüleri</b> kaçırır → Python ayrıca döngü bulan bir toplayıcı çalıştırır.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="erişilebilirlik">
+  <h2>Yönlü BFS: en kısa yönlü yollar</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>BFS de aynen çalışır: kaynaktan <b>ok yönünde</b> en az kenarlı yollar.</p>
+      <ul>
+        <li class="fragment"><b>Çok kaynaklı BFS</b>: başta kuyruğa birden fazla düğüm koy → “herhangi bir kaynaktan en yakın uzaklık”. 🎮 “En yakın can paketine kaç adım?” haritasını her kare için bir kez hesapla (bütün can paketleri kaynak).</li>
+        <li class="fragment"><b>Web tarayıcı</b> <span class="en">web crawler</span>: başlangıç sayfasından BFS; kuyruk = ziyaret edilecek adresler, küme = görülen adresler (Princeton örneği).</li>
+      </ul>
+    </div>
+    <div class="box story fragment"><span class="bt">📜 Kitap yazarının uyarısı</span>Princeton slaytlarındaki web tarayıcısı 10 satır! Gerçek bir tarayıcı ise “aynı sayfanın farklı adresleri”, robots.txt, hız sınırı… ile milyonlarca satır. Algoritma iskelet, mühendislik et.</div>
+  </div>
+</section>
+
+<section data-sec="erişilebilirlik">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · erişilebilirlik</div>
+    <div class="q">Mark-and-sweep çöp toplayıcı, birbirini gösteren ama hiçbir kökten ulaşılamayan iki nesneyi (A → B, B → A) ne yapar?</div>
+    <div class="opts">
+      <button data-opt="A">Siler: işaretleme köklerden başlar ve onlara hiç ulaşamaz</button>
+      <button data-opt="B">Siler ama sadece birini</button>
+      <button data-opt="C">Silmez: ikisinin de referansı var</button>
+      <button data-opt="D">Program çöker</button>
+    </div>
+    <div class="explain">Mark-and-sweep “referansı var mı?” diye değil, “<b>köklerden erişilebilir mi?</b>” diye sorar. Döngü erişilemezse ikisi de çöp. Referans sayma ise burada ikisinde de sayacı 1 görür ve <b>silemez</b> (bellek sızıntısı).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Topolojik sıralama</div>
+  <div class="sub">ön koşulları bozmadan sıraya dizmek</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="done">erişilebilirlik ve çöp toplayıcı</li><li class="on">topolojik sıralama</li><li class="">döngü tespiti</li><li class="">güçlü bileşenler</li></ul>
+</section>
+
+<section data-sec="topolojik sıralama">
+  <h2>Problem: hangi sırayla?</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>Görevler ve “v, w’den önce yapılmalı” kuralları var. Bütün kurallara uyan bir sıra bul.</p>
+      <ul>
+        <li>🎮 Teknoloji ağacı: araştırma sırası</li>
+        <li>🎮 RTS yapı sırası (kışla → atölye → fabrika)</li>
+        <li>🎮 Oyun motoru: varlıkları derlerken bağımlılık sırası; sahnede güncelleme sırası (önce ebeveyn, sonra çocuk)</li>
+        <li>Üniversite: ön koşullu dersler; Excel formülleri; <code>make</code>, npm, pip paket kurulumu</li>
+      </ul>
+    </div>
+    <div class="box prop fragment"><span class="bt">Önerme</span>Bir yönlü grafın topolojik sırası <b>ancak ve ancak</b> grafta yönlü döngü yoksa (DAG ise) vardır.
+      <p class="mini">Döngü varsa: A, B’den önce; B, C’den önce; C, A’dan önce → imkânsız. (Görev zincirindeki kilitlenme!)</p></div>
+  </div>
+</section>
+
+<section data-sec="topolojik sıralama">
+  <h2>Teknoloji ağacı — topolojik sıralama</h2>
+  <div class="demo" data-demo="topo" data-graph="tech"></div>
+  <p class="mini">Algoritma şaşırtıcı derecede kısa: DFS yap, her düğüm <b>bitince</b> listeye ekle (sonsıra), sonunda listeyi <b>ters çevir</b>.</p>
+</section>
+
+<section data-sec="topolojik sıralama">
+  <h2>Neden işe yarıyor?</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>Bir DAG’in DFS ters sonsırası bir topolojik sıradır.</div>
+    <div class="box proof"><span class="bt">Kanıt</span>Herhangi bir v → w okuna bakalım. <code>dfs(v)</code> bu oka baktığında üç durum var:
+      <ul>
+        <li class="fragment"><code>dfs(w)</code> daha çağrılmamış → şimdi çağrılır ve v’den <b>önce</b> biter</li>
+        <li class="fragment"><code>dfs(w)</code> zaten bitmiş → w zaten listede, v’den önce</li>
+        <li class="fragment"><code>dfs(w)</code> çağrılmış ama bitmemiş → w yığında, yani w’den v’ye yol var + v → w = <b>döngü</b>! DAG’de imkânsız.</li>
+      </ul>
+      <p class="fragment">Her durumda w, sonsırada v’den önce → ters sırada v, w’den önce. ∎</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="topolojik sıralama">
+  <h2>Topolojik sıralama — kod</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-10|12-16"><script type="text/template">
+def topological_order(G):
+    marked = [False] * G.V
+    post = []                           # sonsıra
+
+    def dfs(v):
+        marked[v] = True
+        for w in G.adj[v]:
+            if not marked[w]:
+                dfs(w)
+        post.append(v)                  # v BİTTİ
+
+    for v in range(G.V):
+        if not marked[v]:
+            dfs(v)
+    post.reverse()                      # ters sonsıra
+    return post
+
+order = topological_order(tech_tree)
+for t in order:
+    print("Araştır:", names[t])
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static List<int> TopologicalOrder(Digraph G)
+{
+    var marked = new bool[G.V];
+    var post = new List<int>();
+
+    void Dfs(int v)                          // yerel fonksiyon
+    {
+        marked[v] = true;
+        foreach (int w in G.Adj[v])
+            if (!marked[w]) Dfs(w);
+        post.Add(v);                         // v BİTTİ
+    }
+
+    for (int v = 0; v < G.V; v++)
+        if (!marked[v]) Dfs(v);
+    post.Reverse();
+    return post;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function topologicalOrder(G) {
+  const marked = new Array(G.V).fill(false);
+  const post = [];
+  function dfs(v) {
+    marked[v] = true;
+    for (const w of G.adj[v]) if (!marked[w]) dfs(w);
+    post.push(v);                     // v BİTTİ
+  }
+  for (let v = 0; v < G.V; v++) if (!marked[v]) dfs(v);
+  return post.reverse();              // ters sonsıra
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Fonksiyon içinde fonksiyon (C# “local function”, Python/JS iç fonksiyon): iç fonksiyon dıştakinin değişkenlerini (<code>marked</code>, <code>post</code>) görebilir ve değiştirebilir.</p>
+</section>
+
+<section data-sec="topolojik sıralama">
+  <h2>Alternatif: Kahn algoritması (giriş derecesiyle)</h2>
+  <div class="cols">
+    <ol style="font-size:.9em">
+      <li>Her düğümün <b>giriş derecesini</b> say (kaç ön koşulu var?)</li>
+      <li class="fragment">Giriş derecesi <b>0</b> olanları (ön koşulu olmayanları) kuyruğa koy</li>
+      <li class="fragment">Kuyruktan v çıkar, sıraya ekle; v’nin her okunu “sil”: <code>indeg[w]--</code>; 0 olan w’yi kuyruğa koy</li>
+      <li class="fragment">Sonunda sırada V’den az düğüm varsa → <b>döngü</b> var!</li>
+    </ol>
+    <div class="box game fragment"><span class="bt">🎮 Oyuncunun gözünden</span>Kahn tam bir oyuncu gibi düşünür: “Şu an araştırabileceğim (bütün ön koşulları tamam) teknolojiler hangileri?” Bu kuyruk, teknoloji ekranındaki <b>parlayan, tıklanabilir</b> kutular!</div>
+  </div>
+</section>
+
+<section data-sec="topolojik sıralama">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · topolojik sıralama</div>
+    <div class="q">Teknoloji ağacında Kahn algoritmasının kuyruğu herhangi bir anda neyi temsil eder?</div>
+    <div class="opts">
+      <button data-opt="A">Araştırılmış bütün teknolojileri</button>
+      <button data-opt="B">Bütün ön koşulları tamamlanmış, şu an araştırılabilir teknolojileri</button>
+      <button data-opt="C">En pahalı teknolojileri</button>
+      <button data-opt="D">Döngüdeki teknolojileri</button>
+    </div>
+    <div class="explain">Bir teknoloji, giriş derecesi (kalan ön koşul sayısı) 0 olduğunda kuyruğa girer. Oyuncu arayüzünde “araştırılabilir” durumdaki kutular tam bu küme. Birden fazla seçenek varsa birden fazla geçerli topolojik sıra vardır — oyuncunun stratejisi!</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Döngü tespiti</div>
+  <div class="sub">kilitlenen görevleri bulmak</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="done">erişilebilirlik ve çöp toplayıcı</li><li class="done">topolojik sıralama</li><li class="on">döngü tespiti</li><li class="">güçlü bileşenler</li></ul>
+</section>
+
+<section data-sec="döngü tespiti">
+  <h2>Görev zincirinde ölümcül hata</h2>
+  <div class="demo" data-demo="dcycle" data-graph="quests"></div>
+  <p class="mini">Tasarımcı hata yaptı: “Demirciyle konuş” için kılıç, kılıç için maden, maden için demirci gerekiyor. Oyuncu sonsuza kadar takılır! Fikir: DFS sırasında <b>şu an yığında</b> olan bir düğüme geri dönen ok = döngü. Graf seçicisinden teknoloji ağacını deneyin (döngü yok).</p>
+</section>
+
+<section data-sec="döngü tespiti">
+  <h2>Döngü tespiti — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <p>Her düğüm için üç durum:</p>
+      <ul>
+        <li><b>beyaz</b>: hiç ziyaret edilmedi</li>
+        <li><b>gri</b> (<code>on_stack</code>): ziyaret ediliyor, yığında</li>
+        <li><b>siyah</b>: bitti</li>
+      </ul>
+      <p>Gri bir düğüme ok → <b>geri kenar</b> <span class="en">back edge</span> → döngü.</p>
+      <div class="box warn"><span class="bt">⚠️ Yönsüz graftan farkı</span>Siyah (bitmiş) bir düğüme ok döngü <b>değildir</b>: A → C ve B → C, C’ye iki yoldan gelmek döngü yapmaz.</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def has_cycle(G):
+    marked = [False] * G.V
+    on_stack = [False] * G.V
+
+    def dfs(v):
+        marked[v] = True
+        on_stack[v] = True          # gri
+        for w in G.adj[v]:
+            if on_stack[w]:         # yığındakine geri ok
+                return True
+            if not marked[w] and dfs(w):
+                return True
+        on_stack[v] = False         # siyah: bitti
+        return False
+
+    for v in range(G.V):
+        if not marked[v] and dfs(v):
+            return True
+    return False
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static bool HasCycle(Digraph G)
+{
+    var marked = new bool[G.V];
+    var onStack = new bool[G.V];
+
+    bool Dfs(int v)
+    {
+        marked[v] = onStack[v] = true;          // gri
+        foreach (int w in G.Adj[v])
+        {
+            if (onStack[w]) return true;        // geri ok
+            if (!marked[w] && Dfs(w)) return true;
+        }
+        onStack[v] = false;                     // siyah
+        return false;
+    }
+
+    for (int v = 0; v < G.V; v++)
+        if (!marked[v] && Dfs(v)) return true;
+    return false;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function hasCycle(G) {
+  const marked = new Array(G.V).fill(false);
+  const onStack = new Array(G.V).fill(false);
+  function dfs(v) {
+    marked[v] = onStack[v] = true;          // gri
+    for (const w of G.adj[v]) {
+      if (onStack[w]) return true;          // geri ok
+      if (!marked[w] && dfs(w)) return true;
+    }
+    onStack[v] = false;                     // siyah
+    return false;
+  }
+  for (let v = 0; v < G.V; v++)
+    if (!marked[v] && dfs(v)) return true;
+  return false;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı: döngü var mı? (Python)</h2>
+  <div class="dglab" data-task="cycle" data-lang="python">
+<textarea>
+# adj: komşuluk listeleri (yönlü), ör. [[1], [2], [0]]  → 0→1→2→0 döngü
+def has_cycle(adj):
+    V = len(adj)
+    marked = [False] * V
+
+    def dfs(v):
+        marked[v] = True
+        for w in adj[v]:
+            if marked[w]:
+                return True
+            if dfs(w):
+                return True
+        return False
+
+    for v in range(V):
+        if not marked[v] and dfs(v):
+            return True
+    return False
+</textarea>
+    <div class="lab-tasks">Bu kod “işaretli bir düğüme ok” gördüğü an döngü diyor. Neden yanlış? (İpucu: <code>[[1, 2], [2], []]</code> grafında döngü var mı?) Bir <code>on_stack</code> dizisi ekleyerek düzeltin.</div>
+  </div>
+</section>
+
+<section data-sec="döngü tespiti">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · döngü tespiti</div>
+    <div class="q">Bir Excel tablosunda A1 = B1 + 1, B1 = C1 * 2, C1 = A1 − 3 yazıldı. Excel ne der ve neden?</div>
+    <div class="opts">
+      <button data-opt="A">Hesaplar: A1 = 0</button>
+      <button data-opt="B">“Döngüsel başvuru” uyarısı verir: formül bağımlılık grafında yönlü döngü var, topolojik sıra yok</button>
+      <button data-opt="C">Rastgele bir değer yazar</button>
+      <button data-opt="D">Sadece A1’i hesaplar</button>
+    </div>
+    <div class="explain">Excel hücreleri bağımlılık grafının topolojik sırasıyla hesaplar. A1 → B1 → C1 → A1 bir döngü: hiçbirini önce hesaplayamazsınız. Excel’in “Döngüsel Başvuru” uyarısı bu destedeki döngü tespitinin ta kendisi.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Güçlü bileşenler</div>
+  <div class="sub"><i>strong components</i> — karşılıklı ulaşılabilen bölgeler</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="done">erişilebilirlik ve çöp toplayıcı</li><li class="done">topolojik sıralama</li><li class="done">döngü tespiti</li><li class="on">güçlü bileşenler</li></ul>
+</section>
+
+<section data-sec="güçlü bileşenler">
+  <h2>Güçlü bağlılık</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li>v ve w <b>güçlü bağlı</b>: v’den w’ye <b>ve</b> w’den v’ye yol var</li>
+        <li class="fragment">Bu bir denklik ilişkisi → düğümler <b>güçlü bileşenlere</b> ayrılır (her düğüm tam birinde)</li>
+        <li class="fragment">Bileşenleri tek düğüm gibi düşünürseniz kalan graf bir <b>DAG</b> olur: bölgeler arası tek yönlü yolculuk</li>
+      </ul>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Soft-lock tespiti</span>Metroidvania’da tek yönlü kapılar ve uçurumlar var. Oyuncu bir güçlü bileşene girdi; oradan çıkışa giden yol yoksa ve geri dönemiyorsa → <b>sıkıştı</b> (soft-lock)! Seviye tasarım araçları her bölgenin bileşenini hesaplayıp “buradan çıkış bölgesine yol var mı?” diye kontrol eder.
+      <p class="mini">Ekonomide: Web’deki “dev bileşen”, besin ağlarında birbirini yiyen tür grupları.</p></div>
+  </div>
+</section>
+
+<section data-sec="güçlü bileşenler">
+  <h2>Kosaraju–Sharir algoritması</h2>
+  <div class="demo" data-demo="scc"></div>
+  <p class="mini">İki DFS ile: (1) <b>ters</b> grafta DFS yap ve ters sonsırayı hesapla, (2) asıl grafta düğümleri <b>bu sırayla</b> ele al: işaretsiz her düğümden yapılan DFS tam olarak bir güçlü bileşeni işaretler. Kitaptaki tinyDG’nin 5 güçlü bileşeni var.</p>
+</section>
+
+<section data-sec="güçlü bileşenler">
+  <h2>Kosaraju–Sharir: neden ve ne kadar?</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>Kosaraju–Sharir algoritması güçlü bileşenleri <b>E + V</b> ile orantılı sürede bulur.<p class="mini">İki DFS + bir ters çevirme. Kanıt fikri: ters sonsıra, bileşenleri “kaynak” bileşenden “havuz” bileşene doğru değil, havuzdan başlayarak verir; böylece ikinci DFS bir bileşenden <b>dışarı sızamaz</b>.</p></div>
+    <div class="box story"><span class="bt">📜 “Basit ama gizemli”</span>Robert Tarjan 1972’de ilk doğrusal zamanlı algoritmayı buldu. S. Rao Kosaraju 1978’de daha basit bu yöntemi derste anlattı ama yayımlamadı; Micha Sharir 1981’de bağımsız olarak yayımladı. Princeton slaytları onu “basit ama gizemli” diye tanıtır: kodu 10 satır, doğruluğunu anlamak bir saat!</div>
+  </div>
+</section>
+
+<section data-sec="güçlü bileşenler">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · güçlü bileşenler</div>
+    <div class="q">Bir metroidvania haritasının güçlü bileşenleri hesaplandı. Hangi durum bir <b>soft-lock</b> riski gösterir?</div>
+    <div class="opts">
+      <button data-opt="A">Bir bileşende çok fazla oda olması</button>
+      <button data-opt="B">Girişten ulaşılabilen ama çıkış bölgesine yol olmayan bir bileşen</button>
+      <button data-opt="C">Haritada tek bir güçlü bileşen olması</button>
+      <button data-opt="D">İki bileşen arasında tek yönlü kapı olması</button>
+    </div>
+    <div class="explain">Oyuncu o bileşene girebilir (girişten ulaşılabilir) ama oradan çıkışa hiçbir yol yok → sıkışır. Tek yönlü geçişlerin kendisi (D) sorun değil, tasarımın parçası; sorun “geri dönüşü olmayan çıkmaz”. Tüm harita tek bir güçlü bileşense (C) her yerden her yere gidilebilir — güvenli.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: Kahn ile topolojik sıra</h2>
+  <div class="dglab" data-task="topo" data-lang="js">
+<textarea>
+// adj: yönlü komşuluk listeleri (DAG), ör. [[1, 2], [3], [3], []]
+// Her v → w için v, w'den ÖNCE gelecek şekilde bir sıra döndür.
+function topoSort(adj) {
+  const V = adj.length;
+  const indeg = new Array(V).fill(0);
+  for (let v = 0; v < V; v++) for (const w of adj[v]) indeg[w]++;  // giriş dereceleri
+  const queue = [];
+  for (let v = 0; v < V; v++) if (indeg[v] === 0) queue.push(v);   // ön koşulsuzlar
+  const order = [];
+  while (queue.length > 0) {
+    const v = queue.shift();
+    order.push(v);
+    // TODO: v'nin oklarını "sil": indeg[w]--, 0 olanı kuyruğa ekle
+  }
+  return order;
+}
+</textarea>
+    <div class="lab-tasks">TODO kısmını doldurun. Bonus: sonunda <code>order.length &lt; V</code> ise ne demektir? (Döngü!) Bu durumda <code>null</code> döndürün.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>problem</th><th>algoritma</th><th>süre</th><th>🎮 oyunda</th></tr>
+    <tr><td>erişilebilirlik</td><td>DFS</td><td>E + V</td><td>bölgeye gidilebilir mi, çöp toplayıcı</td></tr>
+    <tr><td>en kısa yönlü yol (kenar sayısı)</td><td>BFS</td><td>E + V</td><td>tek yönlü kapılı haritada rota</td></tr>
+    <tr><td>topolojik sıralama</td><td>DFS ters sonsıra / Kahn</td><td>E + V</td><td>teknoloji ağacı, yapı sırası</td></tr>
+    <tr><td>yönlü döngü</td><td>DFS + on_stack</td><td>E + V</td><td>kilitlenen görev zinciri</td></tr>
+    <tr><td>güçlü bileşenler</td><td>Kosaraju–Sharir (2 DFS)</td><td>E + V</td><td>soft-lock tespiti</td></tr>
+  </table>
+  <p class="mini">Hepsi doğrusal zaman, hepsi DFS’nin küçük değişiklikleri. DFS graf algoritmalarının İsviçre çakısı.</p>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: teknoloji ağacının üç farklı geçerli topolojik sırasını yazın.</li>
+    <li>Kahn algoritmasında kuyruk yerine <b>öncelik kuyruğu</b> (en ucuz teknoloji önce) kullanın. Hâlâ geçerli bir sıra mı?</li>
+    <li>Kendi oyununuzdaki bir düşman FSM’sini yönlü graf olarak çizin. “Ölü” durumundan çıkan ok var mı? Hangi durumlar güçlü bileşen oluşturuyor?</li>
+    <li>Bir diyalog ağacında oyuncunun hiçbir seçimle ulaşamayacağı replikleri (ölü içerik) bulan kod yazın.</li>
+    <li>Unity Profiler’da bir sahnenin “GC Alloc” sütununa bakın. Her karede bellek ayıran satırları bulun ve nesne havuzuyla düzeltin.</li>
+    <li>🤖 Bir YZ asistanından “Python’da topolojik sıralama” isteyin. <code>graphlib.TopologicalSorter</code>’ı (Python 3.9+) biliyor mu?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=7J3GadLzydI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7J3GadLzydI/hqdefault.jpg" alt=""><span><b>Topological Sort Visualized and Explained</b><br>Carl the Person</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=eL-KzMXSXXI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/eL-KzMXSXXI/hqdefault.jpg" alt=""><span><b>Topological Sort Algorithm</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=HOOmetF56BI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/HOOmetF56BI/hqdefault.jpg" alt=""><span><b>Kosaraju’s Algorithm for Strongly Connected Components</b><br>Algorithms with Attitude</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=4qLf0FJMyf0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/4qLf0FJMyf0/hqdefault.jpg" alt=""><span><b>Mark and Sweep Garbage Collection Algorithm</b><br>Arpit Bhayani</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=3Kqal7QaCCM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/3Kqal7QaCCM/hqdefault.jpg" alt=""><span><b>How the Garbage Collector Works in Java, Python, and Go</b><br>ByteByteGo</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/42digraph/" target="_blank">algs4 · 4.2 Directed Graphs</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/42DirectedGraphs.pdf" target="_blank">Princeton ders slaytları: Directed Graphs (PDF)</a></li>
+      <li><a href="https://docs.python.org/3/library/graphlib.html" target="_blank">Python · graphlib.TopologicalSorter</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank">Red Blob Games · Grids and Graphs</a></li>
+      <li><a href="../yonsuz-graflar/">Önceki deste: Yönsüz Graflar</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:56px">Minimum Yayılan Ağaçlar</div>
+    <div class="sub">Kenarların bir maliyeti olunca: Kruskal, Prim ve prosedürel zindan koridorları</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../mst/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/graf.js"></script>
+<script src="../ortak/yonlu.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

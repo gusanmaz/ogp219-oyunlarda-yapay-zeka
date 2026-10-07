@@ -49,7 +49,7 @@ Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmü
 | # | Konu | Durum |
 |---|------|-------|
 | 15 | [Yönsüz Graflar](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yonsuz-graflar/) | ✅ hazır |
-| 16 | Yönlü Graflar | hazırlanıyor |
+| 16 | [Yönlü Graflar](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yonlu-graflar/) | ✅ hazır |
 | 17 | Minimum Yayılan Ağaçlar | hazırlanıyor |
 | 18 | En Kısa Yollar | hazırlanıyor |
 
@@ -85,6 +85,7 @@ ortak/              tüm destelerin ortak stil ve kodları
   hash.js           string hash, ayrı zincirleme, doğrusal yoklama, uzaysal hash, hash laboratuvarı
   st.js             kelime sıklığı, yerelleştirme, ters dizin, seyrek matris, Markov replikleri
   graf.js           graf çizimi, DFS/BFS iz tablosu, ızgara haritalar, ada sayma, graf laboratuvarı
+  yonlu.js          topolojik sıralama, döngü tespiti, Kosaraju, çöp toplayıcı, yönlü graf laboratuvarı
 union-find/         01 · Union–Find
 algoritma-analizi/  02 · Algoritma analizi
 bagli-listeler/     03 · Bağlı listeler
@@ -100,6 +101,7 @@ oncelik-kuyruklari/ 12 · Öncelik kuyrukları
 hash-tablolari/     13 · Hash tabloları
 st-uygulamalari/    14 · Sembol tablosu uygulamaları
 yonsuz-graflar/     15 · Yönsüz graflar
+yonlu-graflar/      16 · Yönlü graflar
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

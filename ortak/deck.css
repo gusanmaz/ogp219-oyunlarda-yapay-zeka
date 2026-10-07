@@ -664,3 +664,6 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .g-dq span { border: 2px solid var(--purple); border-radius: 7px; padding: 1px 8px; background: var(--card); font-weight: 700; }
 .g-dq span:last-child { background: color-mix(in srgb, var(--purple) 25%, var(--card)); }
 .g-grid { font-family: "JetBrains Mono", monospace; font-size: 16px; line-height: 1.1; margin: 4px 0; }
+.g-dq.post span { border-color: var(--green); }
+.g-dq span.on { background: var(--amber); border-color: var(--amber); color: #111; }
+.g-order { margin: 4px 0 0 1.2em; font-size: 16px; line-height: 1.35; }
