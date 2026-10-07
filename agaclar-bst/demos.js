@@ -7,6 +7,7 @@
   const D = window.DEMOS;
   const T = () => SL.theme();
   const rint = n => Math.floor(Math.random() * n);
+  // Not: binsearch, guess ve log2 demoları ../ortak/arama.js dosyasında (arama destesiyle ortak)
 
   /* n-ary ağaç yerleşimi: yapraklar sırayla, iç düğümler çocuklarının ortasında */
   function layoutNary(root, W, H, o = {}) {
@@ -251,135 +252,8 @@
     return { stop: () => fp.pause() };
   };
 
-  /* ---------- 5) Sıralı arama vs ikili arama ---------- */
-  D.binsearch = function (root) {
-    const N = +(root.dataset.n || 15);
-    let a = [], mode = 'bin';
-    const row = el('div', { class: 'bs-row' });
-    const note = el('div', { class: 'sv-note' });
-    const stat = el('div', { class: 'sv-counters' });
-    const input = el('input', { type: 'text', class: 'key-in', size: 4 });
-    const gen = () => {
-      const s = new Set(); while (s.size < N) s.add(1 + rint(99));
-      a = [...s].sort((x, y) => x - y); input.value = a[rint(N)]; plan();
-    };
-    const draw = f => {
-      row.innerHTML = a.map((v, i) => {
-        let cls = 'bs-cell';
-        if (f.lo != null && (i < f.lo || i > f.hi)) cls += ' out';
-        if (f.seen && f.seen.includes(i)) cls += ' seen';
-        if (i === f.mid) cls += ' mid';
-        if (i === f.found) cls += ' found';
-        const tags = [];
-        if (f.lo === i) tags.push('lo'); if (f.mid === i) tags.push('mid'); if (f.hi === i) tags.push('hi');
-        return `<div class="${cls}"><b>${v}</b><i>${i}</i><u>${tags.join(' ')}</u></div>`;
-      }).join('');
-      note.textContent = f.note;
-      stat.innerHTML = `<span class="cnt cmp"><b>${f.cmps}</b> karşılaştırma</span><span class="cnt">N = ${N}</span>` +
-        `<span class="cnt">en kötü: sıralı arama ${N} · ikili arama ${Math.floor(Math.log2(N)) + 1}</span>`;
-    };
-    const fp = new SL.FramePlayer(draw, { speed: 1.2 });
-    const plan = () => {
-      const key = parseInt(input.value, 10);
-      const frames = [];
-      if (isNaN(key)) { fp.load([{ cmps: 0, note: 'Aranacak bir sayı yazın.' }]); return; }
-      if (mode === 'seq') {
-        const seen = [];
-        frames.push({ seen: [], cmps: 0, note: `Sıralı arama: ${key} için baştan sona tek tek bak` });
-        for (let i = 0; i < N; i++) {
-          seen.push(i);
-          if (a[i] === key) { frames.push({ seen: seen.slice(), found: i, cmps: i + 1, note: `a[${i}] = ${key} → BULUNDU (${i + 1} karşılaştırma)` }); break; }
-          frames.push({ seen: seen.slice(), mid: i, cmps: i + 1, note: `a[${i}] = ${a[i]} ≠ ${key} → sonrakine geç` });
-          if (i === N - 1) frames.push({ seen: seen.slice(), cmps: N, note: `${key} dizide YOK — ${N} karşılaştırmanın hepsi boşa` });
-        }
-      } else {
-        let lo = 0, hi = N - 1, k = 0;
-        frames.push({ lo, hi, cmps: 0, note: `İkili arama: aralık a[${lo}…${hi}] (tüm dizi)` });
-        while (lo <= hi) {
-          const mid = lo + Math.floor((hi - lo) / 2); k++;
-          if (key < a[mid]) { frames.push({ lo, hi, mid, cmps: k, note: `mid = ${mid}: ${key} < ${a[mid]} → SOL yarı: hi = ${mid - 1}` }); hi = mid - 1; }
-          else if (key > a[mid]) { frames.push({ lo, hi, mid, cmps: k, note: `mid = ${mid}: ${key} > ${a[mid]} → SAĞ yarı: lo = ${mid + 1}` }); lo = mid + 1; }
-          else { frames.push({ lo, hi, mid, found: mid, cmps: k, note: `mid = ${mid}: a[${mid}] = ${key} → BULUNDU (${k} karşılaştırma)` }); break; }
-          if (lo > hi) frames.push({ lo, hi, cmps: k, note: `lo > hi → aralık boşaldı: ${key} dizide YOK (${k} karşılaştırma)` });
-          else frames.push({ lo, hi, cmps: k, note: `yeni aralık a[${lo}…${hi}] — ${hi - lo + 1} eleman kaldı` });
-        }
-      }
-      fp.load(frames);
-    };
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); plan(); fp.play(); } });
-    root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Yöntem ', select({ bin: 'İkili arama (binary search)', seq: 'Sıralı arama (sequential search)' }, mode, v => { mode = v; plan(); })),
-      el('label', { class: 'ctl' }, 'Aranan ', input), btn('🔍 Ara', () => { plan(); fp.play(); }, 'primary'), btn('🎲 Yeni dizi', gen)),
-    row, SL.transport(fp, { min: 0.3, max: 8 }), note, stat);
-    gen();
-    return { stop: () => fp.pause() };
-  };
 
-  /* ---------- 6) Sayı tahmin oyunu ---------- */
-  D.guess = function (root) {
-    let mode = 'pc', lo, hi, cnt, g, secret, hist;
-    const bar = el('div', { class: 'guess-bar' });
-    const msg = el('div', { class: 'guess-msg' });
-    const ctl = el('div', { class: 'sv-controls' });
-    const input = el('input', { type: 'text', class: 'key-in', size: 4 });
-    const drawBar = () => {
-      bar.innerHTML = `<div class="gb-range" style="left:${lo - 1}%;width:${Math.max(0, hi - lo + 1)}%"></div>` +
-        hist.map(h => `<div class="gb-mark" style="left:${h - 0.5}%"></div>`).join('') +
-        '<span class="gb-l">1</span><span class="gb-r">100</span>';
-    };
-    const reset = () => {
-      lo = 1; hi = 100; cnt = 0; hist = []; secret = 1 + rint(100);
-      ctl.innerHTML = '';
-      ctl.append(el('label', { class: 'ctl' }, 'Mod ', select({ pc: '🤖 Bilgisayar tahmin etsin', you: '🙋 Sen tahmin et' }, mode, v => { mode = v; reset(); })));
-      if (mode === 'pc') {
-        ctl.append(btn('⬇ Daha küçük', () => answer(-1)), btn('⬆ Daha büyük', () => answer(1)), btn('✅ Bildin!', () => answer(0), 'primary'), btn('↺', reset));
-        ask();
-      } else {
-        ctl.append(input, btn('Tahmin et', you, 'primary'), btn('↺ Yeni sayı', reset));
-        msg.innerHTML = '1 ile 100 arasında bir sayı tuttum. Bul bakalım! 🤔';
-      }
-      drawBar();
-    };
-    const ask = () => {
-      if (lo > hi) { msg.innerHTML = 'Aralık boşaldı… Hile mi yaptın? 😄'; return; }
-      g = Math.floor((lo + hi) / 2); cnt++; hist.push(g);
-      msg.innerHTML = `${cnt}. tahmin: <b class="big">${g}</b> mi? <span class="mini">(aralık ${lo}–${hi}, ${hi - lo + 1} aday)</span>`;
-      drawBar();
-    };
-    const answer = d => {
-      if (d === 0) { msg.innerHTML = `🎉 ${cnt} tahminde buldum! İkili arama ile 1–100 arasında en fazla <b>7</b> tahmin yeter, çünkü 2⁷ = 128 ≥ 100.`; return; }
-      if (d < 0) hi = g - 1; else lo = g + 1;
-      ask();
-    };
-    const you = () => {
-      const v = parseInt(input.value, 10); if (isNaN(v)) return;
-      cnt++; hist.push(v);
-      if (v === secret) msg.innerHTML = `🎉 ${cnt} tahminde buldun! ${cnt <= 7 ? 'İkili arama gibi düşündün 💪' : 'İkili arama ile en fazla 7 tahmin yeterdi.'}`;
-      else { if (v < secret) lo = Math.max(lo, v + 1); else hi = Math.min(hi, v - 1); msg.innerHTML = `${v} → daha <b>${v < secret ? 'BÜYÜK ⬆' : 'KÜÇÜK ⬇'}</b> <span class="mini">(${cnt}. tahmin)</span>`; }
-      input.value = ''; input.focus(); drawBar();
-    };
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); you(); } });
-    root.setAttribute('data-prevent-swipe', '');
-    root.append(ctl, msg, bar);
-    reset();
-  };
 
-  /* ---------- 7) log₂ N: kaç kez yarıya bölebilirsin? ---------- */
-  D.log2 = function (root) {
-    const Ns = [[8, ''], [16, ''], [100, '1–100 tahmin oyunu'], [1000, ''], [1e6, '1 milyon oyuncu'], [1e9, '1 milyar'], [8e9, 'Dünya nüfusu 🌍'], [1e12, '1 trilyon']];
-    const out = el('div', { class: 'log-out' });
-    const short = v => (v >= 1e12 ? +(v / 1e12).toFixed(1) + ' trilyon' : v >= 1e9 ? +(v / 1e9).toFixed(1) + ' milyar' : v >= 1e6 ? +(v / 1e6).toFixed(1) + ' milyon' : v >= 1e4 ? +(v / 1e3).toFixed(1) + ' bin' : fmt(Math.ceil(v)));
-    const upd = i => {
-      const [N, lab] = Ns[i];
-      const chain = []; let v = N; while (v > 1) { chain.push(v); v = Math.ceil(v / 2); } chain.push(1);
-      out.innerHTML = `<div class="big">N = ${short(N)} ${lab ? '<span class="mini">' + lab + '</span>' : ''}</div>` +
-        `<div class="log-chain">${chain.map((x, k) => `<span>${short(x)}</span>${k < chain.length - 1 ? '<i>÷2</i>' : ''}`).join('')}</div>` +
-        `<div class="big">${chain.length - 1} kez yarıya böldük → <span class="c-red">log₂ N ≈ ${Math.log2(N).toFixed(1)}</span></div>`;
-    };
-    root.append(el('div', { class: 'sv-controls' }, slider('N', 0, Ns.length - 1, 2, 1, upd, i => short(Ns[i][0]))), out);
-    upd(2);
-  };
 
   /* ---------- 8) Ekleme sırası → ağacın şekli ---------- */
   D.bstshape = function (root) {

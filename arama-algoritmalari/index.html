@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arama Algoritmaları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Arama algoritmaları: sıralı arama, ikili arama, lower bound, loot tabloları, ikiye bölme. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a2a07 0%, #1c1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · VERİ YAPILARI</div>
+  <div class="ttl" style="font-size:76px">Arama<br>Algoritmaları</div>
+  <div class="sub"><i>Searching</i> — sıralı arama · ikili arama · ikiye bölme · loot tabloları</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlesearch"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 1.1 (BinarySearch) ve 3.1’deki (sıralı ve ikili arama ile sembol tabloları) fikirleri temel alır. Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları. Arka planda sonsuz döngüde ikili arama yapılıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.92em">
+      <li><b>Arama problemi</b> — ne arıyoruz, “yok” nasıl denir? <span class="en">search problem</span></li>
+      <li><b>Sıralı arama</b> — baştan sona tek tek <span class="en">sequential search</span></li>
+      <li><b>İkili arama</b> — her adımda yarısını at <span class="en">binary search</span></li>
+      <li><b>Oyunlarda ikili arama</b> — XP tabloları, loot sandıkları, animasyon eğrileri</li>
+      <li><b>İkiye bölme</b> — hızlı mermi duvarın içinden neden geçer? <span class="en">bisection</span></li>
+      <li>⚙️ <b>Kaputun altında &amp; ötesi</b> — önbellek, enterpolasyon araması, sembol tabloları</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…1 milyon kayıt içinde bir şeyi <b>20 adımda</b> bulabilecek, bir loot sandığının nasıl çalıştığını ve hızlı bir merminin duvarı neden “ıskaladığını” açıklayabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA SORUSU</span>
+    <p class="big">Kâğıttan bir sözlükte “kelebek” kelimesini<br>nasıl bulursunuz?</p>
+    <p>İlk sayfadan başlayıp kelimeleri tek tek mi okursunuz?</p>
+  </div>
+  <p class="fragment lead">Tabii ki hayır! Ortalardan bir yerden açarsınız: “Burası <b>m</b> harfi, k daha önce” → sol yarıya geçersiniz…</p>
+  <p class="fragment big">Bu sezginin adı: <span class="c-red">ikili arama</span> <span class="en">binary search</span>. Bugün onu bir algoritmaya dönüştüreceğiz.</p>
+  <p class="fragment mini">Peki sözlük <b>sırasız</b> olsaydı? 😱 O zaman tek yol baştan sona okumak: <b>sıralı arama</b>.</p>
+</section>
+
+<section>
+  <h2>Oyunlarda arama her yerde</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">🎒</div><b>Envanter</b>“Ejder Kılıcı çantada var mı?”</div>
+    <div class="icon-card"><div class="ic">📈</div><b>Seviye tablosu</b>“2700 XP kaçıncı seviye?”</div>
+    <div class="icon-card"><div class="ic">🎁</div><b>Loot tablosu</b>%2 efsanevi, %10 epik… hangi eşya düştü?</div>
+    <div class="icon-card"><div class="ic">🎞️</div><b>Animasyon eğrileri</b>t = 1,37 sn hangi iki anahtar kare arasında?</div>
+    <div class="icon-card"><div class="ic">💥</div><b>Çarpışma anı</b>Mermi duvara tam olarak <b>ne zaman</b> değdi?</div>
+    <div class="icon-card"><div class="ic">🧭</div><b>Yol bulma</b>Oyun YZ’de “arama” = olası hamleler arasında arama (A*, minimax). Temel fikir aynı: <b>adayları akıllıca ele</b>.</div>
+  </div>
+</section>
+
+<section>
+  <h2>Mini sözlük (1/2)</h2>
+  <table class="gloss">
+    <tr><td>search</td><td>arama</td><td>Bir koleksiyonda aranan değeri bulmak</td></tr>
+    <tr><td>key</td><td>anahtar</td><td>Aradığımız değer (bir sayı, bir ad, bir ID…)</td></tr>
+    <tr><td>search hit / miss</td><td>başarılı / başarısız arama</td><td>Aranan bulundu / koleksiyonda yok</td></tr>
+    <tr><td>index</td><td>indeks</td><td>Elemanın dizideki sıra numarası (0’dan başlar)</td></tr>
+    <tr><td>sequential (linear) search</td><td>sıralı (doğrusal) arama</td><td>Baştan sona tek tek bakmak</td></tr>
+    <tr><td>binary search</td><td>ikili arama</td><td>Sıralı veride her adımda yarısını atmak</td></tr>
+    <tr><td>sorted</td><td>sıralı</td><td>Küçükten büyüğe dizilmiş (ikili aramanın ön koşulu!)</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Mini sözlük (2/2)</h2>
+  <table class="gloss">
+    <tr><td>invariant</td><td>değişmez</td><td>Döngü boyunca hep doğru kalan cümle</td></tr>
+    <tr><td>logarithm</td><td>logaritma</td><td>“Kaç kez ikiye bölebilirim?” sorusunun cevabı</td></tr>
+    <tr><td>sentinel</td><td>nöbetçi</td><td>Döngüyü kendiliğinden durduran, sona konan özel eleman</td></tr>
+    <tr><td>predicate</td><td>koşul fonksiyonu</td><td>Doğru/yanlış döndüren fonksiyon: “canı 20’den az mı?”</td></tr>
+    <tr><td>lower bound</td><td>alt sınır</td><td>Aranandan büyük ya da eşit olan <b>ilk</b> elemanın yeri</td></tr>
+    <tr><td>bisection</td><td>ikiye bölme</td><td>Bir aralığı yarıya bölerek bir sınırı bulmak</td></tr>
+    <tr><td>cumulative sum</td><td>kümülatif (birikimli) toplam</td><td>Her eleman = kendisine kadar olanların toplamı</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Arama Problemi</div>
+  <div class="sub"><i>the search problem</i> — ne arıyoruz, “yok” nasıl söylenir?</div>
+  <ul class="agenda"><li class="on">arama problemi</li><li class="">sıralı arama</li><li class="">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="arama problemi">
+  <h2>Problem</h2>
+  <div class="cols">
+    <div>
+      <p><b>Girdi:</b> N elemanlı bir dizi <code>a</code> ve aranan bir <b>anahtar</b> <code>key</code></p>
+      <p><b>Çıktı:</b> <code>key</code> dizideyse <b>indeksi</b>, değilse <b>“yok”</b> işareti (genelde <code>−1</code>)</p>
+      <ul>
+        <li>Bulunursa: <b>başarılı arama</b> <span class="en">search hit</span></li>
+        <li>Bulunamazsa: <b>başarısız arama</b> <span class="en">search miss</span></li>
+      </ul>
+      <div class="box prop fragment"><span class="bt">Maliyet modeli <span class="en">cost model</span></span>Algoritma analizi dersindeki gibi: saniyeyi değil, <b>kaç kez <code>a[i]</code> ile karşılaştırdığımızı</b> sayacağız.</div>
+    </div>
+    <div class="box game"><span class="bt">🎮 Örnek</span>
+      <p><code>a = [ 12, 45, 7, 88, 23 ]</code> (envanterdeki eşya ID’leri)</p>
+      <ul><li><code>search(a, 88)</code> → <b>3</b></li><li><code>search(a, 50)</code> → <b>−1</b></li></ul>
+      <p class="mini">Neden −1? Çünkü geçerli indeksler 0, 1, 2… −1 hiçbir zaman gerçek bir indeks olamaz → “yok” demek için güvenli.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: “bulunamadı” nasıl söylenir? <span class="en">return value</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.85em">
+      <p>Fonksiyon <b>bir değer döndürür</b> (<code>return</code>); çağıran taraf bu değeri bir değişkene alıp kontrol eder.</p>
+      <ul>
+        <li><code>−1</code>: “indeks yok” işareti (C#, JS, kendi kodlarımız)</li>
+        <li><code>None</code> / <code>null</code>: “nesne yok” (bir düşman, bir eşya ararken)</li>
+        <li>Hata fırlatmak <span class="en">exception</span>: Python’un <code>list.index</code>’i bulamazsa programı durdurur!</li>
+      </ul>
+      <div class="box warn"><span class="bt">⚠️ En sık hata</span>Dönen değeri kontrol etmeden kullanmak: <code>a[search(a, 50)]</code> → <code>a[-1]</code>! Python’da bu <b>son eleman</b> demektir: hata bile vermez, yanlış eşyayı verir. 😱</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+i = search(a, 88)          # dönen değeri bir değişkene al
+if i == -1:
+    print("yok")
+else:
+    print("bulundu, indeks", i)
+
+print(88 in a)             # True / False   (var mı?)
+print(a.index(88))         # 3
+print(a.index(50))         # ❌ ValueError: 50 is not in list
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int i = Search(a, 88);         // dönen değeri bir değişkene al
+if (i == -1)
+    Debug.Log("yok");
+else
+    Debug.Log("bulundu, indeks " + i);
+
+bool var = list.Contains(88);  // true / false
+int j = list.IndexOf(50);      // -1  (hata yok)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const i = search(a, 88);       // dönen değeri bir değişkene al
+if (i === -1) {
+  console.log("yok");
+} else {
+  console.log("bulundu, indeks", i);
+}
+
+console.log(a.includes(88));   // true / false
+console.log(a.indexOf(50));    // -1  (hata yok)
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Sıralı Arama</div>
+  <div class="sub"><i>sequential (linear) search</i> — en basit, her yerde çalışan yöntem</div>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="on">sıralı arama</li><li class="">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="sıralı arama">
+  <h2>Fikir: baştan sona tek tek bak</h2>
+  <div class="cols c46">
+    <div>
+      <ol>
+        <li>i = 0’dan başla.</li>
+        <li><code>a[i]</code> aranan mı? Evetse <b>i</b>’yi döndür.</li>
+        <li>Değilse bir sonrakine geç.</li>
+        <li>Dizi bittiyse <b>−1</b> döndür.</li>
+      </ol>
+      <div class="box game"><span class="bt">👍 Artısı</span>Dizinin <b>sıralı olması gerekmez</b>. Bağlı listede de çalışır. Kodu 4 satır.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|2|3-4|5"><script type="text/template">
+def sequential_search(a, key):
+    for i in range(len(a)):     # i = 0, 1, 2, ..., N-1
+        if a[i] == key:
+            return i            # bulundu → hemen dön
+    return -1                   # döngü bitti → yok
+
+# modern yazım (aynı iş): enumerate hem indeksi hem değeri verir
+# for i, x in enumerate(a):
+#     if x == key: return i
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int SequentialSearch(int[] a, int key)
+{
+    for (int i = 0; i < a.Length; i++)   // i = 0, 1, ..., N-1
+        if (a[i] == key)
+            return i;                    // bulundu → hemen dön
+    return -1;                           // döngü bitti → yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function sequentialSearch(a, key) {
+  for (let i = 0; i < a.length; i++)   // i = 0, 1, ..., N-1
+    if (a[i] === key)
+      return i;                        // bulundu → hemen dön
+  return -1;                           // döngü bitti → yok
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="sıralı arama">
+  <h2>Sıralı arama — animasyon (sırasız dizi)</h2>
+  <div class="demo" data-demo="binsearch" data-mode="seq" data-sorted="no" data-n="15"></div>
+  <aside class="notes">Önce dizide olan bir sayıyı, sonra OLMAYAN bir sayıyı (ör. 100) arayın: tüm diziye bakılır. “Sınır kontrolü” sayacına dikkat: her adımda hem i &lt; N hem a[i] = key kontrol ediliyor. Bunu birazdan “nöbetçi” ile azaltacağız.</aside>
+</section>
+
+<section data-sec="sıralı arama">
+  <h2>Kaç karşılaştırma? 📐</h2>
+  <div class="cols c64">
+    <div>
+      <ul>
+        <li><b>En iyi</b> <span class="en">best case</span>: aranan ilk elemanda → <b>1</b></li>
+        <li><b>En kötü</b> <span class="en">worst case</span>: aranan sonda ya da hiç yok → <b>N</b></li>
+        <li><b>Ortalama</b> (bulunan anahtar her konumda eşit olasılıkla):</li>
+      </ul>
+      <p class="formula center">\( \dfrac{1 + 2 + \dots + N}{N} = \dfrac{N(N+1)/2}{N} = \dfrac{N+1}{2} \sim \dfrac{N}{2} \)</p>
+      <p class="fragment mini">1’den N’e kadar toplam = \( N(N+1)/2 \) (Gauss’un küçükken bulduğu söylenen formül).</p>
+    </div>
+    <div class="box prop"><span class="bt">Önerme</span>
+      Sıralı arama, N elemanlı bir dizide <b>başarısız</b> aramada tam <b>N</b>, <b>başarılı</b> aramada ortalama <b>~N/2</b> karşılaştırma yapar.
+      <p class="mini">Yani süre N ile doğru orantılı: N iki katına çıkarsa süre de iki katına çıkar. Buna <b>doğrusal</b> <span class="en">linear</span> zaman denir.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="sıralı arama">
+  <div class="quiz" data-answer="D">
+    <div class="qhead">Quiz 1 · sıralı arama</div>
+    <div class="q">1000 elemanlı <b>sırasız</b> bir dizide, dizide <b>olmayan</b> bir değeri sıralı aramayla ararsak kaç karşılaştırma yapılır?</div>
+    <div class="opts">
+      <button data-opt="A">1</button>
+      <button data-opt="B">~10</button>
+      <button data-opt="C">~500</button>
+      <button data-opt="D">1000</button>
+    </div>
+    <div class="explain">“Yok” diyebilmek için <b>her elemana</b> bakmak zorundayız: belki aradığımız en sondadır. Başarısız arama her zaman N karşılaştırma ister. Ortalama ~N/2 sadece <b>başarılı</b> aramalar için geçerli.</div>
+  </div>
+</section>
+
+<section data-sec="sıralı arama · gerçek dünya">
+  <h2>Hazır fonksiyonlar da sıralı arama yapar!</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>dil</th><th>“var mı?”</th><th>“nerede?”</th><th>koşulla bul</th></tr>
+    <tr><td>Python</td><td><code>x in liste</code></td><td><code>liste.index(x)</code></td><td><code>for</code> + <code>if</code> · <code>next(...)</code></td></tr>
+    <tr><td>C#</td><td><code>list.Contains(x)</code></td><td><code>list.IndexOf(x)</code></td><td><code>list.Find(...)</code></td></tr>
+    <tr><td>JavaScript</td><td><code>arr.includes(x)</code></td><td><code>arr.indexOf(x)</code></td><td><code>arr.find(...)</code></td></tr>
+  </table>
+  <div class="box warn fragment"><span class="bt">⚠️ Tek satır ≠ hızlı</span>Bu fonksiyonların hepsi içeride bir <code>for</code> döngüsüdür: <b>N</b> karşılaştırma. Oyunda <code>Update()</code> içinde (saniyede 60 kez) 1000 düşmanlık bir listede <code>Contains</code> çağırmak = saniyede 60.000 karşılaştırma… ve her düşman bunu yapıyorsa 60 milyon!</div>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: koşulla arama — geleneksel ve modern <span class="en">predicate</span></h2>
+  <p>“Canı 20’den az olan <b>ilk</b> düşmanı bul.” Aranan bir değer değil, bir <b>koşul</b>. <span class="mini">(<code>enemies</code>: düşman nesnelerinin listesi; her düşmanın <code>hp</code> alanı var.)</span></p>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Geleneksel: for + if
+def first_weak(enemies):
+    for e in enemies:
+        if e.hp < 20:
+            return e          # bulduğumuz ilk düşman
+    return None               # hiç yok
+
+# Modern: next(...) + üreteç ifadesi — "koşulu sağlayan ilkini ver, yoksa None"
+weak = next((e for e in enemies if e.hp < 20), None)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Geleneksel: foreach + if
+Enemy FirstWeak(List<Enemy> enemies)
+{
+    foreach (Enemy e in enemies)
+        if (e.Hp < 20)
+            return e;          // bulduğumuz ilk düşman
+    return null;               // hiç yok
+}
+
+// Modern: Find + lambda   (e => e.Hp < 20 : "bir e al, canı 20'den az mı söyle")
+Enemy weak = enemies.Find(e => e.Hp < 20);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Geleneksel: for...of + if
+function firstWeak(enemies) {
+  for (const e of enemies)
+    if (e.hp < 20)
+      return e;              // bulduğumuz ilk düşman
+  return null;               // hiç yok (find ise undefined döndürür)
+}
+
+// Modern: find + ok fonksiyonu   (e => e.hp < 20 : "bir e al, canı 20'den az mı?")
+const weak = enemies.find(e => e.hp < 20);
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Doğru/yanlış döndüren küçük fonksiyona <b>koşul fonksiyonu</b> <span class="en">predicate</span> denir. Modern yazımda bunu <b>lambda / ok fonksiyonu</b> olarak veririz. İkisi de aynı işi yapar: <b>sıralı arama</b>.</p>
+</section>
+
+<section data-sec="sıralı arama · kaputun altında">
+  <h2>⚙️ Nöbetçi hilesi <span class="en">sentinel</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p>Normal sıralı aramada döngü her adımda <b>iki</b> soru sorar:</p>
+      <ol><li><code>i &lt; N</code> mi? (dizi bitti mi?)</li><li><code>a[i] == key</code> mi?</li></ol>
+      <p class="fragment">Hile: aranan değeri dizinin <b>sonuna</b> ekle. Artık döngü mutlaka durur → 1. soruya gerek yok!</p>
+      <p class="fragment">Döngü bitince tek bir kontrol: durduğumuz yer <b>nöbetçinin</b> kendisi mi?</p>
+      <p class="fragment mini">Klasik bir optimizasyon (Knuth’un kitaplarında da var). Modern işlemcilerde kazanç küçüktür; ama “iç döngüden gereksiz kontrolü çıkar” fikri her yerde işe yarar.</p>
+    </div>
+    <div class="demo" data-demo="binsearch" data-mode="sent" data-sorted="no" data-n="12"></div>
+  </div>
+</section>
+
+<section data-sec="sıralı arama · kaputun altında">
+  <h2>⚙️ Nöbetçili sıralı arama — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// a: son hücresi BOŞ bırakılmış dizi (a.Length = n + 1)
+static int SentinelSearch(int[] a, int n, int key)
+{
+    a[n] = key;                 // nöbetçiyi sona koy
+    int i = 0;
+    while (a[i] != key)         // tek kontrol: i < n YOK!
+        i++;
+    return i < n ? i : -1;      // nöbetçide durduysak → yok
+    // geleneksel: if (i < n) return i; else return -1;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def sentinel_search(a, key):
+    a.append(key)               # nöbetçiyi sona koy
+    i = 0
+    while a[i] != key:          # tek kontrol: i < N yok!
+        i += 1
+    a.pop()                     # nöbetçiyi geri al
+    if i < len(a):
+        return i
+    return -1
+# Not: Python yorumlayıcısında bu hile pek hız kazandırmaz;
+# fikir C/C#/C++ gibi derlenen dillerde anlam kazanır.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function sentinelSearch(a, key) {
+  const n = a.length;
+  a.push(key);                  // nöbetçiyi sona koy
+  let i = 0;
+  while (a[i] !== key) i++;     // tek kontrol: i < n yok!
+  a.pop();                      // nöbetçiyi geri al
+  if (i < n) return i;
+  return -1;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 C#’taki <code>koşul ? x : y</code>: “koşul doğruysa x, değilse y” (üçlü ifade <span class="en">ternary operator</span>). Altındaki yorumda geleneksel <code>if/else</code> hali var.</p>
+</section>
+
+<section data-sec="sıralı arama · oyunda">
+  <h2>🎮 Sık arananı öne al <span class="en">move-to-front</span></h2>
+  <div class="cols">
+    <div>
+      <p>Oyuncunun büyü kitabında 200 büyü var ama savaşta hep aynı 5’ini kullanıyor.</p>
+      <p class="fragment">Fikir: bir büyü bulunduğunda onu listenin <b>başına</b> taşı. Sık kullanılanlar hep önde durur → sıralı arama çoğu zaman 1–5 adımda biter.</p>
+      <p class="fragment mini">Buna “kendini düzenleyen liste” <span class="en">self-organizing list</span> denir. Aynı fikir: “son kullanılan dosyalar”, tarayıcı geçmişi, işlemci önbelleklerinin LRU politikası.</p>
+    </div>
+    <table class="sum-t fragment" style="font-size:19px">
+      <tr><th>arama</th><th>liste (önce → sonra)</th><th>adım</th></tr>
+      <tr><td>—</td><td>Ateş · Buz · Şimşek · <b>İyileş</b> · Kalkan</td><td></td></tr>
+      <tr><td>İyileş</td><td><b>İyileş</b> · Ateş · Buz · Şimşek · Kalkan</td><td>4</td></tr>
+      <tr><td>İyileş</td><td><b>İyileş</b> · Ateş · Buz · Şimşek · Kalkan</td><td>1</td></tr>
+      <tr><td>Kalkan</td><td><b>Kalkan</b> · İyileş · Ateş · Buz · Şimşek</td><td>5</td></tr>
+      <tr><td>İyileş</td><td><b>İyileş</b> · Kalkan · Ateş · Buz · Şimşek</td><td>2</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Bağlı listede “başa taşımak” O(1)’dir (sadece birkaç bağlantı değişir); dizide ise aradaki herkesi kaydırmak gerekir. Bağlı listeler dersine güzel bir geri dönüş.</aside>
+</section>
+
+<section data-sec="sıralı arama">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 2 · sıralı arama</div>
+    <div class="q"><b>Sıralı</b> bir <b>bağlı listede</b> ikili arama yapmak neden pratik değildir?</div>
+    <div class="opts">
+      <button data-opt="A">Bağlı listeler sıralanamaz</button>
+      <button data-opt="B">Ortadaki düğüme ulaşmak için baştan yürümek gerekir</button>
+      <button data-opt="C">Bağlı listede karşılaştırma yapılamaz</button>
+      <button data-opt="D">Pratik; dizi kadar hızlıdır</button>
+    </div>
+    <div class="explain">İkili arama, <code>a[mid]</code>’e <b>tek adımda</b> atlayabilmeye dayanır (rastgele erişim <span class="en">random access</span>). Dizide bu bir adres hesabıdır; bağlı listede ise ortadaki düğüme ulaşmak için N/2 düğüm yürümek gerekir → her “zıplama” zaten sıralı arama kadar pahalı.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">İkili Arama</div>
+  <div class="sub"><i>binary search</i> — her soruda adayların yarısını at</div>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="on">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="ikili arama">
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: 20 SORU</span>
+    <p class="big">Aklınızdan dünyadaki herhangi bir insanı tutun.<br>Ben sadece <b>evet/hayır</b> soruları soracağım.</p>
+    <p>Kaç soruda bulabilirim? 100? 1000? 1 milyon?</p>
+  </div>
+  <p class="fragment lead">Her soru adayları <b>yarıya</b> indirirse: 2³³ ≈ 8,6 milyar ≥ dünya nüfusu → <b>33 soru</b> yeter!</p>
+  <p class="fragment mini">“Akinator” adlı ünlü oyun, aklınızdaki karakteri genellikle 20 civarı soruda bulur. Bu bölümün sihirli kelimesi: <b>logaritma</b>.</p>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>Fikir: ortadakine bak, yarısını at</h2>
+  <div class="cols c64">
+    <div>
+      <ol>
+        <li>Aralık: tüm dizi, <code>lo = 0</code>, <code>hi = N − 1</code></li>
+        <li>Ortadaki elemana bak: <code>mid</code></li>
+        <li>Aranan <b>küçükse</b> → sol yarıda devam: <code>hi = mid − 1</code></li>
+        <li>Aranan <b>büyükse</b> → sağ yarıda devam: <code>lo = mid + 1</code></li>
+        <li>Eşitse → <b>bulundu!</b> Aralık boşalırsa (<code>lo &gt; hi</code>) → <b>yok</b></li>
+      </ol>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">⚠️ İki ön koşul</span>
+        <ol><li>Dizi <b>sıralı</b> olmalı.</li><li><code>a[mid]</code>’e <b>tek adımda</b> erişebilmeliyiz (dizi ✔, bağlı liste ✘).</li></ol>
+      </div>
+      <div class="box story fragment"><span class="bt">💡 Bedava değil</span>Sıralama da bir maliyet! Tek bir arama için diziyi sıralamaya değmez. Ama <b>bir kez</b> sıralayıp <b>binlerce kez</b> arayacaksak → kesinlikle değer.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>İkili arama — animasyon</h2>
+  <div class="demo" data-demo="binsearch" data-mode="bin" data-n="15"></div>
+  <aside class="notes">Önce dizide olan bir sayı, sonra olmayan bir sayı. Yöntemi “sıralı arama”ya çevirip aynı sayıyı arayarak karşılaştırma sayılarını karşılaştırın. Soluk kutular = artık aday olmayan (elenmiş) elemanlar.</aside>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>İz tablosu <span class="en">trace</span> — başarılı arama: P</h2>
+  <div class="demo" data-demo="bintrace" data-values="A C E H L M P R S X" data-key="P"></div>
+  <div class="trace-legend"><b class="r">kırmızı</b> = a[mid] · <b>siyah</b> = hâlâ aday (lo…hi) · <b class="g">gri</b> = elendi</div>
+  <aside class="notes">Princeton kitabındaki iz tablosu biçimi. Ok tuşlarıyla satır satır ilerleyin; her satırda öğrencilere “mid kaç olacak?” diye sorun.</aside>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>İz tablosu — başarısız arama: Q</h2>
+  <div class="demo" data-demo="bintrace" data-values="A C E H L M P R S X" data-key="Q"></div>
+  <div class="trace-legend">Aralık boşaldığında <code>lo</code>, Q’nun <b>eklenmesi gereken yeri</b> gösterir — birazdan çok işimize yarayacak!</div>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: tam sayı bölmesi <span class="en">integer division</span></h2>
+  <p><code>mid</code> bir <b>indeks</b> olduğu için tam sayı olmalı. Ama her dilde <code>/</code> farklı davranır:</p>
+  <table class="sum-t" style="font-size:21px">
+    <tr><th>dil</th><th><code>7 / 2</code></th><th>tam sayı bölmesi</th><th>dikkat!</th></tr>
+    <tr><td>Python</td><td>3.5</td><td><code>7 // 2</code> → 3</td><td><code>a[7 / 2]</code> → ❌ <i>TypeError: list indices must be integers</i></td></tr>
+    <tr><td>C#</td><td>3 (iki <code>int</code> → tam sayı!)</td><td><code>7 / 2</code> → 3</td><td><code>7.0 / 2</code> → 3.5 · <code>(float)7 / 2</code> → 3.5</td></tr>
+    <tr><td>JavaScript</td><td>3.5</td><td><code>Math.floor(7 / 2)</code> → 3</td><td><code>a[3.5]</code> → <code>undefined</code> (hata bile yok! 😱)</td></tr>
+  </table>
+  <p class="fragment mini">C# öğrencilerinin klasik hatası: <code>int can = 7; float oran = can / 2;</code> → <b>3</b> (3.5 değil), çünkü bölme <b>önce</b> tam sayı olarak yapılır.</p>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>İkili arama — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-12|2-3|4|5|6-9|10-11|12"><script type="text/template">
+def binary_search(a, key):           # a SIRALI olmalı!
+    lo = 0
+    hi = len(a) - 1
+    while lo <= hi:                  # aralık boş değilken
+        mid = lo + (hi - lo) // 2    # ortadaki indeks (// : tam sayı bölmesi)
+        if key < a[mid]:
+            hi = mid - 1             # sol yarıda ara
+        elif key > a[mid]:
+            lo = mid + 1             # sağ yarıda ara
+        else:
+            return mid               # bulundu
+    return -1                        # aralık boşaldı → yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int BinarySearch(int[] a, int key)    // a SIRALI olmalı!
+{
+    int lo = 0, hi = a.Length - 1;
+    while (lo <= hi)                          // aralık boş değilken
+    {
+        int mid = lo + (hi - lo) / 2;         // int / int → tam sayı
+        if      (key < a[mid]) hi = mid - 1;  // sol yarı
+        else if (key > a[mid]) lo = mid + 1;  // sağ yarı
+        else return mid;                      // bulundu
+    }
+    return -1;                                // yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function binarySearch(a, key) {          // a SIRALI olmalı!
+  let lo = 0, hi = a.length - 1;
+  while (lo <= hi) {                     // aralık boş değilken
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (key < a[mid]) hi = mid - 1;      // sol yarı
+    else if (key > a[mid]) lo = mid + 1; // sağ yarı
+    else return mid;                     // bulundu
+  }
+  return -1;                             // yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Java (kitap)">
+<pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
+public static int indexOf(int[] a, int key) {
+    int lo = 0;
+    int hi = a.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if      (key < a[mid]) hi = mid - 1;
+        else if (key > a[mid]) lo = mid + 1;
+        else return mid;
+    }
+    return -1;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="fragment mini">Neden <code>(lo + hi) / 2</code> değil de <code>lo + (hi − lo) / 2</code>? → Birkaç slayt sonra, 9 yıl saklı kalan bir hata hikâyesi. 🕵️</p>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>Neden doğru çalışıyor? Değişmez <span class="en">invariant</span></h2>
+  <div class="inv-pic">
+    <div class="fin" style="flex:3">&lt; key (elendi)</div>
+    <div class="srt" style="flex:4">aday aralığı a[lo…hi]</div>
+    <div class="fin" style="flex:3">&gt; key (elendi)</div>
+  </div>
+  <div class="box prop"><span class="bt">Değişmez</span>“<code>key</code> dizideyse, <b>mutlaka</b> <code>a[lo…hi]</code> aralığındadır.”</div>
+  <ul>
+    <li class="fragment"><b>Başta</b> doğru: aralık tüm dizi.</li>
+    <li class="fragment"><b>Her adımda</b> korunur: <code>key &lt; a[mid]</code> ise dizi sıralı olduğundan mid ve sağındakilerin hepsi key’den büyük → atmak güvenli.</li>
+    <li class="fragment"><b>Sonda</b>: aralık boşaldıysa (<code>lo &gt; hi</code>), key hiçbir yerde olamaz → <b>−1</b> doğru cevap. ✔</li>
+  </ul>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>Özyinelemeli ikili arama <span class="en">recursive</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p>“Yarıda ara” cümlesi aslında: <b>aynı problemi daha küçük bir aralıkta çöz</b> → özyineleme!</p>
+      <ul>
+        <li><b>Temel durum</b> <span class="en">base case</span>: aralık boş → −1</li>
+        <li>Her çağrı, yığına <span class="en">stack</span> bir kare ekler (yığınlar dersi!)</li>
+        <li>Derinlik en fazla ~lg N → 1 milyar elemanda bile ~30 kare. Güvenli. ✔</li>
+      </ul>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def search(a, key, lo, hi):
+    if lo > hi:                       # temel durum: aralık boş
+        return -1
+    mid = lo + (hi - lo) // 2
+    if key < a[mid]:
+        return search(a, key, lo, mid - 1)    # sol yarı
+    elif key > a[mid]:
+        return search(a, key, mid + 1, hi)    # sağ yarı
+    else:
+        return mid
+
+search(a, 42, 0, len(a) - 1)          # ilk çağrı: tüm dizi
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int Search(int[] a, int key, int lo, int hi)
+{
+    if (lo > hi) return -1;                     // aralık boş
+    int mid = lo + (hi - lo) / 2;
+    if      (key < a[mid]) return Search(a, key, lo, mid - 1);
+    else if (key > a[mid]) return Search(a, key, mid + 1, hi);
+    else return mid;
+}
+// Search(a, 42, 0, a.Length - 1);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function search(a, key, lo, hi) {
+  if (lo > hi) return -1;                       // aralık boş
+  const mid = lo + Math.floor((hi - lo) / 2);
+  if (key < a[mid]) return search(a, key, lo, mid - 1);
+  if (key > a[mid]) return search(a, key, mid + 1, hi);
+  return mid;
+}
+// search(a, 42, 0, a.length - 1);
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="ikili arama · matematik">
+  <h2>📐 Kaç karşılaştırma? Logaritma <span class="en">logarithm</span></h2>
+  <div class="demo" data-demo="log2"></div>
+  <div class="cols fragment">
+    <div class="box prop"><span class="bt">Önerme</span>İkili arama N elemanlı sıralı bir dizide en fazla \( \lfloor \lg N \rfloor + 1 \) karşılaştırma yapar.<br><span class="mini">Kanıt fikri: her karşılaştırma aday sayısını en az yarıya indirir: N → N/2 → N/4 → … → 1.</span></div>
+    <div class="box story"><span class="bt">🧠 Akılda tutma hilesi</span>\( 2^{10} \approx 1000 \) · \( 2^{20} \approx \) 1 milyon · \( 2^{30} \approx \) 1 milyar. <br>\( \lg N = \log_2 N \) = N’i kaç kez yarıya bölebilirsin?</div>
+  </div>
+</section>
+
+<section data-sec="ikili arama · oyun">
+  <h2>🎮 Sayı tahmin oyunu</h2>
+  <div class="demo" data-demo="guess"></div>
+  <p class="mini">Bilgisayar modunda 1–100 arası bir sayı tutun ve dürüst cevap verin. Bilgisayar ikili arama yapıyor: en fazla <b>7</b> tahminde bulur, çünkü \( 2^7 = 128 \ge 100 \).</p>
+  <aside class="notes">Önce bir öğrenciye “Sen tahmin et” modunu oynatın; sınıf tahmin sayısını tutsun. Sonra bilgisayar modunu gösterin. Mavi aralık her adımda yarıya iniyor = lo…hi.</aside>
+</section>
+
+<section data-sec="ikili arama">
+  <h2>N büyüdükçe: sıralı arama vs ikili arama 📈</h2>
+  <div class="demo" data-demo="versus"></div>
+  <aside class="notes">N’i 1 milyara çıkarın: sıralı arama ~17 dakika (1 µs/karşılaştırma ile), ikili arama 30 µs. Bu “doğrusal” ve “logaritmik” büyüme farkı, algoritma analizi dersindeki büyüme mertebelerinin en çarpıcı örneklerinden biri.</aside>
+</section>
+
+<section data-sec="ikili arama">
+  <div class="quiz" data-answer="D">
+    <div class="qhead">Quiz 3 · ikili arama</div>
+    <div class="q">1.000.000 elemanlı <b>sıralı</b> bir dizide ikili arama en kötü durumda yaklaşık kaç karşılaştırma yapar?</div>
+    <div class="opts">
+      <button data-opt="A">~1.000.000</button>
+      <button data-opt="B">~500.000</button>
+      <button data-opt="C">~1.000</button>
+      <button data-opt="D">~20</button>
+    </div>
+    <div class="explain">\( 2^{20} \approx 1.048.576 \) → 20 kez yarıya bölünce tek eleman kalır. Sıralı arama ise en kötü 1.000.000 karşılaştırma yapardı: <b>50.000 kat</b> fark!</div>
+  </div>
+</section>
+
+<section data-sec="ikili arama · kod">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 4 · ikili arama · kod</div>
+    <div class="q">Koddaki <code>while (lo &lt;= hi)</code> yerine <code>while (lo &lt; hi)</code> yazarsak ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Hiçbir şey değişmez</button>
+      <button data-opt="B">Sonsuz döngüye girer</button>
+      <button data-opt="C">Bazen dizide <b>olan</b> bir anahtar için “yok” der</button>
+      <button data-opt="D">Dizi dışına taşar ve çöker</button>
+    </div>
+    <div class="explain">Aralık tek elemana indiğinde (<code>lo == hi</code>) döngü o elemana hiç bakmadan biter. Örn. <code>[7]</code> dizisinde 7’yi ararsak hemen −1 döner. Bu tür “bir eksik/bir fazla” hatalarına <b>off-by-one</b> hatası denir. Kod laboratuvarında deneyin!</div>
+  </div>
+</section>
+
+<section data-sec="ikili arama · kod">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 5 · ikili arama · kod</div>
+    <div class="q"><code>mid = lo + (hi - lo) / 2</code> yerine <code>mid = lo</code> yazarsak ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Yanlış sonuç döndürür</button>
+      <button data-opt="B">Sonsuz döngüye girer</button>
+      <button data-opt="C">Hâlâ doğru çalışır ama sıralı arama kadar yavaşlar</button>
+      <button data-opt="D">Dizi dışına taşar</button>
+    </div>
+    <div class="explain">Her adımda sadece <b>bir</b> eleman (en soldaki) elenir: <code>lo = mid + 1</code>. Değişmez korunduğu için sonuç doğrudur, ama aday kümesi yarıya değil <b>birer birer</b> azalır → N karşılaştırma. “Yarıya bölmek” hızın kaynağıdır, doğruluğun değil.</div>
+  </div>
+</section>
+
+<section data-sec="ikili arama · hikâye">
+  <h2>📜 Basit görünen, yazması zor bir algoritma</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">1946 → 1962</span>Knuth’a göre ikili arama ilk kez 1946’da yayımlandı; ama <b>her N için doğru çalışan</b> ilk sürüm ancak 1962’de çıktı.</div>
+      <div class="box story"><span class="bt">%90</span>Jon Bentley, profesyonel programcılara ikili arama yazdırdığında çoğunun kodunda hata buldu (<i>Programming Pearls</i>).</div>
+      <div class="box story"><span class="bt">2006</span>Joshua Bloch: Java’nın kendi kütüphanesindeki ikili arama <b>9 yıl</b> boyunca hatalıydı! Hata: <code>mid = (lo + hi) / 2</code></div>
+    </div>
+    <div>
+  <div class="tabs ">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int mid = (lo + hi) / 2;       // ❌ lo + hi > 2.147.483.647 olursa
+                               //    sayı TAŞAR ve NEGATİF olur!
+int mid = lo + (hi - lo) / 2;  // ✅ taşma yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+mid = (lo + hi) // 2       # Python'da sorun yok: tam sayılar sınırsız büyür
+mid = lo + (hi - lo) // 2  # ama C#/C++/Java'ya geçince bu alışkanlık hayat kurtarır
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const mid = Math.floor((lo + hi) / 2); // sayılar 2^53'e kadar güvenli
+const mid2 = (lo + hi) >>> 1;          // ✅ yaygın hile (işaretsiz kaydırma)
+const mid3 = (lo + hi) >> 1;           // ❌ 2^31'i aşınca negatif olur!
+</script></code></pre>
+    </div>
+  </div>
+      <div class="box low"><span class="bt">⚙️ Tam sayı taşması <span class="en">integer overflow</span></span>C#’ta <code>int</code> 32 bittir: en büyük değer 2.147.483.647. Bir fazlası en küçük negatif sayıya “sarar”. Oyunlarda da çok görülür (efsane: Civilization’daki “nükleer Gandhi”).</div>
+    </div>
+  </div>
+  <aside class="notes">Nükleer Gandhi hikâyesi büyük ölçüde bir şehir efsanesidir (Sid Meier de bunu sonradan söyledi); “efsane” olarak anlatın. Kaynak: Bloch’un 2006 Google Research blog yazısı (Kaynaklar slaytında).</aside>
+</section>
+
+<section data-sec="ikili arama · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: ikili arama (otomatik testli)</h2>
+  <div class="searchlab" data-lang="js" data-task="find">
+<textarea>
+// a: SIRALI dizi, key: aranan sayı
+// Bulursan indeksini, bulamazsan -1 döndür
+function search(a, key) {
+  let lo = 0;
+  let hi = a.length - 1;
+  while (lo <= hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (key < a[mid]) {
+      hi = mid - 1;
+    } else if (key > a[mid]) {
+      lo = mid + 1;
+    } else {
+      return mid;
+    }
+  }
+  return -1;
+}
+</textarea>
+    <div class="lab-tasks"><b>Her değişiklikten sonra çalıştır: kodun 250+ rastgele testten geçiyor mu?</b>
+      <ol>
+        <li>6. satırda <code>&lt;=</code> yerine <code>&lt;</code> yaz. Hangi test başarısız oldu?</li>
+        <li>9. satırda <code>hi = mid - 1</code> yerine <code>hi = mid</code> yaz. Ne oldu, neden?</li>
+        <li>7. satırı <code>const mid = lo;</code> yap. Testler geçiyor mu? Okuma sayısı ne diyor?</li>
+        <li>Kendi <b>sıralı arama</b> fonksiyonunu yaz: testler geçer mi, uyarı çıkar mı?</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">1) Tek elemanlı aralıkta erken çıkış → bulunan elemanı “yok” der. 2) key dizideki her şeyden küçük değilse sonsuz döngü (lo == hi == mid ve key < a[mid] olduğunda aralık hiç küçülmez) → “dizi 5000’den fazla kez okundu” uyarısı. 3) Doğru ama yavaş: laboratuvar “bu gerçekten ikili arama mı?” uyarısı verir. 4) Sıralı arama da testleri geçer ama aynı uyarı çıkar.</aside>
+</section>
+
+<section data-sec="ikili arama · laboratuvar">
+  <h2>🐍 Aynı laboratuvar — Python</h2>
+  <div class="searchlab" data-lang="python" data-task="find">
+<textarea>
+# a: SIRALI liste, key: aranan sayı
+# Bulursan indeksini, bulamazsan -1 döndür
+def search(a, key):
+    lo = 0
+    hi = len(a) - 1
+    while lo <= hi:
+        mid = lo + (hi - lo) // 2
+        if key < a[mid]:
+            hi = mid - 1
+        elif key > a[mid]:
+            lo = mid + 1
+        else:
+            return mid
+    return -1
+</textarea>
+    <div class="lab-tasks">Python tarayıcıda çalışır (ilk açılışta internet gerekir).
+      <ol>
+        <li>7. satırda <code>//</code> yerine <code>/</code> yaz. Hata mesajını oku: neden?</li>
+        <li><code>return -1</code> satırını sil. Python bulamayınca ne döndürüyor?</li>
+        <li>Özyinelemeli sürümü yaz (önceki slayttaki gibi, <code>lo</code> ve <code>hi</code> parametreli bir yardımcı fonksiyonla).</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">1) Python’da / ondalıklı sayı üretir → “list indices must be integers or slices, not float”. 2) Fonksiyon sonuna ulaşınca Python otomatik None döndürür → testler başarısız (beklenen -1).</aside>
+</section>
+
+<section data-sec="ikili arama · kaputun altında">
+  <h2>⚙️ Küçük dizilerde sıralı arama daha hızlı olabilir!</h2>
+  <div class="cols">
+    <div>
+      <p>Karşılaştırma sayısı her şey değildir. Donanım da önemli:</p>
+      <ul>
+        <li class="fragment"><b>Önbellek</b> <span class="en">cache</span>: işlemci bellekten 64 baytlık bloklar (önbellek satırı) getirir = 16 tane <code>int</code>. Sıralı arama bu blokları <b>sırayla</b> okur → çok hızlı. İkili arama bellekte <b>zıplar</b> → büyük dizilerde her zıplama bir önbellek ıskası.</li>
+        <li class="fragment"><b>Dal tahmini</b> <span class="en">branch prediction</span>: sıralı aramanın <code>if</code>’i neredeyse hep “hayır” → işlemci kolayca tahmin eder. İkili aramanın sol/sağ kararı ise yazı-tura gibi → sık yanılır.</li>
+      </ul>
+    </div>
+    <div class="box low fragment"><span class="bt">⚙️ Pratikte</span>
+      <p>Birkaç düzine elemana kadar düz sıralı arama genelde ikili aramayı geçer. Hızlı kütüphaneler bu yüzden önce ikili aramayla aralığı daraltıp, küçük kalan kısımda <b>sıralı aramaya</b> geçer.</p>
+      <p class="mini">Ders: “Büyük-O” büyük N için doğrudur; küçük N’de sabitler ve donanım kazanır. Ölçmeden karar vermeyin (algoritma analizi dersindeki bilimsel yöntem!).</p>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Oyunlarda İkili Arama</div>
+  <div class="sub">XP tabloları · loot sandıkları · animasyon eğrileri</div>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="on">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="oyunlarda ikili arama">
+  <h2>Aranan yoksa: “nereye eklenirdi?” <span class="en">lower bound · rank</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.92em">
+      <p>Çoğu zaman tam eşitlik değil, <b>sınır</b> ararız:</p>
+      <ul>
+        <li><b>lower bound</b>: <code>a[i] ≥ key</code> olan <b>ilk</b> i</li>
+        <li>= key’den <b>küçük</b> kaç eleman var? (<b>rank</b>)</li>
+        <li>= key sıralı diziye <b>nereye eklenmeli</b>?</li>
+      </ul>
+      <p class="fragment">🎮 Skor tablosu: yeni skor 1530 → kaçıncı sıraya girer?</p>
+      <p class="fragment mini">Fark: aralık “yarı açık” <code>[lo, hi)</code>; döngü <code>lo &lt; hi</code>; eşit bulunca durmadan <b>sola</b> devam ederiz. Sonunda <code>lo</code> = cevap.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def lower_bound(a, key):      # a[i] >= key olan ilk i (yoksa len(a))
+    lo, hi = 0, len(a)        # dikkat: hi = len(a), aralık [lo, hi)
+    while lo < hi:
+        mid = lo + (hi - lo) // 2
+        if a[mid] < key:
+            lo = mid + 1      # mid ve solu çok küçük
+        else:
+            hi = mid          # mid aday olabilir, onu tut
+    return lo
+
+# hazırı: import bisect;  bisect.bisect_left(a, key)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int LowerBound(int[] a, int key)   // a[i] >= key olan ilk i
+{
+    int lo = 0, hi = a.Length;            // aralık [lo, hi)
+    while (lo < hi)
+    {
+        int mid = lo + (hi - lo) / 2;
+        if (a[mid] < key) lo = mid + 1;   // mid ve solu çok küçük
+        else              hi = mid;       // mid aday, tut
+    }
+    return lo;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function lowerBound(a, key) {         // a[i] >= key olan ilk i
+  let lo = 0, hi = a.length;          // aralık [lo, hi)
+  while (lo < hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (a[mid] < key) lo = mid + 1;   // mid ve solu çok küçük
+    else hi = mid;                    // mid aday, tut
+  }
+  return lo;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda ikili arama">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 6 · oyunlarda ikili arama</div>
+    <div class="q"><code>a = [1, 3, 3, 3, 5]</code> dizisinde 3 aranıyor. Klasik ikili arama ve <code>lower_bound</code> hangi indeksleri döndürür?</div>
+    <div class="opts">
+      <button data-opt="A">ikisi de 1</button>
+      <button data-opt="B">klasik: 2 (ortadaki 3), lower_bound: 1 (ilk 3)</button>
+      <button data-opt="C">klasik: 3, lower_bound: 3</button>
+      <button data-opt="D">klasik: −1, lower_bound: 1</button>
+    </div>
+    <div class="explain">Klasik ikili arama <b>herhangi bir</b> 3’ü bulur: ilk mid = 2 ve a[2] = 3 → hemen döner. lower_bound ise eşit bulsa bile sola bakmaya devam eder ve <b>ilk</b> 3’ün yerini (1) verir. Tekrar eden anahtarlarda bu fark önemlidir: “3 puanlı oyunculardan ilki kim?”</div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda ikili arama · oyunda">
+  <h2>🎮 XP → seviye tablosu</h2>
+  <div class="demo" data-demo="xp"></div>
+  <p class="mini">Kutular: her seviyenin başladığı XP eşiği (sıralı!). Aranan: eşiği oyuncunun XP’sini <b>geçmeyen en büyük</b> eşik (<i>floor</i>). 16 seviyede en fazla 5 adım; 1000 seviyelik bir MMO’da bile 10 adım.</p>
+  <aside class="notes">Kaydırıcıyı oynatın ve “Adım adım göster”e basın. Seviye eşiklerini bir dizide tutup ikili arama yapmak, oyunlarda çok kullanılan bir desendir (XP, rütbe, fiyat basamakları, zorluk eğrileri).</aside>
+</section>
+
+<section data-sec="oyunlarda ikili arama · oyunda">
+  <h2>🎁 Loot tablosu nasıl çalışır? <span class="en">weighted random</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p>Ağırlıklar: Sıradan 60 · Nadir 28 · Epik 10 · Efsanevi 2</p>
+      <ol>
+        <li class="fragment"><b>Kümülatif toplam</b> <span class="en">cumulative sum</span> al: <code>[60, 88, 98, 100]</code></li>
+        <li class="fragment">0 ile 100 arası rastgele bir <code>r</code> çek: ör. <code>r = 93.4</code></li>
+        <li class="fragment"><code>r</code>’den <b>büyük ilk</b> kümülatif değeri <b>ikili aramayla</b> bul: 98 → indeks 2 → <b>Epik!</b></li>
+      </ol>
+      <p class="fragment mini">Neden doğru? r’nin her aralığa düşme olasılığı, o aralığın <b>genişliği</b> ile orantılı: [88, 98) aralığı 10 birim → %10.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random, bisect
+names   = ["Sıradan", "Nadir", "Epik", "Efsanevi"]
+weights = [60, 28, 10, 2]
+
+cum = []                        # kümülatif toplam: [60, 88, 98, 100]
+total = 0
+for w in weights:
+    total += w
+    cum.append(total)
+
+def roll():
+    r = random.random() * total          # 0 <= r < total
+    i = bisect.bisect_right(cum, r)      # r'den büyük ilk cum'un indeksi
+    return names[i]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+string[] names = { "Sıradan", "Nadir", "Epik", "Efsanevi" };
+int[] weights  = { 60, 28, 10, 2 };
+float[] cum = new float[weights.Length];
+float total = 0;
+for (int i = 0; i < weights.Length; i++) { total += weights[i]; cum[i] = total; }
+
+string Roll()
+{
+    float r = Random.Range(0f, total);      // Unity: 0 <= r < total
+    int lo = 0, hi = cum.Length - 1;        // r'den BÜYÜK ilk cum
+    while (lo < hi)
+    {
+        int mid = lo + (hi - lo) / 2;
+        if (cum[mid] > r) hi = mid; else lo = mid + 1;
+    }
+    return names[lo];
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const names = ["Sıradan", "Nadir", "Epik", "Efsanevi"];
+const weights = [60, 28, 10, 2];
+const cum = [];
+let total = 0;
+for (const w of weights) { total += w; cum.push(total); }
+
+function roll() {
+  const r = Math.random() * total;      // 0 <= r < total
+  let lo = 0, hi = cum.length - 1;      // r'den BÜYÜK ilk cum
+  while (lo < hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (cum[mid] > r) hi = mid; else lo = mid + 1;
+  }
+  return names[lo];
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda ikili arama · oyunda">
+  <h2>🎁 Canlı demo: sandık açalım</h2>
+  <div class="demo" data-demo="loot"></div>
+  <aside class="notes">Önce “Bir sandık aç” ile adım adım ikili aramayı gösterin. Sonra 10.000 sandık açıp yüzdelerin ağırlıklarla uyuştuğunu gösterin. Efsanevi’yi 0 yapıp tekrar deneyin. Tasarım notu: gerçek oyunlarda “acıma sayacı” (pity timer) gibi ek kurallar da eklenir.</aside>
+</section>
+
+<section data-sec="oyunlarda ikili arama · oyunda">
+  <h2>🎞️ Animasyon eğrileri: zamanı hangi kareler arasında?</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p>Bir animasyon eğrisi, zamana göre sıralı <b>anahtar karelerden</b> <span class="en">keyframes</span> oluşur: (0 sn → 0), (0,5 sn → 2), (1,2 sn → 1)…</p>
+      <p>t = 0,8 sn’deki değer? → t’yi çevreleyen iki kareyi <b>ikili aramayla</b> bul, aralarında <b>doğrusal enterpolasyon</b> yap.</p>
+      <p class="fragment mini">Unity’nin <code>AnimationCurve.Evaluate</code>, Godot’nun <code>Curve</code>’ü ve her animasyon sistemi bunu yapar — her karede, her kemik için!</p>
+      <div class="box bgk fragment"><span class="bt">🎒 lerp</span><code>lerp(a, b, t) = a + (b − a) · t</code> → t = 0’da a, t = 1’de b, aradaki değerlerde ikisinin arası. Oyun programlamanın en çok kullanılan formülü.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import bisect
+times  = [0.0, 0.5, 1.2, 2.0]       # anahtar karelerin zamanları (SIRALI)
+values = [0.0, 2.0, 1.0, 3.0]       # o anlardaki değerler
+
+def evaluate(t):
+    i = bisect.bisect_right(times, t)   # t'den büyük ilk zaman
+    if i == 0: return values[0]          # eğrinin başından önce
+    if i == len(times): return values[-1]  # sonundan sonra
+    t0, t1 = times[i - 1], times[i]
+    u = (t - t0) / (t1 - t0)             # 0..1 arası oran
+    return values[i - 1] + (values[i] - values[i - 1]) * u   # lerp
+
+print(evaluate(0.8))                     # 1.571...
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity bunu sizin için yapar:
+public AnimationCurve jumpCurve;     // Inspector'da eğriyi çizin
+
+void Update()
+{
+    float t = Time.time % 2f;              // 0..2 sn arası dönen zaman
+    float h = jumpCurve.Evaluate(t);       // içeride: ikili arama + enterpolasyon
+    transform.position = new Vector3(0, h, 0);
+}
+// Mathf.Lerp(a, b, u) = a + (b - a) * u
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const times  = [0.0, 0.5, 1.2, 2.0];    // anahtar kare zamanları (SIRALI)
+const values = [0.0, 2.0, 1.0, 3.0];
+
+function evaluate(t) {
+  let lo = 0, hi = times.length;          // t'den büyük ilk zaman
+  while (lo < hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (times[mid] <= t) lo = mid + 1; else hi = mid;
+  }
+  if (lo === 0) return values[0];
+  if (lo === times.length) return values[values.length - 1];
+  const u = (t - times[lo - 1]) / (times[lo] - times[lo - 1]);
+  return values[lo - 1] + (values[lo] - values[lo - 1]) * u;   // lerp
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda ikili arama · gerçek dünya">
+  <h2>Hazır ikili arama fonksiyonları</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import bisect
+a = [10, 20, 30, 30, 40]
+bisect.bisect_left(a, 30)    # 2  → 30'dan büyük ya da eşit İLK yer (lower bound)
+bisect.bisect_right(a, 30)   # 4  → 30'dan BÜYÜK ilk yer
+bisect.insort(a, 25)         # sıralı yere ekle: [10, 20, 25, 30, 30, 40]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+int[] a = { 10, 20, 30, 40 };
+int i = Array.BinarySearch(a, 30);   // 2
+int j = Array.BinarySearch(a, 25);   // -3  ← negatif: "yok"!
+int yer = ~j;                        // ~(-3) = 2  → 25 buraya eklenmeli
+// List<int> için: list.BinarySearch(30)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JavaScript'te hazır ikili arama YOK → kendiniz yazın
+// (önceki slaytlardaki binarySearch / lowerBound fonksiyonları)
+const a = [10, 20, 30, 40];
+a.indexOf(30);      // 2 ama bu SIRALI arama (N adım)!
+a.includes(30);     // true — yine sıralı arama
+</script></code></pre>
+    </div>
+  </div>
+  <div class="box bgk fragment"><span class="bt">🎒 C#’taki <code>~</code></span>Bulunamazsa <code>Array.BinarySearch</code> “eklenmesi gereken yer”i <b>bit tersine çevirip</b> negatif bir sayı olarak döndürür (−1 ile karışmasın diye). <code>~j</code> bunu geri çevirir. Kural: sonuç <b>negatifse yok</b>, <code>~sonuç</code> = ekleme yeri.</div>
+</section>
+
+<section data-sec="oyunlarda ikili arama · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: lower bound’u kendin yaz</h2>
+  <div class="searchlab" data-lang="js" data-task="lower">
+<textarea>
+// GÖREV: a[i] >= key olan İLK i'yi döndür.
+// Böyle bir eleman yoksa a.length döndür.
+// Şu an bu kod klasik ikili arama — testler başarısız olacak.
+// Değiştir ve tüm testleri geçir!
+function search(a, key) {
+  let lo = 0;
+  let hi = a.length - 1;
+  while (lo <= hi) {
+    const mid = lo + Math.floor((hi - lo) / 2);
+    if (key < a[mid]) hi = mid - 1;
+    else if (key > a[mid]) lo = mid + 1;
+    else return mid;
+  }
+  return -1;
+}
+</textarea>
+    <div class="lab-tasks"><b>İpuçları:</b> aralığı <code>[lo, hi)</code> yap (<code>hi = a.length</code>) · döngü <code>lo &lt; hi</code> · <code>a[mid] &lt; key</code> ise <code>lo = mid + 1</code>, değilse <code>hi = mid</code> · sonunda <code>lo</code> döndür. Takılırsan “lower bound” slaytına bak.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">İkiye Bölme</div>
+  <div class="sub"><i>bisection</i> — dizide değil, “cevabın kendisinde” ikili arama</div>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="done">oyunlarda ikili arama</li><li class="on">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="ikiye bölme">
+  <h2>Fikir: “evet/hayır” sorusu bir noktada değişiyorsa</h2>
+  <div class="cols c64">
+    <div>
+      <p>İkili arama sadece dizilerde çalışmaz. Bir soru düşünün: cevabı bir noktaya kadar hep <b>hayır</b>, sonra hep <b>evet</b> olsun:</p>
+      <p class="formula center" style="font-family:JetBrains Mono">✘ ✘ ✘ ✘ ✘ ✘ <span class="c-red">✔</span> ✔ ✔ ✔ ✔</p>
+      <p>Böyle bir koşula <b>monoton</b> <span class="en">monotonic</span> denir. Sınırı ikili aramayla buluruz: ortaya bak, ✘ ise sağa, ✔ ise sola.</p>
+      <p class="fragment">Aralık sürekli bile olabilir (zaman, mesafe, açı…): her adımda aralık yarıya iner → 20 adımda milyonda bir hassasiyet.</p>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Örnek sorular</span>
+      <ul style="font-size:.95em">
+        <li>Mermi <b>t anında</b> duvara değmiş mi?</li>
+        <li>Zıplama gücü <b>h</b> ile platforma yetişiliyor mu?</li>
+        <li><b>Kaçıncı sürümde</b> oyun çökmeye başladı?</li>
+        <li>Zorluk <b>d</b>’de test oyuncularının yarısından fazlası kaybediyor mu?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ikiye bölme · oyunda">
+  <h2>💥 Hızlı mermi neden duvarın içinden geçer? <span class="en">tunneling</span></h2>
+  <div class="demo" data-demo="bisect"></div>
+  <aside class="notes">Hızı 230’dayken mermi bir karede duvarın solunda, bir sonraki karede sağında: hiçbir karede çakışmıyor → “tünelleme”. Fizik motorları bunu “sürekli çarpışma tespiti” (continuous collision detection) ile çözer; bunun basit bir yolu iki kare arasında ikiye bölme ile çarpışma anını aramaktır. Unity’de Rigidbody’nin Collision Detection ayarı: Discrete / Continuous.</aside>
+</section>
+
+<section data-sec="ikiye bölme">
+  <h2>İkiye bölme — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def first_true(lo, hi, cond, steps=20):
+    """cond(lo) yanlış, cond(hi) doğru olsun.
+       Koşulun doğru olmaya başladığı noktayı bul."""
+    for _ in range(steps):       # her adımda aralık yarıya iner
+        mid = (lo + hi) / 2      # ondalıklı: burada // DEĞİL /
+        if cond(mid):
+            hi = mid             # sınır mid'de ya da solunda
+        else:
+            lo = mid             # sınır sağda
+    return hi
+
+def touches(t):                  # t anında mermi duvara değmiş mi?
+    return x0 + v * t + r >= wall_x
+
+t_hit = first_true(3, 4, touches)    # kare 3 ile 4 arasında
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Func<float, bool> = "float alıp bool döndüren fonksiyon" türü
+static float FirstTrue(float lo, float hi, Func<float, bool> cond, int steps = 20)
+{
+    for (int k = 0; k < steps; k++)
+    {
+        float mid = (lo + hi) / 2f;
+        if (cond(mid)) hi = mid;     // sınır mid'de ya da solunda
+        else           lo = mid;     // sınır sağda
+    }
+    return hi;
+}
+
+bool Touches(float t) { return x0 + v * t + r >= wallX; }
+float tHit = FirstTrue(3f, 4f, Touches);     // metodun ADINI veriyoruz
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function firstTrue(lo, hi, cond, steps = 20) {
+  for (let k = 0; k < steps; k++) {
+    const mid = (lo + hi) / 2;
+    if (cond(mid)) hi = mid;     // sınır mid'de ya da solunda
+    else lo = mid;               // sınır sağda
+  }
+  return hi;
+}
+
+function touches(t) { return x0 + v * t + r >= wallX; }
+const tHit = firstTrue(3, 4, touches);       // fonksiyonun ADINI veriyoruz
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>cond</code> bir fonksiyon parametresidir: “sorulacak soruyu” dışarıdan veririz (<span class="en">callback · predicate</span>). Aynı <code>first_true</code> her türlü “ne zaman/ne kadar?” sorusu için çalışır.</p>
+</section>
+
+<section data-sec="ikiye bölme · hikâye">
+  <h2>📜 Hangi sürümde bozuldu? <code>git bisect</code></h2>
+  <div class="cols c64">
+    <div>
+      <p>Oyununuz dün akşam akıcıydı, bugün 20 FPS. Aradaki 500 değişiklikten (commit) <b>hangisi</b> bozdu?</p>
+      <ul>
+        <li class="fragment">Sırayla tek tek denemek: 500 derleme + test 😩</li>
+        <li class="fragment">İkiye bölme: ortadaki sürümü dene → iyi mi kötü mü? → yarısını at… <b>~9 deneme</b> (\( 2^9 = 512 \))</li>
+      </ul>
+      <p class="fragment">Git bunu hazır bir komut olarak sunar: <code>git bisect</code>. Siz sadece “iyi” ya da “kötü” dersiniz; ortadaki sürüme Git atlar.</p>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Oyun tasarımında</span>Tasarımcılar da bunu sezgisel olarak yapar: “Zıplama 10 birimken platforma ulaşılamıyor, 20’de çok kolay… 15? 12?” Her denemede aralık yarıya iner. Bilinçli yaparsanız daha az test oyunu harcarsınız!</div>
+  </div>
+</section>
+
+<section data-sec="ikiye bölme">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 7 · ikiye bölme</div>
+    <div class="q">Çarpışma anını 1 karelik aralıkta, <b>milyonda bir</b> kare hassasiyetle bulmak istiyoruz. İkiye bölme kaç adım sürer?</div>
+    <div class="opts">
+      <button data-opt="A">~6</button>
+      <button data-opt="B">~20</button>
+      <button data-opt="C">~1.000</button>
+      <button data-opt="D">~1.000.000</button>
+    </div>
+    <div class="explain">Her adım aralığı yarıya indirir: \( 2^{20} \approx 10^6 \) → 20 adımdan sonra aralık 1/1.048.576 kare. Aynı hassasiyeti kareyi milyon parçaya bölüp tek tek kontrol ederek almak 1 milyon adım sürerdi.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kaputun Altında &amp; Ötesi</div>
+  <div class="sub">enterpolasyon araması · üstel arama · sembol tabloları</div>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="done">oyunlarda ikili arama</li><li class="done">ikiye bölme (bisection)</li><li class="on">kaputun altında &amp; ötesi</li></ul>
+</section>
+
+<section data-sec="ötesi">
+  <h2>Telefon rehberi gibi: enterpolasyon araması <span class="en">interpolation search</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>Rehberde “Zeynep”i ararken ortadan açmazsınız: <b>sonlara yakın</b> bir yerden açarsınız!</p>
+      <p>Fikir: aranan değerin aralıktaki <b>oranına</b> göre tahmin yap:</p>
+      <p class="formula center">\( pos = lo + \dfrac{key - a[lo]}{a[hi] - a[lo]} \cdot (hi - lo) \)</p>
+      <ul>
+        <li class="fragment">Veriler <b>düzgün dağılmışsa</b>: ~\( \lg \lg N \) adım — 1 milyar elemanda ~5 adım!</li>
+        <li class="fragment">Ama veriler dengesizse (ör. <code>1, 2, 3, 4, 1000000</code>): en kötü <b>N</b> adım 😬</li>
+      </ul>
+    </div>
+    <div class="box story fragment"><span class="bt">💡 Ders</span>Daha akıllı tahmin = ortalamada daha hızlı, ama <b>garanti</b> yok. İkili arama hiçbir zaman ~lg N’den kötü olmaz. Oyunlarda genelde garanti tercih edilir: bir karenin bütçesi 16 ms!</div>
+  </div>
+</section>
+
+<section data-sec="ötesi">
+  <h2>Sonu bilinmeyen dizide: üstel arama <span class="en">exponential (galloping) search</span></h2>
+  <div class="cols">
+    <div>
+      <p>Dizinin boyutunu bilmiyorsak (çok uzun bir kayıt, sürekli büyüyen bir liste) ya da aranan <b>başa yakınsa</b>:</p>
+      <ol>
+        <li>1., 2., 4., 8., 16.… elemanlara bak (her seferinde <b>iki katı</b>).</li>
+        <li>Aranandan büyük bir eleman bulunca dur: aranan son iki bakış arasında.</li>
+        <li>O aralıkta <b>ikili arama</b> yap.</li>
+      </ol>
+      <p class="fragment">Toplam ~2 lg <i>k</i> adım (<i>k</i> = aranan elemanın konumu). Baştaki elemanlar için çok hızlı!</p>
+    </div>
+    <div class="box story fragment"><span class="bt">🐍 Gerçek dünyada</span>Python’un ve Java’nın sıralama fonksiyonları (Timsort) iki sıralı parçayı birleştirirken bu “dörtnala” <span class="en">galloping</span> aramayı kullanır. Sıralama derslerinde tekrar karşılaşacağız!</div>
+  </div>
+</section>
+
+<section data-sec="ötesi">
+  <h2>Sıralı dizi bir “sözlük” olabilir mi? <span class="en">symbol table</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>Oyunda anahtar → değer saklamak isteriz: eşya adı → adet, oyuncu ID → profil…</p>
+      <p>Anahtarları sıralı dizide tutarsak <code>get</code> ikili arama ile hızlı. Peki <b>ekleme</b>?</p>
+      <p class="fragment">Yeni anahtarın yerini lg N’de buluruz ama ondan büyük <b>herkesi bir sağa kaydırmak</b> gerekir → ortalama N/2 taşıma.</p>
+      <table class="sum-t fragment" style="font-size:20px">
+        <tr><th>yapı</th><th>arama</th><th>ekleme</th></tr>
+        <tr><td>sırasız dizi / liste</td><td class="no">N</td><td class="yes">1</td></tr>
+        <tr><td>sıralı dizi</td><td class="yes">lg N</td><td class="no">N</td></tr>
+        <tr><td>❓ ikisinin de iyi yanı</td><td class="yes">lg N</td><td class="yes">lg N</td></tr>
+      </table>
+    </div>
+    <div class="box game fragment"><span class="bt">🔜 İlerideki dersler</span>
+      <p><b>İkili arama ağaçları</b> (BST): ikili aramanın “ortadakine bak, sola/sağa git” fikrini bir ağaca dönüştürür → arama ve ekleme ~lg N. <a href="../agaclar-bst/">Ağaçlar destesi ▶</a></p>
+      <p><b>Hash tabloları</b>: ortalama sabit zaman — ama sırayı kaybeder.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Özet tablo 📋</h2>
+  <table class="sum-t">
+    <tr><th>yöntem</th><th>ön koşul</th><th>en iyi</th><th>ortalama</th><th>en kötü</th></tr>
+    <tr><td>sıralı arama</td><td>— (her yerde)</td><td>1</td><td>N/2 (bulunursa)</td><td>N</td></tr>
+    <tr><td>ikili arama</td><td>sıralı + rastgele erişim</td><td>1</td><td>~lg N</td><td>⌊lg N⌋ + 1</td></tr>
+    <tr><td>enterpolasyon araması</td><td>sıralı + düzgün dağılım</td><td>1</td><td>~lg lg N</td><td class="no">N</td></tr>
+    <tr><td>üstel arama</td><td>sıralı (boyut bilinmese de)</td><td>1</td><td colspan="2">~2 lg k (k = konum)</td></tr>
+    <tr><td>ikiye bölme</td><td>monoton koşul</td><td colspan="3">hassasiyet ε için ~lg(aralık / ε) adım</td></tr>
+  </table>
+  <p class="mini">Değerler karşılaştırma sayısıdır.</p>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Arama problemi</b>: indeks ya da −1; başarılı / başarısız arama.</li>
+      <li><b>Sıralı arama</b>: her yerde çalışır, N adım; hazır fonksiyonlar da böyle!</li>
+      <li><b>Nöbetçi</b>, <b>öne alma</b>: küçük ama akıllı hileler.</li>
+      <li><b>İkili arama</b>: sıralı dizi + ortadan bölme → ⌊lg N⌋ + 1.</li>
+    </ul>
+    <ul>
+      <li><b>Logaritma</b> = “kaç kez yarıya?” · \( 2^{10} \approx 1000 \).</li>
+      <li><b>lower bound</b>: “nereye eklenirdi?” — XP tabloları, loot sandıkları, animasyon eğrileri.</li>
+      <li><b>İkiye bölme</b>: monoton koşul → çarpışma anı, <code>git bisect</code>.</li>
+      <li>⚙️ Taşma hatası, tam sayı bölmesi, önbellek ve dal tahmini.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: <code>A C E H L M P R S X</code> dizisinde <b>H</b> ve <b>Z</b> için ikili aramanın iz tablosunu (lo, hi, mid) çıkarın.</li>
+    <li>Kod laboratuvarında <b>upper bound</b>’u (key’den <b>büyük</b> ilk eleman) yazın. lower bound ile farkı nedir?</li>
+    <li>“Bir sayının dizide kaç kez geçtiğini” lg N zamanda bulun. (İpucu: upper bound − lower bound.)</li>
+    <li>p5.js’te bir loot sandığı yapın: ağırlıklar bir dizide, tıklayınca sandık açılsın ve çıkan eşya ekranda görünsün. 1000 kez açıp yüzdeleri yazdırın.</li>
+    <li>Unity’de hızlı bir mermi (Rigidbody) duvara ateşleyin. <i>Collision Detection</i>: Discrete ↔ Continuous farkını gözlemleyin.</li>
+    <li>🤖 Bir YZ asistanından ikili arama yazmasını isteyin. Değişmezi kontrol edin; <code>[7]</code>, <code>[]</code> ve tekrar eden elemanlarla test edin.</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=TwsgCHYmbbA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/TwsgCHYmbbA/hqdefault.jpg" alt=""><span><b>Linear Search</b><br>CS50 Shorts (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=T98PIp4omUA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/T98PIp4omUA/hqdefault.jpg" alt=""><span><b>Binary Search</b><br>CS50 Shorts (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=fDKIpRe8GW4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/fDKIpRe8GW4/hqdefault.jpg" alt=""><span><b>Binary search in 4 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=j5uXyPJ0Pew" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/j5uXyPJ0Pew/hqdefault.jpg" alt=""><span><b>What is binary search</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=P3YID7liBug" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/P3YID7liBug/hqdefault.jpg" alt=""><span><b>Algorithms: Binary Search</b><br>HackerRank (Gayle Laakmann McDowell)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=MFhxShGxHWc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/MFhxShGxHWc/hqdefault.jpg" alt=""><span><b>Binary Search Algorithm in 100 Seconds</b><br>Fireship</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=tgVSkMA8joQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/tgVSkMA8joQ/hqdefault.jpg" alt=""><span><b>Binary Search — A Different Perspective</b><br>mCoding (Python)</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/11model/" target="_blank">algs4 · 1.1 Programming Model</a> (BinarySearch)</li>
+      <li><a href="https://algs4.cs.princeton.edu/31elementary/" target="_blank">algs4 · 3.1 Symbol Tables</a> (sıralı ve ikili arama)</li>
+      <li><a href="https://research.google/blog/extra-extra-read-all-about-it-nearly-all-binary-searches-and-mergesorts-are-broken/" target="_blank">Joshua Bloch · Nearly All Binary Searches… Are Broken (2006)</a></li>
+      <li><a href="https://git-scm.com/docs/git-bisect" target="_blank">git bisect belgeleri</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/Search.html" target="_blank">USFCA · sıralı ve ikili arama görselleştirmesi</a></li>
+      <li><a href="https://docs.python.org/3/library/bisect.html" target="_blank">Python · bisect modülü</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.array.binarysearch" target="_blank">.NET · Array.BinarySearch</a></li>
+      <li><a href="https://docs.unity3d.com/ScriptReference/AnimationCurve.html" target="_blank">Unity · AnimationCurve</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3b1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Temel Sıralama</div>
+    <div class="sub">İkili arama sıralı veri ister. Peki diziyi nasıl sıralarız?</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../siralama-temel/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/arama.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

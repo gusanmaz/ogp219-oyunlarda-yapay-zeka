@@ -14,7 +14,7 @@ Oyun yapay zekâsı algoritmalarına geçmeden önce ihtiyaç duyulan temel algo
 | 02 | Algoritma Analizi | hazırlanıyor |
 | 03 | Bağlı Listeler (dizi ile karşılaştırma) | hazırlanıyor |
 | 04 | Yığınlar ve Kuyruklar | hazırlanıyor |
-| 05 | Arama Algoritmaları | hazırlanıyor |
+| 05 | [Arama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/arama-algoritmalari/) | ✅ hazır |
 | 06 | [Temel Sıralama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/siralama-temel/) | ✅ hazır |
 | 07 | Mergesort | sonra |
 | 08 | Quicksort | sonra |
@@ -42,6 +42,8 @@ ortak/              tüm destelerin ortak stil ve kodları
   core.js           tema, kod büyüteci, sekmeler, quiz, adım adım oynatıcı, kod laboratuvarı iskeleti
   siralama.js       sıralama görselleştirmeleri
   agac.js           ağaç görselleştirmeleri
+  arama.js          arama görselleştirmeleri ve ikili arama laboratuvarı
+arama-algoritmalari/ 05 · Arama algoritmaları
 siralama-temel/     06 · Temel sıralama algoritmaları
 agaclar-bst/        09 · Ağaçlar ve ikili arama ağaçları
 ```

@@ -443,3 +443,26 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .cols.c46 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); }
 .cols.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .reveal pre code { overflow-x: auto; }
+
+/* ---- arama bileşenleri ---- */
+.bs-cell.sent { border-style: dashed; border-color: var(--purple); }
+.xp-row .bs-cell, .lab-row .bs-cell { width: 54px; height: 84px; }
+.xp-row .bs-cell b { font-size: 17px; }
+.lab-row { flex-wrap: wrap; margin: 10px 0 4px; }
+.lab-row .bs-cell { width: 30px; height: 64px; padding-top: 4px; border-width: 2px; }
+.lab-row .bs-cell b { font-size: 14px; } .lab-row .bs-cell i { font-size: 10px; } .lab-row .bs-cell u { font-size: 11px; }
+.loot-bar { position: relative; display: flex; height: 44px; border-radius: 10px; overflow: visible; margin: 34px 0 6px; }
+.loot-bar > div:not(.loot-r) { display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; min-width: 0; overflow: hidden; }
+.loot-bar > div:first-child { border-radius: 10px 0 0 10px; } .loot-bar > div:nth-child(4) { border-radius: 0 10px 10px 0; }
+.loot-r { position: absolute; top: -10px; bottom: -10px; width: 3px; background: var(--red); }
+.loot-r span { position: absolute; top: -24px; left: -30px; width: 80px; text-align: center; font: 700 14px "JetBrains Mono"; color: var(--red); }
+.loot-hist { font-size: 16px; margin-top: 6px; }
+.lh-row { display: grid; grid-template-columns: 140px 1fr 70px 130px; gap: 8px; align-items: center; margin: 3px 0; }
+.lh-bar { height: 14px; background: var(--card-2); border-radius: 6px; overflow: hidden; } .lh-bar div { height: 100%; }
+.lh-row i { color: var(--muted); font-size: 14px; font-style: normal; }
+.vs-out { font-size: 20px; }
+.vs-row { display: grid; grid-template-columns: 240px 1fr 120px 90px; gap: 12px; align-items: center; margin: 12px 0; }
+.vs-row > div { height: 26px; border-radius: 6px; transition: width .3s; }
+.vs-row i { color: var(--muted); font-style: normal; font-size: 16px; }
+.box.bgk { border-left-color: var(--teal); } .box.bgk .bt { color: var(--teal); }
+.trace-t.bt3 td:nth-child(3) { color: var(--muted); font-size: 16px; }
