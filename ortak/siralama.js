@@ -146,6 +146,7 @@
     const api = {
       less(a, i, j) { chk('less', i); chk('less', j); st.cmp++; st.reads += 2; push({ t: 'c', i, j }); return raw[i] < raw[j]; },
       exch(a, i, j) { chk('exch', i); chk('exch', j); st.exch++; st.reads += 2; st.writes += 2; push({ t: 'x', i, j }); const t = raw[i]; raw[i] = raw[j]; raw[j] = t; },
+      cmpv(vx, vy, i, j) { st.cmp++; push({ t: 'c', i, j }); return vx < vy; },   // değerleri karşılaştır (aux dizileri için)
       mark: (k, i) => push({ t: 'm', k, i }),
       region: (k, lo, hi) => push({ t: 'r', k, lo, hi }),
       setH: h => push({ t: 'h', h }),
@@ -547,5 +548,5 @@ a = _Dizi(_input)
   SL.register('.sortviz', SL.SortViz);
   SL.register('.race', SL.Race);
   SL.register('.trace', SL.Trace);
-  SL.register('.codelab:not(.treelab):not(.searchlab):not(.lllab):not(.fnlab):not(.uflab):not(.growthlab)', SL.SortLab);
+  SL.register('.codelab:not(.treelab):not(.searchlab):not(.lllab):not(.fnlab):not(.uflab):not(.growthlab):not(.mergelab):not(.quicklab)', SL.SortLab);
 })();

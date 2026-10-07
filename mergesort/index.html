@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mergesort</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Mergesort: böl ve fethet, birleştirme, N lg N analizi, iyileştirmeler, Timsort, aşağıdan yukarı, sıralamanın alt sınırı, kararlılık. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3b1d7a 0%, #120c2c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · SIRALAMA</div>
+  <div class="ttl" style="font-size:80px">Mergesort</div>
+  <div class="sub"><i>Böl ve fethet</i> — N² duvarını yıkan ilk algoritma: her zaman N lg N</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlemerge"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 2.2 (Mergesort) bölümünü temel alır. Temel sıralama destesinin (selection, insertion, shellsort) devamıdır. Arka planda aşağıdan yukarı mergesort çalışıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li><b>Böl ve fethet</b> — büyük problemi küçüklere böl <span class="en">divide and conquer</span></li>
+      <li><b>Birleştirme</b> — iki sıralı listeyi tek sıralı listeye <span class="en">merge</span></li>
+      <li><b>Yukarıdan aşağı mergesort</b> — özyinelemeli <span class="en">top-down</span></li>
+      <li><b>Analiz</b> — neden N lg N?</li>
+      <li><b>İyileştirmeler</b> — küçük parçalar, zaten sıralı kontrolü, Timsort</li>
+      <li><b>Aşağıdan yukarı</b> — özyinelemesiz <span class="en">bottom-up</span></li>
+      <li><b>Sıralamanın alt sınırı</b> — daha hızlısı mümkün mü?</li>
+      <li><b>Kararlılık ve karşılaştırıcılar</b> — skor tabloları</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…milyon elemanlı bir skor tablosunu saniyenin altında sıralayabilecek ve “bundan daha hızlı karşılaştırmalı sıralama <b>yok</b>” cümlesinin neden doğru olduğunu açıklayabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: İKİ SUNUCU</span>
+    <p class="big">Avrupa ve Asya sunucularının skor tabloları ayrı ayrı <b>sıralı</b>.</p>
+    <p>Küresel skor tablosunu nasıl oluşturursunuz? Hepsini tek listeye atıp baştan mı sıralarsınız?</p>
+  </div>
+  <p class="fragment lead">Daha iyisi: iki listenin <b>tepelerine</b> bakın; büyüğü alın, tekrarlayın. Her adımda bir oyuncu yerine oturur → toplam N adım.</p>
+  <p class="fragment big">Bu işlemin adı <span class="c-green">birleştirme</span> <span class="en">merge</span>. Mergesort bunun üzerine kurulu.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>divide and conquer</td><td>böl ve fethet</td><td>Problemi parçalara böl, parçaları çöz, sonuçları birleştir</td></tr>
+    <tr><td>merge</td><td>birleştirme</td><td>İki sıralı diziyi tek bir sıralı diziye dönüştürmek</td></tr>
+    <tr><td>auxiliary array</td><td>yardımcı dizi (aux)</td><td>Birleştirme için geçici kopya</td></tr>
+    <tr><td>top-down / bottom-up</td><td>yukarıdan aşağı / aşağıdan yukarı</td><td>Özyinelemeli / döngülü sürüm</td></tr>
+    <tr><td>recurrence</td><td>yineleme bağıntısı</td><td>C(N) = 2 C(N/2) + N gibi kendine atıf yapan formül</td></tr>
+    <tr><td>lower bound</td><td>alt sınır</td><td>Hiçbir algoritmanın daha iyisini yapamayacağı en az iş</td></tr>
+    <tr><td>stable</td><td>kararlı</td><td>Eşit anahtarlıların sırası korunur</td></tr>
+    <tr><td>comparator</td><td>karşılaştırıcı</td><td>“Hangisi önce?” sorusunu cevaplayan fonksiyon</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Böl ve Fethet</div>
+  <div class="sub"><i>divide and conquer</i> — Roma’dan bilgisayara bir strateji</div>
+  <ul class="agenda"><li class="on">böl ve fethet</li><li class="">birleştirme</li><li class="">yukarıdan aşağı mergesort</li><li class="">analiz</li><li class="">iyileştirmeler</li><li class="">aşağıdan yukarı</li><li class="">sıralamanın alt sınırı</li><li class="">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="böl ve fethet">
+  <h2>Fikir: ikiye böl, ikisini sırala, birleştir</h2>
+  <div class="cols c64">
+    <div>
+      <ol>
+        <li class="fragment">Diziyi <b>ikiye böl</b>.</li>
+        <li class="fragment">Her yarıyı <b>(aynı yöntemle!)</b> sırala → özyineleme.</li>
+        <li class="fragment">İki sıralı yarıyı <b>birleştir</b>.</li>
+      </ol>
+      <p class="fragment">Tek elemanlı bir dizi zaten sıralıdır → özyinelemenin <b>temel durumu</b>.</p>
+      <div class="box game fragment"><span class="bt">🎮 Böl ve fethet oyunlarda</span>Quadtree (dünyayı 4’e böl), BSP (Doom), minimax (oyun ağacı), LOD (uzaktaki modelleri kaba çiz)… Hepsi “büyük problemi küçüklere bölme” fikri.</div>
+    </div>
+    <div class="box story"><span class="bt">📜 1945: John von Neumann</span>
+      Mergesort, modern bilgisayarın mimarisini tasarlayan <b>John von Neumann</b>’ın EDVAC bilgisayarı için yazdığı ilk programlardan biriydi. Yani bilgisayar tarihindeki ilk “ciddi” algoritmalardan biri bir sıralama algoritması!
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Birleştirme</div>
+  <div class="sub"><i>merge</i> — iki sıralı listeden tek sıralı liste</div>
+  <ul class="agenda"><li class="done">böl ve fethet</li><li class="on">birleştirme</li><li class="">yukarıdan aşağı mergesort</li><li class="">analiz</li><li class="">iyileştirmeler</li><li class="">aşağıdan yukarı</li><li class="">sıralamanın alt sınırı</li><li class="">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="birleştirme · oyunda">
+  <h2>🎮 İki skor tablosunu birleştir</h2>
+  <div class="demo" data-demo="mergepiles"></div>
+  <aside class="notes">Her adımda iki listenin tepesi karşılaştırılır ve büyük olan alınır. Bir liste bitince diğerinin kalanı olduğu gibi eklenir. Toplam en fazla N−1 karşılaştırma: doğrusal zaman. Eşitlik durumunda (Mert 820 vs …) SOL listeden almak, sıranın korunmasını (kararlılık) sağlar.</aside>
+</section>
+
+<section data-sec="birleştirme">
+  <h2>Birleştirme: yardımcı dizi ile</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p><code>a[lo…mid]</code> ve <code>a[mid+1…hi]</code> ayrı ayrı sıralı. Hedef: <code>a[lo…hi]</code> tamamen sıralı.</p>
+      <ol>
+        <li>Parçayı <code>aux</code>’a <b>kopyala</b></li>
+        <li><code>i</code> sol yarıda, <code>j</code> sağ yarıda başlasın</li>
+        <li>Her <code>k</code> için küçüğü <code>a[k]</code>’ye yaz, onun işaretçisini ilerlet</li>
+        <li>Bir yarı bitince diğerinden devam et</li>
+      </ol>
+      <p class="mini">🎒 <code>aux</code> = <span class="en">auxiliary</span> (yardımcı). Neden kopya? Çünkü <code>a</code>’ya yazarken okuduğumuz değerlerin üzerine yazmamalıyız.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-13|2-3|4|6-9|10-13"><script type="text/template">
+def merge(a, aux, lo, mid, hi):
+    for k in range(lo, hi + 1):       # 1) kopyala
+        aux[k] = a[k]
+    i, j = lo, mid + 1                # 2) iki yarının başları
+    for k in range(lo, hi + 1):       # 3) a[k]'yi doldur
+        if i > mid:                   # sol bitti
+            a[k] = aux[j]; j += 1
+        elif j > hi:                  # sağ bitti
+            a[k] = aux[i]; i += 1
+        elif aux[j] < aux[i]:         # sağdaki küçük
+            a[k] = aux[j]; j += 1
+        else:                         # soldaki küçük ya da EŞİT
+            a[k] = aux[i]; i += 1
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static void Merge(int[] a, int[] aux, int lo, int mid, int hi)
+{
+    for (int k = lo; k <= hi; k++) aux[k] = a[k];   // kopyala
+    int i = lo, j = mid + 1;
+    for (int k = lo; k <= hi; k++)
+    {
+        if      (i > mid)          a[k] = aux[j++];  // sol bitti
+        else if (j > hi)           a[k] = aux[i++];  // sağ bitti
+        else if (aux[j] < aux[i])  a[k] = aux[j++];  // sağdaki küçük
+        else                       a[k] = aux[i++];  // soldaki ≤
+    }
+}
+// 🎒 aux[j++]: önce aux[j]'yi kullan, SONRA j'yi bir artır
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function merge(a, aux, lo, mid, hi) {
+  for (let k = lo; k <= hi; k++) aux[k] = a[k];   // kopyala
+  let i = lo, j = mid + 1;
+  for (let k = lo; k <= hi; k++) {
+    if (i > mid)              a[k] = aux[j++];    // sol bitti
+    else if (j > hi)          a[k] = aux[i++];    // sağ bitti
+    else if (aux[j] < aux[i]) a[k] = aux[j++];    // sağdaki küçük
+    else                      a[k] = aux[i++];    // soldaki ≤
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="birleştirme">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · birleştirme</div>
+    <div class="q">Toplam N elemanlı iki sıralı yarıyı birleştirmek en fazla kaç karşılaştırma gerektirir?</div>
+    <div class="opts">
+      <button data-opt="A">lg N</button>
+      <button data-opt="B">N − 1</button>
+      <button data-opt="C">N²/2</button>
+      <button data-opt="D">N lg N</button>
+    </div>
+    <div class="explain">Her karşılaştırma bir elemanı yerine yerleştirir; son eleman karşılaştırmasız yerleşir (diğer yarı bitince) → en fazla <b>N − 1</b>. En az N/2 (bir yarının tamamı diğerinden küçükse). Birleştirme <b>doğrusal</b> zamanlıdır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Yukarıdan Aşağı</div>
+  <div class="sub"><i>top-down mergesort</i> — özyinelemenin gücü</div>
+  <ul class="agenda"><li class="done">böl ve fethet</li><li class="done">birleştirme</li><li class="on">yukarıdan aşağı mergesort</li><li class="">analiz</li><li class="">iyileştirmeler</li><li class="">aşağıdan yukarı</li><li class="">sıralamanın alt sınırı</li><li class="">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="yukarıdan aşağı">
+  <h2>Mergesort — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-11|2|6-7|8|9-10|11"><script type="text/template">
+def sort(a):
+    aux = [None] * len(a)              # yardımcı dizi bir kez ayrılır
+    _sort(a, aux, 0, len(a) - 1)
+
+def _sort(a, aux, lo, hi):
+    if hi <= lo:                       # 0 ya da 1 eleman: zaten sıralı
+        return
+    mid = lo + (hi - lo) // 2
+    _sort(a, aux, lo, mid)             # sol yarıyı sırala
+    _sort(a, aux, mid + 1, hi)         # sağ yarıyı sırala
+    merge(a, aux, lo, mid, hi)         # birleştir
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public static void Sort(int[] a)
+{
+    int[] aux = new int[a.Length];     // bir kez ayır
+    Sort(a, aux, 0, a.Length - 1);
+}
+
+static void Sort(int[] a, int[] aux, int lo, int hi)
+{
+    if (hi <= lo) return;              // temel durum
+    int mid = lo + (hi - lo) / 2;
+    Sort(a, aux, lo, mid);
+    Sort(a, aux, mid + 1, hi);
+    Merge(a, aux, lo, mid, hi);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function mergeSort(a) {
+  const aux = new Array(a.length);     // bir kez ayır
+  sortRange(a, aux, 0, a.length - 1);
+}
+
+function sortRange(a, aux, lo, hi) {
+  if (hi <= lo) return;                // temel durum
+  const mid = lo + Math.floor((hi - lo) / 2);
+  sortRange(a, aux, lo, mid);
+  sortRange(a, aux, mid + 1, hi);
+  merge(a, aux, lo, mid, hi);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Java (kitap)">
+<pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
+private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
+    if (hi <= lo) return;
+    int mid = lo + (hi - lo) / 2;
+    sort(a, aux, lo, mid);
+    sort(a, aux, mid+1, hi);
+    merge(a, aux, lo, mid, hi);
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 C#’ta aynı adlı iki <code>Sort</code> metodu var: parametre listeleri farklı olduğu için derleyici hangisini çağıracağını bilir (<span class="en">method overloading</span>). İçerideki yardımcıyı <code>private</code>/<code>static</code> yapmak, kullanıcıya sadece basit olanı göstermek içindir.</p>
+</section>
+
+<section data-sec="yukarıdan aşağı">
+  <h2>İz tablosu — M E R G E S O R T E X A M P L E</h2>
+  <div class="demo" data-demo="mergetrace"></div>
+  <div class="trace-legend"><b class="r">kırmızı</b> = bu adımda birleştirilen parça (artık sıralı) · <b class="g">gri</b> = bu adımda dokunulmayanlar</div>
+  <aside class="notes">Kitaptaki iz tablosu. Önce ikililer (0-1, 2-3), sonra dörtlüler (0-3), sonra sekizli (0-7)… Sağ yarı sol yarı tamamen bittikten SONRA başlar: bu özyinelemenin derinlik öncelikli doğası (yığınlar dersindeki DFS!).</aside>
+</section>
+
+<section data-sec="yukarıdan aşağı">
+  <h2>Mergesort — animasyon</h2>
+  <div class="demo" data-demo="mergeviz" data-mode="td" data-n="16"></div>
+  <aside class="notes">Üstte asıl dizi a[], altta yardımcı dizi aux[]. Mavi çerçeve = şu an çalışılan parça (kesikli çizgi = ortası). aux’ta turuncu i sol yarıda, pembe j sağ yarıda; kırmızı k = a’da yazılan yer. Açık mavi = sıralanmış parçalar.</aside>
+</section>
+
+<section data-sec="yukarıdan aşağı">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 2 · yukarıdan aşağı</div>
+    <div class="q">16 elemanlı bir diziyi yukarıdan aşağı mergesort ile sıralarken <code>merge</code> fonksiyonu toplam kaç kez çağrılır?</div>
+    <div class="opts">
+      <button data-opt="A">4</button>
+      <button data-opt="B">8</button>
+      <button data-opt="C">15</button>
+      <button data-opt="D">16</button>
+    </div>
+    <div class="explain">8 tane ikili birleştirme (1+1), 4 tane dörtlü, 2 tane sekizli, 1 tane on altılı: 8 + 4 + 2 + 1 = <b>15</b> = N − 1. Her birleştirme iki parçayı bire indirir; 16 parçadan 1 parçaya inmek için 15 birleştirme gerekir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Analiz</div>
+  <div class="sub">neden N lg N? özyineleme ağacı ve bellek</div>
+  <ul class="agenda"><li class="done">böl ve fethet</li><li class="done">birleştirme</li><li class="done">yukarıdan aşağı mergesort</li><li class="on">analiz</li><li class="">iyileştirmeler</li><li class="">aşağıdan yukarı</li><li class="">sıralamanın alt sınırı</li><li class="">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="analiz">
+  <h2>📐 Özyineleme ağacı: her seviye N, lg N seviye</h2>
+  <div class="demo" data-demo="rectree"></div>
+  <aside class="notes">Kitaptaki “mergesort subproblem tree” şeması. Her seviyede tüm parçaların toplam boyutu N; birleştirme doğrusal olduğundan seviye başına ~N iş. Seviye sayısı: N’i kaç kez ikiye bölebilirsek: lg N (arama dersindeki logaritma!).</aside>
+</section>
+
+<section data-sec="analiz · matematik">
+  <h2>📐 Aynı sonuç, formülle</h2>
+  <div class="cols c64">
+    <div>
+      <p>C(N) = N elemanı sıralarken yapılan karşılaştırma sayısı (en kötü):</p>
+      <p class="formula center">\( C(N) = \underbrace{C(N/2)}_{\text{sol}} + \underbrace{C(N/2)}_{\text{sağ}} + \underbrace{N}_{\text{birleştir}} \)</p>
+      <p class="fragment">N = 2ⁿ ise iki tarafı N’e bölelim: \( \frac{C(N)}{N} = \frac{C(N/2)}{N/2} + 1 \)</p>
+      <p class="fragment">Her yarıya bölmede sağ taraf <b>1 artıyor</b>; lg N kez bölebiliriz → \( \frac{C(N)}{N} = \lg N \) → <b>C(N) = N lg N</b></p>
+    </div>
+    <div class="box prop"><span class="bt">Önerme</span>Mergesort N elemanlı bir diziyi sıralarken <b>½ N lg N</b> ile <b>N lg N</b> arasında karşılaştırma ve en fazla <b>6 N lg N</b> dizi erişimi yapar.
+      <p class="mini">Ve bu <b>her</b> girdi için geçerli: en kötü durum bile N lg N. Selection/insertion sort’un N²’sine karşı N = 1 milyonda 50.000 kat fark!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="analiz · deney">
+  <h2>🧪 Canlı ölçüm: N² ile N lg N arasındaki uçurum</h2>
+  <div class="demo" data-demo="sortexp"></div>
+  <aside class="notes">Insertion sort’u 64.000’e kadar ölçüyoruz; daha büyükleri saniyeler/dakikalar sürer. Mergesort 1 milyonu milisaniyeler içinde sıralar. Hazır sort() da (TypedArray için genelde quicksort tabanlı) N lg N.</aside>
+</section>
+
+<section data-sec="analiz · kaputun altında">
+  <h2>⚙️ Bedeli: ek bellek</h2>
+  <div class="cols">
+    <div>
+      <p>Mergesort <b>yerinde</b> <span class="en">in-place</span> değildir: N elemanlık bir <code>aux</code> dizisi ister.</p>
+      <ul>
+        <li>1 milyon <code>int</code> → +4 MB</li>
+        <li>1 milyon <b>nesne referansı</b> → +8 MB</li>
+      </ul>
+      <p class="fragment">Selection, insertion, shellsort ve (birazdan) quicksort ek dizi istemez. Bellek kısıtlı bir konsolda ya da mobil cihazda bu önemli olabilir.</p>
+    </div>
+    <div class="box low fragment"><span class="bt">⚙️ Ama…</span>
+      <ul style="font-size:.92em">
+        <li>Bağlı listeleri mergesort <b>ek dizi olmadan</b> sıralar (düğüm bağlantılarını değiştirerek).</li>
+        <li>Diskteki dev dosyaları sıralamak (<b>dış sıralama</b>, <span class="en">external sort</span>) neredeyse hep mergesort ile yapılır: parça parça sırala, sonra birleştir.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">İyileştirmeler</div>
+  <div class="sub">küçük parçalar · zaten sıralı mı? · Timsort</div>
+  <ul class="agenda"><li class="done">böl ve fethet</li><li class="done">birleştirme</li><li class="done">yukarıdan aşağı mergesort</li><li class="done">analiz</li><li class="on">iyileştirmeler</li><li class="">aşağıdan yukarı</li><li class="">sıralamanın alt sınırı</li><li class="">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="iyileştirmeler">
+  <h2>Üç pratik iyileştirme</h2>
+  <div class="cols c3">
+    <div class="box game"><span class="bt">1) Küçük parçalara insertion sort</span>~10 elemanlık parçalar için özyinelemenin yükü fazla. Insertion sort küçük dizilerde çok hızlı (temel sıralama destesi!). <b>%10–15 kazanç</b>.</div>
+    <div class="box prop"><span class="bt">2) Zaten sıralı mı?</span><code>a[mid] ≤ a[mid+1]</code> ise iki yarı zaten doğru sırada → birleştirmeyi atla. Sıralı girdide mergesort <b>doğrusal</b> olur!</div>
+    <div class="box story"><span class="bt">3) Kopyalamayı azalt</span>Her özyineleme seviyesinde <code>a</code> ile <code>aux</code>’un rollerini değiştirerek kopyalama adımını ortadan kaldırmak.</div>
+  </div>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+CUTOFF = 10
+def _sort(a, aux, lo, hi):
+    if hi - lo + 1 <= CUTOFF:          # 1) küçük parça → insertion sort
+        insertion_sort(a, lo, hi)
+        return
+    mid = lo + (hi - lo) // 2
+    _sort(a, aux, lo, mid)
+    _sort(a, aux, mid + 1, hi)
+    if a[mid] <= a[mid + 1]:           # 2) zaten sıralı → birleştirme gereksiz
+        return
+    merge(a, aux, lo, mid, hi)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+const int Cutoff = 10;
+static void Sort(int[] a, int[] aux, int lo, int hi)
+{
+    if (hi - lo + 1 <= Cutoff) { InsertionSort(a, lo, hi); return; }   // 1)
+    int mid = lo + (hi - lo) / 2;
+    Sort(a, aux, lo, mid);
+    Sort(a, aux, mid + 1, hi);
+    if (a[mid] <= a[mid + 1]) return;                                  // 2)
+    Merge(a, aux, lo, mid, hi);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const CUTOFF = 10;
+function sortRange(a, aux, lo, hi) {
+  if (hi - lo + 1 <= CUTOFF) { insertionSort(a, lo, hi); return; }   // 1)
+  const mid = lo + Math.floor((hi - lo) / 2);
+  sortRange(a, aux, lo, mid);
+  sortRange(a, aux, mid + 1, hi);
+  if (a[mid] <= a[mid + 1]) return;                                   // 2)
+  merge(a, aux, lo, mid, hi);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="iyileştirmeler">
+  <h2>“Zaten sıralı” kontrolünün etkisi</h2>
+  <div class="demo" data-demo="mergeviz" data-mode="td" data-n="32" data-input="nearly" data-speed="20"></div>
+  <aside class="notes">Girdi “Neredeyse sıralı”: makas işaretli (✂) adımlarda birleştirme atlanıyor. Yöntemi “kontrol yok” yapıp karşılaştırma sayılarını kıyaslayın. Oyun verileri (skor tabloları, y-sıralama) çoğu zaman neredeyse sıralıdır!</aside>
+</section>
+
+<section data-sec="iyileştirmeler · gerçek dünya">
+  <h2>📜 Timsort: Python’un ve Java’nın sıralaması</h2>
+  <div class="cols c64">
+    <div>
+      <p>2002’de <b>Tim Peters</b>, Python için mergesort’un pratikte çok hızlı bir çeşidini yazdı: <b>Timsort</b>.</p>
+      <ul>
+        <li class="fragment">Dizide <b>zaten sıralı parçaları</b> (“koşu”, <span class="en">run</span>) bulur — gerçek verilerde çok olur.</li>
+        <li class="fragment">Kısa koşuları <b>insertion sort</b> ile uzatır (temel sıralama destesi).</li>
+        <li class="fragment">Koşuları <b>birleştirir</b>; bir taraf hep kazanıyorsa <b>dörtnala arama</b> <span class="en">galloping</span> ile atlar (arama destesi!).</li>
+      </ul>
+      <p class="fragment">Sonuç: kararlı, en kötü N lg N, neredeyse sıralı veride N’e yakın. Bugün Python, Java (nesneler için), Android ve V8 (JavaScript) Timsort kullanıyor.</p>
+    </div>
+    <div class="box story fragment"><span class="bt">🎮 Ders</span>Bu dönem gördüğünüz parçalar — insertion sort, ikili/dörtnala arama, birleştirme, “gerçek veri neredeyse sıralıdır” gözlemi — bir araya gelince dünyanın en çok kullanılan sıralama algoritması oluyor.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #07332a 0%, #3a0d33 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Aşağıdan Yukarı</div>
+  <div class="sub"><i>bottom-up mergesort</i> — özyineleme olmadan</div>
+  <ul class="agenda"><li class="done">böl ve fethet</li><li class="done">birleştirme</li><li class="done">yukarıdan aşağı mergesort</li><li class="done">analiz</li><li class="done">iyileştirmeler</li><li class="on">aşağıdan yukarı</li><li class="">sıralamanın alt sınırı</li><li class="">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="aşağıdan yukarı">
+  <h2>Önce 1’likleri, sonra 2’likleri, 4’lükleri birleştir</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <ul>
+        <li><code>sz = 1</code>: komşu tekleri birleştir → sıralı ikililer</li>
+        <li><code>sz = 2</code>: ikilileri birleştir → sıralı dörtlüler</li>
+        <li>… <code>sz</code> diziyi aşana kadar ikiye katla</li>
+      </ul>
+      <p>Özyineleme yok, çağrı yığını yok: iki iç içe döngü. Aynı ~N lg N.</p>
+      <p class="mini">🎒 <code>min(lo + 2*sz - 1, N - 1)</code>: son parça tam boyutlu olmayabilir; dizinin dışına taşmamak için.</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def sort_bu(a):
+    n = len(a)
+    aux = [None] * n
+    sz = 1
+    while sz < n:                                  # 1, 2, 4, 8, ...
+        for lo in range(0, n - sz, 2 * sz):
+            hi = min(lo + 2 * sz - 1, n - 1)
+            merge(a, aux, lo, lo + sz - 1, hi)
+        sz *= 2
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public static void SortBU(int[] a)
+{
+    int n = a.Length;
+    int[] aux = new int[n];
+    for (int sz = 1; sz < n; sz *= 2)              // 1, 2, 4, 8, ...
+        for (int lo = 0; lo < n - sz; lo += 2 * sz)
+            Merge(a, aux, lo, lo + sz - 1, Math.Min(lo + 2 * sz - 1, n - 1));
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function mergeSortBU(a) {
+  const n = a.length, aux = new Array(n);
+  for (let sz = 1; sz < n; sz *= 2)                // 1, 2, 4, 8, ...
+    for (let lo = 0; lo < n - sz; lo += 2 * sz)
+      merge(a, aux, lo, lo + sz - 1, Math.min(lo + 2 * sz - 1, n - 1));
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="aşağıdan yukarı">
+  <h2>Aşağıdan yukarı — animasyon</h2>
+  <div class="demo" data-demo="mergeviz" data-mode="bu" data-n="16"></div>
+</section>
+
+<section data-sec="yarış">
+  <h2>🏁 Yarış: temel sıralamalar vs mergesort</h2>
+  <div class="race" data-n="100" data-algs="insertion,shell,merge"></div>
+  <aside class="notes">Temel sıralama destesindeki yarışın devamı. Girdi “Ters sıralı”: insertion çok yavaş, mergesort hep aynı hızda. “Sıralı”: insertion anında biter; mergesort’un “zaten sıralı” kontrolü olmadan N lg N’dir (bu yarıştaki sürüm kontrolsüz).</aside>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Sıralamanın Alt Sınırı</div>
+  <div class="sub">N lg N’den hızlısı mümkün mü?</div>
+  <ul class="agenda"><li class="done">böl ve fethet</li><li class="done">birleştirme</li><li class="done">yukarıdan aşağı mergesort</li><li class="done">analiz</li><li class="done">iyileştirmeler</li><li class="done">aşağıdan yukarı</li><li class="on">sıralamanın alt sınırı</li><li class="">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="alt sınır">
+  <h2>Karar ağacı: her karşılaştırma bir evet/hayır sorusu</h2>
+  <div class="cols c64">
+    <svg viewBox="0 0 680 290" style="width:100%">
+      <g font-family="JetBrains Mono" font-size="14" text-anchor="middle"><line x1="320" y1="42" x2="160" y2="90" stroke="var(--ink-2)" stroke-width="2"/><line x1="320" y1="42" x2="480" y2="90" stroke="var(--ink-2)" stroke-width="2"/><line x1="160" y1="122" x2="70" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="160" y1="122" x2="250" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="480" y1="122" x2="390" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="480" y1="122" x2="570" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="250" y1="202" x2="190" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="250" y1="202" x2="310" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="570" y1="202" x2="520" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="570" y1="202" x2="620" y2="250" stroke="var(--ink-2)" stroke-width="2"/><text x="225" y="62" fill="var(--green)">evet</text><text x="415" y="62" fill="var(--red)">hayır</text><rect x="270" y="10" width="100" height="32" rx="8" fill="var(--blue)"/><text x="320" y="31" fill="#fff">a &lt; b ?</text><rect x="110" y="90" width="100" height="32" rx="8" fill="var(--blue)"/><text x="160" y="111" fill="#fff">b &lt; c ?</text><rect x="430" y="90" width="100" height="32" rx="8" fill="var(--blue)"/><text x="480" y="111" fill="#fff">a &lt; c ?</text><rect x="200" y="170" width="100" height="32" rx="8" fill="var(--blue)"/><text x="250" y="191" fill="#fff">a &lt; c ?</text><rect x="520" y="170" width="100" height="32" rx="8" fill="var(--blue)"/><text x="570" y="191" fill="#fff">b &lt; c ?</text><rect x="28" y="171" width="84" height="30" rx="8" fill="var(--green)"/><text x="70" y="191" fill="#fff">a b c</text><rect x="348" y="171" width="84" height="30" rx="8" fill="var(--green)"/><text x="390" y="191" fill="#fff">b a c</text><rect x="148" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="190" y="271" fill="#fff">a c b</text><rect x="268" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="310" y="271" fill="#fff">c a b</text><rect x="478" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="520" y="271" fill="#fff">b c a</text><rect x="578" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="620" y="271" fill="#fff">c b a</text><text x="40" y="285" fill="var(--muted)" font-size="12" text-anchor="start">sol dal = evet · sağ dal = hayır</text></g>
+    </svg>
+    <div>
+      <p>3 eleman: <b>3! = 6</b> olası sıralanış → ağacın en az 6 yaprağı olmalı.</p>
+      <p>Yüksekliği h olan ikili ağacın en fazla <b>2ʰ</b> yaprağı olur → <b>2ʰ ≥ N!</b> → <b>h ≥ lg N!</b></p>
+      <p class="fragment">Karar ağacının yüksekliği = <b>en kötü durumdaki</b> karşılaştırma sayısı.</p>
+    </div>
+  </div>
+  <aside class="notes">Arama destesindeki “20 soru” oyununun tersi: N! olası cevap arasından doğruyu bulmak için en az lg N! evet/hayır sorusu gerekir. Hiçbir zekice soru sırası bunu azaltamaz.</aside>
+</section>
+
+<section data-sec="alt sınır · matematik">
+  <h2>📐 lg N! ≈ N lg N</h2>
+  <div class="demo" data-demo="lowerbound"></div>
+  <div class="cols fragment">
+    <div class="box prop"><span class="bt">Önerme (alt sınır)</span>Karşılaştırmaya dayalı <b>her</b> sıralama algoritması, en kötü durumda en az <b>lg N! ~ N lg N</b> karşılaştırma yapar.</div>
+    <div class="box game"><span class="bt">Sonuç: mergesort optimal!</span>Mergesort en kötü durumda ~N lg N karşılaştırma yapıyor → karşılaştırma sayısı açısından daha iyisi <b>imkânsız</b>.<p class="mini">Ama: bellek açısından optimal değil (ek N). Ve karşılaştırma <b>kullanmayan</b> sıralamalar (sayma sıralaması, radix sort) belirli verilerde daha hızlı olabilir.</p></div>
+  </div>
+</section>
+
+<section data-sec="alt sınır">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · alt sınır</div>
+    <div class="q">Biri “karşılaştırmaya dayalı ve her girdide ~N lg lg N karşılaştırma yapan” bir sıralama algoritması bulduğunu iddia ediyor. Ne dersiniz?</div>
+    <div class="opts">
+      <button data-opt="A">Harika, mergesort’tan hızlı!</button>
+      <button data-opt="B">İmkânsız: karşılaştırmalı sıralama en kötü durumda en az ~N lg N karşılaştırma ister</button>
+      <button data-opt="C">Sadece küçük N için mümkün</button>
+      <button data-opt="D">Python’da mümkün, C#’ta değil</button>
+    </div>
+    <div class="explain">Karar ağacı argümanı <b>her</b> karşılaştırmalı algoritma için geçerli: N! farklı sonucu ayırt etmek için en az lg N! ≈ N lg N soru gerekir. Bu, matematiksel bir imkânsızlık kanıtıdır. (Belirli girdilerde — ör. neredeyse sıralı — daha az olabilir; ama “her girdide” olamaz.)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2b0d45 0%, #0f2a3d 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kararlılık ve Karşılaştırıcılar</div>
+  <div class="sub">eşitlikte kim önde? · çok anahtarlı sıralama</div>
+  <ul class="agenda"><li class="done">böl ve fethet</li><li class="done">birleştirme</li><li class="done">yukarıdan aşağı mergesort</li><li class="done">analiz</li><li class="done">iyileştirmeler</li><li class="done">aşağıdan yukarı</li><li class="done">sıralamanın alt sınırı</li><li class="on">kararlılık ve karşılaştırıcılar</li></ul>
+</section>
+
+<section data-sec="kararlılık">
+  <h2>Mergesort kararlıdır — tek bir karakter sayesinde</h2>
+  <div class="cols c64">
+    <div>
+      <p>Birleştirmede eşitlik durumunda <b>soldan</b> alıyoruz:</p>
+      <pre class="mini-code" style="display:block"><div>elif aux[j] &lt; aux[i]:   # sadece KESİN küçükse sağdan</div><div>    a[k] = aux[j]; j += 1</div><div>else:                   # eşitse SOLDAN → sıra korunur</div><div>    a[k] = aux[i]; i += 1</div></pre>
+      <p class="fragment"><code>&lt;</code> yerine <code>&lt;=</code> yazsaydık eşitlerde sağdakini önce alırdık → <b>kararsız</b>!</p>
+    </div>
+    <table class="sum-t" style="font-size:19px">
+      <tr><th>algoritma</th><th>kararlı?</th></tr>
+      <tr><td>insertion sort</td><td class="yes">✔</td></tr><tr><td>selection sort</td><td class="no">✘</td></tr>
+      <tr><td>shellsort</td><td class="no">✘</td></tr><tr><td><b>mergesort</b></td><td class="yes">✔</td></tr>
+      <tr><td>quicksort (sonraki ders)</td><td class="no">✘</td></tr>
+    </table>
+  </div>
+</section>
+
+<section data-sec="kararlılık · oyunda">
+  <h2>🎮 Çok anahtarlı sıralama: skor tablosu</h2>
+  <p>Kural: önce <b>puan</b> (büyükten küçüğe), puan eşitse <b>bitirme süresi</b> (kısadan uzuna).</p>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Yol 1: anahtar olarak DEMET (tuple) — önce ilk eleman, eşitse ikinci
+players.sort(key=lambda p: (-p.score, p.time))   # -score: büyükten küçüğe
+
+# Yol 2: kararlılığı kullan — önce İKİNCİL anahtar, sonra BİRİNCİL
+players.sort(key=lambda p: p.time)               # 1) süreye göre
+players.sort(key=lambda p: p.score, reverse=True)   # 2) puana göre (kararlı → süre sırası korunur)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Yol 1: LINQ (kararlı) — OrderBy ardından ThenBy
+var board = players.OrderByDescending(p => p.Score)
+                   .ThenBy(p => p.Time)
+                   .ToList();
+
+// Yol 2: List.Sort (KARARSIZ!) — eşitliği karşılaştırıcının içinde çöz
+players.Sort((x, y) =>
+{
+    int c = y.Score.CompareTo(x.Score);      // puan: büyükten küçüğe
+    if (c != 0) return c;
+    return x.Time.CompareTo(y.Time);         // eşitse süre: kısadan uzuna
+});
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JS'in sort'u ES2019'dan beri KARARLI (Timsort)
+players.sort((x, y) => {
+  if (x.score !== y.score) return y.score - x.score;   // puan: büyükten küçüğe
+  return x.time - y.time;                              // eşitse süre
+});
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Python’da <code>(-p.score, p.time)</code> bir <b>demet</b>: Python demetleri önce ilk elemana, eşitse ikinciye göre karşılaştırır. <code>-</code> işareti büyükten küçüğe sıralamanın kısa yolu (sayılar için).</p>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: merge’ü kendin yaz</h2>
+  <div class="mergelab" data-lang="js">
+<textarea>
+// a[lo..mid] ve a[mid+1..hi] ayrı ayrı SIRALI.
+// GÖREV: a[lo..hi]'yi sıralı hale getir. aux'u yardımcı dizi olarak kullan.
+// (Laboratuvar senin merge'ünü kullanarak tam bir mergesort çalıştırıyor.)
+function merge(a, aux, lo, mid, hi) {
+  for (let k = lo; k <= hi; k++) aux[k] = a[k];
+  let i = lo, j = mid + 1;
+  for (let k = lo; k <= hi; k++) {
+    // kodunu buraya yaz: 4 durum var
+  }
+}
+</textarea>
+    <div class="lab-tasks"><b>4 durum:</b> sol yarı bitti mi? · sağ yarı bitti mi? · sağdaki küçük mü? · değilse soldakini al. Bonus: <code>&lt;</code> yerine <code>&lt;=</code> yaz — testler yine geçer mi? Kararlılık neden testlerde görünmüyor?</div>
+  </div>
+  <aside class="notes">Bonus sorusunun cevabı: testler sadece sayılarla yapılıyor; eşit sayılar ayırt edilemediği için kararlılık bozulsa bile sonuç aynı görünür. Kararlılığı test etmek için (anahtar, kimlik) çiftleri gerekir.</aside>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python</h2>
+  <div class="mergelab" data-lang="python">
+<textarea>
+# Görev aynı: a[lo..mid] ve a[mid+1..hi] sıralı → a[lo..hi] sıralı olsun.
+def merge(a, aux, lo, mid, hi):
+    for k in range(lo, hi + 1):
+        aux[k] = a[k]
+    i, j = lo, mid + 1
+    for k in range(lo, hi + 1):
+        if aux[j] < aux[i]:
+            a[k] = aux[j]; j += 1
+        else:
+            a[k] = aux[i]; i += 1
+</textarea>
+    <div class="lab-tasks">Bu kodda iki durum <b>eksik</b>: çalıştır, hata mesajını oku (<code>IndexError</code>), eksik iki kontrolü ekle.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Böl ve fethet</b>: böl, ikisini sırala, birleştir.</li>
+      <li><b>Birleştirme</b>: doğrusal zaman, yardımcı dizi.</li>
+      <li><b>Mergesort</b>: her girdide ~N lg N karşılaştırma.</li>
+      <li><b>Bedeli</b>: N ek bellek.</li>
+    </ul>
+    <ul>
+      <li><b>İyileştirmeler</b>: küçük parçalara insertion, “zaten sıralı” kontrolü → Timsort.</li>
+      <li><b>Aşağıdan yukarı</b>: özyinelemesiz.</li>
+      <li><b>Alt sınır</b>: karşılaştırmalı sıralama ≥ lg N! ~ N lg N → mergesort optimal.</li>
+      <li><b>Kararlı</b>: çok anahtarlı sıralama, skor tabloları.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: <code>E A S Y Q U E S T I O N</code> için yukarıdan aşağı mergesort iz tablosunu çıkarın.</li>
+    <li>İki sıralı <b>bağlı listeyi</b> yeni düğüm oluşturmadan birleştiren bir fonksiyon yazın. Sonra bağlı liste için mergesort.</li>
+    <li><b>Ters çift sayma</b>: mergesort’u değiştirerek bir dizideki ters çift sayısını N lg N’de bulun. (İpucu: sağdan alınan her eleman, soldaki kalan elemanların hepsiyle ters çift.) 🎮 İki oyuncunun “en iyi 10 oyun” listeleri ne kadar benziyor?</li>
+    <li>Unity’de bir skor tablosunu <code>List.Sort</code> ve <code>OrderBy…ThenBy</code> ile sıralayın; eşit puanlarda sıranın değişip değişmediğini gözlemleyin.</li>
+    <li>Canlı ölçüm demosunda N 4 katına çıkınca mergesort süresinin kaç katına çıktığını not edin; N lg N ile tutarlı mı?</li>
+    <li>🤖 Bir YZ asistanından “k tane sıralı listeyi birleştir” (k-way merge) isteyin. Öncelik kuyruğu kullandı mı? (İleride göreceğiz!)</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=XaqR3G_NVoo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/XaqR3G_NVoo/hqdefault.jpg" alt=""><span><b>Merge-sort with Transylvanian-saxon folk dance</b><br>AlgoRythmics</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=4VqmGXwpLqc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/4VqmGXwpLqc/hqdefault.jpg" alt=""><span><b>Merge sort in 3 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Ns7tGNbtvV4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Ns7tGNbtvV4/hqdefault.jpg" alt=""><span><b>Merge Sort</b><br>CS50 Shorts (Harvard)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=TzeBrDU-JaY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/TzeBrDU-JaY/hqdefault.jpg" alt=""><span><b>Merge sort algorithm</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=KF2j-9iSf4Q" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KF2j-9iSf4Q/hqdefault.jpg" alt=""><span><b>Algorithms: Merge Sort</b><br>HackerRank</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=alJswNJ4P3U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/alJswNJ4P3U/hqdefault.jpg" alt=""><span><b>Why Is Merge Sort O(n log n)?</b><br>Back To Back SWE</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=kPRA0W1kECg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/kPRA0W1kECg/hqdefault.jpg" alt=""><span><b>15 Sorting Algorithms in 6 Minutes</b><br>Timo Bingmann</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/22mergesort/" target="_blank">algs4 · 2.2 Mergesort</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/22Mergesort.pdf" target="_blank">Princeton ders slaytları: Mergesort (PDF)</a></li>
+      <li><a href="https://github.com/python/cpython/blob/main/Objects/listsort.txt" target="_blank">Tim Peters · listsort.txt (Timsort’un kendi anlatımı)</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://visualgo.net/en/sorting" target="_blank">VisuAlgo · Sorting (Merge Sort)</a></li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/ComparisonSort.html" target="_blank">USFCA · Comparison Sort</a></li>
+      <li><a href="../siralama-temel/">Önceki deste: Temel Sıralama</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3b1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Quicksort</div>
+    <div class="sub">Ek bellek istemeyen, pratikte en hızlı sıralama — ve onun riskleri</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../quicksort/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/siralama.js"></script>
+<script src="../ortak/mergesort.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
