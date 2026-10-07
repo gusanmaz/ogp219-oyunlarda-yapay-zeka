@@ -1,0 +1,1213 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dengeli Arama Ağaçları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Dengeli arama ağaçları: 2-3 ağaçları, sola yatık kırmızı-siyah BST, döndürme, renk çevirme, ekleme, 2 lg N garantisi, SortedDictionary, B-ağaçları. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a0d1e 0%, #1c1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · ARAMA AĞAÇLARI</div>
+  <div class="ttl" style="font-size:72px">Dengeli Arama Ağaçları</div>
+  <div class="sub"><i>2-3 ağaçları, kırmızı-siyah ağaçlar, B-ağaçları</i> — en kötü durumda bile lg N</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlerb"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.3 Balanced Search Trees bölümünü temel alır. Önceki deste: Ağaçlar ve BST. Arka planda 1, 2, 3, …, 31 anahtarları SIRAYLA ekleniyor — sıradan bir BST’de bu bir çizgiye (bağlı listeye) dönüşürdü; burada ağaç dengede kalıyor. Kırmızı çizgiler “kırmızı bağlantılar”.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Neden denge?</b> — BST’nin kâbusu: sıralı anahtarlar</li>
+      <li><b>2-3 ağaçları</b> — bir düğüme iki anahtar sığarsa…</li>
+      <li><b>Kırmızı-siyah BST</b> — 2-3 ağacını sıradan BST ile taklit et</li>
+      <li><b>Döndürme &amp; renk çevirme</b> — ağacı onaran iki küçük hamle</li>
+      <li><b>Ekleme</b> — üç satırlık sihir</li>
+      <li><b>Analiz</b> — yükseklik ≤ 2 lg N garantisi</li>
+      <li><b>Oyunda &amp; kütüphanelerde</b> — SortedDictionary, ağ enterpolasyonu</li>
+      <li><b>B-ağaçları</b> — veritabanları ve dosya sistemleri</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…C#’ın <code>SortedDictionary</code>’sinin içinde ne olduğunu, bir oyunun kayıt veritabanının milyonlarca kayıtta neden 3–4 adımda aradığını ve “ortalama hızlı” ile “<b>her zaman</b> hızlı” arasındaki farkı bileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: TEKRAR (REPLAY) SİSTEMİ</span>
+    <p class="big">Oyununuz her olayı zaman damgasıyla kaydediyor: <code>0.016 → zıpla</code>, <code>0.033 → ateş</code>, <code>0.050 → hasar</code>…</p>
+  </div>
+  <p class="fragment lead">Olayları bir <b>BST</b>’ye koyarsak: anahtarlar (zaman) <b>hep artarak</b> geliyor. Ağaç neye benzer?</p>
+  <p class="fragment big">Hep sağa giden bir çizgi → <b>bağlı liste</b>! 10 dakikalık maçta ~36.000 olay → bir arama 36.000 adım. 😱</p>
+  <p class="fragment lead">Artan ID’ler, zaman damgaları, sıralı dosyadan okunan seviyeler… Gerçek hayatta veri <b>sık sık sıralı gelir</b>. Rastgele girdiye güvenemeyiz.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>balanced tree</td><td>dengeli ağaç</td><td>Yüksekliği her zaman ~lg N kalan ağaç</td></tr>
+    <tr><td>2-node · 3-node</td><td>2-düğüm · 3-düğüm</td><td>1 anahtar &amp; 2 çocuk · 2 anahtar &amp; 3 çocuk</td></tr>
+    <tr><td>perfect balance</td><td>mükemmel denge</td><td>Kökten her null bağlantıya aynı uzaklık</td></tr>
+    <tr><td>red-black BST</td><td>kırmızı-siyah BST</td><td>2-3 ağacını ikili ağaçla taklit eden yapı</td></tr>
+    <tr><td>left-leaning (LLRB)</td><td>sola yatık</td><td>Kırmızı bağlantılar hep sola eğik</td></tr>
+    <tr><td>rotation</td><td>döndürme</td><td>Sırayı bozmadan bir bağlantının yönünü değiştirmek</td></tr>
+    <tr><td>color flip</td><td>renk çevirme</td><td>Geçici 4-düğümü bölmek</td></tr>
+    <tr><td>B-tree · page</td><td>B-ağacı · sayfa</td><td>Düğüm başına yüzlerce anahtar · diskten bir okumada gelen blok</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Neden denge?</div>
+  <div class="sub">BST ortalamada iyi, en kötü durumda felaket</div>
+  <ul class="agenda"><li class="on">neden denge?</li><li class="">2-3 ağaçları</li><li class="">kırmızı-siyah BST</li><li class="">döndürme & renk çevirme</li><li class="">ekleme</li><li class="">analiz</li><li class="">oyunda & kütüphanelerde</li><li class="">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="neden denge?">
+  <h2>Hatırlatma: BST’ye sıralı ekleme</h2>
+  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-seq="A C E H L M P R S X" data-h="330" data-hint="▶ Sırayla ekle’ye basın: alfabetik sırayla gelen 10 harf. Sonra karışık sırayla kendiniz deneyin (ör. M E R A C H S X L P)."></div>
+  <aside class="notes">Önceki destede gördük: BST’nin şekli ekleme sırasına bağlı. Sıralı eklemede yükseklik N−1. Rastgele sırada ~2,99 lg N ortalama yükseklik.</aside>
+</section>
+
+<section data-sec="neden denge?">
+  <h2>Hedef: <b>garantili</b> lg N</h2>
+  <table class="sum-t" style="font-size:21px">
+    <tr><th>yapı</th><th>arama (en kötü)</th><th>ekleme (en kötü)</th><th>arama (ortalama)</th><th>sıralı işlemler?</th></tr>
+    <tr><td>sıralı arama (bağlı liste)</td><td>N</td><td>N</td><td>N/2</td><td>hayır</td></tr>
+    <tr><td>ikili arama (sıralı dizi)</td><td>lg N</td><td class="c-red">N</td><td>lg N</td><td>evet</td></tr>
+    <tr><td>BST</td><td class="c-red">N</td><td class="c-red">N</td><td>1,39 lg N</td><td>evet</td></tr>
+    <tr class="fragment"><td><b>bu dersin hedefi</b></td><td class="c-green"><b>~lg N</b></td><td class="c-green"><b>~lg N</b></td><td class="c-green">~lg N</td><td>evet</td></tr>
+  </table>
+  <div class="box game fragment" style="margin-top:14px"><span class="bt">🎮 Oyunda neden “en kötü durum” önemli?</span>60 FPS’te bir karenin bütçesi <b>16,6 ms</b>. Ortalama 1 ms süren işlem bir karede 40 ms sürerse oyuncu <b>takılma</b> <span class="en">stutter / hitch</span> görür. Oyuncular ortalamayı değil, takılmayı hatırlar!</div>
+</section>
+
+<section data-sec="neden denge?">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 1 · neden denge?</div>
+    <div class="q">Boş bir BST’ye <code>1, 2, 3, …, 1000</code> anahtarları bu sırayla eklenirse ağacın yüksekliği ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">10</button>
+      <button data-opt="B">20</button>
+      <button data-opt="C">999</button>
+      <button data-opt="D">500</button>
+    </div>
+    <div class="explain">Her yeni anahtar öncekilerin hepsinden büyük → hep en sağa eklenir. Ağaç 1000 düğümlük bir <b>çizgi</b> olur: yükseklik <b>999</b>. Dengeli bir ağaçta ise lg 1000 ≈ <b>10</b> civarında olurdu.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">2-3 ağaçları</div>
+  <div class="sub">bir düğüme iki anahtar sığarsa ağaç hep mükemmel dengede kalır</div>
+  <ul class="agenda"><li class="done">neden denge?</li><li class="on">2-3 ağaçları</li><li class="">kırmızı-siyah BST</li><li class="">döndürme & renk çevirme</li><li class="">ekleme</li><li class="">analiz</li><li class="">oyunda & kütüphanelerde</li><li class="">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>2-3 ağacı <span class="en">2-3 tree</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <ul>
+        <li><b>2-düğüm</b>: 1 anahtar, 2 çocuk (sıradan BST düğümü) <span class="node23"><span>H</span></span></li>
+        <li><b>3-düğüm</b>: 2 anahtar, 3 çocuk <span class="node23"><span>E</span><span>J</span></span>
+          <ul class="mini"><li>sol: E’den küçükler</li><li>orta: E ile J arasındakiler</li><li>sağ: J’den büyükler</li></ul></li>
+        <li class="fragment"><b>Simetrik sıra</b>: soldan sağa okuyunca anahtarlar sıralı</li>
+        <li class="fragment"><b>Mükemmel denge</b>: kökten <b>her</b> null bağlantıya yol aynı uzunlukta!</li>
+      </ul>
+    </div>
+    <div><svg viewBox="0 0 354 170" style="width:100%;max-width:560px" font-family="JetBrains Mono"><line x1="170" y1="34" x2="112" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="76" y1="98" x2="46" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="112" y1="98" x2="119" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="148" y1="98" x2="177" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="212" y1="34" x2="272" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="250" y1="98" x2="235" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="292" y1="98" x2="308" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><rect x="170" y="5" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="192" y="26" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">M</text><rect x="76" y="69" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="96" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">E</text><text x="126" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">J</text><line x1="112" y1="74" x2="112" y2="94" style="stroke:var(--muted)"/><rect x="10" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="31" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">A</text><text x="61" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">C</text><line x1="46" y1="138" x2="46" y2="158" style="stroke:var(--muted)"/><rect x="98" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="119" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">H</text><rect x="156" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="177" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">L</text><rect x="250" y="69" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="272" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">R</text><rect x="214" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="235" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">P</text><rect x="272" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="293" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">S</text><text x="323" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">X</text><line x1="308" y1="138" x2="308" y2="158" style="stroke:var(--muted)"/></svg>
+      <p class="mini center">Kitaptaki örnek. Gri zeminli kutular 3-düğüm.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>2-3 ağacında arama: H var mı?</h2>
+  <div class="cols c46">
+    <ol style="font-size:.9em">
+      <li class="fragment">Kök <code>M</code>: H &lt; M → <b>sol</b></li>
+      <li class="fragment"><code>E J</code>: E &lt; H &lt; J → <b>orta</b></li>
+      <li class="fragment"><code>H</code>: bulundu! ✔</li>
+      <li class="fragment">Ağaçta olmayan B için: M → sol, <code>E J</code> → sol, <code>A C</code> → A ile C arası → null → <b>yok</b>.</li>
+    </ol>
+    <div><svg viewBox="0 0 354 170" style="width:100%;max-width:560px" font-family="JetBrains Mono"><line x1="170" y1="34" x2="112" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="76" y1="98" x2="46" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="112" y1="98" x2="119" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="148" y1="98" x2="177" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="212" y1="34" x2="272" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="250" y1="98" x2="235" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="292" y1="98" x2="308" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><rect x="170" y="5" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="192" y="26" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">M</text><rect x="76" y="69" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="96" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">E</text><text x="126" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">J</text><line x1="112" y1="74" x2="112" y2="94" style="stroke:var(--muted)"/><rect x="10" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="31" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">A</text><text x="61" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">C</text><line x1="46" y1="138" x2="46" y2="158" style="stroke:var(--muted)"/><rect x="98" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="119" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">H</text><rect x="156" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="177" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">L</text><rect x="250" y="69" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="272" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">R</text><rect x="214" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="235" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">P</text><rect x="272" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="293" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">S</text><text x="323" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">X</text><line x1="308" y1="138" x2="308" y2="158" style="stroke:var(--muted)"/></svg>
+      <div class="box story fragment"><span class="bt">BST ile aynı fikir</span>Tek fark: 3-düğümde <b>iki</b> karşılaştırma yapıp üç yoldan birini seçeriz.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>Ekleme 1: yaprak bir 2-düğümse</h2>
+  <div class="cols">
+    <div>
+      <p>Aşağı inip anahtarın gideceği <b>yaprağı</b> bul. Yaprak 2-düğümse: anahtarı içine koy, <b>3-düğüm</b> olsun. Bitti!</p>
+      <p class="big center"><span class="node23"><span>H</span></span> &nbsp;+ K →&nbsp; <span class="node23 ok"><span>H</span><span>K</span></span></p>
+      <p class="mini">Ağacın şekli değişmedi → yükseklik aynı, denge bozulmadı.</p>
+    </div>
+    <div class="box low"><span class="bt">⚙️ BST ile kritik fark</span>BST yeni anahtarı <b>yeni bir yaprak</b> olarak <b>aşağıya</b> asar → ağaç aşağı doğru uzar, bir dal diğerlerinden derin olabilir.<p>2-3 ağacı ise önce <b>var olan düğüme</b> sığdırmaya çalışır. Ağaç aşağıya doğru <b>asla</b> uzamaz!</p></div>
+  </div>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>Ekleme 2: yaprak bir 3-düğümse</h2>
+  <ol style="font-size:.9em">
+    <li class="fragment">Anahtarı yine içine koy → geçici bir <b>4-düğüm</b> (3 anahtar, 4 çocuk): <span class="node23 hot"><span>A</span><span>C</span><span>E</span></span></li>
+    <li class="fragment"><b>Böl</b> <span class="en">split</span>: ortadaki anahtar (C) <b>ebeveyne çıkar</b>, kalanlar iki 2-düğüm olur: <span class="node23"><span>A</span></span> <span class="node23"><span>E</span></span></li>
+    <li class="fragment">Ebeveyn 2-düğümse → 3-düğüm olur, bitti ✔</li>
+    <li class="fragment">Ebeveyn de 3-düğümse → o da geçici 4-düğüm olur → onu da böl, ortadakini <b>bir üst</b>e çıkar… Gerekirse köke kadar.</li>
+    <li class="fragment">Kök 4-düğüm olursa → böl: ortadaki anahtar <b>yeni kök</b> olur. <b>Yükseklik ancak böyle 1 artar</b> — ve bütün yapraklar aynı anda 1 aşağı iner. Denge korunur!</li>
+  </ol>
+  <div class="box story fragment"><span class="bt">🌳 Ters büyüyen ağaç</span>BST aşağı doğru (yapraklardan) büyür. 2-3 ağacı <b>yukarı doğru</b> (kökten) büyür. Mükemmel dengenin sırrı bu.</div>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>2-3 ağacı — oyun alanı</h2>
+  <div class="demo" data-demo="t23" data-h="270"></div>
+  <p class="mini">Renkler: <b class="c-amber">sarı</b> = aşağı inerken bakılan düğüm · <b class="c-red">kırmızı</b> = geçici 4-düğüm · <b style="color:var(--purple)">mor</b> = bölünen parçalar · <b class="c-green">yeşil</b> = yeni / değişen. Önce “S E A R C H X M P L”, sonra “Sıralı” deneyin: yapraklar hep aynı seviyede mi?</p>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>Neden işe yarıyor? Yerel dönüşümler</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.9em">
+        <li>Bir 4-düğümü bölmek <b>yerel</b> <span class="en">local</span> bir işlem: sadece o düğüm ve ebeveyni değişir. Ağacın geri kalanına dokunulmaz.</li>
+        <li class="fragment">Bölme işlemi <b>sırayı</b> korur (A &lt; C &lt; E hâlâ doğru yerde).</li>
+        <li class="fragment">Bölme işlemi <b>dengeyi</b> korur: hiçbir yaprağın derinliği değişmez (kök bölünmesi hariç; o da herkesi birden 1 indirir).</li>
+      </ul>
+    </div>
+    <div class="box prop"><span class="bt">Önerme</span>N anahtarlı bir 2-3 ağacında arama ve ekleme en fazla <b>lg N</b> düğüm ziyaret eder.
+      <div class="proof box fragment" style="margin-top:8px"><span class="bt">Kanıt fikri</span>Mükemmel denge var. En kötü: hepsi 2-düğüm → yükseklik <b>lg N</b>. En iyi: hepsi 3-düğüm → <b>log₃ N ≈ 0,63 lg N</b>.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>Sayılarla 2-3 ağacı</h2>
+  <table class="sum-t" style="font-size:22px">
+    <tr><th>N</th><th>yükseklik en az (log₃ N)</th><th>yükseklik en çok (lg N)</th><th>sıradan BST en kötü</th></tr>
+    <tr><td>1.000</td><td>6</td><td>10</td><td class="c-red">999</td></tr>
+    <tr><td>1 milyon</td><td>12</td><td>20</td><td class="c-red">999.999</td></tr>
+    <tr><td>1 milyar</td><td>19</td><td>30</td><td class="c-red">~1 milyar</td></tr>
+  </table>
+  <p class="lead fragment">1 milyar kayıtta bile en fazla <b>30 düğüm</b>. Ve bu bir <b>garanti</b> — “şanslıysak” değil.</p>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 2 · 2-3 ağaçları</div>
+    <div class="q">Bir 2-3 ağacında eklemeden sonra ağacın yüksekliği <b>hangi durumda</b> artar?</div>
+    <div class="opts">
+      <button data-opt="A">Yeni anahtar bir 2-düğüm yaprağına eklenince</button>
+      <button data-opt="B">Herhangi bir 4-düğüm bölününce</button>
+      <button data-opt="C">Sadece kök bir 4-düğüme dönüşüp bölününce</button>
+      <button data-opt="D">Her eklemede</button>
+    </div>
+    <div class="explain">Bölmeler ortadaki anahtarı <b>yukarı</b> iter; ağacın şekli ancak kök bölündüğünde değişir: yeni bir kök oluşur ve <b>bütün</b> yapraklar birlikte 1 seviye aşağı iner. Bu yüzden denge hiç bozulmaz.</div>
+  </div>
+</section>
+
+<section data-sec="2-3 ağaçları">
+  <h2>Peki neden 2-3 ağacını doğrudan kodlamıyoruz?</h2>
+  <div class="cols">
+    <ul style="font-size:.92em">
+      <li>İki farklı düğüm türü (2-düğüm, 3-düğüm) + geçici 4-düğüm</li>
+      <li>Düğüm türünü sürekli kontrol eden <code>if</code>’ler, bir türden ötekine kopyalama…</li>
+      <li>Bölmenin bir sürü özel durumu (sol/orta/sağ çocuk, kök…)</li>
+    </ul>
+    <div class="box warn"><span class="bt">⚠️ Sedgewick’in tespiti</span>“Bunu kodlamak mümkün ama kod <b>karmaşık</b> ve bakımı zor; ek yükü de onu sıradan BST’den <b>yavaş</b> yapabilir.”
+      <p class="fragment"><b>Çözüm:</b> 2-3 ağacını <b>sıradan bir BST</b> ile temsil et. Sadece bağlantılara bir <b>renk</b> ekle! →</p>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #4a0d1e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Kırmızı-siyah BST</div>
+  <div class="sub"><i>left-leaning red-black BST</i> — 2-3 ağacının ikili ağaç kılığı</div>
+  <ul class="agenda"><li class="done">neden denge?</li><li class="done">2-3 ağaçları</li><li class="on">kırmızı-siyah BST</li><li class="">döndürme & renk çevirme</li><li class="">ekleme</li><li class="">analiz</li><li class="">oyunda & kütüphanelerde</li><li class="">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="kırmızı-siyah BST">
+  <h2>Fikir: 3-düğümü iki düğüme böl, araya <span class="redlink">kırmızı</span> bağlantı koy</h2>
+  <div class="cols">
+    <div>
+      <p class="big center"><span class="node23"><span>E</span><span>J</span></span> &nbsp;⇄&nbsp;</p>
+      <svg viewBox="0 0 330 190" style="width:100%;max-width:330px" font-family="JetBrains Mono"><line x1="234" y1="24" x2="96" y2="86" style="stroke:var(--red)" stroke-width="5"/><line x1="96" y1="86" x2="26" y2="148" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="96" y1="86" x2="165" y2="148" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="234" y1="24" x2="304" y2="86" style="stroke:var(--ink-2)" stroke-width="2"/><path d="M26,134 L58,182 L-6,182 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="26" y="175" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">&lt;E</text><circle cx="96" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="96" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><path d="M165,134 L197,182 L133,182 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="165" y="175" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">E…J</text><circle cx="234" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="234" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">J</text><path d="M304,72 L336,120 L272,120 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="304" y="113" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">&gt;J</text></svg>
+    </div>
+    <div style="font-size:.9em">
+      <ul>
+        <li><b class="c-red">Kırmızı</b> bağlantı: “bu iki düğüm aslında <b>tek bir 3-düğüm</b>”</li>
+        <li><b>Siyah</b> bağlantı: 2-3 ağacının gerçek bağlantıları</li>
+        <li class="fragment">Kırmızı bağlantı hep <b>sola</b> yatar: büyük anahtar (J) yukarıda, küçük (E) onun sol çocuğu</li>
+        <li class="fragment">Kazanç: <b>BST’nin get() kodu olduğu gibi çalışır</b> — renklere bakmaz bile!</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kırmızı-siyah BST">
+  <h2>Birebir eşleme <span class="en">1-1 correspondence</span></h2>
+  <div class="cols">
+    <div><p class="mini center">2-3 ağacı</p><svg viewBox="0 0 354 160" style="width:100%;max-width:500px" font-family="JetBrains Mono"><line x1="170" y1="34" x2="112" y2="66" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="76" y1="94" x2="46" y2="126" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="112" y1="94" x2="119" y2="126" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="148" y1="94" x2="177" y2="126" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="212" y1="34" x2="272" y2="66" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="250" y1="94" x2="235" y2="126" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="292" y1="94" x2="308" y2="126" style="stroke:var(--ink-2)" stroke-width="2"/><rect x="170" y="5" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="192" y="26" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">M</text><rect x="76" y="65" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="96" y="86" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">E</text><text x="126" y="86" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">J</text><line x1="112" y1="70" x2="112" y2="90" style="stroke:var(--muted)"/><rect x="10" y="125" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="31" y="146" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">A</text><text x="61" y="146" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">C</text><line x1="46" y1="130" x2="46" y2="150" style="stroke:var(--muted)"/><rect x="98" y="125" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="119" y="146" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">H</text><rect x="156" y="125" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="177" y="146" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">L</text><rect x="250" y="65" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="272" y="86" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">R</text><rect x="214" y="125" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="235" y="146" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">P</text><rect x="272" y="125" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="293" y="146" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">S</text><text x="323" y="146" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">X</text><line x1="308" y1="130" x2="308" y2="150" style="stroke:var(--muted)"/></svg></div>
+    <div><p class="mini center">Kırmızı-siyah BST</p><svg viewBox="0 0 500 230" style="width:100%;max-width:500px" font-family="JetBrains Mono"><line x1="295" y1="24" x2="205" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="205" y1="70" x2="116" y2="115" style="stroke:var(--red)" stroke-width="5"/><line x1="116" y1="115" x2="71" y2="160" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="71" y1="160" x2="26" y2="206" style="stroke:var(--red)" stroke-width="5"/><line x1="116" y1="115" x2="160" y2="160" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="205" y1="70" x2="250" y2="115" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="295" y1="24" x2="384" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="384" y1="70" x2="340" y2="115" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="384" y1="70" x2="474" y2="115" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="474" y1="115" x2="429" y2="160" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="206" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="212" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="71" cy="160" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="71" y="166" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">C</text><circle cx="116" cy="115" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="116" y="121" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><circle cx="160" cy="160" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="160" y="166" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">H</text><circle cx="205" cy="70" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="205" y="76" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">J</text><circle cx="250" cy="115" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="250" y="121" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">L</text><circle cx="295" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="295" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">M</text><circle cx="340" cy="115" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="340" y="121" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">P</text><circle cx="384" cy="70" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="384" y="76" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">R</text><circle cx="429" cy="160" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="429" y="166" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">S</text><circle cx="474" cy="115" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="474" y="121" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">X</text></svg></div>
+  </div>
+  <p class="lead fragment">Kırmızı bağlantıları <b>yatay</b> çizin (düğümleri ebeveynlerinin seviyesine çekin) → <b>2-3 ağacının kendisi</b>! ↓</p>
+</section>
+
+<section data-sec="kırmızı-siyah BST">
+  <h2>Kırmızıları yatırınca…</h2>
+  <svg viewBox="0 0 760 160" style="width:100%;max-width:760px" font-family="JetBrains Mono"><line x1="451" y1="24" x2="309" y2="80" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="309" y1="80" x2="168" y2="80" style="stroke:var(--red)" stroke-width="5"/><line x1="168" y1="80" x2="97" y2="136" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="97" y1="136" x2="26" y2="136" style="stroke:var(--red)" stroke-width="5"/><line x1="168" y1="80" x2="238" y2="136" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="309" y1="80" x2="380" y2="136" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="451" y1="24" x2="592" y2="80" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="592" y1="80" x2="522" y2="136" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="592" y1="80" x2="734" y2="136" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="734" y1="136" x2="663" y2="136" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="136" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="142" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="97" cy="136" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="97" y="142" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">C</text><circle cx="168" cy="80" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="168" y="86" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><circle cx="238" cy="136" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="238" y="142" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">H</text><circle cx="309" cy="80" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="309" y="86" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">J</text><circle cx="380" cy="136" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="380" y="142" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">L</text><circle cx="451" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="451" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">M</text><circle cx="522" cy="136" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="522" y="142" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">P</text><circle cx="592" cy="80" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="592" y="86" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">R</text><circle cx="663" cy="136" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="663" y="142" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">S</text><circle cx="734" cy="136" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="734" y="142" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">X</text></svg>
+  <ul style="font-size:.9em">
+    <li><code>A–C</code>, <code>E–J</code>, <code>S–X</code> yan yana: 3-düğümler ✔</li>
+    <li>Bütün null bağlantılar <b>aynı seviyede</b>: mükemmel <b>siyah</b> denge ✔</li>
+  </ul>
+</section>
+
+<section data-sec="kırmızı-siyah BST">
+  <h2>Tanım: sola yatık kırmızı-siyah BST</h2>
+  <div class="cols c64">
+    <div>
+      <p>Kırmızı ve siyah bağlantıları olan bir BST, şu üç kuralı sağlıyorsa:</p>
+      <ol>
+        <li class="fragment">Kırmızı bağlantılar <b>sola</b> yatar.</li>
+        <li class="fragment">Hiçbir düğüme <b>iki</b> kırmızı bağlantı değmez (yoksa 4-düğüm olurdu).</li>
+        <li class="fragment"><b>Mükemmel siyah denge</b>: kökten her null bağlantıya giden yolda <b>siyah</b> bağlantı sayısı aynı.</li>
+      </ol>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Benzetme: takım otobüsü</span>Kırmızı bağlantı = <b>aynı koltukta oturan iki oyuncu</b> (bir 3-düğüm). Siyah bağlantı = otobüsün <b>katları</b>. Kural 3: her oyuncu aynı sayıda kat aşağıda. Kural 2: bir koltuğa en fazla iki kişi!</div>
+  </div>
+</section>
+
+<section data-sec="kırmızı-siyah BST">
+  <h2>🎒 Ön bilgi: düğüme renk alanı eklemek</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <ul>
+        <li>Bağlantının rengini, bağlantının <b>gösterdiği</b> (alttaki) düğümde saklarız: <code>red = True/False</code></li>
+        <li>Mantıksal tür <span class="en">boolean</span>: sadece iki değer → 1 bit bilgi yeter</li>
+        <li><code>RED = True</code> gibi <b>sabitler</b> <span class="en">constant</span> kodu okunur yapar</li>
+        <li><code>is_red(None)</code> → <b>False</b>: null bağlantılar siyah sayılır. Böylece her yerde “null mı?” diye kontrol etmeyiz</li>
+      </ul>
+      <div class="box low"><span class="bt">⚙️ Bellek notu</span>Gerçek kütüphaneler bu tek biti bazen işaretçinin (pointer) kullanılmayan en düşük bitine gizler (Linux çekirdeğinin <code>rbtree</code>’si böyle yapar).</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+RED = True
+BLACK = False
+
+class Node:
+    def __init__(self, key, val):
+        self.key = key
+        self.val = val
+        self.left = None
+        self.right = None
+        self.red = RED        # yeni düğüm hep kırmızı gelir
+
+def is_red(x):
+    if x is None:             # null bağlantı = siyah
+        return False
+    return x.red
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+const bool RED = true;
+const bool BLACK = false;
+
+class Node
+{
+    public int Key;
+    public string Val;
+    public Node Left, Right;
+    public bool Red = RED;        // yeni düğüm hep kırmızı
+
+    public Node(int key, string val) { Key = key; Val = val; }
+}
+
+static bool IsRed(Node x)
+{
+    if (x == null) return false;  // null bağlantı = siyah
+    return x.Red;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const RED = true;
+const BLACK = false;
+
+class Node {
+  constructor(key, val) {
+    this.key = key;
+    this.val = val;
+    this.left = null;
+    this.right = null;
+    this.red = RED;             // yeni düğüm hep kırmızı
+  }
+}
+
+function isRed(x) {
+  if (x === null) return false; // null bağlantı = siyah
+  return x.red;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kırmızı-siyah BST">
+  <h2>Arama: BST ile <b>birebir aynı</b> kod</h2>
+  <div class="cols c46">
+    <div>
+      <ul style="font-size:.92em">
+        <li>Renklere hiç bakılmıyor</li>
+        <li>Ama ağaç dengeli olduğu için en fazla <b>~2 lg N</b> adım</li>
+        <li class="fragment">Önceki destedeki <b>tüm sıralı işlemler</b> (min, max, floor, ceiling, rank, select, range) da <b>aynen</b> çalışır! 🎁</li>
+      </ul>
+      <div class="box story fragment"><span class="bt">Ders</span>İyi bir temsil seçmek = bedava kod. Zor işi sadece <b>ekleme</b> yapacak.</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def get(x, key):
+    while x is not None:
+        if key < x.key:
+            x = x.left
+        elif key > x.key:
+            x = x.right
+        else:
+            return x.val          # bulundu
+    return None                   # yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static string Get(Node x, int key)
+{
+    while (x != null)
+    {
+        if (key < x.Key) x = x.Left;
+        else if (key > x.Key) x = x.Right;
+        else return x.Val;        // bulundu
+    }
+    return null;                  // yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function get(x, key) {
+  while (x !== null) {
+    if (key < x.key) x = x.left;
+    else if (key > x.key) x = x.right;
+    else return x.val;            // bulundu
+  }
+  return null;                    // yok
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kırmızı-siyah BST">
+  <h2>Kırmızı-siyah BST — oyun alanı</h2>
+  <div class="demo" data-demo="llrb" data-h="290"></div>
+  <p class="mini">“2-3 görünümü” kutusunu işaretleyin: kırmızı bağlantılar yatay çizilir ve ağaç 2-3 ağacına dönüşür. Aynı diziyi önceki 2-3 oyun alanında oynatıp karşılaştırın!</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Döndürme & renk çevirme</div>
+  <div class="sub">ağacı onaran iki küçük, yerel hamle</div>
+  <ul class="agenda"><li class="done">neden denge?</li><li class="done">2-3 ağaçları</li><li class="done">kırmızı-siyah BST</li><li class="on">döndürme & renk çevirme</li><li class="">ekleme</li><li class="">analiz</li><li class="">oyunda & kütüphanelerde</li><li class="">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="döndürme">
+  <h2>Sola döndürme <span class="en">rotate left</span></h2>
+  <div class="cols">
+    <div>
+      <p class="mini center">önce: kırmızı bağlantı <b>sağa</b> yatık ❌</p>
+      <svg viewBox="0 0 380 200" style="width:100%;max-width:380px" font-family="JetBrains Mono"><line x1="108" y1="24" x2="26" y2="86" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="108" y1="24" x2="272" y2="86" style="stroke:var(--red)" stroke-width="5"/><line x1="272" y1="86" x2="190" y2="148" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="272" y1="86" x2="354" y2="148" style="stroke:var(--ink-2)" stroke-width="2"/><path d="M26,72 L58,120 L-6,120 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="26" y="113" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">&lt;E</text><circle cx="108" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="108" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><path d="M190,134 L222,182 L158,182 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="190" y="175" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">E…S</text><circle cx="272" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="272" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">S</text><path d="M354,134 L386,182 L322,182 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="354" y="175" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">&gt;S</text></svg>
+    </div>
+    <div>
+      <p class="mini center">sonra: kırmızı bağlantı <b>sola</b> yatık ✔</p>
+      <svg viewBox="0 0 380 200" style="width:100%;max-width:380px" font-family="JetBrains Mono"><line x1="272" y1="24" x2="108" y2="86" style="stroke:var(--red)" stroke-width="5"/><line x1="108" y1="86" x2="26" y2="148" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="108" y1="86" x2="190" y2="148" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="272" y1="24" x2="354" y2="86" style="stroke:var(--ink-2)" stroke-width="2"/><path d="M26,134 L58,182 L-6,182 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="26" y="175" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">&lt;E</text><circle cx="108" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="108" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><path d="M190,134 L222,182 L158,182 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="190" y="175" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">E…S</text><circle cx="272" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="272" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">S</text><path d="M354,72 L386,120 L322,120 Z" style="fill:var(--card-2);stroke:var(--muted)" stroke-width="1.5"/><text x="354" y="113" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">&gt;S</text></svg>
+    </div>
+  </div>
+  <p>S yukarı çıkar, E onun sol çocuğu olur. Ortadaki alt ağaç (<b>E ile S arasındakiler</b>) E’nin sağına geçer. <b>Sıra korunur</b>, sadece 3 bağlantı değişir → sabit zaman!</p>
+</section>
+
+<section data-sec="döndürme">
+  <h2>Döndürme — kendiniz deneyin</h2>
+  <div class="demo" data-demo="rotate"></div>
+  <p class="mini">rotateLeft ardından rotateRight: ağaç eski hâline döner. İki döndürme birbirinin <b>tersi</b>.</p>
+</section>
+
+<section data-sec="döndürme">
+  <h2>rotateLeft — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <ol>
+        <li><code>x</code> = h’nin sağ çocuğu (yukarı çıkacak)</li>
+        <li>x’in sol alt ağacı → h’nin <b>sağına</b></li>
+        <li>h → x’in <b>soluna</b></li>
+        <li>Renkler: x, h’nin eski rengini alır; h kırmızı olur (çünkü artık x ile h arasındaki bağlantı kırmızı)</li>
+        <li>Yeni alt ağaç kökü <code>x</code>’i <b>döndür</b></li>
+      </ol>
+      <div class="box warn"><span class="bt">⚠️ Sıra önemli!</span>2. ve 3. adımın yeri değişirse x’in sol alt ağacı <b>kaybolur</b> (üzerine yazılır).</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-7|2|3|4|5-6|7|9-15"><script type="text/template">
+def rotate_left(h):
+    x = h.right
+    h.right = x.left       # orta alt ağaç h'ye geçer
+    x.left = h             # h, x'in soluna iner
+    x.red = h.red          # x, h'nin rengini alır
+    h.red = RED            # h-x bağlantısı kırmızı
+    return x               # yeni kök
+
+def rotate_right(h):       # ayna görüntüsü
+    x = h.left
+    h.left = x.right
+    x.right = h
+    x.red = h.red
+    h.red = RED
+    return x
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static Node RotateLeft(Node h)
+{
+    Node x = h.Right;
+    h.Right = x.Left;      // orta alt ağaç h'ye geçer
+    x.Left = h;            // h, x'in soluna iner
+    x.Red = h.Red;         // x, h'nin rengini alır
+    h.Red = RED;           // h-x bağlantısı kırmızı
+    return x;              // yeni kök
+}
+
+static Node RotateRight(Node h)   // ayna görüntüsü
+{
+    Node x = h.Left;
+    h.Left = x.Right;
+    x.Right = h;
+    x.Red = h.Red;
+    h.Red = RED;
+    return x;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function rotateLeft(h) {
+  const x = h.right;
+  h.right = x.left;        // orta alt ağaç h'ye geçer
+  x.left = h;              // h, x'in soluna iner
+  x.red = h.red;           // x, h'nin rengini alır
+  h.red = RED;             // h-x bağlantısı kırmızı
+  return x;                // yeni kök
+}
+
+function rotateRight(h) {  // ayna görüntüsü
+  const x = h.left;
+  h.left = x.right;
+  x.right = h;
+  x.red = h.red;
+  h.red = RED;
+  return x;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="döndürme">
+  <h2>🎒 Ön bilgi: “yeni kökü döndür” kalıbı</h2>
+  <div class="cols">
+    <div style="font-size:.88em">
+      <p>Döndürmeden sonra alt ağacın <b>kökü değişti</b>. Ebeveyn hâlâ eski köke (h) bakıyor! Bu yüzden:</p>
+      <pre><code class="language-python" data-trim data-line-numbers>
+h = rotate_left(h)          # h artık yeni kökü gösterir
+h.left = put(h.left, k, v)  # alt ağaç değişmiş olabilir: yeniden bağla
+</code></pre>
+      <p class="mini">Fonksiyon yeni kökü <b>geri döndürür</b>, çağıran onu ilgili bağlantıya <b>atar</b>. BST destesindeki <code>put</code>’ta da aynı kalıp vardı.</p>
+    </div>
+    <div class="box bgk"><span class="bt">🎒 Referans hatırlatması</span>
+      <p><code>h</code> bir düğümün kendisi değil, ona bakan bir <b>ok</b>. <code>rotate_left(h)</code> içindeki <code>x.left = h</code> düğümlerin oklarını değiştirir; ama dışarıdaki <code>h</code> değişkeni <b>otomatik</b> güncellenmez.</p>
+      <p class="mini">Atamayı unutursanız (sadece <code>rotate_left(h)</code> yazarsanız) ağacın bir parçası <b>kaybolur</b> — en sık yapılan hata!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="döndürme">
+  <h2>Renk çevirme <span class="en">flip colors</span></h2>
+  <div class="cols">
+    <div>
+      <p class="mini center">önce: iki çocuk da kırmızı = geçici <b>4-düğüm</b> <span class="node23 hot"><span>A</span><span>E</span><span>S</span></span></p>
+      <svg viewBox="0 0 300 130" style="width:100%;max-width:300px" font-family="JetBrains Mono"><line x1="150" y1="24" x2="26" y2="86" style="stroke:var(--red)" stroke-width="5"/><line x1="150" y1="24" x2="274" y2="86" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="150" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="150" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><circle cx="274" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="274" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">S</text></svg>
+    </div>
+    <div>
+      <p class="mini center">sonra: E yukarı “çıktı” (ebeveynine kırmızıyla bağlı)</p>
+      <svg viewBox="0 0 300 130" style="width:100%;max-width:300px" font-family="JetBrains Mono"><line x1="150" y1="24" x2="26" y2="86" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="150" y1="24" x2="274" y2="86" style="stroke:var(--ink-2)" stroke-width="2"/><circle cx="26" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="150" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="150" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">E</text><circle cx="274" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="274" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">S</text></svg>
+    </div>
+  </div>
+  <div class="cols">
+    <p>2-3 ağacındaki <b>4-düğümü bölme</b> işleminin aynısı: ortadaki anahtar ebeveynin parçası olur. Sadece 3 renk değişir, hiçbir bağlantı yer değiştirmez!</p>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def flip_colors(h):
+    h.red = RED            # h yukarı "çıkar"
+    h.left.red = BLACK
+    h.right.red = BLACK
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static void FlipColors(Node h)
+{
+    h.Red = RED;           // h yukarı "çıkar"
+    h.Left.Red = BLACK;
+    h.Right.Red = BLACK;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function flipColors(h) {
+  h.red = RED;             // h yukarı "çıkar"
+  h.left.red = BLACK;
+  h.right.red = BLACK;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="döndürme">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · döndürme</div>
+    <div class="q">Bir BST’de <code>rotateLeft(h)</code> uygulandıktan sonra hangisi <b>her zaman</b> doğrudur?</div>
+    <div class="opts">
+      <button data-opt="A">Ağacın inorder (sıralı) gezintisi değişir</button>
+      <button data-opt="B">Yeni alt ağaç kökü eski h.right olur ve anahtar sırası korunur</button>
+      <button data-opt="C">Ağacın yüksekliği azalır</button>
+      <button data-opt="D">Bütün bağlantılar siyah olur</button>
+    </div>
+    <div class="explain">Döndürme <b>sırayı korur</b> — bu yüzden güvenle kullanabiliriz. Yükseklik bazen azalır, bazen artar, bazen aynı kalır; o yüzden C “her zaman” doğru değil. Döndürmenin amacı yükseklik değil, kırmızı bağlantının <b>yönünü</b> düzeltmek.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Ekleme</div>
+  <div class="sub">yeni düğüm hep kırmızı · sonra yukarı çıkarken onar</div>
+  <ul class="agenda"><li class="done">neden denge?</li><li class="done">2-3 ağaçları</li><li class="done">kırmızı-siyah BST</li><li class="done">döndürme & renk çevirme</li><li class="on">ekleme</li><li class="">analiz</li><li class="">oyunda & kütüphanelerde</li><li class="">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="ekleme">
+  <h2>Ekleme stratejisi</h2>
+  <ol style="font-size:.95em">
+    <li>BST gibi aşağı in, yeni düğümü en alta ekle.</li>
+    <li class="fragment">Yeni düğümü ebeveynine <b class="c-red">kırmızı</b> bağlantıyla bağla. (2-3 dilinde: yaprağa bir anahtar daha sıkıştırmak.)</li>
+    <li class="fragment">Özyinelemeden <b>geri dönerken</b> (yukarı çıkarken) her düğümde üç durumu kontrol et ve düzelt:</li>
+  </ol>
+  <table class="gloss fragment" style="font-size:20px">
+    <tr><td>sağ çocuk kırmızı, sol değil</td><td>rotateLeft</td><td>sağa yatık kırmızı → sola yatır</td></tr>
+    <tr><td>sol ve solun solu kırmızı</td><td>rotateRight</td><td>art arda iki kırmızı → dengele (4-düğüm oluşur)</td></tr>
+    <tr><td>iki çocuk da kırmızı</td><td>flipColors</td><td>4-düğümü böl, ortadakini yukarı gönder</td></tr>
+  </table>
+  <p class="fragment mini">Bu üç kontrolün <b>sırası</b> önemli: biri ötekini tetikleyebilir (ör. rotateRight sonrası iki kırmızı çocuk → flip). Bir “kırmızı” yukarı itilir, üstte yine kontrol edilir… köke kadar.</p>
+</section>
+
+<section data-sec="ekleme">
+  <h2>Üç durum, tek resimde</h2>
+  <div class="cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="center"><p class="mini"><b>1) sağa yatık</b> → rotateLeft</p><svg viewBox="0 0 220 110" style="width:100%;max-width:220px" font-family="JetBrains Mono"><line x1="26" y1="24" x2="194" y2="86" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="194" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="194" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">B</text></svg><p class="mini">⬇</p><svg viewBox="0 0 220 110" style="width:100%;max-width:220px" font-family="JetBrains Mono"><line x1="194" y1="24" x2="26" y2="86" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="194" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="194" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">B</text></svg></div>
+    <div class="center"><p class="mini"><b>2) iki kırmızı sol</b> → rotateRight</p><svg viewBox="0 0 220 150" style="width:100%;max-width:220px" font-family="JetBrains Mono"><line x1="194" y1="24" x2="110" y2="75" style="stroke:var(--red)" stroke-width="5"/><line x1="110" y1="75" x2="26" y2="126" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="126" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="132" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="110" cy="75" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="110" y="81" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">B</text><circle cx="194" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="194" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">C</text></svg><p class="mini">⬇</p><svg viewBox="0 0 220 110" style="width:100%;max-width:220px" font-family="JetBrains Mono"><line x1="110" y1="24" x2="26" y2="86" style="stroke:var(--red)" stroke-width="5"/><line x1="110" y1="24" x2="194" y2="86" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="110" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="110" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">B</text><circle cx="194" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="194" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">C</text></svg></div>
+    <div class="center"><p class="mini"><b>3) iki kırmızı çocuk</b> → flipColors</p><svg viewBox="0 0 220 110" style="width:100%;max-width:220px" font-family="JetBrains Mono"><line x1="110" y1="24" x2="26" y2="86" style="stroke:var(--red)" stroke-width="5"/><line x1="110" y1="24" x2="194" y2="86" style="stroke:var(--red)" stroke-width="5"/><circle cx="26" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="110" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="110" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">B</text><circle cx="194" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="194" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">C</text></svg><p class="mini">⬇</p><svg viewBox="0 0 220 110" style="width:100%;max-width:220px" font-family="JetBrains Mono"><line x1="110" y1="24" x2="26" y2="86" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="110" y1="24" x2="194" y2="86" style="stroke:var(--ink-2)" stroke-width="2"/><circle cx="26" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="26" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">A</text><circle cx="110" cy="24" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="110" y="30" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">B</text><circle cx="194" cy="86" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="194" y="92" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">C</text></svg></div>
+  </div>
+  <p class="mini center">Boş ağaca A, C, B (ya da C, B, A) eklemek bu zinciri sırasıyla tetikler. Animasyonda adım adım izleyin →</p>
+</section>
+
+<section data-sec="ekleme">
+  <h2>Ekleme — kod <span class="en">put</span></h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|11-17|12-13|14-15|16-17|20-22"><script type="text/template">
+def put(h, key, val):
+    if h is None:
+        return Node(key, val)           # yeni düğüm: KIRMIZI
+    if key < h.key:
+        h.left = put(h.left, key, val)
+    elif key > h.key:
+        h.right = put(h.right, key, val)
+    else:
+        h.val = val                     # anahtar varsa değeri güncelle
+
+    # --- yukarı çıkarken onar (BST'den farkı sadece bu 6 satır) ---
+    if is_red(h.right) and not is_red(h.left):
+        h = rotate_left(h)
+    if is_red(h.left) and is_red(h.left.left):
+        h = rotate_right(h)
+    if is_red(h.left) and is_red(h.right):
+        flip_colors(h)
+    return h
+
+def insert(tree, key, val):
+    tree.root = put(tree.root, key, val)
+    tree.root.red = BLACK               # kök her zaman siyah
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static Node Put(Node h, int key, string val)
+{
+    if (h == null) return new Node(key, val);   // yeni düğüm: KIRMIZI
+
+    if (key < h.Key) h.Left = Put(h.Left, key, val);
+    else if (key > h.Key) h.Right = Put(h.Right, key, val);
+    else h.Val = val;
+
+    // --- yukarı çıkarken onar ---
+    if (IsRed(h.Right) && !IsRed(h.Left))    h = RotateLeft(h);
+    if (IsRed(h.Left) && IsRed(h.Left.Left)) h = RotateRight(h);
+    if (IsRed(h.Left) && IsRed(h.Right))     FlipColors(h);
+    return h;
+}
+
+public void Insert(int key, string val)
+{
+    root = Put(root, key, val);
+    root.Red = BLACK;                            // kök her zaman siyah
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function put(h, key, val) {
+  if (h === null) return new Node(key, val);   // yeni düğüm: KIRMIZI
+
+  if (key < h.key) h.left = put(h.left, key, val);
+  else if (key > h.key) h.right = put(h.right, key, val);
+  else h.val = val;
+
+  // --- yukarı çıkarken onar ---
+  if (isRed(h.right) && !isRed(h.left))    h = rotateLeft(h);
+  if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
+  if (isRed(h.left) && isRed(h.right))     flipColors(h);
+  return h;
+}
+
+function insert(tree, key, val) {
+  tree.root = put(tree.root, key, val);
+  tree.root.red = BLACK;                       // kök her zaman siyah
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 put kodundaki yeni ifadeler</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>not is_red(…) · !IsRed(…)</td><td>değil <span class="en">not</span></td><td>Doğruyu yanlışa, yanlışı doğruya çevirir. <code>!</code> C#/JS yazımı</td></tr>
+    <tr><td>a and b · a &amp;&amp; b</td><td>kısa devre <span class="en">short-circuit</span></td><td><code>a</code> yanlışsa <code>b</code>’ye <b>hiç bakılmaz</b>. Bu yüzden <code>is_red(h.left) and is_red(h.left.left)</code> güvenli: h.left null ise ikinci kısım çalışmaz, null hatası olmaz!</td></tr>
+    <tr><td>h.left = put(h.left, …)</td><td>yeniden bağlama</td><td>Alt ağacın kökü döndürmeyle değişmiş olabilir → yeni kökü bağlantıya geri yaz</td></tr>
+    <tr><td>tree.root</td><td>ağaç nesnesi</td><td>Ağacın kökünü tutan küçük bir nesne. Kök de değişebildiği için <code>tree.root = put(…)</code></td></tr>
+  </table>
+  <p class="mini">Kısa devre olmadan aynı kontrol (geleneksel yazım):</p>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# modern (kısa devre):
+if is_red(h.left) and is_red(h.left.left):
+    h = rotate_right(h)
+
+# geleneksel (iç içe if):
+if is_red(h.left):
+    if is_red(h.left.left):      # buraya geldiysek h.left null değil
+        h = rotate_right(h)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// modern (kısa devre):
+if (IsRed(h.Left) && IsRed(h.Left.Left)) h = RotateRight(h);
+
+// geleneksel (iç içe if):
+if (IsRed(h.Left))
+{
+    if (IsRed(h.Left.Left))      // buraya geldiysek h.Left null değil
+        h = RotateRight(h);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// modern (kısa devre):
+if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
+
+// geleneksel (iç içe if):
+if (isRed(h.left)) {
+  if (isRed(h.left.left))        // buraya geldiysek h.left null değil
+    h = rotateRight(h);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ekleme">
+  <h2>Ekleme — adım adım</h2>
+  <div class="demo" data-demo="llrb" data-h="290"></div>
+  <p class="mini">“S E A R C H X M P L”i oynatın ve <b>◀ Geri / İleri ▶</b> ile tek tek ilerleyin. Her notta hangi kuralın çalıştığı yazıyor. Kendi harflerinizi de ekleyebilirsiniz.</p>
+</section>
+
+<section data-sec="ekleme">
+  <h2>Sıralı ekleme: kâbus bitti mi?</h2>
+  <div class="cols c64">
+    <div>
+      <p>Oyun alanında <b>📈 Sıralı A…O</b>’ya basın. 15 harf, alfabetik sırayla.</p>
+      <ul style="font-size:.92em">
+        <li class="fragment">Sıradan BST: yükseklik <b>14</b> (çizgi)</li>
+        <li class="fragment">Kırmızı-siyah: yükseklik <b>3</b> — mükemmel dengeli ikili ağaç! 🎉</li>
+        <li class="fragment">Sırayla gelen her anahtar sağa kırmızı eklenir → döndürme → renk çevirme → kırmızı yukarı tırmanır… Ağaç kendini sürekli toparlar.</li>
+      </ul>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Isınma sorusuna dönüş</span>Tekrar sistemindeki 36.000 olay artık bir çizgi değil: yükseklik en fazla <b>2 lg 36.000 ≈ 30</b>, pratikte ~16. 2.250 kat daha hızlı arama.</div>
+  </div>
+</section>
+
+<section data-sec="ekleme">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · ekleme</div>
+    <div class="q">Boş bir kırmızı-siyah BST’ye sırayla <code>A</code>, <code>B</code>, <code>C</code> eklenince kök hangisi olur?</div>
+    <div class="opts">
+      <button data-opt="A">A</button>
+      <button data-opt="B">B</button>
+      <button data-opt="C">C</button>
+      <button data-opt="D">Kök kırmızı bir düğüm olur</button>
+    </div>
+    <div class="explain">A kök. B sağa kırmızı eklenir → <b>rotateLeft</b>: B kök, A sol kırmızı. C, B’nin sağına kırmızı eklenir → iki çocuk kırmızı → <b>flipColors</b>: B kırmızı olur, ama <b>kök her zaman siyah</b> yapılır. Sonuç: B kök, A ve C siyah çocuklar. Kök hiçbir zaman kırmızı kalmaz.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: rotateLeft yaz</h2>
+  <div class="rotlab" data-lang="js">
+<textarea>
+// GÖREV: h'nin SAĞINDAKİ kırmızı bağlantıyı sola yatır.
+// Düğüm: { key, left, right, red }   (red: true / false)
+// Yeni alt ağaç kökünü döndür.
+function rotateLeft(h) {
+  const x = h.right;
+  // 1) h.right = ?
+  // 2) x.left = ?
+  // 3) renkler: x.red = ?, h.red = ?
+  return x;
+}
+</textarea>
+    <div class="lab-tasks"><b>İpucu:</b> Döndürme slaytındaki resme bakın: orta alt ağaç (<code>x.left</code>) h’ye geçer, h de x’in soluna iner. Renk: x, h’nin eski rengini alır; h kırmızı olur. Sonra 2. ve 3. adımın yerini değiştirip neler olduğuna bakın.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python</h2>
+  <div class="rotlab" data-lang="python">
+<textarea>
+def rotate_left(h):
+    x = h.right
+    x.left = h
+    h.right = x.left
+    x.red = h.red
+    h.red = True
+    return x
+</textarea>
+    <div class="lab-tasks">Bu kodda <b>tek</b> bir hata var: iki satırın <b>sırası</b> yanlış. Çalıştırın: hangi hatayı görüyorsunuz? (İpucu: <code>x.left = h</code> yapıldıktan sonra <code>x.left</code> neyi gösteriyor? h’nin sağı neye bağlanıyor?) Düzeltin.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2e0d3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Analiz</div>
+  <div class="sub">yükseklik ≤ 2 lg N — her girdi için</div>
+  <ul class="agenda"><li class="done">neden denge?</li><li class="done">2-3 ağaçları</li><li class="done">kırmızı-siyah BST</li><li class="done">döndürme & renk çevirme</li><li class="done">ekleme</li><li class="on">analiz</li><li class="">oyunda & kütüphanelerde</li><li class="">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="analiz">
+  <h2>Garanti: yükseklik ≤ 2 lg N</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>N düğümlü bir sola yatık kırmızı-siyah BST’nin yüksekliği en fazla <b>2 lg N</b>’dir.</div>
+    <div class="box proof"><span class="bt">Kanıt (sezgisel)</span>
+      <ul>
+        <li class="fragment">Her kökten-null yolunda <b>siyah</b> bağlantı sayısı aynı = karşılık gelen 2-3 ağacının yüksekliği ≤ <b>lg N</b>.</li>
+        <li class="fragment">İki kırmızı bağlantı <b>art arda gelemez</b> → bir yolda en fazla siyahlar kadar kırmızı olabilir.</li>
+        <li class="fragment">Toplam ≤ lg N + lg N = <b>2 lg N</b>. ∎</li>
+      </ul>
+    </div>
+  </div>
+  <p class="fragment lead">En kötü yol: sırayla siyah, kırmızı, siyah, kırmızı… (en soldaki yol). Pratikte ortalama yol ~<b>1,0 lg N</b> — neredeyse mükemmel!</p>
+</section>
+
+<section data-sec="analiz">
+  <h2>Deney: yükseklik ölçümü</h2>
+  <div class="demo" data-demo="heightexp"></div>
+  <p class="mini">Sütunlar: sıradan BST (rastgele / sıralı ekleme) ve kırmızı-siyah BST (rastgele / sıralı). Sıralı eklemede sıradan BST’nin yüksekliği N − 1’dir (çizgi). Kırmızı-siyah ağaçtaki sayıların lg N’ye ne kadar yakın olduğuna dikkat!</p>
+</section>
+
+<section data-sec="analiz">
+  <h2>Sembol tablosu karnesi</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th rowspan="2">yapı</th><th colspan="2">en kötü durum</th><th colspan="2">ortalama durum</th><th rowspan="2">sıralı işlemler?</th></tr>
+    <tr><th>arama</th><th>ekleme</th><th>arama</th><th>ekleme</th></tr>
+    <tr><td>sıralı arama (bağlı liste)</td><td>N</td><td>N</td><td>N/2</td><td>N</td><td>hayır</td></tr>
+    <tr><td>ikili arama (sıralı dizi)</td><td>lg N</td><td>N</td><td>lg N</td><td>N/2</td><td>evet</td></tr>
+    <tr><td>BST</td><td class="c-red">N</td><td class="c-red">N</td><td>1,39 lg N</td><td>1,39 lg N</td><td>evet</td></tr>
+    <tr><td>2-3 ağacı</td><td>c lg N</td><td>c lg N</td><td>c lg N</td><td>c lg N</td><td>evet</td></tr>
+    <tr><td><b>kırmızı-siyah BST</b></td><td class="c-green"><b>2 lg N</b></td><td class="c-green"><b>2 lg N</b></td><td class="c-green">1,0 lg N</td><td class="c-green">1,0 lg N</td><td>evet</td></tr>
+  </table>
+  <p class="mini">Kaynak: Sedgewick &amp; Wayne, 3.3. “c”: düğüm türü kontrolü yüzünden sabit çarpan büyük. Hash tabloları (Bölüm 13) ortalamada daha da hızlı, ama sıralı işlemleri desteklemez.</p>
+</section>
+
+<section data-sec="analiz">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · analiz</div>
+    <div class="q">Kırmızı-siyah BST’nin yüksekliği neden 2 lg N’yi aşamaz?</div>
+    <div class="opts">
+      <button data-opt="A">Çünkü anahtarlar eklenmeden önce karıştırılır</button>
+      <button data-opt="B">Çünkü siyah bağlantılar mükemmel dengede ve iki kırmızı bağlantı art arda gelemez</button>
+      <button data-opt="C">Çünkü her düğümün iki çocuğu vardır</button>
+      <button data-opt="D">Çünkü kök her zaman siyahtır</button>
+    </div>
+    <div class="explain">Siyah yükseklik ≤ lg N (2-3 ağacının yüksekliği). Kırmızılar en fazla siyahlar kadar olabilir (araya hep bir siyah girer) → toplam ≤ 2 lg N. Karıştırma (A) quicksort’un ve rastgele BST’nin numarasıydı; burada <b>girdi ne olursa olsun</b> garanti var.</div>
+  </div>
+</section>
+
+<section data-sec="analiz">
+  <h2>Tarihçe 📜</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">1962 · AVL ağacı</span>İlk kendini dengeleyen BST: Sovyet bilim insanları <b>Georgy Adelson-Velsky</b> ve <b>Evgenii Landis</b>. 🎮 Adelson-Velsky, 1974’te ilk <b>Dünya Bilgisayar Satranç Şampiyonası</b>’nı kazanan <b>Kaissa</b> programının geliştiricilerinden biriydi!</div>
+    <div class="box story"><span class="bt">1978 · Kırmızı-siyah ağaç</span><b>Leo Guibas</b> ve <b>Robert Sedgewick</b> (kitabımızın yazarı). Neden kırmızı? Sedgewick’in anlattığına göre Xerox PARC’taki renkli lazer yazıcının en iyi bastığı renk kırmızıydı. 2008’de Sedgewick “sola yatık” sürümle kodu birkaç satıra indirdi.</div>
+  </div>
+  <div class="box low fragment" style="margin-top:10px"><span class="bt">⚙️ AVL mi, kırmızı-siyah mı?</span>AVL daha sıkı dengelidir (yükseklik ≤ 1,44 lg N) → arama biraz daha hızlı, ama ekleme/silmede daha çok döndürme yapar. Kırmızı-siyah ekleme-silmenin bol olduğu yerlerde (çekirdek, kütüphaneler) tercih edilir.</div>
+</section>
+
+<section data-sec="analiz">
+  <div class="box warn" style="font-size:1em"><span class="bt">⚠️ SİLME?</span>
+    <p>Önceki destedeki Hibbard silmesi dengeyi bozar (ağaç zamanla √N yüksekliğe kayar).</p>
+    <p>Kırmızı-siyah ağaçta silme de lg N’de yapılabilir: aşağı inerken “borç alarak” her adımda geçici 3- ya da 4-düğümler oluşturulur, en altta silinir, yukarı çıkarken yine aynı üç kuralla onarılır.</p>
+    <p class="mini">Kodu ekleme kodundan daha uzun ve inceliklidir; bu derste ayrıntısına girmiyoruz. Merak edenler: algs4 <code>RedBlackBST.java</code> (<code>deleteMin</code>, <code>delete</code>).</p>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a1e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Oyunda & kütüphanelerde</div>
+  <div class="sub">kırmızı-siyah ağaçlar her yerde — siz fark etmeden</div>
+  <ul class="agenda"><li class="done">neden denge?</li><li class="done">2-3 ağaçları</li><li class="done">kırmızı-siyah BST</li><li class="done">döndürme & renk çevirme</li><li class="done">ekleme</li><li class="done">analiz</li><li class="on">oyunda & kütüphanelerde</li><li class="">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="oyunda">
+  <h2>Kırmızı-siyah ağaçlar nerede?</h2>
+  <div class="cols">
+    <ul style="font-size:.88em">
+      <li><b>C#</b>: <code>SortedDictionary&lt;K,V&gt;</code>, <code>SortedSet&lt;T&gt;</code> 🎮 Unity’de kullanabilirsiniz</li>
+      <li><b>Java</b>: <code>TreeMap</code>, <code>TreeSet</code></li>
+      <li><b>C++</b>: <code>std::map</code>, <code>std::set</code> (yaygın derleyicilerde) — Unreal’ın <code>TSortedMap</code>’i ise sıralı dizi kullanır</li>
+      <li><b>Python / JavaScript</b>: dilde hazır dengeli ağaç <b>yok</b>! (<code>bisect</code> modülü, <code>sortedcontainers</code> kütüphanesi)</li>
+    </ul>
+    <ul style="font-size:.88em">
+      <li><b>Linux çekirdeği</b>: işlem zamanlayıcısı (CFS, 2007–2023; yerine gelen EEVDF de) çalışmaya hazır işlemleri kırmızı-siyah ağaçta tutar. Sıradaki işlem = <b>en soldaki düğüm</b> (min)!</li>
+      <li class="fragment"><b>Oyun motorları</b>: zamanlayıcılar, olay kuyrukları, tekrar (replay) zaman çizelgeleri, sıralı skor tabloları…</li>
+    </ul>
+  </div>
+  <div class="box story fragment"><span class="bt">🎒 Sıralı sözlük ≠ sözlük</span>C#’ta <code>Dictionary</code> (hash tablosu, Bölüm 13) daha hızlıdır ama anahtarları <b>sırasız</b> tutar. “En küçük”, “şundan hemen önceki”, “şu aralıktakiler” sorularını <b>Sorted</b>Dictionary hızlı yanıtlar.</div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎮 Ağ oyunu: anlık görüntü enterpolasyonu</h2>
+  <div class="cols c64">
+    <div style="font-size:.88em">
+      <p>Sunucu saniyede ~20 kez dünya durumunun <b>anlık görüntüsünü</b> <span class="en">snapshot</span> yollar. İstemci akıcı görüntü için <b>100 ms geriden</b> çizer:</p>
+      <ol>
+        <li>Çizilecek an: <code>t = şimdi − 0,1</code></li>
+        <li class="fragment"><b>floor(t)</b>: t’den önceki son görüntü</li>
+        <li class="fragment"><b>ceiling(t)</b>: t’den sonraki ilk görüntü</li>
+        <li class="fragment">İkisinin arasında oyuncu konumlarını <b>enterpole et</b> (ara değer bul)</li>
+        <li class="fragment">Eski görüntüleri sil: <b>deleteMin</b></li>
+      </ol>
+    </div>
+    <div class="box game"><span class="bt">Gerçek dünya</span>Valve’ın Source motoru (Counter-Strike, Team Fortress 2) bu tekniği kullanır: varsayılan enterpolasyon gecikmesi 100 ms. Zaman damgaları <b>sıralı</b> geldiği için sıradan BST burada en kötü durumuna düşerdi!</div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>floor(t): kütüphaneyle ve elle</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// SortedSet: içinde kırmızı-siyah ağaç var
+var times = new SortedSet<double>();
+times.Add(0.00); times.Add(0.05); times.Add(0.10); times.Add(0.15);
+
+// floor(t): t'den küçük-eşit en büyük zaman
+static double Floor(SortedSet<double> times, double t)
+{
+    // [en küçük, t] aralığına bir "pencere" aç, en büyüğünü al
+    SortedSet<double> view = times.GetViewBetween(double.MinValue, t);
+    return view.Max;     // dikkat: pencere boşsa 0 döner!
+}
+
+Console.WriteLine(Floor(times, 0.12));   // 0.1
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import bisect
+
+times = [0.00, 0.05, 0.10, 0.15]     # SIRALI tutulan liste
+
+bisect.insort(times, 0.20)           # sırayı bozmadan ekle (ama O(N)!)
+
+def floor(t):
+    i = bisect.bisect_right(times, t)    # t'den büyük ilk elemanın yeri
+    if i == 0:
+        return None                      # t'den küçük-eşit eleman yok
+    return times[i - 1]
+
+print(floor(0.12))                       # 0.1
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JS'te hazır dengeli ağaç yok → kendi kırmızı-siyah ağacımızı kullanalım.
+// floor, BST destesindekinin aynısı (renklere bakmaz):
+function floor(x, key) {          // x: ağacın kökü
+  let best = null;
+  while (x !== null) {
+    if (key === x.key) return x.key;
+    if (key < x.key) {
+      x = x.left;                 // daha küçüğünü ara
+    } else {
+      best = x.key;               // aday bulundu, daha iyisi sağda olabilir
+      x = x.right;
+    }
+  }
+  return best;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>var</code> (C#): türü derleyici çıkarır — <code>SortedSet&lt;double&gt; times = new SortedSet&lt;double&gt;();</code> ile aynı. <code>bisect_right</code>: ikili arama (Arama Algoritmaları destesi) ile “t’den büyük ilk eleman”ın indeksini bulur.</p>
+</section>
+
+<section data-sec="oyunda">
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 TARTIŞMA</span>
+    <ol>
+      <li class="fragment">Python’da <code>bisect.insort</code> ekleme başına O(N) ama yine de çoğu zaman hızlı çalışır. Neden? (İpucu: bağlı listeler destesindeki <b>önbellek</b> ve <code>memmove</code>)</li>
+      <li class="fragment">Skor tablosunda “oyuncu kaçıncı sırada?” (rank) sorusunu <code>Dictionary</code> ile nasıl yanıtlarsınız? <code>SortedDictionary</code> ile?</li>
+      <li class="fragment">Bir RTS’de 10.000 zamanlanmış olay var (“12,5 sn’de birim üret”). Her karede “zamanı gelenleri” çalıştırmak için hangi işlemler gerekiyor?</li>
+    </ol>
+  </div>
+  <aside class="notes">1) Dizi elemanları bitişik: kaydırma tek bir hızlı bellek kopyası, önbellek dostu. N birkaç on bine kadar ağaçtan hızlı olabilir. 2) Dictionary: tüm skorları gezip say (N). Sıralı ağaç + düğüm boyutları ile rank lg N. (C#’ın SortedDictionary’si rank desteklemez; kendi ağacınızı ya da sıralı dizi + ikili arama kullanırsınız.) 3) min / deleteMin — bu tam olarak bir ÖNCELİK KUYRUĞU (Bölüm 12) işi; dengeli ağaç da olur ama heap daha basit ve hızlı.</aside>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">B-ağaçları</div>
+  <div class="sub">düğüm başına yüzlerce anahtar: veritabanları ve dosya sistemleri</div>
+  <ul class="agenda"><li class="done">neden denge?</li><li class="done">2-3 ağaçları</li><li class="done">kırmızı-siyah BST</li><li class="done">döndürme & renk çevirme</li><li class="done">ekleme</li><li class="done">analiz</li><li class="done">oyunda & kütüphanelerde</li><li class="on">B-ağaçları</li></ul>
+</section>
+
+<section data-sec="B-ağaçları">
+  <h2>Disk yavaş, sayfa büyük</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <ul>
+        <li>Diskten (ya da SSD’den) okuma <b>sayfa sayfa</b> <span class="en">page</span> olur: tek bayt isteseniz de 4–16 KB gelir.</li>
+        <li class="fragment">Okuma, bellekteki bir karşılaştırmadan <b>binlerce–milyonlarca kat</b> yavaş.</li>
+        <li class="fragment">O hâlde ölçü: <b>kaç sayfa okuduk?</b> (karşılaştırma sayısı değil)</li>
+        <li class="fragment">Fikir: 2-3 ağacını genelleştir → düğüm başına <b>M − 1</b>’e kadar anahtar. Bir düğüm = bir sayfa.</li>
+      </ul>
+    </div>
+    <div class="box low"><span class="bt">⚙️ Yaklaşık erişim süreleri</span>
+      <table class="gloss" style="font-size:18px">
+        <tr><td>L1 önbellek</td><td>~1 ns</td></tr>
+        <tr><td>RAM</td><td>~100 ns</td></tr>
+        <tr><td>NVMe SSD</td><td>~20–100 µs</td></tr>
+        <tr><td>mekanik disk (HDD)</td><td>~5–10 ms</td></tr>
+      </table>
+      <p class="mini">HDD’den bir okuma ≈ RAM’den 100.000 okuma!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="B-ağaçları">
+  <h2>B-ağacı <span class="en">B-tree</span></h2>
+  <div class="cols c46">
+    <div style="font-size:.88em">
+      <ul>
+        <li>Her düğümde <b>M/2</b> ile <b>M − 1</b> arası anahtar (kök hariç). M tipik olarak yüzler–binler.</li>
+        <li class="fragment">Ekleme 2-3 ağacındaki gibi: yaprağa koy, <b>M</b> anahtara ulaşan düğümü ikiye <b>böl</b>, ortadakini yukarı gönder.</li>
+        <li class="fragment">Mükemmel denge: yükseklik ~<b>log<sub>M/2</sub> N</b></li>
+        <li class="fragment">2-3 ağacı = M = 3 olan B-ağacı. 2-3-4 ağacı = M = 4.</li>
+      </ul>
+      <div class="box story fragment"><span class="bt">📜 1970 · Boeing</span>Rudolf Bayer ve Edward McCreight, Boeing araştırma laboratuvarında icat etti. “B” neyin kısaltması? Boeing? Balanced? Bayer? Yazarlar hiçbir zaman açıklamadı. 😄</div>
+    </div>
+    <div><svg viewBox="0 0 796 190" style="width:100%;max-width:700px" font-family="JetBrains Mono"><line x1="402" y1="34" x2="193" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="142" y1="98" x2="46" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="176" y1="98" x2="134" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="210" y1="98" x2="237" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="244" y1="98" x2="340" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="438" y1="34" x2="494" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="458" y1="98" x2="428" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="494" y1="98" x2="501" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="530" y1="98" x2="559" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="474" y1="34" x2="684" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="662" y1="98" x2="632" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="704" y1="98" x2="735" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><rect x="402" y="5" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="423" y="26" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">M</text><text x="453" y="26" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">T</text><line x1="438" y1="10" x2="438" y2="30" style="stroke:var(--muted)"/><rect x="142" y="69" width="102" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="163" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">C</text><text x="193" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">F</text><line x1="178" y1="74" x2="178" y2="94" style="stroke:var(--muted)"/><text x="223" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">J</text><line x1="208" y1="74" x2="208" y2="94" style="stroke:var(--muted)"/><rect x="10" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="31" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">A</text><text x="61" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">B</text><line x1="46" y1="138" x2="46" y2="158" style="stroke:var(--muted)"/><rect x="98" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="119" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">D</text><text x="149" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">E</text><line x1="134" y1="138" x2="134" y2="158" style="stroke:var(--muted)"/><rect x="186" y="133" width="102" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="207" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">G</text><text x="237" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">H</text><line x1="222" y1="138" x2="222" y2="158" style="stroke:var(--muted)"/><text x="267" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">I</text><line x1="252" y1="138" x2="252" y2="158" style="stroke:var(--muted)"/><rect x="304" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="325" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">K</text><text x="355" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">L</text><line x1="340" y1="138" x2="340" y2="158" style="stroke:var(--muted)"/><rect x="458" y="69" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="478" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">P</text><text x="508" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">R</text><line x1="494" y1="74" x2="494" y2="94" style="stroke:var(--muted)"/><rect x="392" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="413" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">N</text><text x="443" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">O</text><line x1="428" y1="138" x2="428" y2="158" style="stroke:var(--muted)"/><rect x="480" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="501" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">Q</text><rect x="538" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="559" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">S</text><rect x="662" y="69" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="684" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">W</text><rect x="596" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="617" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">U</text><text x="647" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">V</text><line x1="632" y1="138" x2="632" y2="158" style="stroke:var(--muted)"/><rect x="684" y="133" width="102" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="705" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">X</text><text x="735" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">Y</text><line x1="720" y1="138" x2="720" y2="158" style="stroke:var(--muted)"/><text x="765" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">Z</text><line x1="750" y1="138" x2="750" y2="158" style="stroke:var(--muted)"/></svg>
+      <p class="mini center">M = 4 olan küçük bir B-ağacı (düğüm başına 1–3 anahtar). Gerçek sistemlerde bir düğüme yüzlerce anahtar sığar.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="B-ağaçları">
+  <h2>B-ağacı hesaplayıcı</h2>
+  <div class="demo" data-demo="btree"></div>
+  <p class="lead fragment">M = 1000 ile <b>1 milyar</b> kayıtta 3–4 seviye. Kök ve ikinci seviye zaten RAM’de durur → bir aramada <b>1–2 disk okuması</b>.</p>
+</section>
+
+<section data-sec="B-ağaçları">
+  <h2>B-ağaçları nerede?</h2>
+  <div class="cols">
+    <ul style="font-size:.9em">
+      <li><b>Veritabanları</b>: SQLite, MySQL (InnoDB), PostgreSQL, SQL Server indeksleri — B-ağacı ya da B+ ağacı (veriler sadece yapraklarda)</li>
+      <li><b>Dosya sistemleri</b>: NTFS, APFS, Btrfs (“B-tree file system”), ext4 dizinleri (HTree)</li>
+      <li><b>Rust</b> dilinin standart sıralı sözlüğü <code>BTreeMap</code>: bellekte bile B-ağacı!</li>
+    </ul>
+    <div>
+      <div class="box game"><span class="bt">🎮 Oyunlarda</span>Birçok mobil oyun ve araç kayıtları, envanterleri, başarımları <b>SQLite</b> veritabanında tutar. <code>SELECT * FROM items WHERE id = 42</code> dediğinizde arka planda bir B-ağacında 3–4 düğüm geziliyor.</div>
+      <div class="box low fragment"><span class="bt">⚙️ RAM’de bile B-ağacı?</span>Rust neden kırmızı-siyah değil de B-ağacı seçti? <b>Önbellek!</b> Bir düğümdeki anahtarlar yan yana → tek önbellek satırı yüklemesiyle birçok karşılaştırma. Kırmızı-siyah ağaçta her adım başka bir yere atlayan bir işaretçi (önbellek ıskası).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="B-ağaçları">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 6 · B-ağaçları</div>
+    <div class="q">Her düğümün yaklaşık 500–1000 bağlantısı olan bir B-ağacında <b>1 milyar</b> kayıt var. Bir arama yaklaşık kaç düğüm ziyaret eder?</div>
+    <div class="opts">
+      <button data-opt="A">1</button>
+      <button data-opt="B">3–4</button>
+      <button data-opt="C">30</button>
+      <button data-opt="D">1000</button>
+    </div>
+    <div class="explain">log<sub>1000</sub> 10⁹ = 3 ve log<sub>500</sub> 10⁹ ≈ 3,3 → <b>3–4 seviye</b>. Dengeli ikili ağaçta bu sayı ~30 olurdu; diskte her seviye bir okuma demek. Fark: 30 × 10 ms = 0,3 sn yerine 30–40 ms (ve kök RAM’deyse daha da az).</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Sorun</b>: BST sıralı girdide çizgiye döner.</li>
+      <li><b>2-3 ağacı</b>: 3-düğümler + bölme; ağaç yukarı büyür → mükemmel denge.</li>
+      <li><b>Kırmızı-siyah BST</b>: 3-düğüm = kırmızı bağlantıyla bağlı iki düğüm. Arama kodu BST ile aynı.</li>
+      <li><b>Üç hamle</b>: rotateLeft, rotateRight, flipColors.</li>
+    </ul>
+    <ul>
+      <li><b>Ekleme</b>: kırmızı ekle, yukarı çıkarken 3 kuralla onar; kök siyah.</li>
+      <li><b>Garanti</b>: yükseklik ≤ 2 lg N (pratikte ~lg N).</li>
+      <li>🎮 SortedDictionary / SortedSet, Linux zamanlayıcısı, ağ enterpolasyonu.</li>
+      <li>💾 <b>B-ağaçları</b>: düğüm = disk sayfası; veritabanları, dosya sistemleri.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: <code>E A S Y Q U T I O N</code> anahtarlarını boş bir 2-3 ağacına sırayla ekleyin. Sonra aynısını kırmızı-siyah BST’ye ekleyip “2-3 görünümü” ile karşılaştırın.</li>
+    <li>1’den 7’ye sırayla eklenen anahtarların kırmızı-siyah ağacını çizin. Sonuç neden mükemmel dengeli bir ikili ağaç?</li>
+    <li>Bir kırmızı-siyah ağacın <b>kurallara uyduğunu</b> kontrol eden bir fonksiyon yazın: (a) kırmızılar sola yatık mı, (b) art arda iki kırmızı var mı, (c) siyah denge tutuyor mu?</li>
+    <li>Unity’de <code>SortedDictionary&lt;float, string&gt;</code> ile bir “zamanlanmış olaylar” sistemi yapın: her karede zamanı gelen olayları çalıştırıp silin.</li>
+    <li>B-ağacı hesaplayıcıda M = 4’ü seçin: 2-3-4 ağacının yüksekliği kırmızı-siyah ağaçla nasıl karşılaştırılır?</li>
+    <li>🤖 Bir YZ asistanından kırmızı-siyah ağaç kodu isteyin. Sola yatık (LLRB) mı yoksa klasik sürüm mü verdi? Kaç satır? Sıralı 1…1000 ekleyip yüksekliği ölçün.</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=qvZGUFHWChY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/qvZGUFHWChY/hqdefault.jpg" alt=""><span><b>Red-black trees in 3 minutes — Intro</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=A3JZinzkMpk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/A3JZinzkMpk/hqdefault.jpg" alt=""><span><b>Red-black trees in 5 minutes — Insertions</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=nMExd4DthdA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/nMExd4DthdA/hqdefault.jpg" alt=""><span><b>Red-Black Trees — rules</b><br>Rob Edwards</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=bhKixY-cZHE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/bhKixY-cZHE/hqdefault.jpg" alt=""><span><b>2-3 Tree Insertion</b><br>distanceedjohn</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=K1a2Bk8NrYQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/K1a2Bk8NrYQ/hqdefault.jpg" alt=""><span><b>Understanding B-Trees</b><br>Spanning Tree</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/33balanced/" target="_blank">algs4 · 3.3 Balanced Search Trees</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/33BalancedSearchTrees.pdf" target="_blank">Princeton ders slaytları: Balanced Search Trees (PDF)</a></li>
+      <li><a href="https://sedgewick.io/wp-content/themes/sedgewick/papers/2008LLRB.pdf" target="_blank">R. Sedgewick · Left-leaning Red-Black Trees (2008)</a></li>
+      <li><a href="https://www.sqlite.org/fileformat2.html" target="_blank">SQLite dosya biçimi: B-ağacı sayfaları</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/RedBlack.html" target="_blank">USFCA · Red-Black Tree görselleştirmesi</a></li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/BTree.html" target="_blank">USFCA · B-Tree görselleştirmesi</a></li>
+      <li><a href="https://www.cs.usfca.edu/~galles/visualization/AVLtree.html" target="_blank">USFCA · AVL Tree görselleştirmesi</a></li>
+      <li><a href="../agaclar-bst/">Önceki deste: Ağaçlar ve BST</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:56px">BST’nin Geometrik Uygulamaları</div>
+    <div class="sub">Aralık arama, kd-ağaçları, çarpışma adayları: oyun dünyasında “yakınımda ne var?”</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../bst-geometrik/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/agac.js"></script>
+<script src="../ortak/dengeli.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

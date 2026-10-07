@@ -576,3 +576,12 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .bs-cell.jj { box-shadow: 0 0 0 3px var(--pink); }
 .lf-wrap { display: grid; grid-template-columns: 760px minmax(0, 1fr); gap: 16px; align-items: start; }
 .lf-info { font-size: 18px; } .lf-info .big { margin: 4px 0; }
+
+/* ---------- dengeli ağaçlar ---------- */
+.t23-svg { display: block; width: 100%; height: auto; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
+.node23 { display: inline-flex; border: 2px solid var(--ink-2); border-radius: 8px; overflow: hidden; font: 700 20px "JetBrains Mono", monospace; vertical-align: middle; }
+.node23 > span { padding: 2px 10px; background: var(--card); }
+.node23 > span + span { border-left: 1.5px solid var(--rule); }
+.node23.hot > span { background: var(--red); color: #fff; }
+.node23.ok > span { background: var(--green); color: #fff; }
+.redlink { color: var(--red); font-weight: 800; }

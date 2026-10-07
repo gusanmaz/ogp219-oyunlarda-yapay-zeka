@@ -17,11 +17,13 @@
     const order = [];
     let height = -1;
     // özyinelemesiz inorder (derin ağaçlarda yığın taşmasın)
+    // o.flatRed: kırmızı bağlantılı çocuk ebeveyniyle AYNI seviyede (2-3 ağacı görünümü)
+    const step = c => (o.flatRed && c && c.red ? 0 : 1);
     const st = []; let x = root, d = 0;
     while (x || st.length) {
-      while (x) { st.push([x, d]); x = x.l; d++; }
+      while (x) { st.push([x, d]); d += step(x.l); x = x.l; }
       const [y, dy] = st.pop(); order.push([y, dy]); if (dy > height) height = dy;
-      x = y.r; d = dy + 1;
+      x = y.r; d = dy + step(y.r);
     }
     const n = order.length;
     const mx = o.mx != null ? o.mx : 26, top = o.top != null ? o.top : 28, bottom = o.bottom != null ? o.bottom : 26;
@@ -100,7 +102,7 @@
           if (c) {
             const q = P(c.id);
             const on = hot(hl[x.id]) && hot(hl[c.id]);
-            ctx.strokeStyle = on ? t.amber : t['ink-2']; ctx.lineWidth = on ? 3.5 : 1.6; ctx.globalAlpha = on ? 1 : 0.7;
+            ctx.strokeStyle = on ? t.amber : c.red ? t.red : t['ink-2']; ctx.lineWidth = on ? 3.5 : c.red ? 4.5 : 1.6; ctx.globalAlpha = on || c.red ? 1 : 0.7;
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.globalAlpha = 1;
             st.push(c);
           } else if (this.o.nulls && r >= 8) {
