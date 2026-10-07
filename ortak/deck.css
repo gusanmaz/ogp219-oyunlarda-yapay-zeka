@@ -667,3 +667,7 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .g-dq.post span { border-color: var(--green); }
 .g-dq span.on { background: var(--amber); border-color: var(--amber); color: #111; }
 .g-order { margin: 4px 0 0 1.2em; font-size: 16px; line-height: 1.35; }
+.mst-list > div { padding: 0 6px; border-radius: 5px; }
+.mst-list > div.in { color: var(--green); font-weight: 700; }
+.mst-list > div.out { color: var(--muted); text-decoration: line-through; }
+.mst-list > div.cur { background: color-mix(in srgb, var(--amber) 30%, transparent); }

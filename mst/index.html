@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minimum Yayılan Ağaçlar</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Minimum yayılan ağaçlar: kesme özelliği, açgözlü algoritma, Kruskal (Union–Find), Prim (öncelik kuyruğu), prosedürel zindan koridorları, labirent, kümeleme. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a3a0d 0%, #1a1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · GRAFLAR</div>
+  <div class="ttl" style="font-size:62px">Minimum Yayılan Ağaçlar</div>
+  <div class="sub"><i>Kruskal, Prim ve kesme özelliği</i> — her şeyi en ucuza bağlamak</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlemst"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.3 Minimum Spanning Trees bölümünü temel alır. Arka planda rastgele odalar ve Kruskal’ın tek tek kazdığı koridorlar: prosedürel zindan üretiminin klasik adımı.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li><b>Tanım</b> — ağırlıklı graf, yayılan ağaç <span class="en">spanning tree</span></li>
+      <li><b>Kesme özelliği</b> — bütün MST algoritmalarının sırrı <span class="en">cut property</span></li>
+      <li><b>Kruskal</b> — en ucuz kenardan başla, döngü yapma (Union–Find!)</li>
+      <li><b>Prim</b> — bir düğümden büyüt (öncelik kuyruğu!)</li>
+      <li><b>Oyunda MST</b> — prosedürel zindan koridorları, labirentler, birlik kümeleme</li>
+      <li><b>Bağlam</b> — 1926’dan bugüne, hâlâ çözülmemiş soru</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…rastgele yerleştirilmiş odaları en az koridorla birbirine bağlayan bir zindan üreticisi yazabilecek ve bunun için daha önce öğrendiğiniz <b>iki</b> veri yapısını (Union–Find ve öncelik kuyruğu) birlikte kullanacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ADALARI BAĞLA</span>
+    <p class="big">Bir strateji oyununda 8 ada var. Aralarına köprü kurmak pahalı: her köprünün maliyeti farklı. Bütün adalar birbirine (dolaylı da olsa) bağlı olmalı.</p>
+  </div>
+  <ul style="font-size:.95em">
+    <li class="fragment">En az kaç köprü gerekir? → <b>7</b> (ada sayısı − 1). Daha fazlası gereksiz bir döngü kurar.</li>
+    <li class="fragment">Hangi 7 köprü, <b>toplam maliyet</b> en az olacak şekilde?</li>
+    <li class="fragment">Olası köprü setleri: milyarlarca! Hepsini denemek imkânsız.</li>
+  </ul>
+  <p class="fragment lead">Şaşırtıcı haber: <b>açgözlü</b> <span class="en">greedy</span> davranmak (hep en ucuz köprüyü seçmek, döngü yapmadıkça) <b>kesinlikle</b> en iyi sonucu verir.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>edge-weighted graph</td><td>kenar ağırlıklı graf</td><td>Her kenarın bir maliyeti (uzunluk, para, süre) var</td></tr>
+    <tr><td>spanning tree</td><td>yayılan ağaç</td><td>Bütün düğümleri kapsayan, döngüsüz, bağlı alt graf (V − 1 kenar)</td></tr>
+    <tr><td>MST</td><td>minimum yayılan ağaç</td><td>Ağırlıkları toplamı en küçük yayılan ağaç</td></tr>
+    <tr><td>cut · crossing edge</td><td>kesme · kesişen kenar</td><td>Düğümleri iki gruba ayırma · iki grubu birleştiren kenar</td></tr>
+    <tr><td>greedy algorithm</td><td>açgözlü algoritma</td><td>Her adımda o an en iyi görüneni seçen, geri dönmeyen algoritma</td></tr>
+    <tr><td>lazy / eager Prim</td><td>tembel / hevesli Prim</td><td>Bayat kenarları PQ’da bırakan / hemen güncelleyen sürüm</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Tanım</div>
+  <div class="sub">ağırlıklı graf ve yayılan ağaç</div>
+  <ul class="agenda"><li class="on">tanım</li><li class="">kesme özelliği</li><li class="">Kruskal</li><li class="">Prim</li><li class="">oyunda MST</li><li class="">bağlam</li></ul>
+</section>
+
+<section data-sec="tanım">
+  <h2>Ağırlıklı graf: kitaptaki “tinyEWG”</h2>
+  <div class="demo" data-demo="gview" data-graph="tinyEWG" data-sel="0"></div>
+  <p class="mini">8 düğüm, 16 kenar; her kenarın üstünde ağırlığı. Komşuluk listesinde artık her kayıt (komşu, ağırlık) çifti. Bir düğüme tıklayın.</p>
+</section>
+
+<section data-sec="tanım">
+  <h2>Yayılan ağaç ve MST</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p><b>Yayılan ağaç</b>: grafın bir alt grafı ki</p>
+      <ul>
+        <li><b>bütün</b> düğümleri içerir,</li>
+        <li><b>bağlıdır</b> (her düğümden her düğüme yol var),</li>
+        <li><b>döngüsüzdür</b> (ağaç).</li>
+      </ul>
+      <p class="fragment">Sonuç: tam <b>V − 1</b> kenarı vardır.</p>
+      <p class="fragment"><b>MST</b>: toplam ağırlığı en küçük yayılan ağaç. tinyEWG için toplam <b>1,81</b>.</p>
+    </div>
+    <div class="box story fragment"><span class="bt">Kolaylık varsayımları</span>
+      <ul>
+        <li>Graf <b>bağlı</b> (değilse her bileşen için bir MST: “minimum yayılan orman”)</li>
+        <li>Ağırlıklar <b>farklı</b> (o zaman MST <b>tek</b>tir)</li>
+      </ul>
+      <p class="mini">Ağırlıklar negatif olabilir; algoritmalar yine çalışır (en kısa yollardan farkı!).</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tanım">
+  <h2>MST nerede kullanılır?</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>alan</th><th>düğüm</th><th>kenar ağırlığı</th></tr>
+    <tr><td>Ağ tasarımı (elektrik, telefon, internet kablosu)</td><td>şehir / bina</td><td>kablo maliyeti</td></tr>
+    <tr><td>🎮 Prosedürel zindan / harita</td><td>oda / ada / şehir</td><td>koridor / yol uzunluğu</td></tr>
+    <tr><td>🎮 Labirent üretimi</td><td>hücre</td><td>rastgele</td></tr>
+    <tr><td>🎮 Birlikleri gruplara ayırma (kümeleme)</td><td>birim</td><td>mesafe</td></tr>
+    <tr><td>Görüntü bölütleme, kanser araştırması (Princeton listesi)</td><td>piksel / hücre</td><td>benzemezlik</td></tr>
+    <tr><td>Gezgin satıcı için yaklaşık çözüm</td><td>şehir</td><td>mesafe</td></tr>
+  </table>
+</section>
+
+<section data-sec="tanım">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · tanım</div>
+    <div class="q">50 odalı bir zindanın odalarını koridorlarla bağlayan bir yayılan ağaçta kaç koridor vardır?</div>
+    <div class="opts">
+      <button data-opt="A">50</button>
+      <button data-opt="B">49</button>
+      <button data-opt="C">25</button>
+      <button data-opt="D">Odaların yerine bağlı</button>
+    </div>
+    <div class="explain">Her yayılan ağacın tam <b>V − 1</b> kenarı vardır: 50 oda → 49 koridor. Bir eksik olsa graf bağlı olmaz; bir fazla olsa döngü oluşur. Hangi 49 koridor olacağı ise ağırlıklara bağlı — MST onu seçer.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Kesme özelliği</div>
+  <div class="sub"><i>cut property</i> — açgözlülük neden doğru?</div>
+  <ul class="agenda"><li class="done">tanım</li><li class="on">kesme özelliği</li><li class="">Kruskal</li><li class="">Prim</li><li class="">oyunda MST</li><li class="">bağlam</li></ul>
+</section>
+
+<section data-sec="kesme özelliği">
+  <h2>Kesme özelliği — kendiniz deneyin</h2>
+  <div class="demo" data-demo="cut"></div>
+  <p class="mini">Hangi kesmeyi seçerseniz seçin, yeşil kenar (en hafif kesişen) her zaman tinyEWG’nin MST’sindeki 7 kenardan biri: 0–7, 1–7, 0–2, 2–3, 5–7, 4–5, 6–2.</p>
+</section>
+
+<section data-sec="kesme özelliği">
+  <h2>Kesme özelliği ve kanıtı</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme (kesme özelliği)</span>Herhangi bir kesmede, <b>en hafif kesişen kenar</b> MST’dedir.</div>
+    <div class="box proof"><span class="bt">Kanıt (değiş-tokuş)</span>
+      <ul>
+        <li class="fragment">Diyelim ki en hafif kesişen kenar <b>e</b>, MST’de <b>yok</b>.</li>
+        <li class="fragment">e’yi MST’ye ekle → bir <b>döngü</b> oluşur.</li>
+        <li class="fragment">Bu döngü kesmeyi bir kez e ile geçiyor; geri dönmek için kesmeyi <b>başka bir kenarla</b> (f) da geçmeli.</li>
+        <li class="fragment">f’yi çıkar: hâlâ yayılan ağaç, ama e, f’den hafif → toplam ağırlık <b>azaldı</b>. MST daha hafif olamaz → çelişki! ∎</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kesme özelliği">
+  <h2>Genel açgözlü algoritma</h2>
+  <div class="cols c64">
+    <ol style="font-size:.95em">
+      <li>Bütün kenarlar başta gri</li>
+      <li class="fragment">Siyah kenarlardan hiçbirinin geçmediği bir <b>kesme</b> bul</li>
+      <li class="fragment">O kesmenin en hafif kesişen kenarını <b>siyaha</b> boya (MST’ye al)</li>
+      <li class="fragment">V − 1 kenar siyah olana kadar tekrarla</li>
+    </ol>
+    <div class="box story fragment"><span class="bt">İki ünlü seçim</span>Kesmeyi nasıl seçtiğiniz algoritmayı belirler:
+      <ul><li><b>Kruskal</b>: kenarları hafiften ağıra dene</li><li><b>Prim</b>: kesme = “şimdiye kadarki ağaç” vs “geri kalan”</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="kesme özelliği">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · kesme özelliği</div>
+    <div class="q">Bir düğümün en hafif kenarı hakkında ne söylenebilir? (Ağırlıklar farklı.)</div>
+    <div class="opts">
+      <button data-opt="A">Her zaman MST’dedir: o düğüm tek başına bir kesmenin bir tarafı</button>
+      <button data-opt="B">Hiçbir zaman MST’de değildir</button>
+      <button data-opt="C">Sadece düğüm yapraksa MST’dedir</button>
+      <button data-opt="D">Bir şey söylenemez</button>
+    </div>
+    <div class="explain">Kesme = {o düğüm} ve {geri kalan herkes}. Bu kesmenin kesişen kenarları tam o düğümün kenarları. En hafifi → kesme özelliğiyle MST’de. (Borůvka algoritması tam bu fikirle başlar!)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Kruskal</div>
+  <div class="sub">kenarları ucuzdan pahalıya dene, döngü yapanı at</div>
+  <ul class="agenda"><li class="done">tanım</li><li class="done">kesme özelliği</li><li class="on">Kruskal</li><li class="">Prim</li><li class="">oyunda MST</li><li class="">bağlam</li></ul>
+</section>
+
+<section data-sec="Kruskal">
+  <h2>Kruskal algoritması</h2>
+  <div class="demo" data-demo="kruskal"></div>
+  <p class="mini">Renkler = şimdiki bileşenler (orman). Bir kenar iki <b>farklı</b> renkteki düğümü bağlıyorsa alınır ve iki renk birleşir; aynı renkse döngü yapacağı için atılır. “Aynı bileşende mi?” sorusu… <b>Union–Find</b> (Ders 1)!</p>
+</section>
+
+<section data-sec="Kruskal">
+  <h2>Kruskal — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-11|4|5-8|9-10"><script type="text/template">
+def kruskal(V, edges):                  # edges: (v, w, ağırlık) listesi
+    uf = UnionFind(V)                   # Ders 1'deki yapı
+    mst = []
+    for v, w, wt in sorted(edges, key=lambda e: e[2]):   # hafiften ağıra
+        if uf.find(v) != uf.find(w):    # farklı bileşenler mi?
+            uf.union(v, w)              # birleştir
+            mst.append((v, w, wt))
+            if len(mst) == V - 1:       # ağaç tamam
+                break
+    return mst
+
+edges = [(0, 7, .16), (2, 3, .17), (1, 7, .19), (0, 2, .26)]   # ...
+print(sum(e[2] for e in kruskal(8, edges)))
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static List<(int v, int w, double wt)> Kruskal(int V, List<(int v, int w, double wt)> edges)
+{
+    edges.Sort((a, b) => a.wt.CompareTo(b.wt));   // hafiften ağıra
+    var uf = new UnionFind(V);
+    var mst = new List<(int v, int w, double wt)>();
+    foreach (var e in edges)
+    {
+        if (uf.Find(e.v) == uf.Find(e.w)) continue;   // döngü yapar: atla
+        uf.Union(e.v, e.w);
+        mst.Add(e);
+        if (mst.Count == V - 1) break;
+    }
+    return mst;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function kruskal(V, edges) {                  // edges: [v, w, ağırlık]
+  edges.sort((a, b) => a[2] - b[2]);          // hafiften ağıra
+  const uf = new UnionFind(V);
+  const mst = [];
+  for (const [v, w, wt] of edges) {
+    if (uf.find(v) === uf.find(w)) continue;  // döngü yapar: atla
+    uf.union(v, w);
+    mst.push([v, w, wt]);
+    if (mst.length === V - 1) break;
+  }
+  return mst;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="🎒 koddaki yeni ifadeler">
+  <h2>🎒 Kruskal kodundaki yeni ifadeler: sıralama anahtarı</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>sorted(edges, key=lambda e: e[2])</td><td>Python</td><td>“Kenarları <b>3. elemanlarına</b> (ağırlığa) göre sırala.” <code>lambda e: e[2]</code> = “e alır, e[2] döndürür” kısa fonksiyonu</td></tr>
+    <tr><td>(a, b) =&gt; a.wt.CompareTo(b.wt)</td><td>C#</td><td>İki kenarı karşılaştıran fonksiyon: negatif → a önce, pozitif → b önce</td></tr>
+    <tr><td>(a, b) =&gt; a[2] - b[2]</td><td>JavaScript</td><td>Aynı fikir: fark negatifse a önce</td></tr>
+    <tr><td>(int v, int w, double wt)</td><td>C# demet</td><td>Sınıf yazmadan üç alanlı küçük kayıt</td></tr>
+  </table>
+  <p class="mini">Lambda yerine geleneksel yol (Python): ayrı bir fonksiyon yazıp adını vermek:</p>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def weight(e):            # "bir kenar al, ağırlığını döndür"
+    return e[2]
+
+edges_sorted = sorted(edges, key=weight)     # lambda'sız aynısı
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int ByWeight((int v, int w, double wt) a, (int v, int w, double wt) b)
+{
+    return a.wt.CompareTo(b.wt);
+}
+edges.Sort(ByWeight);                         // lambda'sız aynısı
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function byWeight(a, b) {
+  return a[2] - b[2];
+}
+edges.sort(byWeight);                         // ok fonksiyonsuz aynısı
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="Kruskal">
+  <h2>Kruskal: doğru mu, ne kadar sürer?</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>Kruskal algoritması MST’yi bulur. Süresi en kötü durumda <b>E log E</b> ile orantılıdır.</div>
+    <div class="box proof"><span class="bt">Neden?</span>
+      <ul>
+        <li><b>Doğruluk</b>: alınan kenar v–w’de, kesme = {v’nin bileşeni} vs {geri kalan}. Daha hafif kesişen kenar olsaydı daha önce denenmiş ve alınmış olurdu → e en hafif kesişen kenar → kesme özelliği ✔</li>
+        <li><b>Süre</b>: sıralama E log E + E kez Union–Find (≈ sabit) → <b>E log E</b></li>
+      </ul>
+    </div>
+  </div>
+  <p class="mini">Princeton’ın sürümü sıralamak yerine bir öncelik kuyruğu (MinPQ) kullanır: aynı süre, ama erken bitince geri kalan kenarları hiç sıralamamış olur.</p>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: Kruskal</h2>
+  <div class="mstlab" data-task="kruskal" data-lang="js">
+<textarea>
+// edges: [[v, w, ağırlık], ...]  — MST'nin TOPLAM ağırlığını döndür.
+// Hazır: new UF(V) → uf.find(x), uf.union(a, b) (birleştirdiyse true)
+function kruskal(V, edges) {
+  const uf = new UF(V);
+  let total = 0;
+  for (const [v, w, wt] of edges) {
+    if (uf.find(v) !== uf.find(w)) {
+      uf.union(v, w);
+      total += wt;
+    }
+  }
+  return total;
+}
+</textarea>
+    <div class="lab-tasks">Bu kod her zaman bir yayılan ağaç buluyor — ama <b>minimum</b> değil! Hangi satır eksik? (İpucu: Kruskal kenarlara hangi sırayla bakmalı?) Bonus: <code>uf.union</code>’un true/false dönüşünü kullanarak <code>if</code>’i tek satıra indirin.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Prim</div>
+  <div class="sub">tek bir düğümden başla, ağacı büyüt</div>
+  <ul class="agenda"><li class="done">tanım</li><li class="done">kesme özelliği</li><li class="done">Kruskal</li><li class="on">Prim</li><li class="">oyunda MST</li><li class="">bağlam</li></ul>
+</section>
+
+<section data-sec="Prim">
+  <h2>Prim algoritması (tembel sürüm)</h2>
+  <div class="demo" data-demo="prim"></div>
+  <p class="mini">Mavi = ağaçtaki düğümler. Kesme = “ağaç” vs “ağaç dışı”. Ağacın dışarı uzanan kenarları bir <b>öncelik kuyruğunda</b> (Öncelik Kuyrukları destesi!); her adımda en hafifi alınır. İki ucu da ağaca girmiş kenarlar “bayat” olur: çıkınca atılır (tembellik).</p>
+</section>
+
+<section data-sec="Prim">
+  <h2>Prim — kod (tembel, MinPQ ile)</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-11|13-20"><script type="text/template">
+import heapq
+
+def prim(V, adj):                       # adj[v] = [(w, ağırlık), ...]
+    marked = [False] * V                # ağaçta mı?
+    pq = []                             # (ağırlık, v, w)
+    total = 0
+
+    def visit(v):                       # v'yi ağaca al, kenarlarını PQ'ya koy
+        marked[v] = True
+        for w, wt in adj[v]:
+            if not marked[w]:
+                heapq.heappush(pq, (wt, v, w))
+
+    visit(0)
+    while pq:
+        wt, v, w = heapq.heappop(pq)    # en hafif kesişen kenar
+        if marked[v] and marked[w]:
+            continue                    # bayat kenar: atla
+        total += wt
+        visit(w if not marked[w] else v)
+    return total
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static double Prim(int V, List<(int w, double wt)>[] adj)
+{
+    var marked = new bool[V];
+    var pq = new PriorityQueue<(int v, int w, double wt), double>();
+    double total = 0;
+
+    void Visit(int v)
+    {
+        marked[v] = true;
+        foreach (var (w, wt) in adj[v])
+            if (!marked[w]) pq.Enqueue((v, w, wt), wt);
+    }
+
+    Visit(0);
+    while (pq.Count > 0)
+    {
+        var e = pq.Dequeue();                       // en hafif kesişen kenar
+        if (marked[e.v] && marked[e.w]) continue;   // bayat
+        total += e.wt;
+        Visit(marked[e.w] ? e.v : e.w);
+    }
+    return total;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// MinPQ: Öncelik Kuyrukları destesindeki ikili yığın (push/pop/size)
+function prim(V, adj) {                 // adj[v] = [[w, ağırlık], ...]
+  const marked = new Array(V).fill(false);
+  const pq = new MinPQ((a, b) => a[2] - b[2]);   // [v, w, ağırlık]
+  let total = 0;
+  const visit = v => {
+    marked[v] = true;
+    for (const [w, wt] of adj[v]) if (!marked[w]) pq.push([v, w, wt]);
+  };
+  visit(0);
+  while (pq.size > 0) {
+    const [v, w, wt] = pq.pop();        // en hafif kesişen kenar
+    if (marked[v] && marked[w]) continue;   // bayat
+    total += wt;
+    visit(marked[w] ? v : w);
+  }
+  return total;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="Prim">
+  <h2>Prim mi, Kruskal mı?</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>algoritma</th><th>fikir</th><th>yardımcı yapı</th><th>süre</th></tr>
+    <tr><td>Kruskal</td><td>ormanları birleştir</td><td>sıralama + Union–Find</td><td>E log E</td></tr>
+    <tr><td>Prim (tembel)</td><td>tek ağacı büyüt</td><td>MinPQ (kenarlar)</td><td>E log E</td></tr>
+    <tr><td>Prim (hevesli)</td><td>tek ağacı büyüt</td><td>indeksli MinPQ (düğümler)</td><td>E log V</td></tr>
+  </table>
+  <div class="cols" style="margin-top:10px">
+    <div class="box story"><span class="bt">Pratikte</span>Seyrek graflarda (oyun haritaları) ikisi de çok hızlı. Kenarlar zaten bir listede ise Kruskal yazması daha kolay; graf büyük ve komşuluk listesiyle tutuluyorsa Prim.</div>
+    <div class="box low"><span class="bt">⚙️ Hevesli Prim</span>PQ’da kenar değil <b>düğüm</b> tutulur: “bu düğümü ağaca bağlamanın şimdiki en ucuz yolu”. Daha ucuz yol bulununca öncelik <b>düşürülür</b> (decreaseKey). PQ en fazla V elemanlı → E log V. Aynı fikri Dijkstra’da göreceğiz!</div>
+  </div>
+</section>
+
+<section data-sec="Prim">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · Prim</div>
+    <div class="q">Tembel Prim’de PQ’dan çıkan bir kenarın iki ucu da ağaçtaysa neden atılır?</div>
+    <div class="opts">
+      <button data-opt="A">Çünkü ağırlığı çok büyüktür</button>
+      <button data-opt="B">Çünkü artık kesmeyi geçmiyor: eklenirse ağaçta döngü oluşur</button>
+      <button data-opt="C">Çünkü PQ bozuk</button>
+      <button data-opt="D">Atılmaz, eklenir</button>
+    </div>
+    <div class="explain">Kenar PQ’ya girdiğinde bir ucu ağaçta, öteki dışarıdaydı (kesişen kenar). Sonra öteki uç başka bir kenarla ağaca katıldı → kenar “bayat”. Eklemek döngü yaratır. Tembel sürüm bu kenarları baştan silmek yerine çıkınca atlar.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Prim (Python)</h2>
+  <div class="mstlab" data-task="prim" data-lang="python">
+<textarea>
+import heapq
+# adj[v] = [(w, ağırlık), ...]  — MST'nin toplam ağırlığını döndür
+def prim(V, adj):
+    marked = [False] * V
+    pq = []
+    total = 0
+    def visit(v):
+        marked[v] = True
+        for w, wt in adj[v]:
+            if not marked[w]:
+                heapq.heappush(pq, (wt, v, w))
+    visit(0)
+    while pq:
+        wt, v, w = heapq.heappop(pq)
+        total += wt
+        if not marked[w]:
+            visit(w)
+    return total
+</textarea>
+    <div class="lab-tasks">Toplam fazla çıkıyor. Neden? (İpucu: PQ’dan çıkan her kenar gerçekten ağaca mı ekleniyor? Bayat kenarlar ne olacak?) Düzeltin.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Oyunda MST</div>
+  <div class="sub">zindan koridorları, labirentler, birlik grupları</div>
+  <ul class="agenda"><li class="done">tanım</li><li class="done">kesme özelliği</li><li class="done">Kruskal</li><li class="done">Prim</li><li class="on">oyunda MST</li><li class="">bağlam</li></ul>
+</section>
+
+<section data-sec="oyunda">
+  <h2>🎮 Prosedürel zindan: odaları MST ile bağla</h2>
+  <div class="demo" data-demo="dungeon"></div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>TinyKeep tarifi (adım adım)</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li>Rastgele boyutlu odalar üret, çakışanları it/ayır</li>
+      <li>Büyük odaları “ana oda” seç</li>
+      <li>Oda merkezleri arasında aday kenarlar: <b>Delaunay üçgenlemesi</b> (biz basitçe “en yakın 4 komşu” kullandık)</li>
+      <li><b>MST</b> → her oda ulaşılabilir, koridor sayısı en az</li>
+      <li>MST dışından birkaç kenarı (~%10–15) geri ekle → döngüler, kestirme yollar</li>
+      <li>Kenarları L biçimli koridorlara çevir; koridorun geçtiği küçük odaları da zindana kat</li>
+    </ol>
+    <div class="box game"><span class="bt">Neden MST + biraz fazlası?</span>Saf MST bir <b>ağaç</b>: her iki oda arasında tek yol → bol çıkmaz, sürekli geri dönüş. Saf tam graf: her yerden her yere koridor → labirent hissi yok. Seviye tasarımı ikisi arasında bir denge.<p class="mini">Kaynak: A. Adonaac, “Procedural Dungeon Generation Algorithm” (Game Developer), TinyKeep oyunundan esinlenerek.</p></div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>Labirentler ve kümeleme</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">🌀 Labirent = rastgele ağırlıklı ızgaranın MST’si</span>Izgaradaki her duvara rastgele bir ağırlık ver; MST’yi (Kruskal) bul; MST kenarlarının duvarlarını yık. Sonuç: her hücreye tek yol olan “mükemmel labirent”. (Union–Find destesindeki labirent tam buydu!) Prim ile üretilen labirentler daha kısa, dallı koridorlu olur — tadı farklı.</div>
+    <div class="box game"><span class="bt">⚔️ Birlikleri k gruba ayır</span>Birim konumlarının MST’sini bul, <b>en ağır k − 1</b> kenarı sil → k bağlı bileşen = k küme (tek bağlantılı kümeleme, Princeton’ın uygulaması). RTS’de seçili 40 birimi otomatik takımlara bölmek ya da ekranda “ordu” etiketlerini gruplamak için.</div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · oyunda</div>
+    <div class="q">Zindan üreticisi saf MST koridorlarını kullansaydı oyuncu deneyimi nasıl olurdu?</div>
+    <div class="opts">
+      <button data-opt="A">Bazı odalara ulaşılamazdı</button>
+      <button data-opt="B">Her oda ulaşılabilir ama iki oda arasında tek yol var: çok çıkmaz ve geri dönüş</button>
+      <button data-opt="C">Koridorlar birbirini keserdi</button>
+      <button data-opt="D">Zindan sonsuz olurdu</button>
+    </div>
+    <div class="explain">MST bir yayılan <b>ağaç</b>: bağlı (herkes ulaşılabilir) ama döngüsüz (alternatif rota yok). Bu yüzden tasarımcılar MST dışından birkaç kenarı geri ekleyip döngüler oluşturur — oyuncuya seçenek ve kestirme verir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Bağlam</div>
+  <div class="sub">bir asırlık bir problem ve hâlâ açık bir soru</div>
+  <ul class="agenda"><li class="done">tanım</li><li class="done">kesme özelliği</li><li class="done">Kruskal</li><li class="done">Prim</li><li class="done">oyunda MST</li><li class="on">bağlam</li></ul>
+</section>
+
+<section data-sec="bağlam">
+  <h2>📜 MST’nin tarihi</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>yıl</th><th>kim</th><th>ne</th></tr>
+    <tr><td>1926</td><td>Otakar Borůvka</td><td>Moravya’nın (Çekya) elektrik şebekesini en ucuza kurmak için — ilk MST algoritması</td></tr>
+    <tr><td>1930</td><td>Vojtěch Jarník</td><td>Bugün “Prim” dediğimiz algoritma (Çek dergisinde, fark edilmedi)</td></tr>
+    <tr><td>1956</td><td>Joseph Kruskal</td><td>Kruskal algoritması (bir sayfalık makale)</td></tr>
+    <tr><td>1957 · 1959</td><td>Robert Prim · Edsger Dijkstra</td><td>Jarník’in algoritmasını bağımsız olarak yeniden buldular</td></tr>
+    <tr><td>2000</td><td>Bernard Chazelle</td><td>Neredeyse doğrusal: E α(V) (α = Union–Find’daki ters Ackermann!)</td></tr>
+    <tr><td>???</td><td>siz?</td><td><b>Doğrusal zamanlı</b> (E) deterministik bir MST algoritması var mı? Hâlâ bilinmiyor!</td></tr>
+  </table>
+</section>
+
+<section data-sec="bağlam">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 5 · bağlam</div>
+    <div class="q">Kruskal algoritmasının çalışma süresinde baskın olan (en pahalı) adım hangisidir?</div>
+    <div class="opts">
+      <button data-opt="A">Union–Find işlemleri</button>
+      <button data-opt="B">Kenarları ağırlığa göre sıralamak (E log E)</button>
+      <button data-opt="C">Döngü kontrolü için DFS</button>
+      <button data-opt="D">Sonucu yazdırmak</button>
+    </div>
+    <div class="explain">Union–Find işlemleri (yol sıkıştırmalı, ağırlıklı) neredeyse sabit; E tanesi ~E. Sıralama ise E log E. Kenarlar zaten sıralı gelirse (ya da ağırlıklar küçük tam sayılarsa ve sayma sıralaması kullanılabilirse) Kruskal neredeyse doğrusal çalışır.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>MST</b>: bütün düğümleri en az toplam ağırlıkla bağlayan ağaç (V − 1 kenar).</li>
+      <li><b>Kesme özelliği</b>: her kesmenin en hafif kesişen kenarı MST’de → açgözlülük doğru.</li>
+      <li><b>Kruskal</b>: sırala + Union–Find; E log E.</li>
+      <li><b>Prim</b>: ağacı büyüt + öncelik kuyruğu; E log E (tembel) / E log V (hevesli).</li>
+    </ul>
+    <ul>
+      <li>🎮 Zindan koridorları: MST + birkaç ek kenar.</li>
+      <li>🎮 Labirent: rastgele ağırlıklı ızgaranın MST’si.</li>
+      <li>🎮 Kümeleme: en ağır k − 1 kenarı sil.</li>
+      <li>Daha önce öğrendiğimiz iki yapı (UF, PQ) burada birleşti.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: tinyEWG’de Kruskal ve Prim’i (0’dan) uygulayın; kenarların eklenme sıralarını karşılaştırın.</li>
+    <li>Bir kenarın ağırlığı biraz artarsa MST nasıl değişir? MST’de olan ve olmayan kenar için ayrı düşünün.</li>
+    <li>p5.js’te: fareyle tıklanan noktaların MST’sini her tıklamada yeniden çizin (tam graf, ağırlık = mesafe).</li>
+    <li>Zindan demosundaki koridorları gerçek bir karo haritasına (0/1 ızgara) dönüştürün ve Yönsüz Graflar destesindeki BFS ile girişten boss’a uzaklığı hesaplayın.</li>
+    <li>“Maksimum yayılan ağaç” nasıl bulunur? (İpucu: ağırlıkları eksi yapın.) Oyunda nerede işe yarar?</li>
+    <li>🤖 Bir YZ asistanından “Godot/Unity’de Delaunay + MST zindan üreticisi” isteyin. MST kısmını hangi algoritmayla yazdı? Union–Find’da yol sıkıştırma var mı?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=71UQH7Pr9kU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/71UQH7Pr9kU/hqdefault.jpg" alt=""><span><b>Kruskal’s algorithm in 2 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=cplfcGZmX7I" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/cplfcGZmX7I/hqdefault.jpg" alt=""><span><b>Prim’s algorithm in 2 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=JZBQLXgSGfs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/JZBQLXgSGfs/hqdefault.jpg" alt=""><span><b>Union Find Kruskal’s Algorithm</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=EHRqQBlZAtU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/EHRqQBlZAtU/hqdefault.jpg" alt=""><span><b>Prim’s Algorithm Visually Explained</b><br>ByteQuest</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=5yQUPkTS3HQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/5yQUPkTS3HQ/hqdefault.jpg" alt=""><span><b>Connecting Rooms (Delaunay &amp; MST) — Procedural Dungeons</b><br>DeveloperEzra</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/43mst/" target="_blank">algs4 · 4.3 Minimum Spanning Trees</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/43MinimumSpanningTrees.pdf" target="_blank">Princeton ders slaytları: Minimum Spanning Trees (PDF)</a></li>
+      <li><a href="https://www.gamedeveloper.com/programming/procedural-dungeon-generation-algorithm" target="_blank">A. Adonaac · Procedural Dungeon Generation Algorithm (TinyKeep)</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="../union-find/">Union–Find destesi (Kruskal’ın yardımcısı)</a></li>
+      <li><a href="../oncelik-kuyruklari/">Öncelik Kuyrukları destesi (Prim’in yardımcısı)</a></li>
+      <li><a href="../yonlu-graflar/">Önceki deste: Yönlü Graflar</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">FINAL LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">En Kısa Yollar</div>
+    <div class="sub">Dijkstra, DAG’ler, Bellman–Ford — ve oyun yapay zekâsındaki yol bulmanın kapısı</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../en-kisa-yollar/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/graf.js"></script>
+<script src="../ortak/mst.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
