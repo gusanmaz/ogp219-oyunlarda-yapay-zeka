@@ -546,3 +546,14 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .go-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
 .go-side { font-size: 17px; } .go-grp { border-left: 6px solid; padding: 2px 10px; margin: 3px 0; background: var(--card); border-radius: 6px; }
 .uf-forest { max-height: 240px; }
+
+/* ---- analiz bileşenleri ---- */
+.sw-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 18px; align-items: start; }
+.freq-t { border-collapse: collapse; width: 100%; font-size: 17px; }
+.freq-t td, .freq-t th { padding: 4px 8px; border-bottom: 1px solid var(--rule); text-align: left; }
+.freq-t th { color: var(--muted); font-weight: 600; }
+.freq-bar { height: 12px; background: var(--s1); border-radius: 4px; }
+.pairs-wrap { display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 20px; align-items: center; }
+.pairs-info { font-size: 19px; } .pairs-info .big { margin: 4px 0; }
+.mem-l { display: grid; grid-template-columns: 330px minmax(0, 1fr) 90px; gap: 12px; align-items: center; margin: 6px 0; font-size: 16px; }
+.mem-lbar { height: 18px; background: var(--card-2); border-radius: 6px; overflow: hidden; } .mem-lbar div { height: 100%; border-radius: 6px; }

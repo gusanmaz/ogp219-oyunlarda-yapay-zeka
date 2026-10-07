@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algoritma Analizi</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Algoritma analizi: bilimsel yöntem, iki katına çıkarma deneyi, kuvvet yasası, ~ gösterimi, büyüme mertebeleri, kare bütçesi, Büyük-O, bellek. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0f3a4a 0%, #120c2c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · ALGORİTMALAR</div>
+  <div class="ttl" style="font-size:72px">Algoritma<br>Analizi</div>
+  <div class="sub"><i>Analysis of algorithms</i> — “ne kadar hızlı?” sorusuna bilimsel yöntemle cevap</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegrowth"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 1.4 (Analysis of Algorithms) bölümünü temel alır. Ana mesaj: performansı tahmin etmek için bilimsel yöntemi kullanırız — ölç, hipotez kur, tahmin et, doğrula. Oyun açısından her şey “kare bütçesi” etrafında döner.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.92em">
+      <li><b>Bilimsel yöntem</b>: tahmin, deney, doğrulama</li>
+      <li><b>Gözlem</b>: süre ölçmek, iki katına çıkarma deneyi <span class="en">doubling test</span></li>
+      <li><b>Matematiksel model</b>: maliyet × sıklık, ~ gösterimi <span class="en">tilde</span></li>
+      <li><b>Büyüme mertebeleri</b>: 1, lg N, N, N lg N, N², N³, 2ᴺ <span class="en">order of growth</span></li>
+      <li><b>Algoritmalar teorisi</b>: en iyi/en kötü durum, Büyük-O <span class="en">Big-O</span></li>
+      <li><b>Bellek</b>: bir nesne kaç bayt?</li>
+      <li>⚠️ <b>Tuzaklar</b>: önbellek, JIT, ölçüm hataları</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…“Oyunda 500 yerine 2000 düşman olursa ne olur?” sorusuna kodu çalıştırmadan, <b>sayıyla</b> cevap verebileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA SORUSU</span>
+    <p class="big">Oyununuzda 100 düşman var ve her düşman diğer her düşmanla çarpışma kontrolü yapıyor. Oyun 60 FPS’te akıcı.</p>
+    <p>Düşman sayısını <b>200</b>’e çıkardınız. Çarpışma kontrolleri ne kadar uzun sürer?</p>
+  </div>
+  <p class="fragment lead">A) 2 katı · B) <b>4 katı</b> · C) 100 katı · D) değişmez</p>
+  <p class="fragment big">Cevap: <b>~4 katı</b>. Çiftlerin sayısı N²/2 ile büyür: N iki katına → N² dört katına. 1000 düşmanda 100 katı! 😱</p>
+  <aside class="notes">Öğrencilerin çoğu “2 katı” der. Bu ders boyunca bu sezgiyi düzelteceğiz: her algoritmanın bir “büyüme imzası” var.</aside>
+</section>
+
+<section>
+  <h2>Oyun geliştirici neden umursamalı?</h2>
+  <div class="icons">
+    <div class="icon-card"><div class="ic">⏱️</div><b>Kare bütçesi</b>60 FPS = her şey için 16,6 ms. Fizik, YZ, çizim, ses… hepsi bu sürenin içinde</div>
+    <div class="icon-card"><div class="ic">📱</div><b>Zayıf cihazlar</b>Sizin PC’nizde akıcı olan, öğrencinin eski telefonunda?</div>
+    <div class="icon-card"><div class="ic">📈</div><b>Ölçeklenme</b>Test haritasında 50 birim; oyuncular 500 birimle oynayınca?</div>
+    <div class="icon-card"><div class="ic">🌐</div><b>Sunucular</b>1000 oyuncudan 100.000’e çıkınca sunucu maliyeti</div>
+    <div class="icon-card"><div class="ic">🧠</div><b>Oyun YZ’si</b>Yol bulma, karar ağaçları: düşünme süresi sınırlı</div>
+    <div class="icon-card"><div class="ic">🔬</div><b>Profiler</b>Unity Profiler’ın söylediğini anlamak</div>
+  </div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>running time</td><td>çalışma süresi</td><td>Programın bir girdi için harcadığı süre</td></tr>
+    <tr><td>order of growth</td><td>büyüme mertebesi</td><td>N büyüdükçe sürenin nasıl büyüdüğü: N, N², …</td></tr>
+    <tr><td>doubling test</td><td>iki katına çıkarma deneyi</td><td>N’i 2 katına çıkarıp sürenin kaç katına çıktığını ölçmek</td></tr>
+    <tr><td>power law</td><td>kuvvet yasası</td><td>T(N) = a · Nᵇ biçiminde bir ilişki</td></tr>
+    <tr><td>tilde notation</td><td>~ gösterimi</td><td>Baskın terimi (katsayısıyla) tutup gerisini atmak</td></tr>
+    <tr><td>Big-O</td><td>Büyük-O</td><td>Üst sınır gösterimi (sabitleri de atar)</td></tr>
+    <tr><td>best / worst / average case</td><td>en iyi / en kötü / ortalama</td><td>Hangi girdide ne kadar sürer?</td></tr>
+    <tr><td>profiler</td><td>profil çıkarıcı</td><td>Programın zamanını nerede harcadığını gösteren araç</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Bilimsel Yöntem</div>
+  <div class="sub">gözlemle · hipotez kur · tahmin et · doğrula</div>
+  <ul class="agenda"><li class="on">bilimsel yöntem</li><li class="">gözlem: ölçmek</li><li class="">matematiksel model</li><li class="">büyüme mertebeleri</li><li class="">algoritmalar teorisi</li><li class="">bellek</li><li class="">tuzaklar</li></ul>
+</section>
+
+<section data-sec="bilimsel yöntem">
+  <h2>Programlara bir fizikçi gibi bakmak</h2>
+  <div class="cols c64">
+    <div>
+      <ol>
+        <li class="fragment"><b>Gözlemle</b>: programı farklı N’lerle çalıştır, süreyi ölç.</li>
+        <li class="fragment"><b>Hipotez kur</b>: gözlemlere uyan bir model öner (ör. süre ≈ a · N²).</li>
+        <li class="fragment"><b>Tahmin et</b>: modelle daha büyük bir N için süreyi hesapla.</li>
+        <li class="fragment"><b>Doğrula</b>: o N ile gerçekten çalıştır; tahmin tuttu mu?</li>
+        <li class="fragment"><b>Tekrarla</b>: tutmadıysa modeli düzelt.</li>
+      </ol>
+    </div>
+    <div class="box story"><span class="bt">📜 Knuth’un fikri</span>1960’larda Donald Knuth, bir programın çalışma süresinin de doğa olayları gibi <b>matematiksel olarak modellenebileceğini</b> gösterdi. Fizikçiler gezegenlerin hareketini tahmin ediyorsa, biz de programlarımızın süresini tahmin edebiliriz.</div>
+  </div>
+  <p class="fragment mini">Önemli fark: doğa bize sunulur, ama programları <b>biz</b> yazarız → deneyleri tekrar tekrar, ucuza yapabiliriz.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Gözlem</div>
+  <div class="sub">kronometre, iki katına çıkarma, log-log grafiği</div>
+  <ul class="agenda"><li class="done">bilimsel yöntem</li><li class="on">gözlem: ölçmek</li><li class="">matematiksel model</li><li class="">büyüme mertebeleri</li><li class="">algoritmalar teorisi</li><li class="">bellek</li><li class="">tuzaklar</li></ul>
+</section>
+
+<section data-sec="gözlem">
+  <h2>Süre nasıl ölçülür? Kronometre</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import time
+
+start = time.perf_counter()            # yüksek çözünürlüklü saat
+count_collisions(enemies)              # ölçmek istediğimiz iş
+elapsed = time.perf_counter() - start
+print(f"{elapsed * 1000:.2f} ms")
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+var sw = System.Diagnostics.Stopwatch.StartNew();
+CountCollisions(enemies);              // ölçmek istediğimiz iş
+sw.Stop();
+Debug.Log($"{sw.Elapsed.TotalMilliseconds:F2} ms");
+
+// Unity'de daha iyisi: Profiler (Window > Analysis > Profiler)
+// ya da: using (new ProfilerMarker("Collisions").Auto()) { ... }
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const start = performance.now();       // milisaniye, ondalıklı
+countCollisions(enemies);              // ölçmek istediğimiz iş
+const elapsed = performance.now() - start;
+console.log(elapsed.toFixed(2) + " ms");
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>f"…{x:.2f}"</code> (Python) ve <code>$"…{x:F2}"</code> (C#): değişkeni metnin içine yerleştir, 2 basamakla yaz (<span class="en">string interpolation</span>).</p>
+</section>
+
+<section data-sec="gözlem · deney">
+  <h2>🧪 İki katına çıkarma deneyi <span class="en">doubling test</span></h2>
+  <div class="demo" data-demo="stopwatch" data-alg="pairs"></div>
+  <aside class="notes">Önce “tüm çiftlerde çarpışma kontrolü” (oran ≈ 4, b ≈ 2), sonra ThreeSum (oran ≈ 8, b ≈ 3), sonra tek döngü (oran ≈ 2, b ≈ 1). Log-log grafikte noktalar bir DOĞRU üzerinde; doğrunun eğimi = üs b. Ölçüm gerçekten bu bilgisayarda yapılıyor; ilk ölçümler JIT ısınması yüzünden biraz gürültülü olabilir.</aside>
+</section>
+
+<section data-sec="gözlem · matematik">
+  <h2>📐 Kuvvet yasası ve log-log grafiği</h2>
+  <div class="cols c64">
+    <div>
+      <p>Pek çok algoritmada süre şu biçimdedir: \( T(N) = a \cdot N^b \)</p>
+      <ul>
+        <li class="fragment">İki tarafın logaritmasını alırsak: \( \lg T = b \cdot \lg N + \lg a \) → <b>bir doğru!</b> Eğimi b.</li>
+        <li class="fragment">N’i ikiye katlarsak: \( \frac{T(2N)}{T(N)} = \frac{a (2N)^b}{a N^b} = 2^b \) → oran 4 ise b = 2, oran 8 ise b = 3.</li>
+        <li class="fragment">b’yi bulunca a’yı da bir ölçümden hesaplarız → artık <b>her N için tahmin</b> yapabiliriz.</li>
+      </ul>
+    </div>
+    <div class="box prop"><span class="bt">Kısayol</span>
+      <table class="sum-t" style="font-size:18px"><tr><th>oran</th><th>b</th><th>büyüme</th></tr>
+        <tr><td>~1</td><td>0</td><td>sabit / log</td></tr><tr><td>~2</td><td>1</td><td>doğrusal</td></tr>
+        <tr><td>~2,1–2,3</td><td>~1,1</td><td>N lg N</td></tr><tr><td>~4</td><td>2</td><td>karesel</td></tr><tr><td>~8</td><td>3</td><td>kübik</td></tr></table>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gözlem">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 1 · gözlem</div>
+    <div class="q">Bir programı N = 1000, 2000, 4000 ile çalıştırdınız: 0,5 sn, 4 sn, 32 sn. N = 8000 için tahmin?</div>
+    <div class="opts">
+      <button data-opt="A">64 sn</button>
+      <button data-opt="B">128 sn</button>
+      <button data-opt="C">256 sn</button>
+      <button data-opt="D">1024 sn</button>
+    </div>
+    <div class="explain">Oran her seferinde 8 → b = lg 8 = 3 (kübik). Bir sonraki adımda da ~8 kat: 32 × 8 = <b>256 sn</b>. N = 16.000 için ~34 dakika! Bu yüzden kübik algoritmalar büyük N’de kullanılamaz.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Matematiksel Model</div>
+  <div class="sub">toplam süre = Σ (maliyet × sıklık)</div>
+  <ul class="agenda"><li class="done">bilimsel yöntem</li><li class="done">gözlem: ölçmek</li><li class="on">matematiksel model</li><li class="">büyüme mertebeleri</li><li class="">algoritmalar teorisi</li><li class="">bellek</li><li class="">tuzaklar</li></ul>
+</section>
+
+<section data-sec="model">
+  <h2>Knuth’un formülü: maliyet × sıklık</h2>
+  <div class="cols c64">
+    <div>
+      <p>Programın toplam süresi = her komutun <b>maliyeti</b> × o komutun <b>kaç kez çalıştığı</b> (sıklık), hepsinin toplamı.</p>
+      <ul>
+        <li><b>Maliyet</b>: makineye, derleyiciye bağlı (bir toplama, bir karşılaştırma…)</li>
+        <li><b>Sıklık</b>: <b>algoritmaya ve girdiye</b> bağlı → bunu hesaplayabiliriz!</li>
+      </ul>
+      <p class="fragment">Örnek problem: <b>ThreeSum</b> — N sayı arasından toplamı tam 0 olan kaç üçlü var?</p>
+      <p class="fragment mini">🎮 Oyun versiyonu: Kart oyununda +/− değerli kartlardan “toplam enerjisi 0 olan üç kartlık kombo” kaç tane?</p>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def count(a):                         # toplamı 0 olan üçlüler
+    n = len(a)
+    cnt = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            for k in range(j + 1, n):
+                if a[i] + a[j] + a[k] == 0:
+                    cnt += 1
+    return cnt
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int Count(int[] a)
+{
+    int n = a.Length, cnt = 0;
+    for (int i = 0; i < n; i++)
+        for (int j = i + 1; j < n; j++)
+            for (int k = j + 1; k < n; k++)
+                if (a[i] + a[j] + a[k] == 0)
+                    cnt++;
+    return cnt;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function count(a) {
+  const n = a.length;
+  let cnt = 0;
+  for (let i = 0; i < n; i++)
+    for (let j = i + 1; j < n; j++)
+      for (let k = j + 1; k < n; k++)
+        if (a[i] + a[j] + a[k] === 0) cnt++;
+  return cnt;
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="model">
+  <h2>Hangi satır kaç kez çalışır?</h2>
+  <div class="demo" data-demo="freq"></div>
+  <aside class="notes">N’i büyütün: iç döngüdeki karşılaştırma diğer her şeyi ezer. Bu yüzden maliyet modelinde sadece EN SIK çalışan işlemi sayarız (burada: üç sayıyı toplayıp karşılaştırma).</aside>
+</section>
+
+<section data-sec="🎒 ön bilgi">
+  <h2>🎒 Ön bilgi: kaç çift, kaç üçlü?</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <p><code>for j in range(i + 1, n)</code>: j hep i’den <b>büyük</b> → her çift <b>bir kez</b> sayılır.</p>
+      <ul>
+        <li>N nesneden çift sayısı: \( \binom{N}{2} = \frac{N(N-1)}{2} \sim \frac{N^2}{2} \)</li>
+        <li>N nesneden üçlü sayısı: \( \binom{N}{3} = \frac{N(N-1)(N-2)}{6} \sim \frac{N^3}{6} \)</li>
+      </ul>
+      <p class="mini">\( \binom{N}{2} \) “N’den 2 seç” diye okunur (kombinasyon). Sıra önemsiz: (Ork, Goblin) ile (Goblin, Ork) aynı çift.</p>
+    </div>
+    <div class="demo" data-demo="pairs"></div>
+  </div>
+</section>
+
+<section data-sec="model">
+  <h2>~ gösterimi: küçük terimleri at <span class="en">tilde notation</span></h2>
+  <div class="cols c64">
+    <div>
+      <p>\( \frac{N(N-1)(N-2)}{6} = \frac{N^3}{6} - \frac{N^2}{2} + \frac{N}{3} \)</p>
+      <table class="sum-t" style="font-size:19px">
+        <tr><th>N</th><th>N³/6</th><th>tam değer</th><th>fark</th></tr>
+        <tr><td>10</td><td>167</td><td>120</td><td>%28</td></tr>
+        <tr><td>100</td><td>166.667</td><td>161.700</td><td>%3</td></tr>
+        <tr><td>1.000</td><td>166,7 milyon</td><td>166,2 milyon</td><td>%0,3</td></tr>
+      </table>
+      <p class="fragment">N büyüdükçe <b>baskın terim</b> (N³/6) her şeyi belirler. Yazarız: <b>~N³/6</b> (“yaklaşık N³/6”).</p>
+    </div>
+    <div class="box prop fragment"><span class="bt">Önerme (ThreeSum)</span>Kaba kuvvet ThreeSum, N sayı için <b>~N³/6</b> kez “üç sayıyı topla ve karşılaştır” işlemi yapar.
+      <p class="mini">Hipotezimiz (b = 3, oran 8) ile matematiksel model aynı şeyi söylüyor ✔ — bilimsel yöntem!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="model">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 2 · model</div>
+    <div class="q">Aşağıdaki kodda <code>tick()</code> yaklaşık kaç kez çağrılır?<br><code>for i in range(N):<br>&nbsp;&nbsp;for j in range(N):<br>&nbsp;&nbsp;&nbsp;&nbsp;tick()</code></div>
+    <div class="opts">
+      <button data-opt="A">~N</button>
+      <button data-opt="B">~N²/2</button>
+      <button data-opt="C">~N²</button>
+      <button data-opt="D">~N lg N</button>
+    </div>
+    <div class="explain">İkinci döngü bu kez <b>0’dan</b> başlıyor (i+1’den değil): her i için N tur → toplam N × N = <b>N²</b>. <code>range(i + 1, N)</code> olsaydı ~N²/2 olurdu. Sabit çarpan (½) büyüme mertebesini değiştirmez ama gerçek süreyi değiştirir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Büyüme Mertebeleri</div>
+  <div class="sub"><i>order of growth</i> — algoritmaların imzası</div>
+  <ul class="agenda"><li class="done">bilimsel yöntem</li><li class="done">gözlem: ölçmek</li><li class="done">matematiksel model</li><li class="on">büyüme mertebeleri</li><li class="">algoritmalar teorisi</li><li class="">bellek</li><li class="">tuzaklar</li></ul>
+</section>
+
+<section data-sec="büyüme">
+  <h2>Birkaç fonksiyon her şeyi açıklıyor</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>büyüme</th><th>adı</th><th>kod kalıbı</th><th>🎮 örnek</th><th>T(2N)/T(N)</th></tr>
+    <tr><td><b>1</b></td><td>sabit</td><td><code>a[i] = x</code></td><td>bir değişken güncelle</td><td>1</td></tr>
+    <tr><td><b>lg N</b></td><td>logaritmik</td><td>yarıya böl</td><td>ikili arama, BST</td><td>~1</td></tr>
+    <tr><td><b>N</b></td><td>doğrusal</td><td>tek döngü</td><td>tüm düşmanları güncelle</td><td>2</td></tr>
+    <tr><td><b>N lg N</b></td><td>doğrusal-log.</td><td>böl ve fethet</td><td>sıralama (mergesort)</td><td>~2</td></tr>
+    <tr><td><b>N²</b></td><td>karesel</td><td>iki iç içe döngü</td><td>tüm çiftlerde çarpışma</td><td>4</td></tr>
+    <tr><td><b>N³</b></td><td>kübik</td><td>üç iç içe döngü</td><td>ThreeSum</td><td>8</td></tr>
+    <tr><td><b>2ᴺ</b></td><td>üstel</td><td>tüm alt kümeler</td><td>en iyi ekipman kombinasyonu</td><td>2ᴺ (!)</td></tr>
+  </table>
+  <p class="fragment mini">İlk dördü “iyi” sınıf: büyük problemlere ölçeklenir. Karesel ve kübik ancak küçük N’de. Üstel: N = 50’de bile evrenin ömrü yetmez.</p>
+</section>
+
+<section data-sec="büyüme · oyunda">
+  <h2>🎮 Kare bütçesi: 60 FPS’te en fazla kaç N?</h2>
+  <div class="demo" data-demo="budget"></div>
+  <aside class="notes">Makineyi “yavaş” yapın (eski telefon / Python): karesel algoritma ile sadece birkaç yüz düşman! Bu tablo, oyun programlamada “hangi algoritmayı seçmeliyim?” sorusunun özeti. Not: gerçekte bütçenin tamamı tek bir işe ayrılamaz; çizim, fizik, ses de pay ister.</aside>
+</section>
+
+<section data-sec="büyüme · hikâye">
+  <h2>📜 Satranç tahtası ve buğday taneleri</h2>
+  <div class="cols c64">
+    <div>
+      <p>Efsaneye göre satrancı icat eden bilge, hükümdardan ödül olarak şunu ister: ilk kareye <b>1</b> buğday tanesi, ikinciye <b>2</b>, üçüncüye <b>4</b>… her kareye bir öncekinin iki katı.</p>
+      <p class="fragment">Hükümdar güler: “Bu kadar mı?” 64. kareye gelince toplam: \( 2^{64} - 1 \approx 1{,}8 \times 10^{19} \) tane — dünyanın yüzlerce yıllık buğday üretimi! 🌾</p>
+    </div>
+    <div class="box warn fragment"><span class="bt">🎮 Oyunda üstel patlama</span>
+      <p>Envanterde 30 eşya var; her birini “giy/giyme” diye deneyerek en güçlü kombinasyonu arıyorsunuz: \( 2^{30} \approx \) 1 milyar deneme.</p>
+      <p>40 eşya → 1 trilyon. 60 eşya → imkânsız. Çözüm: daha akıllı algoritmalar (açgözlü yaklaşım, dinamik programlama) ya da yaklaşık çözümler.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="büyüme">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · büyüme</div>
+    <div class="q">Aşağıdaki kodun büyüme mertebesi nedir?<br><code>for i in range(N):<br>&nbsp;&nbsp;j = 1<br>&nbsp;&nbsp;while j &lt; N:<br>&nbsp;&nbsp;&nbsp;&nbsp;tick()<br>&nbsp;&nbsp;&nbsp;&nbsp;j = j * 2</code></div>
+    <div class="opts">
+      <button data-opt="A">N</button>
+      <button data-opt="B">N lg N</button>
+      <button data-opt="C">N²</button>
+      <button data-opt="D">lg N</button>
+    </div>
+    <div class="explain">İç döngü j’yi her seferinde <b>ikiye katlıyor</b>: 1, 2, 4, …, N → ~lg N tur (ikili arama gibi!). Dış döngü N tur. Toplam: <b>N lg N</b>. Laboratuvarda deneyin: oran ~2,1–2,2 çıkmalı.</div>
+  </div>
+</section>
+
+<section data-sec="büyüme · laboratuvar">
+  <h2>🧪 Kod laboratuvarı: kendi kodunun büyümesini ölç</h2>
+  <div class="growthlab" data-lang="js">
+<textarea>
+// Laboratuvar work(N)'i N = 64, 128, ..., 4096 ile çalıştırır
+// ve DÖNGÜ TURLARINI otomatik sayar.
+function work(N) {
+  for (let i = 0; i < N; i++) {
+    for (let j = i + 1; j < N; j++) {
+      // iç döngü: çift başına bir iş
+    }
+  }
+}
+</textarea>
+    <div class="lab-tasks"><b>Önce tahmin et, sonra çalıştır:</b>
+      <ol>
+        <li>Şu anki kod: oran ve b ne çıkar?</li>
+        <li>İç döngüyü <code>j = 0</code>’dan başlat. Sayı nasıl değişti, b değişti mi?</li>
+        <li>İç döngüyü <code>for (let j = 1; j &lt; N; j *= 2)</code> yap.</li>
+        <li>Üçüncü bir iç içe döngü ekle. · Bonus: tek döngünün içine 10 turluk sabit bir döngü koy — b değişir mi?</li>
+      </ol>
+    </div>
+  </div>
+  <aside class="notes">Laboratuvar döngü başlıklarına sayaç ekleyerek tur sayısını ölçer (dış döngünün turları da sayılır, ama baskın terim iç döngüdür). 2) N² (ama b yine 2). 3) N lg N. 4) N³. 5) Hâlâ doğrusal: sabit çarpanlar b’yi değiştirmez.</aside>
+</section>
+
+<section data-sec="büyüme">
+  <h2>Daha iyi algoritma, daha hızlı bilgisayardan iyidir</h2>
+  <div class="cols c64">
+    <div>
+      <p>ThreeSum’u daha akıllı yapabilir miyiz?</p>
+      <ol>
+        <li class="fragment">Diziyi <b>sırala</b>: N lg N (sıralama dersleri)</li>
+        <li class="fragment">Her (i, j) çifti için <code>−(a[i] + a[j])</code> değerini <b>ikili aramayla</b> ara (arama dersi): N² çift × lg N</li>
+        <li class="fragment">Toplam: <b>~N² lg N</b></li>
+      </ol>
+      <table class="sum-t fragment" style="font-size:19px">
+        <tr><th>N</th><th>N³/6 (kaba kuvvet)</th><th>N² lg N</th></tr>
+        <tr><td>1.000</td><td>~2 sn*</td><td>~0,01 sn</td></tr>
+        <tr><td>8.000</td><td>~17 dk</td><td>~1 sn</td></tr>
+        <tr><td>1 milyon</td><td>~5 yıl</td><td>~6 saat</td></tr>
+      </table>
+      <p class="mini">* kabaca, hızlı bir makinede. Hızlı bilgisayar sabiti küçültür; iyi algoritma <b>üssü</b> küçültür.</p>
+    </div>
+    <div class="box story fragment"><span class="bt">💡 Kitabın mesajı</span>Bilgisayarlar her yıl hızlanıyor ama problemler de büyüyor. Karesel ya da kübik bir algoritma, yeni bilgisayarda <b>daha da</b> yetersiz kalır: 10 kat hızlı makine, 10 kat büyük problemi karesel algoritmayla 10 kat <b>daha yavaş</b> çözer.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Algoritmalar Teorisi</div>
+  <div class="sub">en iyi, en kötü, ortalama · Büyük-O</div>
+  <ul class="agenda"><li class="done">bilimsel yöntem</li><li class="done">gözlem: ölçmek</li><li class="done">matematiksel model</li><li class="done">büyüme mertebeleri</li><li class="on">algoritmalar teorisi</li><li class="">bellek</li><li class="">tuzaklar</li></ul>
+</section>
+
+<section data-sec="teori">
+  <h2>Girdiye bağlı: en iyi, en kötü, ortalama</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li><b>En kötü durum</b> <span class="en">worst case</span>: hiçbir girdi bundan uzun sürmez → <b>garanti</b>. Oyunlarda en önemlisi: kare asla takılmasın!</li>
+        <li><b>Ortalama durum</b> <span class="en">average case</span>: “tipik” girdilerde beklenen süre (girdinin rastgele olduğu varsayımıyla)</li>
+        <li><b>En iyi durum</b> <span class="en">best case</span>: en şanslı girdi — genelde pek bir şey söylemez</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">🎮 Örnek: sıralı arama</span>
+      <p>En iyi: aranan ilk eleman → 1 · Ortalama: ~N/2 · En kötü: N (ya da yok).</p>
+      <p class="mini">Oyun tasarımında “ortalama iyi ama bazen çok kötü” algoritmalar, ara sıra gelen <b>takılmalara</b> (frame spike) yol açar — oyuncunun en çok fark ettiği şey!</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="teori">
+  <h2>Büyük-O, Büyük-Omega, Büyük-Teta <span class="en">Big-O · Ω · Θ</span></h2>
+  <div class="cols c64">
+    <div>
+      <table class="sum-t" style="font-size:19px">
+        <tr><th>gösterim</th><th>anlamı</th><th>benzetme</th></tr>
+        <tr><td><b>Θ(N²)</b></td><td>tam olarak N² gibi büyür</td><td>“yolculuk ~2 saat”</td></tr>
+        <tr><td><b>O(N²)</b></td><td>en fazla N² gibi (üst sınır)</td><td>“en fazla 2 saat”</td></tr>
+        <tr><td><b>Ω(N²)</b></td><td>en az N² gibi (alt sınır)</td><td>“en az 2 saat”</td></tr>
+        <tr><td><b>~N²/2</b></td><td>yaklaşık N²/2 (katsayı dahil)</td><td>“1 saat 58 dakika”</td></tr>
+      </table>
+    </div>
+    <div class="box prop"><span class="bt">Hangisini kullanalım?</span>
+      <p>İş ilanlarında ve mülakatlarda <b>Büyük-O</b> sorulur. Sedgewick ise <b>~</b> kullanır, çünkü <b>sabiti korur</b>: selection sort (~N²/2) ile insertion sort (~N²/4) ikisi de O(N²) ama biri iki kat hızlı.</p>
+      <p class="mini">Dikkat: “O(N²)” teknik olarak bir <b>üst sınır</b>dır; günlük kullanımda çoğu zaman Θ anlamında söylenir.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="teori">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 4 · teori</div>
+    <div class="q">Algoritma A’nın süresi ~2N², algoritma B’ninki ~100 N lg N. Hangisi daha hızlı?</div>
+    <div class="opts">
+      <button data-opt="A">Her zaman A (sabiti küçük)</button>
+      <button data-opt="B">Her zaman B (büyüme mertebesi küçük)</button>
+      <button data-opt="C">Küçük N’de A, büyük N’de B</button>
+      <button data-opt="D">İkisi aynı: ikisi de O(N²)</button>
+    </div>
+    <div class="explain">N = 100: A ≈ 20.000, B ≈ 66.000 → A hızlı. N = 1000: A ≈ 2.000.000, B ≈ 1.000.000 → B hızlı. Büyük N’de büyüme mertebesi kazanır; küçük N’de sabitler. (Sıralama dersindeki “kütüphaneler küçük parçalarda insertion sort kullanır” bilgisinin sebebi bu!)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #07332a 0%, #3a0d33 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Bellek</div>
+  <div class="sub">bir nesne kaç bayt? 1 milyon nesne kaç MB?</div>
+  <ul class="agenda"><li class="done">bilimsel yöntem</li><li class="done">gözlem: ölçmek</li><li class="done">matematiksel model</li><li class="done">büyüme mertebeleri</li><li class="done">algoritmalar teorisi</li><li class="on">bellek</li><li class="">tuzaklar</li></ul>
+</section>
+
+<section data-sec="bellek">
+  <h2>Temel türlerin boyutları</h2>
+  <div class="cols">
+    <table class="sum-t" style="font-size:19px">
+      <tr><th>tür (C#)</th><th>bayt</th></tr>
+      <tr><td><code>bool</code> / <code>byte</code></td><td>1</td></tr>
+      <tr><td><code>char</code> / <code>short</code></td><td>2</td></tr>
+      <tr><td><code>int</code> / <code>float</code></td><td>4</td></tr>
+      <tr><td><code>long</code> / <code>double</code></td><td>8</td></tr>
+      <tr><td>referans (64-bit)</td><td>8</td></tr>
+      <tr><td><code>Vector3</code> (struct)</td><td>12</td></tr>
+      <tr><td>nesne başlığı (<code>class</code>)</td><td>~16</td></tr>
+    </table>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Python ve JavaScript</span>
+        <p><b>Python</b>’da her şey nesnedir: küçük bir <code>int</code> bile ~28 bayt, listedeki her eleman için +8 bayt referans.</p>
+        <p><b>JavaScript</b>’te sayılar 8 baytlık ondalıklı sayıdır (motor bazen tamsayıları sıkıştırır). Bellek kritikse: <code>Int32Array</code>, <code>Float32Array</code>.</p>
+      </div>
+      <p class="mini">Dizi: eleman sayısı × eleman boyutu + küçük bir başlık. Nesne: başlık + alanlar, 8’in katına yuvarlanır (hizalama <span class="en">padding</span>).</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="bellek · oyunda">
+  <h2>1 milyon düşman ne kadar yer kaplar?</h2>
+  <div class="demo" data-demo="memcalc"></div>
+  <aside class="notes">Bağlı listeler dersindeki karşılaştırmanın bellek tarafı. Aynı bilgi, farklı yapı: 32 MB ile 104 MB arası. Mobil oyunlarda (2–4 GB RAM, büyük kısmı dokulara gider) bu fark önemli. Ayrıca daha az bellek = önbelleğe daha çok eleman = daha hızlı.</aside>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Tuzaklar</div>
+  <div class="sub">ölçümler neden yalan söyleyebilir?</div>
+  <ul class="agenda"><li class="done">bilimsel yöntem</li><li class="done">gözlem: ölçmek</li><li class="done">matematiksel model</li><li class="done">büyüme mertebeleri</li><li class="done">algoritmalar teorisi</li><li class="done">bellek</li><li class="on">tuzaklar</li></ul>
+</section>
+
+<section data-sec="tuzaklar">
+  <h2>⚠️ Ölçerken dikkat</h2>
+  <div class="cols">
+    <ul style="font-size:.92em">
+      <li class="fragment"><b>Isınma</b> <span class="en">JIT warm-up</span>: C# ve JS kodu ilk çalıştırmalarda derlenir → ilk ölçümler yavaş. Birkaç kez çalıştırıp en iyisini/ortancayı alın.</li>
+      <li class="fragment"><b>Çöp toplayıcı</b>: ölçümün ortasında GC çalışırsa süre fırlar.</li>
+      <li class="fragment"><b>Önbellek</b>: küçük N önbelleğe sığar, büyük N sığmaz → oran birden değişebilir.</li>
+      <li class="fragment"><b>Arka plan</b>: tarayıcı sekmeleri, güç tasarrufu modu, ısınan laptop.</li>
+      <li class="fragment"><b>Girdi</b>: rastgele girdi ≠ gerçek oyun verisi (çoğu zaman neredeyse sıralı!).</li>
+    </ul>
+    <div>
+      <div class="box story fragment"><span class="bt">📜 Knuth’un ünlü sözü</span>“Erken optimizasyon tüm kötülüklerin anasıdır.” Sözün devamı daha az bilinir: “…ama o kritik %3’lük kısımdaki fırsatları kaçırmamalıyız.” → Önce <b>ölç</b>, darboğazı bul, onu iyileştir.</div>
+      <div class="box game fragment"><span class="bt">🎮 Unity’de</span><b>Profiler</b> (Window → Analysis → Profiler): her karede hangi fonksiyonun kaç ms sürdüğünü ve ne kadar çöp (GC Alloc) ürettiğini gösterir. Tahmin etmeyin, bakın!</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Bilimsel yöntem</b>: gözlemle, hipotez kur, tahmin et, doğrula.</li>
+      <li><b>İki katına çıkarma deneyi</b>: oran = 2ᵇ, b = lg oran.</li>
+      <li><b>Kuvvet yasası</b>: T(N) = a·Nᵇ → log-log grafikte doğru.</li>
+      <li><b>Model</b>: maliyet × sıklık; en sık işlemi say; <b>~</b> ile sadeleştir.</li>
+    </ul>
+    <ul>
+      <li><b>Büyüme mertebeleri</b>: 1, lg N, N, N lg N, N², N³, 2ᴺ.</li>
+      <li>🎮 <b>Kare bütçesi</b>: 16,6 ms’de kaç N?</li>
+      <li><b>En kötü / ortalama</b>; Büyük-O, Θ, Ω, ~.</li>
+      <li><b>Bellek</b>: struct dizisi vs nesneler vs bağlı liste.</li>
+      <li>⚠️ Ölçüm tuzakları; Profiler kullan.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Laboratuvarda <code>while (N &gt; 1) { N = Math.floor(N / 2); }</code> döngüsünün büyümesini ölçün. Neden oran ~1?</li>
+    <li>p5.js’te N parçacıklık bir sahne yapın ve her karede tüm çiftler için mesafe hesaplayın. FPS’in 30’un altına düştüğü N’i bulun. N’i iki katına çıkarınca FPS ne oluyor?</li>
+    <li>Unity Profiler ile bir sahnenin en pahalı 3 fonksiyonunu bulun. Hangisi kare sayısına (N’e) bağlı büyüyor?</li>
+    <li><b>TwoSum</b>: N sayı arasında toplamı 0 olan kaç çift var? Önce ~N²/2 kaba kuvvet, sonra sırala + ikili arama ile N lg N sürümü yazın; iki katına çıkarma deneyiyle karşılaştırın.</li>
+    <li>Kendi oyununuzdaki bir varlığın (düşman, mermi) C# sınıfının kaç bayt tuttuğunu tahmin edin. 10.000 tanesi kaç MB?</li>
+    <li>🤖 Bir YZ asistanına yazdırdığınız bir fonksiyonun büyüme mertebesini sorun, sonra laboratuvarda ölçerek doğrulayın. Uyuştu mu?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=g2o22C3CRfU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/g2o22C3CRfU/hqdefault.jpg" alt=""><span><b>Big-O Notation in 100 Seconds</b><br>Fireship</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=__vX2sjlpXU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/__vX2sjlpXU/hqdefault.jpg" alt=""><span><b>Big-O notation in 5 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=v4cd1O4zkGw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/v4cd1O4zkGw/hqdefault.jpg" alt=""><span><b>Big O Notation</b><br>HackerRank</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=D6xkbGLQesk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/D6xkbGLQesk/hqdefault.jpg" alt=""><span><b>Introduction to Big O Notation and Time Complexity</b><br>CS Dojo</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=XMUe3zFhM5c" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/XMUe3zFhM5c/hqdefault.jpg" alt=""><span><b>Learn Big O notation in 6 minutes</b><br>Bro Code</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=kgBjXUE_Nwc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/kgBjXUE_Nwc/hqdefault.jpg" alt=""><span><b>Getting Sorted &amp; Big O Notation</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=kS_gr2_-ws8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/kS_gr2_-ws8/hqdefault.jpg" alt=""><span><b>Complete Beginner’s Guide to Big O Notation</b><br>Colt Steele</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/14analysis/" target="_blank">algs4 · 1.4 Analysis of Algorithms</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/14AnalysisOfAlgorithms.pdf" target="_blank">Princeton ders slaytları: Analysis of Algorithms (PDF)</a></li>
+      <li><a href="https://www.bigocheatsheet.com/" target="_blank">Big-O Cheat Sheet</a> (yaygın algoritmalar ve veri yapıları)</li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://docs.unity3d.com/Manual/Profiler.html" target="_blank">Unity · Profiler</a></li>
+      <li><a href="https://colin-scott.github.io/personal_website/research/interactive_latency.html" target="_blank">Gecikme sayıları (interaktif)</a></li>
+      <li><a href="../">Ders haritası (tüm desteler)</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a4a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Bağlı Listeler</div>
+    <div class="sub">Dizi mi, bağlı liste mi? Ölçerek karar verelim!</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../bagli-listeler/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/analiz.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
