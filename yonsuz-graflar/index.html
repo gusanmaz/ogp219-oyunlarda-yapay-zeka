@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yönsüz Graflar</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Yönsüz graflar: terimler, Königsberg, gösterimler, örtük karo graflar, DFS, BFS, en kısa yollar, bağlı bileşenler, ada sayma, graf problemlerinin zorluğu. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d4a2e 0%, #10223a 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · GRAFLAR</div>
+  <div class="ttl" style="font-size:80px">Yönsüz Graflar</div>
+  <div class="sub"><i>Düğümler, kenarlar, DFS, BFS</i> — oyun dünyasının iskeleti</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegraph"></div>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.1 Undirected Graphs bölümünü temel alır. Bölüm 5’in (graflar) ilk destesi. Arka planda rastgele bir graf ve rastgele bir kaynaktan yayılan BFS dalgası: renk = kaynağa uzaklık.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.88em">
+      <li><b>Terimler</b> — düğüm, kenar, yol, döngü, bağlılık <span class="en">vertex, edge, path</span></li>
+      <li><b>Gösterimler</b> — komşuluk listesi mi, matris mi?</li>
+      <li><b>DFS</b> — derinlik öncelikli arama: labirentte ip çözmek</li>
+      <li><b>BFS</b> — genişlik öncelikli arama: en az adımlı yol</li>
+      <li><b>Bağlı bileşenler</b> — kaç ada var? ulaşılamayan hazine var mı?</li>
+      <li><b>Oyunda graflar</b> ve “kolay mı, zor mu, imkânsız mı?” listesi</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir oyun haritasını graf olarak görecek, “oyuncu buradan oraya gidebilir mi?” ve “en az kaç adımda?” sorularını yanıtlayan kodu yazabilecek ve oyun yapay zekâsındaki yol bulmanın (A*) temelini atmış olacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ZİNDAN</span>
+    <p class="big">Bir zindanda 40 oda ve odaları bağlayan kapılar var. Oyuncu girişte, boss en dipteki odada.</p>
+    <ul>
+      <li class="fragment">Oyuncu boss’a <b>ulaşabilir mi</b>? (Seviye tasarımında hata var mı?)</li>
+      <li class="fragment">En az <b>kaç kapıdan</b> geçerek?</li>
+      <li class="fragment">Hiçbir yerden ulaşılamayan, boşa tasarlanmış oda var mı?</li>
+    </ul>
+  </div>
+  <p class="fragment lead">Odaları <b>noktalar</b>, kapıları <b>çizgiler</b> olarak çizin: bu bir <b>graf</b>. Üç sorunun da cevabı bu destede.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>graph · vertex · edge</td><td>graf · düğüm (köşe) · kenar</td><td>Noktalar ve onları ikişer ikişer bağlayan çizgiler</td></tr>
+    <tr><td>adjacent · degree</td><td>komşu · derece</td><td>Kenarla bağlı iki düğüm · bir düğüme değen kenar sayısı</td></tr>
+    <tr><td>path · cycle</td><td>yol · döngü</td><td>Kenarlarla birbirine bağlı düğüm dizisi · başladığı yere dönen yol</td></tr>
+    <tr><td>connected component</td><td>bağlı bileşen</td><td>Birbirine yolla ulaşılabilen düğümlerin en büyük grubu</td></tr>
+    <tr><td>DFS · BFS</td><td>derinlik / genişlik öncelikli arama</td><td>Grafı gezmenin iki temel yolu</td></tr>
+    <tr><td>adjacency list</td><td>komşuluk listesi</td><td>Her düğüm için komşularının listesi</td></tr>
+    <tr><td>sparse · dense</td><td>seyrek · yoğun</td><td>Kenar sayısı V’ye yakın · V²’ye yakın</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>📜 Her şey bir yürüyüşle başladı: Königsberg, 1736</h2>
+  <div class="cols c64">
+    <div style="font-size:.9em">
+      <p>Königsberg şehrinde (bugün Kaliningrad) nehrin ortasında iki ada ve <b>7 köprü</b> vardı. Halkın sorusu: “Her köprüden <b>tam bir kez</b> geçen bir yürüyüş var mı?”</p>
+      <p class="fragment">Leonhard Euler haritayı attı ve sadece önemli olanı tuttu: 4 kara parçası (<b>düğüm</b>), 7 köprü (<b>kenar</b>). İlk graf!</p>
+      <p class="fragment">Cevap: <b>Hayır.</b> Böyle bir yürüyüş için en fazla 2 kara parçasının köprü sayısı (derecesi) tek olabilir. Königsberg’de dördü de tek!</p>
+      <p class="fragment mini">🎮 “Kalemi kaldırmadan çiz” bulmaca oyunları (Euler yolu) tam bu kurala göre tasarlanır.</p>
+    </div>
+    <svg viewBox="0 0 300 230" style="width:100%;max-width:330px" font-family="JetBrains Mono">
+      <path d="M0,95 C80,85 220,105 300,92 L300,138 C220,150 80,130 0,140 Z" style="fill:var(--blue);opacity:.18"/>
+      <g style="stroke:var(--ink-2)" stroke-width="3" fill="none">
+        <path d="M150,30 C110,60 95,95 100,118"/><path d="M150,30 C140,70 120,100 112,118"/>
+        <path d="M150,200 C110,175 95,140 100,118"/><path d="M150,200 C140,160 120,135 112,118"/>
+        <path d="M150,30 C200,60 235,95 240,115"/><path d="M150,200 C200,175 235,140 240,115"/>
+        <path d="M106,118 L240,115"/>
+      </g>
+      <g font-size="15" font-weight="700" text-anchor="middle">
+        <circle cx="150" cy="30" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="150" y="35" style="fill:var(--ink)">A</text>
+        <circle cx="150" cy="200" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="150" y="205" style="fill:var(--ink)">B</text>
+        <circle cx="106" cy="118" r="17" style="fill:var(--amber);stroke:var(--amber)" stroke-width="2"/><text x="106" y="123" fill="#111">C</text>
+        <circle cx="240" cy="115" r="17" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="240" y="120" style="fill:var(--ink)">D</text>
+      </g>
+      <text x="150" y="225" text-anchor="middle" font-size="11" style="fill:var(--muted)">dereceler: A=3, B=3, C=5, D=3</text>
+    </svg>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Terimler</div>
+  <div class="sub">graf dilini öğrenelim</div>
+  <ul class="agenda"><li class="on">terimler</li><li class="">gösterimler</li><li class="">DFS</li><li class="">BFS</li><li class="">bağlı bileşenler</li><li class="">oyunda graflar ve zor problemler</li></ul>
+</section>
+
+<section data-sec="terimler">
+  <h2>Graf terimleri</h2>
+  <div class="cols">
+    <div class="demo" data-demo="gsearch" data-graph="tinyG" data-notable data-speed="2"></div>
+    <ul style="font-size:.85em">
+      <li><b>Yol</b>: 0 – 6 – 4 – 3 (kenarlarla bağlı düğümler)</li>
+      <li><b>Döngü</b>: 0 – 5 – 4 – 6 – 0 (başladığı yere dönen yol)</li>
+      <li><b>Derece</b>: 0’ın derecesi 4 (4 komşusu var)</li>
+      <li><b>Bağlı</b>: 0’dan 3’e yol var → bağlılar. 0’dan 9’a yol yok.</li>
+      <li><b>Bağlı bileşen</b>: bu grafın <b>3</b> bileşeni var: {0…6}, {7, 8}, {9…12}</li>
+    </ul>
+  </div>
+  <p class="mini">Kitaptaki “tinyG” grafı. Animasyon 0’dan DFS yapıyor: 9–12 grubuna hiç ulaşamayacak. (DFS’yi birazdan ayrıntılı göreceğiz.)</p>
+</section>
+
+<section data-sec="terimler">
+  <h2>🎮 Oyunlarda graflar her yerde</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>oyun / sistem</th><th>düğüm</th><th>kenar</th></tr>
+    <tr><td>Zindan / metroidvania haritası</td><td>oda</td><td>kapı / koridor</td></tr>
+    <tr><td>Risk, Civilization, strateji haritaları</td><td>bölge / ülke</td><td>ortak sınır</td></tr>
+    <tr><td>Karo (tile) tabanlı harita</td><td>yürünebilir kare</td><td>komşu kare (4 ya da 8 yön)</td></tr>
+    <tr><td>3B oyunlarda yol bulma</td><td>navmesh çokgeni / yol noktası (waypoint)</td><td>geçilebilir sınır</td></tr>
+    <tr><td>Arkadaş listesi, klanlar</td><td>oyuncu</td><td>arkadaşlık</td></tr>
+    <tr><td>Bulmaca / satranç arama</td><td>oyun durumu</td><td>bir hamle</td></tr>
+  </table>
+  <p class="mini">Arkadaşlık “karşılıklı” → <b>yönsüz</b> kenar. “Takip ediyor”, “tek yönlü kapı”, “önce bu görev” → <b>yönlü</b> (sonraki deste).</p>
+</section>
+
+<section data-sec="terimler">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 1 · terimler</div>
+    <div class="q">Bir grafta bütün düğümlerin derecelerini toplarsanız ne bulursunuz? (E = kenar sayısı)</div>
+    <div class="opts">
+      <button data-opt="A">E</button>
+      <button data-opt="B">2E</button>
+      <button data-opt="C">V</button>
+      <button data-opt="D">V + E</button>
+    </div>
+    <div class="explain">Her kenarın <b>iki</b> ucu var ve her uç bir düğümün derecesine 1 ekliyor → toplam = 2E (“tokalaşma lemması”). Sonuç: derecesi tek olan düğümlerin sayısı hep <b>çift</b>tir. Euler’in Königsberg kanıtı da bu tür bir sayma.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Gösterimler</div>
+  <div class="sub">grafı bellekte nasıl tutarız?</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="on">gösterimler</li><li class="">DFS</li><li class="">BFS</li><li class="">bağlı bileşenler</li><li class="">oyunda graflar ve zor problemler</li></ul>
+</section>
+
+<section data-sec="gösterimler">
+  <h2>Üç gösterim — kendiniz karşılaştırın</h2>
+  <div class="demo" data-demo="gview" data-graph="tinyG" data-sel="0"></div>
+</section>
+
+<section data-sec="gösterimler">
+  <h2>Hangisi?</h2>
+  <table class="sum-t" style="font-size:20px">
+    <tr><th>gösterim</th><th>bellek</th><th>kenar ekle</th><th>v–w kenarı var mı?</th><th>v’nin komşularını gez</th></tr>
+    <tr><td>kenar listesi</td><td>E</td><td>1</td><td class="c-red">E</td><td class="c-red">E</td></tr>
+    <tr><td>komşuluk matrisi</td><td class="c-red">V²</td><td>1</td><td class="c-green">1</td><td class="c-red">V</td></tr>
+    <tr><td><b>komşuluk listeleri</b></td><td class="c-green"><b>E + V</b></td><td>1</td><td>derece(v)</td><td class="c-green"><b>derece(v)</b></td></tr>
+  </table>
+  <div class="cols" style="margin-top:10px">
+    <div class="box story"><span class="bt">Gerçek graflar seyrek</span>Bir oyun haritasında 10.000 kare var ama her karenin en fazla 4–8 komşusu. Matris: 100 milyon hücre, neredeyse hepsi 0 (Sembol Tablosu Uygulamaları destesindeki seyrek matris!). Liste: ~40.000 kayıt.</div>
+    <div class="box low"><span class="bt">⚙️ Karo haritalar: örtük graf</span>Izgarada komşuluk listesi bile tutmayız: komşular <b>hesaplanır</b> (sağ, sol, üst, alt). Grafın kendisi hiç bellekte yoktur — <span class="en">implicit graph</span>.</div>
+  </div>
+</section>
+
+<section data-sec="gösterimler">
+  <h2>Graf sınıfı — komşuluk listeleri</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <p>Princeton’ın <code>Graph</code> API’si:</p>
+      <table class="gloss" style="font-size:17px">
+        <tr><td>Graph(V)</td><td>V düğümlü, kenarsız graf</td></tr>
+        <tr><td>addEdge(v, w)</td><td>v–w kenarı ekle</td></tr>
+        <tr><td>adj(v)</td><td>v’nin komşuları</td></tr>
+        <tr><td>V() · E()</td><td>düğüm · kenar sayısı</td></tr>
+      </table>
+      <div class="box bgk"><span class="bt">🎒 Liste listesi</span><code>adj[v]</code> bir liste; <code>adj</code> bu listelerin listesi. Düğümler 0…V−1 numaralı → dizi indeksi olarak kullanılır. Adlı düğümler (“Mağara”, “Köy”) için önce bir sözlükle isim → numara (önceki deste!).</div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.E = 0
+        self.adj = [[] for v in range(V)]   # V tane boş liste
+
+    def add_edge(self, v, w):
+        self.adj[v].append(w)              # yönsüz: iki yöne de
+        self.adj[w].append(v)
+        self.E += 1
+
+g = Graph(4)
+g.add_edge(0, 1); g.add_edge(0, 2); g.add_edge(2, 3)
+for w in g.adj[0]:
+    print("0 -", w)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class Graph
+{
+    public int V, E;
+    public List<int>[] Adj;                 // her düğüm için bir liste
+
+    public Graph(int v)
+    {
+        V = v;
+        Adj = new List<int>[v];
+        for (int i = 0; i < v; i++) Adj[i] = new List<int>();
+    }
+
+    public void AddEdge(int v, int w)
+    {
+        Adj[v].Add(w);                      // yönsüz: iki yöne de
+        Adj[w].Add(v);
+        E++;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Graph {
+  constructor(V) {
+    this.V = V;
+    this.E = 0;
+    this.adj = Array.from({ length: V }, () => []);   // V tane boş liste
+  }
+  addEdge(v, w) {
+    this.adj[v].push(w);                // yönsüz: iki yöne de
+    this.adj[w].push(v);
+    this.E++;
+  }
+}
+
+const g = new Graph(4);
+g.addEdge(0, 1); g.addEdge(0, 2); g.addEdge(2, 3);
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <p class="mini">🎒 <code>[[] for v in range(V)]</code>: V tane <b>ayrı</b> boş liste. ⚠️ <code>[[]] * V</code> yazmayın: V kez <b>aynı</b> listeyi gösterir — bir düğüme eklenen komşu hepsinde görünür! JS’teki <code>Array.from({length: V}, () =&gt; [])</code> aynı sebeple <code>new Array(V).fill([])</code> yerine kullanılır.</p>
+</section>
+
+<section data-sec="gösterimler">
+  <h2>🎮 Örtük graf: karo haritada komşular</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+MAP = ["#########",
+       "#..#....#",
+       "#..#.##.#",
+       "#.......#",
+       "#########"]
+
+def neighbors(r, c):                  # graf bellekte yok: komşular hesaplanır
+    for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:   # sağ, alt, sol, üst
+        nr, nc = r + dr, c + dc
+        if MAP[nr][nc] != "#":        # duvar değilse kenar var
+            yield (nr, nc)
+
+print(list(neighbors(1, 1)))          # [(1, 2), (2, 1)]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static readonly (int dr, int dc)[] Dirs = { (0, 1), (1, 0), (0, -1), (-1, 0) };
+
+static List<(int, int)> Neighbors(char[,] map, int r, int c)
+{
+    var result = new List<(int, int)>();
+    foreach (var (dr, dc) in Dirs)
+    {
+        int nr = r + dr, nc = c + dc;
+        if (map[nr, nc] != '#')            // duvar değilse kenar var
+            result.Add((nr, nc));
+    }
+    return result;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]];   // sağ, alt, sol, üst
+
+function neighbors(map, r, c) {
+  const result = [];
+  for (const [dr, dc] of DIRS) {
+    const nr = r + dr, nc = c + dc;
+    if (map[nr][nc] !== "#") result.push([nr, nc]);   // duvar değilse kenar
+  }
+  return result;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>yield</code> (Python): fonksiyon bir liste kurmak yerine değerleri <b>tek tek üretir</b> (üreteç). Geleneksel hâli: boş liste + <code>append</code> + <code>return</code> (C# ve JS sekmelerindeki gibi). Haritanın kenarı duvar olduğu için dizi dışına çıkmıyoruz.</p>
+</section>
+
+<section data-sec="gösterimler">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 2 · gösterimler</div>
+    <div class="q">100 × 100’lük bir karo haritası (10.000 kare, 4 yönlü komşuluk) için komşuluk matrisi kaç hücre tutar?</div>
+    <div class="opts">
+      <button data-opt="A">40.000</button>
+      <button data-opt="B">10.000</button>
+      <button data-opt="C">100 milyon</button>
+      <button data-opt="D">20.000</button>
+    </div>
+    <div class="explain">Matris V × V = 10.000² = <b>100 milyon</b> hücre; bunların sadece ~40.000’i 1. Komşuluk listeleri ~V + 2E ≈ 50.000 kayıt; örtük ızgara ise <b>hiç</b> ek bellek tutmaz.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">DFS</div>
+  <div class="sub"><i>depth-first search</i> — labirentte ip çözmek</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="done">gösterimler</li><li class="on">DFS</li><li class="">BFS</li><li class="">bağlı bileşenler</li><li class="">oyunda graflar ve zor problemler</li></ul>
+</section>
+
+<section data-sec="DFS">
+  <h2>Labirent keşfi: Trémaux ve Theseus</h2>
+  <div class="cols">
+    <div style="font-size:.9em">
+      <p>Yunan mitolojisinde Theseus, Minotor’un labirentine bir <b>ip yumağı</b> ile girer:</p>
+      <ol>
+        <li>Gittiğin her koridoru <b>işaretle</b> (ipi çöz)</li>
+        <li>İşaretsiz bir koridor varsa ona <b>dal</b></li>
+        <li>Çıkmaza girersen ip boyunca <b>geri dön</b> <span class="en">backtrack</span> ve başka bir işaretsiz koridor dene</li>
+      </ol>
+      <p class="fragment">Bu, <b>derinlik öncelikli arama</b>dır (DFS): olabildiğince <b>derine</b> git, sonra geri dön. 19. yüzyılda Fransız matematikçi Trémaux da tebeşirle aynı yöntemi tarif etti.</p>
+    </div>
+    <div class="box game fragment"><span class="bt">🎮 Oyunda</span>Rastgele labirent üretmenin en popüler yolu “rastgele DFS”dir: işaretsiz komşulardan <b>rastgele</b> birine git, duvarı yık. (Haritadaki 🌀 Labirent düğmesi tam bunu yapıyor.) Uzun, kıvrımlı koridorlar onun imzasıdır.</div>
+  </div>
+</section>
+
+<section data-sec="DFS">
+  <h2>DFS — iz tablosu</h2>
+  <div class="demo" data-demo="gsearch" data-graph="tinyCG" data-alg="dfs" data-speed="1.2"></div>
+  <p class="mini">Kitaptaki “tinyCG”. Mavi = işaretli (çağrı yığınında), yeşil = bitti, sarı = şu anki. Kesikli = bakılan kenar. Tablodaki <code>edgeTo[w] = v</code>: “w’ye ilk kez v’den geldim”. Kaynağı değiştirmek için bir düğüme tıklayın.</p>
+</section>
+
+<section data-sec="DFS">
+  <h2>DFS — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-6|8-13|15-24"><script type="text/template">
+class DepthFirstPaths:
+    def __init__(self, G, s):
+        self.marked = [False] * G.V     # bu düğüme ulaştık mı?
+        self.edge_to = [-1] * G.V       # buraya hangi düğümden geldik?
+        self.s = s
+        self._dfs(G, s)
+
+    def _dfs(self, G, v):
+        self.marked[v] = True
+        for w in G.adj[v]:
+            if not self.marked[w]:
+                self.edge_to[w] = v     # w'ye v'den geldik
+                self._dfs(G, w)         # özyineleme: derine in
+
+    def path_to(self, v):               # s → v yolu (yoksa None)
+        if not self.marked[v]:
+            return None
+        path = []
+        while v != self.s:              # edgeTo zincirini geriye izle
+            path.append(v)
+            v = self.edge_to[v]
+        path.append(self.s)
+        path.reverse()
+        return path
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+class DepthFirstPaths
+{
+    bool[] marked;          // bu düğüme ulaştık mı?
+    int[] edgeTo;           // buraya hangi düğümden geldik?
+    int s;
+
+    public DepthFirstPaths(Graph G, int s)
+    {
+        marked = new bool[G.V]; edgeTo = new int[G.V]; this.s = s;
+        Dfs(G, s);
+    }
+
+    void Dfs(Graph G, int v)
+    {
+        marked[v] = true;
+        foreach (int w in G.Adj[v])
+            if (!marked[w]) { edgeTo[w] = v; Dfs(G, w); }
+    }
+
+    public List<int> PathTo(int v)
+    {
+        if (!marked[v]) return null;
+        var path = new List<int>();
+        for (int x = v; x != s; x = edgeTo[x]) path.Add(x);
+        path.Add(s);
+        path.Reverse();
+        return path;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function depthFirstPaths(G, s) {
+  const marked = new Array(G.V).fill(false);
+  const edgeTo = new Array(G.V).fill(-1);
+
+  function dfs(v) {
+    marked[v] = true;
+    for (const w of G.adj[v])
+      if (!marked[w]) { edgeTo[w] = v; dfs(w); }
+  }
+  dfs(s);
+
+  function pathTo(v) {
+    if (!marked[v]) return null;
+    const path = [];
+    for (let x = v; x !== s; x = edgeTo[x]) path.push(x);
+    path.push(s);
+    return path.reverse();
+  }
+  return { marked, pathTo };
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="DFS">
+  <h2>DFS ne kadar sürer? Ve bir uyarı</h2>
+  <div class="cols">
+    <div class="box prop"><span class="bt">Önerme</span>DFS, s’ye bağlı bütün düğümleri, derecelerinin toplamıyla orantılı sürede işaretler (≤ V + 2E).
+      <p class="mini">Her düğüm bir kez işaretlenir; her kenara iki kez (iki ucundan) bakılır. <code>edgeTo[]</code> ile s’den her ulaşılan düğüme bir yol bulunur — ama <b>en kısa</b> olması gerekmez!</p></div>
+    <div class="box low"><span class="bt">⚙️ Özyineleme derinliği</span>DFS’de çağrı yığını ulaşılan yol kadar derinleşebilir. 1000 × 1000’lik bir karo haritasında yol 1 milyon kare olabilir → <b>yığın taşması</b> <span class="en">stack overflow</span> (Python’da sınır ~1000!).
+      <p class="mini">Çözüm: özyineleme yerine <b>açık bir yığın</b> (Yığınlar destesi) kullanın. Oyun motorlarında flood fill hep böyle yazılır.</p></div>
+  </div>
+</section>
+
+<section data-sec="DFS">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · DFS</div>
+    <div class="q">DFS ile bulunan <code>pathTo(v)</code> yolu için hangisi doğrudur?</div>
+    <div class="opts">
+      <button data-opt="A">Her zaman en kısa yoldur</button>
+      <button data-opt="B">s’den v’ye geçerli bir yoldur ama en kısa olmayabilir</button>
+      <button data-opt="C">Bazen geçersiz olabilir</button>
+      <button data-opt="D">Sadece ağaçlarda çalışır</button>
+    </div>
+    <div class="explain"><code>edgeTo</code> zinciri gerçek kenarlardan oluşur → yol geçerli. Ama DFS “olabildiğince derine” gittiği için dolambaçlı bir yol bulabilir. En kısa yol (en az kenar) için <b>BFS</b> gerekir — sıradaki konu.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">BFS</div>
+  <div class="sub"><i>breadth-first search</i> — önce yakınlar, sonra uzaklar</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="done">gösterimler</li><li class="done">DFS</li><li class="on">BFS</li><li class="">bağlı bileşenler</li><li class="">oyunda graflar ve zor problemler</li></ul>
+</section>
+
+<section data-sec="BFS">
+  <h2>BFS: suya atılan taş 🌊</h2>
+  <div class="cols c64">
+    <ol style="font-size:.9em">
+      <li>Kaynağı işaretle, <b>kuyruğa</b> koy</li>
+      <li class="fragment">Kuyruktan bir düğüm çıkar</li>
+      <li class="fragment">İşaretsiz komşularının hepsini işaretle, <code>edgeTo</code>’larını yaz, kuyruğa koy</li>
+      <li class="fragment">Kuyruk boşalana kadar tekrarla</li>
+    </ol>
+    <div class="box story fragment"><span class="bt">Neden en kısa?</span>Kuyruk (FIFO) sayesinde düğümler uzaklık sırasıyla çıkar: önce 1 adımdakilerin hepsi, sonra 2 adımdakiler… Bir düğüme ilk ulaştığımız an, oraya ulaşmanın en kısa yolunu bulmuşuzdur.</div>
+  </div>
+  <p class="fragment mini">DFS ile tek fark: <b>yığın</b> yerine <b>kuyruk</b>! (Yığınlar ve Kuyruklar destesindeki flood fill demosunu hatırlayın.)</p>
+</section>
+
+<section data-sec="BFS">
+  <h2>BFS — iz tablosu</h2>
+  <div class="demo" data-demo="gsearch" data-graph="tinyCG" data-alg="bfs" data-speed="1.2"></div>
+  <p class="mini">Mor kesikli = kuyrukta bekleyen. Mor rozet = kaynağa uzaklık (<code>distTo</code>). Bütün kenarları kenar sayısına göre en kısa yollardan oluşan yeşil ağaç: <b>en kısa yollar ağacı</b>.</p>
+</section>
+
+<section data-sec="BFS">
+  <h2>BFS — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from collections import deque           # hızlı kuyruk
+
+def bfs(G, s):
+    marked = [False] * G.V
+    edge_to = [-1] * G.V
+    dist_to = [-1] * G.V
+    q = deque([s])
+    marked[s] = True
+    dist_to[s] = 0
+    while q:                            # kuyruk boş değilken
+        v = q.popleft()                 # baştan çıkar (FIFO)
+        for w in G.adj[v]:
+            if not marked[w]:
+                marked[w] = True
+                edge_to[w] = v
+                dist_to[w] = dist_to[v] + 1
+                q.append(w)             # sona ekle
+    return edge_to, dist_to
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int[] Bfs(Graph G, int s, int[] edgeTo)
+{
+    var marked = new bool[G.V];
+    var distTo = new int[G.V];
+    var q = new Queue<int>();
+    marked[s] = true; q.Enqueue(s);
+    while (q.Count > 0)
+    {
+        int v = q.Dequeue();                     // baştan çıkar
+        foreach (int w in G.Adj[v])
+        {
+            if (marked[w]) continue;
+            marked[w] = true;
+            edgeTo[w] = v;
+            distTo[w] = distTo[v] + 1;
+            q.Enqueue(w);                        // sona ekle
+        }
+    }
+    return distTo;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function bfs(G, s) {
+  const marked = new Array(G.V).fill(false);
+  const edgeTo = new Array(G.V).fill(-1);
+  const distTo = new Array(G.V).fill(-1);
+  const q = [s];
+  let head = 0;                         // shift() yavaş: baş işaretçisi
+  marked[s] = true; distTo[s] = 0;
+  while (head < q.length) {
+    const v = q[head++];                // baştan çıkar
+    for (const w of G.adj[v]) {
+      if (marked[w]) continue;
+      marked[w] = true; edgeTo[w] = v;
+      distTo[w] = distTo[v] + 1;
+      q.push(w);                        // sona ekle
+    }
+  }
+  return { edgeTo, distTo };
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 Python <code>list.pop(0)</code> ve JS <code>shift()</code> diziyi kaydırır → O(N) (Bağlı Listeler destesi!). <code>deque</code> ya da “baş işaretçisi” hilesi O(1).</p>
+</section>
+
+<section data-sec="BFS">
+  <h2>🎮 Haritada BFS ve DFS yarışı</h2>
+  <div class="demo" data-demo="gridsearch" data-preset="walls" data-c="36" data-r="13" data-cell="30"></div>
+  <p class="mini">Algoritmayı değiştirip tekrar arayın: BFS dalga gibi yayılır ve en kısa yolu bulur; DFS koridor koridor dalar ve uzun, dolambaçlı bir yol bulur. Fareyle duvar çizin, 🌀 labirent deneyin.</p>
+</section>
+
+<section data-sec="BFS">
+  <h2>Kaç adımda tanışıyoruz? (“Kevin Bacon sayısı”)</h2>
+  <div class="demo" data-demo="gsearch" data-graph="friends" data-alg="bfs" data-src="0" data-w="860" data-h="330" data-notable data-speed="2"></div>
+  <p class="mini">Princeton’ın klasik örneği: aktörler ve filmler grafında herkesin Kevin Bacon’a uzaklığı (BFS). Burada bir oyun arkadaşlık ağı: “Pro Oyuncu” ile aranızda kaç kişi var? Rozet = uzaklık.</p>
+</section>
+
+<section data-sec="BFS">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 4 · BFS</div>
+    <div class="q">BFS’de bir düğüme <b>ilk kez</b> ulaşıldığında bulunan uzaklık neden kesinlikle en kısadır?</div>
+    <div class="opts">
+      <button data-opt="A">Çünkü komşular alfabetik sırayla gezilir</button>
+      <button data-opt="B">Çünkü kuyruk düğümleri uzaklık sırasıyla çıkarır: k adımdakilerin hepsi k+1 adımdakilerden önce işlenir</button>
+      <button data-opt="C">Çünkü BFS özyineleme kullanır</button>
+      <button data-opt="D">Çünkü graf yönsüzdür</button>
+    </div>
+    <div class="explain">Kuyrukta her an en fazla iki farklı uzaklık vardır: k ve k+1, ve k’lar önde. Bir düğüme daha kısa bir yol olsaydı, o yolun önceki düğümü daha erken işlenir ve düğümü daha önce işaretlerdi.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2e3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Bağlı bileşenler</div>
+  <div class="sub"><i>connected components</i> — kaç ayrı parça var?</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="done">gösterimler</li><li class="done">DFS</li><li class="done">BFS</li><li class="on">bağlı bileşenler</li><li class="">oyunda graflar ve zor problemler</li></ul>
+</section>
+
+<section data-sec="bağlı bileşenler">
+  <h2>Kaç ada var? 🏝️</h2>
+  <div class="demo" data-demo="islands"></div>
+  <p class="mini">Algoritma: bütün kareleri sırayla gez; işaretsiz bir kara bulunca oradan DFS yap ve ulaşılan her kareye aynı numarayı (<code>id[]</code>) ver. Bu, resim programlarındaki “boya kovası” <span class="en">flood fill</span> aracının kendisi.</p>
+</section>
+
+<section data-sec="bağlı bileşenler">
+  <h2>Bağlı bileşenler — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.86em">
+      <ul>
+        <li><code>id[v]</code> = v’nin bileşen numarası</li>
+        <li><code>connected(v, w)</code> = <code>id[v] == id[w]</code> → <b>O(1)</b>!</li>
+        <li>Toplam süre: V + E (her düğüm bir kez işaretlenir)</li>
+      </ul>
+      <div class="box story"><span class="bt">Union–Find ile karşılaştırma (Ders 1!)</span>
+        <ul>
+          <li><b>DFS</b>: graf baştan belli → bir kez V + E, sonra her soru O(1)</li>
+          <li><b>Union–Find</b>: kenarlar <b>tek tek</b> geliyor (çevrimiçi) → her kenar ~sabit; graf değişirken soruları yanıtlar</li>
+        </ul>
+      </div>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def connected_components(G):
+    id_ = [-1] * G.V
+    count = 0
+    for s in range(G.V):
+        if id_[s] == -1:            # yeni bileşen bulundu
+            stack = [s]             # açık yığınla DFS (taşma yok)
+            id_[s] = count
+            while stack:
+                v = stack.pop()
+                for w in G.adj[v]:
+                    if id_[w] == -1:
+                        id_[w] = count
+                        stack.append(w)
+            count += 1
+    return id_, count
+
+ids, k = connected_components(g)
+print(k, "bileşen;", "0 ile 3 bağlı mı?", ids[0] == ids[3])
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int[] Components(Graph G, out int count)
+{
+    var id = new int[G.V];
+    Array.Fill(id, -1);
+    count = 0;
+    var stack = new Stack<int>();
+    for (int s = 0; s < G.V; s++)
+    {
+        if (id[s] != -1) continue;
+        id[s] = count; stack.Push(s);
+        while (stack.Count > 0)
+        {
+            int v = stack.Pop();
+            foreach (int w in G.Adj[v])
+                if (id[w] == -1) { id[w] = count; stack.Push(w); }
+        }
+        count++;
+    }
+    return id;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function connectedComponents(G) {
+  const id = new Array(G.V).fill(-1);
+  let count = 0;
+  for (let s = 0; s < G.V; s++) {
+    if (id[s] !== -1) continue;
+    const stack = [s];
+    id[s] = count;
+    while (stack.length) {
+      const v = stack.pop();
+      for (const w of G.adj[v])
+        if (id[w] === -1) { id[w] = count; stack.push(w); }
+    }
+    count++;
+  }
+  return { id, count };
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="bağlı bileşenler">
+  <div class="box game" style="font-size:.95em"><span class="bt">🎮 Prosedürel seviye doğrulama</span>
+    <p>Rastgele üretilen bir mağara/zindan haritası oynanabilir mi? Bağlı bileşenleri hesapla:</p>
+    <ul>
+      <li class="fragment">Giriş, çıkış ve bütün hazineler <b>aynı bileşende</b> mi? Değilse haritayı reddet ya da bileşenleri bir koridorla bağla.</li>
+      <li class="fragment">Çok küçük bileşenler (2–3 karelik kapalı ceplere) → doldur, duvar yap.</li>
+      <li class="fragment">En büyük bileşeni “ana mağara” olarak tut — hücresel otomat (cellular automata) mağara üreticilerinin standart son adımı.</li>
+    </ul>
+    <p class="fragment mini">Aynı fikir Minecraft benzeri oyunlarda “ışık/su yayılması”, Go ve “Bejeweled” türü oyunlarda “bağlı taş grupları” için de kullanılır.</p>
+  </div>
+</section>
+
+<section data-sec="bağlı bileşenler">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 5 · bağlı bileşenler</div>
+    <div class="q">Bağlı bileşenler bir kez hesaplandıktan sonra “v ile w arasında yol var mı?” sorusu ne kadar sürer?</div>
+    <div class="opts">
+      <button data-opt="A">O(1): id[v] == id[w]</button>
+      <button data-opt="B">O(V + E): her seferinde DFS</button>
+      <button data-opt="C">O(lg V)</button>
+      <button data-opt="D">O(V²)</button>
+    </div>
+    <div class="explain">Ön işleme (DFS ile id[] hesaplamak) V + E sürer, ama sonra her soru tek bir karşılaştırma. Bu “önce hazırlan, sonra hızlı cevapla” kalıbı graf algoritmalarında çok yaygın.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Oyunda graflar ve zor problemler</div>
+  <div class="sub">hangi graf problemleri kolay, hangileri imkânsız derecede zor?</div>
+  <ul class="agenda"><li class="done">terimler</li><li class="done">gösterimler</li><li class="done">DFS</li><li class="done">BFS</li><li class="done">bağlı bileşenler</li><li class="on">oyunda graflar ve zor problemler</li></ul>
+</section>
+
+<section data-sec="zorluk">
+  <h2>Graf problemleri zorluk tablosu</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>problem</th><th>🎮 oyundaki karşılığı</th><th>zorluk</th></tr>
+    <tr><td>s’den t’ye yol var mı?</td><td>boss odasına ulaşılabilir mi?</td><td class="c-green">kolay: DFS/BFS</td></tr>
+    <tr><td>en az kenarlı yol</td><td>en az kapıdan geçen rota</td><td class="c-green">kolay: BFS</td></tr>
+    <tr><td>döngü var mı?</td><td>harita bir ağaç mı (tek yol), yoksa alternatif rotalar var mı?</td><td class="c-green">kolay: DFS</td></tr>
+    <tr><td>iki parçalı mı? <span class="en">bipartite</span></td><td>rakipler aynı takıma düşmeden iki takıma bölünebilir mi?</td><td class="c-green">kolay: DFS ile 2 renge boya</td></tr>
+    <tr><td>Euler turu</td><td>her koridordan tam bir kez geç (“kalemi kaldırmadan çiz”)</td><td class="c-green">kolay: derece kuralı</td></tr>
+    <tr><td>Hamilton turu</td><td>her odaya tam bir kez uğra / gezgin satıcı</td><td class="c-red">çok zor (NP-tam)</td></tr>
+    <tr><td>en uzun basit yol</td><td>“en uzun koşu rotası”</td><td class="c-red">çok zor (NP-tam)</td></tr>
+    <tr><td>iki graf aynı mı? <span class="en">isomorphism</span></td><td>iki prosedürel harita aslında aynı yapıda mı?</td><td style="color:var(--amber)">bilinmiyor!</td></tr>
+  </table>
+  <p class="mini">Euler ve Hamilton birbirine çok benziyor (kenarlar mı, düğümler mi?) ama biri lise matematiği, öteki bilgisayar biliminin en ünlü çözülmemiş sorusunun (P = NP?) bir parçası.</p>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: BFS ile uzaklıklar</h2>
+  <div class="graflab" data-task="bfs" data-lang="js">
+<textarea>
+// adj: komşuluk listeleri, ör. [[1,2],[0,3],[0,3],[1,2,4],[3]]
+// s'den her düğüme EN AZ kaç kenarla gidilir? Ulaşılamayan: -1
+function bfs(adj, s) {
+  const dist = new Array(adj.length).fill(-1);
+  dist[s] = 0;
+  const stack = [s];
+  while (stack.length > 0) {
+    const v = stack.pop();
+    for (const w of adj[v]) {
+      if (dist[w] === -1) {
+        dist[w] = dist[v] + 1;
+        stack.push(w);
+      }
+    }
+  }
+  return dist;
+}
+</textarea>
+    <div class="lab-tasks">Bu kod tek bir şeyi yanlış yapıyor: adı “stack” olan şey ve <code>pop()</code>… Bazı graflarda uzaklıklar fazla çıkıyor. Neden? (İpucu: DFS mi BFS mi oldu?) Kuyruğa çevirin: <code>shift()</code> ya da baş işaretçisi.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — adaları say (Python)</h2>
+  <div class="graflab" data-task="islands" data-lang="python">
+<textarea>
+# grid: ['#', '.'] listelerinin listesi.  '#' = kara, '.' = deniz
+# 4 yönde (sağ/sol/üst/alt) bitişik karalar aynı adadır. Kaç ada var?
+def count_islands(grid):
+    R, C = len(grid), len(grid[0])
+    count = 0
+    for r in range(R):
+        for c in range(C):
+            if grid[r][c] == '#':
+                count += 1
+    return count
+</textarea>
+    <div class="lab-tasks">Şu an her <b>kara karesini</b> ayrı ada sayıyor. Bir kara bulunca, ona bağlı bütün karaları bir yığınla (DFS) gezip <code>'.'</code> yapın (“batırın”) ki bir daha sayılmasın. Sınır kontrolünü unutmayın: <code>0 &lt;= nr &lt; R</code>.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Graf</b> = düğümler + kenarlar; oyun haritaları, ağlar, durumlar.</li>
+      <li><b>Komşuluk listeleri</b>: V + E bellek; seyrek graflar için ideal. Karo haritalar <b>örtük</b> graf.</li>
+      <li><b>DFS</b>: yığın / özyineleme; erişilebilirlik, yol, bileşenler, döngü.</li>
+    </ul>
+    <ul>
+      <li><b>BFS</b>: kuyruk; en az kenarlı (en kısa) yollar.</li>
+      <li><b>Bağlı bileşenler</b>: id[] ile O(1) “bağlı mı?”.</li>
+      <li>Bazı graf problemleri kolay, bazıları (Hamilton) imkânsız derecede zor.</li>
+      <li>🎮 Seviye doğrulama, labirent üretimi, ada sayma, arkadaş uzaklığı.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: tinyCG’de 3’ten başlayarak DFS ve BFS iz tablolarını çıkarın (komşuluk listesi sırası: kitaptaki gibi).</li>
+    <li>Graf yönsüzse, DFS ile döngü olup olmadığını nasıl anlarsınız? (İpucu: işaretli bir komşu, geldiğin düğüm değilse…)</li>
+    <li>p5.js’te bir karo haritası çizin; tıklanan kareden BFS yapıp her karenin uzaklığını sayı olarak yazdırın. Fare hedefi gösterince yolu çizin.</li>
+    <li>“İki takıma bölme” (bipartite) kontrolünü DFS ile yazın: her düğümü komşusunun tersi renge boyayın; çelişki çıkarsa bölünemez.</li>
+    <li>Hücresel otomat ile bir mağara üretin; bağlı bileşenleri bulun ve en büyüğü dışındakileri duvarla doldurun.</li>
+    <li>🤖 Bir YZ asistanından Python’da BFS isteyin. Kuyruk için <code>list.pop(0)</code> mı, <code>deque</code> mu kullandı? 1 milyon düğümde fark nedir?</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=nZwSo4vfw6c" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/nZwSo4vfw6c/hqdefault.jpg" alt=""><span><b>How the Königsberg bridge problem changed mathematics</b><br>TED-Ed</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=LFKZLXVO-Dg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/LFKZLXVO-Dg/hqdefault.jpg" alt=""><span><b>Introduction to Graph Theory: A CS Perspective</b><br>Reducible</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=7fujbpJ0LB4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7fujbpJ0LB4/hqdefault.jpg" alt=""><span><b>Depth First Search Algorithm</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=oDqjPvD54Ss" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/oDqjPvD54Ss/hqdefault.jpg" alt=""><span><b>Breadth First Search Algorithm</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=KiCBXu4P-2Y" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KiCBXu4P-2Y/hqdefault.jpg" alt=""><span><b>Breadth First Search grid shortest path</b><br>WilliamFiset</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=09_LlHjoEiY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/09_LlHjoEiY/hqdefault.jpg" alt=""><span><b>Graph Theory Tutorial (uzun kurs)</b><br>freeCodeCamp</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma ve görselleştirme 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/41graph/" target="_blank">algs4 · 4.1 Undirected Graphs</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/41UndirectedGraphs.pdf" target="_blank">Princeton ders slaytları: Undirected Graphs (PDF)</a></li>
+      <li><a href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank">Red Blob Games · Grids and Graphs</a> (oyun geliştiriciler için harika!)</li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://visualgo.net/en/dfsbfs" target="_blank">VisuAlgo · DFS/BFS</a></li>
+      <li><a href="https://qiao.github.io/PathFinding.js/visual/" target="_blank">PathFinding.js görselleştirici</a></li>
+      <li><a href="../st-uygulamalari/">Önceki deste: Sembol Tablosu Uygulamaları</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:64px">Yönlü Graflar</div>
+    <div class="sub">Tek yönlü kapılar, teknoloji ağaçları, görev bağımlılıkları, çöp toplayıcı</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yonlu-graflar/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/graf.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

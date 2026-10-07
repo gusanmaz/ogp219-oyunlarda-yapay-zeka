@@ -643,3 +643,24 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .mk-out { font-size: 24px; line-height: 1.5; min-height: 80px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 14px; margin: 6px 0; }
 .mk-out .mk-key { background: color-mix(in srgb, var(--amber) 30%, transparent); border-radius: 4px; padding: 0 3px; }
 .mk-out .mk-new { background: var(--green); color: #fff; }
+
+/* ---------- graflar ---------- */
+.gv-row { display: flex; gap: 14px; align-items: flex-start; }
+.gv-wrap { flex: 1.15; min-width: 0; }
+.gv-side { flex: 1; min-width: 0; font-size: 17px; }
+.gv-svg { display: block; width: 100%; height: auto; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
+.g-trace { border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 15px; width: 100%; }
+.g-trace th, .g-trace td { border-bottom: 1px solid var(--rule); padding: 1px 8px; text-align: center; }
+.g-trace th { color: var(--muted); font-size: 13px; }
+.g-trace tr.on td { background: color-mix(in srgb, var(--amber) 28%, transparent); }
+.g-adj { font-family: "JetBrains Mono", monospace; font-size: 16px; line-height: 1.55; }
+.g-adj > div.on { background: color-mix(in srgb, var(--amber) 25%, transparent); border-radius: 5px; }
+.g-adj span.nb { color: var(--blue); font-weight: 700; }
+.g-mat { border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 12px; }
+.g-mat th, .g-mat td { padding: 1px 5px; text-align: center; border: 1px solid var(--rule); }
+.g-mat td.one { background: color-mix(in srgb, var(--blue) 30%, transparent); font-weight: 700; }
+.g-mat tr.on td, .g-mat tr.on th { outline: 2px solid var(--amber); }
+.g-dq { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0 8px; font-family: "JetBrains Mono", monospace; }
+.g-dq span { border: 2px solid var(--purple); border-radius: 7px; padding: 1px 8px; background: var(--card); font-weight: 700; }
+.g-dq span:last-child { background: color-mix(in srgb, var(--purple) 25%, var(--card)); }
+.g-grid { font-family: "JetBrains Mono", monospace; font-size: 16px; line-height: 1.1; margin: 4px 0; }
