@@ -343,7 +343,7 @@
 
     const build = () => {
       const input = state.fixed ? state.fixed.slice() : SL.makeInput(state.input, state.n);
-      const rec = SL.record((a, o) => SL.ALGS[state.alg](a, o, { hseq: state.hseq }), input);
+      const rec = SL.record((a, o) => SL.ALGS[state.alg](a, o, { hseq: state.hseq, k: d.k != null ? +d.k : undefined }), input);
       p.load(rec);
     };
     const ctls = el('div', { class: 'sv-controls' });

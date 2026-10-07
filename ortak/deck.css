@@ -567,3 +567,12 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .mp-row.new { background: color-mix(in srgb, var(--green) 20%, var(--card)); font-weight: 700; }
 .rt-wrap { display: grid; grid-template-columns: 760px minmax(0, 1fr); gap: 16px; align-items: center; }
 .rt-info { font-size: 19px; }
+
+/* ---- quicksort bileşenleri ---- */
+.trace-t .ex { color: var(--blue); font-weight: 800; }
+.al-row .bs-cell { width: 70px; } .al-row .bs-cell b { font-size: 30px; }
+.bs-cell.al.on { border-color: var(--green); background: color-mix(in srgb, var(--green) 14%, var(--card)); }
+.bs-cell.al.off { border-color: var(--muted); background: var(--card-2); filter: grayscale(1); }
+.bs-cell.jj { box-shadow: 0 0 0 3px var(--pink); }
+.lf-wrap { display: grid; grid-template-columns: 760px minmax(0, 1fr); gap: 16px; align-items: start; }
+.lf-info { font-size: 18px; } .lf-info .big { margin: 4px 0; }

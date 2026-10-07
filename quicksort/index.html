@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quicksort</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Quicksort: bölümleme, karıştırma, analiz, iyileştirmeler, üç yollu bölümleme, quickselect, %1 low FPS, sistem sıralamaları. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a1d0a 0%, #1c1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · SIRALAMA</div>
+  <div class="ttl" style="font-size:80px">Quicksort</div>
+  <div class="sub"><i>Bir pivot seç, etrafında böl</i> — pratikte en hızlı sıralama ve onun riskleri</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlequick"></div>
+  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 2.3 (Quicksort) bölümünü ve 2.5’teki seçim (selection) ile sistem sıralamaları konularını temel alır. Mergesort destesinin devamıdır. Arka planda pembe çubuk = pivot.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.86em">
+      <li><b>Bölümleme</b> — pivotun solu küçük, sağı büyük <span class="en">partitioning</span></li>
+      <li><b>Quicksort</b> — böl, sonra iki tarafı sırala</li>
+      <li><b>Analiz</b> — ortalama 1,39 N lg N ama en kötü N²! Karıştırmanın önemi</li>
+      <li><b>İyileştirmeler</b> — küçük parçalar, üçün ortancası</li>
+      <li><b>Tekrar eden anahtarlar</b> — üç yollu bölümleme (Hollanda bayrağı)</li>
+      <li><b>Seçim</b> — sıralamadan medyan ve en yakın k düşman <span class="en">quickselect</span></li>
+      <li><b>Oyunda bölümleme</b> — canlılar başa, ölüler sona</li>
+      <li><b>Sistem sıralamaları</b> — C#, Python, JS içeride ne kullanıyor?</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…FPS testlerindeki “%1 low” değerinin nasıl hesaplandığını bilecek ve hazır <code>Sort()</code>’un neden bazen kararsız olduğunu açıklayabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: BOY SIRASI</span>
+    <p class="big">30 kişilik bir sınıfı boy sırasına dizeceksiniz. Herkesle herkesi karşılaştırmadan.</p>
+  </div>
+  <p class="fragment lead">Bir öğrenciyi seçin: <b>Ali</b>. “Ali’den kısalar sola, uzunlar sağa!” Bir anda Ali <b>tam yerine</b> oturdu.</p>
+  <p class="fragment lead">Şimdi soldaki grup için de birini seçin, aynısını yapın; sağdaki grup için de…</p>
+  <p class="fragment big">Ali’nin adı: <span class="c-red">pivot</span>. Bu fikrin adı: <b>quicksort</b>.</p>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss">
+    <tr><td>pivot</td><td>pivot (mihenk)</td><td>Etrafında bölümleme yaptığımız eleman</td></tr>
+    <tr><td>partition</td><td>bölümleme</td><td>Pivotun solu ≤, sağı ≥ olacak şekilde yeniden dizmek</td></tr>
+    <tr><td>in-place</td><td>yerinde</td><td>Ek dizi kullanmadan (sadece takaslarla)</td></tr>
+    <tr><td>randomized</td><td>rastgeleleştirilmiş</td><td>Kötü girdilere karşı önce karıştırmak</td></tr>
+    <tr><td>3-way partitioning</td><td>üç yollu bölümleme</td><td>&lt; pivot · = pivot · &gt; pivot</td></tr>
+    <tr><td>selection / quickselect</td><td>seçim</td><td>k. en küçük elemanı (ör. medyan) bulmak</td></tr>
+    <tr><td>percentile</td><td>yüzdelik</td><td>Verilerin %p’sinin altında kaldığı değer</td></tr>
+    <tr><td>introsort</td><td>introsort</td><td>Quicksort + kötü giderse heapsort’a geçiş (C#, C++)</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Bölümleme</div>
+  <div class="sub"><i>partitioning</i> — pivotun solu küçük, sağı büyük</div>
+  <ul class="agenda"><li class="on">bölümleme</li><li class="">quicksort</li><li class="">analiz</li><li class="">iyileştirmeler</li><li class="">tekrar eden anahtarlar</li><li class="">seçim (quickselect)</li><li class="">oyunda bölümleme</li><li class="">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="bölümleme">
+  <h2>Bölümleme: i soldan, j sağdan</h2>
+  <div class="cols c64">
+    <div style="font-size:.92em">
+      <ol>
+        <li>Pivot: <code>v = a[lo]</code></li>
+        <li><code>i</code> soldan ilerler: <code>a[i] &lt; v</code> olduğu sürece</li>
+        <li><code>j</code> sağdan geriler: <code>a[j] &gt; v</code> olduğu sürece</li>
+        <li>İkisi de durduysa: <code>a[i]</code> ile <code>a[j]</code>’yi <b>takasla</b>, devam</li>
+        <li><code>i</code> ve <code>j</code> kesişince: pivotu <code>a[j]</code> ile takasla → pivot <b>son yerinde</b>!</li>
+      </ol>
+    </div>
+    <div class="box prop"><span class="bt">Bölümlemeden sonra</span>
+      <ul style="font-size:.95em"><li><code>a[j]</code> son yerinde</li><li>solundakilerin hiçbiri <code>a[j]</code>’den büyük değil</li><li>sağındakilerin hiçbiri <code>a[j]</code>’den küçük değil</li></ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="bölümleme">
+  <h2>Bölümleme — animasyon</h2>
+  <div class="sortviz" data-alg="partition1" data-values="K,R,A,T,E,L,E,P,U,I,M,Q,C,X,O,S" data-speed="3" data-controls="none" data-h="280"></div>
+  <div class="legend-bar"><span style="--c:var(--bar-min)">pivot</span><span style="--c:var(--bar-cmp)">karşılaştırılan</span><span style="--c:var(--bar-swap)">takaslanan</span></div>
+</section>
+
+<section data-sec="bölümleme">
+  <h2>İz tablosu: bölümleme <span class="en">partitioning trace</span></h2>
+  <div class="demo" data-demo="parttrace"></div>
+  <div class="trace-legend"><b class="r">kırmızı</b> = pivot · <b style="color:var(--blue)">mavi</b> = az önce takaslanan a[i] ve a[j] · <b class="g">gri</b> = dokunulmayan</div>
+  <aside class="notes">Kitaptaki “partitioning trace”. Her satır bir takas sonrası. Son satırda pivot K, j konumuna gelmiş: solunda K’dan büyük, sağında K’dan küçük harf yok.</aside>
+</section>
+
+<section data-sec="bölümleme">
+  <h2>Bölümleme — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-17|3|5-8|9-12|13-15|16-17"><script type="text/template">
+def partition(a, lo, hi):
+    i, j = lo, hi + 1
+    v = a[lo]                          # pivot
+    while True:
+        i += 1
+        while a[i] < v:                # soldan: v'den küçükleri geç
+            if i == hi: break
+            i += 1
+        j -= 1
+        while v < a[j]:                # sağdan: v'den büyükleri geç
+            if j == lo: break
+            j -= 1
+        if i >= j:                     # kesiştiler mi?
+            break
+        a[i], a[j] = a[j], a[i]        # yanlış taraftakileri takasla
+    a[lo], a[j] = a[j], a[lo]          # pivotu yerine koy
+    return j                           # pivotun son yeri
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int Partition(int[] a, int lo, int hi)
+{
+    int i = lo, j = hi + 1;
+    int v = a[lo];                                  // pivot
+    while (true)
+    {
+        while (a[++i] < v) if (i == hi) break;      // soldan
+        while (v < a[--j]) if (j == lo) break;      // sağdan
+        if (i >= j) break;                          // kesiştiler
+        (a[i], a[j]) = (a[j], a[i]);
+    }
+    (a[lo], a[j]) = (a[j], a[lo]);                  // pivotu yerine koy
+    return j;
+}
+// 🎒 a[++i]: önce i'yi BİR ARTIR, sonra a[i]'yi oku (modern kısa yazım)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function partition(a, lo, hi) {
+  let i = lo, j = hi + 1;
+  const v = a[lo];                                  // pivot
+  for (;;) {                                        // sonsuz döngü, break ile çıkılır
+    while (a[++i] < v) if (i === hi) break;         // soldan
+    while (v < a[--j]) if (j === lo) break;         // sağdan
+    if (i >= j) break;                              // kesiştiler
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  [a[lo], a[j]] = [a[j], a[lo]];                    // pivotu yerine koy
+  return j;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">🎒 <code>while True:</code> / <code>for (;;)</code>: “sonsuza kadar dön” — döngüden <code>break</code> ile çıkılır. Koşul ortada kontrol edildiği için bu kalıp kullanılır.</p>
+</section>
+
+<section data-sec="bölümleme">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 1 · bölümleme</div>
+    <div class="q"><code>[5, 9, 1, 7, 3]</code> dizisi pivot <b>5</b> ile bölümlenirse pivot hangi indekse yerleşir?</div>
+    <div class="opts">
+      <button data-opt="A">0</button>
+      <button data-opt="B">1</button>
+      <button data-opt="C">2</button>
+      <button data-opt="D">4</button>
+    </div>
+    <div class="explain">5’ten küçük iki eleman var (1 ve 3) → sıralı dizide 5’in yeri <b>2</b> numaralı indeks. Bölümleme, pivotu tam sıralı dizideki yerine koyar (geri kalanlar henüz sırasız olsa bile). Örneğin sonuç: <code>[1, 3, 5, 7, 9]</code> ya da <code>[3, 1, 5, 9, 7]</code>.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Quicksort</div>
+  <div class="sub">böl, sonra iki tarafı (özyinelemeyle) sırala</div>
+  <ul class="agenda"><li class="done">bölümleme</li><li class="on">quicksort</li><li class="">analiz</li><li class="">iyileştirmeler</li><li class="">tekrar eden anahtarlar</li><li class="">seçim (quickselect)</li><li class="">oyunda bölümleme</li><li class="">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="quicksort">
+  <h2>Quicksort — kod</h2>
+  <div class="cols c46">
+    <div style="font-size:.9em">
+      <ol>
+        <li>Diziyi <b>karıştır</b> (neden? birazdan!)</li>
+        <li><b>Bölümle</b>: pivot son yerine otursun</li>
+        <li>Solu ve sağı <b>özyinelemeyle</b> sırala</li>
+      </ol>
+      <div class="box story"><span class="bt">Mergesort ile karşılaştırma</span>Mergesort: önce sırala, <b>sonra</b> işi yap (birleştir). Quicksort: önce işi yap (bölümle), <b>sonra</b> sırala. Birleştirme adımı yok, ek dizi yok!</div>
+    </div>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random
+
+def quicksort(a):
+    random.shuffle(a)                  # 1) karıştır: kötü durumdan korun
+    _sort(a, 0, len(a) - 1)
+
+def _sort(a, lo, hi):
+    if hi <= lo:
+        return
+    j = partition(a, lo, hi)           # 2) pivot a[j] son yerinde
+    _sort(a, lo, j - 1)                # 3) solu sırala
+    _sort(a, j + 1, hi)                #    sağı sırala
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+public static void QuickSort(int[] a)
+{
+    Shuffle(a);                        // 1) karıştır (Fisher–Yates)
+    Sort(a, 0, a.Length - 1);
+}
+
+static void Sort(int[] a, int lo, int hi)
+{
+    if (hi <= lo) return;
+    int j = Partition(a, lo, hi);      // 2) bölümle
+    Sort(a, lo, j - 1);                // 3) sol
+    Sort(a, j + 1, hi);                //    sağ
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function quickSort(a) {
+  shuffle(a);                          // 1) karıştır (Fisher–Yates)
+  sortRange(a, 0, a.length - 1);
+}
+
+function sortRange(a, lo, hi) {
+  if (hi <= lo) return;
+  const j = partition(a, lo, hi);      // 2) bölümle
+  sortRange(a, lo, j - 1);             // 3) sol
+  sortRange(a, j + 1, hi);             //    sağ
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="quicksort">
+  <h2>İz tablosu: quicksort</h2>
+  <div class="demo" data-demo="qtrace"></div>
+  <div class="trace-legend"><b class="r">kırmızı</b> = bu adımda son yerine oturan pivot · <b>siyah</b> = bölümlenen parça a[lo…hi] · <b class="g">gri</b> = bu adımın dışı</div>
+</section>
+
+<section data-sec="quicksort">
+  <h2>Quicksort — animasyon</h2>
+  <div class="sortviz" data-alg="quick" data-n="30" data-speed="15" data-controls="alg,n,input" data-h="270"></div>
+  <div class="legend-bar"><span style="--c:var(--bar-min)">pivot</span><span style="--c:var(--bar-cmp)">karşılaştırılan</span><span style="--c:var(--bar-swap)">takaslanan</span><span style="--c:var(--bar-sorted)">şu an bölümlenen parça</span></div>
+  <aside class="notes">Önce karıştırma takasları görünüyor, sonra bölümlemeler. Algoritmayı “Quicksort (karıştırmasız)” ve girdiyi “Sıralı” yapın: karşılaştırma sayısının patladığını gösterin (bir sonraki bölümün konusu).</aside>
+</section>
+
+<section data-sec="quicksort · hikâye">
+  <h2>📜 Tony Hoare, Moskova, 1960</h2>
+  <div class="cols c64">
+    <div>
+      <p>Genç İngiliz bilgisayar bilimci <b>Tony Hoare</b>, Moskova Devlet Üniversitesi’nde Rusça–İngilizce <b>makine çevirisi</b> üzerinde çalışıyordu. Çevrilecek cümledeki kelimeleri, manyetik şeritteki sözlükte aramadan önce <b>sıralaması</b> gerekiyordu.</p>
+      <p class="fragment">Insertion sort çok yavaştı. Hoare quicksort’u buldu — ama dönemin dillerinde <b>özyineleme</b> yoktu, programı yazamadı! İngiltere’ye dönüp özyinelemeli ALGOL 60’ı öğrenince yazabildi.</p>
+    </div>
+    <div class="box story fragment"><span class="bt">💸 “Milyar dolarlık hatam”</span>Hoare 1965’te bir programlama diline <b><code>null</code> referansı</b> ekledi, çünkü “gerçekleştirmesi çok kolaydı”. 2009’da bunun “milyar dolarlık hatası” olduğunu söyledi: <code>NullReferenceException</code> hatalarının (bağlı listeler dersi!) atası.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0b3a2e 0%, #10203f 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Analiz</div>
+  <div class="sub">en iyi N lg N · ortalama 1,39 N lg N · en kötü N²/2</div>
+  <ul class="agenda"><li class="done">bölümleme</li><li class="done">quicksort</li><li class="on">analiz</li><li class="">iyileştirmeler</li><li class="">tekrar eden anahtarlar</li><li class="">seçim (quickselect)</li><li class="">oyunda bölümleme</li><li class="">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="analiz">
+  <h2>Pivot ne kadar iyi bölüyor?</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">😀 En iyi durum</span>Pivot her seferinde <b>tam ortaya</b> düşer → mergesort gibi ikiye bölünür → <b>~N lg N</b> karşılaştırma.</div>
+    <div class="box warn"><span class="bt">😱 En kötü durum</span>Pivot her seferinde <b>en küçük</b> eleman (ör. dizi zaten <b>sıralı</b> ve karıştırmadık!) → bir taraf boş, diğeri N−1 → <b>~N²/2</b> karşılaştırma. Selection sort kadar yavaş!</div>
+  </div>
+  <div class="sortviz" data-alg="quicknosh" data-input="sorted" data-n="40" data-speed="60" data-controls="alg,input" data-h="220"></div>
+  <aside class="notes">Burada algoritma karıştırmasız ve girdi sıralı: her bölümlemede pivot en küçük, parça sadece 1 küçülüyor. Sayaçta karşılaştırma sayısına bakın: ~N²/2 = 800. Sonra algoritmayı “Quicksort” (karıştırmalı) yapın.</aside>
+</section>
+
+<section data-sec="analiz · matematik">
+  <h2>📐 Ortalama durum ve karıştırmanın önemi</h2>
+  <div class="cols c64">
+    <div>
+      <div class="box prop"><span class="bt">Önerme</span>Farklı anahtarlı N elemanı (karıştırdıktan sonra) sıralarken quicksort ortalama <b>~2 N ln N ≈ 1,39 N lg N</b> karşılaştırma yapar.</div>
+      <ul>
+        <li class="fragment">Mergesort’tan <b>%39 daha çok</b> karşılaştırma… ama pratikte <b>daha hızlı</b>: daha az veri taşıma, ek dizi yok, önbellek dostu.</li>
+        <li class="fragment">En kötü durum (~N²/2) hâlâ <b>mümkün</b> ama karıştırma sayesinde olasılığı N = 1 milyonda “bilgisayarınıza yıldırım düşmesinden” çok daha düşük.</li>
+        <li class="fragment">Ağaçlar dersindeki “rastgele BST’nin ortalama derinliği ~2 ln N” ile <b>aynı</b> matematik! (Pivotlar = BST kökleri.)</li>
+      </ul>
+    </div>
+    <div class="box low fragment"><span class="bt">⚙️ Bellek</span>Ek dizi yok (yerinde). Sadece özyineleme yığını: ortalama ~lg N derinlik. Ama en kötü durumda derinlik N → <b>yığın taşması</b>! (Çözüm: küçük tarafa özyineleme, büyük tarafa döngü.)</div>
+  </div>
+</section>
+
+<section data-sec="analiz · deney">
+  <h2>🧪 Canlı ölçüm</h2>
+  <div class="demo" data-demo="qexp"></div>
+  <aside class="notes">“Rastgele girdide yarış”: quicksort genelde mergesort’tan biraz hızlı. “Sıralı girdi: karıştırma olmadan”: N iki katına çıkınca süre ~4 katına (karesel!), karıştırmalı sürüm ise milisaniyeler. Bu ölçümde özyineleme yerine açık bir yığın kullanılıyor, yoksa sıralı girdide yığın taşardı.</aside>
+</section>
+
+<section data-sec="analiz · kaputun altında">
+  <h2>⚙️ Kötü niyetli girdiler: quicksort’a saldırı</h2>
+  <div class="cols c64">
+    <div>
+      <p>Sabit bir pivot kuralı (ör. “her zaman ilk eleman” ya da “ortadaki”) kullanan bir sıralamaya, onu <b>bilerek yavaşlatan</b> bir girdi hazırlanabilir.</p>
+      <ul>
+        <li class="fragment">1999’da Doug McIlroy, “Quicksort için öldürücü bir rakip” <span class="en">A Killer Adversary for Quicksort</span> makalesiyle birçok standart kütüphanenin sıralamasını karesel zamana düşürdü.</li>
+        <li class="fragment">Bir oyun sunucusu, oyuncudan gelen veriyi böyle bir sıralamayla sıralıyorsa: kötü niyetli oyuncu sunucuyu kilitleyebilir (<b>hizmet engelleme</b>, <span class="en">denial of service</span>).</li>
+      </ul>
+    </div>
+    <div class="box game fragment"><span class="bt">🛡️ Savunmalar</span>
+      <ul style="font-size:.95em"><li><b>Karıştır</b> ya da rastgele pivot seç</li><li><b>Introsort</b> (C#, C++): özyineleme çok derinleşirse <b>heapsort</b>’a geç → en kötü N lg N garantisi</li><li>Ya da garantili bir algoritma: mergesort/Timsort</li></ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="analiz">
+  <div class="quiz" data-answer="C">
+    <div class="qhead">Quiz 2 · analiz</div>
+    <div class="q">Karıştırma yapmayan ve pivotu hep <code>a[lo]</code> seçen quicksort’a <b>zaten sıralı</b> 10.000 elemanlı bir dizi veriliyor. Ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Hemen biter: zaten sıralı</button>
+      <button data-opt="B">~N lg N ≈ 130.000 karşılaştırma</button>
+      <button data-opt="C">~N²/2 = 50 milyon karşılaştırma ve 10.000 derinlikte özyineleme</button>
+      <button data-opt="D">Hata verir: sıralı dizi sıralanamaz</button>
+    </div>
+    <div class="explain">Her bölümlemede pivot en küçük eleman: sol taraf boş, sağ taraf sadece 1 küçülür. Toplam (N−1)+(N−2)+… ≈ N²/2 karşılaştırma ve N derinlikte özyineleme (C#’ta <code>StackOverflowException</code> riski). Oyun verileri çoğu zaman neredeyse sıralıdır → karıştırma şart!</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d2a07 0%, #1c1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">İyileştirmeler</div>
+  <div class="sub">küçük parçalar · üçün ortancası</div>
+  <ul class="agenda"><li class="done">bölümleme</li><li class="done">quicksort</li><li class="done">analiz</li><li class="on">iyileştirmeler</li><li class="">tekrar eden anahtarlar</li><li class="">seçim (quickselect)</li><li class="">oyunda bölümleme</li><li class="">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="iyileştirmeler">
+  <h2>İki pratik iyileştirme</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">1) Küçük parçalara insertion sort</span>~10 elemandan küçük parçalarda özyineleme yükü fazla. Insertion sort’a geç → <b>%20’ye kadar</b> kazanç. (Mergesort’taki ile aynı fikir; .NET bunu ≤ 16 elemanda yapar.)</div>
+    <div class="box prop"><span class="bt">2) Üçün ortancası <span class="en">median-of-3</span></span>Pivot olarak ilk, orta ve son elemanın <b>ortancasını</b> seç → pivot ortaya daha yakın düşer, sıralı girdide de iyi çalışır. ~%10 kazanç.</div>
+  </div>
+</section>
+
+<section data-sec="iyileştirmeler">
+  <h2>İyileştirmeler — kod</h2>
+  <div class="tabs short" style="font-size:.82em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+CUTOFF = 10
+def _sort(a, lo, hi):
+    if hi - lo + 1 <= CUTOFF:            # 1) küçük parça
+        insertion_sort(a, lo, hi)
+        return
+    m = median_of_3(a, lo, lo + (hi - lo) // 2, hi)   # 2) iyi pivot
+    a[lo], a[m] = a[m], a[lo]            #    pivotu başa al
+    j = partition(a, lo, hi)
+    _sort(a, lo, j - 1)
+    _sort(a, j + 1, hi)
+
+def median_of_3(a, i, j, k):             # üçünün ortadakinin indeksi
+    if a[i] < a[j]:
+        if a[j] < a[k]: return j
+        return k if a[i] < a[k] else i
+    if a[i] < a[k]: return i
+    return k if a[j] < a[k] else j
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+const int Cutoff = 10;
+static void Sort(int[] a, int lo, int hi)
+{
+    if (hi - lo + 1 <= Cutoff) { InsertionSort(a, lo, hi); return; }   // 1)
+    int m = MedianOf3(a, lo, lo + (hi - lo) / 2, hi);                  // 2)
+    (a[lo], a[m]) = (a[m], a[lo]);
+    int j = Partition(a, lo, hi);
+    Sort(a, lo, j - 1);
+    Sort(a, j + 1, hi);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const CUTOFF = 10;
+function sortRange(a, lo, hi) {
+  if (hi - lo + 1 <= CUTOFF) { insertionSort(a, lo, hi); return; }  // 1)
+  const m = medianOf3(a, lo, lo + Math.floor((hi - lo) / 2), hi);  // 2)
+  [a[lo], a[m]] = [a[m], a[lo]];
+  const j = partition(a, lo, hi);
+  sortRange(a, lo, j - 1);
+  sortRange(a, j + 1, hi);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3d0a0a 0%, #1d0d36 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Tekrar Eden Anahtarlar</div>
+  <div class="sub">üç yollu bölümleme — Dijkstra’nın Hollanda bayrağı</div>
+  <ul class="agenda"><li class="done">bölümleme</li><li class="done">quicksort</li><li class="done">analiz</li><li class="done">iyileştirmeler</li><li class="on">tekrar eden anahtarlar</li><li class="">seçim (quickselect)</li><li class="">oyunda bölümleme</li><li class="">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="3 yollu">
+  <h2>Sadece birkaç farklı değer varsa?</h2>
+  <div class="cols c64">
+    <div>
+      <p>🎮 Envanterdeki 10.000 eşyayı <b>nadirliğe</b> göre sıralıyorsunuz: sadece 4 farklı değer (sıradan, nadir, epik, efsanevi). Ya da sprite’ları 3 <b>çizim katmanına</b> göre…</p>
+      <p class="fragment">Eşit anahtarlar zaten <b>birbiriyle sıralı</b>! Onları tekrar tekrar bölümlemek gereksiz.</p>
+      <p class="fragment"><b>Üç yollu bölümleme</b>: diziyi üçe ayır:</p>
+      <div class="inv-pic fragment"><div class="srt" style="flex:3">&lt; v</div><div class="fin" style="flex:3">= v (bitti!)</div><div class="unk" style="flex:2">?</div><div class="srt" style="flex:3">&gt; v</div></div>
+      <p class="fragment mini">Ortadaki “= v” bölgesi bir daha hiç dokunulmaz. k farklı değer varsa çalışma süresi ~N lg k’ya düşer; az farklı değerde neredeyse <b>doğrusal</b>.</p>
+    </div>
+    <div class="box story"><span class="bt">📜 Hollanda bayrağı problemi</span>Edsger Dijkstra (yol bulma derslerinden tanıyacağınız!) bu problemi 1976’da kırmızı, beyaz, mavi toplarla anlattı: “Topları tek geçişte, renklerine göre sıraya diz.” Hollanda bayrağının renkleri. 🇳🇱</div>
+  </div>
+</section>
+
+<section data-sec="3 yollu">
+  <h2>Üç yollu quicksort — animasyon (az farklı değer)</h2>
+  <div class="sortviz" data-alg="quick3" data-input="few" data-n="50" data-speed="25" data-controls="alg,n,input" data-h="260"></div>
+  <aside class="notes">Girdi “Az farklı değer” (4 farklı yükseklik). Algoritmayı normal “Quicksort” yapıp karşılaştırma sayılarını kıyaslayın. Animasyonda min = lt, i, j = gt işaretçileri.</aside>
+</section>
+
+<section data-sec="3 yollu">
+  <h2>Üç yollu bölümleme — kod</h2>
+  <div class="tabs " style="font-size:.85em">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def sort3(a, lo, hi):
+    if hi <= lo:
+        return
+    lt, i, gt = lo, lo + 1, hi
+    v = a[lo]
+    while i <= gt:
+        if a[i] < v:                         # küçük → sola
+            a[lt], a[i] = a[i], a[lt]
+            lt += 1; i += 1
+        elif a[i] > v:                       # büyük → sağa
+            a[i], a[gt] = a[gt], a[i]
+            gt -= 1                          # (i ilerlemez: gelen elemana bakılmadı)
+        else:                                # eşit → yerinde kal
+            i += 1
+    sort3(a, lo, lt - 1)                     # a[lt..gt] = v → bitti!
+    sort3(a, gt + 1, hi)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static void Sort3(int[] a, int lo, int hi)
+{
+    if (hi <= lo) return;
+    int lt = lo, i = lo + 1, gt = hi, v = a[lo];
+    while (i <= gt)
+    {
+        if      (a[i] < v) { (a[lt], a[i]) = (a[i], a[lt]); lt++; i++; }
+        else if (a[i] > v) { (a[i], a[gt]) = (a[gt], a[i]); gt--; }
+        else i++;
+    }
+    Sort3(a, lo, lt - 1);
+    Sort3(a, gt + 1, hi);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function sort3(a, lo, hi) {
+  if (hi <= lo) return;
+  let lt = lo, i = lo + 1, gt = hi;
+  const v = a[lo];
+  while (i <= gt) {
+    if (a[i] < v) { [a[lt], a[i]] = [a[i], a[lt]]; lt++; i++; }
+    else if (a[i] > v) { [a[i], a[gt]] = [a[gt], a[i]]; gt--; }
+    else i++;
+  }
+  sort3(a, lo, lt - 1);
+  sort3(a, gt + 1, hi);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #07332a 0%, #3a0d33 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Seçim</div>
+  <div class="sub"><i>quickselect</i> — sıralamadan medyanı ve en iyi k’yı bulmak</div>
+  <ul class="agenda"><li class="done">bölümleme</li><li class="done">quicksort</li><li class="done">analiz</li><li class="done">iyileştirmeler</li><li class="done">tekrar eden anahtarlar</li><li class="on">seçim (quickselect)</li><li class="">oyunda bölümleme</li><li class="">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="seçim">
+  <h2>k. en küçüğü bul — tamamen sıralamadan</h2>
+  <div class="cols c64">
+    <div>
+      <p>Bölümlemeden sonra pivot <code>j</code>’de. Aradığımız <code>k</code>:</p>
+      <ul>
+        <li><code>j == k</code> → bulduk!</li>
+        <li><code>j &lt; k</code> → sadece <b>sağ</b> tarafta ara</li>
+        <li><code>j &gt; k</code> → sadece <b>sol</b> tarafta ara</li>
+      </ul>
+      <p class="fragment">Quicksort iki tarafa da iner; quickselect <b>tek</b> tarafa → N + N/2 + N/4 + … ≈ <b>2N</b>: ortalama <b>doğrusal</b> zaman!</p>
+    </div>
+    <div class="box game"><span class="bt">🎮 Oyunda</span>
+      <ul style="font-size:.95em"><li>Medyan MMR (eşleştirme)</li><li>En yakın <b>k</b> düşman (sıralama yok!)</li><li>Skor tablosunda ilk 100 (sadece onları sırala)</li><li>FPS istatistiği: “%1 low”</li></ul>
+    </div>
+  </div>
+  <div class="sortviz" data-alg="select" data-n="40" data-k="20" data-speed="20" data-controls="n,input" data-h="200"></div>
+</section>
+
+<section data-sec="seçim">
+  <h2>Quickselect — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random
+
+def select(a, k):                       # sıralanınca k. sıraya gelecek eleman
+    random.shuffle(a)
+    lo, hi = 0, len(a) - 1
+    while hi > lo:
+        j = partition(a, lo, hi)
+        if j < k:   lo = j + 1          # aranan sağda
+        elif j > k: hi = j - 1          # aranan solda
+        else:       return a[k]         # bulundu
+    return a[k]
+
+median = select(times, len(times) // 2)
+# Hazırları: statistics.median(...), heapq.nsmallest(k, ...)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static int Select(int[] a, int k)
+{
+    Shuffle(a);
+    int lo = 0, hi = a.Length - 1;
+    while (hi > lo)
+    {
+        int j = Partition(a, lo, hi);
+        if      (j < k) lo = j + 1;
+        else if (j > k) hi = j - 1;
+        else return a[k];
+    }
+    return a[k];
+}
+// C#'ta hazır quickselect yok; OrderBy(...).ElementAt(k) tüm diziyi sıralar.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function select(a, k) {
+  shuffle(a);
+  let lo = 0, hi = a.length - 1;
+  while (hi > lo) {
+    const j = partition(a, lo, hi);
+    if (j < k) lo = j + 1;
+    else if (j > k) hi = j - 1;
+    else return a[k];
+  }
+  return a[k];
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">C++’ın <code>std::nth_element</code>’i tam olarak budur. Özyineleme yok: tek tarafa indiğimiz için basit bir <code>while</code> yeter.</p>
+</section>
+
+<section data-sec="seçim · oyunda">
+  <h2>🎮 “%1 low FPS”: oyuncunun hissettiği takılmalar</h2>
+  <div class="demo" data-demo="lowfps"></div>
+  <aside class="notes">Donanım incelemelerinde ortalama FPS’in yanında “%1 low” verilir: en yavaş %1’lik karelerin eşiği. Ortalama 60 FPS olsa bile %1 low 15 ise oyun takılıyor demektir. Takılma sıklığını artırın: ortalama pek değişmezken %1 low çöküyor. Hesap: 1000 kare sürenin %99’luk değeri → quickselect.</aside>
+</section>
+
+<section data-sec="seçim">
+  <div class="quiz" data-answer="B">
+    <div class="qhead">Quiz 3 · seçim</div>
+    <div class="q">1 milyon oyuncunun puanları arasından <b>medyanı</b> bulmak istiyoruz. Hangisi daha hızlı?</div>
+    <div class="opts">
+      <button data-opt="A">Tamamen sırala, ortadakini al (~N lg N)</button>
+      <button data-opt="B">Quickselect (ortalama ~N)</button>
+      <button data-opt="C">İkili arama</button>
+      <button data-opt="D">Hepsi aynı</button>
+    </div>
+    <div class="explain">Sıralama ~20 milyon karşılaştırma (N lg N), quickselect ortalama birkaç milyon (doğrusal). İkili arama sıralı dizi ister — yani önce sıralamak gerekir. Sadece “k. eleman” lazımsa her şeyi sıralamak boşa iş (sıralama destesindeki “en yakın düşman” dersi!).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2b0d45 0%, #0f2a3d 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Oyunda Bölümleme</div>
+  <div class="sub">tek geçişte: canlılar başa, ölüler sona</div>
+  <ul class="agenda"><li class="done">bölümleme</li><li class="done">quicksort</li><li class="done">analiz</li><li class="done">iyileştirmeler</li><li class="done">tekrar eden anahtarlar</li><li class="done">seçim (quickselect)</li><li class="on">oyunda bölümleme</li><li class="">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="oyunda bölümleme">
+  <h2>🎮 Bölümleme tek başına da çok işe yarar</h2>
+  <div class="demo" data-demo="alive"></div>
+</section>
+
+<section data-sec="oyunda bölümleme">
+  <h2>Canlıları başa topla — kod</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Canlıları dizinin başına topla, kaç canlı olduğunu döndür (O(N), yerinde)
+int PartitionAlive(Enemy[] a, int count)
+{
+    int i = 0, j = count - 1;
+    while (true)
+    {
+        while (i <= j && a[i].alive) i++;      // soldan: ölü ara
+        while (i <= j && !a[j].alive) j--;     // sağdan: canlı ara
+        if (i >= j) break;
+        (a[i], a[j]) = (a[j], a[i]);
+    }
+    return i;                                  // a[0..i-1] canlı
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def partition_alive(a):               # canlıları başa topla, sayısını döndür
+    i, j = 0, len(a) - 1
+    while True:
+        while i <= j and a[i].alive: i += 1
+        while i <= j and not a[j].alive: j -= 1
+        if i >= j: break
+        a[i], a[j] = a[j], a[i]
+    return i
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function partitionAlive(a) {          // canlıları başa topla
+  let i = 0, j = a.length - 1;
+  for (;;) {
+    while (i <= j && a[i].alive) i++;
+    while (i <= j && !a[j].alive) j--;
+    if (i >= j) break;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return i;                           // a[0..i-1] canlı
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Sistem Sıralamaları</div>
+  <div class="sub">hazır Sort() içeride ne kullanıyor?</div>
+  <ul class="agenda"><li class="done">bölümleme</li><li class="done">quicksort</li><li class="done">analiz</li><li class="done">iyileştirmeler</li><li class="done">tekrar eden anahtarlar</li><li class="done">seçim (quickselect)</li><li class="done">oyunda bölümleme</li><li class="on">sistem sıralamaları</li></ul>
+</section>
+
+<section data-sec="sistem sıralamaları">
+  <h2>Kütüphaneler hangi algoritmayı kullanıyor?</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>dil / fonksiyon</th><th>algoritma</th><th>kararlı?</th><th>not</th></tr>
+    <tr><td>C# <code>Array.Sort</code>, <code>List.Sort</code></td><td>introsort (quicksort + heapsort + insertion)</td><td class="no">✘</td><td>en kötü N lg N garantili</td></tr>
+    <tr><td>C# LINQ <code>OrderBy</code></td><td>kararlı sıralama</td><td class="yes">✔</td><td>yeni koleksiyon üretir</td></tr>
+    <tr><td>Python <code>sorted</code>, <code>list.sort</code></td><td>Timsort (mergesort + insertion)</td><td class="yes">✔</td><td>neredeyse sıralıda çok hızlı</td></tr>
+    <tr><td>JavaScript <code>Array.sort</code></td><td>Timsort (V8)</td><td class="yes">✔</td><td>ES2019’dan beri kararlı</td></tr>
+    <tr><td>C++ <code>std::sort</code> / <code>stable_sort</code></td><td>introsort / mergesort</td><td>✘ / ✔</td><td>Unreal Engine C++</td></tr>
+    <tr><td>Java (sayılar / nesneler)</td><td>çift pivotlu quicksort / Timsort</td><td>✘ / ✔</td><td>Android</td></tr>
+  </table>
+  <p class="fragment mini">Neden nesneler için kararlı (merge tabanlı), sayılar için quicksort? Sayılarda kararlılığın anlamı yok (eşit sayılar ayırt edilemez) → daha hızlı ve ek bellek istemeyen quicksort seçilir.</p>
+</section>
+
+<section data-sec="sistem sıralamaları">
+  <h2>Hangi sıralama ne zaman? 📋</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>algoritma</th><th>yerinde</th><th>kararlı</th><th>en kötü</th><th>ortalama</th><th>en iyi</th><th>not</th></tr>
+    <tr><td>selection</td><td class="yes">✔</td><td class="no">✘</td><td>N²/2</td><td>N²/2</td><td>N²/2</td><td>en az takas (N)</td></tr>
+    <tr><td>insertion</td><td class="yes">✔</td><td class="yes">✔</td><td>N²/2</td><td>N²/4</td><td>N</td><td>küçük / neredeyse sıralı</td></tr>
+    <tr><td>shellsort</td><td class="yes">✔</td><td class="no">✘</td><td>N<sup>3/2</sup>?</td><td>?</td><td>N</td><td>kısa kod</td></tr>
+    <tr><td>mergesort</td><td class="no">✘</td><td class="yes">✔</td><td>N lg N</td><td>N lg N</td><td>½N lg N</td><td>garanti, kararlı</td></tr>
+    <tr><td>quicksort</td><td class="yes">✔</td><td class="no">✘</td><td>N²/2</td><td>1,39 N lg N</td><td>N lg N</td><td>pratikte en hızlı</td></tr>
+    <tr><td>3 yollu quick</td><td class="yes">✔</td><td class="no">✘</td><td>N²/2</td><td>&lt; N lg N</td><td>N</td><td>tekrar eden anahtarlar</td></tr>
+    <tr><td>heapsort</td><td class="yes">✔</td><td class="no">✘</td><td>2 N lg N</td><td>2 N lg N</td><td>N lg N</td><td>→ öncelik kuyrukları dersi</td></tr>
+  </table>
+</section>
+
+<section data-sec="yarış">
+  <h2>🏁 Yarış: shellsort, mergesort, quicksort, 3 yollu</h2>
+  <div class="race" data-n="120" data-algs="merge,quick,quick3"></div>
+  <aside class="notes">Girdiyi “Az farklı değer” yapın: üç yollu quicksort açık ara kazanır. “Sıralı”: karıştırma sayesinde quicksort sorun yaşamaz. Sayaçlarda karşılaştırma ve yer değiştirme/yazma sayılarını karşılaştırın: mergesort daha az karşılaştırma ama çok daha fazla yazma yapar.</aside>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Kod laboratuvarı: partition yaz</h2>
+  <div class="quicklab" data-lang="js">
+<textarea>
+// GÖREV: a[lo..hi]'yi a[lo] pivotu etrafında bölümle.
+// Pivotun son yerini (j) döndür: solu ≤ pivot, sağı ≥ pivot.
+// (Laboratuvar senin partition'ın ile tam bir quicksort çalıştırıyor.)
+function partition(a, lo, hi) {
+  const v = a[lo];
+  let i = lo, j = hi + 1;
+  for (;;) {
+    // i'yi ilerlet, j'yi gerilet, gerekirse takasla
+    break;
+  }
+  [a[lo], a[j]] = [a[j], a[lo]];
+  return j;
+}
+</textarea>
+    <div class="lab-tasks"><b>İpucu:</b> <code>while (a[++i] &lt; v) if (i === hi) break;</code> · <code>while (v &lt; a[--j]) if (j === lo) break;</code> · <code>if (i &gt;= j) break;</code> · takas. Bonus: daha basit “Lomuto” bölümlemesini araştırıp yazın (tek işaretçi).</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı — Python</h2>
+  <div class="quicklab" data-lang="python">
+<textarea>
+def partition(a, lo, hi):
+    v = a[lo]
+    i, j = lo, hi + 1
+    while True:
+        i += 1
+        while a[i] < v:
+            i += 1
+        j -= 1
+        while v < a[j]:
+            j -= 1
+        if i >= j:
+            break
+        a[i], a[j] = a[j], a[i]
+    a[lo], a[j] = a[j], a[lo]
+    return j
+</textarea>
+    <div class="lab-tasks">Bu kod çoğu zaman çalışır ama bazı testlerde <b>IndexError</b> verir. Neden? (İpucu: pivot dizinin <b>en büyük</b> elemanıysa i nereye kadar gider?) İki sınır kontrolünü ekle.</div>
+  </div>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Bölümleme</b>: i soldan, j sağdan; pivot son yerine.</li>
+      <li><b>Quicksort</b>: böl, sonra iki tarafı sırala; yerinde.</li>
+      <li><b>Analiz</b>: ortalama 1,39 N lg N; en kötü N²/2 → <b>karıştır!</b></li>
+      <li><b>İyileştirmeler</b>: küçük parçalara insertion, üçün ortancası.</li>
+    </ul>
+    <ul>
+      <li><b>3 yollu bölümleme</b>: az farklı anahtarda neredeyse doğrusal.</li>
+      <li><b>Quickselect</b>: medyan, k en yakın, %1 low — ortalama doğrusal.</li>
+      <li>🎮 Bölümleme: canlılar başa, ölüler sona.</li>
+      <li>⚙️ Saldırılar ve introsort; kütüphaneler ne kullanıyor.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="alıştırmalar">
+  <h2>Alıştırmalar 🏋️</h2>
+  <ol style="font-size:.86em">
+    <li>Kâğıt-kalem: <code>E A S Y Q U E S T I O N</code> dizisini (karıştırmadan) bölümleyin ve quicksort iz tablosunu çıkarın.</li>
+    <li>Quickselect ile 100 düşman arasından <b>en yakın 5</b>’ini bulun (k = 4’ü seçin; solundakiler de en yakınlardır!). Sonra sadece o 5’i sıralayın.</li>
+    <li>Unity’de 1000 karelik süreleri bir dizide tutup ekranda ortalama FPS, medyan ve %1 low gösteren bir “performans paneli” yapın.</li>
+    <li>Envanteri nadirliğe göre <b>3 yollu bölümleme</b> ile tek geçişte gruplayın (efsanevi | epik | diğer).</li>
+    <li>Sıralı girdide karıştırmasız quicksort’un özyineleme derinliğini ölçün. N = 10.000’de C# ne yapıyor?</li>
+    <li>🤖 Bir YZ asistanından quicksort isteyin. Pivotu nasıl seçti? Karıştırma ya da rastgele pivot var mı? Sıralı ve “hepsi eşit” girdilerde test edin.</li>
+  </ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=ywWBy6J5gz8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ywWBy6J5gz8/hqdefault.jpg" alt=""><span><b>Quick-sort with Hungarian folk dance</b><br>AlgoRythmics</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Hoixgm4-P4M" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Hoixgm4-P4M/hqdefault.jpg" alt=""><span><b>Quick sort in 4 minutes</b><br>Michael Sambol</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=XE4VP_8Y0BU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/XE4VP_8Y0BU/hqdefault.jpg" alt=""><span><b>Quick Sort</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=SLauY6PpjW4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/SLauY6PpjW4/hqdefault.jpg" alt=""><span><b>Algorithms: Quicksort</b><br>HackerRank</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=COk73cpQbFQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/COk73cpQbFQ/hqdefault.jpg" alt=""><span><b>Quicksort algorithm</b><br>mycodeschool</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=MZaf_9IZCrc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/MZaf_9IZCrc/hqdefault.jpg" alt=""><span><b>Quicksort: Partitioning an array</b><br>KC Ang</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=vxENKlcs2Tw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/vxENKlcs2Tw/hqdefault.jpg" alt=""><span><b>Visualization of Quick sort</b><br>udiprod</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=7h1s2SojIRw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7h1s2SojIRw/hqdefault.jpg" alt=""><span><b>QuickSort Algorithm</b><br>Abdul Bari</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist">
+      <li><a href="https://algs4.cs.princeton.edu/23quicksort/" target="_blank">algs4 · 2.3 Quicksort</a></li>
+      <li><a href="https://algs4.cs.princeton.edu/lectures/keynote/23Quicksort.pdf" target="_blank">Princeton ders slaytları: Quicksort (PDF)</a></li>
+      <li><a href="https://www.cs.dartmouth.edu/~doug/mdmspe.pdf" target="_blank">M. D. McIlroy · A Killer Adversary for Quicksort (1999)</a></li>
+    </ul>
+    <ul class="reflist">
+      <li><a href="https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/" target="_blank">Tony Hoare · Null References: The Billion Dollar Mistake</a></li>
+      <li><a href="https://visualgo.net/en/sorting" target="_blank">VisuAlgo · Sorting (Quick Sort)</a></li>
+      <li><a href="../mergesort/">Önceki deste: Mergesort</a> · <a href="../">Ders haritası</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Ağaçlar ve İkili Arama Ağaçları</div>
+    <div class="sub">Rastgele BST ile quicksort aynı matematiği paylaşıyor — bakalım neden!</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../agaclar-bst/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/siralama.js"></script>
+<script src="../ortak/mergesort.js"></script>
+<script src="../ortak/quicksort.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

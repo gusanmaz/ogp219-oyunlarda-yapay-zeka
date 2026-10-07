@@ -26,7 +26,7 @@ Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmü
 |---|------|-------|
 | 06 | [Temel Sıralama Algoritmaları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/siralama-temel/) | ✅ hazır |
 | 07 | [Mergesort](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/mergesort/) | ✅ hazır |
-| 08 | Quicksort | hazırlanıyor |
+| 08 | [Quicksort](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/quicksort/) | ✅ hazır |
 
 **Bölüm 3 · Arama Ağaçlari**
 
@@ -78,6 +78,8 @@ ortak/              tüm destelerin ortak stil ve kodları
   birlesim.js       union–find görselleştirmeleri, labirent, perkolasyon
   analiz.js         ölçüm deneyleri, kare bütçesi, bellek, büyüme laboratuvarı
   mergesort.js      mergesort görselleştirmeleri, birleştirme laboratuvarı
+  quicksort.js      quicksort, üç yollu bölümleme, quickselect, bölümleme laboratuvarı
+quicksort/          08 · Quicksort
 mergesort/          07 · Mergesort
 algoritma-analizi/  02 · Algoritma analizi
 union-find/         01 · Union–Find
