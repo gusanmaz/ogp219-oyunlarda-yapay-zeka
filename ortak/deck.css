@@ -750,3 +750,31 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .c4stats { margin-top: 6px; }
 .cmp4 { display: grid; grid-template-columns: repeat(2, auto); gap: 6px 18px; justify-content: start; font-size: 15px; }
 .cmp4 canvas { display: block; border: 1px solid var(--rule); border-radius: 6px; }
+
+/* ---- Y14 LLM: mini dil modeli, hafıza, denetim hattı, maliyet ---- */
+.lm-out { font-size: 22px; line-height: 1.6; padding: 12px 16px; background: var(--card-2); border-radius: 10px; min-height: 120px; }
+.lm-out .lm-new { background: color-mix(in srgb, var(--pink) 35%, transparent); border-radius: 4px; padding: 0 3px; }
+.lm-bars { font-size: 15px; }
+.lm-ctx { margin-bottom: 6px; color: var(--muted); }
+.lm-row { display: grid; grid-template-columns: 110px 1fr 120px; gap: 8px; align-items: center; margin: 3px 0; }
+.lm-w { font-family: 'JetBrains Mono', monospace; font-weight: 700; text-align: right; }
+.lm-bar { height: 14px; background: var(--card-2); border-radius: 7px; overflow: hidden; }
+.lm-bar > span { display: block; height: 100%; background: var(--purple); }
+.lm-p { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.mem-t { font-size: 13px; border-collapse: collapse; width: 100%; table-layout: fixed; }
+.mem-t th:first-child { width: 30px; } .mem-t th:nth-child(n+3) { width: 48px; }
+.reveal .mem-t th, .reveal .mem-t td { padding: 2px 4px; border-bottom: 1px solid var(--rule); text-align: left; }
+.mem-t td:nth-child(n+3) { font-family: 'JetBrains Mono', monospace; text-align: right; }
+.mem-t tr.mem-top td { background: color-mix(in srgb, var(--green) 22%, transparent); }
+.mem-prompt { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--card-2); padding: 10px; border-radius: 8px; margin: 0; max-height: 330px; overflow: auto; }
+.mem-q { font-size: 15px; padding: 4px 8px; width: 240px; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); color: var(--ink); }
+.pl-grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: 18px; font-size: 16px; }
+.pl-h { font-weight: 700; margin: 6px 0 4px; }
+.pl-box { background: var(--card-2); padding: 8px 10px; border-radius: 8px; }
+.pl-raw { font-size: 14.5px; white-space: pre-wrap; background: var(--card-2); padding: 8px 10px; border-radius: 8px; margin: 0; }
+.pl-step { padding: 6px 10px; margin: 5px 0; border-radius: 8px; border-left: 5px solid var(--rule); background: var(--card-2); }
+.pl-ok { border-left-color: var(--green); }
+.pl-bad { border-left-color: var(--red); }
+.pl-fb { padding: 6px 10px; margin: 5px 0; border-radius: 8px; background: color-mix(in srgb, var(--amber) 18%, transparent); }
+.cc-out { margin-top: 8px; }
+.cc-big { font-size: 20px; margin: 6px 0; }
