@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zorluk ve Oyuncu Modelleme</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Zorluk ve oyuncu modelleme: Crash, Resident Evil 4, Hades, akış ve dinamik zorluk, Left 4 Dead YZ yönetmeni, Warframe, lastik bant, Sid Meier ve XCOM, PRD, Tomb Raider: Underworld oyuncu tipleri, Elo, TrueSkill, EOMM. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3a2a0d 0%, #1c160c 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 17</div>
+  <div class="ttl" style="font-size:64px">Zorluk ve Oyuncu Modelleme</div>
+  <div class="sub"><i>Akış, YZ yönetmeni, lastik bant, adil rastgelelik, eşleştirme</i> — oyunu oyuncuya göre ayarlamak</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlediff"></div>
+  <aside class="notes">Haftalık plandaki zorluk ve oyuncu modelleme konusu. Arka planda bir gerilim eğrisi: tırmanış, zirve, rahatlama… Left 4 Dead’in YZ yönetmeninin çizmeye çalıştığı dalga.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.8em">
+      <li><b>Zorluk neden zor?</b> — Crash’in maskeleri, RE4’ün gizli zorluk değeri, Hades’in Tanrı Modu</li>
+      <li><b>Akış ve dinamik zorluk</b> — kaygı ile sıkıntı arasında dar bir kanal</li>
+      <li><b>YZ yönetmeni</b> — Left 4 Dead’in gerilim–rahatlama dalgası, Warframe’in yoğunluk ölçümü</li>
+      <li><b>Lastik bant</b> — yarış oyunları yakın yarışı nasıl korur, nasıl “hile” gibi görünmez?</li>
+      <li><b>Adil hissettiren rastgelelik</b> — Sid Meier’in 3’e 1’i, XCOM’un gizli nişan yardımı, Dota’nın PRD’si</li>
+      <li><b>Oyuncu modelleme ve eşleştirme</b> — Tomb Raider: Underworld’ün dört oyuncu tipi, Elo, TrueSkill, etik sorular</li>
+      <li><b>Kod</b> — DDA, yönetmen durum makinesi, Elo + dört laboratuvar</li>
+      <li><b>Araçlar</b> — telemetri, OpenSkill/TrueSkill, eşleştirme hizmetleri, gizlilik</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…oyuncunun becerisini ölçüp zorluğu fark ettirmeden ayarlayabilecek, gerilim ve rahatlama ritmi kuran bir yönetmen yazabilecek, rastgeleliği “adil hissettirecek” şekilde biçimlendirebilecek ve oyuncu verisini <b>oyuncunun yararına</b> kullanmanın sınırlarını tartışabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: BİR OYUNUN SİZİ “KOLLADIĞINI” HİÇ FARK ETTİNİZ Mİ?</span>
+    <p class="big">Çok öldüğünüz bir yerde birden can paketleri çoğaldı mı? Yarışta arkada kalınca rakipler yavaşladı mı? Son vuruşunuz hep mi “tam zamanında” isabet etti?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Büyük ihtimalle evet, ve büyük ihtimalle <b>fark etmediniz</b>. Bu, tasarımın başarısıdır.</li>
+    <li class="fragment">Aynı oyunu oynayan iki kişinin becerisi 10 kat farklı olabilir. Tek bir sabit zorluk, birini sıkar, diğerini bıktırır.</li>
+    <li class="fragment">Bu hafta oyuncuyu <b>ölçen</b> ve oyunu ona göre <b>ayarlayan</b> YZ’leri inceliyoruz. Ve şu soruyu soruyoruz: Bu ayar oyuncunun eğlencesi için mi, yoksa başka bir şey (satış, oyunda kalma süresi) için mi?</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-utility/">Y4 · Utility AI (puanlama, eğriler)</a><a class="" href="../yz-fsm/">Y2 · FSM (yönetmenin durumları)</a><a class="" href="../yz-ogrenme/">Y13 · Öğrenen YZ (oyuncu modeli, Drivatar)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-algilama/">Y11 · Algılama (farkındalık sayacı)</a><a class="opt" href="../yz-pcg/">Y15 · PCG (içeriği oyuncuya göre üretmek)</a><a class="opt" href="../yz-oyun-agaclari/">Y6 · Oyun Ağaçları (zorluk = arama derinliği)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>YZ yönetmeni dört durumlu bir FSM; oyuncunun “yoğunluk” değeri Y11’deki farkındalık sayacının kardeşi; lastik bant bir utility eğrisi. Yeni olan, bunları düşmana değil <b>oyuncunun deneyimine</b> uygulamak.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Matematik olarak ortalama, yüzde ve basit bir eğri yeterli. Elo formülünü laboratuvarda yazacaksınız.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>DDA (dynamic difficulty adjustment)</td><td>dinamik zorluk ayarı</td><td>Zorluğun oyuncunun performansına göre oyun sırasında değişmesi</td></tr>
+    <tr><td>flow</td><td>akış</td><td>Zorluk ile becerinin dengede olduğu, kendini kaptırma hâli</td></tr>
+    <tr><td>AI director · pacing</td><td>YZ yönetmeni · tempo</td><td>Deneyimin ritmini (gerilim/rahatlama) yöneten sistem</td></tr>
+    <tr><td>intensity</td><td>yoğunluk</td><td>Oyuncunun ne kadar “sıkıştığının” sayısal tahmini</td></tr>
+    <tr><td>rubber-banding</td><td>lastik bant</td><td>Rakiplerin oyuncudan çok uzaklaşmaması için hızlarının ayarlanması</td></tr>
+    <tr><td>PRD (pseudo-random distribution)</td><td>sözde rastgele dağılım</td><td>Uzun şanssızlık serilerini önleyen, olasılığı her denemede artan rastgelelik</td></tr>
+    <tr><td>player model · telemetry</td><td>oyuncu modeli · telemetri</td><td>Oyuncunun beceri/tarz/tercih tahmini · oyundan toplanan olay verisi</td></tr>
+    <tr><td>Elo · TrueSkill · matchmaking</td><td>— · — · eşleştirme</td><td>Beceri puanlama sistemleri · oyuncuları maçlara yerleştirme</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Zorluk neden zor?</div>
+  <div class="sub">gizli mi, açık mı?</div>
+  <ul class="agenda"><li class="on">zorluk neden zor?</li><li class="">akış ve dinamik zorluk</li><li class="">YZ yönetmeni ve tempo</li><li class="">yarış ve lastik bant</li><li class="">adil hissettiren rastgelelik</li><li class="">oyuncu modelleme ve eşleştirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="zorluk">
+  <h2>Üç oyun, üç yaklaşım</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Crash Bandicoot (1996): sessiz yardım</span>Yönetmen Jason Rubin’in anlattığına göre oyun, oyuncunun ne kadar zorlandığına göre küçük ayarlar yapıyordu: 5 can kaybettikten sonra koruyucu Aku Aku maskesi vermek, her kayıp canda kovalayan kayaları biraz yavaşlatmak. Sonraki oyunlarda ve N. Sane Trilogy’de daha fazla kontrol noktası da eklendi. Oyuncu çoğu zaman bunu fark etmedi.</div>
+    <div class="box game"><span class="bt">Resident Evil 4 (2005): gizli değer</span>Oyuncuların ve meraklıların analizleriyle ortaya çıktı: oyun, isabet oranı, alınan hasar ve ölümlere göre değişen <b>gizli bir zorluk değeri</b> tutuyor; iyi oynayana daha saldırgan ve dayanıklı düşmanlar, zorlanana daha yumuşak karşılaşmalar. Capcom bunu oyunda hiç açıklamadı. <span class="mini">(Durum: topluluk analizleriyle belgelenmiş; resmî tanıtım yok.)</span></div>
+    <div class="box low"><span class="bt">Hades (2020): açık ve isteğe bağlı</span>Supergiant’ın <b>Tanrı Modu</b>: oyuncu açarsa %20 hasar direnciyle başlar; her ölümde %2 artar, en çok %80. Düşmanlar zayıflamıyor: oyuncu her denemede kalıpları biraz daha öğrenebiliyor. Açık, saygılı ve geri alınabilir.</div>
+  </div>
+  <table class="sum-t" style="font-size:15px;margin-top:10px">
+    <tr><th></th><th>gizli / otomatik</th><th>açık / oyuncu seçer</th></tr>
+    <tr><td>artısı</td><td>Akış bozulmaz, oyuncu “küçümsendiğini” hissetmez</td><td>Dürüst; oyuncunun kontrolü var; erişilebilirlik</td></tr>
+    <tr><td>eksisi</td><td>Fark edilirse “hile” hissi; usta oyuncu cezalandırılabilir</td><td>Gurur engeli (“kolay mod açmam”); seçim yükü</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Akış ve dinamik zorluk</div>
+  <div class="sub">kaygı ile sıkıntı arasında</div>
+  <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="on">akış ve dinamik zorluk</li><li class="">YZ yönetmeni ve tempo</li><li class="">yarış ve lastik bant</li><li class="">adil hissettiren rastgelelik</li><li class="">oyuncu modelleme ve eşleştirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="akış">
+  <h2>Akış kanalı</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Psikolog Mihaly Csikszentmihalyi’nin <b>akış</b> kavramı: görev çok zorsa <b>kaygı</b>, çok kolaysa <b>sıkıntı</b>; ikisinin dengede olduğu dar bir kanalda insan kendini kaptırır.</li>
+        <li>Oyuncu öğrendikçe becerisi artar: sabit bir oyun zamanla <b>kolaylaşır</b>. İyi bir zorluk eğrisi bu artışı takip etmelidir.</li>
+        <li>Jenova Chen’in yüksek lisans tezi ve oyunu <b>flOw</b> (2006): zorluğu oyuncunun <b>kendi seçimleriyle</b> ayarlamasına izin verir (daha derine dalmak ya da yüzeye çıkmak). Oyuncu odaklı DDA.</li>
+      </ul>
+      <div class="box low"><span class="bt">DDA’nın döngüsü</span><b>ölç</b> (son karşılaşmalar, ölümler, isabet, süre) → <b>tahmin et</b> (beceri, “akışta mı?”) → <b>ayarla</b> (düşman sayısı/canı/saldırganlığı, can paketi, kontrol noktası) → tekrar.</div>
+    </div>
+    <div class="box warn"><span class="bt">⚠️ DDA tuzakları</span>
+      <ul style="font-size:.82em">
+        <li><b>Sömürülür</b>: oyuncu bilerek kötü oynayıp zorluğu düşürür, sonra patlar.</li>
+        <li><b>Ustayı cezalandırır</b>: iyi oynadıkça oyun zorlaşırsa “ilerleme” hissi kaybolur.</li>
+        <li><b>Salınım</b>: çok hızlı ayar, zorluğu her karşılaşmada iniş çıkışa sokar.</li>
+        <li><b>Fark edilirse</b> başarı değersizleşir (“oyun beni kazandırdı”).</li>
+      </ul>
+      Çare: küçük ve yavaş ayar, alt/üst sınır, ayarı oyuncunun göremeyeceği değişkenlere uygulamak (kaynak, düşmanın tereddüt süresi) ve kritik anlarda (boss) kapatmak.</div>
+  </div>
+</section>
+
+<section data-sec="akış">
+  <h2>Canlı: akışta tutmak 🌊</h2>
+  <div class="demo" data-demo="flow"></div>
+</section>
+
+<section data-sec="akış">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>“sabit” politikada öğrenme hızını 2’ye çıkarın: çizgi sağa kayıp sıkıntı bölgesine giriyor. Öğrenme hızı 0,25 ve başlangıç becerisi 0: oyuncu kaygıda takılıyor.</li>
+      <li>“basamaklı”: ortalama bir oyuncu için iyi bir eğri. Ama hızlı öğrenen biri için yetersiz, yavaş öğrenen biri için fazla. “başka oyuncu” ile birkaç profil deneyin.</li>
+      <li>“dinamik”: çizgi akış kanalında kalmaya çalışıyor. Hedef galibiyeti 0,5’e indirin (zorlu, yarı yarıya) ve 0,9’a çıkarın (rahat). Hangisi sizin oyununuza uygun?</li>
+      <li>Alt şeride bakın: DDA’da bile kayıplar var; amaç hiç kaybetmemek değil, kayıpların <b>anlamlı</b> olması.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="akış">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · akış</div>
+    <div class="q">Bir DDA sistemi oyuncu her kaybettiğinde zorluğu %30 düşürüyor, her kazandığında %30 artırıyor. Oyuncular ne hisseder?</div>
+    <div class="opts">
+      <button data-opt="A">Zorluk sürekli iniş çıkış yapar; oyuncu bunu fark eder ve kasıtlı kaybederek sistemi sömürebilir</button>
+      <button data-opt="B">Mükemmel akış</button>
+      <button data-opt="C">Hiçbir şey fark etmezler</button>
+      <button data-opt="D">Oyun hep çok kolay kalır</button>
+    </div>
+    <div class="explain">Büyük ve hızlı ayarlar salınım yaratır ve görünür olur. İyi DDA küçük adımlarla, birkaç karşılaşmanın <b>ortalamasına</b> bakarak, sınırlar içinde değişir; laboratuvarda tam olarak bunu yazacaksınız.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">YZ yönetmeni ve tempo</div>
+  <div class="sub">gerilim, zirve, rahatlama</div>
+  <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="done">akış ve dinamik zorluk</li><li class="on">YZ yönetmeni ve tempo</li><li class="">yarış ve lastik bant</li><li class="">adil hissettiren rastgelelik</li><li class="">oyuncu modelleme ve eşleştirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="yönetmen">
+  <h2>Derin hikâye: Left 4 Dead’in YZ Yönetmeni (Valve, 2008)</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.82em">Michael Booth, “The AI Systems of Left 4 Dead” (2009): dört oyuncunun zombi sürüleri arasından kaçtığı bu oyunda, düşman yerleşimi elle yapılmıyordu. Amaç: Counter-Strike’taki doğal gerilim–rahatlama ritmini yakalamak ve <b>her oynayışta farklı</b> olmak.</p>
+      <ul style="font-size:.8em">
+        <li><b>Duygusal yoğunluk</b>: her oyuncu için bir sayı. Artar: hasar alınca (hasarla orantılı), yere düşünce, bir canavar tarafından kenardan çekilince, yakında bir düşman ölünce (uzaklıkla ters orantılı). Zamanla sıfıra doğru azalır; ama oyuncuyla aktif savaşan düşman varsa <b>azalmaz</b>.</li>
+        <li>Yönetmen dört oyuncunun <b>en yüksek</b> yoğunluğunu izler ve dört durumda dolaşır:</li>
+      </ul>
+      <ol style="font-size:.78em">
+        <li><b>Build Up</b>: yoğunluk zirve eşiğini geçene kadar tam tehdit (gezgin zombiler, sürüler, özel düşmanlar).</li>
+        <li><b>Sustain Peak</b>: zirveden sonra 3–5 saniye daha tam tehdit (en kısa tırmanışı garanti eder).</li>
+        <li><b>Peak Fade</b>: en düşük tehdide geç; yoğunluk zirve aralığından çıkana kadar bekle, mevcut çatışma <b>doğal olarak</b> bitsin.</li>
+        <li><b>Relax</b>: 30–45 saniye (ya da oyuncular yeterince ilerleyene kadar) en düşük tehdit; sonra yeniden Build Up.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Ayrıntılar</span>Düşmanlar oyuncuların <b>görmediği</b> yerlerde doğar (“prosedürel nüfus”). Rahatlama sırasında gezgin zombi yok, sürü yok, özel düşman yok. <b>Boss karşılaşmaları</b> (Tank, Witch) uyarlanabilir tempodan etkilenmez: ritmi bilerek bozmaları için.</div>
+      <div class="box game"><span class="bt">Warframe’de aynı fikir</span>Daniel Brewer (GAP Online 2021): prosedürel seviyelerde tetik alanları kullanılamayınca bir YZ yönetmeni kullanıldı. Yoğunluk: alınan hasar / toplam can ve kalkan oranında, öldürülen düşmanın uzaklığıyla orantılı artar; hedef alınıyorsan korunur, yoksa azalır. 100’e ulaşınca yeni düşman doğurma durur.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="yönetmen">
+  <h2>Canlı: YZ yönetmeni 🎬</h2>
+  <div class="demo" data-demo="director"></div>
+</section>
+
+<section data-sec="yönetmen">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Bir süre izleyin: kırmızı yoğunluk eğrisi dalgalanıyor; arka plan renkleri yönetmenin durumunu gösteriyor. Mavi çizgi: aktif düşman. Rahatlama (yeşil) sırasında mavi sıfıra iniyor.</li>
+      <li>Oyuncu becerisini 0,1’e indirin: düşmanlar yavaş temizleniyor, Peak Fade uzuyor; yönetmen savaş bitmeden dinlenmeyi başlatmıyor. 0,9: dalgalar kısa ve sık.</li>
+      <li>Rahatlama süresini 2 saniyeye indirin: dinlenme yok, sürekli gerilim; sonra 40: uzun sessizlik. Hangisi korku, hangisi aksiyon oyununa uyar?</li>
+      <li>“Pusu!” düğmesi: senaryolu bir olay yoğunluğu aniden zirveye taşırsa yönetmen otomatik olarak geri çekilir.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Yarış ve lastik bant</div>
+  <div class="sub">yakın yarış, görünmez el</div>
+  <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="done">akış ve dinamik zorluk</li><li class="done">YZ yönetmeni ve tempo</li><li class="on">yarış ve lastik bant</li><li class="">adil hissettiren rastgelelik</li><li class="">oyuncu modelleme ve eşleştirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="lastik bant">
+  <h2>Lastik bant nasıl “hile” gibi görünmez?</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.84em">Nic Melder (Game AI Pro, 42. bölüm): Öndeki YZ’yi yavaşlat, arkadakini hızlandır; böylece rakipler oyuncuya bir lastik bantla bağlıymış gibi yakın kalır. Ama kötü yapılırsa oyuncu, <b>aynı arabadaki</b> YZ’nin açıkça daha hızlı gittiğini görür ve kandırıldığını hisseder.</p>
+      <ul style="font-size:.8em">
+        <li><b>Ölü bölge</b>: oyuncunun yakınında hiçbir ayar yok; yan yana yarışta her şey “gerçek”.</li>
+        <li>Önce <b>sürücü becerisini</b> değiştir (daha erken fren, virajda daha yavaş): araba aynı, hile yok. Beceri sınırına gelince <b>motor gücünü</b> değiştir.</li>
+        <li><b>Kapat</b>: yarış başında (ilk viraja yığılmayı önlemek için), düşük hızda (kaza sonrası kalkış), YZ oyuncuyu tur bindirirken.</li>
+        <li><b>Yığılma</b>: güçlü ileri bant YZ’leri bir araya toplar; oyuncu hepsini tek hamlede geçer. Çare: bütün öndeki grubu <b>ortalama</b> konumlarına göre birlikte ayarla.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Mario Kart: eşyayla lastik bant</span>Mario Kart serisinde eşya kutuları sıralamaya göre farklı eşya verir: arkadakilere güçlü eşyalar (yıldız, kurşun, ünlü “mavi kabuk” önde gideni vurur), öndekilere zayıflar. Rakip arabaların hızına dokunmadan yarışı sıkıştırır; tartışmalı ama oyunun kimliğinin parçası.</div>
+      <div class="box low"><span class="bt">Bölünmüş ekranda</span>Birden çok insan oyuncu varsa: arkadaki insan, geri bant için; öndeki insan, ileri bant için referans. Aradaki YZ’lere dokunulmaz.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="lastik bant">
+  <h2>Canlı: lastik bant 🏎️</h2>
+  <div class="demo" data-demo="rubber"></div>
+</section>
+
+<section data-sec="lastik bant">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · lastik bant</div>
+    <div class="q">Lastik bandın oyuncunun hemen çevresinde (ölü bölgede) KAPALI olmasının sebebi nedir?</div>
+    <div class="opts">
+      <button data-opt="A">Yan yana yarışırken oyuncu, aynı arabadaki YZ’nin açıkça daha hızlı ya da yavaş olduğunu görürse hile hisseder</button>
+      <button data-opt="B">Performans: yakındaki araçlar için hesap yapmak pahalıdır</button>
+      <button data-opt="C">Fizik motoru buna izin vermez</button>
+      <button data-opt="D">Ölü bölge hiçbir şey değiştirmez</button>
+    </div>
+    <div class="explain">Lastik bandın amacı <b>görünmez</b> kalmak. Oyuncu ancak yakındaki rakibin hızını doğrudan karşılaştırabilir; uzaktaki aracın biraz yavaşlaması fark edilmez. Melder’in eğrisinde “c bölgesi” bu yüzden düzdür.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Adil hissettiren rastgelelik</div>
+  <div class="sub">matematik değil, psikoloji</div>
+  <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="done">akış ve dinamik zorluk</li><li class="done">YZ yönetmeni ve tempo</li><li class="done">yarış ve lastik bant</li><li class="on">adil hissettiren rastgelelik</li><li class="">oyuncu modelleme ve eşleştirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="rastgelelik">
+  <h2>Hikâye: “Oyuncular mantıklı değildir” (Sid Meier, GDC 2010)</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Sid Meier’in “The Psychology of Game Design (Everything You Know Is Wrong)” konuşması: <i>Civilization Revolution</i>’da oyuncunun 3 güçlü birimi 1 güçlü düşmana saldırıyor. Doğru matematikle, düşman yaklaşık <b>%25</b> ihtimalle kazanır.</li>
+        <li>Test oyuncuları bundan <b>nefret etti</b>. Ama 1’e 3 saldırıyı kazandıklarında hiç şikâyet etmediler: bunu “parlak stratejilerine” bağladılar.</li>
+        <li>Sonuç: oyun, oyuncunun lehine olan olasılıkları gösterilenden <b>daha cömert</b> uygular. Meier’in dersi: tasarımın amacı matematiksel doğruluk değil, oyuncunun <b>deneyimi</b>.</li>
+      </ul>
+      <div class="box story"><span class="bt">XCOM: Enemy Unknown (2012)</span>Oyuncuların oyunun yapılandırma dosyalarında (DefaultGameCore.ini) bulduğu gibi: kolay ve normal zorlukta, gösterilen isabet şansı %50 ve üstü olan atışlarda, art arda ıskaladıkça <b>gizli bir nişan yardımı</b> devreye giriyor. Ekranda yazan yüzde, uygulanan yüzde değil. <span class="mini">(Durum: oyun dosyalarıyla belgelenmiş.)</span></div>
+    </div>
+    <div class="box warn"><span class="bt">Neden?</span>İnsanlar olasılığı kötü sezer: %90 isabet ıskalanınca “oyun hile yapıyor” deriz; arka arkaya iki %75’lik ıskalama “imkânsız” gelir (aslında %6 ihtimal). Uzun şanssızlık serileri, ortalama doğru olsa bile <b>haksızlık</b> gibi hissedilir. Oyun tasarımı bu yanılgıları yönetmek zorunda.</div>
+  </div>
+</section>
+
+<section data-sec="rastgelelik">
+  <h2>Canlı: gerçek rastgele mi, PRD mi? 🎲</h2>
+  <div class="demo" data-demo="prd"></div>
+  <p class="mini">PRD (Warcraft III, Dota 2): ilk denemede şans C, her başarısızlıkta C kadar artar (C·n), başarıda sıfırlanır. C, ortalama gerçek olasılığı tutturacak şekilde önceden hesaplanır (%25 için ≈ %8,5).</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Oyuncu modelleme ve eşleştirme</div>
+  <div class="sub">oyuncuyu anlamak, kime karşı oynayacağını seçmek</div>
+  <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="done">akış ve dinamik zorluk</li><li class="done">YZ yönetmeni ve tempo</li><li class="done">yarış ve lastik bant</li><li class="done">adil hissettiren rastgelelik</li><li class="on">oyuncu modelleme ve eşleştirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="oyuncu modeli">
+  <h2>Oyuncu modelleme: ne, neden, nasıl?</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.82em">
+        <li><b>Ne?</b> Beceri (ne kadar iyi?), tarz (nasıl oynuyor?), tercih (neyi seviyor?), duygu (şu an ne hissediyor?).</li>
+        <li><b>Veri</b>: telemetri (ölümler, süreler, yollar, satın almalar), anketler, hatta fizyolojik sinyaller (araştırmada: kalp atışı, ten iletkenliği, yüz ifadesi).</li>
+        <li><b>Isı haritaları</b>: Halo 3 geliştirilirken Microsoft’un kullanıcı araştırma ekibi, oyuncuların nerede öldüğünü haritalara işleyerek dengesiz bölgeleri buldu (Wired, 2007).</li>
+        <li><b>Kullanım</b>: zorluk (bu ders), içerik (Y15), rakipler (Drivatar, Y13), test ve denge.</li>
+      </ul>
+      <div class="box low"><span class="bt">Bartle tipleri (1996)</span>Richard Bartle’ın MUD oyuncuları için önerdiği dört tip: başarıcılar, kâşifler, sosyaller, katiller. Ünlü ama veriden değil gözlemden çıktı; bugün daha çok fikir verici bir çerçeve olarak kullanılıyor.</div>
+    </div>
+    <div class="box story"><span class="bt">Tomb Raider: Underworld’ün dört oyuncu tipi</span>Drachen, Canossa ve Yannakakis (2009): oyunu bitiren <b>1365</b> oyuncunun Xbox Live telemetrisi (ölüm sebepleri, bitirme süresi, yardım istekleri) kendi kendini düzenleyen haritalarla (SOM, bir sinir ağı türü) kümelendi. Dört tip çıktı:
+      <ul style="font-size:.8em">
+        <li><b>Veterans</b>: az ölür, çok hızlı bitirir.</li>
+        <li><b>Solvers</b>: bulmacaları ipucusuz çözer, yavaş ve dikkatli; en çok düşerek ölür.</li>
+        <li><b>Pacifists</b> (en büyük grup): en çok düşmanlardan ölür, gezinmede iyidir.</li>
+        <li><b>Runners</b>: çok ölür ama çok hızlı bitirir.</li>
+      </ul>
+      Ders: “doğrusal” bir oyunda bile oyuncular oyunu çok farklı şekillerde oynar.</div>
+  </div>
+</section>
+
+<section data-sec="oyuncu modeli">
+  <h2>Eşleştirme: kime karşı oynayacağım?</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.82em">
+        <li><b>Elo</b> (Arpad Elo, satranç): her oyuncunun bir puanı; puan farkından beklenen skor hesaplanır, maçtan sonra “beklenenden ne kadar iyi/kötü?” oranında puan güncellenir. Laboratuvarda yazacaksınız.</li>
+        <li><b>Glicko</b>: puana bir de <b>belirsizlik</b> ekler (az oynayanın puanı daha hızlı değişir).</li>
+        <li><b>TrueSkill</b> (Microsoft Research, 2006, Xbox Live; Halo 3): takım oyunları ve çok oyunculu maçlar için Bayesçi beceri tahmini. Açık kaynak benzeri: <b>OpenSkill</b>.</li>
+        <li>Beceriye dayalı eşleştirme (SBMM) tartışmalı: adil maçlar mı, yoksa arkadaşlarla rahat oynamak mı? Her oyun farklı denge kurar.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">Etik sınır: “bağlılık için” eşleştirme</span>
+        <ul style="font-size:.8em">
+          <li>EA araştırmacıları (Chen ve ark., 2017) <b>EOMM</b> çerçevesini yayımladı: sadece “adil” maçlar her zaman oyuncuyu oyunda tutmaz; eşleştirmeyi doğrudan oyuncunun oyunu bırakma riskini azaltacak şekilde optimize etmeyi önerdi.</li>
+          <li>Activision’ın 2015’te başvurup Ekim 2017’de aldığı bir patent: usta bir oyuncuyu yeni bir oyuncuyla eşleştirip yeninin ustanın eşyalarını <b>satın almasını teşvik</b> eden eşleştirme. Tepki büyük oldu; Activision, bunun stüdyolarından bağımsız bir Ar-Ge ekibinin keşif amaçlı patenti olduğunu ve <b>oyunlarda uygulanmadığını</b> açıkladı. <span class="mini">(Durum: patent gerçek; uygulama iddiası şirket tarafından reddedildi.)</span></li>
+        </ul>
+        Soru: Oyuncu modelini <b>oyuncunun eğlencesi</b> için mi, <b>şirketin metrikleri</b> için mi kullanıyoruz?</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyuncu modeli">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · oyuncu modeli</div>
+    <div class="q">Telemetri, oyuncuların %40’ının 3. bölümdeki bir köprüde oyunu bıraktığını gösteriyor. En iyi ilk adım hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Isı haritasıyla nerede ve nasıl öldüklerine bakıp bölümü (ya da o noktadaki yardımı) yeniden tasarlamak, sonra A/B testiyle ölçmek</button>
+      <button data-opt="B">Bütün oyunun zorluğunu %40 düşürmek</button>
+      <button data-opt="C">Köprüyü kaldırmak</button>
+      <button data-opt="D">Hiçbir şey; usta oyuncular geçebiliyor</button>
+    </div>
+    <div class="explain">Veri “nerede” sorusunu cevaplar, “neden” sorusunu değil. Isı haritası ve ölüm sebepleri (Tomb Raider örneğindeki gibi), sorunun beceri mi, belirsiz hedef mi, kötü kamera mı olduğunu gösterir. Genel zorluk düşürmek (B) diğer oyuncuları sıkar; doğrudan düzeltme + ölçüm en sağlam yoldur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">DDA, yönetmen, Elo</div>
+  <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="done">akış ve dinamik zorluk</li><li class="done">YZ yönetmeni ve tempo</li><li class="done">yarış ve lastik bant</li><li class="done">adil hissettiren rastgelelik</li><li class="done">oyuncu modelleme ve eşleştirme</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>DDA ve YZ yönetmeni</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="6-11|12-15"><script type="text/template">
+public class DifficultyDirector : MonoBehaviour {
+    [Range(0, 10)] public float difficulty = 5f;
+    public float targetWinRate = 0.7f, step = 0.4f;
+    readonly Queue<bool> recent = new();
+
+    public void ReportEncounter(bool playerWon) {          // her karşılaşma sonunda çağır
+        recent.Enqueue(playerWon); if (recent.Count > 5) recent.Dequeue();
+        if (recent.Count < 3) return;
+        float winRate = recent.Count(w => w) / (float)recent.Count;
+        difficulty = Mathf.Clamp(difficulty + (winRate - targetWinRate) * step * 2f, 0f, 10f);
+    }
+    // Zorluğu oyuncunun doğrudan göremeyeceği değişkenlere uygula:
+    public float EnemyAccuracy => Mathf.Lerp(0.35f, 0.8f, difficulty / 10f);
+    public float EnemyReactionTime => Mathf.Lerp(0.9f, 0.25f, difficulty / 10f);
+    public float HealthDropChance => Mathf.Lerp(0.35f, 0.08f, difficulty / 10f);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="7-8|10-19"><script type="text/template">
+class Director:
+    """Left 4 Dead tarzı tempo yöneticisi (basitleştirilmiş)."""
+    def __init__(self, peak=0.8, sustain=4.0, relax=30.0, decay=0.08):
+        self.peak, self.sustain, self.relax, self.decay = peak, sustain, relax, decay
+        self.phase, self.t, self.intensity = "build", 0.0, 0.0
+
+    def on_damage(self, dmg, max_hp):       self.intensity = min(1.0, self.intensity + dmg / max_hp)
+    def on_kill_nearby(self, dist):         self.intensity = min(1.0, self.intensity + 0.1 / max(1.0, dist))
+
+    def update(self, dt, enemies_engaging, enemies_alive):
+        if not enemies_engaging:                       # savaşan düşman yoksa azal
+            self.intensity = max(0.0, self.intensity - self.decay * dt)
+        self.t += dt
+        p = self.phase
+        if p == "build" and self.intensity >= self.peak:          self.phase = "sustain"
+        elif p == "sustain" and self.t >= self.sustain:           self.phase = "fade"
+        elif p == "fade" and self.intensity < self.peak / 2 and enemies_alive == 0: self.phase = "relax"
+        elif p == "relax" and self.t >= self.relax:               self.phase = "build"
+        if self.phase != p: self.t = 0.0
+
+    def may_spawn(self):  return self.phase in ("build", "sustain")
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Elo ve sözde rastgele dağılım</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-6"><script type="text/template">
+def expected(ra, rb):
+    return 1 / (1 + 10 ** ((rb - ra) / 400))       # A'nın beklenen skoru (0..1)
+
+def elo_update(ra, rb, score_a, k=32):
+    ea = expected(ra, rb)
+    return ra + k * (score_a - ea), rb + k * ((1 - score_a) - (1 - ea))
+
+# 1500'lük oyuncu 1700'lük oyuncuyu yenerse:
+print(elo_update(1500, 1700, 1))     # (~1524.3, ~1675.7): sürpriz galibiyet çok puan kazandırır
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers="2-9"><script type="text/template">
+// PRD: n'inci denemede şans C·n; başarıda n = 0. %25 ortalama için C ≈ 0.0847
+class PRD {
+  constructor(C) { this.C = C; this.n = 0; }
+  roll() {
+    this.n++;
+    if (random() < this.C * this.n) { this.n = 0; return true; }
+    return false;
+  }
+}
+const crit = new PRD(0.084744);
+// her vuruşta: if (crit.roll()) damage *= 2;
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: lastik bant çarpanı (Melder’in eğrisi): ölü bölge + doğrusal + üst sınır
+public static float RubberBand(float gap, float dead = 100f, float full = 500f, float max = 0.2f) {
+    float a = Mathf.Abs(gap);
+    if (a <= dead) return 1f;                                   // oyuncunun yanında: dokunma
+    float s = Mathf.Min(1f, (a - dead) / (full - dead)) * max;
+    return gap > 0 ? 1f - s : 1f + s;                           // öndeyse yavaşla, arkadaysa hızlan
+}
+// Önce sürücü becerisine uygula (fren noktası, viraj hızı); sınırdaysa motor gücüne.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>Queue&lt;bool&gt; · Enqueue · Dequeue</td><td>kuyruk</td><td>Son N sonucu tutan kayan pencere (Yığınlar ve Kuyruklar destesi)</td></tr>
+    <tr><td>recent.Count(w =&gt; w)</td><td>LINQ ile sayma</td><td>Koşulu sağlayan eleman sayısı (using System.Linq)</td></tr>
+    <tr><td>Mathf.Lerp(a, b, t)</td><td>doğrusal ara değer</td><td>t = 0 → a, t = 1 → b; zorluğu oyun değişkenlerine eşlemek</td></tr>
+    <tr><td>[Range(0, 10)]</td><td>öznitelik</td><td>Inspector’da kaydırıcı: tasarımcı canlı ayarlar</td></tr>
+    <tr><td>10 ** x · Math.pow</td><td>üs alma</td><td>Elo’daki 10 tabanlı beklenti formülü</td></tr>
+    <tr><td>class PRD { constructor … }</td><td>JS sınıfı</td><td>Durum (n) tutan küçük nesne</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: kendi DDA kuralınız</h2>
+  <div class="simlab" data-sim="dda" data-fns="adjust" data-lang="js">
+<textarea>
+// difficulty: şu anki zorluk (0..10)
+// recent: son en fazla 5 karşılaşmanın sonucu, ör. [1, 1, 0, 1, 1] (1 = oyuncu kazandı)
+// Yeni zorluğu döndür. Hedef: oyuncunun kazanma şansı çoğu zaman %50–85 arasında olsun.
+// Kurallar: bir adımda en fazla 1,5 değiş; oyun 0..10 dışını kırpar.
+// Oyuncu (mavi) hızla gelişiyor ve zorluk 5'ten başlıyor (oyuncu için çok zor!).
+function adjust(difficulty, recent) {
+  return difficulty;   // sabit zorluk
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodunda zorluk hiç değişmez: oyuncu önce kaygıda, sonra sıkıntıda. Son sonuçların ortalamasına bakan bir kural yazın. Üç farklı oyuncu profiliyle test ediliyor.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: Elo puanı</h2>
+  <div class="ailab" data-lab="elo" data-lang="python">
+<textarea>
+# ra, rb: A ve B'nin puanları; score_a: A'nın sonucu (1 kazandı, 0.5 berabere, 0 kaybetti)
+# k: güncelleme katsayısı
+# E_A = 1 / (1 + 10**((rb - ra) / 400))
+# Yeni puanları [yeni_ra, yeni_rb] listesi olarak döndür.
+def elo_update(ra, rb, score_a, k):
+    return [ra, rb]
+</textarea>
+    <div class="lab-tasks">Fark edin: iki puanın toplamı değişmez (biri ne kazanırsa öbürü o kadar kaybeder). Güçlü olanı yenmek çok, zayıfı yenmek az puan kazandırır.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: lastik bant çarpanı</h2>
+  <div class="ailab" data-lab="band" data-lang="python">
+<textarea>
+# gap: YZ'nin oyuncuya göre konumu (pozitif: YZ önde)
+# dead: ölü bölge yarıçapı, full: tam etkinin başladığı uzaklık, max: en büyük değişim (ör. 0.2)
+# |gap| <= dead ise 1.0
+# değilse etki = min(1, (|gap| - dead) / (full - dead)) * max
+# YZ öndeyse 1 - etki, arkadaysa 1 + etki döndür.
+def rubber_band(gap, dead, full, max_boost):
+    return 1.0
+</textarea>
+    <div class="lab-tasks">Melder’in grafiğindeki a–e bölgelerinin kodu. Sonuç, YZ’nin sürücü becerisi ya da motor gücüyle çarpılır.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: yönetmenin sonraki durumu</h2>
+  <div class="ailab" data-lab="director" data-lang="python">
+<textarea>
+# phase: "build" | "sustain" | "fade" | "relax"
+# intensity: 0..1, t: bu durumda geçen süre (sn), enemies: canlı düşman sayısı
+# peak: zirve eşiği, sustain: zirveyi koruma süresi, relax: dinlenme süresi
+# build   → sustain  : intensity >= peak
+# sustain → fade     : t >= sustain
+# fade    → relax    : intensity < peak / 2 ve enemies == 0
+# relax   → build    : t >= relax
+# yoksa aynı durumda kal
+def next_phase(phase, intensity, t, enemies, peak, sustain, relax):
+    return phase
+</textarea>
+    <div class="lab-tasks">Y2’deki FSM’nin aynısı; bu sefer bir düşmanı değil, bütün oyunun <b>temposunu</b> yönetiyor.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">ölç, ayarla, saygı göster</div>
+  <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="done">akış ve dinamik zorluk</li><li class="done">YZ yönetmeni ve tempo</li><li class="done">yarış ve lastik bant</li><li class="done">adil hissettiren rastgelelik</li><li class="done">oyuncu modelleme ve eşleştirme</li><li class="done">kod ve laboratuvarlar</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity.com/ugs/manual/analytics/manual/overview" target="_blank" rel="noopener"><b>Unity Analytics (UGS)</b></a></td><td>Unity</td><td>Özel olaylar, huniler, oyuncu segmentleri; uzaktan ayar (Remote Config) ile zorluk değerlerini yayından sonra değiştirme.</td><td>Package Manager → Analytics</td></tr><tr><td><a href="https://gameanalytics.com/docs/" target="_blank" rel="noopener"><b>GameAnalytics</b></a></td><td>Unity / Unreal / Godot / web</td><td>Ücretsiz telemetri: ilerleme, kaynak, hata olayları, ısı haritası benzeri raporlar.</td><td>SDK paketi</td></tr><tr><td><a href="https://github.com/vivekjoshy/openskill.py" target="_blank" rel="noopener"><b>OpenSkill</b></a></td><td>Python / JS / diğerleri</td><td>TrueSkill benzeri, açık lisanslı çok oyunculu beceri puanlama (takımlar, beraberlik).</td><td><code>pip install openskill</code></td></tr><tr><td><a href="https://trueskill.org/" target="_blank" rel="noopener"><b>trueskill (Python)</b></a></td><td>Python</td><td>TrueSkill algoritmasının açık uygulaması; prototip ve analiz için.</td><td><code>pip install trueskill</code></td></tr><tr><td><a href="https://heroiclabs.com/docs/nakama/concepts/multiplayer/matchmaker/" target="_blank" rel="noopener"><b>Nakama</b></a></td><td>açık kaynak sunucu</td><td>Eşleştirme (matchmaker), liderlik tabloları, sohbet; kendi sunucunuzda.</td><td>Docker</td></tr><tr><td><a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank" rel="noopener"><b>scikit-learn</b></a></td><td>Python</td><td>Telemetriden oyuncu kümeleme (k-means), oyunu bırakma tahmini (lojistik regresyon).</td><td><code>pip install scikit-learn</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Zorluk ve oyuncu modeli eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.8em">
+      <li><b>Önce seçenek</b>: zorluk seviyeleri ve erişilebilirlik ayarları (Celeste’in Yardım Modu, Hades’in Tanrı Modu gibi) çoğu zaman gizli DDA’dan daha saygılıdır.</li>
+      <li><b>Telemetri tasarımı</b>: hangi olayı neden topladığınızı yazın (ölüm yeri ve sebebi, bölüm süresi, yardım isteği).</li>
+      <li><b>Gizlilik</b>: kişisel veri için açık rıza ve aydınlatma (KVKK/GDPR); veriyi anonimleştirin, gerekenden fazlasını toplamayın.</li>
+      <li><b>Küçük ve sınırlı ayar</b>: oyuncunun doğrudan görmediği değişkenler; alt/üst sınır; boss ve senaryo anlarında kapalı.</li>
+      <li><b>Uzaktan ayar ve A/B testi</b>: değerleri yayından sonra güncelleyin, etkisini ölçün.</li>
+      <li><b>Tasarımcı paneli</b>: yönetmenin durumunu ve yoğunluğu oyun içinde gösteren hata ayıklama ekranı.</li>
+    </ol>
+    <div>
+      <div class="box warn"><span class="bt">Etik kontrol</span>Her ayar için sorun: “Oyuncu bunu öğrense <b>rahatsız olur mu</b>?” Can paketini biraz artırmak çoğu oyuncuyu rahatsız etmez; satın almaya yönlendirmek için maçları ayarlamak eder. Çocuklara yönelik oyunlarda ve kumar benzeri mekaniklerde (ganimet kutuları) sorumluluk daha da büyük.</div>
+      <div class="box low"><span class="bt">⚙️ Rekabetçi oyunlarda</span>DDA genelde sadece tek oyunculu ya da PvE’de; PvP’de adalet eşleştirmeyle sağlanır, oyun içinde gizli yardım <b>hile</b> sayılır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Her karede zorluğu değiştirmek (salınım)</li><li>Oyuncunun gördüğü değerleri (hasar sayıları, yüzdeler) açıkça değiştirmek</li><li>Rekabetçi modda gizli yardım</li><li>Kişisel veriyi rızasız toplamak</li><li>Asistanın önerdiği “bağlılığı artırma” hilelerini etik değerlendirme yapmadan uygulamak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir tek oyunculu aksiyon oyunu için “PacingDirector” yaz: (1) PlayerIntensity: hasar (hasar/maksCan oranında), yakın düşman ölümü (1/uzaklık), düşman saldırmıyorsa saniyede 0,08 azalma. (2) Dört durumlu FSM: BuildUp, SustainPeak (4 sn), PeakFade (yoğunluk < 0,4 ve canlı düşman 0 olunca bitir), Relax (25 sn). (3) EnemySpawner’a CanSpawn() ve SpawnBudget sağlayan arayüz; spawn noktaları oyuncunun kamerasının görmediği NavMesh noktaları. (4) BossArena içindeyken yönetmeni devre dışı bırak. (5) Oyun içi debug paneli: durum, yoğunluk grafiği (son 60 sn), aktif düşman sayısı. (6) Ayarları ScriptableObject’te tut.”</p><ul class="mini"><li>Ayarın hangi değişkenlere uygulanacağını ve sınırlarını siz belirleyin</li><li>Telemetri olaylarını ve gizlilik metnini birlikte isteyin</li><li>Yönetmen için hata ayıklama paneli (durum, yoğunluk grafiği) isteyin</li><li>Simülasyonla test: farklı beceri profilleri için zorluk eğrisi grafiği ürettirin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Duygusal hesaplama</span>Oyuncunun duygusunu (gerilim, sıkıntı, hayal kırıklığı) kamera, ses ya da fizyolojik sinyallerden tahmin edip deneyimi uyarlamak. Y&amp;T kitabının “Modeling Players” bölümü.</div>
+    <div class="box game"><span class="bt">Deneyim odaklı PCG</span>Oyuncu modeli + içerik üretimi (Y15): oyuncunun tarzına göre seviye üretmek (Solver’a daha çok bulmaca, Runner’a daha çok parkur).</div>
+    <div class="box low"><span class="bt">Pekiştirmeli DDA</span>Zorluk ayarını bir RL ajanına öğretmek (Y13): ödül = oyuncunun oyunda kalması ve memnuniyeti. Ödül hilesine dikkat: “oyunda tutmak” ile “eğlendirmek” aynı şey değil.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Görünür yardım</b> — Bir platform oyununa Hades tarzı açık, isteğe bağlı yardım modu ekleyin; oyunculara sorun: hangisini tercih ediyorlar, gizli DDA mı açık seçenek mi?</li><li><b class="c-green">[kolay]</b> <b>PRD karşılaştırması</b> — Bir kritik vuruş sistemini gerçek rastgele ve PRD ile yapıp 10 oyuncuya oynatın; “adil” bulma oranlarını karşılaştırın.</li><li><b class="c-amber">[orta]</b> <b>Mini yönetmen</b> — Unity’de dalga tabanlı bir hayatta kalma oyunu: YZ istemindeki PacingDirector + yoğunluk grafiği.</li><li><b class="c-amber">[orta]</b> <b>Yarış YZ’si</b> — Waypoint takip eden 5 YZ araba + Melder tarzı lastik bant (ölü bölge, beceri önce güç sonra, başlangıçta kapalı).</li><li><b class="c-red">[zor]</b> <b>Oyuncu kümeleme</b> — Kendi oyununuzdan (ya da açık bir veri kümesinden) telemetri toplayın, k-means ile oyuncu tiplerini bulun, her tip için bir tasarım önerisi yazın.</li><li><b class="c-purple">[araştırma]</b> <b>DDA fark edilir mi?</b> — Aynı seviyeyi DDA açık/kapalı oynatıp oyunculara “oyun size yardım etti mi?” diye sorun; fark edilme oranı ile memnuniyet arasındaki ilişki.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Zorluk: gizli (Crash, RE4) ya da açık (Hades) ayar; ikisinin artı ve eksileri.</li>
+      <li><b>Akış</b> kanalı ve DDA: ölç → tahmin et → küçük adımlarla ayarla.</li>
+      <li><b>YZ yönetmeni</b>: yoğunluk + Build Up / Sustain / Fade / Relax (Left 4 Dead, Warframe).</li>
+      <li><b>Lastik bant</b>: ölü bölge, önce beceri sonra güç, istisnalar (Melder).</li>
+    </ul>
+    <ul>
+      <li><b>Adil rastgelelik</b>: Sid Meier’in 3’e 1’i, XCOM’un gizli yardımı, PRD.</li>
+      <li><b>Oyuncu modelleme</b>: telemetri, ısı haritası, Tomb Raider: Underworld kümeleri.</li>
+      <li><b>Eşleştirme</b>: Elo, TrueSkill; EOMM ve patent tartışması: kimin yararına?</li>
+      <li>Sonraki: <b>performans</b>: bütün bu YZ’leri saniyede 60 kare içinde çalıştırmak.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=WbHMxo11HcU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/WbHMxo11HcU/hqdefault.jpg" alt=""><span><b>The Director AI of Left 4 Dead</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Mnt5zxb8W0Y" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Mnt5zxb8W0Y/hqdefault.jpg" alt=""><span><b>Director AI for Balancing In-Game Experiences</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=zFv6KAdQ5SE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/zFv6KAdQ5SE/hqdefault.jpg" alt=""><span><b>What Capcom Didn’t Tell You About Resident Evil 4</b><br>Game Maker’s Toolkit</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=MtzCLd93SyU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/MtzCLd93SyU/hqdefault.jpg" alt=""><span><b>Sid Meier’s Psychology of Game Design</b><br>GDC</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=AsYfbmp0To0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/AsYfbmp0To0/hqdefault.jpg" alt=""><span><b>The Elo Rating System for Chess and Beyond</b><br>singingbanana</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=S684RQHzmGA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/S684RQHzmGA/hqdefault.jpg" alt=""><span><b>Theories Behind Journey (flow ve duygu)</b><br>Jenova Chen</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Booth 2009</b> · <a href="https://steamcdn-a.akamaihd.net/apps/valve/2009/ai_systems_of_l4d_mike_booth.pdf" target="_blank" rel="noopener">The AI Systems of Left 4 Dead</a> <i>(AIIDE 2009 açılış konuşması (slaytlar))</i><br>YZ yönetmeni, yoğunluk, tempo.</div><div class="paper"><b>Melder 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter42_A_Rubber-Banding_System_for_Gameplay_and_Race_Management.pdf" target="_blank" rel="noopener">A Rubber-Banding System for Gameplay and Race Management</a> <i>(Game AI Pro, Bölüm 42)</i><br>Lastik bant eğrisi ve istisnalar.</div><div class="paper"><b>Brewer 2021</b> · <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter07_Managing_Pacing_in_Procedural_Levels_in_Warframe.pdf" target="_blank" rel="noopener">Managing Pacing in Procedural Levels in Warframe</a> <i>(Game AI Pro Online, Bölüm 7)</i><br>Prosedürel seviyede yönetmen.</div><div class="paper"><b>Drachen, Canossa &amp; Yannakakis 2009</b> · <a href="https://www.um.edu.mt/library/oar/bitstream/123456789/22900/1/CIG09_IOI.pdf" target="_blank" rel="noopener">Player Modeling using Self-Organization in Tomb Raider: Underworld</a> <i>(IEEE CIG 2009)</i><br>Dört oyuncu tipi.</div><div class="paper"><b>Herbrich, Minka &amp; Graepel 2006</b> · <a href="https://www.microsoft.com/en-us/research/publication/trueskilltm-a-bayesian-skill-rating-system/" target="_blank" rel="noopener">TrueSkill™: A Bayesian Skill Rating System</a> <i>(NeurIPS 2006)</i><br>Xbox Live eşleştirmesi.</div><div class="paper"><b>Chen ve ark. 2017</b> · <a href="https://arxiv.org/abs/1702.06820" target="_blank" rel="noopener">EOMM: An Engagement Optimized Matchmaking Framework</a> <i>(WWW 2017)</i><br>Bağlılık odaklı eşleştirme (etik tartışmasıyla okuyun).</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: hikâyelerin izi 📰</h2>
+  <ul style="font-size:.78em">
+    <li>Resident Evil 4: <a href="https://www.engadget.com/2015-06-03-resident-evil-4-difficulty.html" target="_blank" rel="noopener">Engadget</a> · Hades Tanrı Modu: <a href="https://inverse.com/gaming/hades-god-mode-interview" target="_blank" rel="noopener">Inverse röportajı</a></li>
+    <li>Crash Bandicoot: <a href="https://en.wikipedia.org/wiki/Crash_Bandicoot_(video_game)" target="_blank" rel="noopener">Wikipedia (Jason Rubin’in anlatımı)</a></li>
+    <li>Sid Meier GDC 2010: <a href="https://gameinformer.com/b/news/archive/2010/03/12/sid-meier-gamers-arent-logical.aspx" target="_blank" rel="noopener">Game Informer</a> · XCOM gizli nişan yardımı: <a href="https://ufopaedia.org/Aim_(EU2012)" target="_blank" rel="noopener">UFOpaedia</a></li>
+    <li>Activision patenti: <a href="https://mp1st.com/news/call-of-duty-matchmaking-used-by-activision-to-encourage-players-to-buy-microtransactions" target="_blank" rel="noopener">MP1st</a></li>
+  </ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d2a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Oyun YZ’sinde Performans</div>
+    <div class="sub">Bütçeler, zaman dilimleme, LOD, profil, çoklu iş parçacığı</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-performans/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
