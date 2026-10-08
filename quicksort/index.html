@@ -764,6 +764,61 @@ def partition(a, lo, hi):
   </div>
 </section>
 
+<!-- RETRO START quick -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Tony Hoare (1934–2026) ve altı penilik iddia</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>1959–60: genç Tony Hoare, Moskova Devlet Üniversitesi’nde makine çevirisi üzerinde çalışıyordu; Rusça kelimeleri sözlükte aramak için önce <b>sıralamak</b> gerekiyordu. Quicksort fikri o zaman doğdu.</li>
+      <li>İngiltere’ye dönüp Elliott Brothers’ta çalışmaya başladığında kendisinden Shellsort’u kodlaması istendi. Hoare daha hızlı bir yöntem bildiğini söyledi; patronu buna <b>altı peni</b>ne iddiaya girdi. Hoare iddiayı kazandı.</li>
+      <li>Algoritmayı 1961’de yayımladı; özyinelemeyi rahatça ifade edebilen ALGOL 60 sayesinde anlatması kolaylaştı. 1980’de Turing Ödülü’nü aldı. 5 Mart 2026’da, 92 yaşında hayatını kaybetti.</li>
+      <li>Sonrası: Doug McIlroy 1999’da “A Killer Adversary for Quicksort” makalesinde, karşılaştırmaları izleyip girdiyi <b>anında</b> uyduran bir “düşman”ın neredeyse her quicksort’u (rastgele pivot seçenleri bile) karesel süreye sokabildiğini gösterdi. Bugünkü kütüphaneler bu yüzden <b>introsort</b> (derinlik sınırı aşılınca heapsort’a geç) ya da pdqsort kullanır.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Ortalama durumda en hızlı algoritma, en kötü durumda en tehlikeli olabilir. Saldırgan girdi (sunucuya gönderilen veri, oyuncuların hazırladığı haritalar) varsa en kötü durum <b>gerçek</b> bir risktir: korumayı (rastgelelik, derinlik sınırı) bilerek eklemek gerekir.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Quicksort" target="_blank" rel="noopener">Wikipedia: Quicksort</a> · <a href="https://www.merton.ox.ac.uk/news/professor-sir-charles-anthony-richard-tony-hoare-1934-2026" target="_blank" rel="noopener">Merton College: Tony Hoare 1934–2026</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.array.sort" target="_blank" rel="noopener"><b>Array.Sort</b></a></td><td>C# / Unity</td><td>İçgözlemli sıralama: quicksort + derinlik aşılınca heapsort + küçük parçalarda ekleme sıralaması.</td><td>yerleşik</td></tr><tr><td><a href="https://en.cppreference.com/w/cpp/algorithm/nth_element" target="_blank" rel="noopener"><b>std::sort · std::nth_element</b></a></td><td>C++</td><td>Introsort; nth_element ile ortalama doğrusal sürede k’inci eleman (quickselect).</td><td><code>#include &lt;algorithm&gt;</code></td></tr><tr><td><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html" target="_blank" rel="noopener"><b>Arrays.sort (ilkel tipler)</b></a></td><td>Java</td><td>Çift pivotlu quicksort (Java 7’den beri).</td><td>yerleşik</td></tr><tr><td><a href="https://go.dev/doc/go1.19" target="_blank" rel="noopener"><b>slices.Sort · sort_unstable</b></a></td><td>Go · Rust</td><td>pdqsort ailesi (Go 1.19+); Rust’ın kararsız sıralaması da benzer bir hibrit.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.python.org/3/library/heapq.html" target="_blank" rel="noopener"><b>heapq.nsmallest</b></a></td><td>Python</td><td>Sıralamadan en küçük k eleman (yığın ile).</td><td>standart kütüphane</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Ne zaman kendi quicksort’um?</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Neredeyse hiçbir zaman</b>: üretimde standart kütüphaneyi kullanın; yıllarca ayarlanmış ve korunmuştur.</li>
+      <li><b>Bölümleme fikri</b> ise her yerde: “en yakın k düşman” için quickselect (bütün listeyi sıralamadan), “önce aktifler, sonra pasifler” diye yerinde ayırma.</li>
+      <li>Eşit anahtar çoksa (ör. aynı katmandaki 10.000 sprite) 3-yollu bölümleme.</li>
+      <li>Kendiniz yazarsanız: rastgele pivot (ya da üçün ortancası), küçük parçalarda ekleme sıralaması, derinlik sınırı.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Özyineleme derinliği</span>Kötü pivotlarla özyineleme derinliği N’ye ulaşır: büyük dizide <b>yığın taşması</b>. Daha kısa parçaya özyineleme, uzun parçaya döngü uygulamak derinliği log N ile sınırlar.</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>İlk elemanı pivot almak (sıralı girdide O(n²))</li><li>Her çağrıda new Random() oluşturmak</li><li>Özyineleme derinliğini sınırlamamak</li><li>Çok eşit anahtarda 2-yollu bölümleme</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8). En yakın k düşmanı bulmak için quickselect yaz: girdi (konumlar dizisi, oyuncu konumu, k), mesafenin karesiyle karşılaştır, tohumlu Random ile pivot seç, en kötü durumda derinlik sınırı aşılınca heap tabanlı seçime geç. NUnit testleri: k = 0, k = n, tekrarlı mesafeler, sıralı girdi; sonuçları tam sıralamayla karşılaştır.”</p><ul class="mini"><li>Pivot stratejisini ve derinlik sınırını açıkça isteyin</li><li>Sıralı, ters sıralı, hep-eşit girdilerle test isteyin</li><li>Tohumlu rastgele üreteç isteyin</li><li>Top-k için quickselect ya da yığın sorun</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Quickselect ile en yakın k</b> — Unity’de 1.000 düşman arasından en yakın 5’ini her kare quickselect ile bulun; tam sıralamayla ölçün.</li><li><b class="c-amber">[orta]</b> <b>Düşman girdi</b> — McIlroy’un fikrini kendi basit quicksort’unuza uygulayın: karşılaştırma sayısının nasıl karesel büyüdüğünü gösterin.</li><li><b class="c-amber">[orta]</b> <b>3-yollu bölümleme görselleştirmesi</b> — Hollanda bayrağı problemini p5.js’te animasyonla gösterin.</li><li><b class="c-purple">[araştırma]</b> <b>Hibritler</b> — Kendi introsort’unuzu yazıp Array.Sort ile ölçün; eşik değerlerinin etkisini inceleyin.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Hoare 1962</b> · <a href="https://doi.org/10.1093/comjnl/5.1.10" target="_blank" rel="noopener">Quicksort</a> <i>(The Computer Journal 5(1))</i><br>Algoritmanın tam anlatımı.</div><div class="paper"><b>McIlroy 1999</b> · <a href="https://www.cs.dartmouth.edu/~doug/mdmspe.pdf" target="_blank" rel="noopener">A Killer Adversary for Quicksort</a> <i>(Software: Practice and Experience 29(4))</i><br>Her quicksort’u karesele sokan düşman.</div><div class="paper"><b>Bentley &amp; McIlroy 1993</b> · <a href="https://doi.org/10.1002/spe.4380231105" target="_blank" rel="noopener">Engineering a Sort Function</a> <i>(Software: Practice and Experience 23(11))</i><br>C kütüphanesi qsort’unun tasarımı.</div><div class="paper"><b>Peters 2021</b> · <a href="https://arxiv.org/abs/2106.05123" target="_blank" rel="noopener">Pattern-defeating Quicksort</a> <i>(arXiv)</i><br>pdqsort.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

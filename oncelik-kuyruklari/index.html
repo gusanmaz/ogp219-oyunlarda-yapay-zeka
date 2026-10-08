@@ -816,6 +816,61 @@ function update(now) {                               // her karede
   </div>
 </section>
 
+<!-- RETRO START pq -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Linux çekirdeği neden heapsort kullanır?</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>Linux çekirdeğinin genel amaçlı sıralama fonksiyonu (<code>lib/sort.c</code>) quicksort değil, <b>heapsort</b>tur. Kaynak kodundaki açıklama: “Linux çekirdeği için hızlı, küçük, <b>özyinelemesiz</b> bir O(n log n) sıralama.”</li>
+      <li>Sebep 1: Çekirdeğin yığını çok küçüktür (birkaç kilobayt); derin özyineleme sistemi çökertebilir. Heapsort sabit ek bellekle çalışır.</li>
+      <li>Sebep 2: Quicksort’un en kötü durumu O(n²); çekirdekte öngörülemeyen gecikme kabul edilemez. Heapsort’un en kötü durumu da O(n log n).</li>
+      <li>2019’da yapılan iyileştirmeyle (“aşağıdan yukarı” heapsort) karşılaştırma sayısı daha da azaltıldı.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Ortalama hız her şey değildir: <b>garanti</b> (en kötü durum) ve <b>bellek</b> bazen daha önemlidir. Oyunlarda da öyle: bir karede 50 ms takılma, ortalamada kazanılan milisaniyelerden pahalıdır. Yığın veri yapısının asıl gücü ise sıralamadan çok <b>öncelik kuyruğu</b>: A*’ın açık listesi, olay zamanlayıcıları, Y18’deki olay tabanlı güncelleme.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://github.com/torvalds/linux/blob/master/lib/sort.c" target="_blank" rel="noopener">Linux: lib/sort.c</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.priorityqueue-2" target="_blank" rel="noopener"><b>PriorityQueue&lt;TElement, TPriority&gt;</b></a></td><td>C# (.NET 6+)</td><td>İkili yığın (min). <b>Unity’de yok</b>: Unity 6, .NET Standard 2.1 API’sini kullanır; kendi yığınınızı yazın ya da bir port kullanın.</td><td>yerleşik (.NET 6+)</td></tr><tr><td><a href="https://github.com/FyiurAmron/PriorityQueue" target="_blank" rel="noopener"><b>PriorityQueue (Unity portu)</b></a></td><td>Unity</td><td>.NET 6 sınıfının Unity’de çalışan kopyası.</td><td>GitHub’dan paket</td></tr><tr><td><a href="https://docs.python.org/3/library/heapq.html" target="_blank" rel="noopener"><b>heapq</b></a></td><td>Python</td><td>Liste üzerinde min-yığın fonksiyonları; max için anahtarı ters çevirin.</td><td>standart kütüphane</td></tr><tr><td><a href="https://en.cppreference.com/w/cpp/container/priority_queue" target="_blank" rel="noopener"><b>std::priority_queue</b></a></td><td>C++</td><td>Varsayılan olarak <b>max</b>-yığın; min için <code>std::greater</code>.</td><td><code>#include &lt;queue&gt;</code></td></tr><tr><td><a href="https://github.com/ignlg/heap-js" target="_blank" rel="noopener"><b>heap-js</b></a></td><td>JavaScript</td><td>JS’te yerleşik yığın yok; küçük, tipli bir yığın kütüphanesi.</td><td><code>npm install heap-js</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda öncelik kuyruğu</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>A* / Dijkstra açık listesi</b> (Y8): en düşük f değerli düğüm.</li>
+      <li><b>Olay zamanlayıcısı</b>: “3 sn sonra patlat”, “10 sn sonra yeniden doğ”: en erken olay en önde (Y18).</li>
+      <li><b>Yol isteği kuyruğu</b>: yakındaki NPC’lerin isteği önce.</li>
+      <li><b>Öncelik değişirse</b>: çoğu kütüphanede “anahtar azalt” yoktur. Pratik çözüm: yeni kaydı ekleyin, eski kayıt çıkınca “bayat mı?” diye kontrol edip atın (tembel silme).</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Eşitlik ve sıra</span>Yığınlar eşit öncelikli elemanlar için sıra <b>garanti etmez</b>. Aynı anda planlanan iki olayın ekleme sırasıyla çalışması gerekiyorsa önceliğe bir sayaç ekleyin: (zaman, eklemeSırası).</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Unity’de PriorityQueue<,> kullanmak (derlenmez)</li><li>heapq’dan max-yığın beklemek</li><li>Öncelik değişince yığını güncellemeyi unutmak</li><li>Eşit önceliklerde sıra garantisi varsaymak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6 (API Compatibility: .NET Standard 2.1), C#. Genel bir ikili min-yığın yaz: BinaryHeap<T> (karşılaştırıcı alan), Push, Pop, Peek, Count; diziyi büyütürken amortize O(1). Üzerine bir EventScheduler: Schedule(float time, Action a) ve Update(float now); eşit zamanlı olaylar ekleme sırasıyla çalışsın; iptal için tembel silme. NUnit testleri ekle.”</p><ul class="mini"><li>Unity sürümünü ve .NET profilini belirtin</li><li>Min mi max mı açıkça yazın</li><li>Tembel silme (bayat kayıt) kalıbını isteyin</li><li>Eşitlikte FIFO için sayaç isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Olay zamanlayıcısı</b> — Yeniden doğma, büff süreleri ve tuzakları tek bir yığınla yönetin.</li><li><b class="c-amber">[orta]</b> <b>A* açık listesi</b> — Y8’deki A*’ı kendi ikili yığınınızla yazın; List ile doğrusal arama sürümüne karşı ölçün.</li><li><b class="c-amber">[orta]</b> <b>En iyi 10</b> — Milyonlarca skor arasından en yüksek 10’u, boyutu 10 olan min-yığınla tek geçişte bulun.</li><li><b class="c-purple">[araştırma]</b> <b>d-li yığınlar</b> — İkili ve 4-lü yığını ölçün; önbellek etkisini açıklayın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Williams 1964</b> · <a href="https://doi.org/10.1145/512274.3734138" target="_blank" rel="noopener">Algorithm 232: Heapsort</a> <i>(Communications of the ACM 7(6))</i><br>İkili yığın ve heapsort.</div><div class="paper"><b>Floyd 1964</b> · <a href="https://doi.org/10.1145/355588.365103" target="_blank" rel="noopener">Algorithm 245: Treesort 3</a> <i>(Communications of the ACM 7(12))</i><br>Doğrusal sürede yığın kurma.</div><div class="paper"><b>Dijkstra 1959</b> · <a href="https://doi.org/10.1007/BF01386390" target="_blank" rel="noopener">A Note on Two Problems in Connexion with Graphs</a> <i>(Numerische Mathematik 1)</i><br>Öncelik kuyruğunun en ünlü kullanıcısı.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

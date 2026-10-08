@@ -798,6 +798,60 @@ def count_islands(grid):
   </div>
 </section>
 
+<!-- RETRO START ug -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Altı adım mı, üç buçuk adım mı?</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>1967: sosyal psikolog Stanley Milgram, ABD’nin ortasındaki (Nebraska ve Kansas) gönüllülere, Boston’daki bir hedef kişiye ulaştırılmak üzere mektuplar verdi. Kural: mektubu sadece adıyla tanıdığınız, hedefe daha yakın olduğunu düşündüğünüz birine gönderin.</li>
+      <li>Hedefe ulaşan mektuplar ortalama 5–6 aracıdan geçti: “altı derece ayrılık” fikri buradan yayıldı. (Ulaşamayan çok sayıda mektup da vardı; deney yöntemi bu yüzden tartışıldı.)</li>
+      <li>2016: Facebook araştırmacıları, yaklaşık 1,6 milyar kullanıcının arkadaşlık grafında iki kişi arasındaki ortalama uzaklığı <b>3,57</b> adım olarak hesapladı. Bu ölçekte her çift için BFS mümkün değil; uzaklık dağılımını tahmin eden algoritmalar kullanıldı.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>“Kaç adımda ulaşırım?” sorusu, ağırlıksız bir graf üzerinde <b>BFS</b>’in tanımıdır. Gerçek sosyal ağlar “küçük dünya”dır: düğüm sayısı devasa olsa da uzaklıklar küçük. Oyunlarda NPC ilişkileri, söylentilerin yayılması (Y14’teki Smallville), harita bağlantılılığı aynı yapıdadır.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Small-world_experiment" target="_blank" rel="noopener">Wikipedia: Small-world experiment</a> · <a href="https://research.facebook.com/blog/2016/02/three-and-a-half-degrees-of-separation/" target="_blank" rel="noopener">Facebook Research 2016</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://networkx.org/" target="_blank" rel="noopener"><b>NetworkX</b></a></td><td>Python</td><td>Graf oluşturma, BFS/DFS, bağlı bileşenler, en kısa yol, çizim. Öğrenme ve analiz için ideal; çok büyük graflarda yavaş.</td><td><code>pip install networkx</code></td></tr><tr><td><a href="https://igraph.org/" target="_blank" rel="noopener"><b>igraph</b></a></td><td>Python / R / C</td><td>Büyük graflar için hızlı C çekirdeği.</td><td><code>pip install igraph</code></td></tr><tr><td><a href="https://docs.scipy.org/doc/scipy/reference/sparse.csgraph.html" target="_blank" rel="noopener"><b>scipy.sparse.csgraph</b></a></td><td>Python</td><td>Seyrek matris üzerinde BFS, bağlı bileşenler, en kısa yollar.</td><td><code>pip install scipy</code></td></tr><tr><td><a href="https://github.com/KeRNeLith/QuikGraph" target="_blank" rel="noopener"><b>QuikGraph</b></a></td><td>C#</td><td>.NET için graf kütüphanesi (QuickGraph’ın devamı): aramalar, bileşenler, en kısa yol.</td><td>NuGet: <code>QuikGraph</code></td></tr><tr><td><a href="https://graphology.github.io/" target="_blank" rel="noopener"><b>Graphology</b></a></td><td>JavaScript</td><td>Graf veri yapısı ve standart algoritmalar; Sigma.js ile görselleştirme.</td><td><code>npm install graphology</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda yönsüz graflar</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Harita bağlantılılığı</b>: prosedürel seviyede başlangıçtan çıkışa yol var mı? (BFS / flood fill, Y15)</li>
+      <li><b>Bölge etiketleme</b>: mayın tarlasında boş alanın açılması, boya kovası, mağara cepleri.</li>
+      <li><b>Sosyal graf</b>: NPC ilişkileri, söylentinin kaç adımda yayıldığı.</li>
+      <li>Gösterim seçimi: ızgarada komşuluk <b>örtük</b> (komşuları hesaplayın, saklamayın); seyrek graflarda komşuluk listesi; çok küçük ve yoğun graflarda matris.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">BFS/DFS tuzakları</span><ul style="font-size:.82em"><li>“Ziyaret edildi” işaretini kuyruğa <b>eklerken</b> koyun; çıkarırken koyarsanız aynı düğüm defalarca eklenir.</li><li>Büyük haritada özyinelemeli DFS → yığın taşması: açık bir yığın kullanın.</li><li>Izgara sınırlarını kontrol etmeyi unutmak.</li><li>Yönsüz kenarı tek yönde eklemek.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Ziyaret işaretini kuyruktan çıkarırken koymak</li><li>Büyük haritada özyinelemeli DFS</li><li>Izgara sınır kontrolünü unutmak</li><li>Yönsüz kenarı tek yönlü eklemek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Tilemap tabanlı bir haritada bölge etiketleme yaz: duvar olmayan hücreleri 4-komşulukla BFS ile bölgelere ayır (int[,] etiket dizisi), her bölgenin boyutunu ve sınır kutusunu döndür, en büyük bölge dışındakileri isteğe bağlı olarak duvarla doldur. Özyineleme kullanma; Queue<Vector2Int> kullan. Mayın tarlası tarzı “boş alanı aç” fonksiyonunu da aynı BFS ile yaz ve NUnit testleri ekle.”</p><ul class="mini"><li>Gösterimi (örtük ızgara, liste, matris) belirtin</li><li>Ziyaret işaretinin nerede konduğunu açıklatın</li><li>Özyinelemesiz DFS isteyin</li><li>Sınır durumları (tek hücre, hiç yol yok) test ettirin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Mayın tarlası</b> — Boş hücreye tıklayınca BFS ile bölgeyi açan klasik oyun.</li><li><b class="c-amber">[orta]</b> <b>Bağlantı kontrollü seviye üreteci</b> — Y15’teki mağara üretecine BFS ile bağlantı kontrolü ve onarım ekleyin.</li><li><b class="c-amber">[orta]</b> <b>NPC sosyal ağı</b> — Köydeki NPC’lerin arkadaşlık grafında bir söylentinin yayılmasını BFS seviyeleriyle canlandırın.</li><li><b class="c-purple">[araştırma]</b> <b>Küçük dünya</b> — Watts–Strogatz modeliyle graflar üretip ortalama uzaklığı ve kümelenmeyi ölçün.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Travers &amp; Milgram 1969</b> · <a href="https://doi.org/10.2307/2786545" target="_blank" rel="noopener">An Experimental Study of the Small World Problem</a> <i>(Sociometry 32(4))</i><br>Altı derece deneyi.</div><div class="paper"><b>Watts &amp; Strogatz 1998</b> · <a href="https://doi.org/10.1038/30918" target="_blank" rel="noopener">Collective Dynamics of “Small-World” Networks</a> <i>(Nature 393)</i><br>Küçük dünya ağları modeli.</div><div class="paper"><b>Backstrom ve ark. 2012</b> · <a href="https://arxiv.org/abs/1111.4570" target="_blank" rel="noopener">Four Degrees of Separation</a> <i>(WebSci 2012)</i><br>Facebook grafında uzaklık ölçümü.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

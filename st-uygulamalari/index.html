@@ -822,6 +822,61 @@ function generate(table, start, n) {
   </div>
 </section>
 
+<!-- RETRO START st -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Redis sıralı kümeleri ve oyun liderlik tabloları</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>Milyonlarca oyunculu bir oyunda “ilk 100”, “benim sıram kaç?”, “benim çevremdeki 10 oyuncu” sorularını her saniye binlerce kez cevaplamak gerekir.</li>
+      <li>Bellek içi veri deposu <b>Redis</b>’in <b>sıralı küme</b> (sorted set) türü bunun için yaygın kullanılır: <code>ZADD</code> skoru ekler/günceller, <code>ZREVRANK</code> sıralamayı, <code>ZREVRANGE</code> aralığı verir.</li>
+      <li>İçeride <b>iki</b> sembol tablosu birlikte çalışır: bir hash tablosu (oyuncu → skor, O(1)) ve skora göre sıralı bir <b>atlamalı liste</b> (skip list; ekleme, güncelleme, sıra ve aralık için O(log N)). Atlamalı liste, William Pugh’un 1990’da “dengeli ağaçlara olasılıksal bir alternatif” olarak önerdiği yapıdır.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Gerçek sistemler çoğu zaman tek bir veri yapısıyla yetinmez: “anahtardan değere” için hash, “sıraya göre” için ağaç ya da atlamalı liste. Bu destedeki sembol tablosu API’si (get, put, rank, select, aralık) tam olarak bir liderlik tablosunun ihtiyacı.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://redis.io/docs/latest/develop/data-types/sorted-sets/" target="_blank" rel="noopener">Redis: Sorted sets</a> · <a href="https://doi.org/10.1145/78973.78977" target="_blank" rel="noopener">Pugh 1990</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://redis.io/docs/latest/develop/data-types/sorted-sets/" target="_blank" rel="noopener"><b>Redis Sorted Sets</b></a></td><td>sunucu (her dil için istemci)</td><td>Liderlik tabloları, sıralı zaman çizelgeleri; atlamalı liste + hash.</td><td>Docker: <code>redis</code>; C#: StackExchange.Redis</td></tr><tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.sorteddictionary-2" target="_blank" rel="noopener"><b>Dictionary · SortedDictionary</b></a></td><td>C# / Unity</td><td>Sırasız (hash) ve sıralı (ağaç) sembol tabloları.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.python.org/3/library/collections.html" target="_blank" rel="noopener"><b>collections.Counter · defaultdict</b></a></td><td>Python</td><td>Sayma ve varsayılan değerli sözlükler: frekans tabloları, gruplama.</td><td>standart kütüphane</td></tr><tr><td><a href="https://www.sqlite.org/" target="_blank" rel="noopener"><b>SQLite</b></a></td><td>her platform</td><td>Kalıcı sembol tablosu: indeksli sorgular, aralıklar, sıralama.</td><td>Unity için paketler</td></tr><tr><td><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map" target="_blank" rel="noopener"><b>Map · Set</b></a></td><td>JavaScript</td><td>Ekleme sıralı sözlük ve küme.</td><td>yerleşik</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda sembol tablosu uygulamaları</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Eşya veritabanı</b>: kod → tanım (sözlük); etiket → eşyalar (ters indeks: “ateş”, “kılıç” etiketli eşyalar).</li>
+      <li><b>Başarımlar</b>: açılmış başarımlar kümesi; “bu ilk kez mi?” kontrolü O(1).</li>
+      <li><b>Seyrek ızgaralar</b>: sonsuz dünyada sadece dolu hücreleri tutmak (koordinat → hücre).</li>
+      <li><b>Telemetri</b>: olay türü → sayı (Counter); bölüm → ölüm konumları.</li>
+      <li><b>Liderlik tablosu</b>: yukarıdaki hikâye; küçük oyunlar için SortedSet de yeter.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Sık hatalar</span><ul style="font-size:.82em"><li>Üyelik testini listeyle yapmak (O(n)).</li><li>Her istekte bütün tabloyu sıralamak.</li><li>Sürekli büyüyen önbellek sözlüklerini hiç temizlememek (bellek sızıntısı).</li><li>Ters indeksi güncellemeyi unutmak (eşya silinince etiket listesinde kalır).</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Liste ile üyelik testi</li><li>Her istekte tam sıralama</li><li>Sınırsız büyüyen önbellek</li><li>Ters indeksi tutarsız bırakmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8) arka uç için StackExchange.Redis kullanan bir LeaderboardService yaz: SubmitScore(oyuncuId, skor) sadece daha yüksekse günceller (ZADD GT), GetTop(n), GetRank(oyuncuId), GetAround(oyuncuId, k). Haftalık tablolar için anahtar adına hafta numarası koy ve 8 gün sonra sona erdir. Redis yoksa SortedSet ile çalışan bir bellek içi sürüm ve ikisi için ortak birim testleri ekle.”</p><ul class="mini"><li>Hangi sorguların sık olduğunu yazın (rank mı, aralık mı?)</li><li>Ters indeksin güncellenmesini test ettirin</li><li>Bellek sınırı ve temizleme politikası isteyin</li><li>Sunucu tarafında Redis/SQLite seçeneğini sorun</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Başarım sistemi</b> — Açılmış başarımlar kümesi ve olay sayaçları (Counter) ile basit bir başarım motoru.</li><li><b class="c-amber">[orta]</b> <b>Etiketli envanter</b> — Ters indeksle “ateş VE kılıç” gibi etiket sorguları.</li><li><b class="c-amber">[orta]</b> <b>Liderlik tablosu servisi</b> — Redis ya da SQLite ile; sıra ve “çevremdekiler” sorguları.</li><li><b class="c-purple">[araştırma]</b> <b>Bloom filtresi</b> — “Bu prosedürel seviye daha önce üretildi mi?” sorusu için Bloom filtresi; yanlış pozitif oranını ölçün.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Pugh 1990</b> · <a href="https://doi.org/10.1145/78973.78977" target="_blank" rel="noopener">Skip Lists: A Probabilistic Alternative to Balanced Trees</a> <i>(Communications of the ACM 33(6))</i><br>Atlamalı listeler.</div><div class="paper"><b>Bloom 1970</b> · <a href="https://doi.org/10.1145/362686.362692" target="_blank" rel="noopener">Space/Time Trade-offs in Hash Coding with Allowable Errors</a> <i>(Communications of the ACM 13(7))</i><br>Bloom filtreleri.</div><div class="paper"><b>Sedgewick &amp; Wayne 2011</b> · <a href="https://algs4.cs.princeton.edu/35applications/" target="_blank" rel="noopener">Algorithms, 4th Edition — 3.5 Searching Applications</a> <i>(kitap sitesi)</i><br>Sembol tablosu uygulamaları.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <table class="sum-t" style="font-size:19px">

@@ -1864,6 +1864,61 @@ function push(open, node) {
   </div>
 </section>
 
+<!-- RETRO START siralama -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Hollerith’in delikli kartları ve 1890 nüfus sayımı</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>ABD’nin 1880 nüfus sayımının elle işlenmesi yaklaşık <b>8 yıl</b> sürdü. Nüfus hızla büyüyordu; 1890 sayımı bir sonraki sayıma yetişmeyebilirdi.</li>
+      <li>Herman Hollerith’in çözümü: her kişi için bir <b>delikli kart</b> ve kartları elektrikle okuyup sayan makineler. 1890 sayımının sonuçları çok daha kısa sürede çıktı.</li>
+      <li>Sonraki kart <b>sıralama makineleri</b> bir kolondaki rakama göre kartları 10 cebe dağıtıyordu. Operatör cepleri sırayla toplayıp bir sonraki kolon için tekrar ediyordu: en anlamsız haneden başlayan <b>taban (radix) sıralaması</b>, karşılaştırma yapmadan sıralama.</li>
+      <li>Hollerith’in 1896’da kurduğu şirket birleşmelerle 1924’te adını <b>IBM</b> olarak değiştirdi.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Sıralama, bilgisayardan önce de bir mühendislik problemiydi. Radix sıralaması karşılaştırma yapmadığı için N log N alt sınırına takılmaz (Mergesort destesindeki alt sınır sadece <b>karşılaştırmalı</b> sıralamalar içindir). Obama’nın 2007’deki ünlü cevabındaki soru (“bir milyon 32 bitlik tamsayıyı en iyi nasıl sıralarsın?”) için de beklenen cevap buydu.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Herman_Hollerith" target="_blank" rel="noopener">Wikipedia: Herman Hollerith</a> · <a href="https://en.wikipedia.org/wiki/Radix_sort" target="_blank" rel="noopener">Wikipedia: Radix sort</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.array.sort" target="_blank" rel="noopener"><b>Array.Sort · List&lt;T&gt;.Sort</b></a></td><td>C# / Unity</td><td>İçgözlemli sıralama (introsort): hızlı, yerinde, <b>kararsız</b>. Karşılaştırıcı ya da IComparable ister.</td><td>yerleşik</td></tr><tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.orderby" target="_blank" rel="noopener"><b>LINQ OrderBy / ThenBy</b></a></td><td>C#</td><td><b>Kararlı</b>, çok anahtarlı sıralama; yeni dizi üretir (bellek ayırma). Her karede kullanmayın.</td><td><code>using System.Linq;</code></td></tr><tr><td><a href="https://docs.python.org/3/howto/sorting.html" target="_blank" rel="noopener"><b>sorted · list.sort</b></a></td><td>Python</td><td>Kararlı; 3.11’den beri Powersort (Timsort’un geliştirilmiş birleştirme politikası). <code>key=</code> ile.</td><td>yerleşik</td></tr><tr><td><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort" target="_blank" rel="noopener"><b>Array.prototype.sort</b></a></td><td>JavaScript</td><td>ES2019’dan beri kararlı (V8’de Timsort). <b>Varsayılan karşılaştırma metinseldir</b>: sayılar için <code>(a, b) =&gt; a - b</code> şart.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.collections@2.5/manual/index.html" target="_blank" rel="noopener"><b>NativeArray&lt;T&gt;.Sort</b></a></td><td>Unity (Collections)</td><td>Burst ve Jobs ile uyumlu, çöp üretmeyen sıralama.</td><td>Package Manager: Collections</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda sıralama</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Çizim sırası</b>: saydam nesneler kameraya uzaklığa göre arkadan öne sıralanır (Unity bunu kendisi yapar; 2D’de Sorting Layer/Order).</li>
+      <li><b>Liderlik tablosu</b>: puan, sonra süre, sonra isim: çok anahtarlı ve kararlı sıralama.</li>
+      <li><b>Neredeyse sıralı veri</b>: her kare az değişen bir liste (ör. mesafeye göre düşmanlar) için ekleme sıralaması çoğu zaman en hızlısıdır.</li>
+      <li><b>En iyi k tanesi</b> lazımsa bütün listeyi sıralamayın: kısmi seçim ya da yığın (Öncelik Kuyrukları).</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Rastgele karşılaştırıcı tuzağı</span><code>list.sort(() =&gt; Math.random() - 0.5)</code> ile “karıştırmak” <b>yanlıdır</b>: sıralama algoritması tutarlı bir karşılaştırıcı varsayar. 2010’da AB için hazırlanan tarayıcı seçim ekranındaki karıştırma kodunun bu yüzden bazı tarayıcıları belirgin şekilde daha sık belli konumlara koyduğu gösterildi. Doğrusu: Fisher–Yates karıştırması.</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>JS’te sayıları karşılaştırıcısız sıralamak ([10, 9, 1] → [1, 10, 9])</li><li>Rastgele karşılaştırıcıyla karıştırmak</li><li>Array.Sort’un kararlı olduğunu sanmak</li><li>Her karede LINQ OrderBy ile çöp üretmek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir liderlik tablosu yaz: kayıtlar (isim, puan, süre). Sıralama: puan azalan, eşitse süre artan, eşitse isim (kültürden bağımsız, ordinal). Her karede değil, sadece yeni skor gelince güncelle; yeni skoru ikili aramayla doğru yere ekle. Ayrıca Fisher–Yates ile tohumlu karıştırma fonksiyonu ve her ikisi için NUnit testleri ekle.”</p><ul class="mini"><li>Kararlılık gerekip gerekmediğini açıkça yazın</li><li>Sayısal karşılaştırıcıyı (JS) isteyin</li><li>Her karede sıralama yerine artımlı güncelleme sorun</li><li>Karıştırma için Fisher–Yates isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Sıralama görselleştirici</b> — p5.js’te dört temel sıralamayı aynı veriyle yarıştırın; karşılaştırma ve takas sayısını gösterin.</li><li><b class="c-green">[kolay]</b> <b>Liderlik tablosu</b> — Çok anahtarlı, kararlı sıralama + ikili aramayla ekleme.</li><li><b class="c-amber">[orta]</b> <b>Neredeyse sıralı veri</b> — Her kare biraz karışan 1.000 düşman listesinde ekleme sıralaması ile Array.Sort’u ölçün.</li><li><b class="c-purple">[araştırma]</b> <b>Yanlı karıştırma</b> — Rastgele karşılaştırıcıyla 1 milyon karıştırma yapıp her elemanın konum dağılımını çizin; Fisher–Yates ile karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Shell 1959</b> · <a href="https://doi.org/10.1145/368370.368387" target="_blank" rel="noopener">A High-Speed Sorting Procedure</a> <i>(Communications of the ACM 2(7))</i><br>Shellsort’un ilk makalesi.</div><div class="paper"><b>Durstenfeld 1964</b> · <a href="https://doi.org/10.1145/364520.364540" target="_blank" rel="noopener">Algorithm 235: Random Permutation</a> <i>(Communications of the ACM 7(7))</i><br>Fisher–Yates karıştırmasının bilgisayar sürümü.</div><div class="paper"><b>Knuth 1998</b> · <a href="https://www-cs-faculty.stanford.edu/~knuth/taocp.html" target="_blank" rel="noopener">The Art of Computer Programming, Vol. 3: Sorting and Searching</a> <i>(Addison-Wesley)</i><br>Sıralamanın ansiklopedisi.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

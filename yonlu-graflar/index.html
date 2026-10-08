@@ -602,6 +602,60 @@ function topoSort(adj) {
   </div>
 </section>
 
+<!-- RETRO START dg -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Çöp toplayıcı bir graf algoritmasıdır</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>1960: John McCarthy, Lisp’i anlatan makalesinde bellekte artık kullanılmayan hücreleri otomatik geri kazanmanın bir yolunu tarif etti: <b>işaretle ve süpür</b> (mark and sweep).</li>
+      <li>Bellek bir <b>yönlü graftır</b>: nesneler düğüm, referanslar kenar. “Kökler”den (yığındaki değişkenler, statik alanlar) başlayan bir DFS/BFS, ulaşılabilen her nesneyi işaretler; işaretlenmeyen her şey çöptür ve süpürülür. Yani çöp toplama, bu destedeki <b>ulaşılabilirlik</b> sorusunun ta kendisi.</li>
+      <li>Unity, C# betikleri için muhafazakâr bir çöp toplayıcı (Boehm–Demers–Weiser) kullanır ve 2019’dan beri işi karelere bölen <b>artımlı</b> (incremental) modu sunar. Yine de çok fazla nesne ayırmak, toplama sırasında takılmalara yol açar.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Oyunlarda her kare yeni nesne ayırmak (new, LINQ, string birleştirme) çöp toplayıcıya iş çıkarır; grafı her taradığında oyun takılabilir. Bu yüzden nesne havuzları (Bağlı Listeler destesindeki serbest liste) ve “sıfır ayırma” alışkanlığı önemlidir. Grafın ne kadar büyük olduğu = toplayıcının ne kadar çalışacağı.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://doi.org/10.1145/367177.367199" target="_blank" rel="noopener">McCarthy 1960</a> · <a href="https://docs.unity3d.com/Manual/performance-incremental-garbage-collection.html" target="_blank" rel="noopener">Unity: Incremental garbage collection</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.python.org/3/library/graphlib.html" target="_blank" rel="noopener"><b>graphlib.TopologicalSorter</b></a></td><td>Python (3.9+)</td><td>Standart kütüphanede topolojik sıralama ve döngü tespiti (CycleError); paralel işlenebilir düğümleri de verir.</td><td>standart kütüphane</td></tr><tr><td><a href="https://networkx.org/documentation/stable/reference/algorithms/dag.html" target="_blank" rel="noopener"><b>NetworkX</b></a></td><td>Python</td><td>topological_sort, strongly_connected_components, is_directed_acyclic_graph, find_cycle.</td><td><code>pip install networkx</code></td></tr><tr><td><a href="https://github.com/KeRNeLith/QuikGraph" target="_blank" rel="noopener"><b>QuikGraph</b></a></td><td>C#</td><td>Yönlü graflar, topolojik sıralama, güçlü bağlı bileşenler.</td><td>NuGet: <code>QuikGraph</code></td></tr><tr><td><a href="https://graphology.github.io/" target="_blank" rel="noopener"><b>Graphology</b></a></td><td>JavaScript</td><td>Yönlü graflar ve DAG algoritmaları (graphology-dag).</td><td><code>npm install graphology graphology-dag</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda yönlü graflar</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Teknoloji ağacı / yetenek ağacı</b>: bir DAG. Açılma sırası topolojik sıradır; tasarımcı yanlışlıkla döngü kurarsa (A, B’yi; B, A’yı gerektiriyor) hiçbiri açılamaz: editörde döngü kontrolü şart.</li>
+      <li><b>Görev bağımlılıkları</b>, diyalog grafları, durum makineleri (Y2): hepsi yönlü graf.</li>
+      <li><b>Varlık bağımlılıkları</b>: bir sahne hangi dokulara, onlar hangi dosyalara bağlı? (derleme sistemleri, Make’ten Unity’nin Addressables’ına kadar)</li>
+      <li><b>Güçlü bağlı bileşenler</b>: diyalog grafında “içinden çıkılamayan” döngüler.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Sık hatalar</span><ul style="font-size:.82em"><li>Döngü kontrolü yapmadan topolojik sıraya güvenmek.</li><li>Sıralamayı DFS’nin <b>ön</b> sırasıyla yapmak (doğrusu: ters son sıra).</li><li>Kosaraju’da ters grafı unutmak.</li><li>Döngüleri sessizce yutmak: tasarımcıya hangi düğümlerin döngüde olduğunu gösterin.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Döngü kontrolü olmadan topolojik sıra</li><li>Ön sırayı topolojik sıra sanmak</li><li>Ters grafı unutmak</li><li>Döngüyü sessizce yok saymak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir teknoloji ağacı doğrulayıcı yaz: TechNode ScriptableObject’leri (id, önkoşullar listesi). Editör menüsünden çalışan araç: (1) özyinelemesiz DFS ile döngü bul ve döngüdeki düğümleri Console’a yaz, (2) döngü yoksa topolojik sırayı ve her düğümün “en erken açılabileceği katmanı” hesapla, (3) hiçbir şeyin gerektirmediği ve hiçbir şeye ulaşmayan yetim düğümleri raporla. NUnit testleri ekle.”</p><ul class="mini"><li>Döngü bulunduğunda döngüdeki düğümleri döndürmesini isteyin</li><li>Topolojik sıranın ters son sıra olduğunu açıklatın</li><li>Editör aracı olarak (Unity EditorWindow) isteyin</li><li>Büyük grafta özyinelemesiz DFS isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Teknoloji ağacı doğrulayıcı</b> — Döngü bulma + topolojik sıra + katmanlara göre çizim.</li><li><b class="c-amber">[orta]</b> <b>Görev planlayıcı</b> — Görev bağımlılık grafından oyuncuya “şu an yapabileceğin görevler” listesini çıkarın.</li><li><b class="c-amber">[orta]</b> <b>Çöp baskısı ölçümü</b> — Unity’de her kare çöp üreten bir sistemi profilleyin, havuzlama ile düzeltip ölçün.</li><li><b class="c-purple">[araştırma]</b> <b>Tarjan ve Kosaraju</b> — İki SCC algoritmasını aynı büyük graflarda ölçüp karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>McCarthy 1960</b> · <a href="https://doi.org/10.1145/367177.367199" target="_blank" rel="noopener">Recursive Functions of Symbolic Expressions and Their Computation by Machine, Part I</a> <i>(Communications of the ACM 3(4))</i><br>Lisp ve işaretle-süpür çöp toplama.</div><div class="paper"><b>Tarjan 1972</b> · <a href="https://doi.org/10.1137/0201010" target="_blank" rel="noopener">Depth-First Search and Linear Graph Algorithms</a> <i>(SIAM Journal on Computing 1(2))</i><br>DFS ile güçlü bağlı bileşenler.</div><div class="paper"><b>Kahn 1962</b> · <a href="https://doi.org/10.1145/368996.369025" target="_blank" rel="noopener">Topological Sorting of Large Networks</a> <i>(Communications of the ACM 5(11))</i><br>Kuyrukla topolojik sıralama.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <table class="sum-t" style="font-size:19px">

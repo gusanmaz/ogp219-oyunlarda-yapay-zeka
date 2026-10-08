@@ -1078,6 +1078,60 @@ def overlaps(a, b):
   </div>
 </section>
 
+<!-- RETRO START geo -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Barnes–Hut ve galaksileri hesaplamak (1986)</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>N cisimli bir kütle çekim simülasyonunda (yıldızlar, galaksiler) her cisim diğer hepsini çeker: N² kuvvet hesabı. Bir milyon yıldız için her adımda bir trilyon hesap.</li>
+      <li>Josh Barnes ve Piet Hut’un 1986’da Nature’da yayımladığı fikir: uzayı bir <b>sekizli ağaçla</b> (2B’de dörtlü ağaç) böl. Uzaktaki bir grup yıldızı, kütle merkezinde duran <b>tek</b> bir kütle gibi düşün. Bir düğüm “yeterince uzak” mı? (Düğümün boyutu / uzaklık &lt; θ.) Uzaksa tek hesap, değilse çocuklarına in.</li>
+      <li>Sonuç: N² yerine yaklaşık <b>N log N</b>; astrofizikteki büyük simülasyonların temel yöntemlerinden biri oldu.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Geometrik ağaçların sırrı: <b>uzaktaki ayrıntıyı özetlemek</b>. Oyunlardaki ayrıntı düzeyi (LOD, Y18), çarpışma için geniş faz, “yakınımdaki düşmanlar” sorguları ve dörtlü ağaçlı haritalar aynı düşünceye dayanır.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://doi.org/10.1038/324446a0" target="_blank" rel="noopener">Barnes &amp; Hut 1986, Nature</a> · <a href="https://en.wikipedia.org/wiki/Barnes%E2%80%93Hut_simulation" target="_blank" rel="noopener">Wikipedia: Barnes–Hut simulation</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.html" target="_blank" rel="noopener"><b>scipy.spatial.KDTree</b></a></td><td>Python</td><td>k-d ağacı: en yakın k komşu, yarıçap sorguları; C ile hızlı.</td><td><code>pip install scipy</code></td></tr><tr><td><a href="https://scikit-learn.org/stable/modules/neighbors.html" target="_blank" rel="noopener"><b>scikit-learn NearestNeighbors</b></a></td><td>Python</td><td>KDTree/BallTree arasında otomatik seçim; çok boyutlu veri.</td><td><code>pip install scikit-learn</code></td></tr><tr><td><a href="https://docs.unity3d.com/ScriptReference/Physics.OverlapSphereNonAlloc.html" target="_blank" rel="noopener"><b>Physics.OverlapSphereNonAlloc · Physics2D</b></a></td><td>Unity</td><td>Fizik motorunun kendi geniş faz yapısıyla yarıçap/kutu sorguları; NonAlloc ile çöp yok.</td><td>yerleşik</td></tr><tr><td><a href="https://github.com/mourner/kdbush" target="_blank" rel="noopener"><b>kdbush · rbush</b></a></td><td>JavaScript</td><td>Statik noktalar için çok hızlı k-d ağacı; dikdörtgenler için R-ağacı (Mapbox).</td><td><code>npm install kdbush rbush</code></td></tr><tr><td><a href="https://github.com/jlblancoc/nanoflann" target="_blank" rel="noopener"><b>nanoflann</b></a></td><td>C++</td><td>Başlık dosyasından ibaret hızlı k-d ağacı.</td><td>GitHub</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda geometrik arama</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>En yakın düşman / hedef</b>: k-d ağacı ya da ızgara. Hareketli nesneler için her kare ağacı baştan kurmak pahalıysa ızgara (uzaysal hash) çoğu zaman daha basit ve hızlı.</li>
+      <li><b>Alan etkili büyüler</b>: yarıçap içindekiler (OverlapSphere).</li>
+      <li><b>Geniş faz çarpışma</b>: fizik motorları bunu sizin yerinize yapar; kendi sisteminizde dörtlü ağaç/ızgara.</li>
+      <li><b>Statik harita nesneleri</b> (ağaçlar, binalar, toplanabilirler): bir kez kurulan k-d ağacı ya da R-ağacı.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Sık hatalar</span><ul style="font-size:.82em"><li>Ağacı her karede sıfırdan kurmak.</li><li>Mesafeyi karşılaştırırken karekök almak (kare mesafe yeter).</li><li>Dörtlü ağaçta sınıra denk gelen nesneleri sadece bir düğüme koymak.</li><li>Unity’de her kare OverlapSphere (çöp): NonAlloc sürümü.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Her kare ağacı yeniden kurmak</li><li>Gereksiz karekök</li><li>Sınırdaki nesneleri kaybetmek</li><li>Her kare çöp üreten sorgular</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. 2B bir dörtlü ağaç yaz: QuadTree<T>(Rect sınırlar, int kapasite, int maksDerinlik); Insert(T, Vector2), Query(Rect, List<T> sonuç), QueryRadius(Vector2, float, List<T>) — kare mesafe; Clear() ve yeniden kullanılabilir düğüm havuzu (çöp yok). 5.000 hareketli birimle her kare yeniden kurma ve uzaysal hash ızgarasıyla karşılaştırmalı ölçüm yapan bir test sahnesi ve doğruluk testleri ekle.”</p><ul class="mini"><li>Nesneler hareketli mi statik mi yazın</li><li>Kare mesafe kullanımını isteyin</li><li>Izgara ile karşılaştırma ölçümü isteyin</li><li>NonAlloc ya da dışarıdan verilen sonuç listesi isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Barnes–Hut 2B</b> — p5.js’te 2.000 cisimli galaksi; θ’yı değiştirip doğruluk/hız dengesini gösterin.</li><li><b class="c-amber">[orta]</b> <b>En yakın düşman</b> — k-d ağacı, dörtlü ağaç ve ızgarayı 5.000 hareketli birimle ölçün.</li><li><b class="c-amber">[orta]</b> <b>Alan etkili büyü</b> — Unity’de OverlapSphereNonAlloc ile çöp üretmeyen AOE sistemi.</li><li><b class="c-purple">[araştırma]</b> <b>R-ağacı</b> — Harita nesnelerini (dikdörtgenler) R-ağacına koyup görünür alan sorgularını ölçün.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Bentley 1975</b> · <a href="https://doi.org/10.1145/361002.361007" target="_blank" rel="noopener">Multidimensional Binary Search Trees Used for Associative Searching</a> <i>(Communications of the ACM 18(9))</i><br>k-d ağaçları.</div><div class="paper"><b>Finkel &amp; Bentley 1974</b> · <a href="https://doi.org/10.1007/BF00288933" target="_blank" rel="noopener">Quad Trees: A Data Structure for Retrieval on Composite Keys</a> <i>(Acta Informatica 4)</i><br>Dörtlü ağaçlar.</div><div class="paper"><b>Barnes &amp; Hut 1986</b> · <a href="https://doi.org/10.1038/324446a0" target="_blank" rel="noopener">A Hierarchical O(N log N) Force-Calculation Algorithm</a> <i>(Nature 324)</i><br>Barnes–Hut.</div><div class="paper"><b>Guttman 1984</b> · <a href="https://doi.org/10.1145/602259.602266" target="_blank" rel="noopener">R-Trees: A Dynamic Index Structure for Spatial Searching</a> <i>(SIGMOD 1984)</i><br>R-ağaçları.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <table class="sum-t" style="font-size:20px">

@@ -1134,6 +1134,61 @@ function floodFill(grid, sx, sy, useStack) {
   </div>
 </section>
 
+<!-- RETRO START yigin -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Bir mahkeme salonunda yığın taşması (2013)</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>Ekim 2013, Oklahoma: bir Toyota Camry’nin istemsiz hızlanmasıyla ilgili ölümlü bir kaza davasında (Bookout - Toyota), jüri Toyota’yı sorumlu buldu. Davanın merkezinde aracın elektronik gaz kontrol sisteminin (ETCS) <b>yazılımı</b> vardı.</li>
+      <li>Davacıların uzman tanığı gömülü sistem uzmanı Michael Barr, yaklaşık 15 ay boyunca kaynak kodunu inceledi. Raporundaki bulgulardan biri: yazılımın en kötü durumdaki <b>yığın kullanımı</b>, ayrılan alanı aşabilecek kadar yüksekti; yığın taşarsa hemen yanındaki bellekte duran, gaz kontrolü için kritik değişkenlerin üzerine yazılabilirdi. Barr’a göre bu, gazın kontrolünü kaybettirebilecek olası mekanizmalardan biriydi.</li>
+      <li>Rapor, bekçi zamanlayıcısının (watchdog) zayıf kullanımı ve kod kalitesi sorunları gibi başka bulgular da içeriyordu.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Yığın soyut bir veri yapısı olduğu kadar <b>fiziksel</b> bir bellek bölgesidir ve sınırlıdır. Güvenlik açısından kritik gömülü sistemlerde özyineleme çoğu zaman tamamen yasaklanır (ör. MISRA C) ve en kötü yığın kullanımı statik olarak hesaplanır. Oyunlarda sonuç daha masum (çökme), ama ders aynı: derin özyineleme yerine <b>açık bir yığın</b> kullanın.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://homepage.divms.uiowa.edu/~tinelli/classes/181/Fall20/Papers/Barr13.pdf" target="_blank" rel="noopener">Barr 2013: Bookout v. Toyota (sunum)</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.queue-1" target="_blank" rel="noopener"><b>Stack&lt;T&gt; · Queue&lt;T&gt;</b></a></td><td>C# / Unity</td><td>Dizi tabanlı, amortize O(1). Çok iş parçacığı için ConcurrentQueue.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.python.org/3/library/collections.html#collections.deque" target="_blank" rel="noopener"><b>collections.deque</b></a></td><td>Python</td><td>İki uçtan O(1) ekleme/çıkarma; kuyruk için <code>list.pop(0)</code> yerine bunu kullanın.</td><td>standart kütüphane</td></tr><tr><td><a href="https://docs.python.org/3/library/queue.html" target="_blank" rel="noopener"><b>queue.Queue</b></a></td><td>Python</td><td>İş parçacıkları arası güvenli kuyruk (üretici–tüketici).</td><td>standart kütüphane</td></tr><tr><td><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/shift" target="_blank" rel="noopener"><b>Array push/pop · shift</b></a></td><td>JavaScript</td><td>push/pop yığın olarak O(1); <code>shift()</code> O(n)! Büyük kuyruklarda baş indeksi tutun.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.collections@2.5/manual/index.html" target="_blank" rel="noopener"><b>NativeQueue</b></a></td><td>Unity (Collections)</td><td>Jobs içinde paralel yazılabilen kuyruk.</td><td>Package Manager: Collections</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda yığın ve kuyruk</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Geri al / yinele</b>: komut tasarım deseni + iki yığın (seviye editörleri, bulmaca oyunları).</li>
+      <li><b>Durum yığını</b>: oyun → duraklat menüsü → ayarlar: üstteki durumu kapat, alttakine dön.</li>
+      <li><b>Girdi tamponu</b>: dövüş oyunlarında son birkaç tuşu bir kuyrukta tutup kombo algılamak.</li>
+      <li><b>Olay kuyruğu</b>: sistemler arası mesajlar bu karede değil, karenin sonunda işlensin.</li>
+      <li><b>BFS</b> kuyruk, <b>DFS</b> yığın; özyinelemeyi açık yığına çevirmek derinlik sınırını kaldırır.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Sık hatalar</span><ul style="font-size:.82em"><li>JS’te kuyruk için <code>shift()</code>, Python’da <code>list.pop(0)</code>: O(n).</li><li>Çok iş parçacıklı kodda kilitsiz Queue&lt;T&gt;.</li><li>Sınırsız büyüyen geri alma yığını (bellek): kapasite sınırı koyun.</li><li>Özyinelemenin derinliğini hiç düşünmemek.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>JS’te shift(), Python’da list.pop(0) ile kuyruk</li><li>Çok iş parçacıklı kuyrukta kilit yok</li><li>Sınırsız geri alma yığını</li><li>Derin özyineleme</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir seviye editörü için komut deseniyle geri al/yinele sistemi yaz: ICommand (Do, Undo), PlaceTileCommand, RemoveTileCommand, MoveObjectCommand; CommandHistory iki yığınla (en fazla 200 adım, eskiler düşer); yeni komut gelince yinele yığını temizlenir; ardışık küçük hareketleri tek komutta birleştir. NUnit testleri ekle.”</p><ul class="mini"><li>Kapasite sınırı ve taşma davranışını sorun</li><li>Özyinelemeli çözümün açık yığınlı sürümünü isteyin</li><li>İş parçacığı güvenliği gereksinimini yazın</li><li>Komut desenini test edilebilir isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Geri al / yinele</b> — Basit bir çizim ya da karo editörüne komut deseniyle ekleyin.</li><li><b class="c-amber">[orta]</b> <b>Kombo algılayıcı</b> — Dövüş oyunu girdi tamponu: son 0,5 saniyedeki tuşlardan “↓ ↘ → + Yumruk” gibi komboları tanıyın.</li><li><b class="c-amber">[orta]</b> <b>Durum yığını</b> — Oyun, duraklatma, ayarlar ve diyalog ekranlarını yığınla yöneten bir oyun durumu yöneticisi.</li><li><b class="c-purple">[araştırma]</b> <b>Özyineleme ve derinlik</b> — Flood fill’in özyinelemeli ve açık yığınlı sürümlerini büyük haritada çalıştırıp en büyük güvenli boyutu ölçün.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Samelson &amp; Bauer 1960</b> · <a href="https://doi.org/10.1145/366959.366968" target="_blank" rel="noopener">Sequential Formula Translation</a> <i>(Communications of the ACM 3(2))</i><br>Yığın ilkesiyle ifade çevirisi.</div><div class="paper"><b>Dijkstra 1960</b> · <a href="https://doi.org/10.1007/BF01386232" target="_blank" rel="noopener">Recursive Programming</a> <i>(Numerische Mathematik 2)</i><br>Özyinelemeyi yığınla gerçekleştirmek.</div><div class="paper"><b>Barr 2013</b> · <a href="https://homepage.divms.uiowa.edu/~tinelli/classes/181/Fall20/Papers/Barr13.pdf" target="_blank" rel="noopener">Bookout v. Toyota: 2005 Camry software analysis</a> <i>(mahkeme sunumu)</i><br>Gerçek dünyada yığın taşması riski.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

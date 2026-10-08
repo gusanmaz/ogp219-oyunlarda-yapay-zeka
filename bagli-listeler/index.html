@@ -1291,6 +1291,60 @@ def pop_front(head):
   </div>
 </section>
 
+<!-- RETRO START liste -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Linux’un “müdahaleci” listeleri (list_head)</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>Ders kitabındaki bağlı listede düğüm, veriyi <b>tutar</b>: <code>Node { data; next; }</code>. Linux çekirdeği tersini yapar: veri, düğümü <b>içinde taşır</b>. Her yapının içine küçük bir <code>struct list_head { next, prev }</code> gömülür.</li>
+      <li>Listede dolaşırken eldeki <code>list_head</code> işaretçisinden, onu içeren asıl yapıya <code>container_of</code> makrosuyla (alanın yapı içindeki konumunu çıkararak) geri dönülür.</li>
+      <li>Kazançlar: düğüm için <b>ayrı bellek ayırma yok</b>; bir nesne aynı anda <b>birden çok listede</b> olabilir (ör. bir süreç hem “çalışanlar” hem “bekleyenler” listesinde ayrı list_head’lerle); nesneyi bildiğinizde listeden O(1) çıkarabilirsiniz.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Bağlı listenin güçlü olduğu yer, <b>elinizde düğüm varken</b> O(1) ekleme/çıkarmadır; zayıf olduğu yer, rastgele erişim ve önbellek (Stroustrup’un uyarısı). Oyun motorlarında da aynı kalıp görülür: varlıkların içine gömülü listeler, nesne havuzlarının “serbest listeleri”, LRU önbellekleri.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://github.com/torvalds/linux/blob/master/include/linux/list.h" target="_blank" rel="noopener">Linux: include/linux/list.h</a> · <a href="https://isocpp.org/blog/2014/06/stroustrup-lists" target="_blank" rel="noopener">Stroustrup: Are lists evil?</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.linkedlist-1" target="_blank" rel="noopener"><b>LinkedList&lt;T&gt;</b></a></td><td>C# / Unity</td><td>Çift yönlü; LinkedListNode ile O(1) ekleme/çıkarma. Her düğüm bir nesne: Unity’de sık ekleme <b>çöp</b> üretir.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.python.org/3/library/collections.html" target="_blank" rel="noopener"><b>collections.deque · OrderedDict</b></a></td><td>Python</td><td>deque blok bağlantılı; OrderedDict.move_to_end ile LRU.</td><td>standart kütüphane</td></tr><tr><td><a href="https://docs.python.org/3/library/functools.html#functools.lru_cache" target="_blank" rel="noopener"><b>functools.lru_cache</b></a></td><td>Python</td><td>Hazır LRU önbellek dekoratörü (içeride hash + çift bağlı liste).</td><td>standart kütüphane</td></tr><tr><td><a href="https://en.cppreference.com/w/cpp/container/list" target="_blank" rel="noopener"><b>std::list · std::forward_list</b></a></td><td>C++</td><td>Çift ve tek bağlı listeler; <code>splice</code> ile O(1) liste birleştirme.</td><td><code>#include &lt;list&gt;</code></td></tr><tr><td><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map" target="_blank" rel="noopener"><b>(JS’te yok)</b></a></td><td>JavaScript</td><td>Yerleşik bağlı liste yok; çoğu durumda dizi daha hızlı. LRU için Map’in ekleme sırası kullanılabilir.</td><td>—</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda bağlı liste fikri</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Nesne havuzu + serbest liste</b>: bir dizinin içinde, boş yuvaların “sonraki boş” indekslerini tutarak O(1) al/bırak; çöp yok. Mermiler, parçacıklar, düşmanlar.</li>
+      <li><b>LRU önbellek</b>: hash + çift bağlı liste; en son kullanılanı başa taşı, dolunca sondakini at (doku/ses önbellekleri, yol önbelleği).</li>
+      <li><b>Müdahaleci listeler</b>: varlık kendi next/prev’ini taşır; aynı varlık “görünenler” ve “aktifler” listelerinde.</li>
+      <li>Rastgele erişim ya da sık dolaşma varsa: <b>dizi</b> (List&lt;T&gt;), çoğu zaman daha hızlı.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Sık hatalar</span><ul style="font-size:.82em"><li>Rastgele erişim için bağlı liste (O(n)).</li><li>Her düğüm için <code>new</code>: Unity’de çöp baskısı.</li><li>Silmede prev/next’ten birini güncellemeyi unutmak.</li><li>Dolaşırken listeden silip iteratörü bozmak.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Rastgele erişim için bağlı liste</li><li>Her düğüm için new</li><li>prev/next güncellemesini unutmak</li><li>Dolaşırken silme</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir mermi havuzu yaz: sabit kapasiteli Bullet[] dizisi + int nextFree[] ile indeks tabanlı serbest liste; Spawn() O(1) ve çöp üretmeden bir yuva verir, Despawn(index) O(1) geri koyar; aktif mermileri dolaşmak için ayrıca sıkı (dense) bir aktif indeks dizisi tut (swap-remove). Profilleyicide GC Alloc = 0 olduğunu gösteren bir PlayMode testi ve List<GameObject> + Instantiate/Destroy ile karşılaştırma ölçümü ekle.”</p><ul class="mini"><li>Dizi içinde indeks tabanlı serbest liste isteyin</li><li>Çöp üretmeyen tasarımı açıkça isteyin</li><li>Silme sırasında bağlantı güncellemesini test ettirin</li><li>Önce List<T> ile karşılaştırma ölçümü isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Nesne havuzu</b> — Serbest listeli mermi havuzu; Instantiate/Destroy ile ölçün.</li><li><b class="c-amber">[orta]</b> <b>LRU önbellek</b> — Hash + çift bağlı liste ile LRU; isabet oranını farklı kapasitelerde ölçün.</li><li><b class="c-amber">[orta]</b> <b>Müdahaleci liste</b> — Varlıkların içine gömülü next/prev ile “görünen düşmanlar” listesi.</li><li><b class="c-purple">[araştırma]</b> <b>Stroustrup deneyi</b> — Sıralı diziye rastgele ekleme/silme: dizi ve bağlı liste sürelerini N büyüdükçe karşılaştırın; önbellek etkisini açıklayın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Newell &amp; Shaw 1957</b> · <a href="https://doi.org/10.1145/1455567.1455606" target="_blank" rel="noopener">Programming the Logic Theory Machine</a> <i>(Western Joint Computer Conference)</i><br>Liste işleme dilinin (IPL) ve bağlı listenin doğuşu.</div><div class="paper"><b>Knuth 1997</b> · <a href="https://www-cs-faculty.stanford.edu/~knuth/taocp.html" target="_blank" rel="noopener">The Art of Computer Programming, Vol. 1, §2.2 Linear Lists</a> <i>(Addison-Wesley)</i><br>Bağlı bellek ayırma.</div><div class="paper"><b>Stroustrup 2014</b> · <a href="https://isocpp.org/blog/2014/06/stroustrup-lists" target="_blank" rel="noopener">Are lists evil?</a> <i>(isocpp.org)</i><br>Dizi mi liste mi: önbellek gerçeği.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

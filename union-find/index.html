@@ -846,6 +846,61 @@ function makeMaze(cols, rows) {
   <p class="fragment center lead">Kitabın dersi: <b>hızlı algoritma &gt; hızlı bilgisayar</b>. Quick-find ile 30 yıl süren iş, doğru algoritmayla 6 saniye.</p>
 </section>
 
+<!-- RETRO START uf -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Hex’te beraberlik yoktur</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li><b>Hex</b>: altıgenlerden oluşan eşkenar dörtgen bir tahta; bir oyuncu kendi iki karşı kenarını, öteki diğer iki kenarı birleştirmeye çalışır. Danimarkalı Piet Hein 1942’de, John Nash ise Princeton’da 1948’de oyunu birbirinden bağımsız olarak icat etti (Princeton’daki öğrenciler ona “Nash” derdi).</li>
+      <li>Matematiksel bir gerçek: tahta tamamen dolduğunda <b>tam olarak bir</b> oyuncu kazanmış olur; beraberlik imkânsızdır. David Gale 1979’da bunun Brouwer sabit nokta teoremine denk olduğunu gösterdi.</li>
+      <li>Nash, “strateji çalma” argümanıyla ilk oyuncunun kazanan bir stratejisi olduğunu ispatladı; ama bu stratejinin <b>ne olduğunu</b> söylemez. Büyük tahtalarda hâlâ bilinmiyor.</li>
+      <li>Program olarak: her taş konduğunda aynı renkli komşularıyla <b>birleştir</b>; iki kenarı temsil eden iki sanal düğüm aynı kümede mi, diye <b>bul</b>. Her hamle neredeyse sabit sürede kontrol edilir.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Union-Find, “bu iki şey bağlı mı?” sorusunu <b>sadece birleşmeler</b> olurken çok hızlı cevaplar: Hex, Go’daki taş grupları, eşleştir-3 oyunlarındaki gruplar, Kruskal. Sanal düğüm (kenarlar için) hilesi birçok bağlantı probleminde işe yarar.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Hex_(board_game)" target="_blank" rel="noopener">Wikipedia: Hex</a> · <a href="https://doi.org/10.1080/00029890.1979.11994922" target="_blank" rel="noopener">Gale 1979</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.DisjointSet.html" target="_blank" rel="noopener"><b>scipy DisjointSet</b></a></td><td>Python (SciPy 1.6+)</td><td>merge, connected, subset; hazır ayrık küme.</td><td><code>pip install scipy</code></td></tr><tr><td><a href="https://networkx.org/documentation/stable/reference/utils.html" target="_blank" rel="noopener"><b>networkx.utils.UnionFind</b></a></td><td>Python</td><td>Basit union-find yardımcı sınıfı.</td><td><code>pip install networkx</code></td></tr><tr><td><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.label.html" target="_blank" rel="noopener"><b>scipy.ndimage.label</b></a></td><td>Python</td><td>Izgarada bağlı bileşen etiketleme (görüntü, harita).</td><td><code>pip install scipy</code></td></tr><tr><td><a href="https://www.boost.org/doc/libs/1_86_0/libs/graph/doc/disjoint_sets.html" target="_blank" rel="noopener"><b>boost::disjoint_sets</b></a></td><td>C++</td><td>Rank ve yol sıkıştırmalı ayrık kümeler.</td><td>Boost</td></tr><tr><td><a href="https://algs4.cs.princeton.edu/15uf/" target="_blank" rel="noopener"><b>kendi sınıfınız</b></a></td><td>C# / Unity</td><td>.NET’te hazır yok; 30 satırlık bir sınıf (int[] parent, int[] size) yeterli ve çöp üretmez.</td><td>—</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda Union-Find</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Kazanma kontrolü</b>: Hex, bağlantı bulmacaları (borular/kablolar birleşti mi?).</li>
+      <li><b>Gruplar</b>: Go’da taş grupları, eşleştir-3’te aynı renkli kümeler, kalabalıkta bölüklere ayrılma.</li>
+      <li><b>Prosedürel üretim</b>: Kruskal ile labirent ve zindan koridorları (MST destesi).</li>
+      <li><b>Sızma (percolation)</b>: ateşin ya da suyun yayılıp karşı kenara ulaşıp ulaşmadığı.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Bilmeniz gereken sınır</span>Union-Find <b>silmeyi desteklemez</b>: bir duvar yıkılınca birleşir, ama yeniden örülünce ayıramazsınız. Bağlantı kopabiliyorsa (yıkılan köprü) ya baştan kurun ya da BFS kullanın. Ayrıca yol sıkıştırma ve boyuta göre birleştirme olmadan en kötü durum O(n)’dir.</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Yol sıkıştırmayı unutmak</li><li>Boyuta/rank’a göre birleştirmeyi unutmak</li><li>Silme desteklediğini sanmak</li><li>Özyinelemeli find ile derin ağaçta yığın taşması</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Hex oyunu yaz: 11×11 altıgen ızgara (eksenel koordinatlar), iki oyuncu sırayla taş koyar. UnionFind sınıfı (int[] parent, int[] size, yol sıkıştırmalı ve özyinelemesiz Find, boyuta göre Union); her oyuncu için iki sanal kenar düğümü; her hamleden sonra kazanma kontrolü. Altıgen komşuluklarını ve kazanma kontrolünü test eden NUnit testleri ekle.”</p><ul class="mini"><li>Yol sıkıştırma + boyuta göre birleştirmeyi açıkça isteyin</li><li>Özyinelemesiz find isteyin</li><li>Silme gerekiyorsa bunu söyleyin (yanlış yapı!)</li><li>Sanal düğüm hilesini sorun</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Hex</b> — Yukarıdaki istemdeki oyun; iki kişilik yerel oyun.</li><li><b class="c-amber">[orta]</b> <b>Eşleştir-3 grupları</b> — Her hamleden sonra aynı renkli grupları Union-Find ile bulup patlatın.</li><li><b class="c-amber">[orta]</b> <b>Kruskal labirenti</b> — Rastgele sıralı duvarları Union-Find ile kaldırarak mükemmel labirent üretin.</li><li><b class="c-purple">[araştırma]</b> <b>Silme ile bağlantılılık</b> — Çevrimdışı (tüm işlemler önceden bilinen) dinamik bağlantılılık yöntemlerini araştırıp küçük bir örnek yazın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Galler &amp; Fischer 1964</b> · <a href="https://doi.org/10.1145/364099.364331" target="_blank" rel="noopener">An Improved Equivalence Algorithm</a> <i>(Communications of the ACM 7(5))</i><br>Ayrık küme ormanının ilk tanımı.</div><div class="paper"><b>Tarjan 1975</b> · <a href="https://doi.org/10.1145/321879.321884" target="_blank" rel="noopener">Efficiency of a Good But Not Linear Set Union Algorithm</a> <i>(Journal of the ACM 22(2))</i><br>Ters Ackermann sınırı.</div><div class="paper"><b>Gale 1979</b> · <a href="https://doi.org/10.1080/00029890.1979.11994922" target="_blank" rel="noopener">The Game of Hex and the Brouwer Fixed-Point Theorem</a> <i>(American Mathematical Monthly 86(10))</i><br>Hex’te beraberlik olmamasının ispatı.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

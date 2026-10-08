@@ -655,6 +655,61 @@ def merge(a, aux, lo, mid, hi):
   </div>
 </section>
 
+<!-- RETRO START merge -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Timsort’taki hatayı bir ispat aracı buldu (2015)</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>Timsort, Python’un (2002) ve sonra Java’nın, Android’in standart sıralamasıydı: milyarlarca cihazda her gün çalışıyordu.</li>
+      <li>Stijn de Gouw ve arkadaşları, Java’nın Timsort kodunu <b>biçimsel doğrulama</b> aracı KeY ile “matematiksel olarak doğru” ispatlamaya çalıştı. İspat tutmadı: çünkü kodda bir hata vardı.</li>
+      <li>Timsort, sıralı parçaları (run) bir yığında tutar ve yığındaki uzunluklar için bir kural (değişmez) korunmalıdır. Algoritma bu kuralı sadece yığının <b>en üstündeki</b> birkaç eleman için kontrol ediyordu; belirli girdilerde kural daha aşağıda bozuluyor, yığın için ayrılan sabit boyut aşılıyor ve program <b>çöküyordu</b>.</li>
+      <li>Hata Python’un özgün uygulamasında da vardı. Python düzeltmeyi hızla uyguladı; Java ilk aşamada yığın boyutunu büyüterek sorunu ötelemeyi seçti. Ekip, düzeltilmiş sürümü KeY ile doğruladı.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Yıllarca test edilmiş, milyarlarca kez çalışmış bir kod bile hatalı olabilir: hata sadece çok büyük ve özel girdilerde ortaya çıkıyordu. Değişmez (invariant) düşüncesi bu destedeki birleştirme ispatının ve iyi testlerin temeli. Ayrıca: <b>standart kütüphaneyi kullanın</b>; bu tür hataları sizin için onlar düzeltir.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://ir.cwi.nl/pub/23709" target="_blank" rel="noopener">de Gouw ve ark. 2015 (CWI)</a> · <a href="https://github.com/python/cpython/blob/main/Objects/listsort.txt" target="_blank" rel="noopener">CPython listsort.txt</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.python.org/3/howto/sorting.html" target="_blank" rel="noopener"><b>sorted · list.sort</b></a></td><td>Python</td><td>Kararlı; birleştirme tabanlı (3.11+ Powersort). Doğal sıralı parçaları kullanır.</td><td>yerleşik</td></tr><tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.orderby" target="_blank" rel="noopener"><b>LINQ OrderBy</b></a></td><td>C#</td><td>Kararlı sıralama; List.Sort ise kararsızdır. Çok anahtarlı sıralama için ThenBy.</td><td><code>using System.Linq;</code></td></tr><tr><td><a href="https://en.cppreference.com/w/cpp/algorithm/stable_sort" target="_blank" rel="noopener"><b>std::stable_sort · std::merge</b></a></td><td>C++</td><td>Kararlı sıralama ve iki sıralı aralığı birleştirme.</td><td><code>#include &lt;algorithm&gt;</code></td></tr><tr><td><a href="https://docs.python.org/3/library/heapq.html#heapq.merge" target="_blank" rel="noopener"><b>heapq.merge</b></a></td><td>Python</td><td>Birçok sıralı akışı tembel (lazy) birleştirme: k-yollu birleştirme.</td><td>standart kütüphane</td></tr><tr><td><a href="https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html" target="_blank" rel="noopener"><b>GNU sort</b></a></td><td>komut satırı</td><td>Bellekten büyük dosyaları geçici dosyalarla <b>harici birleştirme sıralaması</b> yaparak sıralar.</td><td>Linux/macOS’ta hazır</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Birleştirme fikri oyunlarda</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Kararlılık gereken her yer</b>: liderlik tablosunda eşit puanlıların önceki sırası, envanterde “önce türe, sonra isme göre”.</li>
+      <li><b>k-yollu birleştirme</b>: birden çok oyuncunun zaman damgalı olaylarını (tekrar oynatma, ağ günlükleri) tek bir sıralı akışta birleştirmek.</li>
+      <li><b>Harici sıralama</b>: telemetri günlükleri belleğe sığmazsa parça parça sıralayıp birleştirmek.</li>
+      <li>Bellek: klasik birleştirme ek dizi ister; Unity’de her çağrıda yeni dizi ayırmayın, yardımcı diziyi bir kez ayırın.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Kararlılığı bozan küçük şey</span>Birleştirmede eşit anahtarlarda <b>sol</b> yarıdan almak (<code>&lt;=</code>) kararlılığı korur; <code>&lt;</code> yazmak sessizce bozar. Testinize mutlaka “eşit anahtarlı kayıtların sırası korunuyor mu?” durumunu ekleyin.</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Birleştirmede < kullanıp kararlılığı bozmak</li><li>Her özyinelemede yeni dizi ayırmak</li><li>Sınır indekslerinde bir fazla/eksik hatası</li><li>Kararlı sıralama gerekirken List.Sort kullanmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8). Aşağıdan yukarı (bottom-up) mergesort yaz: yardımcı dizi bir kez ayrılsın, karşılaştırıcı parametre olsun, kararlı olsun. Sonra NUnit testleri: boş dizi, tek eleman, tersine sıralı, çok sayıda eşit anahtar (kararlılık kontrolü), 1 milyon rastgele eleman (sonucu Array.Sort + LINQ OrderBy ile karşılaştır).”</p><ul class="mini"><li>Kararlılık testini açıkça isteyin</li><li>Yardımcı diziyi bir kez ayırmasını isteyin</li><li>Değişmezleri (invariant) yorum olarak yazdırın</li><li>Standart kütüphane alternatifini de sorun</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kararlı liderlik tablosu</b> — Eşit puanlıların önceki sırasını koruyan çok anahtarlı sıralama ve testi.</li><li><b class="c-amber">[orta]</b> <b>Tekrar oynatma birleştirici</b> — Dört oyuncunun ayrı zaman damgalı olay günlüklerini yığın tabanlı k-yollu birleştirmeyle tek akışa çevirin.</li><li><b class="c-amber">[orta]</b> <b>Harici sıralama</b> — Belleğe sığmayan büyük bir telemetri dosyasını parçalara bölüp sıralayıp birleştirin.</li><li><b class="c-purple">[araştırma]</b> <b>Doğal parçalar</b> — Timsort/Powersort’un “run” tespitini görselleştirin; neredeyse sıralı veride neden bu kadar hızlı?</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>de Gouw ve ark. 2015</b> · <a href="https://ir.cwi.nl/pub/23709" target="_blank" rel="noopener">OpenJDK’s java.utils.Collection.sort() Is Broken: The Good, the Bad and the Worst Case</a> <i>(CAV 2015)</i><br>Biçimsel doğrulamayla bulunan Timsort hatası.</div><div class="paper"><b>Munro &amp; Wild 2018</b> · <a href="https://arxiv.org/abs/1805.04154" target="_blank" rel="noopener">Nearly-Optimal Mergesorts: Fast, Practical Sorting Methods That Optimally Adapt to Existing Runs</a> <i>(ESA 2018)</i><br>Powersort.</div><div class="paper"><b>Peters 2002</b> · <a href="https://github.com/python/cpython/blob/main/Objects/listsort.txt" target="_blank" rel="noopener">listsort.txt (Timsort açıklaması)</a> <i>(CPython kaynak kodu)</i><br>Timsort’un tasarımcısından.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

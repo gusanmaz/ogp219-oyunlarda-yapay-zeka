@@ -870,6 +870,60 @@ def hash_str(s, M):
   </div>
 </section>
 
+<!-- RETRO START hash -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: 28C3’ten sonra: “rastgele tohumlu” hash’ler</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>Aralık 2011, 28C3: Alexander Klink ve Julian Wälde, PHP, Java, Python, Ruby ve ASP.NET’in kullandığı hash fonksiyonları için <b>çakışan anahtarlar</b> üretmenin kolay olduğunu gösterdi. Web sunucuları her POST isteğindeki parametreleri bir hash tablosuna koyduğu için tek bir istek bir işlemciyi dakikalarca meşgul edebiliyordu.</li>
+      <li>Cevaplar: Python 3.3 hash rastgeleleştirmesini varsayılan yaptı; yetersiz kalınca Python 3.4 <b>SipHash</b>’e geçti (PEP 456). Java 8 kalabalık kovaları ağaca çevirdi (Dengeli Ağaçlar destesi). .NET (Core/5+) <code>string.GetHashCode</code> değerini <b>her süreçte farklı</b> tohumla hesaplar.</li>
+      <li>Sonuç: aynı metnin hash kodu, programı her çalıştırdığınızda değişebilir.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span><b>GetHashCode’u asla kaydetmeyin ve ağ üzerinden göndermeyin.</b> Kayıt dosyasında, ağda ya da “tohumdan dünya üretme”de (Y15) kalıcı ve platformdan bağımsız bir değer gerekiyorsa açıkça tanımlanmış bir hash (ör. xxHash, FNV-1a) kullanın. Hash tablosu ise girdi saldırgan olabiliyorsa (çok oyunculu sunucu) rastgele tohumlu hash ister.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://ocert.org/advisories/ocert-2011-003.html" target="_blank" rel="noopener">oCERT-2011-003</a> · <a href="https://peps.python.org/pep-0456/" target="_blank" rel="noopener">PEP 456</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2" target="_blank" rel="noopener"><b>Dictionary · HashSet</b></a></td><td>C# / Unity</td><td>Zincirleme (kova dizisi + giriş dizisi); ortalama O(1). Anahtar türü Equals ve GetHashCode’u tutarlı uygulamalı.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.collections@2.5/manual/index.html" target="_blank" rel="noopener"><b>NativeHashMap · NativeParallelHashMap</b></a></td><td>Unity (Collections)</td><td>Burst/Jobs ile uyumlu, çöp üretmeyen hash tabloları.</td><td>Package Manager: Collections</td></tr><tr><td><a href="https://docs.python.org/3/library/stdtypes.html#mapping-types-dict" target="_blank" rel="noopener"><b>dict · set</b></a></td><td>Python</td><td>Açık adresleme; 3.7’den beri ekleme sırasını korur. Metin hash’leri süreç başına rastgele (PYTHONHASHSEED).</td><td>yerleşik</td></tr><tr><td><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map" target="_blank" rel="noopener"><b>Map · Set</b></a></td><td>JavaScript</td><td>Ekleme sırasını korur; nesne anahtarları <b>kimliğe</b> göre karşılaştırılır (iki ayrı {x:1} farklı anahtardır).</td><td>yerleşik</td></tr><tr><td><a href="https://xxhash.com/" target="_blank" rel="noopener"><b>xxHash</b></a></td><td>C, C#, Python, JS…</td><td>Çok hızlı, kriptografik olmayan, <b>deterministik</b> hash: varlık kimlikleri, içerik kontrolü.</td><td>C#: NuGet <code>System.IO.Hashing</code> (XxHash64)</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda hash tabloları</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Uzaysal hash</b>: <code>Dictionary&lt;Vector2Int, List&lt;Unit&gt;&gt;</code> ile “bu hücrede kimler var?” (Y7, Y18).</li>
+      <li><b>Kimlikten nesneye</b>: ağ kimliği → varlık, eşya kodu → tanım.</li>
+      <li><b>Ziyaret edilenler</b>: BFS/A* kapalı kümesi (HashSet).</li>
+      <li><b>Önbellek</b>: pahalı hesap sonuçlarını anahtarlayıp saklamak (memoization).</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Anahtar tuzakları</span><ul style="font-size:.82em"><li>Equals’ı ezip GetHashCode’u ezmemek: eşit nesneler farklı kovalara düşer.</li><li><b>Değişen</b> nesneyi anahtar yapmak: konumu değişince bir daha bulunamaz.</li><li><code>float</code>/<code>Vector3</code> anahtar: 0,1 + 0,2 ≠ 0,3; ızgara hücresine (int) yuvarlayın.</li><li>GetHashCode’u kaydetmek (yukarıdaki hikâye).</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>GetHashCode’u kaydetmek ya da ağdan göndermek</li><li>Equals’ı ezip GetHashCode’u ezmemek</li><li>Değişen nesneyi anahtar yapmak</li><li>float koordinatı anahtar yapmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir uzaysal hash ızgarası yaz: SpatialHash<T>(float cellSize), Insert(T, Vector2), Remove, Move (hücre değişirse taşı), QueryRadius(Vector2 merkez, float r, List<T> sonuç) — sonuç listesi dışarıdan verilsin (çöp üretmesin). Anahtar Vector2Int. 10.000 nesne ile kaba kuvvet aramaya karşı doğruluk ve hız testi ekle.”</p><ul class="mini"><li>Anahtar türünün Equals/GetHashCode’unu kontrol ettirin</li><li>Kalıcı kimlik için deterministik hash isteyin</li><li>Kapasiteyi baştan ayarlamayı sorun</li><li>Unity Jobs içinde NativeHashMap gerekip gerekmediğini sorun</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Uzaysal hash</b> — Boids’i (Y7) uzaysal hash ile hızlandırıp kontrol sayısını ölçün.</li><li><b class="c-amber">[orta]</b> <b>Kendi hash tablonuz</b> — Açık adresleme (doğrusal yoklama) ile yazıp yük faktörünün etkisini grafiğe dökün.</li><li><b class="c-amber">[orta]</b> <b>Deterministik kimlikler</b> — Varlık adlarından xxHash ile kalıcı kimlik üretin; kayıt dosyasında kullanın, çakışmaları test edin.</li><li><b class="c-purple">[araştırma]</b> <b>Çakışma saldırısı</b> — Kendi zayıf hash fonksiyonunuza karşı çakışan anahtarlar üretip tablonun nasıl yavaşladığını gösterin; rastgele tohumla düzeltin.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Klink &amp; Wälde 2011</b> · <a href="https://ocert.org/advisories/ocert-2011-003.html" target="_blank" rel="noopener">Efficient Denial of Service Attacks on Web Application Platforms</a> <i>(28C3 / oCERT-2011-003)</i><br>Hash flooding.</div><div class="paper"><b>Aumasson &amp; Bernstein 2012</b> · <a href="https://cr.yp.to/siphash/siphash-20120918.pdf" target="_blank" rel="noopener">SipHash: a fast short-input PRF</a> <i>(INDOCRYPT 2012)</i><br>Rastgele tohumlu güvenli hash.</div><div class="paper"><b>Heimes 2013</b> · <a href="https://peps.python.org/pep-0456/" target="_blank" rel="noopener">PEP 456 – Secure and interchangeable hash algorithm</a> <i>(Python Enhancement Proposal)</i><br>Python’un SipHash’e geçişi.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

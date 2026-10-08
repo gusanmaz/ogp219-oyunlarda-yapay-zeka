@@ -596,6 +596,62 @@ def dijkstra(V, adj, s):
   </div>
 </section>
 
+<!-- RETRO START sp -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Shakey ve A*’ın doğuşu (1968)</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>1966–1972: Stanford Araştırma Enstitüsü’nde (SRI) geliştirilen <b>Shakey</b>, kendi eylemleri hakkında akıl yürüten ilk mobil robot olarak anılır: kamera ve mesafe sensörleriyle odaları algılıyor, kutuları itiyor, rampalardan geçiyordu.</li>
+      <li>Shakey’in odalar arasında yol bulması gerekiyordu. Dijkstra’nın algoritması (1959) doğruydu ama hedefin <b>nerede</b> olduğunu hiç kullanmadan her yöne eşit yayılıyordu.</li>
+      <li>Peter Hart, Nils Nilsson ve Bertram Raphael, 1968’de hedefe olan tahmini uzaklığı (sezgisel) aramaya ekleyen <b>A*</b>’ı yayımladı ve sezgisel “gerçek uzaklığı hiç aşmadığı” sürece en kısa yolu bulacağını ispatladı.</li>
+      <li>Shakey bugün Bilgisayar Tarihi Müzesi’nde sergileniyor; A* ise neredeyse her oyunun yol bulucusunun kalbinde (Y8).</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>En kısa yol algoritmalarının en ünlü uygulaması bir robottu; oyunlar bu mirası devraldı. Dijkstra “herkese en kısa yol”, A* “tek bir hedefe en kısa yol, akıllıca”: doğru soruyu sormak doğru algoritmayı seçtirir.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Shakey_the_robot" target="_blank" rel="noopener">Wikipedia: Shakey the robot</a> · <a href="https://cacm.acm.org/news/an-interview-with-edsger-w-dijkstra/" target="_blank" rel="noopener">CACM: Dijkstra röportajı (2001)</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://networkx.org/documentation/stable/reference/algorithms/shortest_paths.html" target="_blank" rel="noopener"><b>NetworkX</b></a></td><td>Python</td><td>dijkstra_path, bellman_ford_path, astar_path, all_pairs…</td><td><code>pip install networkx</code></td></tr><tr><td><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csgraph.shortest_path.html" target="_blank" rel="noopener"><b>scipy.sparse.csgraph.shortest_path</b></a></td><td>Python</td><td>Dijkstra, Bellman–Ford, Johnson, Floyd–Warshall; seyrek matrislerde hızlı.</td><td><code>pip install scipy</code></td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/index.html" target="_blank" rel="noopener"><b>Unity NavMesh (AI Navigation)</b></a></td><td>Unity</td><td>Navmesh üzerinde A* + funnel; <code>NavMesh.CalculatePath</code>, <code>NavMeshAgent</code> (Y9).</td><td>Package Manager: AI Navigation</td></tr><tr><td><a href="https://arongranberg.com/astar/" target="_blank" rel="noopener"><b>A* Pathfinding Project</b></a></td><td>Unity</td><td>Izgara, navmesh ve nokta grafları; çok iş parçacıklı arama, etiketler ve cezalar (Y8, Y12).</td><td>Asset Store</td></tr><tr><td><a href="https://github.com/qiao/PathFinding.js" target="_blank" rel="noopener"><b>PathFinding.js</b></a></td><td>JavaScript</td><td>Izgara üzerinde A*, Dijkstra, JPS ve diğerleri; görsel demo.</td><td><code>npm install pathfinding</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Hangi algoritma, ne zaman?</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Tek hedef, iyi bir sezgisel var</b> → A* (oyunların %90’ı).</li>
+      <li><b>Bir noktadan herkese</b> (ör. bir kuleden bütün hücrelere uzaklık, akış alanı) → Dijkstra / BFS.</li>
+      <li><b>Negatif ağırlık</b> (ödül veren kenarlar, döviz kurları) → Bellman–Ford; negatif döngü = sonsuz kazanç (arbitraj).</li>
+      <li><b>Herkesten herkese</b>, küçük graf (ör. 50 şehirlik dünya haritası) → Floyd–Warshall, bir kez hesaplanıp saklanır.</li>
+      <li><b>Hareketli engeller</b> → yeniden arama ya da artımlı algoritmalar (D* Lite); çoğu oyunda kısa aralıklarla yeniden A* yeterli.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Sık hatalar</span><ul style="font-size:.82em"><li>Negatif kenarla Dijkstra.</li><li>Düğümü kuyruğa <b>eklerken</b> kapatmak (Dijkstra’da yanlış; çıkarırken kapatın).</li><li>Gerçek maliyeti aşan (kabul edilemez) sezgisel.</li><li>Kuyrukta bayat kayıtları atlamamak.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Negatif kenarla Dijkstra</li><li>Düğümü eklerken kapatmak</li><li>Kabul edilemez sezgisel</li><li>Bayat kuyruk kayıtlarını işlemek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. 8 yönlü ızgara A* yaz: düz adım 1, çapraz √2; köşe kesmeyi engelle; sezgisel octile; eşit f’de daha küçük h’yi tercih et; açık liste için kendi ikili yığının; kapalı küme bool[]; sonuç: yol + açılan düğüm sayısı. Ayrıca aynı API ile Dijkstra (sezgisel 0) ve BFS; üçünün aynı haritada aynı uzunlukta yol bulduğunu doğrulayan NUnit testleri.”</p><ul class="mini"><li>Kenar ağırlıklarının negatif olup olamayacağını yazın</li><li>Sezgiselin kabul edilebilirliğini açıklatın</li><li>Eşitlik bozma (tie-breaking) kuralı isteyin</li><li>Yolun yanında “açılan düğüm sayısı”nı da döndürsün</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Metro haritası</b> — Bir şehrin metro hatlarında en kısa ve en az aktarmalı rotalar.</li><li><b class="c-amber">[orta]</b> <b>En güvenli yol</b> — Kenar başına “güvenli geçme olasılığı” verin; −log(olasılık) ağırlıklarıyla en güvenli yolu Dijkstra ile bulun.</li><li><b class="c-amber">[orta]</b> <b>Kule savunma uzaklık alanı</b> — Hedeften bütün hücrelere Dijkstra ile uzaklık; düşmanlar alanın eğimini izlesin.</li><li><b class="c-purple">[araştırma]</b> <b>Hızlandırma teknikleri</b> — ALT (yer imli A*) ya da kontraksiyon hiyerarşilerini küçük bir yol ağında deneyin.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Dijkstra 1959</b> · <a href="https://doi.org/10.1007/BF01386390" target="_blank" rel="noopener">A Note on Two Problems in Connexion with Graphs</a> <i>(Numerische Mathematik 1)</i><br>Dijkstra algoritması (ve Prim’in yeniden keşfi).</div><div class="paper"><b>Hart, Nilsson &amp; Raphael 1968</b> · <a href="https://doi.org/10.1109/TSSC.1968.300136" target="_blank" rel="noopener">A Formal Basis for the Heuristic Determination of Minimum Cost Paths</a> <i>(IEEE Trans. Systems Science and Cybernetics 4(2))</i><br>A*.</div><div class="paper"><b>Bellman 1958</b> · <a href="https://doi.org/10.1090/qam/102435" target="_blank" rel="noopener">On a Routing Problem</a> <i>(Quarterly of Applied Mathematics 16)</i><br>Bellman–Ford.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <table class="sum-t" style="font-size:19px">

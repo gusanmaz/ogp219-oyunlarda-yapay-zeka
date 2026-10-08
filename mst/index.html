@@ -572,6 +572,59 @@ def prim(V, adj):
   </div>
 </section>
 
+<!-- RETRO START mst -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: TinyKeep’in zindanları: odalar + Delaunay + MST</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>Bağımsız geliştirici Phi Dinh, oyunu TinyKeep için 2013’te paylaştığı zindan üretme yöntemini anlattı; yöntem bugün hâlâ çok kopyalanır:</li>
+      <li>1) Bir alana rastgele boyutlu çok sayıda oda yerleştir, çakışanları birbirinden it (Y7’deki ayrılma kuvveti gibi). 2) Büyük odaları “ana oda” seç. 3) Ana odaların merkezlerinden <b>Delaunay üçgenlemesi</b> yap (bütün yakın komşuluklar). 4) Bu graftan <b>minimum yayılan ağaç</b> çıkar: her oda bağlı, gereksiz koridor yok. 5) Ağaca, silinen kenarlardan rastgele birkaç tanesini geri ekle: tamamen ağaç bir zindan çıkmaz sokaklarla dolu olur, birkaç döngü keşfi eğlenceli yapar. 6) Kenarları L biçimli koridorlara çevir.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>MST burada “en ucuz bağlantı” değil, “<b>herkes bağlı, hiçbir şey fazla değil</b>” iskeleti olarak kullanılıyor; tasarım için bilerek bozuluyor (geri eklenen kenarlar). Algoritmalar çoğu zaman bir tasarım aracının parçasıdır, son ürünün kendisi değil (Y15’teki “önce yapı, sonra ayrıntı”).</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://www.gamedeveloper.com/programming/procedural-dungeon-generation-algorithm" target="_blank" rel="noopener">Game Developer: Procedural Dungeon Generation Algorithm</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.tree.mst.minimum_spanning_tree.html" target="_blank" rel="noopener"><b>networkx.minimum_spanning_tree</b></a></td><td>Python</td><td>Kruskal, Prim ve Borůvka seçenekleriyle MST.</td><td><code>pip install networkx</code></td></tr><tr><td><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csgraph.minimum_spanning_tree.html" target="_blank" rel="noopener"><b>scipy.sparse.csgraph.minimum_spanning_tree</b></a></td><td>Python</td><td>Seyrek matris üzerinde hızlı MST.</td><td><code>pip install scipy</code></td></tr><tr><td><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.Delaunay.html" target="_blank" rel="noopener"><b>scipy.spatial.Delaunay</b></a></td><td>Python</td><td>Noktalardan Delaunay üçgenlemesi (zindan yönteminin 3. adımı).</td><td><code>pip install scipy</code></td></tr><tr><td><a href="https://github.com/KeRNeLith/QuikGraph" target="_blank" rel="noopener"><b>QuikGraph</b></a></td><td>C#</td><td>Kruskal ve Prim MST.</td><td>NuGet: <code>QuikGraph</code></td></tr><tr><td><a href="https://github.com/mapbox/delaunator" target="_blank" rel="noopener"><b>Delaunator</b></a></td><td>JavaScript (C# portu var)</td><td>Çok hızlı 2B Delaunay üçgenlemesi.</td><td><code>npm install delaunator</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda MST</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Prosedürel zindan/yol ağları</b>: odaları/şehirleri en az koridorla bağlamak, sonra birkaç döngü eklemek.</li>
+      <li><b>Şehir kurma oyunları</b>: elektrik hatları, boru ağları için en ucuz bağlantı önerisi (Borůvka’nın 1926’daki problemi!).</li>
+      <li><b>Kümeleme</b>: MST’nin en uzun kenarlarını silmek noktaları gruplara ayırır (tek bağlantılı kümeleme): düşman gruplarını ya da kaynak kümelerini bulmak.</li>
+      <li><b>Gezgin satıcıya yaklaşım</b>: MST’yi dolaşmak, bütün noktaları gezen turun en fazla <b>iki katı</b> uzunlukta bir tur verir (metrik uzaylarda); NPC’nin bütün noktaları dolaşması için yeterince iyi.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Sık hatalar</span><ul style="font-size:.82em"><li>Kruskal’da kenarları sıralamayı unutmak.</li><li>Döngü kontrolünü Union-Find yerine BFS ile her kenarda yapmak (yavaş).</li><li>Yönlü grafta MST beklemek.</li><li>Eşit ağırlıklarda belirli bir ağaç çıkacağını varsaymak (tohumlu sıralama kullanın).</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Kenarları sıralamayı unutmak</li><li>Union-Find olmadan döngü kontrolü</li><li>Yönlü grafta MST</li><li>Eşitliklerde rastgele, tekrarlanamaz sonuç</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. TinyKeep tarzı zindan üreteci yaz: (1) tohumlu System.Random ile N oda, (2) ayrılma ile çakışmaları çöz, (3) ana odaların merkezleri için Delaunay üçgenlemesi (Bowyer–Watson), (4) Kruskal + Union-Find ile MST, (5) silinen kenarların %12’sini geri ekle, (6) L biçimli koridorlar, (7) Tilemap’e çiz; Gizmos ile grafı göster. Aynı tohumun aynı zindanı ürettiğini test et.”</p><ul class="mini"><li>Hangi algoritmayı neden seçtiğini sorun</li><li>Union-Find’ı yol sıkıştırmalı isteyin</li><li>Tohumlu, tekrarlanabilir üretim isteyin</li><li>Geri eklenen kenar oranını parametre yapın</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>MST ile ağ</b> — p5.js’te tıklanan noktaları Prim ile bağlayan “elektrik hattı” aracı.</li><li><b class="c-amber">[orta]</b> <b>TinyKeep zindanı</b> — Yukarıdaki istemdeki üreteç; döngü oranının oynanışa etkisini deneyin.</li><li><b class="c-amber">[orta]</b> <b>Kümeleme</b> — Kaynak noktalarını MST’nin en uzun kenarlarını silerek gruplayın.</li><li><b class="c-purple">[araştırma]</b> <b>Tur yaklaşımı</b> — MST tabanlı 2-yaklaşık turu, en yakın komşu turu ve 2-opt iyileştirmesiyle karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Kruskal 1956</b> · <a href="https://doi.org/10.1090/S0002-9939-1956-0078686-7" target="_blank" rel="noopener">On the Shortest Spanning Subtree of a Graph and the Traveling Salesman Problem</a> <i>(Proceedings of the AMS 7(1))</i><br>Kruskal algoritması.</div><div class="paper"><b>Prim 1957</b> · <a href="https://doi.org/10.1002/j.1538-7305.1957.tb01515.x" target="_blank" rel="noopener">Shortest Connection Networks and Some Generalizations</a> <i>(Bell System Technical Journal 36(6))</i><br>Prim algoritması.</div><div class="paper"><b>Nešetřil, Milková &amp; Nešetřilová 2001</b> · <a href="https://doi.org/10.1016/S0012-365X(00)00224-7" target="_blank" rel="noopener">Otakar Borůvka on Minimum Spanning Tree Problem: Translation of Both the 1926 Papers</a> <i>(Discrete Mathematics 233)</i><br>Borůvka’nın makalelerinin İngilizce çevirisi.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

@@ -536,6 +536,62 @@ function work(N) {
   </div>
 </section>
 
+<!-- RETRO START analiz -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: GTA Online’ın 6 dakikalık yükleme ekranı (2021)</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>GTA Online’ın PC sürümü yıllarca <b>yaklaşık 6 dakikada</b> açılıyordu. Kaynak koduna erişimi olmayan bir oyuncu, takma adı t0st, 2021’de profilleyici ve tersine mühendislik araçlarıyla nedeni aradı.</li>
+      <li><b>Sebep 1</b>: Yaklaşık 10 MB’lık, 63.000 eşyalık bir JSON dosyası ayrıştırılırken her küçük okumada <code>sscanf</code>, metnin <b>tamamının</b> uzunluğunu (<code>strlen</code>) yeniden hesaplıyordu: farkında olmadan O(n²).</li>
+      <li><b>Sebep 2</b>: Her eşya listeye eklenmeden önce, listenin baştan sona taranmasıyla “zaten var mı?” diye kontrol ediliyordu: 63.000 eşya için yaklaşık <b>2 milyar</b> karşılaştırma (yine O(n²)). Üstelik eşyaların hepsi zaten benzersizdi.</li>
+      <li>İki düzeltmeyle yükleme süresi 6 dakikadan <b>1 dakika 50 saniyeye</b> indi (%69,4 azalma). Rockstar düzeltmeyi oyuna ekledi ve t0st’a hata ödül programından <b>10.000 dolar</b> verdi.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Kod “doğru” çalışıyordu; sadece <b>büyüme hızı</b> yanlıştı. Küçük test verisinde fark edilmeyen O(n²), gerçek veri büyüyünce dakikalara dönüştü. Gizli doğrusal işlemleri (strlen, Contains, IndexOf, liste taraması) bir döngünün içinde görünce alarm zilleri çalmalı: tam olarak bu destede yaptığımız analiz.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://nee.lv/2021/02/28/How-I-cut-GTA-Online-loading-times-by-70/" target="_blank" rel="noopener">t0st: How I cut GTA Online loading times by 70%</a> · <a href="https://bit-tech.net/news/gaming/pc/rockstar-to-implement-gta-online-loading-time-fix/1/" target="_blank" rel="noopener">bit-tech</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://benchmarkdotnet.org/" target="_blank" rel="noopener"><b>BenchmarkDotNet</b></a></td><td>C# / .NET</td><td>Isınma, tekrar, istatistik ve bellek ayırma ölçümüyle güvenilir mikro ölçüm. Unity içinde değil, ayrı bir .NET projesinde çalışır.</td><td>NuGet: <code>BenchmarkDotNet</code></td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.test-framework.performance@3.0/manual/index.html" target="_blank" rel="noopener"><b>Unity Performance Testing</b></a></td><td>Unity</td><td>Test Framework içinde ölçüm: <code>Measure.Method</code>, <code>Measure.Frames</code>; sonuçları sürümler arasında karşılaştırma.</td><td>Package Manager: <code>com.unity.test-framework.performance</code></td></tr><tr><td><a href="https://docs.unity3d.com/Manual/Profiler.html" target="_blank" rel="noopener"><b>Unity Profiler</b></a></td><td>Unity</td><td>Kare bazında süre ve bellek ayırma; hedef cihaza bağlanarak ölçüm.</td><td>Window → Analysis → Profiler</td></tr><tr><td><a href="https://docs.python.org/3/library/timeit.html" target="_blank" rel="noopener"><b>timeit · cProfile</b></a></td><td>Python</td><td>Küçük kod parçalarını tekrar tekrar ölçme; fonksiyon bazında profil.</td><td>standart kütüphane</td></tr><tr><td><a href="https://github.com/tinylibs/tinybench" target="_blank" rel="noopener"><b>Tinybench</b></a></td><td>JavaScript</td><td>Tarayıcı ve Node için küçük, modern ölçüm kütüphanesi.</td><td><code>npm install tinybench</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Ölçerken dikkat</h2>
+  <div class="cols">
+    <div><ol style="font-size:.84em">
+      <li><b>Çift-boyut deneyi</b>: N’yi 1.000, 2.000, 4.000… diye ikiye katlayın, süre oranına bakın: ~2 ise doğrusal, ~4 ise karesel, ~2,1 ise N log N.</li>
+      <li><b>Isınma</b>: ilk çağrılar (JIT derleme, önbellek) yavaştır; ilk ölçümleri atın.</li>
+      <li><b>Release/IL2CPP derlemesi</b> ve hedef cihaz: editörde ölçmek yanıltır.</li>
+      <li><b>Bellek ayırma</b> da maliyettir: Unity’de her karede “GC Alloc” sıfıra yakın olmalı.</li>
+      <li>Tek sayı değil, <b>dağılım</b>: en kötü %1 (takılmalar) ortalamadan önemlidir.</li>
+    </ol></div>
+    <div class="box warn"><span class="bt">Gizli O(n) çağrılar</span><ul style="font-size:.82em"><li><code>List.Contains</code>, <code>IndexOf</code>, <code>Remove(item)</code>: liste taraması.</li><li>Döngüde <code>string +=</code>: her seferinde yeni metin (StringBuilder kullanın).</li><li>LINQ zincirleri (<code>Where().ToList()</code>) her karede: ayırma + tarama.</li><li><code>GameObject.Find</code>, <code>FindObjectsOfType</code>: bütün sahneyi tarar.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Asistanın “bu O(n log n)” iddiasına ölçmeden inanmak</li><li>Debug derlemesinde ya da editörde ölçüp karar vermek</li><li>Tek bir girdi boyutuyla sonuç çıkarmak</li><li>Döngü içindeki Contains/IndexOf/string birleştirmeyi gözden kaçırmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8). Aşağıdaki fonksiyonun zaman karmaşıklığını satır satır açıkla; döngü içindeki gizli O(n) çağrıları (Contains, IndexOf, Remove, string birleştirme, LINQ) işaretle ve daha iyi veri yapısı öner. Sonra N = 1.000’den 64.000’e ikişer katlanan bir BenchmarkDotNet deneyi yaz; her satırda süreyi ve bir önceki süreye oranı yazdırsın.”</p><ul class="mini"><li>Kodun karmaşıklığını satır satır açıklatın</li><li>Çift-boyut deneyini (N, 2N, 4N…) ve oranları isteyin</li><li>Gizli doğrusal çağrıları işaretletin</li><li>Release derlemesinde ölçmeyi hatırlatın</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Çift-boyut deneyi</b> — Üç fonksiyon (doğrusal, karesel, N log N) yazıp N’yi ikiye katlayarak süre oranlarını tablolayın.</li><li><b class="c-green">[kolay]</b> <b>Gizli O(n²) avı</b> — GTA hikâyesindeki hatanın küçük bir kopyasını yazın (döngüde liste taraması), HashSet ile düzeltip ölçün.</li><li><b class="c-amber">[orta]</b> <b>Unity performans testi</b> — Bir yapay zekâ fonksiyonunuz için Performance Testing paketiyle otomatik ölçüm testi; sürümler arasında karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Önbellek etkisi</b> — Aynı sayıda elemanı dizi ve bağlı liste üzerinde dolaşıp süreleri karşılaştırın; büyük-O’nun anlatmadığı farkı açıklayın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Knuth 1976</b> · <a href="https://doi.org/10.1145/1008328.1008329" target="_blank" rel="noopener">Big Omicron and Big Omega and Big Theta</a> <i>(ACM SIGACT News 8(2))</i><br>Asimptotik gösterimin bugünkü anlamı.</div><div class="paper"><b>Hartmanis &amp; Stearns 1965</b> · <a href="https://doi.org/10.1090/S0002-9947-1965-0170805-7" target="_blank" rel="noopener">On the Computational Complexity of Algorithms</a> <i>(Trans. AMS 117)</i><br>Hesaplama karmaşıklığı alanının başlangıcı.</div><div class="paper"><b>Sedgewick &amp; Wayne 2011</b> · <a href="https://algs4.cs.princeton.edu/14analysis/" target="_blank" rel="noopener">Algorithms, 4th Edition — 1.4 Analysis of Algorithms</a> <i>(kitap sitesi)</i><br>Çift-boyut deneyi ve bilimsel yöntem.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

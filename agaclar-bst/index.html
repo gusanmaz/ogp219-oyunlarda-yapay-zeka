@@ -1976,6 +1976,60 @@ function newNode(k) {
   </div>
 </section>
 
+<!-- RETRO START agac -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Huffman’ın dönem ödevi (1951–52)</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>MIT’de bilgi kuramı dersi veren Robert Fano, öğrencilerine bir seçenek sundu: ya final sınavına girersiniz ya da bir dönem ödevi yazarsınız. Ödev konusu: en verimli ikili kodu bulmak. Fano’nun kendisi de Claude Shannon’la birlikte bu problem üzerinde çalışmış, en iyi çözümü bulamamıştı.</li>
+      <li>David Huffman aylarca uğraştı; tam vazgeçip sınava çalışmaya karar verdiği sırada fikri buldu: ağacı <b>yukarıdan aşağı</b> değil, <b>aşağıdan yukarı</b> kurmak. En az görülen iki sembolü birleştir, yeni bir düğüm yap, tekrarla. Sonuç kanıtlanabilir şekilde en iyi önek koduydu.</li>
+      <li>Huffman kodlaması bugün ZIP ve PNG’nin kullandığı DEFLATE’in, JPEG’in ve MP3’ün içinde: her gün milyarlarca kez kurulan bir ikili ağaç.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Bir ikili ağaç sadece “arama” için değildir: yapının kendisi bir <b>karar dizisidir</b> (sol = 0, sağ = 1). Huffman ağacı BST değildir ama aynı düşünce aracını kullanır. Bazen problemi tersinden (aşağıdan yukarı) kurmak çözümü açar.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Huffman_coding" target="_blank" rel="noopener">Wikipedia: Huffman coding</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.sortedset-1" target="_blank" rel="noopener"><b>SortedDictionary · SortedSet</b></a></td><td>C# / Unity</td><td>Kırmızı-siyah ağaç: sıralı anahtarlar, O(log n) ekleme/silme/arama, <code>GetViewBetween</code> ile aralık sorgusu.</td><td>yerleşik</td></tr><tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.sortedlist-2" target="_blank" rel="noopener"><b>SortedList&lt;K,V&gt;</b></a></td><td>C#</td><td>Adı yanıltıcı: <b>dizi</b> tabanlıdır; arama O(log n) ama ekleme O(n). Az değişen veriler için.</td><td>yerleşik</td></tr><tr><td><a href="https://grantjenks.com/docs/sortedcontainers/" target="_blank" rel="noopener"><b>sortedcontainers</b></a></td><td>Python</td><td>Python’da yerleşik ağaç yok; SortedList/SortedDict/SortedSet saf Python, hızlı ve yaygın.</td><td><code>pip install sortedcontainers</code></td></tr><tr><td><a href="https://en.cppreference.com/w/cpp/container/map" target="_blank" rel="noopener"><b>std::map · std::set</b></a></td><td>C++</td><td>Kırmızı-siyah ağaç; <code>lower_bound</code> ile aralık.</td><td><code>#include &lt;map&gt;</code></td></tr><tr><td><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeMap.html" target="_blank" rel="noopener"><b>TreeMap</b></a></td><td>Java</td><td>Kırmızı-siyah ağaç; <code>floorKey</code>, <code>ceilingKey</code>, <code>subMap</code>.</td><td>yerleşik</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Ne zaman ağaç, ne zaman sözlük?</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li>Sadece “bu anahtar var mı, değeri ne?” → <b>hash tablosu</b> (Dictionary) daha hızlı.</li>
+      <li><b>Sıra</b> önemliyse ağaç: “puanı 1000 ile 2000 arasındaki oyuncular”, “şu andan sonraki ilk olay”, “bu sayıdan küçük en büyük anahtar”.</li>
+      <li>Oyunlarda: zaman çizelgesindeki olaylar, sıralı sohbet geçmişi, mesafeye göre sıralı hedef listeleri, otomatik tamamlama (ön ek aralığı).</li>
+      <li>Kendi BST’nizi yazmak öğreticidir; üretimde dengeli olanları (SortedSet, std::map) kullanın.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Dengesiz ağaç tuzağı</span>Sıralı veriyi dengesiz bir BST’ye eklemek ağacı bir <b>listeye</b> çevirir: her işlem O(n), özyinelemeli kod derin ağaçta yığın taşmasına uğrar. Bu destede gördüğünüz yüksekliğe dikkat edin.</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Sıralı veriyi dengesiz BST’ye eklemek</li><li>Silmede ardılın sağ alt ağacını kaybetmek</li><li>Derin ağaçta özyineleme ile yığın taşması</li><li>Çok eklemeli işte SortedList kullanmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8). Bir oyunun liderlik tablosu için SortedSet<(int skor, int id)> kullanan bir sınıf yaz: Ekle, Sil, Güncelle (sil + ekle), “skoru [a, b] aralığındakiler” (GetViewBetween), “ilk 10”. Ayrıca aynı API’yi kendi yazdığın basit (dengesiz) BST ile uygula ve sıralı ekleme yapan bir testte ikisinin süresini karşılaştır.”</p><ul class="mini"><li>Dengeli mi dengesiz mi açıkça sorun</li><li>Silmenin üç durumunu (0, 1, 2 çocuk) test ettirin</li><li>Özyinelemesiz (döngüyle) sürüm isteyin</li><li>Aralık sorgusu için hazır API’yi (GetViewBetween, subMap) sorun</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Huffman sıkıştırıcı</b> — Bir metin dosyasını Huffman ağacıyla kodlayıp çözün; sıkıştırma oranını ölçün.</li><li><b class="c-amber">[orta]</b> <b>Ağaç görselleştirici</b> — Ekleme sırası rastgele ve sıralı olduğunda BST’nin şeklini ve yüksekliğini çizin.</li><li><b class="c-amber">[orta]</b> <b>Otomatik tamamlama</b> — Sıralı bir kelime kümesinde ön ek aralığı sorgusuyla (ceiling/floor) öneriler.</li><li><b class="c-purple">[araştırma]</b> <b>Ortalama derinlik</b> — Rastgele ekleme sırasının ortalama düğüm derinliğini ölçüp ~1,39 log₂ N ile karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Huffman 1952</b> · <a href="https://doi.org/10.1109/JRPROC.1952.273898" target="_blank" rel="noopener">A Method for the Construction of Minimum-Redundancy Codes</a> <i>(Proceedings of the IRE 40(9))</i><br>Huffman kodlaması.</div><div class="paper"><b>Hibbard 1962</b> · <a href="https://doi.org/10.1145/321105.321108" target="_blank" rel="noopener">Some Combinatorial Properties of Certain Trees With Applications to Searching and Sorting</a> <i>(Journal of the ACM 9(1))</i><br>BST silme yöntemi ve analizi.</div><div class="paper"><b>Knuth 1998</b> · <a href="https://www-cs-faculty.stanford.edu/~knuth/taocp.html" target="_blank" rel="noopener">The Art of Computer Programming, Vol. 3, §6.2.2</a> <i>(Addison-Wesley)</i><br>İkili arama ağaçlarının analizi.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

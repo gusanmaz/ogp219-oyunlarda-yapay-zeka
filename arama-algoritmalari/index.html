@@ -1314,6 +1314,60 @@ const tHit = firstTrue(3, 4, touches);       // fonksiyonun ADINI veriyoruz
   <p class="mini">Değerler karşılaştırma sayısıdır.</p>
 </section>
 
+<!-- RETRO START arama -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: “Nükleer Gandhi” — bir taşma efsanesi</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.82em">
+      <li><b>Efsane</b>: İlk Civilization’da (1991) barışçıl Gandhi’nin saldırganlık değeri en düşük, 1’di. Demokrasiye geçen ülkelerin saldırganlığı 2 azalıyordu; 1 − 2 = −1, işaretsiz 8 bitlik bir sayıda <b>255</b>’e sarıyor ve Gandhi bir anda oyunun en saldırgan, nükleer silah kullanan lideri oluyordu.</li>
+      <li><b>Gerçek</b>: Bu anlatı ilk kez 2012’de TV Tropes vikisine kanıtsız eklendi ve yayıldı. Civilization V’te (2010) Gandhi’nin nükleer silah kullanma eğilimi gerçekten yüksek ayarlanmıştı; efsanenin buradan beslenmiş olması muhtemel. Serinin yaratıcısı Sid Meier 2020’deki anı kitabında bu hatanın ilk oyunda <b>mümkün olmadığını</b> açıkladı.</li>
+      <li><b>Durum</b>: Nükleer Gandhi → <b>efsane</b>. Tamsayı taşması → çok <b>gerçek</b>: Joshua Bloch 2006’da, Java’nın standart ikili aramasındaki <code>(low + high) / 2</code> satırının çok büyük dizilerde taşıp negatif indeks ürettiğini ve hatanın JDK’da <b>yaklaşık dokuz yıl</b> fark edilmediğini yazdı. Aynı hata birçok kitapta ve mergesort uygulamasında da vardı.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>İyi bir hikâye, doğru bir hikâye olmayabilir: kaynağını sorun. Ama efsanenin “hissettirdiği” şey gerçek bir hata sınıfıdır: sayılar sonsuz değildir. İkili aramada orta noktayı <code>low + (high − low) / 2</code> ile hesaplayın; oyunda can, para, saldırganlık gibi değerleri sınırlayın (clamp).</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Nuclear_Gandhi" target="_blank" rel="noopener">Wikipedia: Nuclear Gandhi</a> · <a href="https://research.google/blog/extra-extra-read-all-about-it-nearly-all-binary-searches-and-mergesorts-are-broken/" target="_blank" rel="noopener">Bloch 2006 (Google Research)</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.array.binarysearch" target="_blank" rel="noopener"><b>Array.BinarySearch · List&lt;T&gt;.BinarySearch</b></a></td><td>C# / Unity</td><td>Bulamazsa <b>negatif</b> sayı döner: <code>~sonuç</code> eklenecek yerin indeksidir.</td><td>yerleşik</td></tr><tr><td><a href="https://docs.python.org/3/library/bisect.html" target="_blank" rel="noopener"><b>bisect</b></a></td><td>Python</td><td><code>bisect_left</code>, <code>bisect_right</code>, <code>insort</code>; 3.10’dan beri <code>key=</code>.</td><td>standart kütüphane</td></tr><tr><td><a href="https://en.cppreference.com/w/cpp/algorithm/lower_bound" target="_blank" rel="noopener"><b>std::lower_bound · upper_bound · equal_range</b></a></td><td>C++</td><td>Sıralı aralıkta ilk ≥ / ilk &gt; konum.</td><td><code>#include &lt;algorithm&gt;</code></td></tr><tr><td><a href="https://lodash.com/docs/#sortedIndex" target="_blank" rel="noopener"><b>lodash sortedIndex</b></a></td><td>JavaScript</td><td>JS’te yerleşik ikili arama yok; sıralı dizide ekleme yeri.</td><td><code>npm install lodash</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda ikili arama</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Ağırlıklı ganimet tablosu</b>: ağırlıkların önek toplamlarını tutun, [0, toplam) aralığında rastgele bir sayı seçin, ikili aramayla hangi eşyaya düştüğünü bulun: her çekiliş O(log n).</li>
+      <li><b>Deneyim → seviye</b>: kümülatif XP tablosunda oyuncunun seviyesini bulmak.</li>
+      <li><b>Animasyon/eğri anahtar kareleri</b>: t anına en yakın iki anahtar kare.</li>
+      <li><b>Cevap üzerinde ikili arama</b>: “düşmanın canı en az ne olmalı ki oyuncu 3 vuruşta öldüremesin?” gibi tekdüze sorular.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Klasik hatalar</span><ul style="font-size:.82em"><li>Orta nokta taşması (yukarıdaki hikâye).</li><li>Sonsuz döngü: <code>lo = mid</code> ile <code>lo &lt; hi</code> birlikteyse.</li><li>Sıralı olmayan veride ikili arama.</li><li>C#’ta negatif dönüşü indeks sanmak.</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>(lo + hi) / 2 taşması</li><li>Bir fazla/eksik sınır hatası ve sonsuz döngü</li><li>BinarySearch’ün negatif dönüşünü indeks sanmak</li><li>Sıralanmamış listede arama</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Ağırlıklı ganimet tablosu yaz: LootTable<T> (eşya, ağırlık) listesiyle kurulur, önek toplamlarını bir kez hesaplar; Roll(System.Random rng) önek toplamlarında ikili aramayla eşyayı döndürür (Array.BinarySearch’ün ~ dönüşünü doğru kullan). 1 milyon çekilişle dağılımın ağırlıklarla uyumunu test eden NUnit testi ekle.”</p><ul class="mini"><li>Aralığın yarı açık mı ([lo, hi)) kapalı mı olduğunu yazdırın</li><li>Orta noktayı taşmasız isteyin</li><li>Sınır durumlarını (boş, tek, hepsi eşit, bulunamadı) test ettirin</li><li>Standart fonksiyon (bisect, BinarySearch) alternatifini sorun</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Ganimet tablosu</b> — Önek toplamı + ikili arama; 1 milyon çekilişte histogramı ağırlıklarla karşılaştırın.</li><li><b class="c-green">[kolay]</b> <b>XP eğrisi</b> — Seviye tablosunu üretin ve XP’den seviyeyi ikili aramayla bulun.</li><li><b class="c-amber">[orta]</b> <b>Cevap üzerinde ikili arama</b> — Bir düşmanın “adil” can değerini simülasyon + ikili aramayla otomatik ayarlayın.</li><li><b class="c-purple">[araştırma]</b> <b>Taşma avı</b> — Kendi oyununuzdaki sayısal değerlerde taşma riskini tarayan küçük bir statik kontrol ya da test yazın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Bloch 2006</b> · <a href="https://research.google/blog/extra-extra-read-all-about-it-nearly-all-binary-searches-and-mergesorts-are-broken/" target="_blank" rel="noopener">Extra, Extra — Read All About It: Nearly All Binary Searches and Mergesorts are Broken</a> <i>(Google Research Blog)</i><br>Dokuz yıl gizli kalan taşma.</div><div class="paper"><b>Bentley 1986</b> · <a href="https://en.wikipedia.org/wiki/Programming_Pearls" target="_blank" rel="noopener">Programming Pearls (2. sütun: “Aha! Algorithms”, 4. sütun: “Writing Correct Programs”)</a> <i>(Addison-Wesley)</i><br>Profesyonellerin bile ikili aramayı doğru yazmakta zorlandığı deney.</div><div class="paper"><b>Knuth 1998</b> · <a href="https://www-cs-faculty.stanford.edu/~knuth/taocp.html" target="_blank" rel="noopener">The Art of Computer Programming, Vol. 3, §6.2.1</a> <i>(Addison-Wesley)</i><br>İkili aramanın tarihi ve çeşitleri.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">

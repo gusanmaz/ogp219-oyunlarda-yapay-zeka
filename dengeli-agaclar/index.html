@@ -1126,6 +1126,60 @@ function floor(x, key) {          // x: ağacın kökü
   </div>
 </section>
 
+<!-- RETRO START dengeli -->
+<section data-sec="hikâye">
+  <h2>Derin hikâye: Java 8 HashMap’i neden kırmızı-siyah ağaca döner?</h2>
+  <div class="cols c64">
+    <div><ul style="font-size:.84em">
+      <li>2011’in sonunda (28C3 konferansı) araştırmacılar, birçok web platformunun hash tablolarına <b>kasıtlı çakışan anahtarlar</b> göndererek sunucuları kilitleyebildiklerini gösterdi: bütün anahtarlar aynı kovaya düşünce arama O(1)’den O(n)’e, toplam iş O(n²)’ye çıkıyordu (Hash Tabloları destesi).</li>
+      <li>Java 8 (2014) buna veri yapısıyla cevap verdi (JEP 180): bir kovadaki eleman sayısı <b>8</b>’i geçerse (ve tablo yeterince büyükse, en az 64 kova) o kovanın bağlı listesi bir <b>kırmızı-siyah ağaca</b> dönüştürülür. En kötü durum O(n)’den <b>O(log n)</b>’e iner.</li>
+      <li>Sayı tekrar 6’nın altına düşerse kova yeniden listeye çevrilir: küçük kovalarda liste daha hızlı ve daha az bellek kullanır.</li>
+    </ul></div>
+    <div class="box story"><span class="bt">Ders</span>Dengeli ağaçlar sadece “sıralı sözlük” değildir: en kötü durumu <b>garanti altına alan</b> bir güvenlik aracıdır. İki veri yapısını birleştirmek (ortalama durum için hash, en kötü durum için ağaç) gerçek sistemlerde sık görülen bir tasarım.</div>
+  </div>
+  <p class="mini" style="margin-top:6px">Kaynak: <a href="https://openjdk.org/jeps/180" target="_blank" rel="noopener">JEP 180: Handle Frequent HashMap Collisions with Balanced Trees</a></p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.sorteddictionary-2" target="_blank" rel="noopener"><b>SortedSet · SortedDictionary</b></a></td><td>C# / Unity</td><td>Kırmızı-siyah ağaç; aralık görünümü <code>GetViewBetween</code>, <code>Min</code>, <code>Max</code>.</td><td>yerleşik</td></tr><tr><td><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.immutable.immutablesortedset-1" target="_blank" rel="noopener"><b>ImmutableSortedSet</b></a></td><td>C#</td><td>Değişmez (immutable) sıralı küme; AVL ağacı tabanlı. Geri alma/anlık görüntü için.</td><td>yerleşik (System.Collections.Immutable)</td></tr><tr><td><a href="https://www.sqlite.org/fileformat2.html" target="_blank" rel="noopener"><b>SQLite</b></a></td><td>her platform (Unity eklentileriyle)</td><td>Tablolar ve indeksler <b>B-ağacı</b>dır; kayıt dosyaları ve büyük veri için.</td><td>Unity: sqlite-net vb. paketler</td></tr><tr><td><a href="https://en.cppreference.com/w/cpp/container/map" target="_blank" rel="noopener"><b>std::map · std::set</b></a></td><td>C++</td><td>Kırmızı-siyah ağaç.</td><td><code>#include &lt;map&gt;</code></td></tr><tr><td><a href="https://grantjenks.com/docs/sortedcontainers/" target="_blank" rel="noopener"><b>sortedcontainers</b></a></td><td>Python</td><td>Ağaç değil, “listelerin listesi” ama sıralı işlemler için pratikte çok hızlı.</td><td><code>pip install sortedcontainers</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 Oyunlarda dengeli ağaçlar</h2>
+  <div class="cols">
+    <div><ul style="font-size:.84em">
+      <li><b>Kayıt ve veritabanı</b>: SQLite ile oyuncu verisi, envanter, ilerleme; sorguları indeksli sütunlara göre yazın (B-ağacı).</li>
+      <li><b>Sıralı yapı + sık değişim</b>: canlı liderlik tablosu, öncelikli görevler, zaman çizelgesi.</li>
+      <li><b>Değişmez sürümler</b>: geri alma, tekrar oynatma, ağ için anlık görüntü (ImmutableSortedSet paylaşımlı yapı kullanır).</li>
+      <li>Kendi kırmızı-siyah ağacınızı üretimde yazmayın; öğrenmek için LLRB yazıp <b>değişmez denetleyicisiyle</b> test edin.</li>
+    </ul></div>
+    <div class="box warn"><span class="bt">Değişmezleri test edin</span>Her işlemden sonra: kök siyah mı? Kırmızı düğümün kırmızı çocuğu var mı? Her yoldaki siyah sayısı eşit mi? Anahtarlar sıralı mı? Bu dört kontrolü yapan bir fonksiyon, rotasyon hatalarını anında yakalar.</div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Rotasyonda ebeveyn/kök bağlantısını güncellememek</li><li>Renk kurallarını sadece eklemede düşünüp silmeyi unutmak</li><li>Üretimde kendi kırmızı-siyah ağacını yazmak</li><li>Küçük bellek içi veri için B-ağacı seçmek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8). Sedgewick’in sola yatık kırmızı-siyah ağacını (LLRB) yaz: Put, Get, Contains, Min, Max, Floor, Ceiling, Rank. Ayrıca IsBalanced, Is23, IsBST kontrol fonksiyonları. NUnit testleri: 100.000 sıralı ve 100.000 rastgele anahtar ekle, her 1.000 eklemede kontrolleri çalıştır, yüksekliğin 2·log₂N’yi geçmediğini doğrula.”</p><ul class="mini"><li>Değişmez denetleyicisi (invariant checker) isteyin</li><li>Rotasyonları adım adım açıklatın</li><li>Önce hazır yapıyı (SortedSet) sorun</li><li>Rastgele ve sıralı ekleme testleri isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>LLRB + denetleyici</b> — Sedgewick’in LLRB’sini yazıp değişmez denetleyicisiyle test edin.</li><li><b class="c-amber">[orta]</b> <b>SQLite kayıt sistemi</b> — Unity’de SQLite ile envanter; indeksli ve indekssiz sorguları ölçün.</li><li><b class="c-amber">[orta]</b> <b>Zaman çizelgesi</b> — Sıralı sözlükle “t anından sonraki ilk olay” sorgusu yapan bir olay sistemi.</li><li><b class="c-purple">[araştırma]</b> <b>AVL, kırmızı-siyah, B-ağacı</b> — Üçünü (ya da hazır sürümlerini) ekleme/arama ağırlıklı iş yüklerinde karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar ve kaynaklar</h2>
+  <div class="paper"><b>Adelson-Velsky &amp; Landis 1962</b> · <a href="https://en.wikipedia.org/wiki/AVL_tree" target="_blank" rel="noopener">An Algorithm for the Organization of Information</a> <i>(Soviet Mathematics Doklady 3)</i><br>İlk dengeli ikili ağaç (AVL).</div><div class="paper"><b>Bayer &amp; McCreight 1972</b> · <a href="https://doi.org/10.1007/BF00288683" target="_blank" rel="noopener">Organization and Maintenance of Large Ordered Indexes</a> <i>(Acta Informatica 1)</i><br>B-ağaçları.</div><div class="paper"><b>Guibas &amp; Sedgewick 1978</b> · <a href="https://doi.org/10.1109/SFCS.1978.3" target="_blank" rel="noopener">A Dichromatic Framework for Balanced Trees</a> <i>(FOCS 1978)</i><br>Kırmızı-siyah ağaçlar.</div><div class="paper"><b>Sedgewick 2008</b> · <a href="https://sedgewick.io/wp-content/themes/sedgewick/papers/2008LLRB.pdf" target="_blank" rel="noopener">Left-leaning Red-Black Trees</a> <i>(makale taslağı)</i><br>Bu destedeki LLRB.</div>
+</section>
+<!-- RETRO END -->
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
   <div class="cols">
