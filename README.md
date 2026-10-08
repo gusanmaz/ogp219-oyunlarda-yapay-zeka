@@ -86,6 +86,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y16 | [Üretken YZ](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-uretken/) | ✅ hazır |
 | Y17 | [Zorluk ve Oyuncu Modelleme](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-zorluk/) | ✅ hazır |
 | Y18 | [Oyun YZ’sinde Performans](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-performans/) | ✅ hazır |
+| Y19 | [Proje: Hepsini Birleştir](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-proje/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -150,6 +151,7 @@ yz-pcg/             Y15 · Tohumlar (Elite, River Raid, pack.png), Perlin gürü
 yz-uretken/         Y16 · Difüzyon, gömme vektörleri, 2B/3B/ses varlıkları, dünya modelleri (GameNGen, Muse, Genie 3), Clair Obscur, ARC Raiders, SAG-AFTRA ve telif, iş akışı
 yz-zorluk/          Y17 · Crash, RE4, Hades; akış ve DDA, Left 4 Dead YZ yönetmeni, lastik bant, Sid Meier ve XCOM, PRD, Tomb Raider oyuncu tipleri, Elo, TrueSkill, EOMM
 yz-performans/      Y18 · Kare bütçesi, ölçüm, zaman dilimleme, yol isteği kuyruğu, YZ LOD’u (LOD Trader, AC Unity), olay tabanlı güncelleme, veri odaklı tasarım, DOTS ve Mass
+yz-proje/           Y19 · NPC mimarisi, dönemin tekniklerini birleştiren canlı gizlilik oyunu, proje şablonları, kapsam, tasarım belgesi, hata ayıklama ve test, YZ asistanı kuralları, puanlama
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).
