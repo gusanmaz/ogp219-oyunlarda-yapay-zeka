@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Öğrenen YZ</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Öğrenen yapay zekâ: pekiştirmeli öğrenme, keşif/sömürü, Q-learning ve Bellman güncellemesi, ödül hilesi (CoastRunners, Supreme Commander 2), derin RL, nöroevrim, Drivatar, GT Sophy, ARC Raiders, Unity ML-Agents 4, Gymnasium ve Stable-Baselines3. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0f3a4a 0%, #1b1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 13</div>
+  <div class="ttl" style="font-size:84px">Öğrenen YZ</div>
+  <div class="sub"><i>Pekiştirmeli öğrenme, Q-learning, nöroevrim, ML-Agents</i> — kuralı biz yazmayalım, ajan deneyerek bulsun</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlelearn"></div>
+  <aside class="notes">Haftalık plandaki öğrenen YZ konusu. Arka planda bir değer yayılımı: hazinenin (sarı) değeri adım adım ızgaraya yayılıyor; Bellman denkleminin görsel hâli.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.8em">
+      <li><b>Öğrenen YZ nedir?</b> — “Bu düşman senden öğreniyor!” efsaneleri ve gerçekler</li>
+      <li><b>Pekiştirmeli öğrenme</b> — ajan, ortam, ödül; keşif mi sömürü mü?</li>
+      <li><b>Q-learning</b> — Bellman güncellemesini canlı izleyin</li>
+      <li><b>Ödül tasarımı</b> — CoastRunners’ın dönen teknesi, Supreme Commander 2’nin korkak ordusu</li>
+      <li><b>Derin RL ve nöroevrim</b> — DQN, PPO, kendi kendine oynama; evrimleşen arabalar</li>
+      <li><b>Oyunlarda öğrenme</b> — Drivatar, GT Sophy, MotoGP’nin A.N.N.A.’sı, ARC Raiders, Rocket League’in Nexto’su</li>
+      <li><b>Kod</b> — tablo Q-learning, ML-Agents ajanı, Gymnasium + Stable-Baselines3 + dört laboratuvar</li>
+      <li><b>Kütüphaneler</b> — Unity ML-Agents 4, Unreal Learning Agents, Godot RL Agents</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir ajanın deneme yanılmayla nasıl öğrendiğini formülüyle açıklayabilecek, ödül fonksiyonunun neden en tehlikeli tasarım kararı olduğunu bilecek, Unity ML-Agents ile bir ajanı eğitip oyuna gömebilecek ve “öğrenen YZ” iddialarını efsane mi gerçek mi diye sorgulayabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: KÖPEĞE “OTUR”U NASIL ÖĞRETİRSİNİZ?</span>
+    <p class="big">Köpek Türkçe bilmiyor; ona kuralı anlatamazsınız. Peki nasıl öğreniyor?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Rastgele şeyler yapıyor; oturduğu anda <b>ödül</b> (mama) veriyorsunuz. Zamanla “otur” sesi + oturmak = mama bağını kuruyor.</li>
+    <li class="fragment">Bu, <b>pekiştirmeli öğrenmenin</b> (reinforcement learning, RL) ta kendisi: ajan dener, ortam ödül ya da ceza verir, ajan ödülü artıran davranışı daha sık yapar.</li>
+    <li class="fragment">Şimdiye kadarki bütün haftalarda (FSM, davranış ağacı, utility, GOAP) davranışı <b>biz yazdık</b>. Bu hafta davranışı <b>ajan bulacak</b>; bizim işimiz neyi ödüllendireceğimize karar vermek.</li>
+    <li class="fragment">Tuzak: köpek mamayı, oturmaktan daha kolay bir yoldan almanın yolunu bulursa (mutfağa dalmak!) onu öğrenir. Bu derste bunun oyunlardaki karşılığını göreceğiz.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-utility/">Y4 · Utility AI (eylemin “değeri”)</a><a class="" href="../yz-fsm/">Y2 · FSM (durum kavramı)</a><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, olasılık)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-oyun-agaclari/">Y6 · Oyun Ağaçları (UCB, kendi kendine oynama)</a><a class="opt" href="../yz-steering/">Y7 · Steering (ışın sensörleri)</a><a class="opt" href="../yz-taktik/">Y12 · Taktik YZ (ağırlıklar)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Q değeri, Y4’teki utility puanının “öğrenilmiş” hâlidir: bu durumda bu eylemin ne kadar iyi olduğu. Fark: ağırlıkları biz değil, deneyim belirler. Matematik olarak sadece toplama, çarpma ve “en büyüğünü seç” gerekiyor.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>ML-Agents ile eğitmek için Python’u kurup tek bir komut çalıştırmak yeterli; sinir ağını kendiniz yazmanız gerekmez. Ama ödülün ve gözlemlerin ne olacağına <b>siz</b> karar verirsiniz: dersin asıl konusu bu.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>agent · environment</td><td>ajan · ortam</td><td>Karar veren · ajanın içinde yaşadığı dünya (oyun)</td></tr>
+    <tr><td>state · observation · action</td><td>durum · gözlem · eylem</td><td>Dünyanın hâli · ajanın gördüğü kısmı · ajanın yapabildiği</td></tr>
+    <tr><td>reward · return · discount (γ)</td><td>ödül · getiri · indirim</td><td>Anlık puan · gelecekteki ödüllerin indirimli toplamı · geleceğe ne kadar önem verildiği</td></tr>
+    <tr><td>policy (π) · Q-value</td><td>politika · Q değeri</td><td>Durum → eylem kuralı · “bu durumda bu eylem, ileride ne kazandırır?”</td></tr>
+    <tr><td>exploration · exploitation (ε)</td><td>keşif · sömürü</td><td>Yeni şey denemek · bilinen en iyiyi yapmak</td></tr>
+    <tr><td>episode · training · inference</td><td>bölüm · eğitim · çıkarım</td><td>Baştan sona bir deneme · öğrenme aşaması · eğitilmiş modeli oyunda çalıştırma</td></tr>
+    <tr><td>reward hacking / specification gaming</td><td>ödül hilesi</td><td>Ajanın ödülü, niyet edilmeyen bir yoldan toplaması</td></tr>
+    <tr><td>self-play · imitation learning</td><td>kendi kendine oynama · taklit öğrenme</td><td>Kendi kopyasıyla oynayarak · insan örneklerini taklit ederek öğrenme</td></tr>
+    <tr><td>neuroevolution · PPO · DQN</td><td>nöroevrim · —</td><td>Ağırlıkları evrimle bulmak · iki yaygın derin RL algoritması</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0f3a4a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Öğrenen YZ nedir?</div>
+  <div class="sub">efsaneler ve gerçekler</div>
+  <ul class="agenda"><li class="on">öğrenen YZ nedir?</li><li class="">pekiştirmeli öğrenme</li><li class="">Q-learning</li><li class="">ödül tasarımı</li><li class="">derin RL ve nöroevrim</li><li class="">oyunlarda öğrenme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="nedir">
+  <h2>Makine öğrenmesinin dört yolu (oyun gözüyle)</h2>
+  <table class="sum-t" style="font-size:17px">
+    <tr><th>yol</th><th>nasıl öğrenir?</th><th>oyun örneği</th></tr>
+    <tr><td><b>Gözetimli öğrenme</b> (taklit)</td><td>Doğru cevabı bilinen örneklerden: “oyuncu bu virajda böyle sürdü”</td><td>Forza Drivatar, Killer Instinct “Shadow” dövüşçüleri</td></tr>
+    <tr><td><b>Gözetimsiz öğrenme</b></td><td>Etiketsiz veride grup ve desen bulma</td><td>Oyuncu tiplerini kümeleme, hile tespiti (Y17)</td></tr>
+    <tr><td><b>Pekiştirmeli öğrenme</b></td><td>Deneme yanılma + ödül</td><td>Gran Turismo Sophy, MotoGP 19 A.N.N.A., ARC Raiders robotlarının yürüyüşü</td></tr>
+    <tr><td><b>Evrimsel yöntemler</b></td><td>Bir popülasyonun en iyilerini çoğaltıp bozma</td><td>MarI/O (Super Mario), Code Bullet videoları</td></tr>
+  </table>
+  <div class="box low" style="margin-top:10px"><span class="bt">Bu haftanın odağı</span>Pekiştirmeli öğrenme (RL) ve nöroevrim: “doğru cevap” yokken, sadece sonuca bakarak öğrenmek. Oyunlar RL için ideal laboratuvardır: kural belli, puan belli, saniyede binlerce kez tekrar oynanabilir.</div>
+</section>
+
+<section data-sec="nedir">
+  <h2>Efsane mi, gerçek mi? “Bu düşman senden öğreniyor!”</h2>
+  <table class="sum-t" style="font-size:15.5px">
+    <tr><th>iddia</th><th>durum</th><th>aslında</th></tr>
+    <tr><td>Alien: Isolation’daki yaratık oyuncudan öğreniyor</td><td>❌ <b>efsane</b></td><td>Davranış ağacında kilitli dallar, belli olaylardan sonra <b>açılıyor</b> (Y3). Hissettirdiği şey öğrenme, kod değil.</td></tr>
+    <tr><td>ARC Raiders’ın robotları oyunculardan öğreniyor</td><td>⚠️ <b>yarı yarıya</b></td><td>Yürüme, koşma, tökezleme gerçekten RL ile öğrenildi, ama <b>yayından önce, simülasyonda</b>. Embark’tan Martin Singh-Blom: “Oyuncu verisiyle eğitiyor değiliz.” Saldırı ve kuşatma kararları davranış ağacında. Geliştiriciler TikTok ve YouTube kliplerini izleyip robotları elle güncelliyor.</td></tr>
+    <tr><td>Forza’nın Drivatar’ı senin gibi sürüyor</td><td>✅ <b>gerçek</b> (ama yumuşatılmış)</td><td>Oyuncu verisinden öğreniyor; bulutta güncelleniyor. Saldırganlığı törpüleyen bir katman da var (birazdan).</td></tr>
+    <tr><td>Black &amp; White’ın yaratığı ona ne öğretirsen onu yapıyor</td><td>✅ <b>gerçek</b></td><td>Richard Evans’ın tasarımı (2001): yaratık oyuncunun okşama ve tokatlarından, gözlemden ve kendi deneyiminden öğreniyor (karar ağaçları ve algılayıcılar).</td></tr>
+  </table>
+  <p class="mini" style="margin-top:6px">Kural: Yayındaki oyunların çoğunda öğrenme <b>geliştirme sırasında</b> olur; model “dondurulup” oyuna gömülür. Oyun sırasında öğrenen YZ nadirdir, çünkü test edilemez ve tasarımcı kontrolünden çıkar.</p>
+</section>
+
+<section data-sec="nedir">
+  <h2>Neden her oyun öğrenen YZ kullanmıyor?</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Zorluklar</span>
+      <ul style="font-size:.84em">
+        <li><b>Kara kutu</b>: “Neden sola döndü?” sorusunun cevabı binlerce sayı. Kesme noktası koyup hata ayıklayamazsınız (Supreme Commander 2 ekibi bunu bizzat yazdı).</li>
+        <li><b>Tasarımcı kontrolü</b>: “Biraz daha agresif olsun” demek için yeniden eğitim gerekir.</li>
+        <li><b>Eğitim süresi</b>: Girdiyi, ödülü ya da ağı değiştirince eğitim sıfırdan başlar.</li>
+        <li><b>Beklenmedik davranış</b>: Ajan, ödülü sizin hiç düşünmediğiniz bir yoldan toplayabilir.</li>
+        <li><b>Fazla iyi olmak</b>: Kusursuz bir rakip eğlenceli değildir (Y17).</li>
+      </ul></div>
+    <div class="box game"><span class="bt">Parladığı yerler</span>
+      <ul style="font-size:.84em">
+        <li><b>Fiziksel kontrol</b>: araba sürme, yürüme, uçma: kuralını yazmak çok zor, ödülü yazmak kolay.</li>
+        <li><b>Oyun testi botları</b>: haritada sıkışılan yerleri, kırık stratejileri bulmak.</li>
+        <li><b>Denge</b>: “Bu birim fazla güçlü mü?” sorusuna binlerce maçla cevap.</li>
+        <li><b>Oyuncu modeli</b>: Drivatar gibi “senin gibi” oynayan rakipler.</li>
+        <li><b>Karma sistemler</b>: Öğrenilmiş bir parça, el yazımı bir sistemin içinde (SupCom 2: FSM + sinir ağı; ARC Raiders: BT + öğrenilmiş yürüyüş).</li>
+      </ul></div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Pekiştirmeli öğrenme</div>
+  <div class="sub">ajan, ortam, ödül</div>
+  <ul class="agenda"><li class="done">öğrenen YZ nedir?</li><li class="on">pekiştirmeli öğrenme</li><li class="">Q-learning</li><li class="">ödül tasarımı</li><li class="">derin RL ve nöroevrim</li><li class="">oyunlarda öğrenme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="RL">
+  <h2>Ajan–ortam döngüsü</h2>
+  <div class="cols c46">
+    <div>
+      <svg viewBox="0 0 420 250" style="width:100%" role="img" aria-label="Ajan eylem yapar, ortam yeni durum ve ödül döndürür">
+        <defs><marker id="arrL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink)"/></marker></defs>
+        <rect x="10" y="90" width="130" height="74" rx="12" fill="var(--card-2)" stroke="var(--blue)" stroke-width="3"/>
+        <text x="75" y="124" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">Ajan</text>
+        <text x="75" y="149" text-anchor="middle" font-size="14" fill="var(--muted)">politika π</text>
+        <rect x="280" y="90" width="130" height="74" rx="12" fill="var(--card-2)" stroke="var(--green)" stroke-width="3"/>
+        <text x="345" y="124" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">Ortam</text>
+        <text x="345" y="149" text-anchor="middle" font-size="14" fill="var(--muted)">oyun</text>
+        <path d="M75,88 C75,18 345,18 345,82" fill="none" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#arrL)"/>
+        <text x="210" y="70" text-anchor="middle" font-size="17" font-weight="600" fill="var(--blue)">eylem aₜ</text>
+        <path d="M345,166 C345,236 75,236 75,172" fill="none" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#arrL)"/>
+        <text x="210" y="190" text-anchor="middle" font-size="16" font-weight="600" fill="var(--green)">yeni durum sₜ₊₁</text>
+        <text x="210" y="210" text-anchor="middle" font-size="16" font-weight="600" fill="var(--green)">ödül rₜ₊₁</text>
+      </svg>
+    </div>
+    <div>
+      <ul style="font-size:.84em">
+        <li>Her adımda ajan <b>durumu</b> görür, bir <b>eylem</b> seçer; ortam yeni durumu ve bir <b>ödülü</b> döndürür.</li>
+        <li>Amaç anlık ödül değil, <b>getiri</b>: gelecekteki bütün ödüllerin toplamı. Uzaktaki ödül biraz “indirimli” sayılır:</li>
+      </ul>
+      $$G_t = r_{t+1} + \gamma\, r_{t+2} + \gamma^2 r_{t+3} + \dots$$
+      <ul style="font-size:.82em">
+        <li>γ (gama) 0 ile 1 arasında. γ = 0: sadece şimdi önemli (açgözlü). γ = 0,99: çok uzak gelecek de önemli (sabırlı).</li>
+        <li><b>Politika</b> π: “bu durumda ne yaparım?” kuralı. Öğrenmenin çıktısı budur; FSM’nin ya da davranış ağacının yerini tutar.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="RL">
+  <h2>Canlı: keşif mi, sömürü mü? 🎰</h2>
+  <div class="demo" data-demo="bandit"></div>
+</section>
+
+<section data-sec="RL">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>ε = 0 (hiç keşif yok) ile 1000 çekin. Ajan ilk “şanslı” makineye takılıp kalabilir: tahminleri çoğu makine için hiç güncellenmez. Gerçeği gösterip kontrol edin.</li>
+      <li>ε = 1 (hep keşif): bütün tahminler doğru çıkar, ama ödül hep ortalamada kalır, pişmanlık büyür.</li>
+      <li>ε = 0,1 civarı: hem iyi makineyi bulur hem de çoğunlukla onu çeker. “Yeni makineler” ile birkaç kez deneyin.</li>
+      <li>Oyundaki karşılığı: hep aynı taktiği deneyen YZ hiçbir zaman daha iyisini bulamaz; hep rastgele oynayan ise bildiğini kullanamaz. Y6’daki MCTS’nin UCB formülü de aynı ikilemi çözüyordu.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Q-learning</div>
+  <div class="sub">Bellman güncellemesi</div>
+  <ul class="agenda"><li class="done">öğrenen YZ nedir?</li><li class="done">pekiştirmeli öğrenme</li><li class="on">Q-learning</li><li class="">ödül tasarımı</li><li class="">derin RL ve nöroevrim</li><li class="">oyunlarda öğrenme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="Q-learning">
+  <h2>Q değeri ve Bellman güncellemesi</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.84em"><b>Q(s, a)</b> = “<i>s</i> durumundayken <i>a</i> eylemini yapıp sonra hep en iyi şekilde oynarsam toplam ne kazanırım?” Bir tabloda her (durum, eylem) çifti için bir sayı tutarız. Başta hepsi 0.</p>
+      <p style="font-size:.84em">Her adımdan sonra (s, a, r, s′) deneyimiyle tek bir hücreyi düzeltiriz:</p>
+      $$Q(s,a) \leftarrow Q(s,a) + \alpha\big[\, \underbrace{r + \gamma \max_{a'} Q(s',a')}_{\text{hedef}} - Q(s,a)\,\big]$$
+      <ul style="font-size:.8em">
+        <li><b>hedef</b>: aldığım ödül + gittiğim yerin en iyi geleceği (indirimli).</li>
+        <li><b>hedef − Q</b>: ne kadar yanılmışım? (zamansal fark hatası)</li>
+        <li><b>α</b>: hatanın ne kadarını düzelteyim? (0,1 = temkinli, 1 = tamamen yeni bilgiye güven)</li>
+        <li>Bölüm bittiyse (hazine ya da lav) gelecek yok: max Q(s′) yerine 0.</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Sayılarla bir adım</span>Ajan hazinenin hemen solunda, “sağ”a gidiyor. α = 0,5, γ = 0,9; Q(s, →) şu an 0.
+      <ul style="font-size:.84em">
+        <li>Ödül r = +10, bölüm bitti → hedef = 10</li>
+        <li>Q ← 0 + 0,5·(10 − 0) = <b>5</b></li>
+      </ul>
+      Bir sonraki bölümde onun solundaki hücre “sağ”a gidince:
+      <ul style="font-size:.84em">
+        <li>r = −0,1, max Q(s′) = 5 → hedef = −0,1 + 0,9·5 = 4,4</li>
+        <li>Q ← 0 + 0,5·4,4 = <b>2,2</b></li>
+      </ul>
+      Değer, hazineden geriye doğru <b>adım adım yayılır</b>. Başlık slaytındaki animasyon tam olarak buydu.</div>
+  </div>
+</section>
+
+<section data-sec="Q-learning">
+  <h2>Canlı: Q-learning ızgarası 🧠</h2>
+  <div class="demo" data-demo="qgrid"></div>
+</section>
+
+<section data-sec="Q-learning">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.88em">
+      <li>“1 adım”a 10–15 kez basın: alttaki satır her Bellman güncellemesini sayılarla gösteriyor. Ajan hazineyi bulana kadar neredeyse hiçbir şey öğrenmez (seyrek ödül!).</li>
+      <li>“100 bölüm eğit”: her hücrenin dört üçgeni o yöndeki Q değeri (yeşil = iyi, kırmızı = kötü). Oklar hazineye doğru “akıyor” mu? Lavın yanındaki hücrelerde lava bakan üçgenler kırmızı.</li>
+      <li>γ’yı 0,3’e düşürüp “unut” + 100 bölüm: uzak hücrelerin değeri neredeyse sıfır; ajan “miyop” olur.</li>
+      <li>Adım cezasını 0 yapın: ajan acele etmez, dolambaçlı yollar da “iyi” görünür. −0,5 yapın: lava atlamak, uzun yol yürümekten “ucuz” hâle gelebilir!</li>
+      <li>Hücrelere tıklayarak duvar ve lav ekleyin, eğitimi sürdürün: yeni haritaya uyum sağlıyor mu?</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="Q-learning">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · Q-learning</div>
+    <div class="q">Eğitimden sonra oyunu oynatırken ε’yu (keşif oranını) ne yapmalıyız?</div>
+    <div class="opts">
+      <button data-opt="A">0’a yakın: artık bildiği en iyi eylemi seçsin (ya da tasarım için biraz rastlantı bırakılsın)</button>
+      <button data-opt="B">1: her zaman rastgele oynasın</button>
+      <button data-opt="C">α ile aynı yapılmalı</button>
+      <button data-opt="D">ε’nun oyuna etkisi yoktur</button>
+    </div>
+    <div class="explain">Keşif, <b>öğrenme</b> sırasında yeni şeyler bulmak içindir. Oyunda (çıkarım) genellikle açgözlü politika kullanılır. Yine de tamamen deterministik bir rakip ezberlenebilir; Supreme Commander 2 ekibi de çeşitlilik için “en iyi N eylemden birini rastgele seç” gibi seçenekleri tartıştı. Bu, öğrenmeden bağımsız bir <b>tasarım</b> kararıdır.</div>
+  </div>
+</section>
+
+<section data-sec="Q-learning">
+  <h2>Tablo yetmediğinde: derin Q ağı (DQN)</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Izgara dünyamızda 60 durum × 4 eylem = 240 sayı. Gerçek bir oyunda durum = ekrandaki pikseller ya da onlarca sensör: tablo imkânsız.</li>
+        <li>Çözüm: tablo yerine bir <b>sinir ağı</b> Q(s, a)’yı <b>tahmin eder</b>. Benzer durumlar benzer değerler alır (genelleme).</li>
+        <li>DeepMind, 2015 (Nature): aynı ağ ve aynı ayarlarla 49 Atari oyunu, sadece pikseller ve skor ile. Birçoğunda profesyonel test oyuncusu düzeyinde.</li>
+        <li>İki önemli hile: <b>deneyim tekrarı</b> (eski deneyimleri karıştırıp yeniden öğrenmek) ve <b>hedef ağ</b> (hedefin her adımda kaymasını önleyen yavaş güncellenen kopya).</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">🎬 Breakout tüneli</span>DQN, Breakout’ta tuğla duvarın bir kenarına tünel açıp topu duvarın arkasına göndermeyi kendi kendine buldu: profesyonel oyuncuların bildiği bir strateji. <a href="https://www.youtube.com/watch?v=TmPfTpjtdgg" target="_blank" rel="noopener">Videoyu izleyin</a>.</div>
+      <div class="box low"><span class="bt">⚙️ Ölçek</span>Tablo Q-learning tarayıcıda saniyeler sürer; DQN bir oyun için milyonlarca kare ve bir GPU ister. ML-Agents gibi araçlar bu ağır kısmı sizin yerinize yapar.</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Ödül tasarımı</div>
+  <div class="sub">ne ölçersen onu alırsın</div>
+  <ul class="agenda"><li class="done">öğrenen YZ nedir?</li><li class="done">pekiştirmeli öğrenme</li><li class="done">Q-learning</li><li class="on">ödül tasarımı</li><li class="">derin RL ve nöroevrim</li><li class="">oyunlarda öğrenme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="ödül">
+  <h2>Hikâye: CoastRunners’ın hiç bitmeyen yarışı (OpenAI, 2016)</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Dario Amodei ve Jack Clark, “Faulty Reward Functions in the Wild” yazısında bir tekne yarışı oyununu anlattı. İnsanların anladığı hedef açık: yarışı hızlıca, mümkünse önde bitirmek. Ama oyun ilerlemeyi doğrudan ödüllendirmiyordu; puan, parkur boyunca dizilmiş <b>hedefleri vurarak</b> kazanılıyordu.</p>
+      <ul style="font-size:.82em">
+        <li>RL ajanı, içinde <b>yeniden doğan</b> üç hedef bulunan yalıtılmış bir lagün buldu.</li>
+        <li>Orada dar daireler çizerek aynı hedefleri tekrar tekrar vurmayı öğrendi; bu sırada alev aldı, başka teknelere çarptı, ters yöne gitti.</li>
+        <li>Sonuç: insan oyunculardan ortalama <b>%20 daha yüksek puan</b>, ama yarışı <b>bir kez bile bitirmeden</b>.</li>
+      </ul>
+      <p style="font-size:.82em">Ajan “hile” yapmadı: ona söyleneni <b>harfiyen</b> yaptı. Yanlış olan, ödülün niyetimizi anlatmamasıydı. Bugün bu örneğe “specification gaming” denir ve neredeyse her YZ güvenliği dersinde anlatılır.</p>
+    </div>
+    <div class="box warn"><span class="bt">Oyunlardaki karşılığı</span>“Daha çok öldürme = daha iyi” diye eğitilen bir NPC, oyuncuyu bekleyip doğma noktasında avlayabilir. “Hayatta kal” diye eğitilen bir NPC bir köşeye saklanıp hiç çıkmayabilir. “Puan = skor” diye eğitilen bir test botu oyunun puan hatasını bulur, oyunu değil.</div>
+  </div>
+</section>
+
+<section data-sec="ödül">
+  <h2>Canlı: ödül hilesini kendiniz üretin 🚤</h2>
+  <div class="demo" data-demo="rewardhack"></div>
+</section>
+
+<section data-sec="ödül">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>“Oyun puanı” tasarımında eğitip izleyin: tekne ilk köşedeki lagüne girip A ile B arasında gidip geliyor. Puanı yüksek, ama yarışı bitirmiyor. Tıpkı CoastRunners gibi.</li>
+      <li>Neden? γ = 0,97 ile her iki adımda bir gelen +1’in değeri ≈ 17. Uzaktaki bitişin +3’ü buna karşı devede kulak.</li>
+      <li>“Niyet” tasarımına geçip eğitin: aynı algoritma, aynı harita. Tekne artık doğrudan bitişe koşuyor.</li>
+      <li>Kendinize sorun: “niyet” tasarımında altın tamamen anlamsız oldu. Oyuncu “altın toplayan ama yarışı da bitiren” bir rakip görmek isterse ödülü nasıl yazardınız? (İpucu: her altın bir kez, bitiş çok büyük.)</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="ödül">
+  <h2>Derin hikâye: Supreme Commander 2’nin ACU’dan kaçan ordusu</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.82em">Michael Robbins (Gas Powered Games, GAP 30. bölüm): Supreme Commander 2 (2010), müfrezelerin “savaş mı, kaç mı” kararını <b>sinir ağlarıyla</b> verdi. Kara, deniz, bombardıman ve avcı müfrezeleri için dört ayrı ağ vardı.</p>
+      <ul style="font-size:.8em">
+        <li><b>Girdi</b>: çevredeki dost/düşman birimlerin 17 oranı (sayı, can, hasar, hız, kalkan…) ve tersleri: 34 girdi. 98 gizli nöron. Çıktılar: “en zayıfa saldır”, “en yakına saldır”, “kalkan üretecine saldır”… gibi eylemlerin <b>beklenen faydası</b>.</li>
+        <li>Hiçbir çıktı 0,5’i geçmezse: <b>kaç</b>. Yani ağ bir utility sistemi (Y4) gibi çalışıyordu, ama ağırlıkları kimse elle yazmadı.</li>
+        <li><b>Eğitim</b>: YZ kendisine karşı, oyun azami hızda. Müfrezeler bilerek <b>rastgele</b> eylem yaptı (keşif!); sonra iki tarafın istatistiklerinin nasıl değiştiğine bakan bir uygunluk fonksiyonu bu eylemi puanladı. Her ağ yaklaşık 1 saat eğitimle yayına hazır oldu; bir karar 0,03 ms’den kısa sürdü.</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">🐛 Hata: korkak ordu</span>Oyunda rakibin komutan birimi (ACU) yok edilince oyun biter, ama ACU <b>nükleer bir patlamayla</b> çevresindeki birimleri de yok eder. Ağ sadece taktik çatışmalarda eğitildiği için kazanmayı bilmiyordu; tek gördüğü şuydu: ACU’ya saldıran birliklerin çoğu ölüyor.<br><br>Sonuç: YZ dev ordularla oyuncuyu ezerken, bir ACU görür görmez <b>arkasını dönüp kaçıyordu</b>. Hata davranış kodunda değildi, kesme noktasıyla da bulunamazdı: hata <b>uygunluk fonksiyonundaydı</b>. Çözüm: düşman ACU’su yok edildiğinde çok yüksek ödül. Yeniden eğitimden sonra küçük gruplar yine kaçtı, ama yeterince büyük ordular saldırıp oyunu kazandı.</div>
+  </div>
+</section>
+
+<section data-sec="ödül">
+  <h2>Ödül tasarımı kuralları</h2>
+  <div class="cols">
+    <div>
+      <ol style="font-size:.84em">
+        <li><b>Sonucu ödüllendirin, yöntemi değil</b>: “bitiş çizgisi” iyi, “hedef vurma” riskli. Ara ödüller (shaping) öğrenmeyi hızlandırır ama hile kapısıdır.</li>
+        <li><b>Küçük adım cezası</b>: “acele et”. Çok büyükse ajan “kendini öldürmeyi” seçebilir (ızgara demosunda adım cezası −0,5!).</li>
+        <li><b>Ödülü ölçekli tutun</b>: ±1 civarı. ML-Agents belgeleri de büyük ödülleri dengesiz bulur.</li>
+        <li><b>Gerçek oyunu izleyin</b>: getiri grafiği yükseliyor diye ajan doğru şeyi öğrenmiş değildir. Mutlaka <b>oynarken izleyin</b>.</li>
+        <li><b>Müfredat</b> (curriculum): önce kolay görev, sonra zor. <b>Kendi kendine oynama</b>: rakip de öğrendikçe zorlaşır.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">OpenAI saklambacı (2019)</span>Yaklaşık 500 milyon saklambaç oyununda saklananlar kutularla kale yapmayı, arayanlar rampayla duvar aşmayı öğrendi. Sonra arayanlar, kilitli rampadan bir kutunun üstüne çıkıp kutuyla “sörf yaparak” kaleye girmeyi buldu: <b>fizik motorunun açığı</b>. Ödülde hata yoktu; oyun dünyasında vardı. RL ajanları mükemmel <b>hata avcılarıdır</b>.</div>
+      <div class="box game"><span class="bt">🎬</span><a href="https://www.youtube.com/watch?v=kopoLzvh5jY" target="_blank" rel="noopener">Multi-Agent Hide and Seek</a> (OpenAI)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ödül">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · ödül</div>
+    <div class="q">Bir kale savunma oyununda düşman YZ’sini “verdiği hasar” ile ödüllendirdiniz. Eğitimden sonra ajan kaleye hiç saldırmıyor, sürekli tamir edilen bir duvara ateş ediyor. Ne oldu?</div>
+    <div class="opts">
+      <button data-opt="A">Ödül hilesi: duvar hiç yıkılmadığı için sonsuz hasar kaynağı oldu; ödül “kaleyi düşür” niyetini anlatmıyor</button>
+      <button data-opt="B">Ajan yeterince eğitilmedi, daha fazla eğitim çözer</button>
+      <button data-opt="C">Öğrenme hızı α çok küçük</button>
+      <button data-opt="D">ε çok büyük</button>
+    </div>
+    <div class="explain">Daha fazla eğitim, ajanı bu hilede <b>daha iyi</b> yapar. Sorun ödülde: hasar, kaleyi düşürmek için bir <b>vekil</b> ölçü. Ajan vekili en kolay yoldan optimize etti (CoastRunners’ın lagünü gibi). Çözüm: asıl hedefi (kale düştü) büyük ödülle vermek, tekrar eden hasar kaynaklarını sınırlamak.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Derin RL ve nöroevrim</div>
+  <div class="sub">PPO, kendi kendine oynama, evrim</div>
+  <ul class="agenda"><li class="done">öğrenen YZ nedir?</li><li class="done">pekiştirmeli öğrenme</li><li class="done">Q-learning</li><li class="done">ödül tasarımı</li><li class="on">derin RL ve nöroevrim</li><li class="">oyunlarda öğrenme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="derin RL">
+  <h2>Derin RL’nin oyun araç kutusu</h2>
+  <table class="sum-t" style="font-size:16px">
+    <tr><th>yöntem</th><th>bir cümlede</th><th>nerede?</th></tr>
+    <tr><td><b>DQN</b></td><td>Q tablosunu bir sinir ağıyla tahmin et; ayrık eylemler</td><td>Atari (2015)</td></tr>
+    <tr><td><b>PPO</b></td><td>Politikayı doğrudan iyileştir, ama her güncellemede <b>çok az</b> değiştir (kırpma): kararlı ve ayarı kolay</td><td>ML-Agents’ın varsayılanı, OpenAI Five</td></tr>
+    <tr><td><b>SAC</b></td><td>Sürekli eylemler için; geçmiş deneyimi de kullanır, örnek açısından verimli</td><td>ML-Agents, robotik</td></tr>
+    <tr><td><b>Kendi kendine oynama</b></td><td>Ajan kendi eski sürümlerine karşı oynar; rakip ajanla birlikte güçlenir</td><td>AlphaGo, AlphaStar, Rocket League botları</td></tr>
+    <tr><td><b>Taklit öğrenme</b> (BC, GAIL)</td><td>İnsan oyun kayıtlarından başla; RL ile cilala</td><td>ML-Agents Demonstration Recorder, Drivatar</td></tr>
+    <tr><td><b>Müfredat</b></td><td>Görevi adım adım zorlaştır (önce alçak duvar, sonra yüksek)</td><td>ML-Agents environment parameters</td></tr>
+    <tr><td><b>Dünya modeli</b></td><td>Önce ortamın bir modelini öğren, sonra “hayalde” pratik yap</td><td>DreamerV3 (Minecraft’ta sıfırdan elmas)</td></tr>
+  </table>
+  <p class="mini" style="margin-top:6px">Bu dersin ayrıntısı değil: hepsi aynı döngüyü (durum → eylem → ödül) kullanır; fark, politikayı nasıl güncelledikleridir. Pratikte ML-Agents’ta bir YAML satırıyla seçilir.</p>
+</section>
+
+<section data-sec="nöroevrim">
+  <h2>Nöroevrim: ağırlıkları evrimle bulmak</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Gradyan yok, Bellman yok: bir <b>popülasyon</b> rastgele ağ oluştur, hepsini oynat, en iyileri seç, ağırlıklarını karıştır (çaprazlama) ve biraz boz (mutasyon). Tekrarla.</li>
+        <li>Ödül yerine <b>uygunluk</b> (fitness): bir bölümün sonunda tek bir puan (ne kadar yol aldı?).</li>
+        <li>Basit, paralel, “ödül seyrek” durumlarda bile çalışır; ama büyük ağlarda RL’den yavaştır.</li>
+        <li><b>NEAT</b> (Stanley &amp; Miikkulainen, 2002): sadece ağırlıkları değil, ağın <b>yapısını</b> da evrimleştirir.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">MarI/O (SethBling, 2015)</span>NEAT ile Super Mario World’ün bir bölümünü oynamayı öğrenen program: ekranın basitleştirilmiş bir ızgarasını girdi olarak alıyor, düğmelere basıyor. Video milyonlarca kez izlendi ve bir neslin “YZ oyun oynamayı öğreniyor” fikriyle ilk tanışması oldu.</div>
+      <div class="box game"><span class="bt">🎬</span><a href="https://www.youtube.com/watch?v=qv6UVOQ0F44" target="_blank" rel="noopener">MarI/O</a> · <a href="https://www.youtube.com/watch?v=r428O_CMcpI" target="_blank" rel="noopener">Code Bullet: A.I. Learns to DRIVE</a></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="nöroevrim">
+  <h2>Canlı: evrimleşen arabalar 🏎️</h2>
+  <div class="demo" data-demo="neuro"></div>
+</section>
+
+<section data-sec="nöroevrim">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>▶ ile başlatın, hızı 10–20 yapın. İlk nesillerde arabalar ilk virajda duvara çarpıyor. 10–20 nesil sonra en iyiler turu tamamlıyor mu? Sağ üstteki grafik her neslin en iyisini gösteriyor.</li>
+      <li>Mutasyon σ’yı 1’e çıkarın: çocuklar ebeveynlere benzemiyor, ilerleme dağılıyor. 0,05: çok yavaş ilerleme. Keşif–sömürü dengesi burada da var.</li>
+      <li>Önde giden (yeşil) arabanın sarı ışınlarını izleyin: ağın gördüğü tek şey bu 5 sayı. Ağ “viraj” kavramını bilmiyor; sadece “sol ışın kısaldıysa sağa kır” gibi bir ilişki evrimleşti.</li>
+      <li>Kendinize sorun: bu arabalar <b>başka bir pistte</b> çalışır mı? (Girdiler pistten bağımsız olduğu için çoğu zaman evet: genelleme.)</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="öncü">
+  <h2>🚀 Öncü örnekler: oyunlar YZ araştırmasının sahnesi</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Gran Turismo Sophy (Sony AI)</span>Nature, Şubat 2022 (Wurman ve ark.): yaklaşık 1.000 PlayStation 4 üzerinde derin RL ile eğitildi. Temmuz 2021’deki ilk yarışta en iyi insan pilotlara <b>kaybetti</b>; ekip ödülü ve eğitimi düzeltti, Ekim 2021’de <b>kazandı</b>. Zor olan hız değil, <b>sportmenlik</b>: çarpmadan sollamak. Ödül, çarpışma ve pist dışına çıkma cezaları içeriyordu. Kasım 2024’te “Sophy 2.0” GT7’nin PS5 sürümünde herkese açıldı: 340 araba, 9 pist.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Büyük üçlü ve sonrası</span>
+        <ul style="font-size:.8em">
+          <li><b>OpenAI Five</b> (Dota 2): Nisan 2019’da dünya şampiyonu OG’yi yendi; günde yüzlerce yıllık oyun deneyimiyle kendi kendine oynama.</li>
+          <li><b>AlphaStar</b> (StarCraft II): Nature 2019, Battle.net’te Grandmaster seviyesi.</li>
+          <li><b>DreamerV3</b>: Nature 2025; Minecraft’ta insan verisi ya da müfredat olmadan <b>sıfırdan elmas</b> bulan ilk algoritma.</li>
+          <li><b>SIMA 2</b> (Google DeepMind, Kasım 2025): Gemini tabanlı; birçok 3B oyunda dil komutlarını izleyen, akıl yürüten ve oynadıkça gelişen ajan. Genie 3’ün ürettiği hiç görmediği dünyalarda da yolunu buluyor (Y14 ve Y16’ya köprü).</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Oyunlarda öğrenme</div>
+  <div class="sub">yayına çıkmış örnekler</div>
+  <ul class="agenda"><li class="done">öğrenen YZ nedir?</li><li class="done">pekiştirmeli öğrenme</li><li class="done">Q-learning</li><li class="done">ödül tasarımı</li><li class="done">derin RL ve nöroevrim</li><li class="on">oyunlarda öğrenme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>Yayındaki oyunlarda öğrenen YZ</h2>
+  <table class="sum-t" style="font-size:15px">
+    <tr><th>oyun</th><th>ne öğreniyor?</th><th>yöntem</th><th>ne zaman öğreniyor?</th></tr>
+    <tr><td>Black &amp; White (2001)</td><td>Yaratığın tercihleri ve ahlakı</td><td>karar ağaçları, algılayıcılar</td><td>oyun sırasında, oyuncudan</td></tr>
+    <tr><td>Forza serisi (2005–)</td><td>“Senin gibi” süren rakipler (Drivatar)</td><td>oyuncu modeli, sinir ağları</td><td>oyun sırasında, bulutta</td></tr>
+    <tr><td>Supreme Commander 2 (2010)</td><td>Savaş mı kaç mı</td><td>çok katmanlı algılayıcı</td><td>geliştirmede (kendine karşı)</td></tr>
+    <tr><td>Killer Instinct (2014–)</td><td>Oyuncunun “gölge” kopyası</td><td>elle tasarlanmış yapı + öğrenilen parametreler</td><td>oyuncunun dövüşlerinden</td></tr>
+    <tr><td>MotoGP 19 (2019)</td><td>A.N.N.A. rakip sürücüler</td><td>RL; günde 200.000+ simüle yarış</td><td>geliştirmede</td></tr>
+    <tr><td>Gran Turismo 7 (2023–)</td><td>Sophy</td><td>derin RL</td><td>geliştirmede</td></tr>
+    <tr><td>ARC Raiders (2025)</td><td>Robotların yürümesi, tökezlemesi</td><td>RL + fizik tabanlı kontrol (+ davranış ağacı)</td><td>geliştirmede</td></tr>
+  </table>
+  <p class="mini" style="margin-top:6px">Desen: öğrenilmiş parça, el yazımı bir sistemin içinde ve çoğunlukla <b>yayından önce</b> eğitilmiş. Oyun sırasında öğrenenler (Black &amp; White, Drivatar, Shadow) öğrenmenin kendisini <b>oyun mekaniği</b> yapmış oyunlar.</p>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>Derin hikâye: Drivatar ve “saldırganlık filtresi”</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.82em">
+        <li>2005, ilk Forza Motorsport (Xbox): Microsoft Research Cambridge’in projesi. Oyuncunun sürüşünden öğrenip onun gibi süren bir “Drivatar” oluşturuluyordu; model o kadar küçüktü ki hafıza kartıyla arkadaşa taşınabiliyordu.</li>
+        <li>2013, Forza Motorsport 5: Drivatar’lar <b>buluta</b> taşındı. Arkadaşlarınızın Drivatar’ları siz çevrimdışıyken bile sizinle yarışıyor; pistler standart viraj tiplerine bölünüyor, YZ hiç görmediği virajda benzerlerinden genelliyor.</li>
+        <li>Sorun: oyuncular agresif sürer. Drivatar’lar da <b>çarpmayı, viraj kesmeyi, itip kakmayı</b> öğrendi; oyuncular şikâyet etti.</li>
+        <li>Çözüm: Drivatar ile araç kontrolcüsü arasına bir <b>düzeltme katmanı</b>: saldırganlığı azaltan, çarpışmaya yol açan manevraları engelleyen kurallar. “Geri sarma” ile yapılan sürüşler eğitime katılmıyor (bir virajı 50 kez deneyip mükemmel Drivatar yapmak yok).</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Ders</span>Öğrenen sistem, öğrettiğiniz veriden <b>daha iyi</b> olamaz: oyuncular kaba sürüyorsa Drivatar da kaba sürer. Gerçek oyunlarda neredeyse her zaman öğrenilmiş modelin <b>etrafında</b> el yazımı bir “emniyet kemeri” bulunur. Y17’de zorluk ayarlamada (rubber-banding) aynı fikre döneceğiz; Forza bunu YZ’ye değil, <b>araçların fiziğine</b> küçük ayarlarla yaptı.</div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda">
+  <h2>Hikâye: Rocket League’in Nexto’su, bir eğitim botunun hileye dönüşmesi</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li><b>RLGym</b>: Rocket League’i bir RL ortamına çeviren topluluk aracı. Topluluğun botu <b>Nexto</b>, kendisine karşı yaklaşık 250.000 saatlik oyunla eğitildi; geliştiricileri, oyuncuların en iyi %1’i düzeyinde olduğunu tahmin ediyordu.</li>
+        <li>Bot, rekabetçi çevrimiçi maçlarda kullanılmasın diye kodla sınırlanmıştı. Ocak 2023’te biri bu kısıtı aşıp botu dereceli maçlara soktu; oyuncular kendi hesaplarını YZ’ye oynatıyordu.</li>
+        <li>Psyonix “bir dizi” hesabı yasakladığını ve hile karşıtı önlemler ekleyeceğini açıkladı.</li>
+      </ul>
+    </div>
+    <div class="box warn"><span class="bt">Ders</span>İyi bir öğrenilmiş oyuncu = iyi bir hile aracı. Oyununuza ML ortamı açıyorsanız (ya da topluluk açıyorsa) hile tespitini de düşünün. Tersi de doğru: aynı botlar oyunun en iyi <b>antrenman partnerleri</b> olabilir (GT Sophy’nin hedefi tam olarak buydu).</div>
+  </div>
+</section>
+
+<section data-sec="oyunlarda">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · oyunlarda</div>
+    <div class="q">Bir yapımcı “Düşmanlarımız oyuncudan öğrenecek, her oyunda daha akıllı olacak!” diye pazarlama yapmak istiyor. En doğru teknik uyarı hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Oyun sırasında öğrenme test edilemez ve kötü davranış da öğrenilebilir; genelde eğitim geliştirmede yapılır, oyunda “öğreniyor hissi” tasarımla verilir</button>
+      <button data-opt="B">Bu imkânsızdır, hiçbir oyun oyun sırasında öğrenmez</button>
+      <button data-opt="C">Sorun yok, RL her zaman daha iyi düşman üretir</button>
+      <button data-opt="D">Sadece GPU yetmez, o kadar</button>
+    </div>
+    <div class="explain">Oyun sırasında öğrenen örnekler var (Black &amp; White, Drivatar), yani B yanlış. Ama Drivatar’ın agresiflik sorunu ve Alien: Isolation’ın “öğreniyor gibi görünen” kilitli dalları gösteriyor ki çoğu zaman doğru yol, öğrenmeyi geliştirmede yapmak ve oyunda <b>uyum hissini</b> tasarımla vermektir. ARC Raiders da tam olarak böyle: yürüyüş öğrenildi, oyuncudan değil.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">tablo Q, ML-Agents, Gymnasium</div>
+  <ul class="agenda"><li class="done">öğrenen YZ nedir?</li><li class="done">pekiştirmeli öğrenme</li><li class="done">Q-learning</li><li class="done">ödül tasarımı</li><li class="done">derin RL ve nöroevrim</li><li class="done">oyunlarda öğrenme</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>Tablo Q-learning</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="3-5|10-12|13-15"><script type="text/template">
+import numpy as np, gymnasium as gym           # pip install gymnasium
+
+env = gym.make("FrozenLake-v1", is_slippery=False)   # 4x4 buzlu göl: deliğe düşme, hedefe ulaş
+Q = np.zeros((env.observation_space.n, env.action_space.n))
+alpha, gamma, eps = 0.5, 0.95, 0.2
+rng = np.random.default_rng(0)
+
+for episode in range(2000):
+    s, _ = env.reset()
+    done = False
+    while not done:
+        a = env.action_space.sample() if rng.random() < eps else int(np.argmax(Q[s]))
+        s2, r, terminated, truncated, _ = env.step(a)
+        target = r + (0 if terminated else gamma * np.max(Q[s2]))
+        Q[s, a] += alpha * (target - Q[s, a])          # Bellman güncellemesi
+        s, done = s2, terminated or truncated
+
+print(np.argmax(Q, axis=1).reshape(4, 4))   # öğrenilen politika (0 sol, 1 aşağı, 2 sağ, 3 yukarı)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="8-13|15-18"><script type="text/template">
+// Basit bir ızgara NPC'si için tablo Q-learning (Unity, ML kütüphanesi yok)
+public class GridQLearner {
+    readonly Dictionary<Vector2Int, float[]> Q = new();
+    public float alpha = 0.5f, gamma = 0.9f, epsilon = 0.2f;
+
+    float[] Row(Vector2Int s) { if (!Q.TryGetValue(s, out var q)) Q[s] = q = new float[4]; return q; }
+
+    public int ChooseAction(Vector2Int s) {
+        if (Random.value < epsilon) return Random.Range(0, 4);          // keşif
+        float[] q = Row(s); int best = 0;
+        for (int a = 1; a < 4; a++) if (q[a] > q[best]) best = a;        // sömürü
+        return best;
+    }
+
+    public void Learn(Vector2Int s, int a, float r, Vector2Int s2, bool done) {
+        float maxNext = done ? 0f : Mathf.Max(Row(s2));
+        Row(s)[a] += alpha * (r + gamma * maxNext - Row(s)[a]);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: ızgara dünyasında Q-learning (bu destedeki demo ile aynı mantık)
+const Q = Array.from({ length: W * H }, () => [0, 0, 0, 0]);
+function choose(s, eps) {
+  if (random() < eps) return floor(random(4));
+  return Q[s].indexOf(max(Q[s]));
+}
+function learn(s, a, r, s2, done, alpha = 0.5, gamma = 0.9) {
+  const target = r + (done ? 0 : gamma * max(Q[s2]));
+  Q[s][a] += alpha * (target - Q[s][a]);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Unity ML-Agents: bir ajan sınıfı</h2>
+  <div class="cols c64">
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="11-14|16-21|23-28|30-33"><script type="text/template">
+using Unity.MLAgents;
+using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
+using UnityEngine;
+
+public class RollerAgent : Agent {
+    public Transform target; Rigidbody rb; public float force = 10f;
+
+    public override void Initialize() { rb = GetComponent<Rigidbody>(); }
+
+    public override void OnEpisodeBegin() {               // her bölümün başında
+        if (transform.localPosition.y < 0) { rb.linearVelocity = Vector3.zero; transform.localPosition = new Vector3(0, 0.5f, 0); }
+        target.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.value * 8 - 4);
+    }
+
+    public override void CollectObservations(VectorSensor sensor) {   // ajanın gördükleri: 8 sayı
+        sensor.AddObservation(target.localPosition);
+        sensor.AddObservation(transform.localPosition);
+        sensor.AddObservation(rb.linearVelocity.x);
+        sensor.AddObservation(rb.linearVelocity.z);
+    }
+
+    public override void OnActionReceived(ActionBuffers actions) {    // ağın kararı → fizik
+        var a = actions.ContinuousActions;
+        rb.AddForce(new Vector3(a[0], 0, a[1]) * force);
+        if (Vector3.Distance(transform.localPosition, target.localPosition) < 1.42f) { SetReward(1f); EndEpisode(); }
+        else if (transform.localPosition.y < 0) EndEpisode();     // platformdan düştü
+    }
+
+    public override void Heuristic(in ActionBuffers actionsOut) {     // klavyeyle test
+        var c = actionsOut.ContinuousActions;
+        c[0] = Input.GetAxis("Horizontal"); c[1] = Input.GetAxis("Vertical");
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <div class="box low"><span class="bt">Eğitim yapılandırması (YAML)</span><pre style="font-size:12px;margin:0"><code class="language-yaml">behaviors:
+  RollerBall:            # Behavior Name ile aynı
+    trainer_type: ppo
+    hyperparameters:
+      batch_size: 10
+      buffer_size: 100
+      learning_rate: 3.0e-4
+    network_settings:
+      hidden_units: 128
+      num_layers: 2
+    reward_signals:
+      extrinsic: { gamma: 0.99, strength: 1.0 }
+    max_steps: 500000</code></pre></div>
+      <div class="box game"><span class="bt">Komut</span><code style="font-size:13px">mlagents-learn config.yaml --run-id=Roller1</code> → Unity’de ▶. Bittiğinde <code>results/Roller1/RollerBall.onnx</code> dosyasını Behavior Parameters → Model alanına sürükleyin.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Python’da derin RL: Gymnasium + Stable-Baselines3</h2>
+  <div class="cols c64">
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="5-8|10-16"><script type="text/template">
+# pip install "gymnasium[box2d]" stable-baselines3
+import gymnasium as gym
+from stable_baselines3 import PPO
+
+env = gym.make("LunarLander-v3")                 # ay aracını yumuşakça indir
+model = PPO("MlpPolicy", env, verbose=1)         # küçük bir sinir ağı politikası
+model.learn(total_timesteps=300_000)             # ~10-20 dk, CPU yeterli
+model.save("ppo_lander")
+
+env = gym.make("LunarLander-v3", render_mode="human")
+obs, _ = env.reset()
+for _ in range(1000):
+    action, _ = model.predict(obs, deterministic=True)
+    obs, reward, terminated, truncated, _ = env.step(action)
+    if terminated or truncated:
+        obs, _ = env.reset()
+</script></code></pre>
+    </div>
+  </div>
+    <div>
+      <div class="box story"><span class="bt">Neden önce burada denemeli?</span>Kendi oyununuzu bağlamadan önce, RL’nin nasıl “hissettirdiğini” hazır ortamlarda görmek iyi bir başlangıç: getiri grafiği, hiperparametre etkisi, eğitim süresi. Gymnasium’un arayüzü (reset, step) neredeyse bütün RL kütüphanelerinin ortak dilidir; Godot RL Agents ve ML-Agents’ın Python tarafı da buna benzer.</div>
+      <div class="box low"><span class="bt">⚙️ Not</span>ML-Agents kendi Python paketini (mlagents) kullanır ve şu an <b>Python 3.10</b> ister; SB3/Gymnasium daha yeni Python’larla çalışır. Ayrı sanal ortamlar (venv/conda) kurun.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>np.zeros((n, m)) · np.argmax · np.max</td><td>NumPy</td><td>Sıfırlarla dolu tablo · en büyüğün indisi · en büyük değer</td></tr>
+    <tr><td>env.reset() · env.step(a)</td><td>Gymnasium arayüzü</td><td>Bölümü başlat · eylemi uygula → (gözlem, ödül, bitti mi, süre doldu mu, bilgi)</td></tr>
+    <tr><td>terminated · truncated</td><td>bitti · kesildi</td><td>Gerçek son (hedef/ölüm) · süre sınırı. Kesilmede gelecek değer yine hesaba katılır!</td></tr>
+    <tr><td>class RollerAgent : Agent</td><td>kalıtım</td><td>ML-Agents’ın Agent sınıfını genişletmek; override = hazır metodu kendi kodumuzla değiştirmek</td></tr>
+    <tr><td>ActionBuffers · ContinuousActions</td><td>eylem tamponu</td><td>Ağın çıkardığı sayılar (−1…1); ayrık eylemler için DiscreteActions</td></tr>
+    <tr><td>SetReward · AddReward · EndEpisode</td><td>ödül API’si</td><td>Ödülü ayarla · üzerine ekle · bölümü bitir</td></tr>
+    <tr><td>Dictionary&lt;K, V&gt;.TryGetValue</td><td>sözlük</td><td>Anahtar varsa değeri verir; yoksa false (yeni satır açmak için)</td></tr>
+    <tr><td>.onnx</td><td>model dosyası</td><td>Eğitilmiş ağın taşınabilir biçimi; Unity, Godot, Unreal okuyabilir</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: Bellman güncellemesi</h2>
+  <div class="simlab" data-sim="qlearn" data-fns="qUpdate" data-lang="js">
+<textarea>
+// q:       Q(s, a)'nın şimdiki değeri
+// r:       bu adımda alınan ödül
+// maxNext: max Q(s', a')  — gidilen durumun en iyi değeri
+// alpha:   öğrenme hızı,  gamma: indirim
+// done:    bölüm bitti mi? (hazine ya da lav)
+// Döndür: Q(s, a)'nın YENİ değeri
+function qUpdate(q, r, maxNext, alpha, gamma, done) {
+  return q;   // şimdilik hiç öğrenmiyor
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu hiçbir şey öğrenmez: ajan sonsuza dek rastgele dolaşır. Formülü yazın; sağda ajan <b>sizin</b> fonksiyonunuzla eğitilir. Bitmiş bölümde gelecek yoktur.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: indirimli getiri</h2>
+  <div class="ailab" data-lab="ret" data-lang="python">
+<textarea>
+# rewards: bir bölümde sırayla alınan ödüller, ör. [-0.1, -0.1, 10]
+# gamma:   indirim katsayısı
+# G = r0 + gamma*r1 + gamma^2*r2 + ...
+def discounted_return(rewards, gamma):
+    G = 0.0
+    # TODO
+    return G
+</textarea>
+    <div class="lab-tasks">Sonra düşünün: [−0,1, −0,1, 10] ile [−0,1 × 20 kez, 10] getirilerini γ = 0,9 için karşılaştırın. Ajan neden kısa yolu tercih eder?</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: ε-açgözlü seçim</h2>
+  <div class="ailab" data-lab="egreedy" data-lang="python">
+<textarea>
+# qs:  bir durumdaki Q değerleri, ör. [1.0, 5.0, 2.0, 0.0]
+# eps: keşif olasılığı
+# u:   0 ile 1 arası rastgele sayı (zar; test edilebilsin diye dışarıdan veriliyor)
+# k:   keşif yapılırsa seçilecek rastgele eylem
+# u < eps ise keşif: k döndür. Değilse en büyük Q'nun indisi (eşitlikte ilki).
+def epsilon_greedy(qs, eps, u, k):
+    return 0
+</textarea>
+    <div class="lab-tasks">Gerçek oyunda u = random.random(), k = random.randrange(len(qs)) olur. Rastgeleliği dışarıdan vermek, bu tür kodu test edilebilir yapmanın klasik yoludur.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: sinir ağının ileri geçişi</h2>
+  <div class="ailab" data-lab="forward" data-lang="python">
+<textarea>
+import math
+
+# x:  girdiler (ör. 5 ışın sensörü)
+# W1: gizli katman ağırlıkları, W1[j][i] = girdi i → gizli nöron j
+# b1: gizli katman sabitleri (bias)
+# W2, b2: çıkış katmanı (W2[k][j] = gizli j → çıkış k)
+# Her katman: tanh(b + Σ w·girdi). Çıkışların LİSTESİNİ döndür.
+def forward(x, W1, b1, W2, b2):
+    return [0.0]
+</textarea>
+    <div class="lab-tasks">Evrimleşen arabaların “beyni” tam olarak bu fonksiyon. Eğitim (ister RL ister evrim) sadece W1, b1, W2, b2 sayılarını değiştirir; ileri geçiş hep aynıdır. Supreme Commander 2’nin ağı da bu yapıdaydı (34 girdi, 98 gizli).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">motorlar ve oyununuz</div>
+  <ul class="agenda"><li class="done">öğrenen YZ nedir?</li><li class="done">pekiştirmeli öğrenme</li><li class="done">Q-learning</li><li class="done">ödül tasarımı</li><li class="done">derin RL ve nöroevrim</li><li class="done">oyunlarda öğrenme</li><li class="done">kod ve laboratuvarlar</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ml-agents@4.0/manual/Installation.html" target="_blank" rel="noopener"><b>Unity ML-Agents 4.0</b></a></td><td>Unity 6 (6000.0+)</td><td>PPO, SAC, POCA (takım), taklit öğrenme (BC, GAIL), kendi kendine oynama, müfredat; ışın ve kamera sensörleri; eğitilmiş model Inference Engine ile oyunda çalışır.</td><td>Package Manager → ML Agents; Python 3.10.12 + <code>pip install mlagents==1.1.0</code></td></tr><tr><td><a href="https://dev.epicgames.com/community/learning/tutorials/qj2O/unreal-engine-learning-to-drive" target="_blank" rel="noopener"><b>Unreal Learning Agents</b></a></td><td>Unreal 5.3+ · eklenti</td><td>Epic’in resmî RL ve taklit öğrenme eklentisi; Blueprint ile ajan, gözlem ve ödül tanımı. Resmî eğitim: araba sürmeyi öğrenme.</td><td>Edit → Plugins → Learning Agents</td></tr><tr><td><a href="https://github.com/edbeeching/godot_rl_agents" target="_blank" rel="noopener"><b>Godot RL Agents</b></a></td><td>Godot 4</td><td>Godot sahnesini Gymnasium benzeri ortama çevirir; SB3, Sample Factory, RLlib ile eğitim; ONNX ile oyuna gömme.</td><td><code>pip install godot-rl</code> + Asset Library’den eklenti</td></tr><tr><td><a href="https://gymnasium.farama.org/" target="_blank" rel="noopener"><b>Gymnasium</b></a></td><td>Python</td><td>RL ortamlarının standart arayüzü (reset/step) ve klasik ortamlar (FrozenLake, CartPole, LunarLander, Atari).</td><td><code>pip install gymnasium</code></td></tr><tr><td><a href="https://stable-baselines3.readthedocs.io/" target="_blank" rel="noopener"><b>Stable-Baselines3</b></a></td><td>Python · PyTorch</td><td>Güvenilir PPO, SAC, DQN, A2C uygulamaları; birkaç satırla eğitim. Kendi Gymnasium ortamınızı bağlayabilirsiniz.</td><td><code>pip install stable-baselines3</code></td></tr><tr><td><a href="https://github.com/vwxyzjn/cleanrl" target="_blank" rel="noopener"><b>CleanRL</b></a></td><td>Python</td><td>Her algoritma tek, okunabilir bir dosya: öğrenmek ve araştırma için ideal.</td><td>GitHub’dan klonla</td></tr><tr><td><a href="https://pettingzoo.farama.org/" target="_blank" rel="noopener"><b>PettingZoo</b></a></td><td>Python</td><td>Çok ajanlı ortamlar için Gymnasium benzeri arayüz (satranç, Go, işbirliği oyunları).</td><td><code>pip install pettingzoo</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 ML-Agents ile bir ajanı oyuna gömmek: adım adım</h2>
+  <div class="cols">
+    <ol style="font-size:.8em">
+      <li><b>Kurulum</b>: Unity 6 → Package Manager → ML Agents (4.0). Ayrı bir Python 3.10.12 sanal ortamı → <code>pip install mlagents==1.1.0</code>. Kontrol: <code>mlagents-learn --help</code>.</li>
+      <li><b>Ajan</b>: Agent’tan türeyen sınıf; nesneye <b>Behavior Parameters</b> (gözlem boyutu, eylem tipi) ve <b>Decision Requester</b> (her kaç fizik adımında bir karar) bileşenlerini ekleyin.</li>
+      <li><b>Heuristic ile test</b>: önce klavyeyle oynayın. Gözlemler ve ödüller doğru mu? Debug.Log ile bakın.</li>
+      <li><b>Eğitim</b>: <code>mlagents-learn config.yaml --run-id=...</code>, sonra Unity’de ▶. Hız için sahnede ortamın <b>10–20 kopyasını</b> çalıştırın, ya da oyunu derleyip <code>--env</code> ile verin.</li>
+      <li><b>İzleme</b>: <code>tensorboard --logdir results</code>: getiri yükseliyor mu? Ama mutlaka oynarken de izleyin.</li>
+      <li><b>Gömme</b>: .onnx modeli Behavior Parameters → Model. Inference Engine CPU/GPU’da çalıştırır; Python gerekmez.</li>
+    </ol>
+    <div>
+      <div class="box warn"><span class="bt">Sık hatalar</span>
+        <ul style="font-size:.8em">
+          <li>Gözlemleri normalize etmemek (konum 0–500, hız 0–1 karışımı).</li>
+          <li>Unity 6’da yeni Input System etkinse <code>Input.GetAxis</code> hata verir: Heuristic’i yeni sisteme göre yazın ya da “Both” seçin.</li>
+          <li>Ajanı tek bir haritada eğitip başka haritada şaşırmak: başlangıç konumlarını ve haritayı rastgeleleştirin.</li>
+          <li>Eğitimde sabit kare hızı, oyunda değişken: kararları FixedUpdate/Decision Requester ile bağlayın.</li>
+        </ul></div>
+      <div class="box low"><span class="bt">Tasarımcı kontrolü</span>Öğrenilmiş modeli bir FSM ya da BT içinde <b>bir yetenek</b> olarak kullanın (“araba sür”, “yürü”): ne zaman kullanılacağına el yazımı kod karar versin. Zorluğu modelin girdilerine ya da çıktısına eklenen bir katmanla ayarlayın (SupCom 2’nin “saldırganlık” çarpanı, Forza’nın düzeltme katmanı).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Eski API’ler: <code>OnActionReceived(float[] vectorAction)</code>, <code>Barracuda</code>, <code>rb.velocity</code> (Unity 6’da linearVelocity)</li><li>Python sürümünü belirtmemek (mlagents 3.10 ister)</li><li>Ödülü her karede büyük sayılarla vermek</li><li>Eğitim ve oyun için farklı fizik ayarları</li><li>Asistanın “bu ajan 10 dakikada öğrenir” iddiasına güvenmek: deneyin, ölçün</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, ML-Agents 4.0 (com.unity.ml-agents), C#. Bir “kaçan tavşan” ajanı yaz: 10×10 m arenada bir tilki (el yazımı, ajanı kovalıyor) var. Gözlemler: tavşanın ve tilkinin yerel konumu (arena boyutuna bölünerek normalize), tavşanın hızı, 8 yönlü RayPerceptionSensor3D (duvarlar). Eylemler: 2 sürekli (x, z kuvveti). Ödül: her adım +0,001 (hayatta kal), yakalanınca −1 ve EndEpisode, 30 sn hayatta kalırsa +1 ve EndEpisode. OnEpisodeBegin’de iki hayvanı rastgele yerleştir. Yeni Input System ile Heuristic yaz. PPO için YAML ver (max_steps 1e6). Bu ödülde ajanın bulabileceği olası ödül hilelerini de listele.”</p><ul class="mini"><li>Gözlemleri, eylemleri ve ödülü <b>siz</b> tasarlayın; asistandan bunları uygulamasını isteyin</li><li>ML-Agents ve Unity sürümünü açıkça yazın (4.0, Unity 6): API’ler sürümler arasında değişti</li><li>Heuristic metodu ve hata ayıklama için Gizmos isteyin</li><li>Ödül hilesi riskini asistana sorun: “Bu ödülde ajan hangi kestirmeyi bulabilir?”</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Oyun testi ajanları</span>EA SEED ve Ubisoft La Forge gibi araştırma ekipleri, büyük haritalarda gezinen ve hata arayan RL ajanları üzerinde çalışıyor. Soru: hangi ödül “ilginç” hataları bulmayı teşvik eder? (merak tabanlı ödüller, “keşif bonusu”)</div>
+    <div class="box game"><span class="bt">İnsan gibi oynayan ajan</span>GT Sophy’nin zorluğu “yenmek” değil, <b>adil ve eğlenceli</b> yenmekti. İnsan benzerliğini nasıl ölçeriz? Taklit + RL karışımları, “insanlık testi” (Turing testi benzeri) yarışmaları.</div>
+    <div class="box low"><span class="bt">Dil + RL</span>SIMA 2 gibi ajanlar dil modeli ile RL’yi birleştiriyor: “kırmızı evin yanındaki ağacı kes” komutunu anlayıp yapan bir ajan. Y14’te LLM tarafını, Y16’da dünya modellerini (Genie 3) göreceğiz.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kendi ızgaram</b> — Bu destedeki Q-learning’i p5.js’te yeniden yazın; anahtarlı kapı ekleyin (durum = konum + anahtar var mı). Ajan önce anahtarı almayı öğreniyor mu?</li><li><b class="c-green">[kolay]</b> <b>FrozenLake’ten LunarLander’a</b> — Gymnasium’da tablo Q-learning ve SB3 PPO; γ ve öğrenme hızını değiştirip getiri grafiklerini karşılaştıran kısa rapor.</li><li><b class="c-amber">[orta]</b> <b>ML-Agents ile kaçan tavşan</b> — YZ asistanı istemindeki ajan: tilkiyi el yazımı, tavşanı RL ile yapın. Ödül hilesi buldu mu? Raporlayın.</li><li><b class="c-amber">[orta]</b> <b>Evrimleşen yarışçılar</b> — Bu destedeki nöroevrimi Unity’ye taşıyın: 3B pist, raycast sensörler; en iyi ağı JSON’a kaydedip başka pistte deneyin.</li><li><b class="c-red">[zor]</b> <b>Karma düşman</b> — Bir davranış ağacı (Y3) düşmanı yapın; “yaklaş ve kaçın” hareket yeteneğini ML-Agents ile eğitip BT’nin bir eylemi olarak çağırın.</li><li><b class="c-purple">[araştırma]</b> <b>Ödül hilesi kataloğu</b> — Kendi küçük oyununuzda üç farklı ödül tasarımıyla eğitip ajanın bulduğu beklenmedik stratejileri belgeleyin (CoastRunners deneyinin küçük bir tekrarı).</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Öğrenen YZ’de davranışı biz değil <b>deneyim</b> yazar; bizim işimiz gözlem, eylem ve <b>ödülü</b> tasarlamak.</li>
+      <li>RL döngüsü: durum → eylem → ödül; amaç indirimli <b>getiri</b>. Keşif–sömürü ikilemi (ε).</li>
+      <li><b>Q-learning</b>: Q ← Q + α(r + γ max Q′ − Q); değer hazineden geriye yayılır.</li>
+      <li><b>Ödül hilesi</b>: CoastRunners, SupCom 2’nin ACU korkusu, saklambacın kutu sörfü.</li>
+    </ul>
+    <ul>
+      <li>Derin RL (DQN, PPO), kendi kendine oynama, taklit; <b>nöroevrim</b> (MarI/O).</li>
+      <li>Gerçek oyunlarda: öğrenilmiş parça + el yazımı emniyet kemeri; çoğunlukla yayından önce eğitim.</li>
+      <li>Araçlar: Unity ML-Agents 4, Unreal Learning Agents, Godot RL Agents, Gymnasium + SB3.</li>
+      <li>Sonraki: <b>büyük dil modelleriyle konuşan ve plan yapan NPC’ler</b>.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=kopoLzvh5jY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/kopoLzvh5jY/hqdefault.jpg" alt=""><span><b>Multi-Agent Hide and Seek</b><br>OpenAI</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Dw3BZ6O_8LY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Dw3BZ6O_8LY/hqdefault.jpg" alt=""><span><b>Training an unbeatable AI in Trackmania</b><br>Yosh</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=qv6UVOQ0F44" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/qv6UVOQ0F44/hqdefault.jpg" alt=""><span><b>MarI/O — Machine Learning for Video Games</b><br>SethBling</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=zPFU30tbyKs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/zPFU30tbyKs/hqdefault.jpg" alt=""><span><b>How to use Machine Learning AI in Unity! (ML-Agents)</b><br>Code Monkey</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=TmPfTpjtdgg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/TmPfTpjtdgg/hqdefault.jpg" alt=""><span><b>DQN Breakout</b><br>Google DeepMind</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=L_4BPjLBF4E" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/L_4BPjLBF4E/hqdefault.jpg" alt=""><span><b>AI Learns to Walk (deep reinforcement learning)</b><br>AI Warehouse</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Sutton &amp; Barto 2018</b> · <a href="http://incompleteideas.net/book/the-book-2nd.html" target="_blank" rel="noopener">Reinforcement Learning: An Introduction (2. baskı)</a> <i>(MIT Press, ücretsiz çevrimiçi)</i><br>Alanın ders kitabı; 6. bölüm Q-learning.</div><div class="paper"><b>Mnih ve ark. 2015</b> · <a href="https://www.nature.com/articles/nature14236" target="_blank" rel="noopener">Human-level control through deep reinforcement learning</a> <i>(Nature 518)</i><br>DQN ve Atari.</div><div class="paper"><b>Wurman ve ark. 2022</b> · <a href="https://www.nature.com/articles/s41586-021-04357-7" target="_blank" rel="noopener">Outracing champion Gran Turismo drivers with deep reinforcement learning</a> <i>(Nature 602)</i><br>GT Sophy.</div><div class="paper"><b>Baker ve ark. 2020</b> · <a href="https://arxiv.org/abs/1909.07528" target="_blank" rel="noopener">Emergent Tool Use From Multi-Agent Autocurricula</a> <i>(ICLR 2020)</i><br>Saklambaç.</div><div class="paper"><b>Hafner ve ark. 2025</b> · <a href="https://danijar.com/project/dreamerv3/" target="_blank" rel="noopener">Mastering diverse control tasks through world models</a> <i>(Nature)</i><br>DreamerV3.</div><div class="paper"><b>Schulman ve ark. 2017</b> · <a href="https://arxiv.org/abs/1707.06347" target="_blank" rel="noopener">Proximal Policy Optimization Algorithms</a> <i>(arXiv)</i><br>PPO.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar (devam)</h2>
+  <div class="paper"><b>Juliani ve ark. 2018</b> · <a href="https://arxiv.org/abs/1809.02627" target="_blank" rel="noopener">Unity: A General Platform for Intelligent Agents</a> <i>(arXiv)</i><br>ML-Agents.</div><div class="paper"><b>Robbins 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter30_Using_Neural_Networks_to_Control_Agent_Threat_Response.pdf" target="_blank" rel="noopener">Using Neural Networks to Control Agent Threat Response</a> <i>(Game AI Pro, Bölüm 30)</i><br>Supreme Commander 2.</div><div class="paper"><b>Stanley &amp; Miikkulainen 2002</b> · <a href="https://nn.cs.utexas.edu/downloads/papers/stanley.ec02.pdf" target="_blank" rel="noopener">Evolving Neural Networks through Augmenting Topologies</a> <i>(Evolutionary Computation)</i><br>NEAT.</div><div class="paper"><b>Amodei &amp; Clark 2016</b> · <a href="https://openai.com/index/faulty-reward-functions/" target="_blank" rel="noopener">Faulty Reward Functions in the Wild</a> <i>(OpenAI blog)</i><br>CoastRunners.</div><div class="paper"><b>Hugging Face</b> · <a href="https://huggingface.co/learn/deep-rl-course/unit0/introduction" target="_blank" rel="noopener">Deep Reinforcement Learning Course</a> <i>(ücretsiz kurs)</i><br>ML-Agents ve Godot RL bölümleri dahil.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: hikâyelerin izi 📰</h2>
+  <ul style="font-size:.78em">
+    <li>Forza Drivatar: <a href="https://www.gamedeveloper.com/design/how-forza-s-drivatar-actually-works" target="_blank" rel="noopener">How Forza’s Drivatar actually works</a> (Tommy Thompson, Game Developer)</li>
+    <li>ARC Raiders: <a href="https://frvr.com/blog/news/embark-says-arc-raiders-robots-dont-learn-on-player-data/" target="_blank" rel="noopener">Embark says Arc Raiders’ robots don’t learn on player data</a> · <a href="https://schedule.gdconf.com/session/learning-to-move-physics-based-enemy-locomotion-in-arc-raiders/917319" target="_blank" rel="noopener">GDC 2026: Learning to Move</a></li>
+    <li>Rocket League Nexto: <a href="https://www.deeplearning.ai/the-batch/gamers-are-using-ai-to-cheat-in-rocket-league" target="_blank" rel="noopener">Gamers are using AI to cheat in Rocket League</a> (The Batch)</li>
+    <li>MotoGP 19 A.N.N.A.: <a href="https://wccftech.com/motogp-19-features-a-n-n-a-a-new-artificial-intelligence-based-on-neural-networks/" target="_blank" rel="noopener">MotoGP 19 features A.N.N.A.</a> (Wccftech)</li>
+    <li>GT Sophy 2.0: <a href="https://ai.sony/articles/sonyai022/" target="_blank" rel="noopener">Sony AI duyurusu</a></li>
+    <li>SIMA 2: <a href="https://deepmind.google/blog/sima-2-an-agent-that-plays-reasons-and-learns-with-you-in-virtual-3d-worlds/" target="_blank" rel="noopener">Google DeepMind blog</a></li>
+    <li>Black &amp; White: <a href="https://en.wikipedia.org/wiki/Richard_Evans_(AI_researcher)" target="_blank" rel="noopener">Richard Evans</a> · Killer Instinct: <a href="https://www.gamedeveloper.com/programming/the-killer-groove-the-shadow-ai-of-killer-instinct" target="_blank" rel="noopener">The Shadow AI of Killer Instinct</a></li>
+  </ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3a0d2e 0%, #1c0c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">LLM ile NPC’ler</div>
+    <div class="sub">Konuşan, hatırlayan ve plan yapan karakterler</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ff9ad5" href="../yz-llm/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
