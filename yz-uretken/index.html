@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Üretken YZ</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Üretken yapay zekâ: difüzyon modelleri, gömme vektörleri, 2B/3B/ses varlıkları (TRELLIS 2, Roblox Cube, Unity AI), dünya modelleri (GameNGen, Muse, Genie 3), etik ve hukuk (Clair Obscur, ARC Raiders, SAG-AFTRA, telif), iş akışı. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3a0d3a 0%, #1c0c24 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 16</div>
+  <div class="ttl" style="font-size:84px">Üretken YZ</div>
+  <div class="sub"><i>Görüntü, 3B model, ses ve oynanabilir dünya modelleri</i> — ne yapabilir, ne yapamaz, ne pahasına?</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegen"></div>
+  <aside class="notes">Haftalık plandaki üretken YZ konusu. Arka planda saf gürültüden adım adım bir yıldız beliriyor: difüzyon modellerinin üretim süreci.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.8em">
+      <li><b>Üretken YZ nedir?</b> — PCG’den farkı; geliştiriciler ne düşünüyor? (GDC 2026)</li>
+      <li><b>Difüzyon</b> — gürültüden şekle; istem nasıl “anlaşılıyor”? (gömme vektörleri)</li>
+      <li><b>Oyun varlıkları</b> — 2B, 3B (TRELLIS 2, Roblox Cube), ses ve müzik, Unity AI</li>
+      <li><b>Dünya modelleri</b> — Doom’u “hayal eden” GameNGen, Microsoft Muse, Genie 3</li>
+      <li><b>Etik, hukuk, sektör</b> — Clair Obscur’un geri alınan ödülleri, ARC Raiders’ın sesleri, SAG-AFTRA anlaşması, telif</li>
+      <li><b>İş akışı</b> — nerede gerçekten işe yarıyor, nerede yaramıyor?</li>
+      <li><b>Kod</b> — diffusers, MusicGen, Unity Inference Engine + dört laboratuvar</li>
+      <li><b>Araçlar</b> — Hugging Face, ComfyUI, Unity AI, TRELLIS, AudioCraft, lisanslar</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…difüzyon ve dünya modellerinin nasıl çalıştığını oyuncak örneklerle açıklayabilecek, bir oyun varlığını üretken bir modelle prototipleyebilecek ve en önemlisi: <b>lisans, telif, oyuncu tepkisi ve sanatçı hakları</b> açısından neyin kabul edilebilir olduğunu tartabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: “KONSEPT ÇİZİMLERİNİ YZ YAPSIN” DENDİĞİNDE NE OLUR?</span>
+    <p class="big">Bir stüdyo yöneticisi bunu söylüyor. Ekipte, oyuncularda, basında ve hukukta neler olabilir?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Hız: dakikada onlarca fikir. Ama hepsi birbirine benziyor, tarz tutarsız, eller altı parmaklı.</li>
+    <li class="fragment">Sanatçılar: “İşimizi elimizden alıyor, üstelik bizim çizimlerimizle eğitildi.”</li>
+    <li class="fragment">Oyuncular: Aralık 2025’te yılın en çok ödül alan oyunlarından biri, sadece birkaç <b>yer tutucu</b> doku yüzünden bir ödül törenindeki ödüllerini kaybetti.</li>
+    <li class="fragment">Hukuk: Tamamen YZ’nin ürettiği bir görselin telif hakkı (ABD’de) kimseye ait değil.</li>
+    <li class="fragment">Bu ders teknolojiyi <b>ve</b> bu soruları birlikte ele alıyor. İkisi de mesleğinizin parçası.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-ogrenme/">Y13 · Öğrenen YZ (sinir ağı, eğitim)</a><a class="" href="../yz-llm/">Y14 · LLM ile NPC’ler (sıradaki parça, gömme)</a><a class="" href="../yz-pcg/">Y15 · PCG (gürültü, tohum)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, nokta çarpım)</a><a class="opt" href="../yz-algilama/">Y11 · Algılama (ses)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Üretken modeller iki fikrin üzerine kurulu: Y14’teki “sıradakini tahmin et” (metin, müzik) ve bu derste göreceğimiz “gürültüyü adım adım temizle” (görüntü, video, ses). İstem, Y14’teki gibi bir anlam vektörüne çevrilir.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Modelleri sıfırdan eğitmeyeceğiz. Hazır modelleri kullanmak için Python’da birkaç satır ve bir GPU (ya da bulut hizmeti) yeter. Asıl beceri: doğru aracı seçmek, lisansı okumak, çıktıyı oyuna uygun hâle getirmek.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>generative model</td><td>üretken model</td><td>Verinin dağılımını öğrenip ondan yeni örnekler üreten model</td></tr>
+    <tr><td>diffusion · denoising</td><td>difüzyon · gürültü giderme</td><td>Gürültüden başlayıp adım adım temizleyerek üretmek</td></tr>
+    <tr><td>prompt · embedding · CLIP</td><td>istem · gömme · —</td><td>Metin talimatı · anlam vektörü · metin ve görüntüyü aynı vektör uzayına koyan model</td></tr>
+    <tr><td>guidance · img2img · inpainting</td><td>yönlendirme · görüntüden görüntü · boşluk doldurma</td><td>İsteme ne kadar uyulacağı · bir görseli başlangıç almak · bir bölgeyi yeniden üretmek</td></tr>
+    <tr><td>LoRA · ControlNet</td><td>—</td><td>Modeli küçük ek ağırlıklarla kendi tarzına uyarlamak · poz, kenar, derinlik ile kontrol</td></tr>
+    <tr><td>world model</td><td>dünya modeli</td><td>Eylemlere göre sonraki kareyi/durumu tahmin eden, “oynanabilir” model</td></tr>
+    <tr><td>TTS · voice clone</td><td>metinden sese · ses klonu</td><td>Yazıyı konuşmaya çevirmek · belirli birinin sesini taklit etmek</td></tr>
+    <tr><td>model license · provenance</td><td>model lisansı · köken</td><td>Modeli ve çıktısını nerede kullanabileceğiniz · bir varlığın nasıl üretildiğinin kaydı</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Üretken YZ nedir?</div>
+  <div class="sub">kural yerine örnekten üretmek</div>
+  <ul class="agenda"><li class="on">üretken YZ nedir?</li><li class="">difüzyon: gürültüden görüntüye</li><li class="">oyun varlıkları: 2B, 3B, ses</li><li class="">dünya modelleri</li><li class="">etik, hukuk ve sektör</li><li class="">iş akışı</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="nedir">
+  <h2>PCG ile üretken YZ arasındaki fark</h2>
+  <table class="sum-t" style="font-size:16px">
+    <tr><th></th><th>Klasik PCG (Y15)</th><th>Üretken YZ</th></tr>
+    <tr><td>nasıl?</td><td>Tasarımcının yazdığı <b>kurallar</b> (gürültü, otomat, WFC)</td><td>Milyonlarca örnekten <b>öğrenilmiş</b> dağılım</td></tr>
+    <tr><td>kontrol</td><td>Yüksek, öngörülebilir, tohumla tekrarlanabilir</td><td>İstemle dolaylı; sonuç sürpriz olabilir</td></tr>
+    <tr><td>veri</td><td>Gerekmez</td><td>Çok büyük veri; kaynağı tartışmalı olabilir</td></tr>
+    <tr><td>çıktı</td><td>Genelde yapı (harita, yerleşim)</td><td>Genelde yüzey (görüntü, ses, model, metin)</td></tr>
+    <tr><td>maliyet</td><td>Ucuz, oyun içinde çalışır</td><td>GPU, bulut ücreti; oyun içinde çalıştırmak zor</td></tr>
+    <tr><td>hukuk</td><td>Çıktı sizin</td><td>Model lisansı, telif, oyuncu ve sanatçı hakları</td></tr>
+  </table>
+  <div class="box low" style="margin-top:8px"><span class="bt">Model aileleri</span><b>Otoregresif</b> (sıradakini tahmin et: LLM’ler, bazı müzik modelleri), <b>difüzyon</b> (gürültüyü temizle: görüntü, video, ses), daha eski <b>GAN</b>’lar (iki ağın yarışı: StyleGAN yüzleri), <b>akış eşleme</b> (difüzyonun akrabası; TRELLIS 2 gibi yeni 3B modeller).</div>
+</section>
+
+<section data-sec="nedir">
+  <h2>Sektör ne düşünüyor? GDC 2026 anketi</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>GDC’nin 2026 “Oyun Sektörünün Durumu” anketi (yaklaşık 2.300 katılımcı): oyun sektörü çalışanlarının <b>%52’si</b> üretken YZ’nin sektöre <b>olumsuz</b> etkisi olduğunu düşünüyor. Bu oran bir önceki yıl %30, ondan önceki yıl %18’di. Olumlu diyenler sadece %7.</li>
+        <li>En olumsuz bakanlar: görsel ve teknik sanatçılar (%64), oyun tasarımı ve anlatı (%63), programcılar (%59).</li>
+        <li>Buna rağmen çalışanların <b>%36’sı</b> işinde üretken YZ araçları kullanıyor: en çok araştırma ve beyin fırtınası (%81), günlük işler ve kod yardımı (%47’şer), prototip (%35).</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Okuma notu</span>İki eğilim aynı anda: kullanım artıyor, <b>güven</b> azalıyor. Sebepler: işten çıkarmalar, eğitim verisindeki izinsiz eserler, “vasat içerik seli”, oyuncu tepkisi. Bir oyun geliştiricisi olarak bu araçları <b>bilmek</b> zorundasınız; <b>nerede kullanacağınız</b> ise teknik değil, etik ve tasarım kararı.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Difüzyon</div>
+  <div class="sub">gürültüden görüntüye</div>
+  <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="on">difüzyon: gürültüden görüntüye</li><li class="">oyun varlıkları: 2B, 3B, ses</li><li class="">dünya modelleri</li><li class="">etik, hukuk ve sektör</li><li class="">iş akışı</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="difüzyon">
+  <h2>Difüzyon modelleri nasıl çalışır?</h2>
+  <div class="cols">
+    <div>
+      <ol style="font-size:.84em">
+        <li><b>Boz</b> (eğitim): eğitim görsellerine adım adım gürültü ekle; sonunda saf gürültü kalır.</li>
+        <li><b>Öğren</b>: bir sinir ağına, her gürültü seviyesinde “bu gürültülü görselin <b>temiz hâli</b> (ya da içindeki gürültü) neydi?” sorusunu sor, milyonlarca kez. Hedef belli olduğu için bu, gözetimli öğrenmedir.</li>
+        <li><b>Üret</b>: saf gürültüyle başla; ağa “temizini tahmin et” de, biraz o yöne git, gürültü seviyesini azalt, tekrarla. 20–50 adımda bir görüntü belirir.</li>
+      </ol>
+      <p style="font-size:.84em">Her seferinde farklı bir gürültüyle başladığınız için her seferinde farklı (ama benzer) bir görüntü çıkar. Aynı gürültü tohumu + aynı istem = aynı görüntü (Y15’teki tohum fikri).</p>
+    </div>
+    <div class="box story"><span class="bt">Bu derste oyuncak sürüm</span>Bir sonraki demoda görüntü yerine 2B <b>noktalar</b> var; “veri kümesi” bir yıldızın, kalbin ve halkanın noktaları. Gürültü giderici bir sinir ağı değil, veriye bakarak hesaplanan <b>ideal</b> tahmin: “bu gürültülü nokta, verideki hangi noktaların gürültülü hâli olabilir? Onların ağırlıklı ortalaması.” Gerçek modeller bu tahmini yapmayı <b>öğrenir</b> ve ezberlemek yerine genelleştirir.</div>
+  </div>
+</section>
+
+<section data-sec="difüzyon">
+  <h2>Canlı: gürültüden şekle ✨</h2>
+  <div class="demo" data-demo="diffusion"></div>
+</section>
+
+<section data-sec="difüzyon">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>“boz” yönünde oynatın: yıldızın noktaları adım adım dağılıyor. Eğitim verisi böyle hazırlanır.</li>
+      <li>“üret” yönünde oynatın: gürültü önce kabaca bir “bulut”a, sonra yıldız şekline toplanıyor. Büyük yapı <b>önce</b>, ayrıntı <b>sonra</b> belirir (gerçek görüntü modellerinde de: önce kompozisyon, sonra doku).</li>
+      <li>İstemi “kalp” yapın: aynı gürültü, farklı koşul, farklı sonuç. “hepsi (koşulsuz)” seçince bazı noktalar yıldıza, bazıları kalbe gider: model ne istediğinizi bilmiyor.</li>
+      <li>“yeni gürültü” ile birkaç kez üretin: aynı istem, farklı tohum, biraz farklı dağılım.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="difüzyon">
+  <h2>İstem nasıl “anlaşılıyor”? Gömme vektörleri</h2>
+  <div class="cols c46">
+    <div>
+      <ul style="font-size:.82em">
+        <li>CLIP (OpenAI, 2021) gibi modeller metni ve görüntüyü <b>aynı vektör uzayına</b> yerleştirir: “buz kılıcı” metni ile bir buz kılıcı resmi birbirine yakın vektörler olur.</li>
+        <li>Görüntü modeli, gürültüyü temizlerken bu vektöre bakar (koşullu üretim). <b>Yönlendirme ölçeği</b> (guidance) istemin ne kadar sıkı izleneceğini belirler: düşük = yaratıcı ama alakasız, yüksek = isteme sadık ama aşırı doymuş.</li>
+        <li>Aynı vektörler varlık kütüphanesinde <b>arama</b> için de kullanılır: “karanlık, metal bir şey” → en yakın varlıklar (Y14’teki hafıza aramasının aynısı).</li>
+      </ul>
+    </div>
+    <div class="demo" data-demo="embed"></div>
+  </div>
+</section>
+
+<section data-sec="difüzyon">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · difüzyon</div>
+    <div class="q">Bir difüzyon modeliyle aynı istemden 4 karakter görseli ürettiniz; hepsi farklı çıktı. Aynı görseli bir hafta sonra tekrar üretmek için ne saklamalısınız?</div>
+    <div class="opts">
+      <button data-opt="A">İstem, model sürümü, ayarlar (adım sayısı, yönlendirme) ve gürültü tohumu</button>
+      <button data-opt="B">Sadece istemi</button>
+      <button data-opt="C">Hiçbir şey, model her zaman aynı görseli verir</button>
+      <button data-opt="D">Sadece görselin dosya adını</button>
+    </div>
+    <div class="explain">Üretim, gürültü tohumundan başlar (Y15’teki gibi). Aynı istem farklı tohumla farklı görsel verir; model sürümü ya da örnekleyici değişirse aynı tohum bile farklı sonuç verebilir. Bu bilgiler aynı zamanda varlığın <b>köken kaydıdır</b>: ileride “bu görsel nasıl üretildi?” sorusunun cevabı.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Oyun varlıkları</div>
+  <div class="sub">2B, 3B, ses ve müzik</div>
+  <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="done">difüzyon: gürültüden görüntüye</li><li class="on">oyun varlıkları: 2B, 3B, ses</li><li class="">dünya modelleri</li><li class="">etik, hukuk ve sektör</li><li class="">iş akışı</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="varlıklar">
+  <h2>2B ve 3B: ne kadar “oyuna hazır”?</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">2B görseller</span>
+        <ul style="font-size:.8em">
+          <li><b>İyi</b>: konsept fikirleri, ruh hâli panoları, doku varyasyonları, büyütme (upscale), arka plan taslakları.</li>
+          <li><b>Zor</b>: aynı karakteri farklı pozlarda <b>tutarlı</b> çizmek, animasyon kareleri, gerçek piksel sanatı (ızgaraya oturmayan “sahte pikseller”), döşenebilir (tileable) dokular, okunabilir arayüz metni.</li>
+          <li>Çare: kendi tarzınızla eğitilmiş LoRA, ControlNet ile poz/kenar kontrolü, el ile son dokunuş.</li>
+        </ul></div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">3B modeller</span>
+        <ul style="font-size:.8em">
+          <li><b>TRELLIS 2</b> (Microsoft, açık kaynak, 4 milyar parametre): tek bir görselden saniyeler içinde, PBR malzemeli .glb 3B model; Unity, Unreal, Blender’a doğrudan girer.</li>
+          <li><b>Roblox Cube 3D</b> (Mart 2025, açık kaynak): metinden 3B nesne; Roblox Studio’da “Mesh Generation API” ile.</li>
+          <li><b>Sorun</b>: topoloji (animasyona uygun mu?), poligon sayısı, UV açılımı, LOD. Arka plan nesnesi için iyi; ana karakter için çoğu zaman bir 3B sanatçının elinden geçmesi gerekir.</li>
+        </ul></div>
+    </div>
+  </div>
+  <div class="box low" style="margin-top:6px"><span class="bt">Motorun içinde: Unity AI (Unity 6.2+)</span>Muse ve Sentis’in yerine geldi: <b>Assistant</b> (projeyi bilen sohbet ve kod yardımcısı), <b>Generators</b> (sprite, doku, malzeme, ses ve animasyon üretimi; Unity’nin kendi modelleri ve Scenario ile Layer AI’ın Stable Diffusion/FLUX tabanlı modelleri) ve <b>Inference Engine</b> (kendi ONNX modellerinizi oyun içinde çalıştırmak). Unity, üretilen içeriğin telif sorumluluğunun kullanıcıda olduğunu belirtiyor.</div>
+</section>
+
+<section data-sec="varlıklar">
+  <h2>Ses ve müzik</h2>
+  <div class="cols c46">
+    <div>
+      <ul style="font-size:.82em">
+        <li><b>Müzik</b>: MusicGen (Meta, AudioCraft), Stable Audio Open, Suno… “sakin bir ortaçağ meyhanesi müziği” gibi istemlerle kısa parçalar. Oyunun <b>dinamik</b> müziği (gerilim arttıkça katman ekleme) hâlâ çoğunlukla el yapımı sistemlerle yapılıyor.</li>
+        <li><b>Ses efektleri</b>: metinden efekt (adım, kapı, büyü). Prototip için hızlı; son kalite için ses tasarımcısı.</li>
+        <li><b>Konuşma</b> (TTS, ses klonlama): en tartışmalı alan. ARC Raiders ve Fortnite örneklerine Level 4’te döneceğiz.</li>
+      </ul>
+    </div>
+    <div class="demo" data-demo="markov"></div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Dünya modelleri</div>
+  <div class="sub">oyunu “hayal eden” sinir ağları</div>
+  <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="done">difüzyon: gürültüden görüntüye</li><li class="done">oyun varlıkları: 2B, 3B, ses</li><li class="on">dünya modelleri</li><li class="">etik, hukuk ve sektör</li><li class="">iş akışı</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="dünya modeli">
+  <h2>Oyun motoru yerine sinir ağı?</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.82em">
+        <li><b>GameNGen</b> (Google, Ağustos 2024): Doom’u <b>motor olmadan</b> oynatan difüzyon modeli. Bir RL ajanının oynadığı oyun kayıtlarıyla eğitildi; her kareyi, önceki kareler ve oyuncunun tuşlarına göre <b>tahmin ediyor</b>. Tek bir TPU’da saniyede 20+ kare. Stable Diffusion 1.4 tabanlı.</li>
+        <li><b>Muse / WHAM</b> (Microsoft, Nature, Şubat 2025): Ninja Theory’nin <i>Bleeding Edge</i> oyununun 7 yıldan fazla insan oyun verisiyle eğitilen “Dünya ve İnsan Eylem Modeli”: hem görüntüyü hem oyuncu eylemlerini üretiyor; hedefi oyun fikri geliştirmeye yardım. Nisan 2025’teki <b>WHAMM</b> demosu Quake II’nin bir bölümünü saniyede 10+ kareyle “hayal etti”; oyuncular bulanıklığı ve tutarsızlığı sert eleştirdi.</li>
+        <li><b>Genie 3</b> (Google DeepMind, Ağustos 2025): bir metin isteminden, gezilebilir dünyalar; 720p, saniyede 24 kare, birkaç dakika boyunca büyük ölçüde tutarlı. SIMA 2 ajanı (Y13) bu dünyalarda oynatıldı.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">Efsane: “Oyun motorları bitti”</span>Şimdilik <b>hayır</b>. Dünya modelleri: kısa süre sonra unutur (odadan çıkıp dönünce oda değişebilir), kuralları <b>yaklaşık</b> izler (puan, envanter, fizik), çok pahalı hesap ister ve tasarımcıya hassas kontrol vermez. Bugünkü en gerçekçi kullanım alanları: hızlı fikir prototipleme, ajan eğitimi için sınırsız ortam, video/sinematik üretimi.</div>
+      <div class="box game"><span class="bt">🎬</span><a href="https://www.youtube.com/watch?v=PDKhUknuQDg" target="_blank" rel="noopener">Genie 3</a> (Google DeepMind) · <a href="https://www.youtube.com/watch?v=epglVP5bjnc" target="_blank" rel="noopener">GameNGen anlatımı</a></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="dünya modeli">
+  <h2>Canlı: oyunu ezberleyen bir “dünya modeli” 🌀</h2>
+  <div class="demo" data-demo="worldmodel"></div>
+</section>
+
+<section data-sec="dünya modeli">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Eğitim verisini 50’ye indirin ve ok düğmeleriyle duvarlara doğru yürüyün: model hiç görmediği durumlarda “genelde bir kare ilerlenir” diye genelliyor ve <b>duvarın içinden geçiyor</b> (kırmızı halka).</li>
+      <li>Bir kez ayrıştıktan sonra iki dünya bir daha birleşmiyor: model kendi hatalı tahmininin üzerine tahmin yürütüyor. Gerçek dünya modellerinde de hatalar <b>birikir</b>; bu yüzden uzun süreli tutarlılık en zor problem.</li>
+      <li>Veriyi 5000’e çıkarın: neredeyse her durum görüldüğü için model gerçeğe çok yakın. Ama gerçek oyunlarda durum sayısı astronomik; her şeyi görmek imkânsız, <b>genelleme</b> şart.</li>
+      <li>Buradaki “model” bir tablo; GameNGen ve Genie aynı işi <b>piksellerle</b> ve milyarlarca parametreyle yapıyor.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a1a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Etik, hukuk ve sektör</div>
+  <div class="sub">oyuncular, sanatçılar ve mahkemeler</div>
+  <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="done">difüzyon: gürültüden görüntüye</li><li class="done">oyun varlıkları: 2B, 3B, ses</li><li class="done">dünya modelleri</li><li class="on">etik, hukuk ve sektör</li><li class="">iş akışı</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="etik">
+  <h2>Derin hikâye: Clair Obscur’un geri alınan ödülleri (Aralık 2025)</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li><i>Clair Obscur: Expedition 33</i> (Sandfall Interactive), 2025’in en çok övülen oyunlarından biriydi. 18 Aralık 2025’teki Indie Game Awards’ta <b>Yılın Bağımsız Oyunu</b> ve <b>En İyi İlk Oyun</b> ödüllerini kazandı.</li>
+        <li>Oyunun ilk sürümünde, sınırlı sayıda <b>yer tutucu</b> görselin (gazete kupürü benzeri arka plan dokuları) üretken YZ ile yapıldığı, oyuncular tarafından çıkıştan kısa süre sonra fark edilmişti. Bu dokular birkaç gün içinde bir yamayla el yapımı çizimlerle değiştirilmişti.</li>
+        <li>Ödül töreninin kuralları üretken YZ kullanımını yasaklıyordu; başvuruda YZ kullanılmadığı beyan edilmişti. İki gün sonra oyun diskalifiye edildi; ödüller ikincilere (<i>Blue Prince</i> ve <i>Sorry We’re Closed</i>) verildi.</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Dersler</span>
+      <ol style="font-size:.82em">
+        <li>“Sadece yer tutucuydu” savunması, yer tutucu <b>yayına çıktıysa</b> geçersiz. Yer tutucuları <b>işaretleyin</b> ve yayın öncesi kontrol listesine koyun.</li>
+        <li>Neyi, nerede kullandığınızın <b>kaydını</b> tutun (köken). Beyanlarınız (mağaza, ödül, yayıncı) bu kayda dayansın.</li>
+        <li>Oyuncu tepkisi teknik kaliteden bağımsız olabilir: üretken YZ bugün bir <b>güven</b> meselesi.</li>
+      </ol></div>
+  </div>
+</section>
+
+<section data-sec="etik">
+  <h2>Sesler, sanatçılar ve sözleşmeler</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">ARC Raiders’ın TTS sesleri (2025–2026)</span>Embark Studios, Steam sayfasında bazı replikler için metinden sese (TTS) kullandığını açıkladı. Eurogamer’ın 5 üzerinden 2 verdiği inceleme, bunu “etik ve sanatsal olarak” kabul edilemez buldu ve tartışma sektöre yayıldı. Stüdyo başkanı Patrick Söderlund, seslendirme sanatçılarına seslerinin TTS için lisanslanması karşılığında <b>ödeme yapıldığını</b>, TTS’nin replikleri hızlıca denemek için kullanıldığını söyledi. Çıkıştan sonra bazı replikler <b>gerçek oyuncularla yeniden kaydedildi</b>.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">SAG-AFTRA 2025 Video Oyunu Sözleşmesi</span>ABD seslendirme ve hareket yakalama sanatçılarının yaklaşık 11 ay süren grevi Haziran 2025’te bitti; yeni sözleşme %95 oyla onaylandı. Temel kazanım: bir sanatçının <b>dijital kopyası</b> (ses ya da görüntü) için <b>açık rıza</b> ve <b>bilgilendirme</b> zorunlu; grev sırasında yeni içerik üretimine verilen izni askıya alma hakkı.</div>
+      <div class="box low"><span class="bt">Telif (ABD)</span>18 Mart 2025, <i>Thaler v. Perlmutter</i>: temyiz mahkemesi, bir YZ sisteminin “yazar” olamayacağını, telif için <b>insan yazarlığın</b> şart olduğunu onayladı. İnsanın yaratıcı katkısının ne kadar olması gerektiği ise hâlâ vaka vaka tartışılıyor. Türkiye’de de FSEK eser sahibini gerçek kişi olarak tanımlar; ülkenize göre hukuki görüş alın.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="etik">
+  <h2>Sorumlu kullanım kontrol listesi</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Lisans</b>: modelin ve çıktısının ticari kullanımına izin var mı? (Bazı popüler modeller sadece araştırma/ticari olmayan kullanım içindir: SDXL-Turbo, MusicGen ağırlıkları gibi.)</li>
+      <li><b>Eğitim verisi</b>: model, izinli ya da lisanslı veriyle mi eğitildi? Kendi verinizle ince ayar en temiz yol.</li>
+      <li><b>Kişi hakları</b>: gerçek bir kişinin sesi, yüzü, tarzı: yazılı rıza ve ödeme.</li>
+      <li><b>Beyan</b>: Steam’in “önceden üretilmiş” ve “canlı üretilen” içerik bildirimi; ödül ve yayıncı kuralları.</li>
+      <li><b>Köken kaydı</b>: hangi varlık, hangi araç, hangi istem/tohum, kim düzenledi.</li>
+      <li><b>İnsan son sözü</b>: üretilen her şey bir insanın gözünden geçsin.</li>
+    </ol>
+    <div class="box warn"><span class="bt">Ekip içi</span>Araçlar ekip arkadaşlarınızın işini doğrudan etkiliyor. Kullanım kararlarını sanatçılar, yazarlar ve ses ekibiyle <b>birlikte</b> almak, hem etik hem de pratik olarak (kalite, motivasyon, oyuncu güveni) daha iyi sonuç veriyor.</div>
+  </div>
+</section>
+
+<section data-sec="etik">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · etik</div>
+    <div class="q">Küçük ekibiniz, yayına kadar yerine çizim konacak yer tutucu dokular için görüntü üreteci kullanmak istiyor. En sağlıklı süreç hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Yer tutucuları dosya adında ve bir listede işaretlemek, yayın öncesi otomatik kontrolle hiçbirinin kalmadığını doğrulamak, beyanları buna göre yapmak</button>
+      <button data-opt="B">Nasılsa sonra değiştireceğiz, kayıt gerekmez</button>
+      <button data-opt="C">Yer tutucu bile olsa asla hiçbir araç kullanılamaz</button>
+      <button data-opt="D">Oyuncular fark etmezse sorun yoktur</button>
+    </div>
+    <div class="explain">Clair Obscur örneği gösteriyor ki sorun genellikle aracın kendisi değil, yer tutucunun <b>kaçması</b> ve beyanla çelişmesi. “_PLACEHOLDER_” etiketi, varlık listesi ve yayın öncesi bir betik (Unity’de bir Editor testi) bunu önler. C, bazı ekipler ve ödüller için geçerli bir <b>politika</b> olabilir; ama soru süreç soruyor.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">İş akışı</div>
+  <div class="sub">nerede gerçekten işe yarıyor?</div>
+  <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="done">difüzyon: gürültüden görüntüye</li><li class="done">oyun varlıkları: 2B, 3B, ses</li><li class="done">dünya modelleri</li><li class="done">etik, hukuk ve sektör</li><li class="on">iş akışı</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="iş akışı">
+  <h2>Üretim hattında üretken YZ</h2>
+  <table class="sum-t" style="font-size:15.5px">
+    <tr><th>aşama</th><th>işe yarayan kullanım</th><th>dikkat</th></tr>
+    <tr><td>Fikir</td><td>ruh hâli panoları, varyasyon, “ya şöyle olsaydı?”</td><td>Hepsi birbirine benzer; fikri <b>siz</b> seçin</td></tr>
+    <tr><td>Prototip</td><td>yer tutucu görsel/ses, TTS ile replik denemesi (Embark), hızlı 3B blok</td><td>İşaretleyin, yayına kaçmasın</td></tr>
+    <tr><td>Üretim</td><td>doku varyasyonu, büyütme, arka plan nesnesi (3B), kod yardımı</td><td>Tarz tutarlılığı, lisans, kalite kontrol</td></tr>
+    <tr><td>Oyun içi (canlı)</td><td>LLM diyalog (Y14), kişiselleştirilmiş içerik</td><td>Gecikme, maliyet, güvenlik filtresi, Steam beyanı</td></tr>
+    <tr><td>Test</td><td>RL ve LLM ajanlarıyla oyun testi (Y13)</td><td>Ajanlar hata bulur, eğlenceyi ölçemez</td></tr>
+  </table>
+  <div class="box low" style="margin-top:8px"><span class="bt">Altın kural</span>Üretken YZ bir <b>malzeme kaynağı</b>, tasarım değil. En iyi sonuçlar: net bir sanat yönetimi + kendi tarzınızla sınırlanmış model (LoRA, kendi verinizle) + insan son dokunuşu.</div>
+</section>
+
+<section data-sec="iş akışı">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · iş akışı</div>
+    <div class="q">Bir dünya modeli (Genie 3 gibi) ile oyununuzun seviyesini “oynanabilir video” olarak üretmeyi düşünüyorsunuz. En büyük teknik engel hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Uzun süreli tutarlılık ve kuralların (puan, envanter, fizik) kesin işlememesi; yüksek hesap maliyeti</button>
+      <button data-opt="B">Görüntü kalitesinin çok düşük olması, başka sorun yok</button>
+      <button data-opt="C">Dünya modellerinin klavyeden girdi alamaması</button>
+      <button data-opt="D">Dünya modellerinin sadece Doom’u bilmesi</button>
+    </div>
+    <div class="explain">Dünya modelleri bir sonraki kareyi <b>tahmin</b> eder; kuralları kesin olarak <b>hesaplamaz</b>. Demodaki gibi hata birikir, unutma olur. Bir oyunun puanı, envanteri, kaydı kesin olmalı. Bu yüzden bugün prototipleme ve ajan eğitimi için umut verici, tam oyunlar için değil.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">diffusers, MusicGen, Inference Engine</div>
+  <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="done">difüzyon: gürültüden görüntüye</li><li class="done">oyun varlıkları: 2B, 3B, ses</li><li class="done">dünya modelleri</li><li class="done">etik, hukuk ve sektör</li><li class="done">iş akışı</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>Python ile görüntü ve müzik üretimi</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="5-6|8-11"><script type="text/template">
+# pip install diffusers transformers accelerate torch
+import torch
+from diffusers import AutoPipelineForText2Image
+
+pipe = AutoPipelineForText2Image.from_pretrained(
+    "stabilityai/sdxl-turbo", torch_dtype=torch.float16, variant="fp16").to("cuda")
+
+img = pipe(prompt="treasure chest, isometric game asset, white background",
+           num_inference_steps=1, guidance_scale=0.0,          # Turbo: tek adım
+           generator=torch.Generator("cuda").manual_seed(42)   # tohum = tekrarlanabilirlik
+           ).images[0]
+img.save("sandik.png")
+# ⚠️ SDXL-Turbo’nun lisansı ticari kullanımı kısıtlar: ticari oyunda kullanmadan önce lisansı okuyun.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python (müzik)">
+<pre><code class="language-python" data-trim data-line-numbers="5-8"><script type="text/template">
+# pip install transformers scipy torch
+from transformers import pipeline
+import scipy.io.wavfile
+
+synth = pipeline("text-to-audio", "facebook/musicgen-small")
+music = synth("calm medieval tavern music with lute and flute",
+              forward_params={"do_sample": True})
+scipy.io.wavfile.write("han.wav", rate=music["sampling_rate"], data=music["audio"])
+# ⚠️ MusicGen ağırlıkları ticari olmayan (CC-BY-NC) lisanslıdır: prototip için uygun, satış için değil.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Unity: kendi modelinizi oyun içinde çalıştırmak (Inference Engine)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="8-11|13-19"><script type="text/template">
+using Unity.InferenceEngine;     // Unity 6.2+: “Inference Engine” paketi (eski adı Sentis)
+using UnityEngine;
+
+public class StyleClassifier : MonoBehaviour {
+    public ModelAsset modelAsset;            // projeye sürüklenen .onnx dosyası
+    Worker worker;
+
+    void Start() {
+        Model model = ModelLoader.Load(modelAsset);
+        worker = new Worker(model, BackendType.GPUCompute);   // GPU yoksa BackendType.CPU
+    }
+
+    public float[] Run(float[] features) {
+        using var input = new Tensor<float>(new TensorShape(1, features.Length), features);
+        worker.Schedule(input);                                // engellemeyen çalıştırma
+        var output = worker.PeekOutput() as Tensor<float>;
+        using var cpu = output.ReadbackAndClone();             // GPU → CPU kopyası
+        return cpu.DownloadToArray();
+    }
+
+    void OnDestroy() => worker?.Dispose();                    // GPU belleğini bırak
+}
+// API ayrıntıları paket sürümüne göre değişebilir: Inference Engine belgelerini kontrol edin.
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Büyük görüntü modelleri oyun içinde çalıştırılamayacak kadar ağır; küçük modeller (sınıflandırıcı, stil aktarımı, ML-Agents politikaları, poz tahmini) ise Inference Engine ile cihazda rahatça çalışır.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>from_pretrained("...")</td><td>hazır model indirme</td><td>Hugging Face’ten ağırlıkları indirip yükler (ilk seferde GB’larca olabilir)</td></tr>
+    <tr><td>torch.float16 · .to("cuda")</td><td>yarım hassasiyet · GPU’ya taşı</td><td>Bellek kullanımını yarıya indirir · NVIDIA GPU’da çalıştırır</td></tr>
+    <tr><td>generator.manual_seed(42)</td><td>tohum</td><td>Aynı gürültüyle başlat: tekrarlanabilir üretim</td></tr>
+    <tr><td>pipeline("text-to-audio", ...)</td><td>hazır iş hattı</td><td>Model + ön/son işleme tek nesnede</td></tr>
+    <tr><td>Tensor&lt;float&gt; · TensorShape</td><td>tensör</td><td>Çok boyutlu sayı dizisi ve boyutları (Inference Engine)</td></tr>
+    <tr><td>using var ... · Dispose()</td><td>kaynak temizliği</td><td>İş bitince (GPU) belleğini hemen bırakmak</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: gürültü giderici</h2>
+  <div class="simlab" data-sim="denoise" data-fns="denoise" data-lang="js">
+<textarea>
+// DATA: kalp şeklindeki veri noktaları [[x, y], ...] (hazır verildi)
+// (x, y): gürültülü nokta, sigma: şu anki gürültü seviyesi
+// İdeal gürültü giderici: her veri noktası i için
+//   w_i = exp( -((x - xi)² + (y - yi)²) / (2·sigma²) )
+// sonuç = Σ w_i · (xi, yi) / Σ w_i   →  [x, y] döndür
+// Küçük sigma'da exp(...) sıfıra yuvarlanabilir: en küçük üssü çıkarın.
+function denoise(x, y, sigma) {
+  return [x, y];   // şimdilik hiçbir şey temizlemiyor
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodunda gürültü hiç azalmaz. Formülü yazın: sağda saf gürültü sizin fonksiyonunuzla adım adım kalbe dönüşmeli. (Gerçek modeller bu fonksiyonu bir sinir ağıyla <b>öğrenir</b>.)</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: ileri difüzyon adımı</h2>
+  <div class="ailab" data-lab="addnoise" data-lang="python">
+<textarea>
+import math
+
+# x0: temiz veri (sayı listesi), eps: gürültü (aynı uzunlukta liste)
+# alpha_bar: 0..1 arası "ne kadar temiz kaldı" (1 = hiç gürültü yok)
+# x_t[i] = sqrt(alpha_bar) * x0[i] + sqrt(1 - alpha_bar) * eps[i]
+def add_noise(x0, eps, alpha_bar):
+    return x0
+</textarea>
+    <div class="lab-tasks">Eğitimde model, x_t’yi görüp eps’i (ya da x0’ı) tahmin etmeyi öğrenir. Gürültüyü dışarıdan vermek testi deterministik yapar (Y13’teki ε-açgözlü laboratuvarı gibi).</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: kosinüs benzerliği</h2>
+  <div class="ailab" data-lab="cosine" data-lang="python">
+<textarea>
+import math
+
+# a, b: aynı uzunlukta vektörler (sayı listeleri)
+# cos = (a·b) / (|a|·|b|);  vektörlerden biri sıfırsa 0 döndür
+def cosine(a, b):
+    return 0.0
+</textarea>
+    <div class="lab-tasks">Gömme demosundaki sıralama bu fonksiyonla yapılıyor. Aynı fonksiyon Y14’te hafıza aramasında, burada istem–görsel eşleştirmesinde ve varlık kütüphanesi aramasında kullanılır.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: en olası sonraki nota</h2>
+  <div class="ailab" data-lab="nextnote" data-lang="python">
+<textarea>
+# seq: nota listesi, ör. ["Do", "Do", "Sol", ...]
+# note: hangi notadan sonrasını soruyoruz
+# Dizide note'tan hemen sonra gelen notaları say;
+# en çok geleni döndür (eşitlikte İLK karşılaşılan). Hiç yoksa None.
+def most_likely_next(seq, note):
+    return None
+</textarea>
+    <div class="lab-tasks">Melodi üreteci demosu bu sayımları kullanıyor; sıcaklık 0’a yaklaşınca hep bu fonksiyonun cevabını seçer ve melodi tekrara düşer.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve araçlar</div>
+  <div class="sub">lisansı okuyarak</div>
+  <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="done">difüzyon: gürültüden görüntüye</li><li class="done">oyun varlıkları: 2B, 3B, ses</li><li class="done">dünya modelleri</li><li class="done">etik, hukuk ve sektör</li><li class="done">iş akışı</li><li class="done">kod ve laboratuvarlar</li><li class="on">kütüphaneler ve araçlar</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://huggingface.co/docs/diffusers/index" target="_blank" rel="noopener"><b>Hugging Face (diffusers, transformers)</b></a></td><td>Python</td><td>Açık modelleri indirip birkaç satırla çalıştırma: görüntü, ses, metin, 3B. Her modelin sayfasında <b>lisans</b> yazar.</td><td><code>pip install diffusers transformers</code></td></tr><tr><td><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noopener"><b>ComfyUI</b></a></td><td>Windows / Linux / macOS</td><td>Düğüm tabanlı görsel iş akışı: difüzyon, ControlNet, LoRA, TRELLIS gibi 3B düğümler; tekrarlanabilir “tarifler”.</td><td>GitHub sürümü / masaüstü uygulaması</td></tr><tr><td><a href="https://docs.unity3d.com/6000.2/Documentation/Manual/unity-ai.html" target="_blank" rel="noopener"><b>Unity AI</b></a></td><td>Unity 6.2+</td><td>Assistant, Generators (sprite, doku, malzeme, ses, animasyon), Inference Engine.</td><td>AI menüsü; kullanım kredisi</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.inference@2.2/manual/index.html" target="_blank" rel="noopener"><b>Unity Inference Engine</b></a></td><td>Unity 6+</td><td>ONNX modellerini oyun içinde CPU/GPU’da çalıştırma (eski Sentis).</td><td>Package Manager → com.unity.ai.inference</td></tr><tr><td><a href="https://github.com/microsoft/TRELLIS.2" target="_blank" rel="noopener"><b>TRELLIS 2</b></a></td><td>Python (GPU)</td><td>Görselden PBR malzemeli 3B model (.glb); açık kaynak.</td><td>GitHub / Hugging Face</td></tr><tr><td><a href="https://github.com/Roblox/cube" target="_blank" rel="noopener"><b>Roblox Cube</b></a></td><td>Python / Roblox Studio</td><td>Metinden 3B nesne; açık kaynak model + Studio API.</td><td>GitHub</td></tr><tr><td><a href="https://github.com/facebookresearch/audiocraft" target="_blank" rel="noopener"><b>AudioCraft (MusicGen, AudioGen)</b></a></td><td>Python</td><td>Metinden müzik ve ses efekti. Ağırlıkların lisansına dikkat.</td><td><code>pip install audiocraft</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧩 Bir üretken aracı ekibinize eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.8em">
+      <li><b>Amaç</b>: hangi darboğazı çözüyor? (Varyasyon mu, prototip mi, kod mu?)</li>
+      <li><b>Lisans ve veri</b>: model lisansı, eğitim verisi, hizmet şartları; hukuki görüş.</li>
+      <li><b>Pilot</b>: küçük, geri alınabilir bir alanda deneyin (ör. sadece prototip sahnesi).</li>
+      <li><b>Kalite kapısı</b>: sanat yönetmeninin onayı olmadan hiçbir üretilmiş varlık ana dala girmesin.</li>
+      <li><b>Köken kaydı</b>: varlık meta verisine araç, model sürümü, istem, tohum, düzenleyen kişi.</li>
+      <li><b>Yayın kontrolü</b>: yer tutucu taraması, mağaza beyanı, ödül kuralları.</li>
+    </ol>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Donanım</span>Görüntü modelleri için 8–24 GB GPU belleği; 3B ve video modelleri daha fazlası. Alternatif: bulut GPU ya da ücretli API. Ekip için ortak bir sunucu (ComfyUI) maliyeti düşürür ve tarifleri paylaşır.</div>
+      <div class="box warn"><span class="bt">Tasarım tuzağı</span>“Daha fazla içerik” ≠ “daha iyi oyun”. Y15’in yulaf lapası uyarısı burada iki katı geçerli: sonsuz vasat görsel, birkaç güçlü el yapımı görselin yerini tutmaz.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>“Bu model ticari kullanıma açık” iddiasını kontrol etmeden kabul etmek</li><li>API anahtarını istemciye gömmek</li><li>Gerçek kişilerin adını/tarzını istemde kullanmak</li><li>Üretilmiş varlıkları köken kaydı olmadan projeye eklemek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir “AssetProvenance” sistemi yaz: (1) [Serializable] ProvenanceInfo: araç adı, model adı ve sürümü, istem, tohum, oluşturma tarihi, düzenleyen kişi, “yer tutucu mu?” bayrağı. (2) Bunu her Texture2D/AudioClip için yan .provenance.json dosyası olarak saklayan bir AssetPostprocessor. (3) Proje penceresinde yer tutucuları kırmızı ikonla gösteren bir editor eklentisi. (4) Build öncesi (IPreprocessBuildWithReport) yer tutucu bayraklı bir varlık sahnelerde kullanılıyorsa build’i durduran kontrol. (5) Steam beyanı için üretilmiş varlıkların listesini CSV’ye döken menü komutu.”</p><ul class="mini"><li>Model adını, sürümünü ve lisansını açıkça sorun</li><li>Tohum ve ayarları kaydeden betikler isteyin (köken)</li><li>Yer tutucu tarayan bir yayın öncesi Editor testi yazdırın</li><li>Çıktıyı oyuna uydurma işini (boyut, döşenebilirlik, LOD) otomatikleştirin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Kontrol edilebilir dünya modelleri</span>Tasarımcının kuralları (kapı kilitli, anahtar envanterde) kesin olarak koruyan, sinir ağı + klasik motor karması sistemler.</div>
+    <div class="box game"><span class="bt">Tarz tutarlılığı</span>Bir oyunun bütün varlıklarında aynı sanat tarzını koruyan, az örnekten öğrenen (birkaç düzine çizim) modeller; sanatçı kontrolünde ince ayar.</div>
+    <div class="box low"><span class="bt">Etik veri ve atıf</span>Eğitim verisinin izinli olduğu modeller, çıktının hangi eserlere “benzediğini” gösteren atıf sistemleri, sanatçılara gelir paylaşımı.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Oyuncak difüzyon</b> — Bu destedeki 2B nokta difüzyonunu p5.js’te yeniden yazın; kendi şeklinizi (harfinizi) veri kümesi yapın.</li><li><b class="c-green">[kolay]</b> <b>Varlık arama</b> — Projenizdeki 50 varlığa CLIP ile gömme çıkarıp (Python) “karanlık metal kapı” gibi metinle arama yapan bir araç.</li><li><b class="c-amber">[orta]</b> <b>Prototip hattı</b> — ComfyUI ile 10 yer tutucu ikon üretin; her birinin köken kaydını tutun; sonra bir sanatçının yeniden çizdiği sürümlerle değiştirin ve süreci raporlayın.</li><li><b class="c-amber">[orta]</b> <b>Görselden 3B</b> — TRELLIS 2 ile 5 arka plan nesnesi üretip Unity’ye alın; poligon sayısı, UV ve malzeme sorunlarını belgeleyin; hangileri “oyuna hazır”?</li><li><b class="c-red">[zor]</b> <b>Mini dünya modeli</b> — Basit bir ızgara oyununun karelerini (32×32 piksel) bir sonraki kareyi tahmin eden küçük bir ağla (PyTorch) öğrenin; kaç kare sonra bozuluyor?</li><li><b class="c-purple">[araştırma]</b> <b>Oyuncu algısı anketi</b> — Aynı sahnenin el yapımı ve üretilmiş sürümlerini oyunculara gösterip ayırt edebiliyorlar mı, tercihleri değişiyor mu, “YZ kullanıldı” bilgisi algıyı nasıl etkiliyor?</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Üretken YZ, örneklerden öğrenilmiş dağılımdan üretir; PCG kurallarla.</li>
+      <li><b>Difüzyon</b>: boz → temizlemeyi öğren → gürültüden üret; istem gömme vektörüyle girer.</li>
+      <li>Varlıklar: 2B (tutarlılık sorunu), 3B (TRELLIS 2, Cube; topoloji sorunu), ses ve müzik.</li>
+      <li><b>Dünya modelleri</b>: GameNGen, Muse, Genie 3; hata birikimi ve tutarlılık.</li>
+    </ul>
+    <ul>
+      <li>Sektör: %52 olumsuz görüş, %36 kullanım (GDC 2026).</li>
+      <li>Etik/hukuk: Clair Obscur, ARC Raiders, SAG-AFTRA sözleşmesi, insan yazarlık şartı.</li>
+      <li>İş akışı: lisans, köken kaydı, yer tutucu kontrolü, insan son sözü.</li>
+      <li>Sonraki: <b>zorluk ayarı ve oyuncu modelleme</b>: YZ’yi oyuncuya göre ayarlamak.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=iv-5mZ_9CPY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/iv-5mZ_9CPY/hqdefault.jpg" alt=""><span><b>But how do AI images and videos actually work?</b><br>3Blue1Brown / Welch Labs</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=1CIpzeNxIhU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/1CIpzeNxIhU/hqdefault.jpg" alt=""><span><b>How AI Image Generators Work</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=j5h9dBtWZXM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/j5h9dBtWZXM/hqdefault.jpg" alt=""><span><b>How AI connects text and images</b><br>3Blue1Brown</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=PDKhUknuQDg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/PDKhUknuQDg/hqdefault.jpg" alt=""><span><b>Genie 3: Creating dynamic worlds you can navigate in real-time</b><br>Google DeepMind</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=epglVP5bjnc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/epglVP5bjnc/hqdefault.jpg" alt=""><span><b>GameNGen: Playing DOOM Inside a Diffusion Model</b><br>Gradient Daily</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=du6S-egCx1s" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/du6S-egCx1s/hqdefault.jpg" alt=""><span><b>Getting Started with Unity AI</b><br>Code Monkey</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Ho, Jain &amp; Abbeel 2020</b> · <a href="https://arxiv.org/abs/2006.11239" target="_blank" rel="noopener">Denoising Diffusion Probabilistic Models</a> <i>(NeurIPS 2020)</i><br>Modern difüzyonun temeli.</div><div class="paper"><b>Rombach ve ark. 2022</b> · <a href="https://arxiv.org/abs/2112.10752" target="_blank" rel="noopener">High-Resolution Image Synthesis with Latent Diffusion Models</a> <i>(CVPR 2022)</i><br>Stable Diffusion.</div><div class="paper"><b>Radford ve ark. 2021</b> · <a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">Learning Transferable Visual Models From Natural Language Supervision</a> <i>(ICML 2021)</i><br>CLIP.</div><div class="paper"><b>Valevski ve ark. 2024</b> · <a href="https://arxiv.org/abs/2408.14837" target="_blank" rel="noopener">Diffusion Models Are Real-Time Game Engines</a> <i>(arXiv (GameNGen))</i><br>Doom’u hayal eden model.</div><div class="paper"><b>Kanervisto ve ark. 2025</b> · <a href="https://www.nature.com/articles/s41586-025-08600-3" target="_blank" rel="noopener">World and Human Action Models towards gameplay ideation</a> <i>(Nature 638)</i><br>Microsoft Muse / WHAM.</div><div class="paper"><b>Copet ve ark. 2023</b> · <a href="https://arxiv.org/abs/2306.05284" target="_blank" rel="noopener">Simple and Controllable Music Generation</a> <i>(NeurIPS 2023)</i><br>MusicGen.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: hikâyelerin izi 📰</h2>
+  <ul style="font-size:.78em">
+    <li>GDC 2026 anketi: <a href="https://gdconf.com/article/gdc-2026-state-of-the-game-industry-reveals-impact-of-layoffs-generative-ai-and-more/" target="_blank" rel="noopener">GDC duyurusu</a></li>
+    <li>Clair Obscur ve Indie Game Awards: <a href="https://www.avclub.com/clair-obscur-genai-iga-awards-rescinded" target="_blank" rel="noopener">AV Club</a></li>
+    <li>ARC Raiders sesleri: <a href="https://www.pushsquare.com/news/2026/03/arc-raiders-replacing-some-of-its-controversial-ai-voices-with-better-human-ones" target="_blank" rel="noopener">Push Square</a> · <a href="https://80.lv/articles/eurogamer-s-2-5-arc-raiders-review-splits-the-gaming-community/" target="_blank" rel="noopener">80.lv</a> · <a href="https://www.topgear.com/car-news/gaming/extraction-shooter-arc-raiders-already-a-hit-its-ai-voice-acting-has-ruffled-some" target="_blank" rel="noopener">Top Gear</a></li>
+    <li>SAG-AFTRA sözleşmesi: <a href="https://www.pocketgamer.biz/video-games-strike-ends-after-11-months-as-sag-aftra-ratifies-new-contract" target="_blank" rel="noopener">PocketGamer.biz</a> · Thaler v. Perlmutter: <a href="https://www.skadden.com/insights/publications/2025/03/appellate-court-affirms-human-authorship" target="_blank" rel="noopener">Skadden</a></li>
+    <li>Genie 3: <a href="https://deepmind.google/discover/blog/genie-3-a-new-frontier-for-world-models/" target="_blank" rel="noopener">DeepMind blog</a> · Roblox Cube: <a href="https://www.infoq.com/news/2025/03/roblox-cube-3d" target="_blank" rel="noopener">InfoQ</a> · Unity 6.2 AI: <a href="https://digitalproduction.com/2025/08/22/unity-6-2-welcomes-ai-but-pace-caution-user-liability-on-copyright/" target="_blank" rel="noopener">Digital Production</a></li>
+  </ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3a2a0d 0%, #1c160c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Zorluk ve Oyuncu Modelleme</div>
+    <div class="sub">Dinamik zorluk, akış, lastik bant ve oyuncuyu anlamak</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd36b" href="../yz-zorluk/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

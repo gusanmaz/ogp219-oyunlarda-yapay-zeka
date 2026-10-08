@@ -32,7 +32,9 @@
       if (mode === 'gen') {   // ters süreç: σ büyükten küçüğe; her adımda tahmini temiz noktaya doğru yürü, biraz gürültü ekle
         if (step >= STEPS) return false;
         const s = SIG(1 - step / STEPS), sn = SIG(1 - (step + 1) / STEPS), d = data();
-        pts = pts.map(([x, y]) => { const [mx, my] = idealDenoise(x, y, s, d); const k = sn / s; const nx = mx + (x - mx) * k, ny = my + (y - my) * k; const z = Math.sqrt(Math.max(0, sn * sn - (sn * k) * (sn * k))) * 0; return [nx + gauss(r) * z, ny + gauss(r) * z]; });
+        // deterministik (DDIM benzeri) adım: tahmini temiz noktaya, gürültü oranı σ'/σ kadar yaklaş
+        const k = sn / s;
+        pts = pts.map(([x, y]) => { const [mx, my] = idealDenoise(x, y, s, d); return [mx + (x - mx) * k, my + (y - my) * k]; });
       } else {               // ileri süreç: her adımda biraz daha gürültü
         if (step >= STEPS) return false;
         const s = SIG(step / STEPS), sn = SIG((step + 1) / STEPS), add = Math.sqrt(Math.max(0, sn * sn - s * s));
@@ -52,7 +54,7 @@
       SL.drawLabel(ctx, `gürültü seviyesi σ ≈ ${s.toFixed(2)}`, bx + 100, 56, t.muted, { size: 11 });
       SL.drawLabel(ctx, mode === 'gen' ? 'ÜRETİM: gürültü → şekil' : 'EĞİTİM VERİSİ BOZULUYOR: şekil → gürültü', bx + 100, 84, mode === 'gen' ? t.purple : t.red, { size: 11 });
       info.innerHTML = mode === 'gen'
-        ? `Her nokta saf gürültüyle başlıyor. Her adımda “gürültü giderici”, noktanın <b>temiz hâlini tahmin ediyor</b> ve noktayı o yöne biraz kaydırıyor; gürültü seviyesi azaldıkça şekil beliriyor. “İstem” (${prompt === 'all' ? 'hepsi' : prompt}) hangi veriye göre tahmin yapılacağını belirliyor: koşullu üretim.`
+        ? `Her nokta saf gürültüyle başlıyor. Her adımda “gürültü giderici”, noktanın <b>temiz hâlini tahmin ediyor</b> ve noktayı o yöne biraz kaydırıyor; gürültü seviyesi azaldıkça şekil beliriyor. “İstem” (${({ star: 'yıldız', heart: 'kalp', ring: 'halka', all: 'hepsi' })[prompt]}) hangi veriye göre tahmin yapılacağını belirliyor: koşullu üretim.`
         : 'İleri süreç: eğitim verisine adım adım gürültü eklenir. Model, her gürültü seviyesinde “orijinal neydi?” sorusunu cevaplamayı öğrenir. Üretim bunun tersidir.';
     };
     const play = () => { if (timer) { clearInterval(timer); timer = null; return; } timer = setInterval(() => { if (!tick()) { clearInterval(timer); timer = null; } draw(); }, 90); };

@@ -778,3 +778,14 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .pl-fb { padding: 6px 10px; margin: 5px 0; border-radius: 8px; background: color-mix(in srgb, var(--amber) 18%, transparent); }
 .cc-out { margin-top: 8px; }
 .cc-big { font-size: 20px; margin: 6px 0; }
+
+/* ---- Y16 üretken YZ: Markov melodi, gömme listesi ---- */
+.mk-out { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; padding: 12px; background: var(--card-2); border-radius: 10px; min-height: 110px; }
+.mk-n { font-family: 'JetBrains Mono', monospace; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: color-mix(in srgb, var(--purple) 25%, transparent); }
+.reveal .mk-tab { font-size: 14px; border-collapse: collapse; width: 100%; }
+.reveal .mk-tab th, .reveal .mk-tab td { padding: 3px 6px; border-bottom: 1px solid var(--rule); text-align: left; }
+.em-list { margin: 8px 0; font-size: 16px; }
+.em-row { display: grid; grid-template-columns: 200px 1fr 70px; gap: 10px; align-items: center; margin: 4px 0; padding: 2px 6px; border-radius: 6px; }
+.em-row.em-top { background: color-mix(in srgb, var(--green) 18%, transparent); }
+.em-n { font-weight: 700; }
+.em-s { font-family: 'JetBrains Mono', monospace; text-align: right; }

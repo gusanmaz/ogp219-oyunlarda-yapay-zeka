@@ -83,6 +83,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y13 | [Öğrenen YZ](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-ogrenme/) | ✅ hazır |
 | Y14 | [LLM ile NPC’ler](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-llm/) | ✅ hazır |
 | Y15 | [Prosedürel İçerik Üretimi](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-pcg/) | ✅ hazır |
+| Y16 | [Üretken YZ](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-uretken/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -144,6 +145,7 @@ yz-taktik/          Y12 · Siper seçimi (üret/ele/puanla), Killzone, Crysis 2 
 yz-ogrenme/         Y13 · Pekiştirmeli öğrenme, keşif/sömürü, Q-learning, ödül hilesi (CoastRunners, SupCom 2), nöroevrim, Drivatar, GT Sophy, ARC Raiders, Unity ML-Agents 4
 yz-llm/             Y14 · Sıradaki parça tahmini, Cicero, Generative Agents hafıza akışı, yapılandırılmış çıktı ve denetim hattı, gecikme/maliyet, Fortnite Vader ve Where Winds Meet, Ollama, LLM for Unity, NVIDIA ACE
 yz-pcg/             Y15 · Tohumlar (Elite, River Raid, pack.png), Perlin gürültüsü ve arazi, No Man’s Sky, hücresel otomat, BSP, Spelunky, dalga fonksiyonu çöküşü, L-sistemleri, ifade aralığı
+yz-uretken/         Y16 · Difüzyon, gömme vektörleri, 2B/3B/ses varlıkları, dünya modelleri (GameNGen, Muse, Genie 3), Clair Obscur, ARC Raiders, SAG-AFTRA ve telif, iş akışı
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).
