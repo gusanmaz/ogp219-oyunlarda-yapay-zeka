@@ -85,6 +85,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y15 | [Prosedürel İçerik Üretimi](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-pcg/) | ✅ hazır |
 | Y16 | [Üretken YZ](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-uretken/) | ✅ hazır |
 | Y17 | [Zorluk ve Oyuncu Modelleme](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-zorluk/) | ✅ hazır |
+| Y18 | [Oyun YZ’sinde Performans](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-performans/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -148,6 +149,7 @@ yz-llm/             Y14 · Sıradaki parça tahmini, Cicero, Generative Agents h
 yz-pcg/             Y15 · Tohumlar (Elite, River Raid, pack.png), Perlin gürültüsü ve arazi, No Man’s Sky, hücresel otomat, BSP, Spelunky, dalga fonksiyonu çöküşü, L-sistemleri, ifade aralığı
 yz-uretken/         Y16 · Difüzyon, gömme vektörleri, 2B/3B/ses varlıkları, dünya modelleri (GameNGen, Muse, Genie 3), Clair Obscur, ARC Raiders, SAG-AFTRA ve telif, iş akışı
 yz-zorluk/          Y17 · Crash, RE4, Hades; akış ve DDA, Left 4 Dead YZ yönetmeni, lastik bant, Sid Meier ve XCOM, PRD, Tomb Raider oyuncu tipleri, Elo, TrueSkill, EOMM
+yz-performans/      Y18 · Kare bütçesi, ölçüm, zaman dilimleme, yol isteği kuyruğu, YZ LOD’u (LOD Trader, AC Unity), olay tabanlı güncelleme, veri odaklı tasarım, DOTS ve Mass
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

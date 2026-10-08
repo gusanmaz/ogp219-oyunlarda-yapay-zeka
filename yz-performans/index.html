@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oyun YZ’sinde Performans</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Oyun yapay zekâsında performans: kare bütçesi, profil ve ölçüm (Final Fantasy XV, Cities: Skylines II), zaman dilimleme ve yol isteği kuyrukları, YZ LOD’u (LOD Trader, Assassin’s Creed Unity), olay tabanlı güncelleme, veri odaklı tasarım, Unity DOTS, Unreal Mass. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d2a3a 0%, #0c1c24 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 18</div>
+  <div class="ttl" style="font-size:64px">Oyun YZ’sinde Performans</div>
+  <div class="sub"><i>Kare bütçesi, zaman dilimleme, YZ LOD’u, olay tabanlı güncelleme, DOTS ve Mass</i> — binlerce NPC’yi 16 milisaniyeye sığdırmak</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titleperf"></div>
+  <aside class="notes">Haftalık plandaki performans konusu. Arka planda kare süreleri: çoğu çubuk 16,7 ms çizgisinin altında; ara sıra bir “sıçrama” çizgiyi aşıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.8em">
+      <li><b>Bütçe</b> — 60 FPS’de bir karede ne kadar zamanımız var, YZ’ye ne kadarı düşer?</li>
+      <li><b>Önce ölç</b> — profilleyiciler, işaretçiler, kayıt ve görselleştirme (Final Fantasy XV), otomatik testler; Cities: Skylines II’nin “dişleri”</li>
+      <li><b>Zaman dilimleme ve kuyruklar</b> — işi karelere yaymak, yol isteklerini sıraya koymak</li>
+      <li><b>YZ LOD’u</b> — LOD Trader ve Assassin’s Creed Unity’nin 10.000 kişilik kalabalığı</li>
+      <li><b>Olaylar, önbellek, uzaysal yapılar</b> — hesaplanabilen şeyi güncelleme</li>
+      <li><b>Veri odaklı tasarım ve iş parçacıkları</b> — Unity DOTS, Unreal Mass</li>
+      <li><b>Kod</b> — zaman dilimli zamanlayıcı, Jobs + Burst, profil + dört laboratuvar</li>
+      <li><b>Araçlar</b> — Unity Profiler, Unreal Insights, Godot, Tracy</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…YZ’nin kare süresindeki payını ölçebilecek, pahalı işleri karelere yayıp kuyruğa alabilecek, NPC’leri önemlerine göre farklı ayrıntıda çalıştırabilecek ve “bu optimizasyon gerçekten gerekli mi?” sorusunu veriyle cevaplayabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: 500 NPC, KİŞİ BAŞI 10 IŞIN</span>
+    <p class="big">Her NPC her karede çevresini görmek için 10 ışın (raycast) atıyor. Sahnede 500 NPC var ve oyun 60 FPS. Saniyede kaç ışın?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">500 × 10 × 60 = <b>300.000</b> ışın/saniye. Bir ışın birkaç mikrosaniye sürse bile bu, karenin büyük bir kısmı.</li>
+    <li class="fragment">Ama oyuncu aynı anda en fazla birkaç NPC’ye bakıyor. Uzaktaki bir köylünün görüşünü saniyede 60 kez yenilemek kimin işine yarıyor?</li>
+    <li class="fragment">Oyun YZ’si performansının özü: <b>doğru işi, doğru sıklıkta, doğru ayrıntıda</b> yapmak. Ve bunu tahminle değil <b>ölçerek</b> yapmak.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-astar/">Y8 · A* (düğüm açma maliyeti)</a><a class="" href="../yz-algilama/">Y11 · Algılama (ışınlar)</a><a class="" href="../yz-steering/">Y7 · Steering (komşu arama, boids)</a></div>
+  <div class="prereq"><a class="opt" href="../oncelik-kuyruklari/">Öncelik Kuyrukları (yığın)</a><a class="opt" href="../algoritma-analizi/">Algoritma Analizi (büyüme hızı)</a><a class="opt" href="../yz-davranis-agaclari/">Y3 · Davranış Ağaçları (olay güdümlü)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu ders algoritmalar dersinin “büyüme hızı” fikrinin oyundaki karşılığı: n NPC için O(n²) komşu arama ile ızgara arasındaki fark, kare süresinde milisaniyeler demek. Olay tabanlı güncelleme bir öncelik kuyruğu (yığın) kullanır.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Profilleyiciyi açıp bir grafiğe bakmayı ve bir döngünün kaç kez çalıştığını saymayı bilmek yeter. DOTS ve iş parçacıkları için tanıtım düzeyinde kalacağız.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>frame budget · frame time</td><td>kare bütçesi · kare süresi</td><td>Bir karede harcanabilecek süre (60 FPS → 16,7 ms) · gerçekte harcanan süre</td></tr>
+    <tr><td>spike · hitch · 1% low</td><td>sıçrama · takılma · en kötü %1</td><td>Tek bir karenin çok uzaması · oyuncunun hissettiği donma · en yavaş karelerin ortalaması</td></tr>
+    <tr><td>profiler · marker</td><td>profilleyici · işaretçi</td><td>Kodun nerede ne kadar süre harcadığını ölçen araç · ölçülecek kod bölümü</td></tr>
+    <tr><td>time slicing · staggering</td><td>zaman dilimleme · kademelendirme</td><td>İşi birden çok kareye yaymak · ajanların güncellemelerini farklı karelere dağıtmak</td></tr>
+    <tr><td>LOD (level of detail)</td><td>ayrıntı düzeyi</td><td>Önemsiz şeyi daha ucuz/seyrek hesaplamak</td></tr>
+    <tr><td>starvation</td><td>açlık</td><td>Bir ajanın sırası hiç gelmemesi</td></tr>
+    <tr><td>spatial partitioning</td><td>uzaysal bölümleme</td><td>Izgara, dörtlü ağaç: “yakınımda kim var?” sorusunu hızlandıran yapılar</td></tr>
+    <tr><td>DOD · ECS · cache miss</td><td>veri odaklı tasarım · varlık-bileşen-sistem · önbellek ıskası</td><td>Veriyi işlenme biçimine göre düzenlemek · Unity DOTS mimarisi · işlemcinin veriyi bellekten beklemesi</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Bütçe: 16,7 ms</div>
+  <div class="sub">zaman en kıt kaynak</div>
+  <ul class="agenda"><li class="on">bütçe: 16,7 ms</li><li class="">önce ölç</li><li class="">zaman dilimleme ve kuyruklar</li><li class="">YZ LOD’u</li><li class="">olaylar, önbellek, uzaysal yapılar</li><li class="">veri odaklı tasarım ve iş parçacıkları</li><li class="">kod ve laboratuvarlar</li><li class="">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="bütçe">
+  <h2>Kare bütçesi</h2>
+  <div class="cols">
+    <div>
+      <table class="sum-t" style="font-size:16px">
+        <tr><th>hedef</th><th>kare başına</th></tr>
+        <tr><td>30 FPS (bazı konsol oyunları)</td><td>33,3 ms</td></tr>
+        <tr><td>60 FPS (çoğu oyun)</td><td><b>16,7 ms</b></td></tr>
+        <tr><td>120 FPS (rekabetçi, VR’ye yakın)</td><td>8,3 ms</td></tr>
+      </table>
+      <ul style="font-size:.84em;margin-top:8px">
+        <li>Bu süreye <b>her şey</b> sığmalı: girdi, fizik, animasyon, ses, ağ, oyun kodu, YZ, çizim hazırlığı.</li>
+        <li>YZ’ye genelde birkaç milisaniyelik bir dilim düşer (oyuna göre değişir; strateji oyunlarında daha fazla).</li>
+        <li>Ortalama değil <b>en kötü kare</b> önemlidir: ortalama 12 ms ama arada bir 40 ms olan bir oyun “takılıyor” diye hissedilir.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">YZ zamanı nereye gider?</span>
+        <ul style="font-size:.82em">
+          <li><b>Algılama</b>: görüş ışınları, ses sorguları (Y11)</li>
+          <li><b>Yol bulma</b>: A* aramaları, navmesh sorguları (Y8, Y9)</li>
+          <li><b>Konum sorguları</b>: EQS/TPS gibi çok sayıda aday noktanın test edilmesi (Y12)</li>
+          <li><b>Karar</b>: davranış ağacı, utility, GOAP planlama (Y3–Y5)</li>
+          <li><b>Hareket</b>: steering, komşu arama, çarpışmadan kaçınma (Y7, Y10)</li>
+        </ul>
+        Genelde en pahalıları <b>ışınlar</b> ve <b>yol bulma</b>; karar mantığı çoğu zaman şaşırtıcı derecede ucuzdur.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="bütçe">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · bütçe</div>
+    <div class="q">Oyununuzun ortalama kare süresi 11 ms, ama her 3–4 saniyede bir 45 ms’lik kareler var. Oyuncu ne hisseder ve ilk şüpheli ne olmalı?</div>
+    <div class="opts">
+      <button data-opt="A">Düzenli takılmalar hisseder; ilk şüpheli aynı anda toplu yapılan pahalı işler (ör. birçok NPC’nin aynı karede yol istemesi)</button>
+      <button data-opt="B">Hiçbir şey, ortalama 60 FPS’nin altında</button>
+      <button data-opt="C">Sadece GPU’ya bakılmalı</button>
+      <button data-opt="D">Ortalama düşük olduğu için optimizasyon gerekmez</button>
+    </div>
+    <div class="explain">Göz, ortalamayı değil <b>tutarsızlığı</b> fark eder. Periyodik sıçramaların klasik sebebi, birçok sistemin aynı karede tetiklenmesidir: bütün NPC’lerin aynı anda yeniden plan yapması, aynı saniyede başlayan zamanlayıcılar. Çözüm: işi kademelendirmek ve kuyruğa almak (Level 2).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Önce ölç</div>
+  <div class="sub">tahmin etme, ölç</div>
+  <ul class="agenda"><li class="done">bütçe: 16,7 ms</li><li class="on">önce ölç</li><li class="">zaman dilimleme ve kuyruklar</li><li class="">YZ LOD’u</li><li class="">olaylar, önbellek, uzaysal yapılar</li><li class="">veri odaklı tasarım ve iş parçacıkları</li><li class="">kod ve laboratuvarlar</li><li class="">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="ölç">
+  <h2>Ölçmeden optimize etmeyin</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Donald Knuth’un ünlü uyarısı: “Erken optimizasyon bütün kötülüklerin anasıdır.” Zamanın çoğu kodun küçük bir bölümünde harcanır; hangisi olduğunu <b>tahminle</b> bulmak zordur.</li>
+        <li><b>Profilleyici</b>: Unity Profiler, Unreal Insights, Godot’nun profilleyicisi. Her sistemin kare başına süresini ve çağrı sayısını gösterir.</li>
+        <li><b>İşaretçiler</b>: kendi kodunuzun bölümlerini adlandırın (“AI.Perception”, “AI.Path”): profilleyicide ayrı satır olarak görünür.</li>
+        <li><b>Sayaçlar</b>: kare başına ışın sayısı, açılan A* düğümü, aktif NPC. Süre dalgalanır; sayılar sebebi gösterir.</li>
+        <li><b>Hedef cihazda ölçün</b>: geliştirme bilgisayarı oyuncunun telefonundan 10 kat hızlı olabilir.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Kayıt ve görselleştirme: Final Fantasy XV</span>Matthew W. Johnson ve arkadaşları (Game AI Pro 3, 3. bölüm): yüzlerce kişilik ekipte NPC hareket sorunlarını bulmak için oyun olayları bir veritabanına kaydedildi ve web tabanlı bir arayüzde harita üzerinde incelendi: takılan NPC’ler, olayların zaman ve mekândaki dağılımı, navmesh’in zamanla değişimi.</div>
+      <div class="box game"><span class="bt">Otomatik YZ testleri</span>Malte Skarupke (GAP Online 2021): YZ hatalarının çoğu <b>iki karakterle</b> yeniden üretilebilir. Küçük test seviyeleri + otomatik testler, hem hataları hem de performans gerilemelerini erken yakalar.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ölç">
+  <h2>Efsane mi, gerçek mi? Cities: Skylines II’nin “dişleri”</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Ekim 2023’te çıkan şehir kurma oyunu ciddi performans sorunlarıyla eleştirildi. Çıkıştan bir gün sonra bir Reddit gönderisi, vatandaş modellerinin <b>tek tek modellenmiş dişlerle</b> ve ayrıntı düzeyi (LOD) olmadan çizildiğini gösterdi; “oyun dişler yüzünden yavaş” fikri hızla yayıldı.</li>
+        <li>Geliştirici Colossal Order: dişlerin performans sorununun asıl sebebi <b>olmadığını</b>, ama karakterlerin <b>LOD modellerinin eksik</b> olduğunu ve bunun performansı etkilediğini açıkladı; LOD, su simülasyonu ve arazi gibi alanlarda iyileştirmeler yapıldı.</li>
+      </ul>
+      <p style="font-size:.84em"><b>Durum</b>: “Dişler oyunu yavaşlattı” → büyük ölçüde <b>efsane</b>. “Eksik LOD performansı düşürdü” → <b>gerçek</b>.</p>
+    </div>
+    <div class="box warn"><span class="bt">Ders</span>Gözle görülür, akılda kalıcı bir “suçlu” bulmak kolaydır; asıl sebebi bulmak <b>ölçüm</b> ister. Profilleyici açılmadan yapılan tartışmalar (oyuncu forumlarında da, ekip içinde de) çoğu zaman yanlış yeri işaret eder. Bir de: görülmeyen ayrıntıya harcanan her milisaniye, görünen bir şeyden çalınmıştır. LOD’un mantığı bu.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Zaman dilimleme ve kuyruklar</div>
+  <div class="sub">işi karelere yaymak</div>
+  <ul class="agenda"><li class="done">bütçe: 16,7 ms</li><li class="done">önce ölç</li><li class="on">zaman dilimleme ve kuyruklar</li><li class="">YZ LOD’u</li><li class="">olaylar, önbellek, uzaysal yapılar</li><li class="">veri odaklı tasarım ve iş parçacıkları</li><li class="">kod ve laboratuvarlar</li><li class="">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="zaman dilimleme">
+  <h2>Herkes her kare düşünmek zorunda değil</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li><b>Kademelendirme</b>: 100 NPC’yi her kare değil, her karede 10’unu güncelle. Her NPC 10 karede bir (60 FPS’de saniyede 6 kez) düşünür: çoğu karar için fazlasıyla yeterli. İnsanın tepki süresi de ~200 ms.</li>
+        <li><b>Bütçeli dilimleme</b>: YZ’ye sabit bir süre (ör. 2 ms) ver; süre dolana kadar sıradakileri güncelle, kalanlar sonraki kareye.</li>
+        <li><b>Kuyruk</b>: pahalı istekler (yol, konum sorgusu) bir kuyruğa girer; her kare sınırlı sayıda işlenir. Uzun bir arama bir kareye sığmazsa <b>kaldığı yerden</b> sonraki karede devam eder.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">Tuzaklar</span>Tutarsız güncelleme (bir meşale fazladan yanar), <b>açlık</b> (bazı ajanların sırası hiç gelmez), her ajanın listede durmasının bile maliyeti (David “Rez” Graham, GAP Online 2021).</div>
+      <div class="box low"><span class="bt">Kodda</span>Graham’ın örneğindeki gibi: bir indeks kareler arasında saklanır; her kare bu indeksten devam edilir ve süre dolunca durulur. Laboratuvarda bunun öncelikli bir sürümünü yazacaksınız.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="zaman dilimleme">
+  <h2>Canlı: kare bütçesi ⏱️</h2>
+  <div class="demo" data-demo="budget"></div>
+</section>
+
+<section data-sec="zaman dilimleme">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>“herkes her kare” + 400 ajan: mor YZ çubukları bütçe çizgisini aşıyor; kırmızı çubuklar pahalı yol isteklerinin sıçramaları.</li>
+      <li>“zaman dilimleme”: kare süresi sabit! Ama ajan sayısını artırınca “en bayat ajan” büyüyor; soluk noktalar uzun süredir düşünmeyen ajanlar.</li>
+      <li>“uzaklığa göre LOD”: oyuncuyu (mavi) kalabalığın ortasına sürükleyin: yakındaki herkes her kare güncelleniyor, bütçe yine aşılabiliyor.</li>
+      <li>“LOD + bütçe”: yakındakiler ve takip ettiğiniz sarı ajan her kare; kalan bütçe en uzun süredir bekleyenlere. “Başka ajanı takip et” ile uzaktaki birini seçin: hâlâ her kare güncelleniyor mu?</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="zaman dilimleme">
+  <h2>Canlı: yol isteği kuyruğu 📨</h2>
+  <div class="demo" data-demo="pathqueue"></div>
+</section>
+
+<section data-sec="zaman dilimleme">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · zaman dilimleme</div>
+    <div class="q">Yol isteklerini kare başına sınırlı düğümle işleyen bir kuyruk kurdunuz. 30 NPC aynı anda istek yapınca sonuncusu 20 kare bekliyor. Oyuncunun bunu fark etmemesi için en iyi tasarım?</div>
+    <div class="opts">
+      <button data-opt="A">Bekleyen NPC hemen hedefe kabaca dönsün/yürümeye başlasın ya da “düşünme” animasyonu oynasın; yakındaki NPC’lerin isteklerine öncelik verin</button>
+      <button data-opt="B">Bütçeyi kaldırın, herkes aynı karede hesaplasın</button>
+      <button data-opt="C">Kuyruğu rastgele karıştırın</button>
+      <button data-opt="D">Bekleyen NPC olduğu yerde donsun</button>
+    </div>
+    <div class="explain">Gecikme kaçınılmazsa onu <b>gizleyin</b>: hedefe doğru kaba bir ilk adım, bir tepki animasyonu, yakındakilere öncelik. Bütçeyi kaldırmak (B) sıçramayı geri getirir. Donan NPC (D) en göze batan seçenektir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">YZ LOD’u</div>
+  <div class="sub">önemsiz olan ucuz olsun</div>
+  <ul class="agenda"><li class="done">bütçe: 16,7 ms</li><li class="done">önce ölç</li><li class="done">zaman dilimleme ve kuyruklar</li><li class="on">YZ LOD’u</li><li class="">olaylar, önbellek, uzaysal yapılar</li><li class="">veri odaklı tasarım ve iş parçacıkları</li><li class="">kod ve laboratuvarlar</li><li class="">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="LOD">
+  <h2>Derin hikâye: LOD Trader, uzaklık yerine “fark edilme olasılığı”</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.8em">Ben Sunshine-Hill (Game AI Pro, 14. bölüm): uzaklık eşikleri yetersizdir; kalabalık oyuncunun yanına gelirse bütçe patlar, seyrek alanlarda ise ayrıntı gereksiz yere kısılır.</p>
+      <ul style="font-size:.78em">
+        <li>Ölçü: oyuncunun bir <b>gerçekçilik kırılmasını</b> fark etme olasılığı. Üç tür: <b>gerçek dışı durum</b> (duvara doğru yerinde koşmak), <b>süreksizlik</b> (köşeyi dönünce kaybolan karakter), <b>gerçek dışı uzun vadeli davranış</b> (amaçsızca dolaşan karakter).</li>
+        <li>Her karakter için tür başına bir <b>kritiklik</b>: görünürlük, dikkat (oyuncu onu takip ediyor mu?)… Takip edilen şüpheli uzakta olsa bile iyi yol bulma alır; önden geçen köylü iyi animasyon.</li>
+        <li>Her kare, bütçeyi aşmadan toplam fark edilme olasılığını en aza indiren seçim (yaklaşık bir sırt çantası çözümü).</li>
+        <li>Yüzlerce karakterli açık dünya bir oyunda 8 özelliği yönetti: ortalama <b>57 µs/kare</b> (%0,17). Kör deneyde izleyiciler uzaklık tabanlı LOD’daki kırılmaları daha sık fark etti.</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Ana fikir</span>“Bu karakter <b>ne kadar uzakta</b>?” değil, “oyuncu bu karakterdeki ayrıntı kaybını <b>fark eder mi</b>?” Uzaklık bunun sadece bir parçası. Y12’deki utility puanlamasının ve Y11’deki farkındalığın performans dünyasındaki karşılığı.</div>
+  </div>
+</section>
+
+<section data-sec="LOD">
+  <h2>Derin hikâye: Assassin’s Creed Unity’nin kalabalığı (2014)</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Fransız Devrimi Paris’i: Ubisoft, bazı görevlerde <b>5.000</b>, kralın idam sahnesinde <b>10.000</b> kişilik kalabalıklar hedefledi. Kalabalık tepkileri için 500’den fazla “kalabalık hayatı” türü vardı.</li>
+        <li>Ama aynı anda ancak <b>40 “gerçek” YZ</b> ve <b>120 yüksek çözünürlüklü model</b> çalıştırılabiliyordu.</li>
+        <li>Çözüm (GDC 2015, “Massive Crowd on Assassin’s Creed Unity: AI Recycling”): kalabalığın büyük kısmı ucuz, düşük ayrıntılı temsillerdir; oyuncu yaklaştıkça ya da biriyle etkileşime girdikçe bu kişi bir havuzdan alınan tam YZ’ye ve yüksek çözünürlüklü modele <b>fark ettirmeden</b> dönüşür; uzaklaşınca kaynak geri verilir.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Havuz (pooling)</span>Pahalı nesneleri (tam YZ beyni, ayrıntılı model) her seferinde oluşturup yok etmek yerine sabit sayıda hazırlayıp sırayla <b>yeniden kullanmak</b>: hem hız hem bellek için. Mermi ve parçacıklarda da standart.</div>
+      <div class="box game"><span class="bt">🎬</span><a href="https://www.youtube.com/watch?v=Rz2cNWVLncI" target="_blank" rel="noopener">Massive Crowd on Assassin’s Creed Unity: AI Recycling</a> (GDC)</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Olaylar, önbellek, uzaysal yapılar</div>
+  <div class="sub">hesaplanabilen şeyi güncelleme</div>
+  <ul class="agenda"><li class="done">bütçe: 16,7 ms</li><li class="done">önce ölç</li><li class="done">zaman dilimleme ve kuyruklar</li><li class="done">YZ LOD’u</li><li class="on">olaylar, önbellek, uzaysal yapılar</li><li class="">veri odaklı tasarım ve iş parçacıkları</li><li class="">kod ve laboratuvarlar</li><li class="">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="olaylar">
+  <h2>Olay tabanlı güncelleme</h2>
+  <div class="cols c46">
+    <div>
+      <ul style="font-size:.82em">
+        <li>Bir NPC’nin açlığı saniyede 0,1 artıyorsa, onu her kare güncellemek yerine <b>ne zaman acıkacağını</b> bir kez hesaplayın ve bir öncelik kuyruğuna koyun.</li>
+        <li>Değer gerekirse (oyuncu NPC’ye baktı) formülle hesaplanır: <code>açlık = başlangıç + hız · geçen süre</code>.</li>
+        <li>Davranış ağaçlarında da aynı fikir: Unreal’ın olay güdümlü ağaçları (Y3) her kare kökten başlamak yerine kara tahtadaki <b>değişikliklere</b> tepki verir.</li>
+      </ul>
+    </div>
+    <div class="demo" data-demo="events"></div>
+  </div>
+</section>
+
+<section data-sec="olaylar">
+  <h2>Önbellek, ön hesaplama, uzaysal yapılar</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Önbellek</span>Aynı soruyu tekrar sormayın: bir konum sorgusunun sonucu birkaç kare geçerlidir (Y12); görünürlük sonucu, hedef ve gözlemci çok hareket etmediyse yeniden kullanılabilir. Sorun: “ne zaman geçersiz?” sorusu (ölü önbellek hatası).</div>
+    <div class="box game"><span class="bt">Ön hesaplama</span>Navmesh pişirme (Y9), görünürlük tabloları, etki haritaları (Y12), akış alanları: oyun başlamadan ya da seyrek hesaplanır, oyun sırasında okunur. Fieldrunners 2: binlerce birim tek bir akış alanını paylaşır (Y7).</div>
+    <div class="box low"><span class="bt">Uzaysal yapılar</span>“Yakınımda kim var?” sorusu için herkesi herkesle karşılaştırmak O(n²): 1000 NPC → 1 milyon karşılaştırma. Izgara ya da dörtlü ağaç ile sadece komşu hücrelere bakılır (Y7’deki boids demosundaki “kontrol sayısı”nı hatırlayın).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Veri odaklı tasarım ve iş parçacıkları</div>
+  <div class="sub">DOTS, Mass, çok çekirdek</div>
+  <ul class="agenda"><li class="done">bütçe: 16,7 ms</li><li class="done">önce ölç</li><li class="done">zaman dilimleme ve kuyruklar</li><li class="done">YZ LOD’u</li><li class="done">olaylar, önbellek, uzaysal yapılar</li><li class="on">veri odaklı tasarım ve iş parçacıkları</li><li class="">kod ve laboratuvarlar</li><li class="">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="DOD">
+  <h2>Veri odaklı tasarım: önbellek dostu kod</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>İşlemci, belleği tek tek değil <b>satırlar</b> hâlinde getirir. Verileriniz bellekte art arda duruyorsa hızlı; her NPC ayrı bir nesne ve her alan farklı yerdeyse işlemci zamanının çoğunu <b>beklemekle</b> geçirir (önbellek ıskası).</li>
+        <li><b>Nesne dizisi</b> (AoS): her NPC’nin konum, can, durum… hepsi bir arada. <b>Dizi nesnesi</b> (SoA): bütün konumlar bir dizide, bütün canlar başka bir dizide. “Bütün konumları güncelle” işi SoA’da çok daha hızlıdır.</li>
+        <li>Mike Acton’ın CppCon 2014 konuşması “Data-Oriented Design and C++” bu yaklaşımın klasik anlatımıdır.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Motorlarda</span>
+        <ul style="font-size:.82em">
+          <li><b>Unity DOTS</b>: Entities (ECS), C# Job System, Burst derleyicisi. Entities 1.0, Haziran 2023’te Unity 2022 LTS ile üretime hazır olarak yayımlandı. Jobs ve Burst, ECS kullanmadan da her projede kullanılabilir.</li>
+          <li><b>Unreal Mass (MassEntity)</b>: binlerce varlık için veri odaklı çerçeve; The Matrix Awakens demosunu temel alan City Sample projesinde kalabalık ve trafik bununla yönetildi.</li>
+          <li><b>Godot</b>: sunucu API’leri (PhysicsServer, NavigationServer) ve GDExtension ile C++/Rust.</li>
+        </ul></div>
+      <div class="box warn"><span class="bt">⚠️ İş parçacıkları</span>Çok çekirdek bedava hız değildir: iki iş parçacığı aynı veriyi aynı anda yazarsa <b>yarış durumu</b>. Güvenli kalıp: işler sadece kendi verisini yazar, ortak veriyi <b>salt okunur</b> okur; sonuçlar kare sonunda birleştirilir (Unity Jobs bunu derleme zamanında denetler).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="DOD">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · DOD</div>
+    <div class="q">2000 NPC’nin konumunu her kare güncelleyen bir sistemde profilleyici, işin hesaplamadan çok “bellek beklemekle” geçtiğini gösteriyor. En etkili değişiklik hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Konum ve hızları art arda duran dizilerde (SoA/ECS) tutup döngüyü bu diziler üzerinde, gerekirse iş parçacıklarına bölerek çalıştırmak</button>
+      <button data-opt="B">Her NPC’ye ayrı bir MonoBehaviour.Update eklemek</button>
+      <button data-opt="C">Konumları double yerine string tutmak</button>
+      <button data-opt="D">Daha çok sınıf ve kalıtım katmanı eklemek</button>
+    </div>
+    <div class="explain">Bellek bekleme sorunu veri yerleşimiyle çözülür: art arda veri, önbelleğe tek seferde gelir. Unity’de binlerce ayrı Update çağrısının kendisi de maliyetlidir; ECS/Jobs ya da tek bir yönetici döngü tercih edilir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">zamanlayıcı, Jobs, profil</div>
+  <ul class="agenda"><li class="done">bütçe: 16,7 ms</li><li class="done">önce ölç</li><li class="done">zaman dilimleme ve kuyruklar</li><li class="done">YZ LOD’u</li><li class="done">olaylar, önbellek, uzaysal yapılar</li><li class="done">veri odaklı tasarım ve iş parçacıkları</li><li class="on">kod ve laboratuvarlar</li><li class="">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>Zaman dilimli YZ zamanlayıcısı ve ölçüm</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="12|16-27"><script type="text/template">
+using System.Collections.Generic;
+using Unity.Profiling;
+using UnityEngine;
+
+public interface IAIAgent { void Think(); float Priority { get; } }
+
+public class AIScheduler : MonoBehaviour {
+    public float budgetMs = 2f;
+    readonly List<IAIAgent> agents = new();
+    int next;
+    readonly System.Diagnostics.Stopwatch sw = new();
+    static readonly ProfilerMarker s_Think = new("AI.Think");     // profilleyicide ayrı satır
+
+    public void Register(IAIAgent a) => agents.Add(a);
+
+    void Update() {
+        if (agents.Count == 0) return;
+        sw.Restart();
+        int done = 0;
+        using (s_Think.Auto()) {
+            while (done < agents.Count && sw.Elapsed.TotalMilliseconds < budgetMs) {
+                agents[next].Think();                     // algılama + karar + istekler
+                next = (next + 1) % agents.Count;         // sırayla: açlık yok
+                done++;
+            }
+        }
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="6|8-10"><script type="text/template">
+import cProfile, pstats, time
+
+def simulate(n_agents, frames=300):
+    ...  # YZ döngünüz
+
+# 1) Kaba ölçüm
+t0 = time.perf_counter(); simulate(500); print(f"{(time.perf_counter() - t0) * 1000:.1f} ms")
+
+# 2) Profil: zaman nerede harcanıyor?
+cProfile.run("simulate(500)", "ai.prof")
+pstats.Stats("ai.prof").sort_stats("cumulative").print_stats(10)   # en pahalı 10 fonksiyon
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: kare başına YZ süresini ölç ve ekrana yaz
+let aiMs = 0;
+function draw() {
+  const t0 = performance.now();
+  updateAI();                                  // sizin YZ güncellemeniz
+  aiMs = 0.9 * aiMs + 0.1 * (performance.now() - t0);   // yumuşatılmış ortalama
+  render();
+  fill(aiMs > 4 ? 'red' : 'black');
+  text(`YZ: ${aiMs.toFixed(2)} ms  FPS: ${frameRate().toFixed(0)}`, 10, 20);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Unity C# Job System + Burst</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="6-11|13-18|21-24"><script type="text/template">
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
+
+[BurstCompile]                                    // yerel koda derlenir, SIMD kullanır
+struct NearestThreatJob : IJobParallelFor {
+    [ReadOnly] public NativeArray<float3> agents;
+    [ReadOnly] public NativeArray<float3> threats;
+    public NativeArray<float> nearestDist;        // her iş sadece kendi indisini yazar
+
+    public void Execute(int i) {
+        float best = float.MaxValue;
+        for (int k = 0; k < threats.Length; k++)
+            best = math.min(best, math.distancesq(agents[i], threats[k]));
+        nearestDist[i] = math.sqrt(best);
+    }
+}
+
+// Bir MonoBehaviour içinde (diziler Allocator.Persistent ile bir kez oluşturulur, OnDestroy'da Dispose):
+// var job = new NearestThreatJob { agents = agentPos, threats = threatPos, nearestDist = result };
+// JobHandle h = job.Schedule(agentPos.Length, 64);   // 64'lük paketler hâlinde çekirdeklere dağıt
+// h.Complete();                                       // sonuçlara ihtiyaç olduğu anda bekle
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Burst ile basit sayısal döngüler genelde düz C#’tan kat kat hızlı çalışır; ama ölçmeden varsaymayın. Fizik ışınları için toplu sorgu: <code>RaycastCommand.ScheduleBatch</code>.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>Stopwatch · Elapsed.TotalMilliseconds</td><td>kronometre</td><td>Kod içinde süre ölçmek</td></tr>
+    <tr><td>ProfilerMarker · .Auto()</td><td>profil işaretçisi</td><td>using bloğu süresince ölçüm; Unity Profiler’da adıyla görünür</td></tr>
+    <tr><td>interface IAIAgent</td><td>arayüz</td><td>“Think() metodu olan her şey”; zamanlayıcı türden bağımsız çalışır</td></tr>
+    <tr><td>struct · IJobParallelFor · Execute(i)</td><td>iş yapısı</td><td>Her indis için ayrı çalışan, çekirdeklere dağıtılan iş</td></tr>
+    <tr><td>NativeArray · [ReadOnly] · Dispose</td><td>yerel dizi</td><td>Çöp toplayıcı dışı bellek; salt okunur işaret; elle serbest bırakma</td></tr>
+    <tr><td>cProfile · pstats</td><td>Python profilleyici</td><td>Fonksiyon başına süre ve çağrı sayısı</td></tr>
+    <tr><td>performance.now()</td><td>yüksek çözünürlüklü zaman</td><td>Tarayıcıda milisaniye ölçümü</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: bu kare kimi güncelleyeyim?</h2>
+  <div class="simlab" data-sim="slice" data-fns="pickAgents" data-lang="js">
+<textarea>
+// agents: [{id, x, y, dist, lastUpdate}, ...]  (dist: oyuncuya uzaklık)
+// budget: bu kare en fazla kaç ajan güncellenebilir (12)
+// frame: kare numarası
+// Döndür: güncellenecek ajanların İNDİS listesi (en fazla budget tane).
+// Kurallar: oyuncuya yakın (dist < 60) olanlar en az 2 karede bir güncellenmeli;
+//           hiçbir ajan 15 kareden fazla beklememeli.
+function pickAgents(agents, budget, frame) {
+  return [0, 1, 2];   // hep aynı üç ajan: diğerleri açlıktan ölür
+}
+</textarea>
+    <div class="lab-tasks">İpucu: önce yakındakiler (en uzun bekleyen önce), sonra kalan yere herkesi lastUpdate’e göre sırala. Sağda sarı = bu kare güncellenen, kırmızı = 10+ karedir bekleyen.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: sırayla güncelleme (round-robin)</h2>
+  <div class="ailab" data-lab="rr" data-lang="python">
+<textarea>
+# n: ajan sayısı, per_frame: kare başına güncellenecek ajan, frame: kare no (0'dan)
+# k = min(per_frame, n); bu karede (frame*k + j) % n, j = 0..k-1 güncellenir.
+# Listeyi döndür (n == 0 ise boş liste).
+def slice_indices(n, per_frame, frame):
+    return []
+</textarea>
+    <div class="lab-tasks">En basit kademelendirme: her ajan n/k karede bir güncellenir, hiçbiri atlanmaz. Laboratuvardaki öncelikli seçimin temeli.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: ayrıntı düzeyi seçimi</h2>
+  <div class="ailab" data-lab="lod" data-lang="python">
+<textarea>
+# dist: oyuncuya uzaklık, on_screen: ekranda mı, is_target: oyuncunun hedefi/takip ettiği mi
+# near, far: eşikler
+# Kurallar: hedefse 0 (tam ayrıntı).
+#           ekranda değilse: dist < near ise 1, değilse 3 (çok seyrek)
+#           ekrandaysa: dist < near → 0, dist < far → 1, değilse 2
+def lod_level(dist, on_screen, is_target, near, far):
+    return 0
+</textarea>
+    <div class="lab-tasks">Sadece uzaklık değil, <b>görünürlük</b> ve <b>dikkat</b> de hesaba giriyor: LOD Trader’ın kritiklik fikrinin basit hâli. 0–3 seviyeleri her biri farklı güncelleme sıklığına eşlenir.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: olay ne zaman olacak?</h2>
+  <div class="ailab" data-lab="untilev" data-lang="python">
+<textarea>
+# value: şu anki değer (ör. açlık), rate: saniyedeki artış, threshold: eşik
+# Eşiğe kaç saniye sonra ulaşılır?
+# value >= threshold → 0; rate <= 0 → None (asla); değilse (threshold - value) / rate
+def time_until(value, rate, threshold):
+    return 0.0
+</textarea>
+    <div class="lab-tasks">Olay tabanlı güncellemenin çekirdeği: değeri her kare artırmak yerine olayın zamanını bir kez hesaplayıp öncelik kuyruğuna koymak.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Araçlar ve entegrasyon</div>
+  <div class="sub">ölç, bütçele, izle</div>
+  <ul class="agenda"><li class="done">bütçe: 16,7 ms</li><li class="done">önce ölç</li><li class="done">zaman dilimleme ve kuyruklar</li><li class="done">YZ LOD’u</li><li class="done">olaylar, önbellek, uzaysal yapılar</li><li class="done">veri odaklı tasarım ve iş parçacıkları</li><li class="done">kod ve laboratuvarlar</li><li class="on">araçlar ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/Manual/Profiler.html" target="_blank" rel="noopener"><b>Unity Profiler · Profile Analyzer</b></a></td><td>Unity</td><td>CPU/GPU/bellek zaman çizelgesi, ProfilerMarker satırları, iki ölçümü karşılaştırma; hedef cihaza bağlanarak ölçüm.</td><td>Window → Analysis → Profiler; Package Manager → Profile Analyzer</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-insights-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Insights · stat komutları</b></a></td><td>Unreal</td><td>İz (trace) tabanlı ayrıntılı profil; <code>stat unit</code>, <code>stat game</code>, AI hata ayıklayıcısı (Gameplay Debugger).</td><td>Motorla birlikte</td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/tutorials/scripting/debug/the_profiler.html" target="_blank" rel="noopener"><b>Godot Profiler · Monitors</b></a></td><td>Godot 4</td><td>Betik fonksiyonu başına süre, fizik/navigasyon sayaçları, özel monitörler.</td><td>Debugger paneli</td></tr><tr><td><a href="https://github.com/wolfpld/tracy" target="_blank" rel="noopener"><b>Tracy</b></a></td><td>C/C++ (bağlamalar: C#, Lua, Python…)</td><td>Açık kaynak, nanosaniye çözünürlüklü kare profilleyicisi; çok iş parçacıklı zaman çizelgesi.</td><td>GitHub sürümü</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.entities@1.3/manual/index.html" target="_blank" rel="noopener"><b>Unity Entities · Jobs · Burst</b></a></td><td>Unity</td><td>ECS, çok çekirdekli işler, yüksek performanslı derleyici.</td><td>Package Manager</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-mass-entity-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Mass</b></a></td><td>Unreal 5</td><td>Binlerce varlık için veri odaklı kalabalık/trafik çerçevesi (MassEntity, MassAI).</td><td>Plugins → MassEntity, MassAI</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="entegrasyon">
+  <h2>🧩 YZ performansını yönetmek</h2>
+  <div class="cols">
+    <ol style="font-size:.8em">
+      <li><b>Bütçe yazın</b>: “YZ ≤ 3 ms, yol bulma ≤ 1 ms, algılama ≤ 1 ms” gibi; hedef cihazda.</li>
+      <li><b>İşaretleyin ve sayın</b>: her alt sistem için profil işaretçisi ve sayaç (ışın, düğüm, aktif ajan).</li>
+      <li><b>En kötü durumu test edin</b>: “en kalabalık sahne” test seviyesi; otomatik performans testi (gerileme alarmı).</li>
+      <li><b>Önce algoritma</b>: O(n²) → ızgara; her kare → olay; tekrar → önbellek. Sonra kademelendirme ve LOD. En son mikro optimizasyon ve iş parçacıkları.</li>
+      <li><b>Gecikmeyi gizleyin</b>: kuyrukta bekleyen NPC kaba bir tepki versin.</li>
+      <li><b>Hata ayıklama görünümü</b>: hangi NPC hangi LOD’da, kaç karedir güncellenmedi: oyun içinde renkli gösterin.</li>
+    </ol>
+    <div>
+      <div class="box warn"><span class="bt">Sık hatalar</span>
+        <ul style="font-size:.8em">
+          <li>Editörde ölçüp oyuncu cihazını unutmak.</li>
+          <li>Ortalama FPS’ye bakıp sıçramaları kaçırmak.</li>
+          <li>Unity’de her NPC’ye ayrı Update, her karede GetComponent, LINQ ve çöp üreten kod.</li>
+          <li>Optimizasyonun davranışı bozduğunu fark etmemek (LOD’da duvara takılan uzak NPC): görsel test şart.</li>
+        </ul></div>
+      <div class="box low"><span class="bt">⚙️ Mobil ve web</span>Daha az çekirdek, ısınma ve pil: bütçeler masaüstünün yarısı ya da daha azı. WebGL’de iş parçacıkları sınırlıdır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Ölçmeden “bu yavaş olabilir” diye kodu karmaşıklaştırmak</li><li>Asistanın önerdiği iş parçacığı kodunu yarış durumu açısından incelemeden kullanmak</li><li>Her karede new ile nesne üretmek (çöp toplayıcı takılmaları)</li><li>Davranışı bozan agresif LOD’u test etmeden yayına koymak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir AIScheduler yaz: (1) IAIAgent arayüzü (Think(), DistanceToPlayer, IsVisible, IsPlayerTarget). (2) Her kare 2 ms bütçe (Stopwatch). (3) Öncelik: oyuncunun hedefi ve 15 m içindekiler her kare; görünür olanlar en fazla 5 karede bir; görünmeyenler en fazla 30 karede bir; kalan bütçe en uzun süredir güncellenmeyene. (4) ProfilerMarker ile “AI.Think” ölçümü ve kare başına güncellenen ajan sayısını Profiler Counter olarak yayınla. (5) Sahne görünümünde her ajanın üstünde son güncellemeden bu yana geçen kare sayısını renkli gösteren Gizmos. (6) 1000 ajanla en kötü durum performans testi (PlayMode test).”</p><ul class="mini"><li>Önce profil sonucunu (hangi fonksiyon, kaç ms) asistana verin, sonra optimizasyon isteyin</li><li>Optimizasyondan önce/sonra ölçen bir test isteyin</li><li>İş parçacığı kodunda veri sahipliğini açıkça sorun</li><li>Hata ayıklama görselleştirmesi (LOD renkleri, bekleme süresi) isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Dikkat tabanlı LOD</span>Göz izleme ve oyuncu modeliyle (Y17) “oyuncu neye bakıyor?” tahmini; LOD Trader’ın kritiklik modellerini öğrenerek ayarlamak.</div>
+    <div class="box game"><span class="bt">GPU’da YZ</span>Akış alanları, etki haritaları, binlerce ajanın steering’i GPU hesaplamasıyla (compute shader); GAP’in “Introduction to GPGPU for AI” bölümü.</div>
+    <div class="box low"><span class="bt">Sinir ağı çıkarım maliyeti</span>Y13/Y16’daki öğrenilmiş modelleri oyunda çalıştırmak: model küçültme (nicemleme), toplu çıkarım, Inference Engine ile GPU/CPU seçimi.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Profil raporu</b> — Önceki haftalardan bir demonuzu (ör. boids, A*) profilleyip en pahalı 3 fonksiyonu ve bir iyileştirmeyi önce/sonra ölçümleriyle raporlayın.</li><li><b class="c-green">[kolay]</b> <b>Kademeli algılama</b> — 200 nöbetçi: görüş ışınlarını her kare yerine kademeli yapın; kare süresi ve tepki gecikmesi grafiği.</li><li><b class="c-amber">[orta]</b> <b>Yol isteği kuyruğu</b> — Unity’de A* (ya da NavMesh) isteklerini kuyruklayan, kare başına bütçeli bir PathService; 100 NPC aynı anda istediğinde sıçrama olmasın.</li><li><b class="c-amber">[orta]</b> <b>Kalabalık havuzu</b> — AC Unity fikri: 2000 ucuz “figüran” + 30 tam YZ havuzu; oyuncuya yaklaşanlar fark ettirmeden tam YZ’ye geçsin.</li><li><b class="c-red">[zor]</b> <b>Jobs ile boids</b> — Y7’deki boids’i Unity Jobs + Burst + uzaysal ızgarayla 10.000 ajana çıkarın; ölçüm tablosu.</li><li><b class="c-purple">[araştırma]</b> <b>LOD algı deneyi</b> — Aynı sahnenin uzaklık tabanlı ve öncelikli LOD sürümlerini videoya alıp izleyicilere “bir terslik fark ettiniz mi?” diye sorun (Sunshine-Hill’in deneyinin küçük bir tekrarı).</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Bütçe: 60 FPS = 16,7 ms; YZ birkaç ms; en kötü kare önemlidir.</li>
+      <li><b>Önce ölç</b>: profilleyici, işaretçiler, sayaçlar; Cities: Skylines II’nin diş efsanesi.</li>
+      <li><b>Zaman dilimleme</b> ve <b>kuyruklar</b>: işi karelere yay, açlığa dikkat.</li>
+      <li><b>YZ LOD’u</b>: uzaklık değil fark edilme (LOD Trader); havuzlama (AC Unity).</li>
+    </ul>
+    <ul>
+      <li><b>Olay tabanlı</b> güncelleme, önbellek, ön hesaplama, uzaysal yapılar.</li>
+      <li><b>Veri odaklı tasarım</b>: SoA, Unity DOTS, Unreal Mass; iş parçacığı güvenliği.</li>
+      <li>Sıra: algoritma → kademelendirme/LOD → mikro optimizasyon.</li>
+      <li>Sonraki ve son: <b>proje</b>: bütün dönemi tek bir oyunda birleştirmek.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=Rz2cNWVLncI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Rz2cNWVLncI/hqdefault.jpg" alt=""><span><b>Massive Crowd on Assassin’s Creed Unity: AI Recycling</b><br>GDC</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=rX0ItVEVjHc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/rX0ItVEVjHc/hqdefault.jpg" alt=""><span><b>Data-Oriented Design and C++</b><br>Mike Acton (CppCon 2014)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=_cV1B2hqXGI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/_cV1B2hqXGI/hqdefault.jpg" alt=""><span><b>Boosting your game performance with Unity 6 Profiling tools</b><br>Unity (Unite 2024)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=zsoH6zrWPVI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/zsoH6zrWPVI/hqdefault.jpg" alt=""><span><b>Check Game Performance with Unity Profiler</b><br>Dad Makes Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=q_ga7Kloqiw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/q_ga7Kloqiw/hqdefault.jpg" alt=""><span><b>Unreal Engine 5 Tutorial: Mass Entity Crowds</b><br>pheel</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=2nzmOeg_Mrs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/2nzmOeg_Mrs/hqdefault.jpg" alt=""><span><b>When Regular Pathfinding Isn’t Enough (akış alanları)</b><br>Deep Dive Dev</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Sunshine-Hill 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter14_Phenomenal_AI_Level-of-Detail_Control_with_the_LOD_Trader.pdf" target="_blank" rel="noopener">Phenomenal AI Level-of-Detail Control with the LOD Trader</a> <i>(Game AI Pro, Bölüm 14)</i><br>Fark edilme olasılığına dayalı LOD.</div><div class="paper"><b>Graham 2021</b> · <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter02_Efficient_Event_Based_Simulations.pdf" target="_blank" rel="noopener">Efficient, Event-Based Simulations</a> <i>(Game AI Pro Online, Bölüm 2)</i><br>Zaman dilimleme ve olay tabanlı güncelleme.</div><div class="paper"><b>Pentheny 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter24_Efficient_Crowd_Simulation_for_Mobile_Games.pdf" target="_blank" rel="noopener">Efficient Crowd Simulation for Mobile Games</a> <i>(Game AI Pro, Bölüm 24)</i><br>Fieldrunners 2 akış alanları.</div><div class="paper"><b>Johnson ve ark. 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter03_Logging_Visualization_in_FINAL_FANTASY_XV.pdf" target="_blank" rel="noopener">Logging Visualization in FINAL FANTASY XV</a> <i>(Game AI Pro 3, Bölüm 3)</i><br>Kayıt + görselleştirme ile hata bulma.</div><div class="paper"><b>Skarupke 2021</b> · <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter01_Automated_AI_Testing_Simple_tests_will_save_you_time.pdf" target="_blank" rel="noopener">Automated AI Testing: Simple tests will save you time</a> <i>(Game AI Pro Online, Bölüm 1)</i><br>YZ için otomatik testler.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: hikâyelerin izi 📰</h2>
+  <ul style="font-size:.78em">
+    <li>Cities: Skylines II ve dişler: <a href="https://www.techradar.com/gaming/pc-gaming/no-cities-skylines-2s-performance-issues-arent-because-of-the-citizens-teeth-developer-confirms" target="_blank" rel="noopener">TechRadar</a></li>
+    <li>Assassin’s Creed Unity kalabalıkları: <a href="https://www.techradar.com/news/gaming/inside-assassin-s-creed-unity-ubisoft-s-leap-of-faith-1268435/2" target="_blank" rel="noopener">TechRadar</a> · <a href="https://www.gamepro.de/artikel/assassins-creed-unity-szene-mit-10000-npcs-gleichzeitig,3080204.html" target="_blank" rel="noopener">GamePro (Almanca; 40 gerçek YZ / 120 model)</a> · <a href="https://gdcvault.com/play/1022141/Massive-Crowd-on-Assassin-s" target="_blank" rel="noopener">GDC Vault</a></li>
+    <li>Unity Entities 1.0: <a href="https://discussions.unity.com/t/dots-development-status-and-next-milestones-june-2023/919381" target="_blank" rel="noopener">Unity duyurusu</a> · City Sample: <a href="https://dev.epicgames.com/documentation/unreal-engine/city-sample-project-unreal-engine-demonstration" target="_blank" rel="noopener">Epic belgeleri</a></li>
+  </ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3a0d1b 0%, #240c14 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">FINAL LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Proje: Hepsini Birleştir</div>
+    <div class="sub">Dönem projesi, mimari, değerlendirme</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ff9ab8" href="../yz-proje/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
