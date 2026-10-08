@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Davranış Ağaçları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Davranış ağaçları: selector, sequence, decorator, tick, kara tahta, reaktif ve olay güdümlü ağaçlar, Halo 2, Spore, Alien: Isolation, The Last of Us, Unity Behavior, Unreal Behavior Tree, Beehave, LimboAI, BehaviorTree.CPP, py_trees, mistreevous. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d4a3a 0%, #102236 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 3</div>
+  <div class="ttl" style="font-size:76px">Davranış Ağaçları</div>
+  <div class="sub"><i>Selector, sequence, decorator, kara tahta</i> — Halo 2’den Unreal’a modern NPC beyni</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlebt"></div>
+  <aside class="notes">Haftalık plandaki “davranış ağaçları” konusu. Arka planda bir ağacın kökünden yaprağına seçilen yol yanıp sönüyor: her “tick”te ağaç kökten yeniden düşünür.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>FSM’den ağaca</b> — Halo 2 neden ağaca geçti?</li>
+      <li><b>Düğüm türleri</b> — selector, sequence, decorator, koşul, eylem</li>
+      <li><b>Tick</b> — ağaç her karede nasıl düşünür (adım adım + canlı nöbetçi)</li>
+      <li><b>Kod</b> — 60 satırlık kendi BT motorumuz (C#, JS, Python) + laboratuvarlar</li>
+      <li><b>Kara tahta, hafıza, olaylar</b> — RUNNING, reaktif ağaçlar, Unreal’ın olay güdümlü ağaçları</li>
+      <li><b>Tuzaklar ve melezler</b> — dev ağaçlar, titreme, FSM+BT, utility+BT</li>
+      <li><b>Gerçek oyunlarda</b> — Halo 2, Spore, Alien: Isolation, The Last of Us, Amalur…</li>
+      <li><b>Kütüphaneler</b> — Unity Behavior, Unreal BT, Behavior Designer, Beehave, LimboAI, BehaviorTree.CPP, py_trees, mistreevous</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…geçen haftaki nöbetçiyi bir davranış ağacıyla yeniden kurabilecek, bir ağacın her karede hangi yolu izlediğini elle takip edebilecek, kendi küçük BT motorunuzu yazabilecek ve Unity / Unreal / Godot’nun hazır BT araçlarını projenize ekleyebileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: GEÇEN HAFTANIN NÖBETÇİSİNE YENİ BİR DAVRANIŞ EKLEYİN</span>
+    <p class="big">“Nöbetçi, yerde bir <b>el bombası</b> görürse ne yapıyor olursa olsun <b>siper alsın</b>.”</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">FSM’de: yeni bir SİPER durumu + <b>beş durumun her birinden</b> ona bir ok + siperden çıkınca nereye döneceği… Y2’deki “durum patlaması”.</li>
+    <li class="fragment">Asıl soru “hangi durumdan hangisine?” değil, <b>“şu an en önemli şey ne?”</b>. Önce hayatta kal, sonra saldır, sonra kovala, sonra araştır, hiçbiri yoksa devriye gez.</li>
+    <li class="fragment">Bu bir <b>öncelik listesi</b>. El bombası kuralı listenin <b>en üstüne tek satır</b> olarak eklenir — başka hiçbir yere dokunmadan.</li>
+    <li class="fragment">Davranış ağacı = öncelik listelerinin iç içe geçmiş hâli. Bugünün konusu bu.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık</a><a class="" href="../yz-fsm/">Y2 · Sonlu Durum Makineleri</a></div>
+  <div class="prereq"><a class="opt" href="../agaclar-bst/">İkili Arama Ağaçları (ağaç yürüyüşü, özyineleme)</a><a class="opt" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Aynı nöbetçiyi bu kez ağaçla kuracağız; FSM’yi bilmek karşılaştırmayı kolaylaştırır. Ağacı çalıştıran kod <b>özyinelemeli</b> (kendini çağıran) bir fonksiyondur: BST destesindeki ağaç yürüyüşüyle aynı fikir. Bilmiyorsanız sorun değil, 🎒 slaytlarında anlatıyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Davranış ağacı kurmak için kod yazmak <b>şart değil</b>: Unity Behavior, Unreal Behavior Tree editörü, Behavior Designer ve Beehave tamamen görseldir. Bu destede ağacı çizmeyi ve okumayı öğrenmek, kodu yazmaktan daha önemli. Kod bölümünü ilk okumada hızlı geçebilirsiniz.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>behavior tree (BT)</td><td>davranış ağacı</td><td>Kararları iç içe öncelik listeleri ve adım dizileri olarak tutan ağaç</td></tr>
+    <tr><td>node · root · leaf</td><td>düğüm · kök · yaprak</td><td>Ağacın parçaları; yapraklar asıl işi (koşul/eylem) yapar</td></tr>
+    <tr><td>tick</td><td>tık / değerlendirme</td><td>Ağaca “şimdi ne yapayım?” diye sorma; kökten başlar</td></tr>
+    <tr><td>SUCCESS · FAILURE · RUNNING</td><td>başarılı · başarısız · sürüyor</td><td>Her düğümün ebeveynine verdiği üç cevaptan biri</td></tr>
+    <tr><td>selector (fallback, “?”)</td><td>seçici</td><td>Çocukları sırayla dener, ilk <b>başarısız olmayanda</b> durur: “olmazsa B planı”</td></tr>
+    <tr><td>sequence (“→”)</td><td>dizi</td><td>Çocukları sırayla çalıştırır, ilk <b>başarılı olmayanda</b> durur: “tarif”</td></tr>
+    <tr><td>decorator</td><td>dekoratör / süsleyici</td><td>Tek çocuğu saran, sonucunu değiştiren düğüm: tersine çevir, tekrarla, bekleme süresi</td></tr>
+    <tr><td>condition · action (task)</td><td>koşul · eylem (görev)</td><td>Koşul anında evet/hayır der; eylem birkaç kare sürebilir</td></tr>
+    <tr><td>blackboard</td><td>kara tahta</td><td>Ağacın okuduğu/yazdığı ortak hafıza: hedef, son görülen yer…</td></tr>
+    <tr><td>abort · service</td><td>iptal · servis</td><td>Unreal: daha önemli dal açılınca çalışanı kes · arada bir çalışan güncelleyici</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #10223a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">FSM’den ağaca</div>
+  <div class="sub">Halo 2 ve “karmaşıklığı yönetmek”</div>
+  <ul class="agenda"><li class="on">FSM’den ağaca</li><li class="">düğüm türleri</li><li class="">tick: ağaç nasıl düşünür</li><li class="">kod: kendi BT motorumuz</li><li class="">kara tahta, hafıza, olaylar</li><li class="">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="FSM’den ağaca">
+  <h2>Hikâye: Halo 2 (2004) ve 50 davranış</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.86em">Bungie’den <b>Damian Isla</b>, GDC 2005’te “Handling Complexity in the Halo 2 AI” konuşmasını yaptı. Sorun şuydu: oyuncular NPC’lerin <b>çok şey</b> yapmasını istiyor (siper al, araca bin, el bombası at, liderini kaybedince kaç…) ama davranış sayısı arttıkça FSM’ler yönetilemez oluyordu.</p>
+      <ul style="font-size:.82em">
+        <li>Çözüm: davranışları bir <b>ağaçta</b> (aslında bir DAG — aynı alt ağaç birden çok yerde) toplamak. Halo 2’nin çekirdek ağacında <b>yaklaşık 50 davranış</b> vardı.</li>
+        <li>En çok kullanılan karar biçimi <b>öncelikli liste</b> (prioritized-list): çocukları sırayla dene, ilk çalışabilen çalışsın; ama üstteki bir kardeş bir sonraki tick’te onu <b>kesebilir</b>.</li>
+        <li>Ağırlıklı puanlarla seçim de denendi ama Isla’nın gözlemi: “2–3 seçenekte sayılarla oynamak olur, <b>20’den fazla</b> seçenekte neredeyse imkânsız.” Uygunluk testi bu yüzden <b>evet/hayır</b> yapıldı.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">📜 Sonrası</span>Isla’nın yazısı Gamasutra’da yayımlandı ve endüstriye yayıldı. <b>Spore</b> ekibi (Chris Hecker vd.) yaratık YZ’sini “Halo tarzı, sürüm 1.5” bir BT ile yeniden yazdı; Unreal Engine 4 (2014) BT’yi motora yerleşik araç olarak koydu; Unity 6 resmî “Behavior” paketini çıkardı.</div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=NU717sd8oUc" target="_blank" rel="noopener">The Behaviour Tree AI of Halo 2</a> (AI and Games) · <a href="https://www.youtube.com/watch?v=m9W-hpxuApk" target="_blank" rel="noopener">Isla’nın konuşması</a> (Bungie arşivi)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="FSM’den ağaca">
+  <h2>Aynı nöbetçi, ağaç olarak</h2>
+  <div class="demo" data-demo="btstatic"></div>
+  <div class="cols">
+    <ul style="font-size:.84em">
+      <li><b>Soldan sağa = öncelik sırası.</b> “Kaç” en solda: canım azsa başka hiçbir şeye bakmadan kaçarım.</li>
+      <li>Her alt dal bir <b>sequence</b> (→): “koşullar tamamsa eylemi yap”.</li>
+      <li>Kök bir <b>selector</b> (?): “ilk işe yarayan dalı seç”.</li>
+    </ul>
+    <ul style="font-size:.84em">
+      <li class="fragment">Y2’deki FSM’de <b>9 geçiş satırı</b> vardı; burada hiç geçiş oku yok. Geçişler <b>örtük</b>: daha soldaki dal açılınca otomatik olarak ona geçilir.</li>
+      <li class="fragment">El bombası kuralı? En sola tek bir dal: <code>→ [bomba var mı?] [siper al]</code>. Bitti.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="FSM’den ağaca">
+  <h2>FSM mi, davranış ağacı mı?</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th></th><th>Sonlu durum makinesi</th><th>Davranış ağacı</th></tr>
+    <tr><td>Kararın yeri</td><td>Her durumun içinde, çıkış oklarında</td><td>Ağacın yapısında: sıra = öncelik</td></tr>
+    <tr><td>Yeni davranış eklemek</td><td>Yeni durum + birçok yeni ok</td><td>Doğru yere tek bir dal</td></tr>
+    <tr><td>Yeniden kullanım</td><td>Zor (oklar duruma bağlı)</td><td>Kolay: “siper al” alt ağacı her NPC’de</td></tr>
+    <tr><td>“Şu an ne yapıyor, neden?”</td><td>Durum adı söyler</td><td>Kökten yaprağa yol söyler (hangi koşul neyi engelledi)</td></tr>
+    <tr><td>Küçük işler (kapı, ışık, menü)</td><td><b>Daha basit</b> ✔</td><td>Fazla</td></tr>
+    <tr><td>Maliyet</td><td>Çok ucuz</td><td>Ucuz ama her tick’te birçok koşul (önlemleri var)</td></tr>
+  </table>
+  <div class="box story fragment" style="margin-top:10px"><span class="bt">💬 Chris Hecker (Spore)</span>“Davranış ağaçlarını hâlâ sağlam biçimde FSM kategorisinde görüyorum. Sihir yeni bir teknik olmalarında değil; <b>geliştirme sürecine</b> o kadar uygunlar ki FSM’lerle ulaşabileceğiniz karmaşıklığı çok çok ileri taşıyorlar.” — yani BT, FSM’nin <i>ölçeklenen</i> bir yazım biçimi.</div>
+</section>
+
+<section data-sec="FSM’den ağaca">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · FSM’den ağaca</div>
+    <div class="q">Bir davranış ağacında “kaçmak saldırmaktan daha önemlidir” bilgisi nasıl ifade edilir?</div>
+    <div class="opts">
+      <button data-opt="A">“Kaç” dalı, “Saldır” dalından daha solda (önce) durur</button>
+      <button data-opt="B">“Saldır” durumundan “Kaç” durumuna bir ok çizilir</button>
+      <button data-opt="C">“Kaç” düğümüne daha büyük bir sayı (ağırlık) yazılır</button>
+      <button data-opt="D">İki dal aynı anda çalışır, kazananı motor seçer</button>
+    </div>
+    <div class="explain">Klasik bir BT’de öncelik <b>sıradır</b>: selector çocuklarını soldan sağa dener. Ok çizmek FSM’nin yoludur; ağırlıkla seçmek ise Utility AI’ın (Y4) yolu — BT’ye “utility selector” olarak eklenebilir, ama temel BT’de yoktur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Düğüm türleri</div>
+  <div class="sub">üç cevap, beş tür düğüm</div>
+  <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="on">düğüm türleri</li><li class="">tick: ağaç nasıl düşünür</li><li class="">kod: kendi BT motorumuz</li><li class="">kara tahta, hafıza, olaylar</li><li class="">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="düğüm türleri">
+  <h2>Her düğüm üç cevaptan birini verir</h2>
+  <div class="cols3">
+    <div class="box" style="border-color:var(--green)"><span class="bt c-green">SUCCESS · başarılı</span>“İşimi yaptım / koşul doğru.” <br><span class="mini">Kapıyı açtım. Oyuncuyu görüyorum.</span></div>
+    <div class="box" style="border-color:var(--red)"><span class="bt c-red">FAILURE · başarısız</span>“Yapamadım / koşul yanlış.” <br><span class="mini">Kapı kilitli. Oyuncu görünmüyor. Yol yok.</span></div>
+    <div class="box" style="border-color:var(--amber)"><span class="bt c-amber">RUNNING · sürüyor</span>“Hâlâ uğraşıyorum, sonraki karede tekrar sor.” <br><span class="mini">Hedefe yürüyorum (3 sn sürecek). Şarjör değiştiriyorum.</span></div>
+  </div>
+  <ul style="font-size:.88em;margin-top:14px">
+    <li><b>RUNNING</b>, BT’yi oyunlar için kullanışlı yapan şeydir: oyunda eylemler <b>zaman alır</b>, bir fonksiyon çağrısı gibi anında bitmez.</li>
+    <li>Ebeveyn düğüm, çocuklarının cevaplarına bakıp <b>kendi</b> cevabını üretir. Kökün cevabı, ağacın o karedeki kararıdır.</li>
+  </ul>
+</section>
+
+<section data-sec="düğüm türleri">
+  <h2>Selector ve sequence: “B planı” ve “tarif”</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">? Selector (fallback)</span>
+      <p style="font-size:.86em">Çocukları <b>soldan sağa</b> dener.</p>
+      <ul style="font-size:.84em"><li>Bir çocuk SUCCESS ya da RUNNING derse → <b>dur</b>, aynı cevabı yukarı ver.</li><li>FAILURE derse → bir sonrakini dene.</li><li>Hepsi başarısızsa → FAILURE.</li></ul>
+      <p class="mini">Mantıktaki <b>VEYA</b>: “A olmazsa B, o da olmazsa C”.</p></div>
+    <div class="box game"><span class="bt">→ Sequence</span>
+      <p style="font-size:.86em">Çocukları <b>soldan sağa</b> çalıştırır.</p>
+      <ul style="font-size:.84em"><li>Bir çocuk FAILURE ya da RUNNING derse → <b>dur</b>, aynı cevabı yukarı ver.</li><li>SUCCESS derse → bir sonrakine geç.</li><li>Hepsi başarılıysa → SUCCESS.</li></ul>
+      <p class="mini">Mantıktaki <b>VE</b>: “A’yı yap, sonra B’yi, sonra C’yi”.</p></div>
+  </div>
+  <p class="mini">İsimler araca göre değişir: selector = fallback (BehaviorTree.CPP) = <b>Try In Order</b> (Unity Behavior) = priority/prioritized-list (Halo 2). Sequence her yerde sequence.</p>
+</section>
+
+<section data-sec="düğüm türleri">
+  <h2>Klasik örnek: odaya gir 🚪</h2>
+  <div class="demo" data-demo="btdoor"></div>
+  <p class="mini">Kutuları değiştirin. Kapı açıksa ilk plan yeter; kilitliyse anahtar planı; anahtar yoksa tekme. Kapı sağlamsa (çürük kutusu boş) tekme başarısız olur ve kök de başarısız olur. Gri düğümler o değerlendirmede <b>hiç ziyaret edilmedi</b> — selector ilk başarılı planda durduğu için.</p>
+</section>
+
+<section data-sec="düğüm türleri">
+  <h2>Dekoratörler: tek çocuğu “süsleyen” düğümler</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>dekoratör</th><th>ne yapar</th><th>oyun örneği</th></tr>
+    <tr><td><b>Inverter</b> (değil, !)</td><td>SUCCESS ↔ FAILURE; RUNNING aynen</td><td>“Oyuncu <i>görünmüyorsa</i> devriye gez”</td></tr>
+    <tr><td><b>Cooldown</b> (bekleme)</td><td>Çocuk başarılı olunca X sn boyunca FAILURE döndür</td><td>El bombası 8 sn’de bir (Halo 2’de tam bu vardı)</td></tr>
+    <tr><td><b>Repeat</b> / <b>Until Fail</b></td><td>Çocuğu N kez / başarısız olana dek tekrar çalıştır</td><td>“Mermi bitene kadar ateş et”</td></tr>
+    <tr><td><b>Time Out</b> (zaman aşımı)</td><td>Çocuk X sn’de bitmezse kes, FAILURE</td><td>“5 sn’de kapıya ulaşamazsan vazgeç”</td></tr>
+    <tr><td><b>Succeeder</b> (her zaman başarılı)</td><td>Sonuç ne olursa olsun SUCCESS</td><td>İsteğe bağlı adım: “bağırabiliyorsan bağır” sequence’ı bozmasın</td></tr>
+    <tr><td><b>Koşullu dekoratör</b> (Unreal)</td><td>Koşul doğruysa dalı aç; değişirse dalı iptal et</td><td>“HasLineOfSight?” anahtarı doğruysa kovala</td></tr>
+  </table>
+  <p class="mini">Bunların hepsi Unity Behavior’da hazır düğüm olarak var: Inverter, Cooldown, Repeat, Time Out, Succeeder, ayrıca Abort/Restart koşulları.</p>
+</section>
+
+<section data-sec="düğüm türleri">
+  <h2>Yapraklar ve paralel düğüm</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Koşul (condition)</span>Dünyaya bakar, <b>anında</b> SUCCESS/FAILURE der; asla RUNNING demez ve dünyayı değiştirmez. Diyagramda yuvarlak köşeli, mavi çerçeve. <span class="mini">canım az mı? · görüyor mu? · mermim var mı?</span></div>
+      <div class="box game"><span class="bt">Eylem (action / task)</span>Dünyayı değiştirir. Çoğu zaman birkaç kare <b>RUNNING</b> der, sonunda SUCCESS ya da FAILURE. Diyagramda köşeli, mor çerçeve. <span class="mini">yürü · ateş et · animasyon oynat · ses çal</span></div>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Parallel</span>Çocukların <b>hepsini aynı karede</b> çalıştırır; “kaç tanesi başarılı olursa ben başarılıyım” kuralı (hepsi / biri / N tanesi) düğüm ayarıdır. Örnek: “hedefe yürü” ∥ “yürürken etrafı tara”.</div>
+      <p class="mini">“Paralel” çoklu iş parçacığı demek değil: aynı karede sırayla çalışırlar (Unreal belgeleri de bunu vurgular). Unreal tam paralel yerine sade bir <b>Simple Parallel</b> (bir ana görev + bir arka plan alt ağacı) sunar; Unity Behavior’da <b>Run In Parallel</b> var.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="düğüm türleri">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · düğüm türleri</div>
+    <div class="q">Sequence → [görüyor mu? = SUCCESS] [yakın mı? = FAILURE] [Ateş et]. Sequence ne döndürür ve “Ateş et” çalışır mı?</div>
+    <div class="opts">
+      <button data-opt="A">FAILURE döndürür; “Ateş et” hiç çalışmaz</button>
+      <button data-opt="B">SUCCESS döndürür; ilk çocuk başarılı</button>
+      <button data-opt="C">RUNNING döndürür; “Ateş et” çalışır</button>
+      <button data-opt="D">FAILURE döndürür ama “Ateş et” yine de çalışır</button>
+    </div>
+    <div class="explain">Sequence ilk <b>başarılı olmayan</b> çocukta durur ve onun cevabını verir. “yakın mı?” başarısız → sequence FAILURE, üçüncü çocuk hiç ziyaret edilmez. Üst selector bu durumda bir sonraki dalı (kovala) dener.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #10223a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Tick: ağaç nasıl düşünür</div>
+  <div class="sub">kökten yaprağa, soldan sağa, her karede</div>
+  <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="done">düğüm türleri</li><li class="on">tick: ağaç nasıl düşünür</li><li class="">kod: kendi BT motorumuz</li><li class="">kara tahta, hafıza, olaylar</li><li class="">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="tick">
+  <h2>Bir “tick”in anatomisi</h2>
+  <div class="cols c64">
+    <ol style="font-size:.86em">
+      <li>Oyun döngüsü (ör. Unity <code>Update</code>) ağaca sorar: <code>root.Tick()</code>.</li>
+      <li>Kök, ilk çocuğunu tick’ler; o da kendi ilk çocuğunu… <b>derinlik öncelikli, soldan sağa</b>.</li>
+      <li>Yapraklar cevap verir; cevaplar yukarı doğru selector/sequence kurallarıyla birleşir.</li>
+      <li>Bir RUNNING eyleme ulaşıldığında o eylem bu karenin işidir (yürü, ateş et).</li>
+      <li>Sonraki karede <b>yeniden kökten</b>. Daha soldaki bir koşul doğru olduysa ağaç kendiliğinden o dala geçer: <b>reaktiflik</b>.</li>
+    </ol>
+    <div>
+      <div class="box story"><span class="bt">🎒 Derinlik öncelikli yürüyüş</span>BST destesindeki “önce sol alt ağaç, sonra sağ” yürüyüşüyle aynı: bir düğümün çocuklarını sırayla ve tamamen bitirmeden kardeşine geçmezsin. Fark: burada çocuk cevabına göre <b>erken durabiliriz</b>.</div>
+      <div class="box low"><span class="bt">⚙️ Her kare mi?</span>Küçük ağaçlar için evet. Büyük oyunlarda saniyede 5–10 tick ya da olay güdümlü (Level 4) yapılır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tick">
+  <h2>Adım adım tick 👣</h2>
+  <div class="demo" data-demo="bttrace"></div>
+</section>
+
+<section data-sec="tick">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 İZLEYİCİDE DENEYİN</span>
+    <ol style="font-size:.92em">
+      <li>Varsayılan: “görüyorum” açık, “yakın” kapalı. “Saldır” dalında “görüyor mu?” yeşil, “yakın mı?” kırmızı olur ve sequence orada durur. Selector bir sonraki dala (“Kovala”) geçer.</li>
+      <li>“canım az” kutusunu açın: tick ilk dalda biter, geri kalan her şey <b>gri</b> kalır. Yüksek öncelik = ucuz karar.</li>
+      <li>Her şeyi kapatın: ağacın tamamı dolaşılır, devriyeye ulaşmak <b>en pahalı</b> yoldur. (Halo 2 bu maliyeti “davranış etiketleri” ile düşürdü — Level 4.)</li>
+      <li>Dikkat: “görüyor mu?” iki kez soruluyor. Gerçek motorlarda bu tür koşullar önbelleğe alınır ya da bir <b>kara tahtadan</b> okunur.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="tick">
+  <h2>Elle tick: siz ağaç olun ✍️</h2>
+  <table class="sum-t" style="font-size:19px">
+    <tr><th>can az</th><th>görüyor</th><th>yakın</th><th>iz var</th><th>seçilen eylem</th><th>ziyaret edilen yapraklar</th></tr>
+    <tr><td>hayır</td><td>evet</td><td>evet</td><td>hayır</td><td class="fragment"><b>Ateş et</b></td><td class="fragment mini">can az? · görüyor? · yakın? · Ateş</td></tr>
+    <tr><td>evet</td><td>evet</td><td>evet</td><td>evet</td><td class="fragment"><b>Kaç</b></td><td class="fragment mini">can az? · Kaç (gerisi gri)</td></tr>
+    <tr><td>hayır</td><td>hayır</td><td>evet</td><td>evet</td><td class="fragment"><b>İze git</b></td><td class="fragment mini">can az? · görüyor? · görüyor? · iz var? · İze git</td></tr>
+    <tr><td>hayır</td><td>hayır</td><td>hayır</td><td>hayır</td><td class="fragment"><b>Devriye</b></td><td class="fragment mini">5 koşulun hepsi başarısız → en sağdaki eylem</td></tr>
+  </table>
+  <p class="mini fragment">Üçüncü satırdaki ilginç nokta: “yakın” doğru olsa da önemsiz, çünkü “görüyor mu?” başarısız olduğunda “yakın mı?” <b>hiç sorulmuyor</b>.</p>
+</section>
+
+<section data-sec="tick">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · tick</div>
+    <div class="q">Selector’ün çocukları sırayla FAILURE, RUNNING, SUCCESS cevabı verecek durumda. Selector ne döndürür, üçüncü çocuk tick’lenir mi?</div>
+    <div class="opts">
+      <button data-opt="A">RUNNING; üçüncü çocuk tick’lenmez</button>
+      <button data-opt="B">SUCCESS; selector başarılı çocuğu arar</button>
+      <button data-opt="C">FAILURE; ilk çocuk başarısız</button>
+      <button data-opt="D">RUNNING; ama üçüncü çocuk da tick’lenir</button>
+    </div>
+    <div class="explain">Selector ilk <b>başarısız olmayan</b> çocukta durur: ikinci çocuk RUNNING → selector de RUNNING der ve üçüncüye hiç gitmez. Bu, “ikinci plan şu an sürüyor, onu bölme” demektir. Sonraki karede ilk çocuk başarılı olursa (yüksek öncelik), ikinci çocuğun işi kesilir.</div>
+  </div>
+</section>
+
+<section data-sec="tick">
+  <h2>Canlı: davranış ağaçlı nöbetçi 🌳</h2>
+  <div class="demo" data-demo="btguard"></div>
+</section>
+
+<section data-sec="tick">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Görüş konisine girin ve uzak durun: “Kovala” dalının yeşil yandığını görün. Yaklaşın: yol bir dal sola, “Saldır”a kayar.</li>
+      <li>İki kez ateş edin: can 30’un altında. Ağacın yalnızca ilk dalı renkli; nöbetçi kaçıp iyileşiyor. Kaçış 70’e kadar sürüyor: koşul “önceki eylem KAÇ ise &lt; 70” — <b>histerezis</b>, tıpkı Y2’deki gibi.</li>
+      <li>Duvarın arkasına saklanın: “iz var mı?” koşulu son görülen yere gitmeyi sağlıyor (4 sn hafıza). Bir yere tıklayıp ses çıkarın: aynı dal.</li>
+      <li>▶| 1 kare ile ilerleyin: Y2’deki FSM nöbetçisiyle <b>aynı davranış</b>, ama ortada tek bir geçiş oku yok.</li>
+    </ol>
+  </div>
+  <p class="mini">Sayaçlar: ağacın o karede gördüğü koşul değerleri. Histerezis ve “iz” hafızası ağacın <b>dışında</b>, algı katmanında hesaplanıyor — sağlıklı bir BT tasarımının ilk kuralı (Level 4: kara tahta).</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Kod: kendi BT motorumuz</div>
+  <div class="sub">bir arayüz, beş sınıf, 60 satır</div>
+  <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="done">düğüm türleri</li><li class="done">tick: ağaç nasıl düşünür</li><li class="on">kod: kendi BT motorumuz</li><li class="">kara tahta, hafıza, olaylar</li><li class="">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: “her düğüm Tick’e cevap verir”</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em"><b>Soyut sınıf / arayüz</b>: “Bu aileden olan herkesin bir <code>Tick()</code> metodu vardır” sözleşmesi. Ama <i>nasıl</i> çalıştığını her alt sınıf kendisi yazar.</p>
+      <ul style="font-size:.82em">
+        <li><code>Selector.Tick()</code>: çocukları B planı mantığıyla dener</li>
+        <li><code>Sequence.Tick()</code>: çocukları tarif mantığıyla çalıştırır</li>
+        <li><code>Condition.Tick()</code>: bir soruyu cevaplar</li>
+      </ul>
+      <p style="font-size:.82em">Ebeveyn, çocuğunun hangi tür olduğunu <b>bilmez</b>, sadece <code>child.Tick()</code> der. Buna <b>çok biçimlilik</b> (polymorphism) denir: aynı çağrı, türüne göre farklı iş.</p>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">🎒 Özyineleme (recursion)</span><code>Selector.Tick()</code> içinde çocuğun <code>Tick()</code>’i çağrılıyor; çocuk da bir selector olabilir ve o da kendi çocuklarını çağırır… Bir fonksiyonun (dolaylı olarak) kendini çağırmasına <b>özyineleme</b> denir. Yapraklara ulaşınca durur, çünkü yaprakların çocuğu yoktur.</div>
+      <div class="box game"><span class="bt">Benzetme</span>Bir şirkette müdür “bu işi kim yapabilir?” diye ekibine sorar; ekip liderleri kendi ekiplerine sorar; asıl işi en alttaki çalışan yapar ve cevap yukarı doğru iletilir.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Motorun kalbi: durum, düğüm, selector, sequence</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="1|3-5|7-17|19-29"><script type="text/template">
+public enum Status { Success, Failure, Running }
+
+public abstract class Node {                  // her düğümün sözleşmesi
+    public abstract Status Tick(Guard g);
+}
+
+public class Selector : Node {                // "?" — B planı
+    readonly Node[] kids;
+    public Selector(params Node[] children) { kids = children; }
+    public override Status Tick(Guard g) {
+        foreach (Node k in kids) {
+            Status s = k.Tick(g);
+            if (s != Status.Failure) return s;  // başarılı ya da sürüyor: dur
+        }
+        return Status.Failure;                 // hiçbir plan işe yaramadı
+    }
+}
+
+public class Sequence : Node {                // "→" — tarif
+    readonly Node[] kids;
+    public Sequence(params Node[] children) { kids = children; }
+    public override Status Tick(Guard g) {
+        foreach (Node k in kids) {
+            Status s = k.Tick(g);
+            if (s != Status.Success) return s;  // başarısız ya da sürüyor: dur
+        }
+        return Status.Success;                 // bütün adımlar tamam
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const SUCCESS = "SUCCESS", FAILURE = "FAILURE", RUNNING = "RUNNING";
+
+class Selector {                       // "?" — B planı
+  constructor(...children) { this.kids = children; }
+  tick(g) {
+    for (const k of this.kids) {
+      const s = k.tick(g);
+      if (s !== FAILURE) return s;     // başarılı ya da sürüyor: dur
+    }
+    return FAILURE;
+  }
+}
+
+class Sequence {                       // "→" — tarif
+  constructor(...children) { this.kids = children; }
+  tick(g) {
+    for (const k of this.kids) {
+      const s = k.tick(g);
+      if (s !== SUCCESS) return s;     // başarısız ya da sürüyor: dur
+    }
+    return SUCCESS;
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+SUCCESS, FAILURE, RUNNING = "SUCCESS", "FAILURE", "RUNNING"
+
+class Selector:                  # "?" — B planı
+    def __init__(self, *children):
+        self.kids = children
+    def tick(self, g):
+        for k in self.kids:
+            s = k.tick(g)
+            if s != FAILURE:     # başarılı ya da sürüyor: dur
+                return s
+        return FAILURE
+
+class Sequence:                  # "→" — tarif
+    def __init__(self, *children):
+        self.kids = children
+    def tick(self, g):
+        for k in self.kids:
+            s = k.tick(g)
+            if s != SUCCESS:     # başarısız ya da sürüyor: dur
+                return s
+        return SUCCESS
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Yapraklar ve dekoratörler</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="4-8|10-14|16-25|27-36"><script type="text/template">
+using System;
+using UnityEngine;
+
+public class Condition : Node {                         // soru sorar
+    readonly Func<Guard, bool> test;
+    public Condition(Func<Guard, bool> test) { this.test = test; }
+    public override Status Tick(Guard g) => test(g) ? Status.Success : Status.Failure;
+}
+
+public class ActionNode : Node {                        // iş yapar
+    readonly Func<Guard, Status> run;
+    public ActionNode(Func<Guard, Status> run) { this.run = run; }
+    public override Status Tick(Guard g) => run(g);
+}
+
+public class Inverter : Node {                          // "!"
+    readonly Node child;
+    public Inverter(Node child) { this.child = child; }
+    public override Status Tick(Guard g) {
+        Status s = child.Tick(g);
+        if (s == Status.Success) return Status.Failure;
+        if (s == Status.Failure) return Status.Success;
+        return s;                                       // Running aynen
+    }
+}
+
+public class Cooldown : Node {                          // "X sn’de bir"
+    readonly Node child; readonly float seconds; float readyAt;
+    public Cooldown(float seconds, Node child) { this.seconds = seconds; this.child = child; }
+    public override Status Tick(Guard g) {
+        if (Time.time < readyAt) return Status.Failure; // henüz soğumadı
+        Status s = child.Tick(g);
+        if (s == Status.Success) readyAt = Time.time + seconds;
+        return s;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Condition {                       // soru sorar
+  constructor(test) { this.test = test; }
+  tick(g) { return this.test(g) ? SUCCESS : FAILURE; }
+}
+
+class Action {                          // iş yapar
+  constructor(run) { this.run = run; }
+  tick(g) { return this.run(g); }
+}
+
+class Inverter {                        // "!"
+  constructor(child) { this.child = child; }
+  tick(g) {
+    const s = this.child.tick(g);
+    return s === SUCCESS ? FAILURE : s === FAILURE ? SUCCESS : s;
+  }
+}
+
+class Cooldown {                        // "X sn’de bir"
+  constructor(seconds, child) { this.seconds = seconds; this.child = child; this.readyAt = 0; }
+  tick(g) {
+    const now = millis() / 1000;        // p5.js: program başından beri geçen ms
+    if (now < this.readyAt) return FAILURE;
+    const s = this.child.tick(g);
+    if (s === SUCCESS) this.readyAt = now + this.seconds;
+    return s;
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import time
+
+class Condition:                 # soru sorar
+    def __init__(self, test):
+        self.test = test
+    def tick(self, g):
+        return SUCCESS if self.test(g) else FAILURE
+
+class Action:                    # iş yapar
+    def __init__(self, run):
+        self.run = run
+    def tick(self, g):
+        return self.run(g)
+
+class Inverter:                  # "!"
+    def __init__(self, child):
+        self.child = child
+    def tick(self, g):
+        s = self.child.tick(g)
+        if s == SUCCESS: return FAILURE
+        if s == FAILURE: return SUCCESS
+        return s
+
+class Cooldown:                  # "X sn’de bir"
+    def __init__(self, seconds, child):
+        self.seconds, self.child, self.ready_at = seconds, child, 0.0
+    def tick(self, g):
+        now = time.monotonic()
+        if now < self.ready_at:
+            return FAILURE
+        s = self.child.tick(g)
+        if s == SUCCESS:
+            self.ready_at = now + self.seconds
+        return s
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Nöbetçi ağacını kurup her karede çalıştırmak</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="6-14|16|18-20"><script type="text/template">
+public class Guard : MonoBehaviour {
+    public Transform player;
+    public float hp = 100;
+    Node root;
+
+    void Start() {
+        root = new Selector(
+            new Sequence(new Condition(g => g.hp < 30),       new ActionNode(g => g.Flee())),
+            new Sequence(new Condition(g => g.SeesPlayer()),  new Condition(g => g.Dist() < 6f),
+                         new Cooldown(0.6f, new ActionNode(g => g.Shoot()))),
+            new Sequence(new Condition(g => g.SeesPlayer()),  new ActionNode(g => g.Chase())),
+            new Sequence(new Condition(g => g.HasClue()),     new ActionNode(g => g.Investigate())),
+            new ActionNode(g => g.Patrol()));
+    }
+
+    void Update() { root.Tick(this); }          // her kare kökten
+
+    public Status Patrol() { /* sıradaki yol noktasına yürü */ return Status.Running; }
+    public Status Shoot()  { /* mermi oluştur */                return Status.Success; }
+    // Flee, Chase, Investigate, SeesPlayer, Dist, HasClue ...
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+let guard, root;
+
+function setup() {
+  createCanvas(720, 380);
+  guard = new Guard(80, 70);
+  root = new Selector(
+    new Sequence(new Condition(g => g.hp < 30),      new Action(g => g.flee())),
+    new Sequence(new Condition(g => g.seesPlayer()), new Condition(g => g.dist() < 60),
+                 new Cooldown(0.6, new Action(g => g.shoot()))),
+    new Sequence(new Condition(g => g.seesPlayer()), new Action(g => g.chase())),
+    new Sequence(new Condition(g => g.hasClue()),    new Action(g => g.investigate())),
+    new Action(g => g.patrol()));
+}
+
+function draw() {
+  background(30);
+  root.tick(guard);          // her kare kökten
+  guard.show();
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+root = Selector(
+    Sequence(Condition(lambda g: g.hp < 30),       Action(lambda g: g.flee())),
+    Sequence(Condition(lambda g: g.sees_player()), Condition(lambda g: g.dist() < 60),
+             Cooldown(0.6, Action(lambda g: g.shoot()))),
+    Sequence(Condition(lambda g: g.sees_player()), Action(lambda g: g.chase())),
+    Sequence(Condition(lambda g: g.has_clue()),    Action(lambda g: g.investigate())),
+    Action(lambda g: g.patrol()),
+)
+
+# pygame döngüsü içinde:
+while running:
+    root.tick(guard)         # her kare kökten
+    guard.update(dt)
+    draw(screen, guard)
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Cooldown soğurken FAILURE der; o zaman selector bir sonraki dala (Kovala) geçer: nöbetçi ateş edemediği anlarda hedefe doğru yürür. Bu davranış istenmiyorsa Cooldown’ı sequence’ın dışına alın.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>abstract class Node</td><td>soyut sınıf</td><td>Doğrudan nesnesi oluşturulamaz; alt sınıflar için şablon. <code>abstract Tick</code> = “alt sınıf bunu yazmak zorunda”</td></tr>
+    <tr><td>override</td><td>geçersiz kılma</td><td>Üst sınıfın metodunu alt sınıfta yeniden yazmak</td></tr>
+    <tr><td>params Node[] · ...children · *children</td><td>değişken sayıda parametre</td><td><code>new Selector(a, b, c)</code> gibi istediğiniz kadar çocuk verebilmek; içeride dizi olarak gelir</td></tr>
+    <tr><td>Func&lt;Guard, bool&gt;</td><td>fonksiyon türü</td><td>“Guard alıp bool döndüren fonksiyon” tutan değişken</td></tr>
+    <tr><td>g =&gt; g.hp &lt; 30 · lambda g: g.hp &lt; 30</td><td>lambda / ok fonksiyonu</td><td>Adsız minik fonksiyon. Uzun hâli: <code>bool LowHp(Guard g) { return g.hp &lt; 30; }</code> yazıp <code>new Condition(LowHp)</code> demek</td></tr>
+    <tr><td>Status Tick(Guard g) =&gt; ...;</td><td>ifade gövdeli metot</td><td>Tek satırlık metodun kısa yazımı: <code>{ return ...; }</code> ile aynı</td></tr>
+    <tr><td>a ? b : c</td><td>üçlü (ternary) işleç</td><td>“a doğruysa b, değilse c”</td></tr>
+    <tr><td>readonly</td><td>salt okunur</td><td>Yapıcıda bir kez atanır, sonra değişmez</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: ağacı siz kurun</h2>
+  <div class="simlab" data-sim="bt" data-fns="buildTree" data-lang="js">
+<textarea>
+// Hazır yardımcılar:
+//   sel(ad, ...çocuklar)  → selector
+//   seq(ad, ...çocuklar)  → sequence
+//   not(çocuk)            → ters çevirici
+//   cond(anahtar): "lowHp" "sees"
+//                  "close" "clue"
+//   act(eylem): "KAC" "SALDIR" "KOVALA"
+//               "SUPHE" "DEVRIYE"
+// Önce yazılan çocuk = yüksek öncelik.
+function buildTree() {
+  return sel("Kök",
+    seq("Kovala", cond("sees"), act("KOVALA")),
+    act("DEVRIYE")
+  );
+}
+</textarea>
+    <div class="lab-tasks">Ağacı tamamlayın: <b>kaç</b> (lowHp) → <b>saldır</b> (sees + close) → <b>kovala</b> → <b>araştır</b> (clue → SUPHE) → <b>devriye</b>. Test 16 algı birleşiminin hepsini dener. Sonra bilerek “Kovala” dalını “Saldır”ın soluna alın: nöbetçi neden hiç ateş etmiyor?</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Kod laboratuvarı: tick fonksiyonunu yazın</h2>
+  <div class="ailab" data-lab="bttick" data-lang="python">
+<textarea>
+# Ağaç iç içe demetlerle (tuple/list) tutuluyor:
+#   ("sel", [çocuklar])   ("seq", [çocuklar])   ("not", çocuk)
+#   ("cond", "anahtar")   ("act", "EYLEM")
+# s: algı sözlüğü, ör. {"low_hp": False, "sees": True, "close": False, "clue": False}
+# Döndür: (durum, eylem)  durum: "SUCCESS" | "FAILURE" | "RUNNING"
+#         eylem: çalışan eylemin adı ya da None
+def tick(node, s):
+    kind = node[0]
+    if kind == "cond":
+        return ("SUCCESS" if s[node[1]] else "FAILURE", None)
+    if kind == "act":
+        return ("RUNNING", node[1])
+    # TODO: "seq", "sel" ve "not"
+    return ("FAILURE", None)
+</textarea>
+    <div class="lab-tasks">Sequence: sırayla çocukları tick’le, <b>SUCCESS olmayan</b> ilk cevabı (eylemiyle birlikte) döndür; hepsi başarılıysa <code>("SUCCESS", None)</code>. Selector: <b>FAILURE olmayan</b> ilk cevabı döndür; yoksa <code>("FAILURE", None)</code>. Not: SUCCESS↔FAILURE, eylemi aynen geçir. Boş sequence ve boş selector testleri de var!</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #10223a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Kara tahta, hafıza, olaylar</div>
+  <div class="sub">RUNNING’in bedeli ve büyük oyunların çözümleri</div>
+  <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="done">düğüm türleri</li><li class="done">tick: ağaç nasıl düşünür</li><li class="done">kod: kendi BT motorumuz</li><li class="on">kara tahta, hafıza, olaylar</li><li class="">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kara tahta">
+  <h2>Kara tahta (blackboard): ağacın not defteri</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Düğümler birbirine doğrudan veri göndermez; ortak bir <b>anahtar → değer</b> tablosuna yazar ve oradan okur.</li>
+        <li>Örnek anahtarlar: <code>TargetActor</code>, <code>LastSeenPos</code>, <code>HasLineOfSight</code>, <code>Ammo</code>.</li>
+        <li><b>Algı</b> katmanı (görüş, ses) kara tahtaya yazar; ağaç sadece <b>okur ve karar verir</b>. Demodaki “iz var mı?” böyle çalışıyor.</li>
+        <li>Unreal’da kara tahta ayrı bir varlık (asset), Unity Behavior’da “Blackboard variables”.</li>
+      </ul>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unreal C++: algı yazar, ağaç okur
+UBlackboardComponent* BB =
+    GetBlackboardComponent();
+BB->SetValueAsObject("TargetActor", Seen);
+BB->SetValueAsVector("LastSeenPos",
+    Seen->GetActorLocation());
+BB->SetValueAsBool("HasLineOfSight", true);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# En basit hâli: bir sözlük
+bb = {"target": None, "last_seen": None, "ammo": 30}
+bb["last_seen"] = player.pos          # algı yazar
+if bb["last_seen"] is not None: ...   # koşul okur
+</script></code></pre>
+    </div>
+  </div>
+    </div>
+    <div class="box story"><span class="bt">📜 Halo 2’de hafıza türleri</span>Isla dört tür hafıza ayırdı:
+      <ul style="font-size:.82em">
+        <li><b>Davranışa ait, kalıcı</b>: son el bombası zamanı (cooldown)</li>
+        <li><b>Davranışa ait, kısa ömürlü</b>: davranış bitince silinir</li>
+        <li><b>Nesneye ait</b>: hedefin son görüldüğü yer ve yön</li>
+        <li><b>Nesne + davranış</b>: “bu hedefi aramayı denedim, başaramadım”</li>
+      </ul>
+      <p class="mini">Bellek hilesi: ~100 NPC × ~60 davranış × 32 bayt ≈ 192 KB yerine, yalnızca <b>çalışan yolun</b> (4 seviye) hafızasını tutarak ≈ 25 KB. Xbox’ın sınırlı belleğinde fark büyüktü.</p></div>
+  </div>
+</section>
+
+<section data-sec="kara tahta">
+  <h2>RUNNING sorunu: kökten mi, kaldığı yerden mi?</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.84em">Sequence → [nişan al] [ateş et] [şarjör değiştir]. “Nişan al” 1 sn RUNNING dedi ve bitti; sıra “ateş et”te. Sonraki tick’te ne olacak?</p>
+      <ul style="font-size:.82em">
+        <li><b>Reaktif</b>: her tick kökten ve her sequence baştan. Koşullar sürekli yeniden kontrol edilir (bizim motor ve demolar böyle). Ama “nişan al” yeniden başlayabilir!</li>
+        <li><b>Hafızalı</b>: sequence kaldığı çocuktan devam eder; önceki başarılı kardeşleri tekrar sormaz. Ama arada koşul bozulduysa fark etmez.</li>
+      </ul>
+      <p class="mini">Gerçek kütüphaneler ikisini de sunar; doğru olanı seçmek tasarımcının işi. Kaba kural: koşulları <b>reaktif</b> bir ebeveynin altına, uzun eylem dizilerini <b>hafızalı</b> bir sequence’a koyun.</p>
+    </div>
+    <div>
+      <table class="sum-t" style="font-size:16px">
+        <tr><th>BehaviorTree.CPP</th><th>çocuk FAILURE</th><th>çocuk RUNNING</th></tr>
+        <tr><td>Sequence</td><td>baştan başla</td><td>aynı çocuğu tekrar tick’le</td></tr>
+        <tr><td>ReactiveSequence</td><td>baştan başla</td><td><b>baştan</b> (koşullar yeniden)</td></tr>
+        <tr><td>SequenceWithMemory</td><td>aynı çocuğu tekrar</td><td>aynı çocuğu tekrar</td></tr>
+      </table>
+      <p class="mini">py_trees: <code>Sequence(memory=True/False)</code>. Champandard &amp; Dunstan bunu “1. nesil” (her tick kökten tarama) ve “2. nesil” (çalışan düğümleri hatırlayan, olaylarla uyanan) ağaçlar olarak adlandırır.</p>
+      <div class="box warn"><span class="bt">⚠️ Kesilen eylemi temizleyin</span>Yüksek öncelikli dal açılınca çalışan eylem yarıda kalır. Animasyonu durdurmak, rezervasyonu bırakmak için bir <b>halt / OnEnd</b> çağrısı gerekir; basit motorumuzda bu yok.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="olaylar">
+  <h2>Olay güdümlü ağaçlar: Unreal’ın yolu</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Unreal belgeleri: “Unreal Engine davranış ağaçları her karede gereksiz iş yapmamak için <b>olay güdümlüdür</b>. Bir şeyin değişip değişmediğini sürekli kontrol etmek yerine ağaç, değişiklikleri tetikleyebilecek olayları <b>pasif olarak dinler</b>.”</p>
+      <ul style="font-size:.82em">
+        <li><b>Decorator</b> = koşul. Yaprak değil, dalın üstüne takılır: “HasLineOfSight doğruysa bu dal açılabilir”.</li>
+        <li><b>Observer aborts</b>: kara tahtadaki değer değişince dekoratör uyanır. <i>Self</i> = kendi dalımı kes · <i>Lower Priority</i> = sağdaki (düşük öncelikli) çalışan dalı kes · <i>Both</i>.</li>
+        <li><b>Service</b>: bir dal aktifken her X saniyede bir çalışan güncelleyici. “Kovalarken 0,5 sn’de bir en yakın düşmanı seç.”</li>
+        <li><b>Task</b> = eylem yaprağı (Blueprint’te <i>Event Receive Execute AI</i> → <i>Finish Execute</i>).</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">📜 Halo 2: uyaran davranışları</span>“Lider ölünce kaç” kuralını her tick test etmek israf. Isla’nın çözümü: “bir aktör öldü” <b>olayı</b> gelince, ağaca 1–2 saniyeliğine “lider öldüğü için kaç” dalı <b>eklenir</b>. Dal ağacın içinde olduğu için daha öncelikli dallar (ör. araca binmek) yine söz hakkına sahip.</div>
+      <div class="box low"><span class="bt">⚙️ Neden önemli?</span>Yüzlerce NPC × her karede tüm koşullar = boşa giden işlemci. Olaylar sayesinde koşullar yalnızca değer <b>değiştiğinde</b> hesaplanır. Champandard &amp; Dunstan, olay güdümlü BT örneği olarak <b>Bulletstorm</b>’u (2011) anar (Game AI Pro, 6. bölüm).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="olaylar">
+  <h2>Halo 2’nin diğer üç hilesi</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Dürtüler (impulses)</span>Önceliğin sabit olmadığı durumlar: “normalde savaş, araca binme; <b>ama</b> oyuncu araçtaysa bin”. Koşul ayrı bir “dürtü” düğümüne alınır; dürtü, ağacın başka bir yerindeki davranışı <b>işaret eder</b>. İlke: “Açıklığı her şeyin üstünde tut.”</div>
+    <div class="box game"><span class="bt">Davranış etiketleri</span>“Araçta mı? Hedefi görüyor mu?” gibi sık koşullar bir <b>bit vektörü</b> olarak tutulur; uymayan büyük dallar hiç test edilmez. Yan etki: ağacın büyük kısımları <b>kilitlenip açılır</b> — araç yolcusunun kaçma/arama dalları kapalıdır.</div>
+    <div class="box low"><span class="bt">Özel davranışlar</span>Ortak bir temel ağaç + karaktere özel eklemeler. <b>Grunt</b>’lar (korkak uzaylılar) çok sayıda “geri çekil” dürtüsü alır, deniz piyadeleri ekip koordinasyonu davranışları. Flood ise o kadar farklıydı ki <b>tamamen ayrı</b> bir ağaç aldı.</div>
+  </div>
+  <p class="mini">Isla’nın ilkelerinden biri: “Hacklenebilirlik anahtardır.” Gerçek projede tasarımcılar her zaman kuralın istisnasını isteyecektir; mimari buna yer açmalı.</p>
+</section>
+
+<section data-sec="olaylar">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 4 · olaylar</div>
+    <div class="q">Unreal’da “Kovala” dalının dekoratöründe “Observer aborts: Lower Priority” seçili. Nöbetçi devriye gezerken (sağdaki dal) HasLineOfSight doğru olursa ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Devriye görevi hemen kesilir ve Kovala dalı başlar</button>
+      <button data-opt="B">Devriye bitene kadar beklenir, sonra Kovala başlar</button>
+      <button data-opt="C">Kovala dalı kendi kendini iptal eder</button>
+      <button data-opt="D">Hiçbir şey; dekoratörler sadece ağaç başlarken kontrol edilir</button>
+    </div>
+    <div class="explain"><b>Lower Priority</b>: dekoratörün koşulu doğru olunca, kendisinden <b>daha düşük öncelikli</b> (daha sağdaki) çalışan dalları iptal eder ve kendi dalını açar. <i>Self</i> ise koşul yanlışa dönünce kendi dalını keser. Bu, reaktifliğin olay güdümlü hâlidir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Tuzaklar ve melezler</div>
+  <div class="sub">dev ağaçlar, titreme, FSM+BT, utility+BT</div>
+  <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="done">düğüm türleri</li><li class="done">tick: ağaç nasıl düşünür</li><li class="done">kod: kendi BT motorumuz</li><li class="done">kara tahta, hafıza, olaylar</li><li class="on">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="tuzaklar">
+  <h2>Sık düşülen tuzaklar</h2>
+  <div class="cols">
+    <div>
+      <div class="box warn"><span class="bt">1) Dev, tek parça ağaç</span>Yüzlerce düğüm tek ekranda → kimse okuyamaz. Çare: <b>alt ağaçlar</b> (Unity: Run Subgraph, Unreal: Run Behavior) ve isimlendirilmiş dallar.</div>
+      <div class="box warn"><span class="bt">2) Dal titremesi</span>FSM’deki titremenin aynısı: “yakın mı?” eşiğin etrafında gidip gelir, ağaç Saldır↔Kovala arasında zıplar. Çare: koşullarda <b>histerezis</b>, Cooldown/minimum süre, kara tahtada hafıza.</div>
+      <div class="box warn"><span class="bt">3) Pahalı koşullar her tick</span>Görüş ışını, yol bulma… Çare: algıyı ayrı katmanda saniyede birkaç kez hesaplayıp kara tahtaya yaz; ya da servisler/olaylar.</div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">📜 Anthony Francis (Google robotik, GAP3 9. bölüm)</span>
+        <ul style="font-size:.82em">
+          <li><b>Çok fazla düzenleyici sınıf</b>: “beceri”, “modül”, “görev” için ayrı kök sınıflar yazmayın; BT’nin kendi kavramları yeterli.</li>
+          <li><b>Erkenden dil icat etmek</b>: Not, And, Or, If… düğümleri ekledikçe ağaç bir programlama diline dönüşür. Gerçekten gerekene kadar bekleyin.</li>
+          <li><b>Her şeyi kara tahtadan geçirmek</b>: prototipte basit veri akışı için dilin kendi değişkenleri daha güvenilir.</li>
+        </ul></div>
+      <div class="box warn"><span class="bt">4) Ağacı programlama dili sanmak</span>Döngüler, sayaçlar, karmaşık matematik yapraklara (koda) aittir. Ağaç <b>karar</b> verir; hesap yapmaz.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="melezler">
+  <h2>Gerçek projelerde teknikler karışır</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">The Last of Us (2013)</span>Naughty Dog’un insan düşmanlarında üst seviye kararlar <b>“beceriler”</b> (skills): panik, ilerle, yakın dövüş, silahlı çatışma, saklan, araştır… Beceriler <b>öncelik sıralı</b>; her kare her biri “çalışmak istiyor musun?” diye sorulur ve en öncelikli olan kazanır — bir selector. Her becerinin içi ise kendi <b>FSM</b>’i (Game AI Pro 2, 34. bölüm).</div>
+      <div class="box story"><span class="bt">Final Fantasy XV (2016)</span>Durum makinesi + davranış ağacı aynı editörde: büyük resim FSM, her durumun içi BT (GAP3 11. bölüm).</div>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">Utility + BT</span>Bill Merrill (GAP 10. bölüm): mevcut bir BT’ye “<b>utility selector</b>” eklemek — çocukları sırayla değil, <b>puanına</b> göre dener. Y4’ün konusu.</div>
+      <div class="box low"><span class="bt">Planlayıcı + BT</span>Kinect Star Wars’taki Jedi YZ’si: BT’yi “simüle edip” birkaç adım ilerisini planlayan melez yapı (Hilburn, GAP 8. bölüm). Y5’teki GOAP’a köprü.</div>
+      <div class="box game"><span class="bt">Unreal StateTree</span>Unreal’ın yeni aracı: durum makinesinin <b>durumlarını</b>, BT’nin <b>seçicileriyle</b> birleştirir. Y2’de de değindik.</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #10223a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Gerçek oyunlarda</div>
+  <div class="sub">Alien: Isolation, Spore, Amalur, Mafia III, Paragon… ve robotlar</div>
+  <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="done">düğüm türleri</li><li class="done">tick: ağaç nasıl düşünür</li><li class="done">kod: kendi BT motorumuz</li><li class="done">kara tahta, hafıza, olaylar</li><li class="done">tuzaklar ve melezler</li><li class="on">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>Derin hikâye: Alien: Isolation’ın “öğrenen” canavarı 👾</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Creative Assembly’nin 2014 korku oyununda tek bir uzaylı sizi bütün oyun boyunca avlar. İki beyin var (Y1’den hatırlayın): <b>yönetmen</b> sizin yerinizi hep bilir ve uzaylıyı ara sıra doğru yöne “dürter”; <b>uzaylı</b> ise hile yapmaz, sizi duyularıyla bulmak zorundadır.</p>
+      <ul style="font-size:.82em">
+        <li>Uzaylının davranış ağacında <b>100’den fazla düğüm</b> var; en üstte ~30 düğüm hangi tür davranışın çalışacağını seçiyor.</li>
+        <li>Asıl numara: ağacın bazı bölümleri oyun başında <b>kilitli</b>. Oyuncu belirli taktikleri kullandıkça (ör. dolaplara saklanmak, alev silahı) ilgili dallar <b>açılıyor</b>: uzaylı dolapların içine bakmayı, alevden sonra geri çekilip başka yoldan gelmeyi “öğreniyor”.</li>
+        <li>Tasarımcı Andy Bray’in vurguladığı kural: kilit açan koşulların hiçbiri <b>oyuncunun ölümüne yol açan</b> olaylardan gelmiyor — yoksa oyuncu neyi yanlış yaptığını anlayamadan uzaylı avantaj kazanırdı.</li>
+        <li>Oyuncu hep aynı taktiği kullanmasa bile, belirli noktalarda kalan dallar zorla açılır; böylece uzaylı oyuncuyla aynı hızda “gelişir”.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">💡 Ders</span>Bu bir makine öğrenmesi değil! Tasarımcının önceden yazdığı dalların <b>zamanla açılması</b>. Oyuncuya “öğreniyor” hissi veren, tamamen kontrol edilebilir bir yapı. Halo 2’nin “davranış etiketleri”yle dalları kilitleme fikrinin akrabası.</div>
+      <div class="box game"><span class="bt">📖 Okuyun / izleyin</span><a href="https://www.gamedeveloper.com/design/the-perfect-organism-the-ai-of-alien-isolation" target="_blank" rel="noopener">The Perfect Organism: The AI of Alien: Isolation</a> (Tommy Thompson) · <a href="https://www.youtube.com/watch?v=-nD9SDOwnWc" target="_blank" rel="noopener">video</a></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>BT kullanan oyunlar: kısa turlar</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">Spore (2008)</span>Yaratık YZ’si önce başka bir sistemle yazılmış, sorun çıkınca ekip Halo tarzı BT’ye geçmiş. Chris Hecker, Isla ve Bungie ekibiyle konuşup sistemi “sürüm 1.5” olarak tasarladığını ve belgelerini yayımladığını anlatıyor.</div>
+      <div class="box game"><span class="bt">Kingdoms of Amalur: Reckoning (2012)</span>BT yapısı C++’ta, <b>yaprak davranışları Lua betiklerinde</b>. Tasarımcılar motoru yeniden derlemeden davranış yazabildi (Dawe, GAP 7. bölüm).</div>
+      <div class="box game"><span class="bt">Mafia III (2016)</span>Açık dünya düşmanlarında BT, algı / pozisyon seçimi / siper sistemlerini birbirine bağlayan “tutkal”. İlginç ayrıntı: ateş ederken “ıskala mı vur mu” kararını BT değil, ayrı bir sistem veriyor; BT sadece ne zaman ateşe başlanacağına karar veriyor.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Paragon botları (Epic, 2016)</span>Unreal’ın kendi BT’siyle: bir “ana ağaç” genel yapıyı tanımlar, kahramana özel kısımlar <b>parametre</b> olarak verilir (GAP3 32. bölüm, Mieszko Zieliński).</div>
+      <div class="box game"><span class="bt">Motorlara yerleşti</span>BT bugün AAA’da en yaygın karar yapılarından biri: Unreal (2014’ten beri), CryEngine (“Modular Behavior Tree”), Unity 6 (Behavior paketi) motorla birlikte gelir. Yani öğrendiğiniz kavramlar doğrudan iş ilanlarındaki araçlara karşılık gelir.</div>
+      <div class="box story"><span class="bt">🤖 Oyunların dışında: robotlar</span>BT oyunlardan <b>robotiğe</b> geçti: ROS 2’nin navigasyon yığını Nav2, görevlerini BehaviorTree.CPP ağaçlarıyla tanımlar. Colledanchise &amp; Ögren’in kitabı tam bu geçişi anlatır. Oyun geliştiricisi olarak öğrendiğiniz şey, robotik mühendisliğinde de iş görür.</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">Unity, Unreal, Godot, web ve Python</div>
+  <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="done">düğüm türleri</li><li class="done">tick: ağaç nasıl düşünür</li><li class="done">kod: kendi BT motorumuz</li><li class="done">kara tahta, hafıza, olaylar</li><li class="done">tuzaklar ve melezler</li><li class="done">gerçek oyunlarda</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html" target="_blank" rel="noopener"><b>Unity Behavior</b></a></td><td>Unity 6+ · ücretsiz, resmî</td><td>Görsel “behavior graph” (dallar birleşebilir), Blackboard, hazır düğümler (Try In Order, Sequence, Run In Parallel, Cooldown, Inverter, Repeat, Patrol, Navigate To Target), C# ile özel düğüm. Yeni bir paket, topluluk kaynağı az.</td><td>Package Manager → + → <i>Add package by name</i> → <code>com.unity.behavior</code></td></tr><tr><td><a href="https://opsive.com/assets/behavior-designer/" target="_blank" rel="noopener"><b>Behavior Designer (Opsive)</b></a></td><td>Unity · ücretli</td><td>Yıllardır en yaygın Unity BT eklentisi; çok sayıda hazır görev, hata ayıklayıcı, Movement/Tactical paketleri. Kaynak kod paralı.</td><td>Asset Store’dan satın al → içe aktar</td></tr><tr><td><a href="https://www.paradoxnotion.com/" target="_blank" rel="noopener"><b>NodeCanvas</b></a></td><td>Unity · ücretli</td><td>BT + FSM + diyalog ağacı aynı araçta; FSM durumunun içinde BT çalıştırma (FFXV tarzı melez).</td><td>Asset Store</td></tr><tr><td><a href="https://github.com/meniku/NPBehave" target="_blank" rel="noopener"><b>NPBehave · Fluid BT</b></a></td><td>Unity · açık kaynak</td><td>Koddan ağaç kurma. NPBehave olay güdümlü (Unreal tarzı) ve kara tahtalı; Fluid BT akıcı (fluent) “builder” sözdizimi.</td><td>GitHub’dan Packages klasörüne / UPM git URL</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---overview" target="_blank" rel="noopener"><b>Unreal Behavior Tree</b></a></td><td>Unreal 4/5 · yerleşik</td><td>Olay güdümlü BT + Blackboard + Decorator/Service/Task, görsel hata ayıklayıcı, EQS ile konum sorguları. Unreal dışına taşınmaz.</td><td>İçerik tarayıcı → Artificial Intelligence → Behavior Tree + Blackboard; AIController’da <code>RunBehaviorTree</code></td></tr><tr><td><a href="https://github.com/bitbrain/beehave" target="_blank" rel="noopener"><b>Beehave</b></a></td><td>Godot 4 · açık kaynak</td><td>Düğüm sahnesi olarak BT; hata ayıklama paneli. GDScript ile yaprak yazılır.</td><td>AssetLib’de “Beehave” → kur → eklentiyi etkinleştir</td></tr><tr><td><a href="https://github.com/limbonaut/limboai" target="_blank" rel="noopener"><b>LimboAI</b></a></td><td>Godot 4 · açık kaynak</td><td>BT + hiyerarşik durum makinesi birlikte, görsel editör, C++ ile hızlı; GDExtension ya da modül.</td><td>AssetLib’de “LimboAI” ya da GitHub sürümü</td></tr><tr><td><a href="https://github.com/BehaviorTree/BehaviorTree.CPP" target="_blank" rel="noopener"><b>BehaviorTree.CPP + Groot2</b></a></td><td>C++ · açık kaynak</td><td>Endüstri/robotik standardı; XML ağaçlar, reaktif ve hafızalı düğümler, Groot2 görsel editör ve canlı izleme. Nav2’nin temeli.</td><td>CMake / vcpkg / conan; ROS 2 paketi</td></tr><tr><td><a href="https://github.com/splintered-reality/py_trees" target="_blank" rel="noopener"><b>py_trees</b></a></td><td>Python · açık kaynak</td><td>Eğitim ve prototip için temiz Python BT; ağacı metin/grafik olarak çizer. ROS sarmalayıcısı var. Oyun motoru değil.</td><td><code>pip install py_trees</code></td></tr><tr><td><a href="https://github.com/nikkorn/mistreevous" target="_blank" rel="noopener"><b>mistreevous</b></a></td><td>JavaScript/TypeScript · açık kaynak</td><td>Küçük, bağımlılıksız; ağacı MDSL metniyle ya da JSON ile tanımlar. p5.js/Phaser oyunları için ideal.</td><td><code>npm install mistreevous</code></td></tr>
+  </table>
+  <p class="mini">Hepsi 2026 Ekim’de kontrol edildi. Ücretli araçlar için önce ücretsiz seçeneği (Unity Behavior, Beehave/LimboAI) deneyin; gereksinim büyüyünce geçin.</p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>Unity Behavior ile nöbetçi: adım adım</h2>
+  <div class="cols">
+    <ol style="font-size:.8em">
+      <li><b>Window → Package Manager → + → Add package by name</b> → <code>com.unity.behavior</code>.</li>
+      <li>Sahneye NavMesh ekleyin (Y9); nöbetçiye <b>NavMeshAgent</b>.</li>
+      <li>Project penceresi: <b>Create → Behavior → Behavior Graph</b>. Nöbetçiye <b>Behavior Graph Agent</b> bileşenini ekleyip grafiği atayın.</li>
+      <li>Blackboard değişkenleri: <code>Player</code> (GameObject), <code>HP</code> (float), <code>SeesPlayer</code> (bool), <code>Waypoints</code> (liste).</li>
+      <li><b>On Start</b> → <b>Repeat</b> → <b>Try In Order</b> (selector). Altına dallar: <i>Conditional Guard</i> (HP &lt; 30) → kaç; <i>SeesPlayer</i> → <b>Navigate To Target</b>; en sonda <b>Patrol</b>.</li>
+      <li>SeesPlayer’ı bir C# betiği güncellesin (algı ağacın dışında!).</li>
+      <li>Play’e basın, grafiği açık tutun: çalışan düğümler canlı olarak vurgulanır.</li>
+    </ol>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Add > Action > Create new Action iskeleti
+// (sadeleştirilmiş)
+using System;
+using Unity.Behavior;
+using Unity.Properties;
+using UnityEngine;
+using Action = Unity.Behavior.Action;
+
+[Serializable, GeneratePropertyBag]
+[NodeDescription(name: "Shoot",
+                 story: "[Agent] shoots at [Target]",
+                 category: "Action/Combat")]
+public partial class ShootAction : Action
+{
+    [SerializeReference] public BlackboardVariable<GameObject> Agent;
+    [SerializeReference] public BlackboardVariable<GameObject> Target;
+    float t;
+
+    protected override Status OnStart() {
+        t = 0;
+        return Status.Running;
+    }
+    protected override Status OnUpdate() {
+        t += Time.deltaTime;
+        Agent.Value.transform.LookAt(Target.Value.transform);
+        // 0,3 sn nişan al, sonra ateş et
+        return t < 0.3f ? Status.Running : Status.Success;
+    }
+    protected override void OnEnd() {
+        // kesilirse de çağrılır: temizlik
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  <p class="mini">Dikkat: editörün ürettiği şablonda ayrıca bir <code>id</code> alanı vardır; onu elle değiştirmeyin. Kesin sözdizimi paket sürümüne göre değişebilir: “Create new Action” sihirbazını kullanın.</p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>Unreal, Godot, web, Python: aynı ağaç</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Unreal (C++)">
+<pre><code class="language-cpp" data-trim data-line-numbers><script type="text/template">
+// Ağacı AIController başlatır; kararlar Behavior Tree asset’inde
+void AGuardController::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+    RunBehaviorTree(GuardTree);                       // UBehaviorTree* (editörde atanır)
+}
+
+// Algı bileşeninden: kara tahtaya yaz, ağaç tepki versin
+void AGuardController::OnSeen(AActor* Actor)
+{
+    GetBlackboardComponent()->SetValueAsObject("TargetActor", Actor);
+    GetBlackboardComponent()->SetValueAsBool("HasLineOfSight", true);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Godot (Beehave)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Sahne: BeehaveTree > SelectorComposite > SequenceComposite > ...
+# Her yaprak bir betik:
+class_name IsLowHp extends ConditionLeaf
+
+func tick(actor: Node, blackboard: Blackboard) -> int:
+    return SUCCESS if actor.hp < 30 else FAILURE
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Godot (LimboAI)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+extends BTAction   # LimboAI eylem yaprağı
+
+func _tick(delta: float) -> Status:
+    var target: Node2D = blackboard.get_var(&"target")
+    if target == null:
+        return FAILURE
+    agent.global_position = agent.global_position.move_toward(target.global_position, 120 * delta)
+    return SUCCESS if agent.global_position.distance_to(target.global_position) < 8 else RUNNING
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JS (mistreevous)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+import { BehaviourTree, State } from "mistreevous";
+
+const definition = `root {
+    selector {
+        sequence { condition [IsLowHp]     action [Flee] }
+        sequence { condition [SeesPlayer]  action [Chase] }
+        action [Patrol]
+    }
+}`;
+const agent = {
+  IsLowHp: () => guard.hp < 30,
+  SeesPlayer: () => guard.seesPlayer(),
+  Flee: () => { guard.flee(); return State.RUNNING; },
+  Chase: () => { guard.chase(); return State.RUNNING; },
+  Patrol: () => { guard.patrol(); return State.RUNNING; },
+};
+const tree = new BehaviourTree(definition, agent);
+// p5.js draw() içinde:  tree.step();
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="XML (BT.CPP)">
+<pre><code class="language-xml" data-trim data-line-numbers><script type="text/template">
+<root BTCPP_format="4">
+  <BehaviorTree ID="Guard">
+    <Fallback>
+      <Sequence> <IsLowHp/> <Flee/> </Sequence>
+      <ReactiveSequence> <SeesPlayer/> <IsClose/> <Shoot/> </ReactiveSequence>
+      <ReactiveSequence> <SeesPlayer/> <Chase/> </ReactiveSequence>
+      <Patrol/>
+    </Fallback>
+  </BehaviorTree>
+</root>
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python (py_trees)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import py_trees
+from py_trees.common import Status
+
+class Check(py_trees.behaviour.Behaviour):
+    def __init__(self, name, test):
+        super().__init__(name); self.test = test
+    def update(self):
+        return Status.SUCCESS if self.test() else Status.FAILURE
+
+root = py_trees.composites.Selector("Kök", memory=False, children=[
+    py_trees.composites.Sequence("Kaç", memory=False,
+        children=[Check("can az?", lambda: guard.hp < 30), Flee("kaç")]),
+    Patrol("devriye"),
+])
+root.tick_once()
+print(py_trees.display.unicode_tree(root, show_status=True))
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Projenize BT eklerken: adım adım</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Önce kâğıt</b>: öncelik listesini cümleyle yazın (“önce hayatta kal, sonra…”). Her satır bir dal.</li>
+      <li><b>Algı ayrı</b>: görüş/ses/can bilgisini bir bileşen hesaplasın, kara tahtaya yazsın. Ağaç sadece okur.</li>
+      <li><b>Yapraklar küçük</b>: “Kovala” = hedefe NavMesh ile yürü. Karmaşık işler kodda, karar ağaçta.</li>
+      <li><b>Görsel hata ayıklama</b>: araç editörünü Play sırasında açık tutun; kendi motorunuzda aktif yolu NPC’nin üstüne yazdırın.</li>
+      <li><b>Titreme kontrolü</b>: eşiklerde histerezis, eylemlerde minimum süre.</li>
+      <li><b>Alt ağaçlar</b>: “siper al”, “ekip çağır” gibi parçaları yeniden kullanın.</li>
+    </ol>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Yüzlerce NPC’de: tick’i her karede değil 5–10 Hz’de yapın, NPC’lerin tick’lerini karelere yayın, pahalı koşulları önbelleğe alın (Y18). Unreal’ın olay güdümlü yapısı bunu sizin yerinize yapar.</div>
+      <div class="box story"><span class="bt">FSM mi, BT mi? Pratik karar</span>3–5 davranış, az değişiklik → <b>FSM</b>. Çok davranış, öncelikler, ekipte tasarımcı var → <b>BT</b>. Ağır puanlama gerekiyorsa → <b>Utility</b> (Y4). Uzun vadeli plan gerekiyorsa → <b>GOAP/HTN</b> (Y5).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Unity Behavior ile eski “Muse Behavior” ya da Behavior Designer API’lerini <b>karıştırmak</b> (yeni paket, model eski bilgilerle cevap verebilir)</li><li>Her tick’te <code>new</code> ile düğüm oluşturmak (ağaç bir kez kurulur)</li><li>Bütün NPC’lerin aynı Cooldown nesnesini paylaşması (bir NPC atınca hepsi bekler!)</li><li>Koşulu yaprak yerine eylemin içine gömmek: ağaç neden o dalı seçtiğini göstermez</li><li>RUNNING’i hiç kullanmamak: her eylem tek karede “bitmiş” sayılır</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, Behavior paketi 1.0 (com.unity.behavior). Bir nöbetçi için behavior graph tasarla: Try In Order altında sırasıyla (1) HP < 30 ise kaç, (2) oyuncuyu görüyor ve 6 m’den yakınsa ateş et (0,6 sn cooldown), (3) görüyorsa Navigate To Target, (4) LastSeenPos doluysa oraya git ve 3 sn bekle, (5) Patrol. Blackboard değişkenlerini listele, algıyı güncelleyen ayrı bir MonoBehaviour yaz, ateş için Create new Action ile özel bir düğüm şablonu ver. Sadece bu paketin API’sini kullan.”</p><ul class="mini"><li>Öncelik listesini <b>siz</b> yazın, asistan ağacı/kodu kursun</li><li>Hangi aracı kullandığınızı ve sürümünü söyleyin (Unity Behavior 1.x, Unreal 5.x, Beehave 2.x)</li><li>Reaktif mi hafızalı mı olacağını açıkça isteyin</li><li>Algının ağaçtan ayrı bir bileşende olmasını isteyin</li><li>Kesilen eylemler için temizlik (OnEnd/halt) isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu: BT’yi kim yazar?</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Evrimle ağaç üretmek</span>Lim, Baumgarten &amp; Colton (2010), ticari strateji oyunu <b>DEFCON</b> için BT’leri <b>genetik programlama</b> ile evrimleştirdi: rastgele ağaçlar maç yapıyor, iyiler çaprazlanıyor. Sonuçta oyunun kendi yapay zekâsını yenen ağaçlar çıktı. BT’nin yapısı (alt ağaç değiş tokuşu) evrime çok uygun.</div>
+    <div class="box game"><span class="bt">Öğrenme ile BT</span>Colledanchise, Parasuraman &amp; Ögren (2019): Super Mario gibi ortamlarda BT’yi örnekleri ve deneyimi kullanarak otomatik büyütmek. Okunabilirliği korurken öğrenme.</div>
+    <div class="box low"><span class="bt">LLM ile BT üretmek</span>BTGenBot (2024): küçük bir dil modeli, doğal dilden robot görevleri için BehaviorTree.CPP XML’i üretiyor. Oyun için fikir: <b>LLM ağacı tasarlar, ağaç güvenle çalışır</b> — LLM’in her kare karar vermesi yerine (Y14), çıktısı okunabilir ve test edilebilir bir ağaç olur.</div>
+  </div>
+  <p class="mini">Bu üç yön, “davranışı elle yazmak” ile “davranışı öğrenmek” (Y13) arasındaki köprü. Bitirme projesi için iyi konular.</p>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>p5.js nöbetçi</b> — Bu destedeki 60 satırlık motoru p5.js’e taşıyın; aktif yolu ekranda ağaç olarak çizin.</li><li><b class="c-green">[kolay]</b> <b>Kapı ve oda</b> — Kapı örneğini bir Unity sahnesinde Unity Behavior ile kurun: açık kapı, kilitli kapı + anahtar, kırılabilir kapı.</li><li><b class="c-amber">[orta]</b> <b>Grunt ve Elite</b> — Aynı temel ağaçtan iki karakter: biri korkak (fazladan “geri çekil” dalları), biri cesur. Halo 2’nin “özel davranışlar” fikri.</li><li><b class="c-amber">[orta]</b> <b>Kilit açılan dallar</b> — Alien: Isolation gibi: oyuncu bir taktiği 3 kez kullanınca düşmanın ağacında yeni bir dal açılsın (ör. saklanma yerlerini kontrol et).</li><li><b class="c-red">[zor]</b> <b>Olay güdümlü motor</b> — Kendi motorunuza kara tahta + gözlemci (observer) ekleyin: koşullar sadece değer değişince yeniden hesaplansın. Her kare tick ile işlemci süresini karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Evrilen ağaçlar</b> — Basit bir arena oyununda BT’leri genetik programlamayla evrimleştirin (DEFCON makalesi gibi). Sonuçta çıkan ağaçlar okunabilir mi?</li><li><b class="c-purple">[araştırma]</b> <b>LLM tasarımcı</b> — Bir LLM’den doğal dil tarifinden mistreevous MDSL ya da BT.CPP XML ağacı üretmesini isteyin; ürettiklerini otomatik testlerle (bu destedeki 16 algı birleşimi gibi) doğrulayın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Davranış ağacı</b>: iç içe öncelik listeleri; soldan sağa = öncelik.</li>
+      <li>Üç cevap: <b>SUCCESS, FAILURE, RUNNING</b>.</li>
+      <li><b>Selector</b> = B planı (VEYA), <b>sequence</b> = tarif (VE), <b>dekoratör</b> = tek çocuğu değiştirir.</li>
+      <li><b>Tick</b>: kökten, derinlik öncelikli; reaktiflik bedavaya gelir.</li>
+    </ul>
+    <ul>
+      <li><b>Kara tahta</b>: algı yazar, ağaç okur.</li>
+      <li>Reaktif vs hafızalı sequence; olay güdümlü ağaçlar (Unreal).</li>
+      <li>Halo 2, Spore, Alien: Isolation, TLOU, Amalur, Mafia III, Paragon; robotikte Nav2.</li>
+      <li>Araçlar: Unity Behavior, Behavior Designer, Unreal BT, Beehave, LimboAI, BT.CPP, py_trees, mistreevous.</li>
+      <li>Sonraki: <b>Utility AI</b> — sıra yerine puanla karar vermek.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: oyunlardan videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=6VBCXvfNlCM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/6VBCXvfNlCM/hqdefault.jpg" alt=""><span><b>Behaviour Trees: The Cornerstone of Modern Game AI</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=NU717sd8oUc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/NU717sd8oUc/hqdefault.jpg" alt=""><span><b>The Behaviour Tree AI of Halo 2</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=m9W-hpxuApk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/m9W-hpxuApk/hqdefault.jpg" alt=""><span><b>Managing Complexity in the Halo 2 AI System (Damian Isla)</b><br>Bungie Halo Archive</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=-nD9SDOwnWc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/-nD9SDOwnWc/hqdefault.jpg" alt=""><span><b>The Perfect Organism (Alien: Isolation)</b><br>AI and Games Plus</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=7MVzKuQ5SfY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7MVzKuQ5SfY/hqdefault.jpg" alt=""><span><b>Endure and Survive: the AI of The Last of Us</b><br>AI and Games</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: araç eğitimleri 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=KeShMInMjro" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KeShMInMjro/hqdefault.jpg" alt=""><span><b>5 minute Behavior Tree tutorial</b><br>Petter Ögren</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=2Jux5Grqfj0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/2Jux5Grqfj0/hqdefault.jpg" alt=""><span><b>Introduction to Unity Behavior</b><br>LlamAcademy</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Qw5QX6gQC9c" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Qw5QX6gQC9c/hqdefault.jpg" alt=""><span><b>Unity 6 Behavior Graph Explained</b><br>DebugDevin</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=aR6wt5BlE-E" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/aR6wt5BlE-E/hqdefault.jpg" alt=""><span><b>Build AI Behaviour Trees FAST in Unity with C#</b><br>Mina Pêcheux</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=-hXFCSxAYEI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/-hXFCSxAYEI/hqdefault.jpg" alt=""><span><b>Understanding AI and Behavior Trees — The Ultimate Guide [UE5]</b><br>Darklore Creations</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=9AjWNG6Z1YQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9AjWNG6Z1YQ/hqdefault.jpg" alt=""><span><b>Behaviour Tree ile Yapay Zekâ NPC (Bölüm 1) — UE5 Türkçe</b><br>Samet Yalçın Bitişik</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=n5m2aI6Wk8E" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/n5m2aI6Wk8E/hqdefault.jpg" alt=""><span><b>EASY way to add AI in Unity 6 — Behavior Package</b><br>Sunny Valley Studio</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Isla 2005</b> · <a href="https://www.gamedeveloper.com/programming/gdc-2005-proceeding-handling-complexity-in-the-i-halo-2-i-ai" target="_blank" rel="noopener">Handling Complexity in the Halo 2 AI</a> <i>(GDC 2005 / Gamasutra)</i><br>BT’yi endüstriye tanıtan yazı: öncelikli listeler, dürtüler, etiketler, uyaran davranışları, hafıza.</div><div class="paper"><b>Champandard &amp; Dunstan 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter06_The_Behavior_Tree_Starter_Kit.pdf" target="_blank" rel="noopener">The Behavior Tree Starter Kit</a> <i>(Game AI Pro, Bölüm 6)</i><br>1. ve 2. nesil BT, olay güdümlü yapı, örnek C++ kodu.</div><div class="paper"><b>Francis 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter09_Overcoming_Pitfalls_in_Behavior_Tree_Design.pdf" target="_blank" rel="noopener">Overcoming Pitfalls in Behavior Tree Design</a> <i>(Game AI Pro 3, Bölüm 9)</i><br>Google robotikten pratik dersler: az sınıf, geç dil, ölçülü kara tahta.</div><div class="paper"><b>Colledanchise &amp; Ögren 2018</b> · <a href="https://arxiv.org/abs/1709.00084" target="_blank" rel="noopener">Behavior Trees in Robotics and AI: An Introduction</a> <i>(CRC Press (arXiv sürümü ücretsiz))</i><br>BT’nin biçimsel tanımı, FSM/HFSM ile karşılaştırması; ders kitabı.</div><div class="paper"><b>Iovino vd. 2022</b> · <a href="https://arxiv.org/abs/2005.05842" target="_blank" rel="noopener">A Survey of Behavior Trees in Robotics and AI</a> <i>(Robotics and Autonomous Systems)</i><br>Alanın kapsamlı taraması: oyunlardan robotiğe.</div><div class="paper"><b>Lim, Baumgarten &amp; Colton 2010</b> · <a href="https://link.springer.com/chapter/10.1007/978-3-642-12239-2_11" target="_blank" rel="noopener">Evolving Behaviour Trees for the Commercial Game DEFCON</a> <i>(EvoApplications, LNCS 6024)</i><br>BT’leri genetik programlamayla otomatik üretmek.</div><div class="paper"><b>Colledanchise, Parasuraman &amp; Ögren 2019</b> · <a href="https://arxiv.org/abs/1504.05811" target="_blank" rel="noopener">Learning of Behavior Trees for Autonomous Agents</a> <i>(IEEE Transactions on Games)</i><br>Öğrenme ile BT oluşturma; Mario örnekleri.</div><div class="paper"><b>Izzo, Bardaro &amp; Matteucci 2024</b> · <a href="https://arxiv.org/abs/2403.12761" target="_blank" rel="noopener">BTGenBot: Behavior Tree Generation for Robotic Tasks with Lightweight LLMs</a> <i>(arXiv 2403.12761)</i><br>Küçük dil modelleriyle doğal dilden BT üretmek.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://www.gamedeveloper.com/programming/behavior-trees-for-ai-how-they-work" target="_blank" rel="noopener">Chris Simpson: Behavior trees for AI — How they work</a> — en çok okunan giriş yazısı</li><li><a href="https://chrishecker.com/My_Liner_Notes_for_Spore" target="_blank" rel="noopener">Chris Hecker: My Liner Notes for Spore</a> — Spore BT belgeleri</li><li><a href="https://www.gamedeveloper.com/design/the-perfect-organism-the-ai-of-alien-isolation" target="_blank" rel="noopener">Tommy Thompson: The AI of Alien: Isolation</a></li><li><a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter34_Human_Enemy_AI_in_The_Last_of_Us.pdf" target="_blank" rel="noopener">Game AI Pro 2, Bölüm 34: Human Enemy AI in The Last of Us</a></li><li><a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter07_Real-World_Behavior_Trees_in_Script.pdf" target="_blank" rel="noopener">Game AI Pro, Bölüm 7: Real-World Behavior Trees in Script (Amalur)</a></li><li><a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter10_Building_Utility_Decisions_into_Your_Existing_Behavior_Tree.pdf" target="_blank" rel="noopener">Game AI Pro, Bölüm 10: Utility Decisions in Your BT</a></li></ul>
+    <ul class="reflist"><li><a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter08_Simulating_Behavior_Trees.pdf" target="_blank" rel="noopener">Game AI Pro, Bölüm 8: Simulating Behavior Trees (Kinect Star Wars)</a></li><li><a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter32_Paragon_Bots_A_Bag_of_Tricks.pdf" target="_blank" rel="noopener">Game AI Pro 3, Bölüm 32: Paragon Bots</a></li><li><a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter16_Open-world_Enemy_AI_in_Mafia_III.pdf" target="_blank" rel="noopener">Game AI Pro Online: Open-world Enemy AI in Mafia III</a></li><li><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---overview" target="_blank" rel="noopener">Unreal: Behavior Tree Overview</a></li><li><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/behavior-tree-in-unreal-engine---quick-start-guide" target="_blank" rel="noopener">Unreal: Behavior Tree Quick Start</a></li><li><a href="https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/node-types.html" target="_blank" rel="noopener">Unity Behavior: düğüm türleri</a></li><li><a href="https://www.behaviortree.dev/docs/nodes-library/SequenceNode" target="_blank" rel="noopener">BehaviorTree.CPP belgeleri (sequence türleri)</a></li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #4a3a0f 0%, #2c1d0c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Utility AI</div>
+    <div class="sub">The Sims’ten Dave Mark’a: kararları puanlarla vermek</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd27a" href="../yz-utility/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

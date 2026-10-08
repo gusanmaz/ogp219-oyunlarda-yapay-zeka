@@ -51,86 +51,8 @@
     return `<svg viewBox="0 0 530 330" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
   }
 
-  /* ---------- nöbetçi simülasyonu ---------- */
-  const WALLS = [{ x: 300, y: 90, w: 30, h: 150 }, { x: 470, y: 230, w: 150, h: 26 }];
-  const PATROL = [V.v(80, 70), V.v(640, 70), V.v(640, 320), V.v(80, 320)];
-  const segRect = (a, b, r) => {   // doğru parçası dikdörtgeni kesiyor mu? (slab yöntemi)
-    let t0 = 0, t1 = 1; const d = V.sub(b, a);
-    for (const [p, dd, lo, hi] of [[a.x, d.x, r.x, r.x + r.w], [a.y, d.y, r.y, r.y + r.h]]) {
-      if (Math.abs(dd) < 1e-9) { if (p < lo || p > hi) return false; continue; }
-      let ta = (lo - p) / dd, tb = (hi - p) / dd; if (ta > tb) [ta, tb] = [tb, ta];
-      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb); if (t0 > t1) return false;
-    }
-    return true;
-  };
-  const inWall = p => WALLS.some(r => p.x > r.x - 8 && p.x < r.x + r.w + 8 && p.y > r.y - 8 && p.y < r.y + r.h + 8);
-  function makeGuardSim(o = {}) {
-    const W = o.W || 720, H = o.H || 380;
-    let decide = o.decide || refNext;
-    const st = {};
-    const resetState = () => Object.assign(st, { g: V.v(80, 70), heading: 0, state: 'DEVRIYE', tIn: 0, wp: 1, hp: 100, noise: null, heard: false, lastSeen: -99, flash: null, flashT: 0, log: [], switches: [], shotT: 0, muzzle: 0, botT: 0, memory: o.memory !== false });
-    resetState();
-    const move = (dir, sp, dt) => {
-      const try1 = d => { const before = V.copy(st.g), n = V.add(st.g, V.mul(d, sp * dt)); if (!inWall(V.v(n.x, st.g.y))) st.g.x = n.x; if (!inWall(V.v(st.g.x, n.y))) st.g.y = n.y; st.g.x = SL.clamp(st.g.x, 15, W - 15); st.g.y = SL.clamp(st.g.y, 15, H - 15); return V.dist(before, st.g); };
-      if (try1(dir) < sp * dt * 0.2) { if (try1(V.perp(dir)) < sp * dt * 0.2) try1(V.mul(V.perp(dir), -1)); }   // sıkıştıysa yana kay
-    };
-    const turnTo = (a, dt, sp = 4) => { st.heading += SL.clamp(SL.angDiff(st.heading, a), -sp * dt, sp * dt); };
-    const w = new SL.World({
-      W, H,
-      reset() { resetState(); },
-      onClick(m) { st.noise = V.v(m.x, m.y); st.heard = true; st.noiseT = 0; },
-      update(dt, w) {
-        st.botT += dt;
-        const p = w.mouse.inside ? V.v(w.mouse.x, w.mouse.y) : V.v(500 + Math.cos(st.botT * 0.4) * 160, 170 + Math.sin(st.botT * 0.7) * 50);
-        st.player = p;
-        // ALGILA
-        const to = V.sub(p, st.g), d = V.len(to), fwd = V.fromAngle(st.heading);
-        const raw = d < 260 && V.dot(fwd, V.norm(to)) > Math.cos((55 * Math.PI) / 180) && !WALLS.some(r => segRect(st.g, p, r));
-        if (raw) st.lastSeen = w.time;
-        const sees = raw || (st.memory && w.time - st.lastSeen < 1.2 && d < 340);
-        const sense = { seesPlayer: sees, dist: Math.round(d), hp: Math.round(st.hp), heardNoise: st.heard, timeInState: Math.round(st.tIn * 10) / 10 };
-        st.sense = sense;
-        // DÜŞÜN
-        const next = decide(st.state, Object.assign({}, sense));
-        if (typeof next !== 'string' || !NAMES[next]) { w.pause(); if (o.onBad) o.onBad(next); return; }
-        if (next !== st.state) {
-          st.flash = [st.state, next]; st.flashT = 1;
-          st.log.unshift(`${w.time.toFixed(1)} sn: ${NAMES[st.state]} → ${NAMES[next]}`); st.log.length = Math.min(st.log.length, 6);
-          st.switches.push(w.time);
-          if (next === 'SUPHE' && st.state !== 'DEVRIYE') { st.noise = V.copy(p); }   // son görülen yer
-          st.state = next; st.tIn = 0; st.heard = false;
-        }
-        st.tIn += dt; st.flashT -= dt; st.switches = st.switches.filter(x => x > w.time - 5);
-        // DAVRAN
-        const s = st.state;
-        if (s === 'DEVRIYE') { const tg = PATROL[st.wp], dir = V.norm(V.sub(tg, st.g)); turnTo(V.angle(dir), dt); move(dir, 70, dt); if (V.dist(st.g, tg) < 10) st.wp = (st.wp + 1) % PATROL.length; }
-        else if (s === 'SUPHE') { const tg = st.noise || st.g; if (V.dist(st.g, tg) > 12) { const dir = V.norm(V.sub(tg, st.g)); turnTo(V.angle(dir), dt); move(dir, 95, dt); } else st.heading += dt * 2.2; }
-        else if (s === 'KOVALA') { const dir = V.norm(to); turnTo(V.angle(dir), dt, 6); move(dir, 125, dt); }
-        else if (s === 'SALDIR') { turnTo(V.angle(to), dt, 8); st.shotT -= dt; if (st.shotT <= 0) { st.shotT = 0.6; st.muzzle = 0.1; } }
-        else if (s === 'KAC') { const dir = V.norm(V.mul(to, -1)); turnTo(V.angle(dir), dt, 6); move(dir, 115, dt); st.hp = Math.min(100, st.hp + 9 * dt); }
-        st.muzzle -= dt;
-      },
-      render(ctx, w, t) {
-        const col = COLS(t)[st.state];
-        WALLS.forEach(r => { ctx.fillStyle = t.dark ? '#3a3f55' : '#4a4f63'; ctx.fillRect(r.x, r.y, r.w, r.h); });
-        ctx.save(); ctx.strokeStyle = t.rule; ctx.setLineDash([4, 6]); ctx.beginPath(); PATROL.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath(); ctx.stroke(); ctx.restore();
-        SL.drawCone(ctx, st.g, st.heading, (110 * Math.PI) / 180, 260, st.sense && st.sense.seesPlayer ? t.red : t.amber, 0.12);
-        if (st.noise && (st.state === 'SUPHE' || st.heard)) { ctx.strokeStyle = t.amber; ctx.lineWidth = 2; [10, 18].forEach(r => { ctx.beginPath(); ctx.arc(st.noise.x, st.noise.y, r, 0, 7); ctx.stroke(); }); }
-        const p = st.player || V.v(0, 0);
-        if (st.muzzle > 0) { ctx.strokeStyle = t.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(st.g.x, st.g.y); ctx.lineTo(p.x, p.y); ctx.stroke(); }
-        ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 7); ctx.fill();
-        SL.drawLabel(ctx, w.mouse.inside ? 'oyuncu (sen)' : 'oyuncu (bot)', p.x, p.y + 20, t.green, { size: 11 });
-        SL.drawAgent(ctx, st.g, st.heading, col, 14);
-        SL.drawLabel(ctx, NAMES[st.state], st.g.x, st.g.y - 26, col);
-        ctx.fillStyle = t.rule; ctx.fillRect(st.g.x - 20, st.g.y + 18, 40, 5); ctx.fillStyle = st.hp < 30 ? t.red : t.green; ctx.fillRect(st.g.x - 20, st.g.y + 18, 40 * st.hp / 100, 5);
-        if (o.onDraw) o.onDraw(st);
-      }
-    });
-    return { world: w, st, setDecide: f => { decide = f; }, shoot: () => { st.hp = Math.max(0, st.hp - 25); }, setMemory: m => { st.memory = m; } };
-  }
-
   D.guardfsm = function (root) {
-    const sim = makeGuardSim({ W: 720, H: 380, memory: root.dataset.memory != null ? root.dataset.memory === '1' : true, onDraw: st => {
+    const sim = SL.makeGuardArena({ decide: refNext, memory: root.dataset.memory != null ? root.dataset.memory === '1' : true, onDraw: st => {
       diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null);
       const s = st.sense || {};
       info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b>${s.dist}</b></span><span class="cnt">görüyor <b>${s.seesPlayer ? 'evet' : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('') || '<i>henüz geçiş yok</i>'}</div>`;
@@ -183,7 +105,7 @@
   /* ---------- simlab: kendi geçiş fonksiyonunu yaz ---------- */
   SL.SIMLABS.guard = function (box, api) {
     let bad = false;
-    const sim = makeGuardSim({ W: 540, H: 300, onBad: v => { api.setMsg('err', '⚠️ nextState geçerli bir durum adı döndürmeli (DEVRIYE, SUPHE, KOVALA, SALDIR, KAC). Döndürülen: ' + JSON.stringify(v)); }, onDraw: st => { lbl.textContent = `durum: ${NAMES[st.state]} · can ${Math.round(st.hp)}`; } });
+    const sim = SL.makeGuardArena({ decide: refNext, displayW: 540, onBad: v => { api.setMsg('err', '⚠️ nextState geçerli bir durum adı döndürmeli (DEVRIYE, SUPHE, KOVALA, SALDIR, KAC). Döndürülen: ' + JSON.stringify(v)); }, onDraw: st => { lbl.textContent = `durum: ${NAMES[st.state]} · can ${Math.round(st.hp)}`; } });
     const lbl = el('div', { class: 'mini' });
     box.append(sim.world.canvas, el('div', { class: 'sv-controls' }, btn('🔫 ateş et (−25)', () => sim.shoot())), lbl, sim.world.controls({ speed: false }));
     sim.world.reset();
