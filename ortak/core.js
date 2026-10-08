@@ -63,7 +63,7 @@
     return s;
   };
   SL.slider = function (label, min, max, val, step, onInput, fmtFn) {
-    const r = el('input', { type: 'range', min, max, value: val, step: step || 1 });
+    const r = el('input', { type: 'range', min, max, step: step || 1, value: val });   // step, value’dan önce: yoksa değer eski adıma yuvarlanır
     const v = el('b', null, fmtFn ? fmtFn(val) : val);
     r.addEventListener('input', () => { v.textContent = fmtFn ? fmtFn(+r.value) : r.value; onInput(+r.value); });
     return el('label', { class: 'ctl' }, label, ' ', v, r);

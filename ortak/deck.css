@@ -705,3 +705,21 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .bto-st { font: 700 12px "JetBrains Mono", monospace; margin-left: 8px; }
 .bt-path { font: 600 14px/1.6 "Source Sans 3", sans-serif; min-height: 2.2em; }
 .bt-path span { display: inline-block; border-radius: 6px; padding: 0 6px; margin: 1px 2px; color: #fff; }
+/* utility AI: puan çubukları */
+.ctl-col { display: flex; flex-direction: column; gap: 6px; font-size: 16px; }
+.ubar { display: inline-block; width: 90px; height: 10px; border-radius: 5px; background: var(--rule); overflow: hidden; vertical-align: middle; }
+.ubar.wide { width: 150px; }
+.ubar > i { display: block; height: 100%; border-radius: 5px; background: var(--blue); }
+.unum { font: 600 12px "JetBrains Mono", monospace; margin-left: 6px; }
+.ucons { display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 1.5; }
+.ulab { width: 110px; color: var(--muted); }
+.ut-table { font-size: 15px; }
+.ut-table td { vertical-align: middle; padding: 4px 8px; }
+.ut-table tr.ut-best td { background: color-mix(in srgb, var(--green) 14%, transparent); }
+.uneed, .uscore { display: grid; grid-template-columns: 120px 150px 44px; align-items: center; gap: 8px; font-size: 14px; line-height: 1.55; }
+.uneed b, .uscore b { font: 600 12px "JetBrains Mono", monospace; text-align: right; }
+.uscore .ubar > i { background: var(--purple); }
+.uscore.on { font-weight: 800; color: var(--green); }
+.uscore.on .ubar > i { background: var(--green); }
+.uneed-row { display: flex; gap: 12px; font-size: 15px; margin-top: 4px; }
+.mono { font-family: "JetBrains Mono", monospace; }

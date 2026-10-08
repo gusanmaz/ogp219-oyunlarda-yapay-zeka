@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utility AI</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Utility (fayda) tabanlı yapay zekâ: normalleştirme, yanıt eğrileri, etkenleri çarpma ve telafi faktörü, ağırlıklı rastgele seçim, dual utility, atalet, The Sims akıllı nesneleri, Zoo Tycoon 2, Guild Wars 2 IAUS, Dragon Age: Inquisition, Unreal StateTree ve EQS. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a3a0f 0%, #2a1636 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 4</div>
+  <div class="ttl" style="font-size:84px">Utility AI</div>
+  <div class="sub"><i>Yanıt eğrileri, etkenler, akıllı nesneler</i> — kararları evet/hayır yerine puanla vermek</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titleutil"></div>
+  <aside class="notes">Haftalık plandaki utility (fayda) tabanlı karar verme konusu. Arka plandaki çubuklar beş eylemin puanı; her an en yüksek olanın üstünde ok var.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Neden puan?</b> — eşiklerin sorunu, fayda fikrinin kısa tarihi</li>
+      <li><b>Yanıt eğrileri</b> — bir sayıyı “ne kadar istiyorum?”a çevirmek (canlı eğri editörü)</li>
+      <li><b>Etkenleri birleştirmek</b> — çarpım, veto, telafi faktörü (canlı asker)</li>
+      <li><b>Seçim ve atalet</b> — en iyi mi, rastgele mi? Dual utility, Zoo Tycoon 2</li>
+      <li><b>The Sims</b> — ihtiyaçlar, akıllı nesneler, Joy Booth (canlı oda)</li>
+      <li><b>Kod</b> — C#, JS, Python + üç laboratuvar</li>
+      <li><b>Gerçek oyunlarda</b> — Guild Wars 2, Dragon Age: Inquisition, Unreal EQS</li>
+      <li><b>Kütüphaneler</b> — Unreal StateTree, Unity AnimationCurve, Godot eklentileri, Curvature</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir NPC’nin her seçeneğine 0–1 arası bir puan veren eğriler tasarlayabilecek, birden çok etkeni doğru biçimde birleştirebilecek, Sims tarzı ihtiyaç güdümlü bir karakter yazabilecek ve bu yöntemi davranış ağacınızla birlikte kullanabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: AKŞAM 9, KARARINIZ NE?</span>
+    <p class="big">Biraz açsınız, epey yorgunsunuz, sevdiğiniz dizinin yeni bölümü çıkmış, yarın sabah sınav var.</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">“Açsam ye, değilsem…” gibi <b>evet/hayır</b> kurallarıyla karar vermiyorsunuz. Her seçeneği kafanızda <b>tartıyorsunuz</b>: ne kadar açım, ne kadar yorgunum, dizi ne kadar cazip.</li>
+    <li class="fragment">Her seçeneğe gizli bir <b>puan</b> veriyor ve en yüksek puanlıyı seçiyorsunuz. İktisatçılar buna <b>fayda</b> (utility) der.</li>
+    <li class="fragment">Bir NPC de aynısını yapabilir: “ateş et 0,62 · siper al 0,71 · iyileş 0,18” → <b>siper al</b>. Bugünün konusu bu: <b>Utility AI</b>.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (0–1 aralığı, lerp)</a><a class="" href="../yz-davranis-agaclari/">Y3 · Davranış Ağaçları</a></div>
+  <div class="prereq"><a class="opt" href="../yz-fsm/">Y2 · Sonlu Durum Makineleri</a><a class="opt" href="../oncelik-kuyruklari/">Öncelik Kuyrukları (en büyüğü bulmak)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Y0’daki “bir değeri 0–1 aralığına getirme” fikri bu dersin temel taşı. Y3’teki ağaçla karşılaştıracağız ve sonunda ikisini birleştireceğiz. Matematik olarak sadece <b>çarpma</b> ve <b>grafik okuma</b> gerekiyor.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Utility AI’ın kalbi kod değil, <b>eğri tasarımı</b>. Eğrileri Excel / Google Sheets / Desmos’ta çizip denemek, Unity’de <code>AnimationCurve</code> ile fareyle şekillendirmek mümkün. Unreal 5.5+ StateTree’de utility seçimi editörden yapılır.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:19px">
+    <tr><td>utility</td><td>fayda</td><td>Bir seçeneğin “şu an ne kadar iyi” olduğunu gösteren sayı (genelde 0–1)</td></tr>
+    <tr><td>consideration</td><td>etken / değerlendirme</td><td>Puanı etkileyen tek bir ölçüt: mesafe, can, mermi…</td></tr>
+    <tr><td>normalization</td><td>normalleştirme</td><td>Ham değeri (ör. 0–50 m) 0–1 aralığına getirmek</td></tr>
+    <tr><td>response curve</td><td>yanıt eğrisi</td><td>0–1 girdiyi 0–1 puana çeviren fonksiyon: doğrusal, üslü, lojistik, parçalı</td></tr>
+    <tr><td>decision score evaluator (DSE)</td><td>karar puanlayıcı</td><td>Bir eylemin bütün etkenlerini birleştirip tek puan üreten birim (IAUS)</td></tr>
+    <tr><td>compensation factor</td><td>telafi faktörü</td><td>Çok etkenli eylemlerin çarpım yüzünden haksız düşük puan almasını düzeltir</td></tr>
+    <tr><td>weighted random</td><td>ağırlıklı rastgele</td><td>Puanı yüksek olanın seçilme olasılığı yüksek olan kura</td></tr>
+    <tr><td>rank · weight</td><td>öncelik sınıfı · ağırlık</td><td>Dual utility: önce sınıf, sınıf içinde ağırlık</td></tr>
+    <tr><td>inertia / commitment</td><td>atalet / bağlılık</td><td>Yeni karara geçmek için mevcut kararı biraz kayırmak: titremeyi önler</td></tr>
+    <tr><td>smart object · advertisement</td><td>akıllı nesne · reklam</td><td>Nesnenin “beni kullanırsan şu ihtiyacını şu kadar doyururum” ilanı (The Sims)</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Neden puan?</div>
+  <div class="sub">eşiklerin sorunu ve fayda fikri</div>
+  <ul class="agenda"><li class="on">neden puan?</li><li class="">yanıt eğrileri</li><li class="">etkenleri birleştirmek</li><li class="">seçim ve atalet</li><li class="">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="neden puan?">
+  <h2>Eşik mi, eğri mi?</h2>
+  <div class="cols">
+    <svg viewBox="0 0 540 300" style="width:100%" font-family="Source Sans 3">
+      <g style="stroke:var(--rule)" stroke-width="1">
+        <line x1="50" y1="250" x2="510" y2="250"/><line x1="50" y1="30" x2="50" y2="250"/>
+      </g>
+      <g font-size="14" style="fill:var(--muted)" text-anchor="middle">
+        <text x="50" y="270">0</text><text x="188" y="270">30</text><text x="510" y="270">100</text><text x="280" y="292">can</text>
+        <text x="28" y="254">0</text><text x="28" y="36">1</text>
+      </g>
+      <polyline points="50,40 188,40 188,250 510,250" fill="none" style="stroke:var(--red)" stroke-width="4"/>
+      <path d="M50,42 C130,48 160,90 200,150 C240,210 300,240 510,248" fill="none" style="stroke:var(--blue)" stroke-width="4"/>
+      <text x="215" y="70" font-size="16" font-weight="700" style="fill:var(--red)">eşik: “can &lt; 30 → kaç”</text>
+      <text x="250" y="180" font-size="16" font-weight="700" style="fill:var(--blue)">eğri: kaçma isteği</text>
+      <circle cx="193" cy="250" r="6" style="fill:var(--red)"/><text x="196" y="235" font-size="13" style="fill:var(--red)">31: hiç istemiyor!</text>
+    </svg>
+    <ul style="font-size:.86em">
+      <li>Y2–Y3’te kararlar <b>evet/hayır</b> koşullarıydı. Can 31’de nöbetçi, can 100’deki kadar cesur; 29’da birden tabanları yağlıyor.</li>
+      <li>Eğride ise kaçma isteği can azaldıkça <b>yavaş yavaş</b> artar. Başka etkenlerle (düşman sayısı, siper) <b>tartılabilir</b>.</li>
+      <li class="fragment">Kevin Dill: “Utility AI, durumun <b>ince ayrıntılarını</b> hesaba katar; yine de eğrileri tasarımcı yazdığı için kontrol elden gitmez.”</li>
+      <li class="fragment">Önemli: puanlar <b>o anda</b>, oyunun gerçek durumuna göre hesaplanmalı. Sabit ağırlıklar (“saldırı her zaman 0,7”) işe yaramaz.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="neden puan?">
+  <h2>Fayda fikrinin kısa tarihi 📜</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">1738 · Bernoulli</span>Daniel Bernoulli “St. Petersburg paradoksu”nu çözmek için paranın değerinin herkes için aynı olmadığını söyler: zengine 100 lira, yoksula 100 liradan daha az <b>fayda</b> sağlar. İlk “yanıt eğrisi” budur: para → mutluluk, doğrusal değil.</div>
+      <div class="box story"><span class="bt">1944 · von Neumann &amp; Morgenstern</span>“Oyun Teorisi ve Ekonomik Davranış”: rasyonel bir karar verici <b>beklenen faydayı</b> en büyükleyen seçeneği seçer. (Minimax’ı da bu kitaptan tanıyacağız, Y6.)</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">2000 · The Sims</span>Oyuncunun <b>gördüğü</b> ilk büyük utility sistemi: ihtiyaç çubukları ve nesnelerin “reklamları” (Level 4).</div>
+      <div class="box game"><span class="bt">2009–2015 · Dave Mark</span>“Behavioral Mathematics for Game AI” kitabı (2009), Kevin Dill ile GDC 2010 konuşması “Improving AI Decision Modeling Through Utility Theory”, Mike Lewis ile GDC 2015 “Building a Better Centaur” — <b>Infinite Axis Utility System</b> (IAUS). Bugünkü dilin çoğu buradan.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="neden puan?">
+  <h2>Utility AI’ın döngüsü</h2>
+  <svg viewBox="0 0 1180 250" style="width:100%" font-family="Source Sans 3">
+    <defs><marker id="ua" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+    <g font-size="17" font-weight="700" text-anchor="middle">
+      <rect x="10" y="80" width="170" height="80" rx="12" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="95" y="115" style="fill:var(--ink)">ham girdi</text><text x="95" y="140" font-size="14" font-weight="400" style="fill:var(--muted)">mesafe = 18 m</text>
+      <rect x="240" y="80" width="170" height="80" rx="12" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="325" y="115" style="fill:var(--ink)">normalleştir</text><text x="325" y="140" font-size="14" font-weight="400" style="fill:var(--muted)">18 / 50 = 0,36</text>
+      <rect x="470" y="80" width="170" height="80" rx="12" style="fill:var(--card);stroke:var(--purple)" stroke-width="3"/><text x="555" y="115" style="fill:var(--ink)">yanıt eğrisi</text><text x="555" y="140" font-size="14" font-weight="400" style="fill:var(--muted)">1 − 0,36² = 0,87</text>
+      <rect x="700" y="80" width="190" height="80" rx="12" style="fill:var(--card);stroke:var(--amber)" stroke-width="3"/><text x="795" y="115" style="fill:var(--ink)">etkenleri birleştir</text><text x="795" y="140" font-size="14" font-weight="400" style="fill:var(--muted)">0,87 × 0,81 × 0,79</text>
+      <rect x="950" y="80" width="220" height="80" rx="12" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="1060" y="115" style="fill:var(--ink)">en iyi eylemi seç</text><text x="1060" y="140" font-size="14" font-weight="400" style="fill:var(--muted)">siper al (0,71)</text>
+    </g>
+    <g style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ua)"><line x1="182" y1="120" x2="236" y2="120"/><line x1="412" y1="120" x2="466" y2="120"/><line x1="642" y1="120" x2="696" y2="120"/><line x1="892" y1="120" x2="946" y2="120"/></g>
+    <text x="440" y="215" font-size="15" style="fill:var(--muted)" text-anchor="middle">her etken için ayrı ayrı · her eylem için ayrı ayrı · saniyede birkaç kez</text>
+    <path d="M1060,165 C1060,235 95,235 95,165" fill="none" style="stroke:var(--rule)" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#ua)"/>
+  </svg>
+  <p style="font-size:.86em">Bir NPC’nin <b>N eylemi</b>, her eylemin birkaç <b>etkeni</b> var. Her etken bir sayı → 0–1 → eğri → puan. Eylemin puanı, etkenlerinin birleşimi. En yüksek (ya da en iyilerden biri) seçilir. Sonra dünya değişir ve döngü yeniden başlar.</p>
+</section>
+
+<section data-sec="neden puan?">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · neden puan?</div>
+    <div class="q">Bir FPS’te “can &lt; 30 ise kaç” kuralını utility ile yeniden yazmak neyi değiştirir?</div>
+    <div class="opts">
+      <button data-opt="A">Kaçma isteği can azaldıkça kademeli artar ve başka etkenlerle tartılabilir</button>
+      <button data-opt="B">NPC artık hiç kaçmaz</button>
+      <button data-opt="C">Kural daha hızlı çalışır</button>
+      <button data-opt="D">Tasarımcının kontrolü tamamen kaybolur</button>
+    </div>
+    <div class="explain">Utility, eşiği bir <b>eğriye</b> çevirir: can 31’de de az da olsa kaçma isteği vardır ve düşman sayısı, siperin yakınlığı gibi etkenlerle birlikte değerlendirilir. Eğrileri tasarımcı çizdiği için kontrol kaybolmaz; hız açısından da genelde daha pahalıdır, ucuz değil.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Yanıt eğrileri</div>
+  <div class="sub">bir sayıyı “ne kadar istiyorum?”a çevirmek</div>
+  <ul class="agenda"><li class="done">neden puan?</li><li class="on">yanıt eğrileri</li><li class="">etkenleri birleştirmek</li><li class="">seçim ve atalet</li><li class="">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="eğriler">
+  <h2>Adım 1: normalleştirme (“kitap ayraçları”)</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Mesafe metre, can puan, mermi adet… Hepsini karşılaştırabilmek için önce <b>0–1</b> aralığına getiririz. Mike Lewis buna “kitap ayraçları” (bookends) der: bir <b>en az</b> ve bir <b>en çok</b> değer seçilir.</p>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Y0’daki "ters lerp": değer, aralığın neresinde?
+float Normalize(float v, float min, float max)
+{
+    return Mathf.Clamp01((v - min) / (max - min));
+}
+
+float d = Normalize(distance, 0f, 50f);   // 18 m → 0,36
+float h = Normalize(hp, 0f, maxHp);       // 70/100 → 0,70
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def normalize(v, lo, hi):
+    return min(1.0, max(0.0, (v - lo) / (hi - lo)))
+
+d = normalize(distance, 0, 50)   # 18 m → 0.36
+</script></code></pre>
+    </div>
+  </div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">🎒 Kırpma (clamp)</span>50 m’den uzak her şey 1 sayılır, negatifler 0. Unity: <code>Mathf.Clamp01</code>. Böylece puanlar asla 0–1 dışına taşmaz.</div>
+      <div class="box warn"><span class="bt">⚠️ Ayraç seçimi bir tasarım kararı</span>Keskin nişancı için “uzak” 100 m, tabancalı için 15 m olabilir. Aynı eğri, farklı ayraçlarla farklı karakter yaratır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="eğriler">
+  <h2>Adım 2: eğri ailesi</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>eğri</th><th>biçim (x ∈ [0,1])</th><th>ne zaman?</th><th>örnek</th></tr>
+    <tr><td><b>doğrusal</b></td><td><code>y = m·(x − c) + b</code></td><td>Etki her yerde eşit artıyorsa</td><td>Düşman sayısı → siper isteği</td></tr>
+    <tr><td><b>üslü</b> (karesel, kübik)</td><td><code>y = (x − c)^k</code></td><td>Uçlarda hızlanan/yavaşlayan etki</td><td>Mermi azaldıkça şarjör isteği: önce ihmal, sonra acil</td></tr>
+    <tr><td><b>lojistik</b> (S)</td><td><code>y = 1 / (1 + e^(−s·(x − c)))</code></td><td>Bir eşik etrafında yumuşak geçiş</td><td>Can ~%25 altına inince kaçma isteği hızla artar</td></tr>
+    <tr><td><b>ters</b></td><td><code>y' = 1 − y</code></td><td>“Ne kadar azsa o kadar iyi”</td><td>Mesafe: yakın hedef daha cazip</td></tr>
+    <tr><td><b>parçalı doğrusal</b></td><td>elle noktalar + aradaki doğrular</td><td>Formülle anlatılamayan istek</td><td>The Sims’in açlık eğrisi</td></tr>
+  </table>
+  <p class="mini">Formülden korkmayın: oyunda bu eğrileri kimse formül yazarak ayarlamaz, <b>görsel bir editörde</b> (sonraki slayt, Unity AnimationCurve, Curvature) şekillendirir.</p>
+</section>
+
+<section data-sec="eğriler">
+  <h2>Eğri editörü 📈</h2>
+  <div class="demo" data-demo="curves"></div>
+</section>
+
+<section data-sec="eğriler">
+  <h2>Hikâye: Sims neden doğru zamanda acıkır?</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">David “Rez” Graham (The Sims Medieval, The Sims 4 YZ programcısı) Game AI Pro’da anlatıyor:</p>
+      <ul style="font-size:.84em">
+        <li>Bütün Sims oyunlarının sorunu: Sim acıkınca yemek yesin. Açlık için basit bir <b>karesel</b> eğri kullanırsanız, Sim açlık göstergesi neredeyse doluyken bile <b>küçük bir olasılıkla</b> yemeğe gider. Er geç gider de!</li>
+        <li>Tasarımcılar şunu istiyordu: belli bir eşiğe kadar açlığı <b>tamamen yok say</b>, sonra <b>biraz</b> acık, sonra <b>birden çok</b> acık.</li>
+        <li>Bunu tek bir formülle kurmak zor; çözüm elle ayarlanan <b>parçalı doğrusal</b> eğri. Graham: “The Sims’in kullandığı tam olarak budur.”</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">🔎 Editörde deneyin</span>“Açlık (Sims tarzı)” hazır ayarını seçin. Noktaları sürükleyip kendi Sim’inizin “açlık kişiliğini” tasarlayın: obur bir Sim mi, oruç tutan bir keşiş mi?</div>
+      <div class="box story"><span class="bt">💡 Ders</span>Eğri, karakterin <b>kişiliğidir</b>. Aynı kod, farklı eğrilerle farklı karakterler üretir — programcıya gerek kalmadan tasarımcı ayarlayabilir.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="eğriler">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · eğriler</div>
+    <div class="q">Bir keskin nişancı “hedef uzaksa daha iyi, ama 80 m’den sonrası fark etmez” istiyor. En uygun yanıt eğrisi?</div>
+    <div class="opts">
+      <button data-opt="A">Mesafeyi 0–80 m ayraçlarıyla normalleştirip doğrusal ya da kökümsü (k &lt; 1) yükselen eğri</button>
+      <button data-opt="B">Ters (1 − y) eğri</button>
+      <button data-opt="C">Sabit 0,5</button>
+      <button data-opt="D">Mesafeyi 0–1000 m ile normalleştirip karesel eğri</button>
+    </div>
+    <div class="explain">Ayraçlar 0–80 m olunca 80 m ve üstü zaten 1’e kırpılır. Yükselen bir eğri “uzak iyi” der; k &lt; 1 olan üslü eğri ilk metrelerde hızlı artar. Ters eğri “yakın iyi” demek olurdu; 0–1000 m ayracı ise 80 m’yi 0,08’e sıkıştırıp karesel eğriyle neredeyse sıfırlar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Etkenleri birleştirmek</div>
+  <div class="sub">çarpım, veto ve telafi faktörü</div>
+  <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="on">etkenleri birleştirmek</li><li class="">seçim ve atalet</li><li class="">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="birleştirmek">
+  <h2>Toplamak mı, çarpmak mı?</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">“Ateş et” eyleminin üç etkeni var: <b>mermi var</b>, <b>hedef yakın</b>, <b>canım yerinde</b>.</p>
+      <table class="sum-t" style="font-size:17px">
+        <tr><th>etkenler</th><th>ortalama</th><th>çarpım</th></tr>
+        <tr><td>0,9 · 0,8 · 0,9</td><td>0,87</td><td>0,65</td></tr>
+        <tr><td><b class="c-red">0</b> · 0,9 · 1,0 (mermi yok!)</td><td class="c-red"><b>0,63</b> 😱</td><td class="c-green"><b>0</b> ✔</td></tr>
+      </table>
+      <p style="font-size:.84em">Ortalamada mermisi olmayan asker yine de ateş etmeye çalışır. <b>Çarpımda</b> sıfır olan tek bir etken bütün eylemi <b>veto</b> eder. IAUS ve çoğu sistem çarpar.</p>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Bedava optimizasyon (Guild Wars 2)</span>Bir etken 0 verince çarpım 0 olur ve gerisini hesaplamaya gerek kalmaz: <b>erken çıkış</b>. Bu yüzden ucuz etkenler (mermi var mı?) önce, pahalılar (görüş ışını) sonra sıralanır.</div>
+      <div class="box warn"><span class="bt">⚠️ Çarpımın yan etkisi</span>Her etken 1’den küçük olduğu için, etken sayısı arttıkça puan <b>düşer</b>: 0,9 × 0,9 = 0,81 ama 0,9⁵ = 0,59. Beş etkenli “iyi” bir eylem, iki etkenli “orta” bir eyleme kaybedebilir.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="birleştirmek">
+  <h2>Telafi faktörü (Dave Mark)</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Çarpımın kaybettirdiğini, etken sayısına göre <b>geri ver</b>:</p>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+float Compensate(float score, int n)
+{
+    if (n < 2 || score == 0f) return score;
+    float mod    = 1f - 1f / n;              // n=2 → 0,5 · n=5 → 0,8
+    float makeUp = (1f - score) * mod;        // kaybın bir kısmı
+    return score + makeUp * score;            // puana orantılı ekle
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def compensate(score, n):
+    if n < 2 or score == 0:
+        return score
+    mod = 1 - 1 / n
+    make_up = (1 - score) * mod
+    return score + make_up * score
+</script></code></pre>
+    </div>
+  </div>
+    </div>
+    <table class="sum-t" style="font-size:17px">
+      <tr><th>etkenler</th><th>çarpım</th><th>telafili</th></tr>
+      <tr><td>0,9 · 0,9</td><td>0,81</td><td>0,89</td></tr>
+      <tr><td>0,9 · 0,9 · 0,9</td><td>0,73</td><td>0,86</td></tr>
+      <tr><td>0,9 × 5</td><td>0,59</td><td>0,78</td></tr>
+      <tr><td>0,5 · 0,5</td><td>0,25</td><td>0,34</td></tr>
+      <tr><td>0 · 0,9 · 0,9</td><td>0</td><td>0 (veto korunur)</td></tr>
+    </table>
+  </div>
+  <p class="mini">Telafi, sıralamayı tamamen düzeltmez ama “daha çok etken = daha düşük puan” cezasını büyük ölçüde azaltır. Sıfır yine sıfır kalır.</p>
+</section>
+
+<section data-sec="birleştirmek">
+  <h2>Canlı: bir askerin beş seçeneği 🪖</h2>
+  <div class="demo" data-demo="combat"></div>
+</section>
+
+<section data-sec="birleştirmek">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Mermiyi 0 yapın: “Ateş et”in kırmızı etkeni bütün eylemi veto ediyor; “Şarjör değiştir” öne çıkıyor. Düşmanı 5 m’ye getirin: şarjör değiştirmek artık riskli (düşman uzak etkeni düştü).</li>
+      <li>Canı yavaş yavaş azaltın: önce “İyileş”, sonra çok düşük canda “Kaç” kazanıyor. Hiçbir yerde “eşik” yazmadık!</li>
+      <li>Medkit kutusunu kaldırın: “İyileş” sıfırlanıyor. Kutu, tasarımcının “bu eylem şu an mümkün mü?” sorusunu etken olarak sormasıdır.</li>
+      <li>Telafi faktörünü kapatın: 3 etkenli eylemlerin puanı düşüyor, 2 etkenliler kazançlı çıkıyor. Kazanan değişti mi?</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="birleştirmek">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · birleştirmek</div>
+    <div class="q">“İyileş” eyleminin etkenleri: can düşük = 0,8 · medkit var = 0 · düşman uzak = 0,9. Çarpımla puan kaçtır ve bu neden istenen davranıştır?</div>
+    <div class="opts">
+      <button data-opt="A">0 — medkit yoksa iyileşmek imkânsız, eylem veto edilmeli</button>
+      <button data-opt="B">0,57 — ortalaması</button>
+      <button data-opt="C">0,72 — sıfırı yok sayarız</button>
+      <button data-opt="D">1,7 — toplamı</button>
+    </div>
+    <div class="explain">Çarpımda tek bir 0, bütün puanı 0 yapar: <b>veto</b>. “Medkit yok” bir tercih değil, bir imkânsızlık; ortalama ya da toplam bunu ifade edemez ve NPC’nin olmayan medkiti kullanmaya çalışmasına yol açar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Seçim ve atalet</div>
+  <div class="sub">en iyi mi, rastgele mi? titremeden nasıl kaçınılır?</div>
+  <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="done">etkenleri birleştirmek</li><li class="on">seçim ve atalet</li><li class="">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="seçim">
+  <h2>Puanlar hesaplandı: hangisini seçeceğiz?</h2>
+  <div class="cols">
+  <div>
+    <div class="box story"><span class="bt">Mutlak: en yüksek</span>Her zaman en yüksek puanlı. Satranç, strateji için ideal. Sorun: aynı durumda hep aynı şeyi yapar → <b>robot gibi</b>, tahmin edilebilir.</div>
+    <div class="box game"><span class="bt">Göreli: ağırlıklı rastgele</span>Puanı 0,6 olan, 0,2 olandan 3 kat sık seçilir. Çeşitlilik var; ama ara sıra çok kötü bir seçenek de seçilir → <b>aptal görünür</b>.</div>
+    <div class="box low"><span class="bt">Orta yol: en iyiler arasından</span>En iyi 3–5 seçenek ya da “en iyinin %90’ı üstündekiler” arasından ağırlıklı rastgele. The Sims’in de kullandığı yol.</div>
+  </div>
+  <div>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Ağırlıklı rastgele: puanları bir "çark"a diz, rastgele bir nokta seç
+Action WeightedRandom(List<(Action a, float s)> opts)
+{
+    float total = 0f;
+    foreach (var o in opts) total += o.s;
+    float r = Random.Range(0f, total);
+    foreach (var o in opts) {
+        r -= o.s;
+        if (r <= 0f) return o.a;
+    }
+    return opts[opts.Count - 1].a;     // yuvarlama hatasına karşı
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import random
+
+def weighted_random(opts):          # opts: [(eylem, puan), ...]
+    total = sum(s for _, s in opts)
+    r = random.uniform(0, total)
+    for a, s in opts:
+        r -= s
+        if r <= 0:
+            return a
+    return opts[-1][0]
+# Hazırı: random.choices(adlar, weights=puanlar)[0]
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+  </div>
+  <p class="mini">The Sims 3’te Richard Evans, Sim mutluyken neredeyse hep en iyiyi, mutsuzken daha “savruk” seçimler yapan bir yöntem kullandı (Boltzmann dağılımı ve “sıcaklık”; GDC konuşması “Modeling Individual Personalities in The Sims 3”).</p>
+</section>
+
+<section data-sec="seçim">
+  <h2>Dual utility: önce sınıf, sonra ağırlık (Kevin Dill)</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Her seçeneğe <b>iki</b> sayı: <b>rank</b> (öncelik sınıfı) ve <b>weight</b> (sınıf içindeki ağırlık).</p>
+      <ol style="font-size:.84em">
+        <li>Ağırlığı 0 olanları at (imkânsız).</li>
+        <li>En yüksek rank’ı bul; daha düşük rank’lı her şeyi at.</li>
+        <li>Kalanlardan en büyük ağırlığın belli bir oranından (ör. %25) küçük olanları at (“aptalca” seçenekler).</li>
+        <li>Kalanlar arasından <b>ağırlıklı rastgele</b> seç.</li>
+      </ol>
+      <p class="mini">Halo’nun öncelik listesi + Sims’in ağırlıklı kurası: ikisinin iyi yanı bir arada.</p>
+    </div>
+    <div class="box game"><span class="bt">🐨 Zoo Tycoon 2 (Blue Fang, 2004)</span>
+      <ul style="font-size:.82em">
+        <li>Hayvanlar ve ziyaretçiler normalde ihtiyaçlarına (açlık, eğlence, tuvalet) göre seçer: hepsi <b>rank 0</b>, ağırlıklar duruma göre değişir.</li>
+        <li>Koala ağaca tırmanınca ağaç davranışları <b>rank ~5</b> alır: hayvan başka bir şey seçip ağaçtan “ışınlanarak” inmesin diye.</li>
+        <li>Marine Mania eklentisindeki yunus gösterileri: gösteri davranışları <b>rank 98–102</b>, sırayı basit bir FSM ayarlar.</li>
+        <li>Ölmek: <b>rank 1.000.000</b>. “Hiçbir hayvanın ölümden geri dönmesini istemedik.”</li>
+      </ul></div>
+  </div>
+</section>
+
+<section data-sec="seçim">
+  <h2>Atalet: kararsız NPC sorunu</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Bir asker kötü bir konumda: “saldır” 0,50, “kaç” 0,50. Her karede yeniden karar verirse: iki el ateş, üç adım kaç, bir el ateş, … <b>Titreme</b> (Y2’deki sorunun puanlı hâli).</p>
+      <ul style="font-size:.84em">
+        <li><b>Mevcut eyleme bonus</b>: şu an yaptığın eylemin puanını ×1,2–1,5. Başka bir eylem “gerçekten daha iyi” olmadıkça geçme.</li>
+        <li><b>Bekleme süresi</b>: karar verdikten sonra X sn boyunca mevcut eylemi çok yüksek puanla tut; süre bitince yavaşça bırak.</li>
+        <li><b>Bitirince karar ver</b>: The Sims Medieval’de bir Sim, yalnızca eylem kuyruğu <b>boşaldığında</b> karar verirdi. Seçince bağlanırdı.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Karar sıklığı</span>Çoğu oyunda utility kararı her karede değil, saniyede 2–10 kez (ya da eylem bitince) verilir. Hem titremeyi azaltır hem işlemciyi rahatlatır.</div>
+      <div class="box warn"><span class="bt">⚠️ Fazla atalet</span>Bonus çok büyükse NPC yangın çıkınca bile TV izlemeye devam eder. Acil durumlar için ya bonusu aşan bir puan ya da dual utility’deki gibi <b>daha yüksek rank</b> kullanın.</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">The Sims ve akıllı nesneler</div>
+  <div class="sub">zekâ karakterde değil, nesnelerde</div>
+  <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="done">etkenleri birleştirmek</li><li class="done">seçim ve atalet</li><li class="on">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="The Sims">
+  <h2>Derin hikâye: The Sims (2000) ve “reklam yapan” nesneler 🏠</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Will Wright ve Ken Forbus’un 2001 tarihli “Some notes on programming objects in The Sims” notlarından:</p>
+      <ul style="font-size:.82em">
+        <li>Her Sim’in <b>ihtiyaçları</b> var: enerji, konfor, açlık, hijyen, tuvalet, oda, sosyal, eğlence ve bunların özeti ruh hâli.</li>
+        <li>Davranışlar Sim’de değil <b>nesnelerde</b>. Her nesne, sunduğu etkileşimleri <b>reklam</b> eder: “beni kullan, şu ihtiyacını şu kadar doyururum.” Tuvalet, Tuvalet ihtiyacına 0–70 arasında reklam verir.</li>
+        <li>Reklamlar <b>kişiliğe</b> göre ölçeklenir: akvaryumdaki “balıkları besle”, Sim’in oyuncu (Playful) puanına göre Eğlence’ye 1 ile 11 arası verir.</li>
+        <li>Reklamlar <b>mesafeyle zayıflar</b> (attenuation): uzaktaki buzdolabı daha az cazip.</li>
+        <li>Sim, evdeki <b>bütün nesnelerin bütün davranışları</b> arasından mutluluğunu en çok artıracak olanı seçer; sonra o davranışın kodu nesneden alınıp Sim’in kendi iş parçacığında çalışır.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">💡 Neden dâhice?</span>Yeni bir eşya eklemek için Sim’in beynine <b>dokunmak gerekmez</b>: eşya kendi davranışını ve reklamını getirir. Sims’in onlarca eklenti paketi ve topluluğun binlerce özel eşyası bu sayede mümkün oldu.</div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=9gf2MT-IOsg" target="_blank" rel="noopener">The Genius AI Behind The Sims</a> (Game Maker’s Toolkit) — Sims YZ programcılarıyla röportajlı.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="The Sims">
+  <h2>Joy Booth: bağımlılık yapan bir nesne 🎡</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Forbus &amp; Wright’ın notlarındaki örnek nesne “Joy Booth” Sosyal, Eğlence ve Ruh hâli için <b>çok güçlü reklam</b> verir.</p>
+      <ul style="font-size:.84em">
+        <li>Yerel olarak harika görünür: arkadaşı az bir Sim’i günün sonunda daha mutlu eder.</li>
+        <li>Ama Sim onu kullanırken <b>gerçek ilişkiler kurmaz</b>: arkadaşlık yerine kabinde vakit geçirir. Notların yorumu: “Sonuçta muhtemelen evde bulundurmaya değer bir nesne değil.”</li>
+        <li>Genel ders: “Bağımlılık yapan nesneler yaratmak kolaydır — bir davranışa bir boyutta yüksek reklam verin, o davranışın tekrar tekrar seçildiğini görürsünüz. Zor olan, Sim’lerin <b>doğal görünen</b> desenlerle kullandığı <b>dengeli</b> nesne koleksiyonları kurmaktır.”</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box ask"><span class="bt">🔬 Notlardaki araştırma önerisi: “şüpheci Sim’ler”</span>Nesneler reklam verir ama Sim’ler deneyimin buna değip değmediğini bilmez. Öneri: davranıştan önce ve sonra ihtiyaçları kaydet, nesne <b>reklam ettiği kadar</b> doyurmuş mu karşılaştır, sonraki kararlarda reklamı buna göre ölçekle. Yani <b>öğrenen</b> utility (Y13’e köprü).</div>
+      <p class="mini">Sonraki demoda Joy Booth’u ekleyebilirsiniz: bizim kabin reklamında Eğlence ve Sosyal’e 100 vaat ediyor ama gerçekte 30 ve 12 veriyor.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="The Sims">
+  <h2>Canlı: ihtiyaçlarla yaşayan bir Sim 🙂</h2>
+  <div class="demo" data-demo="simroom"></div>
+</section>
+
+<section data-sec="The Sims">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.88em">
+      <li>Bir süre izleyin: Sim hangi sırayla ihtiyaçlarını gideriyor? Sağdaki puan çubukları her an güncelleniyor; yeşil olan seçilen.</li>
+      <li>🎡 Joy Booth ekleyin. Sim’in kabinde ne kadar vakit geçirdiğine ve <b>kriz</b> sayısına bakın (ihtiyaçlardan biri sıfıra düştü). Reklamın yalan olması ortalama mutluluğu nasıl etkiliyor?</li>
+      <li>Atalet: “her kare karar (atalet yok)” + seçim: “ağırlıklı rastgele (hepsi)”. Sim odanın ortasında kararsızca titriyor mu? “Fikir değiştirme” sayacı ne oldu?</li>
+      <li>“Mesafe zayıflatması”nı kapatın: Sim uzaktaki nesneler için gereksiz yere odayı arşınlıyor mu?</li>
+      <li>Bir nesneye tıklayın: oyuncu emri (The Sims’te tıklayıp eylem seçmek). 2 sn sonra Sim yine kendi kararlarına döner.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">eylem listesi, eğriler, bir döngü</div>
+  <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="done">etkenleri birleştirmek</li><li class="done">seçim ve atalet</li><li class="done">The Sims ve akıllı nesneler</li><li class="on">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: “en büyüğü bul” döngüsü</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Utility AI’ın kodu, programlamanın en eski kalıplarından biridir: bir listedeki <b>en büyük</b> elemanı bulmak.</p>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Action best = null;
+float bestScore = float.MinValue;   // "çok küçük bir sayı" ile başla
+foreach (Action a in actions) {
+    float s = a.Score(npc);
+    if (s > bestScore) {             // daha iyisini bulduysan hatırla
+        bestScore = s;
+        best = a;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+best, best_score = None, float("-inf")
+for a in actions:
+    s = a.score(npc)
+    if s > best_score:
+        best, best_score = a, s
+# Kısa hâli:  best = max(actions, key=lambda a: a.score(npc))
+</script></code></pre>
+    </div>
+  </div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">🎒 Fonksiyonu veri olarak tutmak</span>Her etken “girdiyi oku” ve “eğriyi uygula” adımlarından oluşur. Bunları bir <b>listede</b> tutarız; yeni etken eklemek = listeye bir satır eklemek. Y3’teki <code>Func&lt;Guard, bool&gt;</code> fikrinin aynısı, bu sefer <code>Func&lt;Npc, float&gt;</code>.</div>
+      <div class="box game"><span class="bt">🎒 Unity AnimationCurve</span>Unity’nin animasyon için yaptığı eğri nesnesi, Inspector’da <b>fareyle çizilen</b> bir yanıt eğrisidir: <code>curve.Evaluate(x)</code>. Utility AI için biçilmiş kaftan.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Etken, eylem, beyin</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="6-12|14-27|28-32"><script type="text/template">
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+[Serializable]
+public class Consideration {
+    public string name;
+    public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);  // Inspector’da çizilir
+    public Func<Npc, float> input;                                     // 0–1 döndürür
+    public float Score(Npc npc) => Mathf.Clamp01(curve.Evaluate(input(npc)));
+}
+
+public class UtilityAction {
+    public string name;
+    public List<Consideration> considerations = new();
+    public Func<Npc, Status> run;
+
+    public float Score(Npc npc) {
+        float total = 1f;
+        foreach (var c in considerations) {
+            total *= c.Score(npc);
+            if (total == 0f) return 0f;              // veto: gerisini hesaplama
+        }
+        return Compensate(total, considerations.Count);
+    }
+    static float Compensate(float s, int n) {
+        if (n < 2) return s;
+        float mod = 1f - 1f / n;
+        return s + (1f - s) * mod * s;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const curves = {
+  linear: x => x,
+  inverse: x => 1 - x,
+  quadratic: x => x * x,
+  logistic: (x, mid = 0.5, steep = 10) => 1 / (1 + Math.exp(-steep * (x - mid))),
+};
+const norm = (v, lo, hi) => constrain((v - lo) / (hi - lo), 0, 1);   // p5.js constrain = clamp
+
+const actions = [
+  { name: "Ateş et",
+    considerations: [
+      npc => (npc.ammo > 0 ? 1 : 0),
+      npc => curves.inverse(norm(npc.dist, 0, 50)),
+      npc => 0.3 + 0.7 * norm(npc.hp, 0, 100),
+    ] },
+  { name: "Kaç",
+    considerations: [
+      npc => 1 - curves.logistic(norm(npc.hp, 0, 100), 0.25),
+      npc => norm(npc.enemies, 0, 5),
+    ] },
+];
+
+function scoreAction(a, npc) {
+  let total = 1;
+  for (const c of a.considerations) {
+    total *= c(npc);
+    if (total === 0) return 0;
+  }
+  const n = a.considerations.length, mod = 1 - 1 / n;
+  return n < 2 ? total : total + (1 - total) * mod * total;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def norm(v, lo, hi):
+    return min(1.0, max(0.0, (v - lo) / (hi - lo)))
+
+def logistic(x, mid=0.5, steep=10):
+    return 1 / (1 + math.exp(-steep * (x - mid)))
+
+actions = {
+    "Ateş et": [
+        lambda n: 1.0 if n.ammo > 0 else 0.0,
+        lambda n: 1 - norm(n.dist, 0, 50),
+        lambda n: 0.3 + 0.7 * norm(n.hp, 0, 100),
+    ],
+    "Kaç": [
+        lambda n: 1 - logistic(norm(n.hp, 0, 100), 0.25),
+        lambda n: norm(n.enemies, 0, 5),
+    ],
+}
+
+def score(considerations, npc):
+    total = 1.0
+    for c in considerations:
+        total *= c(npc)
+        if total == 0:
+            return 0.0
+    k = len(considerations)
+    mod = 1 - 1 / k
+    return total + (1 - total) * mod * total if k > 1 else total
+
+best = max(actions, key=lambda name: score(actions[name], npc))
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Beyni karar sıklığı ve ataletle sarmak</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="3-4|12-21|23"><script type="text/template">
+public class UtilityBrain : MonoBehaviour {
+    public List<UtilityAction> actions;
+    public float thinkInterval = 0.25f;   // saniyede 4 karar
+    public float inertia = 1.25f;          // mevcut eyleme bonus
+    UtilityAction current;
+    float nextThink;
+    Npc npc;
+
+    void Awake() { npc = GetComponent<Npc>(); }
+
+    void Update() {
+        if (Time.time >= nextThink) {
+            nextThink = Time.time + thinkInterval;
+            UtilityAction best = current;
+            float bestScore = current != null ? current.Score(npc) * inertia : 0f;
+            foreach (var a in actions) {
+                float s = a.Score(npc);
+                if (s > bestScore) { bestScore = s; best = a; }
+            }
+            if (best != current) Debug.Log($"{name}: {current?.name} → {best?.name} ({bestScore:0.00})");
+            current = best;
+        }
+        if (current != null) current.run(npc);   // seçilen eylemi her kare yürüt
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class UtilityBrain:
+    def __init__(self, actions, think_interval=0.25, inertia=1.25):
+        self.actions, self.dt, self.inertia = actions, think_interval, inertia
+        self.current, self.timer = None, 0.0
+
+    def update(self, npc, dt):
+        self.timer -= dt
+        if self.timer <= 0:
+            self.timer = self.dt
+            best = self.current
+            best_s = score(self.actions[best], npc) * self.inertia if best else 0.0
+            for name, cons in self.actions.items():
+                s = score(cons, npc)
+                if s > best_s:
+                    best, best_s = name, s
+            self.current = best
+        return self.current          # oyun döngüsü bu eylemi yürütür
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Debug satırı önemli: utility sistemlerinde hata ayıklamanın tek yolu <b>puanları görmek</b>. NPC’nin başında küçük bir puan tablosu çizmek (demodaki gibi) altın değerindedir.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>float.MinValue · float("-inf")</td><td>en küçük sayı</td><td>“En büyüğü bul” döngüsünü başlatmak için: ilk eleman her zaman daha büyük olur</td></tr>
+    <tr><td>Mathf.Clamp01(x) · constrain(x, 0, 1)</td><td>kırpma</td><td>x’i 0–1 aralığına sıkıştırır</td></tr>
+    <tr><td>AnimationCurve · curve.Evaluate(x)</td><td>Unity eğrisi</td><td>Inspector’da çizilen eğrinin x’teki değeri</td></tr>
+    <tr><td>[Serializable]</td><td>serileştirilebilir</td><td>Unity bu sınıfın alanlarını Inspector’da gösterebilsin</td></tr>
+    <tr><td>Func&lt;Npc, float&gt;</td><td>fonksiyon türü</td><td>“Npc alıp float döndüren fonksiyon” tutan değişken</td></tr>
+    <tr><td>current?.name</td><td>null-koşullu erişim</td><td>current null ise hata verme, null döndür</td></tr>
+    <tr><td>$"{a} → {b:0.00}"</td><td>metin şablonu</td><td>Değişkenleri metne göm; <code>:0.00</code> = iki ondalık</td></tr>
+    <tr><td>max(liste, key=f)</td><td>Python max</td><td>f(eleman) değeri en büyük olan elemanı döndürür</td></tr>
+    <tr><td>math.exp(x) · Math.exp(x)</td><td>e üzeri x</td><td>Lojistik eğride kullanılır; ≈ 2,718ˣ</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: Sim’in puan fonksiyonu</h2>
+  <div class="simlab" data-sim="sims" data-fns="score" data-lang="js">
+<textarea>
+// needs: { hunger, energy, fun,
+//          bladder, social }
+//        0 = kriz, 100 = tam dolu
+// ad: nesnenin reklamı, ör.
+//     { hunger: 70 }
+//     { social: 60, fun: 10 }
+// dist: nesneye mesafe (piksel)
+// Döndür: puan (büyük = cazip)
+function score(needs, ad, dist) {
+  let total = 0;
+  for (const need in ad) {
+    // doğrusal aciliyet
+    const urgency = (100 - needs[need]) / 100;
+    total += urgency * ad[need] / 100;
+  }
+  return total;
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu çalışıyor ama Sim “biraz acıkınca” bile buzdolabına koşuyor. Aciliyeti doğrusal yerine <b>parçalı</b> ya da <b>üslü</b> bir eğriyle hesaplayın (ör. <code>u * u * u</code>), mesafeyi hesaba katın (ör. <code>/ (1 + dist / 600)</code>). Kriz sayısını ve ortalama mutluluğu karşılaştırın.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: IAUS karar puanı</h2>
+  <div class="ailab" data-lab="dse" data-lang="python">
+<textarea>
+# scores: etken puanları (0–1)
+#         ör. [0.9, 0.8, 0.5]
+# 1) Çarp; biri 0 ise hemen 0
+#    döndür (veto + erken çıkış)
+# 2) Telafi:
+#    mod = 1 - 1/n
+#    make_up = (1 - p) * mod
+#    sonuç = p + make_up * p
+# 3) Liste boşsa 0 döndür
+def dse_score(scores):
+    p = 1.0
+    for s in scores:
+        p *= s
+    return p
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu sadece çarpıyor. Veto, telafi ve boş liste kurallarını ekleyin. Tek etkenli listede telafi “kendiliğinden” sıfırdır (mod = 0) — formülünüz bunu da doğru vermeli.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: dual utility adayları</h2>
+  <div class="ailab" data-lab="dual" data-lang="python">
+<textarea>
+# options: [[ad, rank, weight], ...]
+# pct: 0–1 arası oran
+# Kevin Dill’in ilk üç adımı:
+#  1) weight <= 0 olanları at
+#  2) en yüksek rank'ı bul,
+#     daha düşük rank'lıları at
+#  3) weight < pct * en büyük weight
+#     olanları at
+# Kalan ADLARI alfabetik sırala.
+# (4. adım ağırlıklı rastgele:
+#  sonucu rastgele, testte yok.)
+def dual_candidates(options, pct):
+    kalan = [o for o in options if o[2] > 0]
+    return sorted(o[0] for o in kalan)
+</textarea>
+    <div class="lab-tasks">Testlerde Zoo Tycoon örnekleri de var: ölüm rank 1.000.000, gösteri 100, ağaç davranışları 5. Hiç seçenek kalmazsa boş liste döndürün.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Gerçek oyunlarda</div>
+  <div class="sub">Guild Wars 2, Dragon Age, Unreal EQS</div>
+  <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="done">etkenleri birleştirmek</li><li class="done">seçim ve atalet</li><li class="done">The Sims ve akıllı nesneler</li><li class="done">kod ve laboratuvarlar</li><li class="on">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>Guild Wars 2: Heart of Thorns (2015) — IAUS sahada</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>ArenaNet’in yapay zekâsı Dave Mark’ın <b>Infinite Axis Utility System</b>’i üzerine kuruldu (Mike Lewis, Game AI Pro 3, 13. bölüm).</li>
+        <li>Her karakter türüne bir <b>karar</b> listesi verilir; her karar bir <b>DSE</b> (karar puanlayıcı). Her düşünme döngüsünde bütün DSE’ler puanlanır, en iyisi kazanır.</li>
+        <li>DSE = etkenlerin çarpımı. Her etken: ham sayı → 0–1 → yanıt eğrisi. Bir etken 0 verirse karar elenir ve kalan etkenler hesaplanmaz.</li>
+        <li>Hepsi <b>veri</b>: girdi seçimi ve eğri ayarı mühendis gerektirmeden tasarımcı tarafından yapılır.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">“Sonsuz eksen” ne demek?</span>Bir kararın kaç etkeni olacağına sınır yok: “hedef mesafesi”, “hedefin canı”, “bana bakıyor mu?”, “bu yeteneği az önce kullandım mı?” (bekleme süresi de bir etken!). Her etken bir eksen.</div>
+      <div class="box game"><span class="bt">🎬 GDC 2015</span>Mark &amp; Lewis, “Building a Better Centaur: AI at Massive Scale” konuşmasında bir tasarımcının IAUS ile yeni bir NPC’nin yapay zekâsını <b>yaklaşık 7 dakikada</b> kurduğu hızlandırılmış bir video gösterir (GDC Vault).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>Dragon Age: Inquisition (2014) — puan bantları</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.84em">BioWare’in “Behavior Decision System”i (Hanlon &amp; Watts, GAP3 31. bölüm): bir savaşçının 2–20 yeteneği var, her biri mana/dayanıklılık harcar. Her yetenek için küçük bir <b>değerlendirme ağacı</b> puan ve hedef üretir; en yüksek puan kazanır.</p>
+      <table class="sum-t" style="font-size:17px">
+        <tr><th>eylem sınıfı</th><th>puan aralığı</th></tr>
+        <tr><td>Temel (sıradan vuruş)</td><td>10</td></tr>
+        <tr><td>Saldırı yetenekleri</td><td>20–40</td></tr>
+        <tr><td>Destek (büyü, hazırlık)</td><td>25–45</td></tr>
+        <tr><td>Tepki (yakın tehlikeye)</td><td>50–70</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">💡 Dual utility’nin akrabası</span>Bantlar, sınıflar arasında <b>öncelik</b> kurar (tepki her zaman saldırıdan önce) ve sınıf içinde 20 puanlık bir “aciliyet aralığı” bırakır. Bu bir kural değil, tasarımcılar arasında bir <b>anlaşmadır</b>: oyun verisinde zorlanmaz.</div>
+      <div class="box game"><span class="bt">Hedef seçimi de puanla</span>Bir yetenek “kime?” sorusunu da cevaplar: değerlendirme ağacı her olası hedef için ayrı puan üretir, en iyisi seçilir. Y12’de konum seçimi için aynı fikri göreceğiz.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>Utility her yerde</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">Unreal EQS (Environment Query System)</span>“Nereye siper alayım?” sorusu için çevredeki noktaları üretir, her noktayı <b>testlerle puanlar</b> (oyuncuya mesafe, görüş, yol uzunluğu) ve en iyisini döndürür. Konumlar için utility! (Zieliński, GAP 33. bölüm — Y12’de ayrıntılı.)</div>
+      <div class="box game"><span class="bt">Davranış ağacına utility</span>Bill Merrill (GAP 10. bölüm): çocuklarını sırayla değil puanla deneyen “utility selector”. Unreal StateTree 5.5+’ta da çocuk durumlar puanla seçilebiliyor.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">The Last of Us — Ellie</span>Naughty Dog, Ellie’ye “combat utility” derken <b>işe yararlığı</b> kastediyor: oyuncuyu desteklemesi ama zorluk dengesini bozmaması (GAP2 35. bölüm). Kelime aynı, anlam farklı — dikkat!</div>
+      <div class="box story"><span class="bt">Strateji ve simülasyon</span>Kaynak dağıtımı, inşaat sırası, diplomasi kararları gibi “birçok şeyi tart” problemlerinde utility doğal seçimdir. Zoo Tycoon 2 ve The Sims gibi simülasyonlar bunun klasik örnekleri.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>BT mi, utility mi? İkisi birden mi?</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th></th><th>Davranış ağacı</th><th>Utility AI</th></tr>
+    <tr><td>Karar</td><td>Sıra ve evet/hayır koşulları</td><td>Puanlar ve eğriler</td></tr>
+    <tr><td>Güçlü yanı</td><td>Okunabilir, öngörülebilir, “şunu kesin yap” kuralları</td><td>Ayrıntılı tartma, kişilik, çeşitlilik, yeni seçenek eklemek kolay</td></tr>
+    <tr><td>Zayıf yanı</td><td>Öncelikler sabit, ayrıntıyı ifade etmek zor</td><td>“Neden bunu seçti?” sorusu zor; eğri ayarı zaman alır</td></tr>
+    <tr><td>Hata ayıklama</td><td>Aktif yol</td><td>Puan tablosu (mutlaka görselleştirin!)</td></tr>
+    <tr><td>Tipik kullanım</td><td>Nişancı düşmanlar, boss fazları</td><td>Sims tarzı simülasyon, RPG ekip arkadaşları, strateji</td></tr>
+  </table>
+  <p style="font-size:.84em" class="fragment"><b>Pratik öneri:</b> çoğu oyun ikisini birleştirir. Üst seviyede utility “ne yapayım?” (savaş / yağma / iyileş), alt seviyede BT “nasıl yapayım?” (siper al → nişan al → ateş). Ya da BT’nin içinde bir utility selector.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">Unreal, Unity, Godot ve kendi aracınız</div>
+  <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="done">etkenleri birleştirmek</li><li class="done">seçim ve atalet</li><li class="done">The Sims ve akıllı nesneler</li><li class="done">kod ve laboratuvarlar</li><li class="done">gerçek oyunlarda</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://dev.epicgames.com/documentation/unreal-engine/state-tree-selectors-overview" target="_blank" rel="noopener"><b>Unreal StateTree (utility seçimi)</b></a></td><td>Unreal 5.5+ · yerleşik</td><td>Durumların “Selection Behavior”u: <i>Try Select Children With Highest Utility</i> ya da <i>…at Random Weighted by Utility</i>. Her durumda etkenler (Consideration), AND/OR ve ağırlık.</td><td>StateTree eklentisini etkinleştir → durumun Selection Behavior ayarı</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/environment-query-system-overview-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal EQS</b></a></td><td>Unreal 4/5 · yerleşik</td><td>Konum/hedef puanlama: üreteç + testler (mesafe, görüş, yol). BT’den “Run EQS Query” ile çağrılır. Eylem seçimi için değil, “nerede/kime” için.</td><td>Project Settings → AI System; içerik tarayıcı → Environment Query</td></tr><tr><td><a href="https://github.com/kamrann/BTUtilityPlugin" target="_blank" rel="noopener"><b>BTUtilityPlugin</b></a></td><td>Unreal · açık kaynak</td><td>Unreal davranış ağacına puanla seçen “Utility” composite düğümü ekler. Eski ama fikri öğretici.</td><td>Plugins klasörüne kopyala</td></tr><tr><td><a href="https://docs.unity3d.com/ScriptReference/AnimationCurve.html" target="_blank" rel="noopener"><b>Unity AnimationCurve + kendi kodunuz</b></a></td><td>Unity · yerleşik</td><td>Eğri editörü hazır; yukarıdaki 60 satırlık beyin yeter. En esnek ve en yaygın yol.</td><td>Hiçbir şey kurmayın: <code>public AnimationCurve curve;</code></td></tr><tr><td><a href="https://github.com/ZorPastaman/UtilityAI" target="_blank" rel="noopener"><b>ZorPastaman UtilityAI</b></a></td><td>Unity · açık kaynak</td><td>Ajan, etken, eylem bileşenleri; yanıt eğrileri; OpenUPM paketi.</td><td>OpenUPM: <code>com.zor.utility-ai</code></td></tr><tr><td><a href="https://github.com/JarkkoPar/Utility_AI_GDExtension" target="_blank" rel="noopener"><b>Utility AI GDExtension</b></a></td><td>Godot 4 · açık kaynak</td><td>Agent Behaviour düğümleri + puanlı “Node Query System” (EQS benzeri, zaman bütçeli). BT ve State Tree düğümleri de içerir.</td><td>AssetLib’de “Utility AI (GDExtension)”</td></tr><tr><td><a href="https://github.com/Pennycook/godot-utility-ai" target="_blank" rel="noopener"><b>godot-utility-ai</b></a></td><td>Godot 4 · açık kaynak</td><td>Davranış, etken ve yanıt eğrilerini Inspector’dan düzenleten küçük GDScript eklentisi.</td><td>AssetLib ya da addons klasörü</td></tr><tr><td><a href="https://github.com/apoch/curvature" target="_blank" rel="noopener"><b>Curvature</b></a></td><td>Windows · açık kaynak</td><td>IAUS fikirleriyle utility yapay zekâ tasarlama ve deneme aracı (Mike Lewis). Oyun motoru değil, tasarım laboratuvarı.</td><td>GitHub sürümünü indir</td></tr>
+  </table>
+  <p class="mini">Python/JS için yaygın bir utility kütüphanesi yok: yukarıdaki kod zaten yeterince kısa. Eğri tasarlamak için Desmos (desmos.com/calculator) ya da bir hesap tablosu çok iş görür.</p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>Unity’de utility: tasarımcı dostu kurulum</h2>
+  <div class="cols">
+    <ol style="font-size:.82em">
+      <li><b>Etkenleri listeleyin</b>: “ham girdi + ayraçlar + eğri”. Örn. <i>Hedef mesafesi, 0–30 m, ters karesel</i>.</li>
+      <li><b>Girdileri tek bir yerde hesaplayın</b>: algı bileşeni mesafeyi, canı, mermiyi bir “bağlam” nesnesine yazsın (Y3’teki kara tahta).</li>
+      <li><b>Eylemleri ScriptableObject yapın</b>: her eylem bir asset; içinde etken listesi ve <code>AnimationCurve</code>’ler. Tasarımcı Inspector’da eğri çizer.</li>
+      <li><b>Beyin</b>: saniyede 4–10 kez puanla, ataletle seç, seçileni her kare yürüt.</li>
+      <li><b>Görselleştirin</b>: <code>OnDrawGizmos</code> ya da bir UI paneliyle NPC’nin puan tablosunu çizin.</li>
+      <li><b>Kayıt alın</b>: her karar değişimini (eski → yeni, puanlar) bir dosyaya yazın; “neden saçmaladı?” sorusunun cevabı orada.</li>
+    </ol>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+[CreateAssetMenu(menuName = "AI/Utility Action")]
+public class ActionAsset : ScriptableObject {
+    public string displayName;
+    public InputKind[] inputs;            // Distance, Health, Ammo, ...
+    public AnimationCurve[] curves;       // her girdi için bir eğri
+    public float weight = 1f;
+
+    public float Score(AIContext ctx) {
+        float total = weight;
+        for (int i = 0; i < inputs.Length; i++) {
+            float x = ctx.Get(inputs[i]);  // 0–1’e normalleştirilmiş
+            total *= Mathf.Clamp01(curves[i].Evaluate(x));
+            if (total <= 0f) return 0f;
+        }
+        return total;
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Projenize utility eklerken: dikkat listesi</h2>
+  <div class="cols">
+    <div>
+      <div class="box warn"><span class="bt">Sık hatalar</span>
+        <ul style="font-size:.82em">
+          <li><b>Normalleştirmeyi unutmak</b>: “mesafe 18” ile “can 0,7”yi çarpmak.</li>
+          <li><b>Puan enflasyonu</b>: her şeye “biraz daha önemli” diye ağırlık eklemek; sonunda hepsi 1 civarında.</li>
+          <li><b>Ortalama almak</b>: veto kaybolur.</li>
+          <li><b>Ataletsiz her kare karar</b>: titreme.</li>
+          <li><b>Görselleştirmemek</b>: utility’de hata ayıklamak “neden 0,61 ve 0,63?” sorusudur; tablo yoksa cevap yok.</li>
+        </ul></div>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>N NPC × M eylem × K etken her düşünmede. 100 NPC × 10 eylem × 4 etken = 4000 eğri değerlendirmesi: saniyede 5 kez rahat. Pahalı etkenleri (görüş ışını) önbelleğe alın, sıfır veren ucuz etkeni öne koyun, NPC’lerin düşünme anlarını karelere yayın.</div>
+      <div class="box story"><span class="bt">Ayar süreci</span>Önce her eylemi tek bir etkenle çalıştırın, sonra etken ekleyin. Her eklemeden sonra 5–10 senaryoyu (bu destedeki lab gibi) otomatik test edin: “çok aç → yemek”, “mermi yok → ateş etme”.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Normalleştirmeden çarpmak ya da puanları 0–1 dışına taşırmak</li><li>Ortalamayla birleştirip veto özelliğini kaybetmek</li><li>Her eylem için ayrı ayrı “if” zinciri yazıp buna utility demek</li><li>Her kare <code>new List</code> / LINQ ile çöp üretmek (sık çağrılan kodda)</li><li>Ağırlıklı rastgelede puanı 0 olanları da kuraya katmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir asker NPC için utility AI yaz. Eylemler: Shoot, TakeCover, Reload, Heal, Flee. Her eylemin etkenleri ScriptableObject’te AnimationCurve ile tanımlansın; girdiler 0–1’e normalleştirilsin (mesafe 0–50 m, can 0–maxHp, mermi 0–magSize). Puan = etkenlerin çarpımı, herhangi biri 0 ise erken çık, Dave Mark’ın telafi faktörünü uygula. Beyin saniyede 4 kez karar versin, mevcut eyleme ×1.25 atalet versin, karar değişince Debug.Log yazsın ve OnDrawGizmos ile puanları karakterin üstüne yazsın. LINQ kullanma.”</p><ul class="mini"><li>Etken listesini, ayraçları ve eğri türlerini <b>siz</b> belirleyin; asistan kodu yazsın</li><li>Çarpım + veto + telafi istediğinizi açıkça yazın</li><li>Karar sıklığı ve atalet değerlerini isteyin</li><li>Her NPC için puan tablosunu çizen bir debug paneli isteyin</li><li>Senaryo testleri (girdi → beklenen eylem) yazdırın</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu: eğrileri kim ayarlar?</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Öğrenen reklamlar</span>Sims notlarındaki “şüpheci Sim” fikri: nesnenin vaadi ile gerçek etkisini karşılaştırıp reklamı güncellemek. Basit bir pekiştirmeli öğrenme (Y13) problemi.</div>
+    <div class="box game"><span class="bt">Eğri ayarını otomatikleştirmek</span>Binlerce simüle maç oynatıp eğri parametrelerini <b>optimize etmek</b> (genetik algoritma, Bayes optimizasyonu). Hedef: “kazanma oranı %50”, “oyuncu 10 dakikada ölmesin”. Zorluk ayarıyla (Y17) birleşir.</div>
+    <div class="box low"><span class="bt">LLM + utility</span>Dil modeli her kare karar vermek için pahalı ve öngörülemez. Ama bir karakterin <b>kişilik tarifinden</b> (“korkak ama açgözlü bir tüccar”) eğri parametreleri üretmesi, sonra utility sisteminin hızlı ve güvenilir şekilde çalışması mümkün (Y14).</div>
+  </div>
+  <p class="mini">Ayrıca: utility puanlarını oyuncuya göstermek (Sims’in ihtiyaç çubukları gibi) bir <b>tasarım</b> kararıdır: YZ’yi okunabilir yapar ve oyuncuya “zekâ yanılsaması” verir (Y1).</p>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Eğri kataloğu</b> — Desmos ya da p5.js ile 6 farklı yanıt eğrisini çizen ve parametrelerini kaydırıcıyla değiştiren küçük bir araç.</li><li><b class="c-green">[kolay]</b> <b>Kedi simülatörü</b> — Bir kedinin 4 ihtiyacı (açlık, uyku, oyun, sevgi) ve evdeki nesneler. Sims tarzı reklamlar ve mesafe zayıflatması.</li><li><b class="c-amber">[orta]</b> <b>Utility asker</b> — Unity’de bu destedeki beş eylemli asker: ScriptableObject eylemler, AnimationCurve etkenleri, puan paneli.</li><li><b class="c-amber">[orta]</b> <b>Kişilikler</b> — Aynı kod, üç farklı eğri seti: korkak, cesur, açgözlü. Oyuncular farkı fark ediyor mu? Küçük bir oyuncu testi yapın.</li><li><b class="c-red">[zor]</b> <b>Utility + BT</b> — Üst seviyede utility “ne yapayım?”, alt seviyede davranış ağacı “nasıl?”. Unreal StateTree 5.5+ ya da kendi motorunuzla.</li><li><b class="c-purple">[araştırma]</b> <b>Şüpheci Sim’ler</b> — Nesne reklamlarını deneyimden güncelleyen ajanlar. Yalancı Joy Booth’a karşı ne kadar sürede “bağışıklık” kazanıyorlar?</li><li><b class="c-purple">[araştırma]</b> <b>Otomatik ayar</b> — Bir eğri setini genetik algoritmayla ayarlayıp elle ayarlanmış setle kıyaslayın: hangisi daha “insan gibi” görünüyor?</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Utility</b>: her seçeneğe o anki duruma göre 0–1 puan; en iyisini (ya da iyilerden birini) seç.</li>
+      <li><b>Normalleştirme</b> → <b>yanıt eğrisi</b> → <b>birleştirme</b> → <b>seçim</b>.</li>
+      <li>Çarpım = <b>veto</b> ve erken çıkış; <b>telafi faktörü</b> çok etkenli eylemleri korur.</li>
+      <li>Seçim: mutlak, ağırlıklı rastgele, en iyiler arasından, <b>dual utility</b>.</li>
+    </ul>
+    <ul>
+      <li><b>Atalet</b>: bonus, bekleme süresi, “bitirince karar ver”.</li>
+      <li>The Sims: <b>akıllı nesneler</b> ve reklamlar; Joy Booth dersi.</li>
+      <li>Gerçek oyunlar: Zoo Tycoon 2, Guild Wars 2, Dragon Age: Inquisition, Unreal EQS.</li>
+      <li>Araçlar: StateTree utility, EQS, AnimationCurve, Godot eklentileri, Curvature.</li>
+      <li>Sonraki: <b>GOAP</b> — tek bir eylem değil, bir <b>plan</b> seçmek.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=9gf2MT-IOsg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9gf2MT-IOsg/hqdefault.jpg" alt=""><span><b>The Genius AI Behind The Sims</b><br>Game Maker’s Toolkit</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=78AcS_0lQSM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/78AcS_0lQSM/hqdefault.jpg" alt=""><span><b>An introduction to Utility AI</b><br>The Shaggy Dev</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=5WH3k3aeyC8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/5WH3k3aeyC8/hqdefault.jpg" alt=""><span><b>Utility functions and Utility AI, a practical example</b><br>noozo</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=VoJm91Y6l8I" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/VoJm91Y6l8I/hqdefault.jpg" alt=""><span><b>Utility AI vs Behaviour Tree</b><br>Triple Eh?</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=zGCe8vOHRqg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/zGCe8vOHRqg/hqdefault.jpg" alt=""><span><b>Unity AI Tutorial: Sims-Style AI (Part 2 — Satisfying Needs)</b><br>Iain McManus</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Jm1F6UaMtY4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Jm1F6UaMtY4/hqdefault.jpg" alt=""><span><b>How the Sims Make Decisions (Unity Game Devlog)</b><br>Kyle Martin</span></a>
+  </div>
+  <p class="mini">GDC Vault (bazıları ücretsiz): <a href="https://www.gdcvault.com/play/1012410/Improving-AI-Decision-Modeling-Through" target="_blank" rel="noopener">Improving AI Decision Modeling Through Utility Theory</a> (Mark &amp; Dill, 2010) · <a href="https://www.gdcvault.com/play/1021848/Building-a-Better-Centaur-AI" target="_blank" rel="noopener">Building a Better Centaur: AI at Massive Scale</a> (Mark &amp; Lewis, 2015)</p>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Forbus &amp; Wright 2001</b> · <a href="https://www.qrg.northwestern.edu/papers/Files/Programming_Objects_in_The_Sims.pdf" target="_blank" rel="noopener">Some notes on programming objects in The Sims</a> <i>(Northwestern Üniversitesi ders notu)</i><br>Akıllı nesneler, reklamlar, ihtiyaçlar, Joy Booth — birinci elden.</div><div class="paper"><b>Graham 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter09_An_Introduction_to_Utility_Theory.pdf" target="_blank" rel="noopener">An Introduction to Utility Theory</a> <i>(Game AI Pro, Bölüm 9)</i><br>Eğriler, seçim yöntemleri, kovalar, atalet; Sims örnekleri.</div><div class="paper"><b>Dill 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter03_Dual-Utility_Reasoning.pdf" target="_blank" rel="noopener">Dual-Utility Reasoning</a> <i>(Game AI Pro 2, Bölüm 3)</i><br>Rank + weight; Zoo Tycoon 2.</div><div class="paper"><b>Lewis 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter13_Choosing_Effective_Utility-Based_Considerations.pdf" target="_blank" rel="noopener">Choosing Effective Utility-Based Considerations</a> <i>(Game AI Pro 3, Bölüm 13)</i><br>Guild Wars 2’de IAUS: etken seçimi sanatı.</div><div class="paper"><b>Hanlon &amp; Watts 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter31_Behavior_Decision_System_Dragon_Age_Inquisition’s_Utility_Scoring_Architecture.pdf" target="_blank" rel="noopener">Behavior Decision System: Dragon Age Inquisition’s Utility Scoring Architecture</a> <i>(Game AI Pro 3, Bölüm 31)</i><br>Puan bantları ve hedef seçimi.</div><div class="paper"><b>Merrill 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter10_Building_Utility_Decisions_into_Your_Existing_Behavior_Tree.pdf" target="_blank" rel="noopener">Building Utility Decisions into Your Existing Behavior Tree</a> <i>(Game AI Pro, Bölüm 10)</i><br>BT + utility melezi.</div><div class="paper"><b>Mark 2009</b> · <a href="https://gameai.com/iaus.php" target="_blank" rel="noopener">Behavioral Mathematics for Game AI</a> <i>(Course Technology (kitap))</i><br>Alanın temel kitabı; bağlantı yazarın IAUS sayfası.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://en.wikipedia.org/wiki/Utility_system" target="_blank" rel="noopener">Wikipedia: Utility system</a> — kısa tarihçe ve kaynaklar</li><li><a href="https://gameai.com/iaus.php" target="_blank" rel="noopener">Dave Mark: Infinite Axis Utility System</a></li><li><a href="https://dev.epicgames.com/documentation/unreal-engine/state-tree-selectors-overview" target="_blank" rel="noopener">Unreal: State Tree Selectors (utility)</a></li><li><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/environment-query-system-overview-in-unreal-engine" target="_blank" rel="noopener">Unreal: Environment Query System</a></li></ul>
+    <ul class="reflist"><li><a href="https://docs.unity3d.com/ScriptReference/AnimationCurve.html" target="_blank" rel="noopener">Unity: AnimationCurve</a></li><li><a href="https://www.desmos.com/calculator" target="_blank" rel="noopener">Desmos grafik hesaplayıcı (eğri denemek için)</a></li><li><a href="https://github.com/apoch/curvature" target="_blank" rel="noopener">Curvature (IAUS tasarım aracı)</a></li><li><a href="https://github.com/JarkkoPar/Utility_AI_GDExtension" target="_blank" rel="noopener">Utility AI GDExtension (Godot)</a></li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f3a4a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">GOAP</div>
+    <div class="sub">F.E.A.R.’ın planlayan askerleri: hedef, eylem ve A* ile plan</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-goap/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
