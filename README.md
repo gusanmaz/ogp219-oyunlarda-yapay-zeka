@@ -75,6 +75,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y5 | [GOAP ve HTN](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-goap/) | ✅ hazır |
 | Y6 | [Oyun Ağaçları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-oyun-agaclari/) | ✅ hazır |
 | Y7 | [Steering Davranışları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-steering/) | ✅ hazır |
+| Y8 | [A* ile Yol Bulma](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-astar/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -128,6 +129,7 @@ yz-utility/         Y4 · Yanıt eğrisi editörü, IAUS tarzı asker, Sims tarz
 yz-goap/            Y5 · A* plan arama izleyicisi, F.E.A.R. kapı sahnesinde yeniden planlayan canlı asker, Trunk Thumper HTN ayrıştırması, eylem tablosu ve plan maliyeti laboratuvarları
 yz-oyun-agaclari/   Y6 · XOX’ta minimax, adım adım alfa-beta, Dört Bir Arada’da alfa-beta ve MCTS rakipleri, değerlendirme fonksiyonu turnuvası, minimax ve UCB1 laboratuvarları; Deep Blue, Chinook, AlphaGo
 yz-steering/        Y7 · Kuvvet vektörleri görünen seek/flee/arrive/pursue/evade/wander/yol izleme, boids (ızgara ve kontrol sayacıyla), context steering vs ağırlıklı toplam, seek/arrive, ayrılma ve hizalanma laboratuvarları
+yz-astar/           Y8 · Düzenlenebilir ızgarada BFS/Dijkstra/Greedy/A* yarışı, sezgiler ve ağırlıklı A*, yol yumuşatma, StarCraft hilesi, Factorio hiyerarşisi, JPS; sezgi ve yol maliyeti laboratuvarları
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

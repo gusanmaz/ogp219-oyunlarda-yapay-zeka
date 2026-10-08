@@ -748,3 +748,5 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .ttt-c[data-v]:not([data-v=""])::after { content: "değer " attr(data-v); position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font: 700 15px "JetBrains Mono", monospace; opacity: .9; }
 .ttt-c.good::after { color: var(--blue); } .ttt-c.bad::after { color: var(--red); } .ttt-c.draw::after { color: var(--muted); }
 .c4stats { margin-top: 6px; }
+.cmp4 { display: grid; grid-template-columns: repeat(2, auto); gap: 6px 18px; justify-content: start; font-size: 15px; }
+.cmp4 canvas { display: block; border: 1px solid var(--rule); border-radius: 6px; }

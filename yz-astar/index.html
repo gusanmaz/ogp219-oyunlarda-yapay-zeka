@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A* ile Yol Bulma</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — A* ile yol bulma: ızgara/yol noktası/navmesh, BFS–Dijkstra–Greedy–A* karşılaştırması, Manhattan/octile/Öklid sezgileri, ağırlıklı A*, yol yumuşatma, StarCraft’ın yol bulma hilesi, DigiPen yarışması, hiyerarşik yol bulma (Dragon Age, Factorio), JPS, A* Pathfinding Project, Godot AStarGrid2D. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a3a0f 0%, #10223a 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 8</div>
+  <div class="ttl" style="font-size:80px">A* ile Yol Bulma</div>
+  <div class="sub"><i>Izgaralar, sezgiler, oyun hileleri</i> — oyun yapay zekâsının en çok kullanılan algoritması</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titleastar"></div>
+  <aside class="notes">Haftalık plandaki A* konusu. Arka planda rastgele engelli bir ızgarada A* araması genişliyor ve sarı yolu buluyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Yol bulma problemi</b> — ızgara, yol noktası grafı, navmesh</li>
+      <li><b>BFS’ten A*’a</b> — dört algoritma aynı haritada yarışıyor</li>
+      <li><b>Sezgiler</b> — Manhattan, octile, Öklid; ağırlıklı A*</li>
+      <li><b>Kod</b> — 30 satırlık A* + üç laboratuvar</li>
+      <li><b>Oyunlarda</b> — StarCraft’ın yol bulma hilesi, yol yumuşatma, sık hatalar</li>
+      <li><b>Hızlandırma</b> — hiyerarşi (Dragon Age, Factorio), JPS, akış alanı</li>
+      <li><b>Kütüphaneler</b> — A* Pathfinding Project, Godot AStarGrid2D, PathFinding.js, NetworkX</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir oyun haritasını grafa çevirebilecek, A*’ı yazıp ızgarada çalıştırabilecek, doğru sezgiyi seçebilecek, bulunan yolu yumuşatıp steering ile izletebilecek ve büyük haritalarda yol bulmayı hızlandırmanın yollarını tanıyacaksınız.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: 50 ASKER SEÇİP HARİTANIN ÖBÜR UCUNA TIKLADINIZ</span>
+    <p class="big">Ne bekliyorsunuz? Ne olursa oyunu “bozuk” bulursunuz?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Duvara toslayan, gölün etrafında dönüp duran, köprüde birbirine sıkışan birimler… Oyuncuların en çabuk fark ettiği yapay zekâ hatası <b>yol bulma</b> hatasıdır.</li>
+    <li class="fragment">Patrick Wyatt (StarCraft): “Yol bulma, çoğu oyuncunun düzgün çalışmadığı ana kadar fark etmediği bir şeydir; sonra o küçük sorun çileden çıkaran bir dünyanın sonuna dönüşür.”</li>
+    <li class="fragment">İyi haber: algoritma 1968’den beri belli (<b>A*</b>). Kötü haber: oyunda iyi çalıştırmak bir mühendislik sanatı.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../en-kisa-yollar/">En Kısa Yollar (Dijkstra)</a><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, mesafe)</a></div>
+  <div class="prereq"><a class="opt" href="../oncelik-kuyruklari/">Öncelik Kuyrukları (yığın)</a><a class="opt" href="../yonsuz-graflar/">Yönsüz Graflar (BFS)</a><a class="opt" href="../union-find/">Union-Find (erişilebilirlik)</a><a class="opt" href="../yz-steering/">Y7 · Steering (yolu izlemek)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>A*, Dijkstra’ya tek bir fikir ekler: “hedefe ne kadar kaldığını tahmin et.” Dijkstra’yı En Kısa Yollar destesinden hatırlıyorsanız bu deste çok kolay gelecek; hatırlamıyorsanız Level 1 baştan anlatıyor.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unity’de NavMesh (Y9) ve A* Pathfinding Project, Godot’da AStarGrid2D, Unreal’da NavMesh hazır A* içerir: kod yazmadan yol bulabilirsiniz. Ama “neden takıldı?”, “neden yavaş?” sorularının cevabı bu destede.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>pathfinding</td><td>yol bulma</td><td>Başlangıçtan hedefe engellere çarpmadan giden (en ucuz) yolu bulmak</td></tr>
+    <tr><td>node · edge · cost</td><td>düğüm · kenar · maliyet</td><td>Gidilebilir yer · iki yer arası geçiş · geçişin “pahası” (mesafe, arazi)</td></tr>
+    <tr><td>g · h · f</td><td>—</td><td>g: başlangıçtan buraya gerçek maliyet · h: buradan hedefe tahmin · f = g + h</td></tr>
+    <tr><td>heuristic · admissible</td><td>sezgi · kabul edilebilir</td><td>Kalan maliyet tahmini · tahminin asla fazla olmaması (en kısa yolu garanti eder)</td></tr>
+    <tr><td>open / closed list</td><td>açık / kapalı liste</td><td>Keşfedilmiş ama işlenmemiş düğümler · işi bitmiş düğümler</td></tr>
+    <tr><td>Manhattan · octile · Euclidean</td><td>—</td><td>4 yönlü · 8 yönlü · her açıda mesafe tahminleri</td></tr>
+    <tr><td>path smoothing / string pulling</td><td>yol yumuşatma / ip germe</td><td>Izgara yolunun gereksiz köşelerini kaldırmak</td></tr>
+    <tr><td>hierarchical pathfinding</td><td>hiyerarşik yol bulma</td><td>Önce kaba haritada (odalar), sonra ayrıntıda arama</td></tr>
+    <tr><td>JPS · flow field</td><td>sıçrama noktası araması · akış alanı</td><td>Izgarada simetrik yolları atlayan hızlı A* · binlerce birim için yön haritası</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Yol bulma problemi</div>
+  <div class="sub">dünyayı grafa çevirmek</div>
+  <ul class="agenda"><li class="on">yol bulma problemi</li><li class="">BFS’ten A*’a</li><li class="">sezgiler</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda tuzaklar ve hileler</li><li class="">hızlandırma</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="problem">
+  <h2>Dünya → graf: üç yaygın gösterim</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Izgara (grid)</span>Harita karelere bölünür; her kare bir düğüm, komşu kareler kenar. 4 yön ya da 8 yön. Basit, düzenlenmesi kolay, arazi maliyeti eklemek kolay. Strateji, kule savunma, roguelike, 2B oyunlar.<p class="mini">Bedeli: çok düğüm, “basamaklı” yollar.</p></div>
+    <div class="box game"><span class="bt">Yol noktası grafı (waypoints)</span>Tasarımcı haritaya noktalar koyar ve aralarını bağlar. Az düğüm, hızlı arama. 2000’lerin nişancı oyunlarında yaygındı.<p class="mini">Bedeli: elle bakım; noktaların dışındaki alanı “bilmez”.</p></div>
+    <div class="box low"><span class="bt">Gezinti ağı (navmesh)</span>Yürünebilir zemin dışbükey çokgenlere bölünür; her çokgen bir düğüm. Bugün 3B oyunların standardı (Unity, Unreal, Godot). Y9’un konusu.<p class="mini">Bedeli: üretmesi karmaşık (motorlar yapar).</p></div>
+  </div>
+  <p style="font-size:.86em;margin-top:12px">A* üçünde de <b>aynı</b> çalışır: sadece “komşular kim, geçiş maliyeti ne?” sorusunun cevabı değişir. Bu destede ızgara kullanıyoruz çünkü görmesi en kolayı.</p>
+</section>
+
+<section data-sec="problem">
+  <h2>Hikâye: A*’ın doğumu (1968)</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Y5’ten hatırlayın: Stanford Research Institute’teki robot <b>Shakey</b>, bir odadan diğerine nasıl gideceğini bulmak zorundaydı.</li>
+        <li>Nils Nilsson önce “A1” adlı bir algoritma, Bertram Raphael onu iyileştiren “A2”yi önerdi. Peter Hart, belirli koşullarda en iyi sonucu garanti eden bir sürüm olduğunu kanıtladı ve isim “A*” (“A yıldız”: en iyisi) oldu.</li>
+        <li>1968’de Hart, Nilsson ve Raphael yayımladı. 55 yıl sonra hâlâ oyunlarda “yol bulma algoritması” denince ilk akla gelen.</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">💡 Fikir tek cümle</span>Dijkstra her yöne eşit yayılır, çünkü hedefin nerede olduğunu <b>umursamaz</b>. A* ise her adımda “bu yoldan hedefe toplam ne kadar sürer?” diye <b>tahmin</b> eder ve en umut vadeden yolu önce dener. Tahmin asla abartılı değilse, bulunan yol yine <b>en kısadır</b>.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #10223a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">BFS’ten A*’a</div>
+  <div class="sub">dört algoritma, bir harita</div>
+  <ul class="agenda"><li class="done">yol bulma problemi</li><li class="on">BFS’ten A*’a</li><li class="">sezgiler</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda tuzaklar ve hileler</li><li class="">hızlandırma</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="algoritmalar">
+  <h2>Dört kardeş: hangisini önce genişletiyoruz?</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>algoritma</th><th>öncelik</th><th>en kısa yolu garanti eder mi?</th><th>hız</th></tr>
+    <tr><td><b>BFS</b></td><td>önce keşfedilen (kuyruk)</td><td>Sadece bütün adımlar eşit maliyetliyse</td><td>yavaş: her yöne dalga</td></tr>
+    <tr><td><b>Dijkstra</b></td><td>en küçük <b>g</b></td><td>Evet (negatif maliyet yoksa)</td><td>yavaş: her yöne, maliyete göre</td></tr>
+    <tr><td><b>Greedy best-first</b></td><td>en küçük <b>h</b></td><td><b>Hayır</b>: “hedefe en yakın görünen” yolu seçer</td><td>çok hızlı ama aptal olabilir</td></tr>
+    <tr><td><b>A*</b></td><td>en küçük <b>f = g + h</b></td><td>Evet (h kabul edilebilirse)</td><td>hızlı ve doğru</td></tr>
+  </table>
+  <div class="cols" style="margin-top:10px">
+    <p style="font-size:.86em">Dördü de <b>aynı kod</b>: bir öncelik kuyruğu, komşulara bak, daha iyi yol bulursan güncelle. Sadece kuyruğun “sıralama ölçütü” değişir.</p>
+    <div class="box low"><span class="bt">⚙️ İki uç</span>h = 0 → A* = Dijkstra (güvenli, yavaş). g’yi yok say → A* = Greedy (hızlı, riskli). A* ikisinin tam ortası.</div>
+  </div>
+</section>
+
+<section data-sec="algoritmalar">
+  <h2>Yarış: aynı harita, dört algoritma 🏁</h2>
+  <div class="demo" data-demo="compare4"></div>
+</section>
+
+<section data-sec="algoritmalar">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>U şeklindeki engel: <b>Greedy</b> önce düz hedefe koşuyor, U’nun içine giriyor, sonra çıkış arıyor. Bulduğu yolun maliyeti diğerlerinden yüksek mi?</li>
+      <li><b>BFS</b> ve <b>Dijkstra</b> neredeyse bütün haritayı renklendiriyor (genişletilen düğüm sayısına bakın). <b>A*</b> hedefe doğru “uzanıyor”.</li>
+      <li>U’nun ağzını bir duvarla kapatın: Greedy artık daha iyi mi, daha kötü mü?</li>
+      <li>B’yi U’nun içine taşıyın. Hangi algoritma en az düğümle buluyor?</li>
+      <li>Renkler: mavi → kırmızı, başlangıçtan uzaklık (g). Sarı = açık liste (keşfedilmiş, sırada bekliyor).</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="algoritmalar">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · algoritmalar</div>
+    <div class="q">A*’da h değerini her yerde 0 alırsanız hangi algoritmayı elde edersiniz?</div>
+    <div class="opts">
+      <button data-opt="A">Dijkstra</button>
+      <button data-opt="B">Greedy best-first</button>
+      <button data-opt="C">BFS</button>
+      <button data-opt="D">Derinlik öncelikli arama</button>
+    </div>
+    <div class="explain">f = g + 0 = g: öncelik sadece başlangıçtan uzaklık olur, bu da tam olarak <b>Dijkstra</b>’dır. Doğrudur ama hedefe yönelmez, gereksiz çok düğüm açar. BFS ise maliyetleri hiç dikkate almaz (bataklık haritasında farkı görün).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #10223a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Sezgiler</div>
+  <div class="sub">iyi bir tahmin, yarı yarıya iş</div>
+  <ul class="agenda"><li class="done">yol bulma problemi</li><li class="done">BFS’ten A*’a</li><li class="on">sezgiler</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda tuzaklar ve hileler</li><li class="">hızlandırma</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="sezgiler">
+  <h2>Hangi sezgi, hangi ızgara?</h2>
+  <div class="cols">
+    <table class="sum-t" style="font-size:18px">
+      <tr><th>sezgi</th><th>formül (dx, dy = kare farkları)</th><th>ne zaman?</th></tr>
+      <tr><td><b>Manhattan</b></td><td><code>dx + dy</code></td><td>4 yönlü hareket</td></tr>
+      <tr><td><b>Octile</b></td><td><code>max + (√2 − 1)·min</code></td><td>8 yönlü, çapraz = √2</td></tr>
+      <tr><td><b>Chebyshev</b></td><td><code>max(dx, dy)</code></td><td>8 yönlü, çapraz = 1 (satranç şahı)</td></tr>
+      <tr><td><b>Öklid</b></td><td><code>√(dx² + dy²)</code></td><td>her açıda hareket (navmesh)</td></tr>
+    </table>
+    <div>
+      <div class="box story"><span class="bt">Kabul edilebilir (admissible)</span>h, gerçek kalan maliyeti <b>asla aşmamalı</b>. Öyleyse A* en kısa yolu bulur. Öklid her zaman güvenlidir ama ızgarada “fazla iyimser” olduğu için gereğinden çok düğüm açar.</div>
+      <div class="box warn"><span class="bt">⚠️ Yanlış sezgi</span>8 yönlü ızgarada Manhattan, çapraz adımları 2 sayar: tahmin <b>abartılı</b> → yol en kısa olmayabilir. 4 yönlü ızgarada Öklid: doğru ama yavaş.</div>
+      <p class="mini">Amit Patel’in (Red Blob Games) ipucu: “En iyi sezgi, hareket kurallarınızın tam mesafesidir.”</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="sezgiler">
+  <h2>Ağırlıklı A*: biraz hata, çok hız</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li><code>f = g + w · h</code>, w &gt; 1. Arama hedefe daha <b>aç gözlü</b> koşar: çok daha az düğüm.</li>
+        <li>Bedeli: yol en kısa olmayabilir; ama en fazla <b>w katı</b> uzun olur (w = 1,5 ise en kötü %50 uzun).</li>
+        <li>Oyunlarda sık kullanılır: oyuncu %5 uzun bir yolu fark etmez, 5 kat yavaş yol bulmayı fark eder (takılan kare hızı).</li>
+      </ul>
+      <div class="box game"><span class="bt">Eşitlik bozma hilesi</span>Açık arazide çok sayıda <b>eşit uzunlukta</b> yol vardır ve A* hepsini açar. h’yi çok küçük bir oranla büyütmek (ör. × 1,001) eşitlikleri hedefe yakın olan lehine bozar; yol aynı kalır, arama küçülür.</div>
+    </div>
+    <div class="box story"><span class="bt">Arazi maliyeti</span>Bataklık 5, yol 1, orman 2… A* maliyeti zaten hesaba katar: hızlı ama dolambaçlı yolu seçer. Tasarım için güçlü bir araç: “düşmanlar köprüyü tercih etsin” → köprü ucuz. Taktik maliyetler (tehlikeli bölge pahalı) Y12’de.</div>
+  </div>
+</section>
+
+<section data-sec="sezgiler">
+  <h2>Canlı: A* laboratuvarı 🧭</h2>
+  <div class="demo" data-demo="astar"></div>
+</section>
+
+<section data-sec="sezgiler">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.88em">
+      <li><b>Çizim</b>: ızgaraya tıklayıp sürükleyin (duvar). Fırçayı “bataklık” yapın. B ve H’yi sürükleyin: arama anında yenilenir.</li>
+      <li>“Bataklık” hazır haritası: <b>BFS</b> bataklıktan geçiyor (maliyeti bilmiyor), <b>A*</b> üstteki dar yoldan dolaşıyor. Yol maliyetlerini karşılaştırın.</li>
+      <li>Sezgiyi “sıfır” yapın: A* = Dijkstra. Genişletilen düğüm sayısı kaç kat arttı?</li>
+      <li>Ağırlık w = 3: düğüm sayısı düşüyor; yol maliyeti değişti mi? “Labirent”te dene: ağırlık orada işe yarıyor mu?</li>
+      <li>8 yön açıkken sezgiyi “Manhattan” yapın: yol maliyeti octile ile aynı mı? (Abartılı sezgi.)</li>
+      <li>“g değerleri”ni açıp adım adım oynatın: her karede başlangıçtan gerçek uzaklık yazıyor.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="sezgiler">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · sezgiler</div>
+    <div class="q">8 yönlü (çapraz maliyeti √2) bir ızgarada hedef 3 sağda ve 4 yukarıda. Octile sezgisi kaç verir?</div>
+    <div class="opts">
+      <button data-opt="A">4 + (√2 − 1)·3 ≈ 5,24</button>
+      <button data-opt="B">7</button>
+      <button data-opt="C">5</button>
+      <button data-opt="D">4</button>
+    </div>
+    <div class="explain">Octile: max(3, 4) + (√2 − 1)·min(3, 4) = 4 + 0,414·3 ≈ <b>5,24</b>. Gerçekte 3 çapraz (3√2 ≈ 4,24) + 1 düz = 5,24 adımlık maliyet. Manhattan 7 der (abartılı), Öklid 5 der (iyimser), Chebyshev 4 der (çapraz = 1 varsayımı).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">30 satırlık A*</div>
+  <ul class="agenda"><li class="done">yol bulma problemi</li><li class="done">BFS’ten A*’a</li><li class="done">sezgiler</li><li class="on">kod ve laboratuvarlar</li><li class="">oyunlarda tuzaklar ve hileler</li><li class="">hızlandırma</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: A*’ın üç veri yapısı</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Öncelik kuyruğu (açık liste)</span>“f’si en küçük düğümü ver.” Python <code>heapq</code>, C# <code>PriorityQueue</code> (.NET 6+; Unity’de yoksa kendi yığınınız), JS’de kendi yığınınız. Öncelik Kuyrukları destesindeki ikili yığın.</div>
+    <div class="box game"><span class="bt">g tablosu</span>“Bu düğüme şimdiye kadar bulduğum en ucuz maliyet.” Sözlük ya da dizi. Daha ucuz yol bulursan güncelle ve kuyruğa yeniden koy.</div>
+    <div class="box low"><span class="bt">came_from (ebeveyn) tablosu</span>“Bu düğüme hangi düğümden geldim?” Hedefe ulaşınca geriye doğru izleyip yolu çıkarırsın. En Kısa Yollar destesindeki <code>edgeTo</code>.</div>
+  </div>
+  <p class="mini" style="margin-top:10px">“Kuyrukta aynı düğüm iki kez olabilir mi?” Evet: basit uygulamalarda düğümü güncellemek yerine <b>yeniden eklenir</b>; çıkarken “zaten kapalıysa atla” denir (tembel silme). Kod bunu yapıyor.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>A* (ızgara, 8 yön)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="3-5|7-14|17-19|20-26|27-33"><script type="text/template">
+import heapq, math
+
+def octile(a, b):
+    dx, dy = abs(a[0] - b[0]), abs(a[1] - b[1])
+    return max(dx, dy) + (math.sqrt(2) - 1) * min(dx, dy)
+
+def neighbors(grid, x, y):
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            nx, ny = x + dx, y + dy
+            if (dx or dy) and 0 <= ny < len(grid) and 0 <= nx < len(grid[0]) and grid[ny][nx] != "#":
+                if dx and dy and (grid[y][nx] == "#" or grid[ny][x] == "#"):
+                    continue                              # köşeden geçme
+                yield (nx, ny), (math.sqrt(2) if dx and dy else 1.0)
+
+def astar(grid, start, goal):
+    open_ = [(octile(start, goal), start)]
+    g = {start: 0.0}
+    came_from = {start: None}
+    while open_:
+        f, cur = heapq.heappop(open_)
+        if cur == goal:                                   # yolu geriye doğru çıkar
+            path = []
+            while cur is not None:
+                path.append(cur); cur = came_from[cur]
+            return path[::-1], g[goal]
+        for nxt, step in neighbors(grid, *cur):
+            ng = g[cur] + step
+            if ng < g.get(nxt, math.inf):                 # daha ucuz yol bulundu
+                g[nxt] = ng
+                came_from[nxt] = cur
+                heapq.heappush(open_, (ng + octile(nxt, goal), nxt))
+    return None, math.inf                                 # yol yok
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity 6 (.NET Standard 2.1): PriorityQueue yoksa basit bir ikili yığın yazın ya da SortedSet kullanın
+public static List<Vector2Int> AStar(bool[,] walkable, Vector2Int start, Vector2Int goal) {
+    var open = new PriorityQueue<Vector2Int, float>();           // .NET 6+ ya da kendi yığınınız
+    var g = new Dictionary<Vector2Int, float> { [start] = 0f };
+    var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+    open.Enqueue(start, Octile(start, goal));
+    while (open.TryDequeue(out var cur, out _)) {
+        if (cur == goal) return Reconstruct(cameFrom, cur);
+        foreach (var (next, step) in Neighbors(walkable, cur)) {
+            float ng = g[cur] + step;
+            if (!g.TryGetValue(next, out float old) || ng < old) {
+                g[next] = ng;
+                cameFrom[next] = cur;
+                open.Enqueue(next, ng + Octile(next, goal));
+            }
+        }
+    }
+    return null;                                                // yol yok
+}
+
+static float Octile(Vector2Int a, Vector2Int b) {
+    int dx = Mathf.Abs(a.x - b.x), dy = Mathf.Abs(a.y - b.y);
+    return Mathf.Max(dx, dy) + 0.41421356f * Mathf.Min(dx, dy);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Basit hâli: açık listeyi her seferinde sıralıyoruz (küçük ızgaralar için yeterli)
+function astar(grid, start, goal) {      // grid[y][x] === 1 → duvar; düğüm = "x,y"
+  const key = (x, y) => x + "," + y, h = (x, y) => Math.abs(x - goal.x) + Math.abs(y - goal.y);
+  const open = [{ x: start.x, y: start.y, g: 0, f: h(start.x, start.y) }];
+  const g = { [key(start.x, start.y)]: 0 }, from = {};
+  while (open.length) {
+    open.sort((a, b) => a.f - b.f);
+    const cur = open.shift();
+    if (cur.x === goal.x && cur.y === goal.y) {
+      const path = []; let k = key(cur.x, cur.y);
+      while (k) { path.unshift(k); k = from[k]; }
+      return path;
+    }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = cur.x + dx, ny = cur.y + dy;
+      if (grid[ny]?.[nx] !== 0) continue;                 // dışarı ya da duvar
+      const ng = cur.g + 1, k = key(nx, ny);
+      if (ng < (g[k] ?? Infinity)) { g[k] = ng; from[k] = key(cur.x, cur.y); open.push({ x: nx, y: ny, g: ng, f: ng + h(nx, ny) }); }
+    }
+  }
+  return null;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>heapq.heappush / heappop</td><td>yığın</td><td>En küçük öncelikli elemanı O(log n)’de verir</td></tr>
+    <tr><td>yield</td><td>üreteç</td><td>Fonksiyon bir liste döndürmek yerine elemanları tek tek “verir”; for döngüsüyle kullanılır</td></tr>
+    <tr><td>g.get(k, math.inf) · TryGetValue</td><td>güvenli okuma</td><td>Hiç görülmemiş düğüm için “sonsuz” varsay</td></tr>
+    <tr><td>path[::-1]</td><td>ters çevirme</td><td>Hedeften başlangıca toplanan yolu başlangıçtan hedefe çevirir</td></tr>
+    <tr><td>Vector2Int · Dictionary</td><td>Unity tam sayılı vektör · sözlük</td><td>Izgara koordinatı ve anahtar → değer tablosu</td></tr>
+    <tr><td>grid[ny]?.[nx]</td><td>isteğe bağlı zincirleme</td><td>Satır yoksa hata vermeden undefined</td></tr>
+    <tr><td>a ?? b</td><td>boşsa varsayılan</td><td>a undefined/null ise b</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: octile sezgisi</h2>
+  <div class="simlab" data-sim="heur" data-fns="heuristic" data-lang="js">
+<textarea>
+// dx, dy: hedefe kalan kare farkları (≥ 0)
+// 8 yönlü ızgara: düz adım 1, çapraz adım √2
+// Döndür: kalan maliyetin tahmini
+function heuristic(dx, dy) {
+  return dx + dy;        // Manhattan: 8 yönde abartılı!
+}
+</textarea>
+    <div class="lab-tasks">Manhattan’ı <b>octile</b> ile değiştirin: <code>max + (√2 − 1)·min</code>. Sağda üç harita sırayla aranıyor; sizin sezginizle A*’ın genişlettiği düğüm sayısını ve yolun en kısa olup olmadığını izleyin. Sonra deney: <code>3 *</code> octile yapın; düğüm azalır ama yol hâlâ en kısa mı?</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: arazili ızgarada yol maliyeti</h2>
+  <div class="ailab" data-lab="gridcost" data-lang="python">
+<textarea>
+import heapq
+
+# rows: ["..#~", ...]  "." = 1, "~" = bataklık 5, "#" = duvar
+# start, goal: [x, y] · 4 yönlü hareket
+# Adım maliyeti = (iki hücrenin maliyeti toplamı) / 2
+# En ucuz yolun maliyetini döndür; yol yoksa None.
+def astar_cost(rows, start, goal):
+    W, H = len(rows[0]), len(rows)
+    cost = {".": 1, "~": 5}
+    s, t = tuple(start), tuple(goal)
+    open_ = [(0, s)]
+    best = {s: 0}
+    while open_:
+        g, (x, y) = heapq.heappop(open_)
+        # TODO 1: hedefe ulaştıysan g'yi döndür
+        # TODO 2: 4 komşuya bak; duvar/dışarı atla;
+        #   yeni g daha küçükse best'i güncelle ve
+        #   (yeni_g + h, komşu) kuyruğa koy (h = Manhattan)
+    return None
+</textarea>
+    <div class="lab-tasks">Dikkat: kuyruğa <code>g + h</code> koyuyorsunuz ama çekince g’ye ihtiyacınız var; <code>best[(x, y)]</code>’den okuyun. Testlerde bataklıkta dolaşmanın daha ucuz olduğu, yolun olmadığı ve başlangıç = hedef olan ızgaralar var.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: üç sezgi</h2>
+  <div class="ailab" data-lab="heuristics" data-lang="python">
+<textarea>
+import math
+
+# dx, dy ≥ 0 · Döndür: [manhattan, octile, oklid]
+def heuristics(dx, dy):
+    manhattan = dx + dy
+    octile = 0      # TODO
+    oklid = 0       # TODO
+    return [manhattan, octile, oklid]
+</textarea>
+    <div class="lab-tasks">Hepsi aynı (dx, dy) için. Sonucu inceleyin: hangisi her zaman en büyük, hangisi en küçük? Bu sıralama, hangisinin hangi ızgarada “abartılı” olduğunu söyler.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Oyunlarda tuzaklar ve hileler</div>
+  <div class="sub">StarCraft’tan DigiPen’e</div>
+  <ul class="agenda"><li class="done">yol bulma problemi</li><li class="done">BFS’ten A*’a</li><li class="done">sezgiler</li><li class="done">kod ve laboratuvarlar</li><li class="on">oyunlarda tuzaklar ve hileler</li><li class="">hızlandırma</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="oyunlar">
+  <h2>Derin hikâye: StarCraft’ın yol bulma hilesi (1998) ⛏️</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Patrick Wyatt’ın (Blizzard) 2013 blog yazısından:</p>
+      <ul style="font-size:.82em">
+        <li>StarCraft’ın çıkışı yaklaşırken yol bulmada o kadar çok uç durum vardı ki oyun “çıkarılamaz” hâldeydi: birimler savaş alanında takılıyor, ileri geri kıpırdayıp duruyordu.</li>
+        <li>En büyük sorun <b>işçiler</b>di (SCV, drone, probe). Oyuncular kazancı artırmak için bir maden yatağına olabildiğince çok işçi koyar; işçiler maden ile üs arasında gidip gelirken <b>karşı yönden gelenlerle</b> çarpışır. Yeterince kalabalıkta bazıları kilitlenir; oyuncu savaşla uğraşırken üssündeki ekonomi durur.</li>
+        <li>Wyatt’ın itirafı: yol bulma kodunu uzun uzun inceledikten sonra “sorunu düzeltecek kadar akıllı olmadığını” anladı ve bir <b>hile</b> yaptı: maden taşıyan ya da madene giden işçiler, aynı işi yapan diğer işçilerle <b>çarpışmayı yok sayar</b>.</li>
+        <li>Sonuç: “trafik sıkışıklığı” tamamen kayboldu. Bugün bile bir grup çalışan işçiyi seçip “dur” derseniz, hemen dağılıp boş kareler aradıklarını görürsünüz.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">🐘 Dragoon</span>Diğer sorunlar ya etrafından dolaşıldı ya da görmezden gelindi. Wyatt’a göre Protoss <b>Dragoon</b>, en büyük kara birimi olduğu için sık sık yol bulamadı ve kötü bir üne kavuştu. (Büyük birimler için “boşluk” (clearance) farklı hesaplanmalı: dar geçitler onlara kapalı.)</div>
+      <div class="box story"><span class="bt">💡 Ders</span>“Doğru” çözüm her zaman gerekli değil; oyuncunun gördüğü sonuç önemli. Wyatt: “Çalışıyor; bu en iyi hile türü.”</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunlar">
+  <h2>Izgara yolu çirkindir: yumuşatma</h2>
+  <div class="demo" data-demo="smooth"></div>
+  <p class="mini">Kırmızı: A*’ın ızgara yolu (8 yönlü bile olsa 45° basamaklar). Mor: “ip germe” (string pulling) — her noktadan, görüş hattı olan en uzak noktaya düz git. Sarı ajan, Y7’deki gibi steering ile izliyor. “Ham ızgara yolu”nu seçip farkı izleyin.</p>
+</section>
+
+<section data-sec="oyunlar">
+  <h2>Sık düşülen tuzaklar</h2>
+  <div class="cols">
+    <div>
+      <div class="box warn"><span class="bt">1) Ulaşılamayan hedef</span>Hedef bir adanın üstündeyse A* <b>bütün haritayı</b> tarar ve “yol yok” der: oyunun en pahalı araması. Çare: haritayı önceden “bağlantılı bölgelere” ayırın (Union-Find destesi!) ve aynı bölgede değillerse hiç arama yapmayın.</div>
+      <div class="box warn"><span class="bt">2) Herkes aynı karede</span>50 birim tek bir noktaya gider ve orada üst üste biner. Çare: hedef etrafında formasyon/dağıtma, birimler arası kaçınma (Y7: RVO).</div>
+      <div class="box warn"><span class="bt">3) Hareketli engeller</span>Yol bulunduktan sonra kapı kapanır. Çare: yolu izlerken önü kontrol et, gerekirse yeniden ara (Y5’teki yeniden planlama).</div>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">4) Hepsi aynı karede arama</span>Yüz birim aynı karede yol isterse kare hızı düşer. Çare: istekleri kuyruğa al, karelere yay (<b>zaman dilimleme</b>); aynı hedefe gidenler için akış alanı.</div>
+      <div class="box warn"><span class="bt">5) Birim boyu</span>Büyük birimler için dar koridorlar kapalı olmalı (Dragoon!). Çare: her hücre için “buradan geçebilecek en büyük birim” (clearance) haritası ya da boya göre ayrı navmesh.</div>
+      <div class="box warn"><span class="bt">6) Her kare arama</span>Kovalayan düşman her karede yeniden yol bulursa işlemci yanar. Çare: hedef bir eşikten fazla kımıldadıysa yeniden ara; arada steering ile hedefe yaklaş.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunlar">
+  <h2>Hikâye: DigiPen’in A* yarışması — 100 kat fark 🏎️</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Steve Rabin ve Nathan Sturtevant (Game AI Pro, 17. bölüm): DigiPen Teknoloji Enstitüsü’nde giriş YZ dersinin ilk ödevlerinden biri sabit bir ızgarada A* yazmak. Ek puan için “en hızlı A*” yarışması yapılıyor. Yıllar içinde yüzlerce öğrenciden çıkan sonuç:</p>
+      <table class="sum-t" style="font-size:18px">
+        <tr><th></th><th>aynı haritada süre</th></tr>
+        <tr><td>en hızlılar</td><td>~200 µs</td></tr>
+        <tr><td>ortalama</td><td>~2.500 µs</td></tr>
+        <tr><td>en yavaşlar</td><td>20.000 µs’den fazla</td></tr>
+      </table>
+      <p class="mini">Aynı algoritma, aynı sonuç; arada <b>100 kat</b>. “Nerede olurdunuz?”</p>
+    </div>
+    <div class="box game"><span class="bt">Kitaptaki optimizasyonlar</span>
+      <ol style="font-size:.82em">
+        <li>Kaliteli sezgi (önceden hesaplanmış tablolar bile)</li>
+        <li>Doğru arama uzayı (ızgara mı, navmesh mi, hiyerarşi mi?)</li>
+        <li>Bütün belleği <b>önceden ayır</b> (arama sırasında new yok)</li>
+        <li>Abartılı sezgi (ağırlıklı A*) ile daha az düğüm</li>
+        <li>Açık liste için doğru veri yapısı</li>
+        <li>Geri dönüşleri önle, komşuları önbelleğe al</li>
+      </ol>
+      <p class="mini">Ve “kötü fikir”: on aramayı aynı anda yarım yarım yürütmek; birini bitirip sonrakine geçmek genelde daha hızlı.</p></div>
+  </div>
+</section>
+
+<section data-sec="oyunlar">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · oyunlar</div>
+    <div class="q">Oyuncu, birimlerini su ile çevrili ulaşılamaz bir adaya göndermek için tıkladı. Önlem alınmamış bir A* ne yapar?</div>
+    <div class="opts">
+      <button data-opt="A">Ulaşılabilen bütün haritayı tarar, sonra “yol yok” der — çok pahalı</button>
+      <button data-opt="B">Hemen “yol yok” der</button>
+      <button data-opt="C">En yakın kıyıya gider</button>
+      <button data-opt="D">Suyun üstünden yürür</button>
+    </div>
+    <div class="explain">A* yolun olmadığını ancak açık listesi boşalınca anlar: başlangıçtan ulaşılabilen <b>her</b> düğümü genişletir. Çözüm: haritayı önceden bağlantılı bölgelere ayırıp (Union-Find, flood fill) hedefin aynı bölgede olup olmadığına O(1)’de bakmak; olmadığı durumda hedefe en yakın ulaşılabilir noktayı seçmek.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #10223a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Hızlandırma</div>
+  <div class="sub">hiyerarşi, JPS, akış alanı</div>
+  <ul class="agenda"><li class="done">yol bulma problemi</li><li class="done">BFS’ten A*’a</li><li class="done">sezgiler</li><li class="done">kod ve laboratuvarlar</li><li class="done">oyunlarda tuzaklar ve hileler</li><li class="on">hızlandırma</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="hızlandırma">
+  <h2>Hiyerarşik yol bulma: önce odalar, sonra adımlar</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>İnsan da böyle düşünür: “Ankara’dan İzmir’e: önce otobana, sonra…” Her sokağı baştan aramayız.</li>
+        <li>Harita bölgelere ayrılır (odalar, parçalar). Önce <b>bölgeler grafında</b> kaba yol, sonra sadece o bölgelerin içinde ayrıntılı yol.</li>
+        <li><b>Dragon Age: Origins</b> (BioWare): alt seviye ızgaranın üstünde <b>iki</b> soyut ızgara seviyesi. <b>Company of Heroes</b>: üst seviye altıgen ızgara, alt seviye kare ızgara (Rabin &amp; Sturtevant).</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Factorio (2019): göl etrafında biter’lar</span>Topçu eklenince, oyuncular büyük bir gölün öbür kıyısındaki biter yuvalarını vurmaya başladı; yüzlerce biter gölün etrafından yol aramaya çalıştı ve düz-çizgi sezgili A* kare hızını öldürdü. Çözüm (Friday Facts #317): oyunun 32×32’lik <b>parçalarını</b> (chunk) “içinde serbestçe dolaşılabilen bileşenlere” ayırıp küçük bir soyut graf kurmak. Bu soyut graftaki mesafe, asıl A* için <b>çok daha akıllı bir sezgi</b> oldu: arama gölün etrafından dolaşmayı baştan “biliyor”.</div>
+  </div>
+</section>
+
+<section data-sec="hızlandırma">
+  <h2>Izgara hileleri: JPS ve önceden hesaplama</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">Jump Point Search (JPS)</span>Harabor &amp; Grastien (2011): açık bir ızgarada aynı uzunlukta yüzlerce simetrik yol vardır ve A* hepsini açar. JPS, düz çizgide “ilginç bir şey” (bir köşe, engelin ucu) olana kadar <b>sıçrar</b>; aradaki düğümleri listeye hiç koymaz. Sonuç yine en kısa yol.</div>
+      <div class="box low"><span class="bt">JPS+ ve Goal Bounding</span>Steve Rabin (GDC 2015, GAP2 14. bölüm): sıçrama mesafelerini <b>önceden hesaplamak</b> (JPS+) — testinde geleneksel A*’dan <b>116 kat</b> hızlı; bir de “bu yönden gidilince hangi hedeflere varılır” kutularını (goal bounding) ekleyince 1000 kattan fazla. Bedeli: harita <b>statik</b> ve maliyetler <b>tekdüze</b> olmalı.</div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Hepsini önceden hesapla</span>Küçük haritalarda bütün düğüm çiftleri için “ilk adım” tablosu (Floyd–Warshall) tutulabilir: yol bulma = tablo okuma. Bellek düğüm sayısının karesiyle büyür.</div>
+      <div class="box story"><span class="bt">Her açıda yol: Theta*</span>Arama sırasında görüş hattı varsa ebeveyni “atlayarak” bağlar; sonradan yumuşatmaya gerek kalmadan doğal, kesintisiz açılı yollar (GAP2 16. bölüm).</div>
+      <div class="box game"><span class="bt">Binlerce birim tek hedef</span>Y7’deki akış alanları: hedeften bir kez Dijkstra, sonra her birim kendi hücresinin okunu izler (Supreme Commander 2, kule savunma oyunları).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="hızlandırma">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 4 · hızlandırma</div>
+    <div class="q">Haritası oyun sırasında sürekli değişen (oyuncunun duvar inşa ettiği) bir oyunda hangisi en zor uygulanır?</div>
+    <div class="opts">
+      <button data-opt="A">JPS+ (önceden hesaplanmış sıçrama tabloları)</button>
+      <button data-opt="B">Ağırlıklı A*</button>
+      <button data-opt="C">Zaman dilimleme</button>
+      <button data-opt="D">Ulaşılabilirlik bölgeleri</button>
+    </div>
+    <div class="explain">JPS+ ve goal bounding, harita değişmeyecek varsayımıyla <b>önceden hesaplanan</b> tablolara dayanır; her duvar inşasında tabloları yeniden hesaplamak gerekir. Factorio da bu yüzden kolayca güncellenebilen parça tabanlı bir hiyerarşi seçti. Ağırlıklı A* ve zaman dilimleme haritadan bağımsızdır; bölgeler ise yerel olarak güncellenebilir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">hazır A*’lar ve kendi oyununuz</div>
+  <ul class="agenda"><li class="done">yol bulma problemi</li><li class="done">BFS’ten A*’a</li><li class="done">sezgiler</li><li class="done">kod ve laboratuvarlar</li><li class="done">oyunlarda tuzaklar ve hileler</li><li class="done">hızlandırma</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://arongranberg.com/astar/" target="_blank" rel="noopener"><b>A* Pathfinding Project</b></a></td><td>Unity · ücretsiz + Pro</td><td>Aron Granberg’in yaygın eklentisi: ızgara, navmesh, nokta grafı; yol yumuşatma, çok iş parçacıklı arama, RVO kaçınması (Pro). Unity NavMesh’ten esnek.</td><td>Asset Store ya da sitesinden UnityPackage</td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/classes/class_astargrid2d.html" target="_blank" rel="noopener"><b>Godot AStarGrid2D / AStar2D</b></a></td><td>Godot 4 · yerleşik</td><td>Izgara için hazır A* (çapraz kuralları, sezgi seçimi, ağırlıklı hücreler); AStar2D/3D kendi nokta grafınız için.</td><td>Kodda <code>AStarGrid2D.new()</code></td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/navigation-system-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Navigation System</b></a></td><td>Unreal · yerleşik</td><td>Recast/Detour tabanlı navmesh + A*; AI MoveTo ile hazır. Izgara oyunları için kendi A*’ınızı yazarsınız.</td><td>Haritaya NavMeshBoundsVolume</td></tr><tr><td><a href="https://github.com/recastnavigation/recastnavigation" target="_blank" rel="noopener"><b>Recast &amp; Detour</b></a></td><td>C++ · açık kaynak</td><td>Unreal ve birçok motorun kullandığı navmesh üretici + yol bulucu (Y9).</td><td>CMake</td></tr><tr><td><a href="https://github.com/qiao/PathFinding.js" target="_blank" rel="noopener"><b>PathFinding.js</b></a></td><td>JavaScript · açık kaynak</td><td>Izgarada A*, Dijkstra, BFS, JPS, iki yönlü arama; görsel demo sayfası ünlü.</td><td><code>npm install pathfinding</code></td></tr><tr><td><a href="https://github.com/brean/python-pathfinding" target="_blank" rel="noopener"><b>python-pathfinding</b></a></td><td>Python · açık kaynak</td><td>Pygame projeleri için ızgara A*, Dijkstra, JPS vb.</td><td><code>pip install pathfinding</code></td></tr><tr><td><a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.shortest_paths.astar.astar_path.html" target="_blank" rel="noopener"><b>NetworkX</b></a></td><td>Python · açık kaynak</td><td>Genel graf kütüphanesi; <code>nx.astar_path(G, a, b, heuristic)</code>. Prototip ve analiz için.</td><td><code>pip install networkx</code></td></tr><tr><td><a href="https://movingai.com/benchmarks/" target="_blank" rel="noopener"><b>Moving AI benchmarks</b></a></td><td>veri seti</td><td>Gerçek oyunlardan (Dragon Age, StarCraft vb.) çıkarılmış haritalar ve test senaryoları: kendi A*’ınızı ölçmek için.</td><td>İndir</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>Hazır A* ile üç satır</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Godot (GDScript)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+var astar := AStarGrid2D.new()
+astar.region = Rect2i(0, 0, 32, 18)
+astar.cell_size = Vector2(32, 32)
+astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+astar.default_estimate_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+astar.update()
+astar.set_point_solid(Vector2i(10, 5), true)        # duvar
+astar.set_point_weight_scale(Vector2i(12, 7), 5.0)  # bataklık
+var path: PackedVector2Array = astar.get_point_path(Vector2i(1, 1), Vector2i(30, 16))
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Unity (A* Pathfinding Project)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+using Pathfinding;
+
+public class Mover : MonoBehaviour {
+    Seeker seeker;
+    void Start() {
+        seeker = GetComponent<Seeker>();
+        seeker.StartPath(transform.position, target.position, OnPathComplete);   // asenkron
+    }
+    void OnPathComplete(Path p) {
+        if (p.error) return;
+        List<Vector3> points = p.vectorPath;       // bu noktaları steering ile izleyin
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python (pathfinding)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from pathfinding.core.grid import Grid
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.finder.a_star import AStarFinder
+
+matrix = [[1, 1, 1, 1],
+          [1, 0, 0, 1],      # 0 = duvar, >0 = maliyet
+          [1, 1, 1, 1]]
+grid = Grid(matrix=matrix)
+finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+path, runs = finder.find_path(grid.node(0, 0), grid.node(3, 2), grid)
+print([(n.x, n.y) for n in path], runs)
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Godot örneğinde dil GDScript; renklendirme için Python sözdizimi kullanılıyor. Sürüm farklarına dikkat: yukarıdaki API’ler Godot 4.2+, A* Pathfinding Project 4.x/5.x içindir.</p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Projenize yol bulma eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Gösterimi seçin</b>: 2B ızgara oyunu → ızgara A*; 3B → motorun navmesh’i (Y9).</li>
+      <li><b>Yol bulma ≠ hareket</b>: A* nokta listesi verir; karakteri Y7’deki gibi steering/arrive ile yürütün, yolu yumuşatın.</li>
+      <li><b>Asenkron</b>: aramayı bir kuyruğa koyun, kare başına süre bütçesi verin; sonuç gelene kadar karakter beklesin ya da hedefe doğru dönsün.</li>
+      <li><b>Hata ayıklama</b>: açık/kapalı düğümleri ve yolu Gizmos ile çizin (demodaki gibi). “Neden bu yolu seçti?” sorusunu ancak görerek cevaplarsınız.</li>
+      <li><b>Ölçün</b>: en kötü durum (ulaşılamaz hedef, haritanın iki ucu) kaç ms? Profiler ile (Y18).</li>
+    </ol>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Bütçe örneği</span>60 FPS’te bir karenin 16,6 ms’si var; YZ’ye genelde 1–3 ms düşer. Ortalama arama 0,2 ms ise karede ~10 arama. Daha fazlası kuyruğa.</div>
+      <div class="box story"><span class="bt">Tasarım düğmeleri</span>Arazi maliyetleri (düşman yolu tercih etsin), “tehlikeli bölge” cezası (Y12), birim türüne göre farklı maliyet (tank bataklıktan kaçınsın, piyade umursamasın).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>8 yönlü ızgarada Manhattan sezgisi (abartılı → en kısa değil)</li><li>Açık listeyi her adımda tam sıralamak (büyük haritada yavaş)</li><li>Kapalı düğümü yeniden açmak / hiç kapatmamak (sonsuz döngü)</li><li>Köşelerden çapraz geçişe izin vermek (karakter duvarın içinden geçer)</li><li>Unity’de .NET sürümünde olmayan PriorityQueue kullanmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. 2B ızgara (bool[,] walkable, float[,] cost) için A* yaz: 8 yön, köşe kesme yok, octile sezgisi, kendi ikili yığınını kullan (PriorityQueue kullanma). Ulaşılamaz hedef için önceden flood fill ile bölge kimlikleri hesapla ve farklı bölgedeyse hedefe en yakın ulaşılabilir hücreyi hedef yap. Sonucu string pulling ile yumuşat (Bresenham görüş testi). Aramayı coroutine’de kare başına en fazla 1 ms çalıştır. Açık/kapalı hücreleri ve yolu OnDrawGizmos ile çiz.”</p><ul class="mini"><li>Izgara mı, graf mı, navmesh mi; 4 mü 8 yön mü; köşe kesme kuralını açıkça yazın</li><li>Sezginin hareket kurallarıyla uyumlu olmasını isteyin (8 yön → octile)</li><li>Yol yoksa ne olacağını (en yakın ulaşılabilir nokta) belirtin</li><li>Aramayı ana iş parçacığını dondurmadan yapmasını ve sınır koymasını isteyin</li><li>Yolu bulduktan sonra yumuşatma ve steering ile izleme isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Çoklu ajan yol bulma (MAPF)</span>Depo robotları gibi yüzlerce ajanın <b>birbirine çarpmadan</b> aynı anda yol bulması: Conflict-Based Search (Sharon vd., 2015) ve türevleri. Oyunlarda RTS birimleri için ilham verici; mapf.info ve Moving AI’da benchmarklar var.</div>
+    <div class="box game"><span class="bt">Değişen dünyada: D* Lite</span>Koenig &amp; Likhachev (2002): harita değişince her şeyi baştan aramak yerine eski aramayı <b>onarır</b>. Mars gezginleri gibi robotlarda; oyunlarda yıkılabilir ortamlar için.</div>
+    <div class="box low"><span class="bt">Öğrenilmiş sezgiler</span>“Neural A*” (Yonetani vd., 2021) gibi çalışmalar, sezgiyi ya da hangi düğümlerin açılacağını sinir ağıyla öğrenir. Oyun haritalarında ne kadar işe yarar? Açık bir bitirme projesi sorusu.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kule savunma</b> — p5.js’te ızgara + A*: oyuncu kule koydukça düşmanların yolu değişsin. Tamamen kapatmayı yasaklayın (yol yoksa kuleyi koyma).</li><li><b class="c-green">[kolay]</b> <b>Kampüs haritası</b> — Fakültenizin kroki planını ızgaraya çevirip binalar arası en kısa yürüyüşü A* ile bulun; merdiven = yüksek maliyet.</li><li><b class="c-amber">[orta]</b> <b>RTS seçimi</b> — 20 birim seçip tıklama: tek A* + formasyon ofsetleri + steering ile kaçınma. StarCraft’ın işçi hilesini deneyin.</li><li><b class="c-amber">[orta]</b> <b>Hiyerarşik ızgara</b> — 128×128 haritayı 16×16 bölgelere ayırıp iki seviyeli arama; düz A* ile süre ve düğüm sayısını karşılaştırın.</li><li><b class="c-red">[zor]</b> <b>JPS</b> — Harabor &amp; Grastien’in JPS’ini yazıp Moving AI’daki bir StarCraft haritasında A* ile karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>MAPF oyunu</b> — Sıra tabanlı bir bulmaca: 5 robot aynı anda hedeflerine çarpışmadan gitmeli; CBS ile otomatik çözücü yazın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Dünya → graf: ızgara, yol noktası, navmesh.</li>
+      <li>BFS → Dijkstra → Greedy → <b>A*: f = g + h</b>.</li>
+      <li>Sezgi: Manhattan (4 yön), octile (8 yön), Öklid (her açı); <b>kabul edilebilirlik</b>; ağırlıklı A*.</li>
+      <li>Kod: öncelik kuyruğu, g tablosu, came_from.</li>
+    </ul>
+    <ul>
+      <li>Oyunlarda: StarCraft işçi hilesi, Dragoon, yumuşatma, ulaşılamaz hedef, zaman dilimleme, birim boyu.</li>
+      <li>Hızlandırma: hiyerarşi (Dragon Age, Company of Heroes, Factorio), JPS/JPS+, önceden hesaplama, akış alanı.</li>
+      <li>Araçlar: A* Pathfinding Project, AStarGrid2D, Unreal/Recast, PathFinding.js, NetworkX.</li>
+      <li>Sonraki: <b>NavMesh</b> — 3B dünyada yürünebilir alan.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=-L-WgKMFuhE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/-L-WgKMFuhE/hqdefault.jpg" alt=""><span><b>A* Pathfinding (E01: algorithm explanation)</b><br>Sebastian Lague</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=mZfyt03LDH4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/mZfyt03LDH4/hqdefault.jpg" alt=""><span><b>A* Pathfinding (E03: algorithm implementation)</b><br>Sebastian Lague</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=ySN5Wnu88nE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ySN5Wnu88nE/hqdefault.jpg" alt=""><span><b>A* (A Star) Search Algorithm</b><br>Computerphile</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=i0x5fj4PqP4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/i0x5fj4PqP4/hqdefault.jpg" alt=""><span><b>Pathfinding — Understanding A* (A star)</b><br>Tarodev</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=icZj67PTFhc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/icZj67PTFhc/hqdefault.jpg" alt=""><span><b>Path Planning — A* (A-Star)</b><br>javidx9</span></a>
+  </div>
+  <p class="mini">Etkileşimli: <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">Red Blob Games — Introduction to A*</a> (Amit Patel; muhtemelen internetteki en iyi A* anlatımı) · <a href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener">PathFinding.js görsel demo</a></p>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Hart, Nilsson &amp; Raphael 1968</b> · <a href="https://ieeexplore.ieee.org/document/4082128" target="_blank" rel="noopener">A Formal Basis for the Heuristic Determination of Minimum Cost Paths</a> <i>(IEEE Trans. Systems Science and Cybernetics 4(2))</i><br>A*’ın doğduğu makale.</div><div class="paper"><b>Harabor &amp; Grastien 2011</b> · <a href="https://ojs.aaai.org/index.php/AAAI/article/view/7994" target="_blank" rel="noopener">Online Graph Pruning for Pathfinding on Grid Maps</a> <i>(AAAI 2011)</i><br>Jump Point Search.</div><div class="paper"><b>Rabin &amp; Sturtevant 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter17_Pathfinding_Architecture_Optimizations.pdf" target="_blank" rel="noopener">Pathfinding Architecture Optimizations</a> <i>(Game AI Pro, Bölüm 17)</i><br>DigiPen yarışması, hiyerarşi örnekleri, optimizasyonlar.</div><div class="paper"><b>Rabin 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter14_JPS_Plus_An_Extreme_A_Star_Speed_Optimization_for_Static_Uniform_Cost_Grids.pdf" target="_blank" rel="noopener">JPS+: An Extreme A* Speed Optimization for Static Uniform Cost Grids</a> <i>(Game AI Pro 2, Bölüm 14)</i><br>JPS+ ayrıntıları.</div><div class="paper"><b>Rabin &amp; Sturtevant 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter22_Faster_A_Star_with_Goal_Bounding.pdf" target="_blank" rel="noopener">Faster A* with Goal Bounding</a> <i>(Game AI Pro 3, Bölüm 22)</i><br>Hedef sınırlama kutuları.</div><div class="paper"><b>Nash &amp; Koenig 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter16_Theta_Star_for_Any-Angle_Pathfinding.pdf" target="_blank" rel="noopener">Theta* for Any-Angle Pathfinding</a> <i>(Game AI Pro 2, Bölüm 16)</i><br>Her açılı yollar.</div><div class="paper"><b>Koenig &amp; Likhachev 2002</b> · <a href="https://cdn.aaai.org/AAAI/2002/AAAI02-072.pdf" target="_blank" rel="noopener">D* Lite</a> <i>(AAAI 2002)</i><br>Değişen haritalarda artımlı yeniden planlama.</div><div class="paper"><b>Yonetani vd. 2021</b> · <a href="https://arxiv.org/abs/2009.07476" target="_blank" rel="noopener">Path Planning using Neural A* Search</a> <i>(ICML 2021 / arXiv)</i><br>Öğrenilmiş arama.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://www.codeofhonor.com/blog/the-starcraft-path-finding-hack" target="_blank" rel="noopener">Patrick Wyatt: The StarCraft path-finding hack</a></li><li><a href="https://www.factorio.com/blog/post/fff-317" target="_blank" rel="noopener">Factorio Friday Facts #317: New pathfinding algorithm</a></li><li><a href="https://www.gamedeveloper.com/programming/coordinated-unit-movement" target="_blank" rel="noopener">Dave Pottinger: Coordinated Unit Movement (Age of Empires)</a></li><li><a href="https://theory.stanford.edu/~amitp/GameProgramming/" target="_blank" rel="noopener">Amit Patel: Amit’s A* Pages</a></li></ul>
+    <ul class="reflist"><li><a href="https://www.redblobgames.com/pathfinding/a-star/implementation.html" target="_blank" rel="noopener">Red Blob Games: Implementation of A*</a></li><li><a href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank" rel="noopener">Red Blob Games: Grids and Graphs</a></li><li><a href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener">Red Blob Games: Flow field pathfinding for tower defense</a></li><li><a href="https://harablog.wordpress.com/2011/09/07/jump-point-search/" target="_blank" rel="noopener">Harabor: Jump Point Search (blog)</a></li><li><a href="https://mapf.info/" target="_blank" rel="noopener">mapf.info (çoklu ajan yol bulma)</a></li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f3a4a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">NavMesh</div>
+    <div class="sub">Yürünebilir zemini çokgenlerle örtmek: Recast, Unity, Unreal, Godot</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-navmesh/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
