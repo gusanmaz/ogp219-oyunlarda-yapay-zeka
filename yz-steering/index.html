@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steering Davranışları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Steering davranışları: Reynolds’ın üç katmanı, seek, flee, arrive, pursue, evade, wander, engelden kaçınma, yol izleme, boids (ayrılma/hizalanma/bütünleşme), ağırlıklı ve öncelikli birleştirme, context steering (F1 2011), RVO/ORCA, akış alanları, NavMeshAgent, Unreal Mass, Yuka. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0f4a3a 0%, #102236 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 7</div>
+  <div class="ttl" style="font-size:76px">Steering Davranışları</div>
+  <div class="sub"><i>Seek, arrive, wander, boids</i> — karakterler nasıl “canlı gibi” hareket eder?</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlesteer"></div>
+  <aside class="notes">Haftalık plandaki hareket (steering) konusu. Arka planda 70 “boid” hareket eden bir hedefi takip ederken birbirinden ayrılıp hizalanıyor ve bir arada kalıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Hareket katmanları</b> — karar, yönlendirme, hareket; kovboy ve sığırlar</li>
+      <li><b>Seek ve flee</b> — Reynolds’ın formülü: istenen − mevcut</li>
+      <li><b>Arrive, pursue, wander</b> — yavaşlamak, önünü kesmek, rastgele ama yumuşak dolaşmak</li>
+      <li><b>Engeller ve yollar</b> — antenler, yol izleme</li>
+      <li><b>Boids</b> — üç kural, bir sürü (Batman Returns’ten Half-Life’a)</li>
+      <li><b>Birleştirmek</b> — ağırlıklı toplamın sorunları ve F1 2011’in context steering’i</li>
+      <li><b>Kod</b> — Vehicle sınıfı, boids + üç laboratuvar</li>
+      <li><b>Oyunlarda</b> — Supreme Commander 2, Fieldrunners 2, NavMeshAgent, Mass, Yuka</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir ajanı hedefe yumuşakça götürebilecek, kaçan bir hedefin önünü kesebilecek, sürü hâlinde hareket eden kuşlar/balıklar yapabilecek, birden çok davranışı çakışmadan birleştirebilecek ve motorunuzun yerleşik kaçınma sistemini bilinçli kullanabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: PAC-MAN HAYALETİ VS UZAY GEMİSİ</span>
+    <p class="big">Pac-Man’in hayaleti bir kavşakta <b>anında</b> 90° döner. Bir uzay gemisi, bir araba ya da bir kuş bunu yapabilir mi?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Gerçek şeylerin <b>kütlesi</b> ve <b>hızı</b> var: dönmek zaman alır, frenlemek mesafe ister. Izgarada “bir kare sağa” hareketi bunu taşımaz.</li>
+    <li class="fragment">Y0’da <code>moveToward</code> yazdık: hedefe sabit hızla düz gitmek. Yeterince “canlı” değil: köşeli, robotik.</li>
+    <li class="fragment">Craig Reynolds’ın fikri: karakteri doğrudan <b>konumlandırma</b>, ona bir <b>kuvvet</b> uygula; hız ve konum fizikle değişsin. Sonuç: kavisli, ataletli, inandırıcı hareket.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektörler, dt, normalize)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-fsm/">Y2/Y3 · FSM ve BT (karar katmanı)</a><a class="opt" href="../bst-geometrik/">BST · Geometrik Uygulamalar (yakın komşu arama)</a><a class="opt" href="../hash-tablolari/">Hash Tabloları (uzamsal ızgara)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu konu tamamen <b>vektör</b> üzerine kurulu: toplama, çıkarma, uzunluk, normalize, “uzunluğu en fazla şu olsun”. Y0’daki vektör oyun alanı ve dt bilgisi yeter. Sürüde “yakındaki kuşları bulmak” veri yapısı problemidir; geometrik arama ve hash destelerine bağlanacağız.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unity’de NavMeshAgent, Unreal’da CharacterMovement + RVO, Godot’da NavigationAgent zaten seek/arrive ve çarpışmadan kaçınma yapıyor. Bu deste, onların <b>içinde ne olduğunu</b> ve ne zaman kendi davranışınızı yazmanız gerektiğini anlatıyor. Demoların hepsi kaydırıcıyla ayarlanabilir: önce oynayın.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>steering · steering force</td><td>yönlendirme · direksiyon kuvveti</td><td>Ajanın hızını değiştirmek için uyguladığı kuvvet</td></tr>
+    <tr><td>desired velocity</td><td>istenen hız</td><td>Davranışın “şu yönde şu hızla gitmek istiyorum” vektörü</td></tr>
+    <tr><td>max speed · max force</td><td>azami hız · azami kuvvet</td><td>Ajanın fiziksel sınırları: ne kadar hızlı gidebilir, ne kadar keskin dönebilir</td></tr>
+    <tr><td>seek · flee · arrive</td><td>ara · kaç · yavaşlayarak var</td><td>Bir noktaya git / uzaklaş / yaklaşınca yavaşla</td></tr>
+    <tr><td>pursue · evade</td><td>takip (önünü kes) · kaçın</td><td>Hareketli hedefin <b>gelecekteki</b> konumuna göre ara / kaç</td></tr>
+    <tr><td>wander</td><td>dolaşma</td><td>Yumuşak, rastgele görünen dolaşma</td></tr>
+    <tr><td>separation · alignment · cohesion</td><td>ayrılma · hizalanma · bütünleşme</td><td>Boids’in üç kuralı</td></tr>
+    <tr><td>emergence</td><td>ortaya çıkan davranış</td><td>Basit yerel kurallardan karmaşık grup davranışı doğması</td></tr>
+    <tr><td>context map</td><td>bağlam haritası</td><td>Her yön için “ilgi” ve “tehlike” puanları tutan dizi</td></tr>
+    <tr><td>RVO / ORCA · flow field</td><td>karşılıklı kaçınma · akış alanı</td><td>Kalabalıkta çarpışmasız yürüme · her hücrede “buradan şuraya git” oku</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #102236 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Hareket katmanları</div>
+  <div class="sub">kovboy, at ve sığırlar</div>
+  <ul class="agenda"><li class="on">hareket katmanları</li><li class="">seek ve flee</li><li class="">arrive, pursue, wander</li><li class="">engeller ve yollar</li><li class="">boids ve sürüler</li><li class="">birleştirmek: context steering</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="katmanlar">
+  <h2>Reynolds’ın üç katmanı (GDC 1999)</h2>
+  <div class="cols">
+    <svg viewBox="0 0 520 300" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <g font-size="17" font-weight="800" text-anchor="middle">
+        <rect x="20" y="15" width="300" height="70" rx="12" style="fill:var(--card);stroke:var(--purple)" stroke-width="3"/><text x="170" y="45" style="fill:var(--ink)">Eylem seçimi</text><text x="170" y="68" font-size="13" font-weight="400" style="fill:var(--muted)">hedef ve strateji · FSM, BT, utility, GOAP</text>
+        <rect x="20" y="115" width="300" height="70" rx="12" style="fill:var(--card);stroke:var(--green)" stroke-width="3.5"/><text x="170" y="145" style="fill:var(--ink)">Yönlendirme (steering)</text><text x="170" y="168" font-size="13" font-weight="400" style="fill:var(--muted)">yol, ara, kaç, kaçın · BU HAFTA</text>
+        <rect x="20" y="215" width="300" height="70" rx="12" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="170" y="245" style="fill:var(--ink)">Hareket (locomotion)</text><text x="170" y="268" font-size="13" font-weight="400" style="fill:var(--muted)">animasyon, fizik, tekerlek, bacak</text>
+      </g>
+      <g style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#sa)"><line x1="170" y1="86" x2="170" y2="112"/><line x1="170" y1="186" x2="170" y2="212"/></g>
+      <g font-size="14" style="fill:var(--ink-2)"><text x="340" y="55">🤠 patron: “kaçan</text><text x="340" y="73">ineği geri getir”</text><text x="340" y="150">🤠 kovboy: atı ineğe</text><text x="340" y="168">yönlendirir</text><text x="340" y="250">🐎 at: bacaklarını</text><text x="340" y="268">hareket ettirir</text></g>
+    </svg>
+    <ul style="font-size:.86em">
+      <li>Reynolds’ın benzetmesi: sığır sürüsünden bir inek kaçar. <b>Patron</b> bir kovboya “onu getir” der (eylem seçimi). <b>Kovboy</b> atını ineğe doğru yönlendirir, engellerin etrafından dolaştırır (steering). <b>At</b> bacaklarını nasıl oynatacağını bilir (locomotion).</li>
+      <li>Önceki haftalar en üst katmandı. Y8–Y9’da (A*, NavMesh) <b>rota</b> bulacağız; steering o rotayı <b>yumuşakça</b> izler ve anlık engellerden kaçar.</li>
+      <li class="fragment">Katmanların ayrı olması büyük kolaylık: aynı “kovala” kararı, bir kuş, bir araba ya da bir zombi için farklı locomotion ile çalışır.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="katmanlar">
+  <h2>🎒 Ön bilgi: konum, hız, ivme</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li><b>Konum</b> p: nerede? <b>Hız</b> v: saniyede ne kadar ve hangi yöne? <b>İvme</b> a: hız saniyede ne kadar değişiyor?</li>
+        <li>Newton: kuvvet = kütle × ivme. Kütleyi 1 alırsak <b>kuvvet = ivme</b>.</li>
+        <li>Her karede (Y0’daki dt ile) <b>Euler adımı</b>: önce hızı, sonra konumu güncelle.</li>
+        <li>İki sınır karakteri “kişiliklendirir”: <b>azami hız</b> (ne kadar hızlı) ve <b>azami kuvvet</b> (ne kadar çevik). Hızlı ama hantal bir tank, yavaş ama çevik bir kedi.</li>
+      </ul>
+    </div>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Her FixedUpdate’te (kütle = 1)
+Vector2 force = Steering();                     // davranışlardan
+force = Vector2.ClampMagnitude(force, maxForce);
+velocity += force * Time.fixedDeltaTime;        // ivme → hız
+velocity = Vector2.ClampMagnitude(velocity, maxSpeed);
+position += velocity * Time.fixedDeltaTime;     // hız → konum
+if (velocity.sqrMagnitude > 0.01f)
+    transform.right = velocity;                 // gittiği yöne baksın
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# pygame: v ve p, pygame.Vector2
+force = steering()
+if force.length() > max_force:
+    force.scale_to_length(max_force)
+v += force * dt
+if v.length() > max_speed:
+    v.scale_to_length(max_speed)
+p += v * dt
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="katmanlar">
+  <h2>Reynolds’ın formülü: direksiyon = istenen − mevcut</h2>
+  <div class="cols">
+    <svg viewBox="0 0 520 300" style="width:100%" font-family="Source Sans 3">
+      <defs>
+        <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--blue)"/></marker>
+        <marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--green)"/></marker>
+        <marker id="m3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--red)"/></marker>
+      </defs>
+      <circle cx="80" cy="220" r="12" style="fill:var(--blue)"/>
+      <circle cx="440" cy="60" r="10" style="fill:var(--red)"/><text x="455" y="50" font-size="15" style="fill:var(--red)">hedef</text>
+      <line x1="80" y1="220" x2="300" y2="220" style="stroke:var(--blue)" stroke-width="4" marker-end="url(#m1)"/><text x="190" y="245" font-size="15" style="fill:var(--blue)">mevcut hız</text>
+      <line x1="80" y1="220" x2="250" y2="105" style="stroke:var(--green)" stroke-width="4" stroke-dasharray="8 5" marker-end="url(#m2)"/><text x="100" y="140" font-size="15" style="fill:var(--green)">istenen hız</text><text x="100" y="158" font-size="12" style="fill:var(--muted)">(hedefe doğru, azami hızla)</text>
+      <line x1="300" y1="220" x2="254" y2="110" style="stroke:var(--red)" stroke-width="4.5" marker-end="url(#m3)"/><text x="300" y="160" font-size="15" style="fill:var(--red)">direksiyon</text><text x="300" y="178" font-size="12" style="fill:var(--muted)">= istenen − mevcut</text>
+    </svg>
+    <ul style="font-size:.86em">
+      <li>Davranış söyler: “şu yönde, şu hızla gitmek <b>istiyorum</b>” (istenen hız).</li>
+      <li>Ajan şu an başka bir hızla gidiyor. Aradaki <b>fark</b>, uygulanması gereken düzeltme kuvveti.</li>
+      <li>Kuvvet <b>azami kuvvetle</b> kırpılır: ajan bir anda dönemez, yavaş yavaş döner. Kavisli hareket buradan gelir.</li>
+      <li class="fragment">Bütün steering davranışları bu kalıbı kullanır; değişen tek şey <b>istenen hızın</b> nasıl hesaplandığı.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="katmanlar">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · katmanlar</div>
+    <div class="q">Bir ajan sağa doğru tam hızla giderken hedef tam arkasında kalırsa “seek” direksiyon kuvveti hangi yönü gösterir?</div>
+    <div class="opts">
+      <button data-opt="A">Sola (geriye) — istenen hız sola, mevcut hız sağa; fark büyük ve sola doğru</button>
+      <button data-opt="B">Sağa — ajan zaten o yöne gidiyor</button>
+      <button data-opt="C">Yukarı — her zaman dik açıyla döner</button>
+      <button data-opt="D">Sıfır — hedef görüş alanı dışında</button>
+    </div>
+    <div class="explain">İstenen hız hedefe (sola) doğru azami hız; mevcut hız sağa. Fark = istenen − mevcut, sola doğru <b>iki kat</b> büyüklükte bir vektördür (azami kuvvetle kırpılır). Ajan önce yavaşlar, sonra sola hızlanır: frenleyip geri dönen bir araç gibi.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #102236 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Seek ve flee</div>
+  <div class="sub">en basit iki davranış</div>
+  <ul class="agenda"><li class="done">hareket katmanları</li><li class="on">seek ve flee</li><li class="">arrive, pursue, wander</li><li class="">engeller ve yollar</li><li class="">boids ve sürüler</li><li class="">birleştirmek: context steering</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="seek">
+  <h2>Seek ve flee</h2>
+  <div class="cols">
+    <div>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Vector2 Seek(Vector2 target) {
+    Vector2 desired = (target - position).normalized * maxSpeed;
+    return desired - velocity;                 // direksiyon
+}
+
+Vector2 Flee(Vector2 threat) {
+    Vector2 desired = (position - threat).normalized * maxSpeed;
+    return desired - velocity;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+seek(target) {
+  const desired = p5.Vector.sub(target, this.pos).setMag(this.maxSpeed);
+  return p5.Vector.sub(desired, this.vel);    // direksiyon
+}
+
+flee(threat) {
+  return this.seek(threat).mult(-1);          // kısayol: tam tersi
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def seek(self, target):
+    desired = (target - self.pos)
+    if desired.length() > 0:
+        desired.scale_to_length(self.max_speed)
+    return desired - self.vel
+
+def flee(self, threat):
+    desired = (self.pos - threat)
+    if desired.length() > 0:
+        desired.scale_to_length(self.max_speed)
+    return desired - self.vel
+</script></code></pre>
+    </div>
+  </div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Seek’in kusuru</span>Hedefe tam hızla gider ve <b>üstünden geçer</b>; sonra geri döner, yine geçer… Hedefin etrafında yörüngeye girer. Bir hayalet için iyi, bir arabanın park etmesi için kötü. Çözüm: <b>arrive</b> (sonraki bölüm).</div>
+      <div class="box game"><span class="bt">Flee’nin kusuru</span>Sonsuza kadar kaçar. Genelde bir “panik yarıçapı” eklenir: tehdit yakınsa kaç, uzaksa normal davranışa dön (demoda kırmızı kesikli çember).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="seek">
+  <h2>Canlı: vektörleri görün 🎯</h2>
+  <div class="demo" data-demo="steer" data-mode="seek"></div>
+</section>
+
+<section data-sec="seek">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Fareyi ajanın arkasına götürün: <b>kırmızı</b> direksiyon oku geriye dönüyor, ajan kavis çizerek dönüyor.</li>
+      <li><b>Azami kuvveti</b> 40’a indirin: ajan bir gemi gibi geniş dönüyor. 800’e çıkarın: bir sinek gibi keskin.</li>
+      <li>Fareyi bir noktada sabit tutun: ajan hedefin etrafında <b>yörüngeye</b> giriyor mu? (Seek’in kusuru.)</li>
+      <li>“Flee (kaç)” seçin: kırmızı çember panik yarıçapı. Ajanı bir köşeye sıkıştırabiliyor musunuz?</li>
+      <li>▶| 1 kare ile adım adım ilerleyin: her karede yeşil (istenen) ile mavi (mevcut) arasındaki fark = kırmızı.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #102236 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Arrive, pursue, wander</div>
+  <div class="sub">yavaşlamak, önünü kesmek, gezinmek</div>
+  <ul class="agenda"><li class="done">hareket katmanları</li><li class="done">seek ve flee</li><li class="on">arrive, pursue, wander</li><li class="">engeller ve yollar</li><li class="">boids ve sürüler</li><li class="">birleştirmek: context steering</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="arrive">
+  <h2>Arrive: yavaşlayarak var</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Hedefin etrafına bir <b>yavaşlama yarıçapı</b> çiz. Dışarıdaysa seek gibi tam hız.</li>
+        <li>İçerideyse istenen hız mesafeyle orantılı küçülür: <code>hız = azami × (mesafe / yarıçap)</code>. Hedefte hız sıfır.</li>
+        <li>Park eden araba, köşeye gelen asker, yanınıza koşup duran köpek…</li>
+      </ul>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+Vector2 Arrive(Vector2 target, float slowRadius) {
+    Vector2 offset = target - position;
+    float d = offset.magnitude;
+    if (d < 0.001f) return -velocity;               // dur
+    float speed = d < slowRadius ? maxSpeed * d / slowRadius : maxSpeed;
+    Vector2 desired = offset / d * speed;
+    return desired - velocity;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def arrive(self, target, slow_radius):
+    offset = target - self.pos
+    d = offset.length()
+    if d < 1e-3:
+        return -self.vel
+    speed = self.max_speed * d / slow_radius if d < slow_radius else self.max_speed
+    return offset / d * speed - self.vel
+</script></code></pre>
+    </div>
+  </div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Pursue: önünü kesmek</span>Hareketli bir hedefi seek ile kovalarsanız hep <b>arkasından</b> gidersiniz. Pursue, hedefin <b>T saniye sonraki</b> konumunu tahmin eder ve oraya gider. Basit T: <code>mesafe / benim azami hızım</code> (yakınsa az, uzaksa çok ileri bak). <b>Evade</b> aynı tahmine göre kaçar.</div>
+      <div class="box game"><span class="bt">Wander: yumuşak rastgelelik</span>Her karede tamamen rastgele yön = titreyen, sinirli bir ajan. Reynolds’ın hilesi: ajanın önüne bir <b>çember</b> koy, çemberin üstünde bir hedef noktası tut ve o noktayı her karede <b>biraz</b> kaydır. Yön değişimleri yumuşak ve doğal olur.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="arrive">
+  <h2>Canlı: arrive, pursue, evade, wander</h2>
+  <div class="demo" data-demo="steer" data-mode="arrive"></div>
+</section>
+
+<section data-sec="arrive">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li><b>Arrive</b>: fareyi sabitleyin; ajan sarı çemberin içinde yavaşlayıp tam üstünde duruyor. Seek ile karşılaştırın.</li>
+      <li><b>Pursue</b>: mor bot sekerek dolaşıyor. Ajan botun <b>önüne</b> (tahmini konuma) koşuyor mu? Mor kesikli çizgi tahmin.</li>
+      <li><b>Evade</b>: ajan botun gelecekteki konumundan kaçıyor; bot ona doğru gelirken erkenden kenara çekiliyor.</li>
+      <li><b>Wander</b>: turuncu çember ve üstündeki nokta. Ajan sarhoş gibi değil, keşif yapan bir hayvan gibi gezmeli.</li>
+      <li>Hepsinde azami kuvveti düşürün: tahmin doğru olsa bile hantal bir ajan yakalayamıyor. <b>Zorluk ayarı</b> için güzel bir düğme!</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="arrive">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · arrive</div>
+    <div class="q">Yavaşlama yarıçapı 100, azami hız 160 olan bir ajan hedefe 25 birim uzaklıktaysa arrive’ın istenen hızı ne kadardır?</div>
+    <div class="opts">
+      <button data-opt="A">40</button>
+      <button data-opt="B">160</button>
+      <button data-opt="C">25</button>
+      <button data-opt="D">0</button>
+    </div>
+    <div class="explain">Yarıçapın içinde: hız = azami × (mesafe / yarıçap) = 160 × 25/100 = <b>40</b>. Mesafe 0’a indikçe hız da 0’a iner; yarıçapın dışında 160.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #102236 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Engeller ve yollar</div>
+  <div class="sub">antenler, yol izleme ve sınırları</div>
+  <ul class="agenda"><li class="done">hareket katmanları</li><li class="done">seek ve flee</li><li class="done">arrive, pursue, wander</li><li class="on">engeller ve yollar</li><li class="">boids ve sürüler</li><li class="">birleştirmek: context steering</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="engeller">
+  <h2>Engelden kaçınma ve yol izleme</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Anten (feeler)</span>Ajanın önüne, hızıyla orantılı uzunlukta bir “anten” uzat. Anten bir engele değiyorsa, engelin merkezinden <b>uzağa</b> doğru yanal bir kuvvet uygula. Hızlıyken daha uzağa bak (fren mesafesi!). Benzer şekilde <b>duvar takibi</b> ve alanın içinde kalma (<b>containment</b>).</div>
+      <div class="box warn"><span class="bt">⚠️ Yerel minimum</span>U şeklindeki bir engelin içindeki hedef: kaçınma itiyor, seek çekiyor; ajan dibe sıkışır. Steering <b>yereldir</b>; sadece burnunun ucunu görür. Labirentten çıkmak için <b>yol bulma</b> (A*, Y8) gerekir.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Yol izleme (Reynolds)</span>
+        <ol style="font-size:.82em">
+          <li>Ajanın biraz ilerideki konumunu tahmin et.</li>
+          <li>Bu noktayı yola <b>izdüşür</b> (en yakın yol noktası).</li>
+          <li>İzdüşüm yolun “genişliği” içindeyse bir şey yapma; dışındaysa yol üzerinde <b>biraz ileriyi</b> seek et.</li>
+        </ol>
+        <p class="mini">A* köşeli bir rota verir; yol izleme köşeleri yumuşatır ve ajanı yolun içinde doğal salınımlarla tutar.</p></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="engeller">
+  <h2>Canlı: yol izleme ve engeller</h2>
+  <div class="demo" data-demo="steer" data-mode="path"></div>
+  <p class="mini">“Davranış” menüsünden “Path following” seçili. “Engeller + kaçınma”yı açıp Seek’e geçin: anten (kesikli) bir engele değince kırmızıya döner. Fareyi bir engelin tam arkasına koyun: ajan takılıyor mu?</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #102236 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Boids ve sürüler</div>
+  <div class="sub">üç basit kural, bir canlı sürü</div>
+  <ul class="agenda"><li class="done">hareket katmanları</li><li class="done">seek ve flee</li><li class="done">arrive, pursue, wander</li><li class="done">engeller ve yollar</li><li class="on">boids ve sürüler</li><li class="">birleştirmek: context steering</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="boids">
+  <h2>Hikâye: Boids (1986) — Batman Returns’ten Half-Life’a 🐦</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Craig Reynolds, 1986’da kuş sürülerinin hareketini bir bilgisayar modeliyle taklit etti. Simüle edilen kuşlara “bird-oid” kısaltmasıyla <b>boid</b> dedi.</li>
+        <li>Her boid sadece <b>yakınındaki</b> birkaç komşuya bakar ve üç kurala uyar. Lider yok, merkezi plan yok — ama ekranda gerçekçi bir sürü belirir.</li>
+        <li>1987’de SIGGRAPH’ta makaleyle birlikte boids kullanan kısa film <i>Stanley and Stella in: Breaking the Ice</i> gösterildi.</li>
+        <li><b>Batman Returns</b> (1992, Tim Burton): yarasa sürüleri ve Gotham sokaklarında yürüyen <b>penguen ordusu</b>, Reynolds’ın boids yazılımının değiştirilmiş hâlleriyle yapıldı. Boids’in ilk uzun metraj filmi.</li>
+        <li><b>Half-Life</b> (1998): oyunun sonundaki Xen dünyasında uçan kuş benzeri yaratıklar boids ile hareket eder; oyun dosyalarındaki adları bile “boid”.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">💡 Ortaya çıkan davranış (emergence)</span>Reynolds’ın sitesinde: sürü, “basit yerel kurallardan karmaşık küresel davranışın doğmasının” klasik örneği. Kısa vadede tahmin edilebilir (bir saniye sonra aşağı yukarı aynı yöne gider), uzun vadede değil (beş dakika sonra nereye gideceği bilinmez). Yapay yaşam (artificial life) alanının ikonu oldu.</div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=86iQiV3-3IA" target="_blank" rel="noopener">Orijinal 1986 boids simülasyonu</a> · <a href="https://www.youtube.com/watch?v=bqtqltqcQhw" target="_blank" rel="noopener">Coding Adventure: Boids</a> (Sebastian Lague)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="boids">
+  <h2>Üç kural</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">↔ Ayrılma (separation)</span>Komşularına <b>çok yaklaşma</b>. Her yakın komşudan uzağa doğru, yakınlığıyla orantılı bir itme: <code>(ben − komşu) / d²</code>.</div>
+    <div class="box game"><span class="bt">⇉ Hizalanma (alignment)</span>Komşularınla <b>aynı yöne</b> uç. Komşuların ortalama hızını istenen hız yap.</div>
+    <div class="box low"><span class="bt">◎ Bütünleşme (cohesion)</span>Sürüden <b>kopma</b>. Komşuların ortalama konumuna doğru seek.</div>
+  </div>
+  <ul style="font-size:.86em;margin-top:12px">
+    <li>Her boid sadece bir <b>görüş yarıçapı</b> içindekilere bakar (gerçek kuşlar da yaklaşık 6–7 komşuyu izler).</li>
+    <li>Üç kuvvet ağırlıklarla toplanır. Ağırlıkları değiştirmek, sürünün <b>karakterini</b> değiştirir: dağınık sinek bulutu, sıkı balık sürüsü, düzenli kaz V’si…</li>
+    <li>Ek kurallar kolayca eklenir: yırtıcıdan kaç, engelden kaçın, bir hedefe git (başlık animasyonu).</li>
+  </ul>
+</section>
+
+<section data-sec="boids">
+  <h2>Canlı: boids 🐟</h2>
+  <div class="demo" data-demo="boids"></div>
+</section>
+
+<section data-sec="boids">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.88em">
+      <li>Üç kaydırıcıyı tek tek sıfırlayın. Ayrılma 0: boidler üst üste biner. Hizalanma 0: her biri kendi yönüne. Bütünleşme 0: sürü dağılır.</li>
+      <li>Fareyi sürünün içine sokun (yırtıcı): sürü yarılıp yeniden birleşiyor. Balık sürülerinin köpekbalığından kaçışı.</li>
+      <li>Görüş yarıçapını 15’e indirin: küçük gruplar. 120’ye çıkarın: tek dev sürü.</li>
+      <li><b>Uzamsal ızgara</b>yı kapatın ve boid sayısını 400 yapın. Üstteki “komşu kontrolü” sayısına bakın: 400 × 399 ≈ <b>160.000</b>. Izgara açıkken? Bu, BST Geometrik ve Hash destelerindeki fikrin aynısı: herkesi herkesle karşılaştırma, sadece yakın hücrelere bak.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="boids">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · boids</div>
+    <div class="q">Bir boid sürüsünde boidler sürekli birbirinin üstüne biniyor ve tek bir noktada topaklanıyorsa hangi ağırlık çok düşüktür (ya da hangisi çok yüksek)?</div>
+    <div class="opts">
+      <button data-opt="A">Ayrılma çok düşük (ya da bütünleşme çok yüksek)</button>
+      <button data-opt="B">Hizalanma çok yüksek</button>
+      <button data-opt="C">Görüş yarıçapı çok büyük</button>
+      <button data-opt="D">Azami hız çok düşük</button>
+    </div>
+    <div class="explain">Bütünleşme herkesi merkeze çeker; ona karşı koyan tek kuvvet <b>ayrılma</b>dır. Ayrılma zayıfsa ya da bütünleşme baskınsa boidler topaklanır. Hizalanma sadece yönleri eşitler; konum üzerinde doğrudan etkisi yoktur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #102236 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Birleştirmek: context steering</div>
+  <div class="sub">ağırlıklı toplamın sorunları ve F1 2011</div>
+  <ul class="agenda"><li class="done">hareket katmanları</li><li class="done">seek ve flee</li><li class="done">arrive, pursue, wander</li><li class="done">engeller ve yollar</li><li class="done">boids ve sürüler</li><li class="on">birleştirmek: context steering</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="birleştirmek">
+  <h2>Davranışları nasıl birleştiririz?</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">1) Ağırlıklı toplam</span><code>F = 1,0·seek + 2,0·kaçınma + 1,5·ayrılma</code> → azami kuvvetle kırp. En yaygın ve en basit yol (boids böyle).</div>
+      <div class="box game"><span class="bt">2) Öncelik</span>Davranışları önem sırasına koy (çarpışma &gt; ayrılma &gt; seek). Sırayla sor; anlamlı (sıfırdan büyük) kuvvet üreten <b>ilk</b> davranışı kullan. Acil durumlar diğerlerini bastırır.</div>
+      <div class="box low"><span class="bt">3) Melez</span>Öncelik grupları; her grubun içinde ağırlıklı toplam (Millington’ın kitabındaki yaklaşım).</div>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">⚠️ Ağırlıklı toplamın sorunları</span>
+        <ul style="font-size:.84em">
+          <li><b>Birbirini götürme</b>: seek sağa, kaçınma sola → toplam sıfır; ajan engelin önünde durur.</li>
+          <li><b>Titreme</b>: iki kuvvet sırayla baskın çıkar, ajan sağa sola sallanır.</li>
+          <li><b>Garanti yok</b>: “asla çarpışma” gibi kesin bir kuralı ağırlıkla ifade edemezsiniz; ağırlığı artırırsınız, başka şey bozulur.</li>
+          <li>Ayar cehennemi: her yeni davranış eskilerin ağırlıklarını yeniden dengelemeyi gerektirir.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="birleştirmek">
+  <h2>Derin hikâye: F1 2011 ve context steering 🏎️</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Andrew Fray (Codemasters), Game AI Pro 2’de anlatıyor: yarış arabaları birbirine çok yakın, oyuncu her birini izliyor; çarpışmadan kaçınma ve tutarlı sollama hareketleri <b>çok önemli</b>. Klasik steering davranışları büyüdükçe birbirine bağımlı ve kırılgan hâle geldi.</p>
+      <ul style="font-size:.84em">
+        <li>Fikir: davranışlar artık <b>vektör döndürmez</b>, “bağlam haritası” doldurur. Ajanın etrafında N yön var (ör. 16). Her davranış her yön için iki şey söyler: <b>ilgi</b> (“bu yön hedefe götürür”) ve <b>tehlike</b> (“bu yönde engel var”).</li>
+        <li>Birleştirme adımı basit: tehlikesi düşük olmayan yönleri <b>maskele</b>, kalanlar arasından ilgisi en yüksek yönü seç.</li>
+        <li>Davranışlar küçük ve durumsuz; “şu yöne asla gitme” gibi kısıtlar <b>garanti</b> edilir.</li>
+        <li>Sonuç: F1 2011’de klasik steering’in yerine konduğunda kod tabanı <b>4000 satır küçüldü</b>; yapay zekâ çarpışmadan kaçınmada ve sollamada <b>daha iyi</b> oldu.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Neden “nasıl” değil “neden”?</span>Fray’ın başlığı “Toward Why, Not How”: davranışlar “şöyle dön” (nasıl) demek yerine “şu yön iyi, şu yön tehlikeli” (neden) der. Kararı tek bir yer verir; davranışlar birbirini götüremez.</div>
+      <div class="box game"><span class="bt">Hangi oyunlar için?</span>Fray’a göre klasik steering, oyuncunun tek tek varlıkları <b>izleyemediği</b> sürü/kalabalık oyunlarında hâlâ harika. Oyuncunun yakından izlediği az sayıda varlık (yarış, dövüş, takım arkadaşı) varsa context steering’i düşünün.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="birleştirmek">
+  <h2>Canlı: ağırlıklı toplam vs context steering</h2>
+  <div class="demo" data-demo="context"></div>
+  <p class="mini">Hedef, engelin tam arkasında. “Ağırlıklı toplam”da seek ileri, kaçınma geri iter; simetrik durumda ikisi birbirini götürür ve ajan engelin önünde <b>takılır</b>. Context steering’de her yön için ilgi (yeşil) ve ışınla ölçülen tehlike (kırmızı) var; tehlikeli yönler maskelenir (soluk), kalanlardan hedefe en dönük olan seçilir (turuncu): ajan engelin <b>etrafından</b> dolaşır.</p>
+</section>
+
+<section data-sec="birleştirmek">
+  <h2>Kalabalıklar: RVO/ORCA ve akış alanları</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Karşılıklı kaçınma (RVO / ORCA)</span>İki kişi koridorda karşılaşınca ikisi de “yarı yarıya” kenara çekilir. RVO/ORCA her ajan için “çarpışmaya yol açacak hızları” hesaplar ve geri kalanlardan istenen hıza en yakın olanı seçer. Unreal’ın karakter hareketindeki RVO kaçınması, Unity’nin NavMeshAgent kaçınması ve Godot’nun NavigationAgent kaçınması bu aileden yerel kaçınma sistemleridir. (Ayrıntı: Sunshine-Hill, GAP3 19. bölüm.)</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Akış alanları (flow fields)</span>Binlerce birim aynı hedefe gidiyorsa her biri için ayrı A* yapmak israf. Haritanın her hücresine bir kez “hedefe şu yönden gidilir” oku yaz; birimler sadece bulundukları hücrenin okunu seek eder.
+        <ul style="font-size:.8em"><li><b>Supreme Commander 2</b> (Elijah Emerson, GAP 23. bölüm): akış alanı karoları ile kalabalık yol bulma ve yönlendirme.</li><li><b>Fieldrunners 2</b> (mobil kule savunma, GAP 24. bölüm): akış alanı + steering ile mobil cihazda <b>binlerce</b> birim.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="birleştirmek">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 4 · birleştirmek</div>
+    <div class="q">Seek hedefe doğru (sağa) 100 birimlik, kaçınma tam tersine (sola) 100 birimlik kuvvet üretiyor. Ağırlıklı toplamda (ağırlıklar 1) ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Kuvvetler birbirini götürür, ajan engelin önünde durur ya da titrer</button>
+      <button data-opt="B">Ajan engelin etrafından dolaşır</button>
+      <button data-opt="C">Kaçınma her zaman kazanır</button>
+      <button data-opt="D">Ajan iki kat hızla gider</button>
+    </div>
+    <div class="explain">Toplam sıfırdır: ajan ne ileri ne geri gider (yerel minimum). Ağırlıklı toplamın klasik sorunu budur. Öncelik sistemi ya da context steering, bu durumda tehlikeli yönü maskeleyip <b>yan</b> yönleri değerlendirerek çıkış bulabilir; gerçek labirentlerde ise yol bulma gerekir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #102236 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">Vehicle sınıfı ve sürü</div>
+  <ul class="agenda"><li class="done">hareket katmanları</li><li class="done">seek ve flee</li><li class="done">arrive, pursue, wander</li><li class="done">engeller ve yollar</li><li class="done">boids ve sürüler</li><li class="done">birleştirmek: context steering</li><li class="on">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: vektörle düşünmek</h2>
+  <div class="cols">
+    <table class="sum-t" style="font-size:17px">
+      <tr><th>işlem</th><th>anlamı</th><th>Unity / p5.js / pygame</th></tr>
+      <tr><td>b − a</td><td>a’dan b’ye ok</td><td><code>b - a</code> · <code>p5.Vector.sub(b, a)</code></td></tr>
+      <tr><td>|v|</td><td>uzunluk</td><td><code>v.magnitude</code> · <code>v.mag()</code> · <code>v.length()</code></td></tr>
+      <tr><td>v / |v|</td><td>yön (birim vektör)</td><td><code>v.normalized</code> · <code>v.copy().normalize()</code> · <code>v.normalize()</code></td></tr>
+      <tr><td>yön × s</td><td>uzunluğu s yap</td><td><code>v.normalized * s</code> · <code>v.setMag(s)</code> · <code>v.scale_to_length(s)</code></td></tr>
+      <tr><td>kırp</td><td>en fazla m uzunluk</td><td><code>Vector2.ClampMagnitude(v, m)</code> · <code>v.limit(m)</code></td></tr>
+    </table>
+    <div>
+      <div class="box story"><span class="bt">Hatırlatma (Y0)</span>Normalize etmeden önce uzunluğun 0 olmadığından emin olun: sıfıra bölme! Unity <code>normalized</code> sıfır vektörde sıfır döndürür; elle yazarken kontrol edin.</div>
+      <div class="box game"><span class="bt">Neden sınıf?</span>Ajanın konum, hız, azami hız/kuvvet gibi verilerini ve davranışlarını tek bir <b>Vehicle</b> (araç) sınıfında toplamak, sürüde yüzlerce kopyasını oluşturmayı kolaylaştırır. Reynolds ve “Nature of Code” bu adı kullanır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Vehicle sınıfı</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers="9|10-13|14-20|21-25"><script type="text/template">
+class Vehicle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.vel = p5.Vector.random2D();
+    this.acc = createVector(0, 0);
+    this.maxSpeed = 4;      // piksel / kare
+    this.maxForce = 0.2;
+  }
+  applyForce(f) { this.acc.add(f); }
+  seek(target) {
+    const desired = p5.Vector.sub(target, this.pos).setMag(this.maxSpeed);
+    return p5.Vector.sub(desired, this.vel).limit(this.maxForce);
+  }
+  arrive(target, slowRadius = 100) {
+    const desired = p5.Vector.sub(target, this.pos);
+    const d = desired.mag();
+    const speed = d < slowRadius ? map(d, 0, slowRadius, 0, this.maxSpeed) : this.maxSpeed;
+    desired.setMag(speed);
+    return p5.Vector.sub(desired, this.vel).limit(this.maxForce);
+  }
+  update() {
+    this.vel.add(this.acc).limit(this.maxSpeed);
+    this.pos.add(this.vel);
+    this.acc.mult(0);       // kuvvetler her kare sıfırlanır
+  }
+  show() {
+    push(); translate(this.pos.x, this.pos.y); rotate(this.vel.heading());
+    triangle(12, 0, -8, -6, -8, 6); pop();
+  }
+}
+
+let v;
+function setup() { createCanvas(640, 360); v = new Vehicle(100, 100); }
+function draw() {
+  background(30);
+  v.applyForce(v.arrive(createVector(mouseX, mouseY)));
+  v.update(); v.show();
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+using UnityEngine;
+
+public class Vehicle : MonoBehaviour {
+    public float maxSpeed = 5f, maxForce = 10f, slowRadius = 3f;
+    public Transform target;
+    Vector3 velocity;
+
+    void FixedUpdate() {
+        Vector3 steer = Arrive(target.position);
+        steer = Vector3.ClampMagnitude(steer, maxForce);
+        velocity = Vector3.ClampMagnitude(velocity + steer * Time.fixedDeltaTime, maxSpeed);
+        transform.position += velocity * Time.fixedDeltaTime;
+        if (velocity.sqrMagnitude > 0.01f) transform.forward = velocity;
+    }
+
+    Vector3 Arrive(Vector3 t) {
+        Vector3 offset = t - transform.position; offset.y = 0;     // yerde hareket
+        float d = offset.magnitude;
+        if (d < 0.01f) return -velocity;
+        float speed = d < slowRadius ? maxSpeed * d / slowRadius : maxSpeed;
+        return offset / d * speed - velocity;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import pygame
+from pygame import Vector2
+
+class Vehicle:
+    def __init__(self, x, y):
+        self.pos, self.vel = Vector2(x, y), Vector2(1, 0)
+        self.max_speed, self.max_force = 240, 400       # piksel/sn, piksel/sn²
+
+    def arrive(self, target, slow_radius=100):
+        offset = target - self.pos
+        d = offset.length()
+        if d < 1e-3:
+            return -self.vel
+        speed = self.max_speed * min(1, d / slow_radius)
+        return offset / d * speed - self.vel
+
+    def update(self, force, dt):
+        if force.length() > self.max_force:
+            force.scale_to_length(self.max_force)
+        self.vel += force * dt
+        if self.vel.length() > self.max_speed:
+            self.vel.scale_to_length(self.max_speed)
+        self.pos += self.vel * dt
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">p5.js örneği “kare başına” birimler kullanır (Nature of Code tarzı); Unity ve pygame örnekleri saniye ve dt ile çalışır. Kendi oyununuzda dt’li hâli tercih edin (Y0: kare hızından bağımsızlık).</p>
+</section>
+
+<section data-sec="kod">
+  <h2>Sürü (flocking)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers="3-8|10-12|13-15"><script type="text/template">
+flock(boids, radius = 50) {
+  let sep = createVector(), ali = createVector(), coh = createVector(), n = 0;
+  for (const other of boids) {
+    const d = p5.Vector.dist(this.pos, other.pos);
+    if (other === this || d > radius) continue;
+    const away = p5.Vector.sub(this.pos, other.pos).div(d * d);   // yakın = güçlü
+    sep.add(away); ali.add(other.vel); coh.add(other.pos); n++;
+  }
+  if (n === 0) return;
+  sep.setMag(this.maxSpeed).sub(this.vel).limit(this.maxForce);
+  ali.div(n).setMag(this.maxSpeed).sub(this.vel).limit(this.maxForce);
+  coh = this.seek(coh.div(n));
+  this.applyForce(sep.mult(1.5));
+  this.applyForce(ali.mult(1.0));
+  this.applyForce(coh.mult(1.0));
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: yüzlerce boid için Physics.OverlapSphere ya da kendi ızgaranızı kullanın
+Vector3 Flock(List<Boid> neighbours) {
+    Vector3 sep = Vector3.zero, ali = Vector3.zero, coh = Vector3.zero;
+    foreach (var o in neighbours) {
+        Vector3 away = transform.position - o.transform.position;
+        float d = away.magnitude;
+        if (d < 0.0001f) continue;
+        sep += away / (d * d);
+        ali += o.velocity;
+        coh += o.transform.position;
+    }
+    if (neighbours.Count == 0) return Vector3.zero;
+    ali /= neighbours.Count; coh /= neighbours.Count;
+    return wSep * Steer(sep.normalized * maxSpeed)
+         + wAli * Steer(ali.normalized * maxSpeed)
+         + wCoh * Seek(coh);
+}
+Vector3 Steer(Vector3 desired) => Vector3.ClampMagnitude(desired - velocity, maxForce);
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Bu kod her boidi her boidle karşılaştırır: O(n²). Demodaki gibi bir <b>ızgara</b> (hash tablosu: hücre → boid listesi) ile sadece komşu hücrelere bakın. Unity’de binlerce boid için Jobs/Burst ya da ECS kullanılır.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>createVector · p5.Vector.sub · .setMag · .limit</td><td>p5.js vektörleri</td><td>Oluştur · çıkar (yeni vektör) · uzunluğu ayarla · uzunluğu kırp</td></tr>
+    <tr><td>this.acc.mult(0)</td><td>sıfırla</td><td>Kuvvetler birikir; her kare sonunda temizlenir</td></tr>
+    <tr><td>map(d, 0, r, 0, max)</td><td>aralık dönüştürme</td><td>d’yi 0–r aralığından 0–max aralığına taşır (lerp’in akrabası)</td></tr>
+    <tr><td>vel.heading()</td><td>yön açısı</td><td>Vektörün açısı (radyan): çizimde döndürmek için</td></tr>
+    <tr><td>Vector3.ClampMagnitude</td><td>kırpma</td><td>Unity’de uzunluğu en fazla m yapan hazır fonksiyon</td></tr>
+    <tr><td>transform.forward = velocity</td><td>yöne bakma</td><td>Nesneyi gittiği yöne çevirir</td></tr>
+    <tr><td>pygame.Vector2 · scale_to_length</td><td>pygame vektörü</td><td>2B vektör sınıfı · uzunluğu ayarla</td></tr>
+    <tr><td>O(n²)</td><td>karesel karmaşıklık</td><td>n boid için n·(n−1) karşılaştırma (Algoritma Analizi destesi)</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: seek ve arrive</h2>
+  <div class="simlab" data-sim="steer" data-fns="seek,arrive" data-lang="js">
+<textarea>
+// Vektörler [x, y] dizisi. Döndürülen: İSTENEN hız [x, y]
+// (direksiyonu = istenen − hız, simülasyon kendisi hesaplıyor)
+function seek(pos, vel, target, maxSpeed) {
+  const dx = target[0] - pos[0], dy = target[1] - pos[1];
+  const d = Math.hypot(dx, dy);
+  if (d === 0) return [0, 0];
+  return [dx / d * maxSpeed, dy / d * maxSpeed];
+}
+
+function arrive(pos, vel, target, maxSpeed, slowRadius) {
+  // TODO: mesafe slowRadius’tan küçükse hızı
+  //       maxSpeed * d / slowRadius yap
+  return seek(pos, vel, target, maxSpeed);
+}
+</textarea>
+    <div class="lab-tasks">Seek hazır; simülasyon <b>arrive</b>’ı kullanıyor. Başlangıçta ajan hedefin etrafında yörüngeye girer. Arrive’ı tamamlayın: sarı çemberin içinde yavaşlayıp hedefte durmalı. Testler 5 seek + 5 arrive durumu dener (mesafe 0 dahil).</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: ayrılma kuvveti</h2>
+  <div class="ailab" data-lab="separation" data-lang="python">
+<textarea>
+import math
+
+# me: [x, y] · others: [[x, y], ...] · radius: görüş yarıçapı
+# Yarıçap içindeki (0 < d < radius) her komşu için
+#   (me - komşu) / d²  vektörünü topla ve [sx, sy] döndür.
+# (Mesafe 0 olan komşuyu atla.)
+def separation(me, others, radius):
+    sx, sy = 0.0, 0.0
+    for o in others:
+        dx, dy = me[0] - o[0], me[1] - o[1]
+        # TODO
+    return [sx, sy]
+</textarea>
+    <div class="lab-tasks">Neden d²? (me − komşu) vektörünün uzunluğu zaten d; d²’ye bölünce sonuç <b>yön / d</b> olur: yakın komşu güçlü, uzak komşu zayıf iter. Komşu yoksa [0, 0].</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: hizalanma</h2>
+  <div class="ailab" data-lab="alignment" data-lang="python">
+<textarea>
+import math
+
+# vels: komşuların hızları [[vx, vy], ...] · max_speed
+# Ortalama hızı bul, uzunluğunu max_speed yap → istenen hız
+# Komşu yoksa ya da ortalama sıfırsa [0, 0]
+def alignment(vels, max_speed):
+    return [0, 0]
+</textarea>
+    <div class="lab-tasks">Adımlar: topla → n’e böl → uzunluğu hesapla (<code>math.hypot</code>) → sıfır değilse yönü bul ve <code>max_speed</code> ile çarp. Testte birbirini götüren iki hız da var.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #102236 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Oyunlarda ve kütüphanelerde</div>
+  <div class="sub">motorların yerleşik sistemleri ve ötesi</div>
+  <ul class="agenda"><li class="done">hareket katmanları</li><li class="done">seek ve flee</li><li class="done">arrive, pursue, wander</li><li class="done">engeller ve yollar</li><li class="done">boids ve sürüler</li><li class="done">birleştirmek: context steering</li><li class="done">kod ve laboratuvarlar</li><li class="on">oyunlarda ve kütüphanelerde</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/index.html" target="_blank" rel="noopener"><b>Unity NavMeshAgent</b></a></td><td>Unity · yerleşik (AI Navigation paketi)</td><td>Yol bulma + seek/arrive benzeri hareket + diğer ajanlardan yerel kaçınma (kalitesi <code>obstacleAvoidanceType</code> ile). Sürü, wander gibi davranışlar yok; kendi steering’inizle birleştirebilirsiniz.</td><td>Package Manager → AI Navigation; ajana NavMeshAgent bileşeni</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/using-avoidance-with-the-navigation-system-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal: RVO ve Detour Crowd</b></a></td><td>Unreal 4/5 · yerleşik</td><td>CharacterMovement’ta RVO kaçınması ya da AI kontrolcüsünde Detour Crowd ile kalabalık kaçınma.</td><td>Karakterde “Use RVOAvoidance” ya da CrowdFollowingComponent</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-mass-ai-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Mass</b></a></td><td>Unreal 5 · yerleşik eklenti</td><td>Veri odaklı (ECS) sistem: binlerce varlıklı kalabalık ve trafik simülasyonları, Mass AI ile hareket ve kaçınma.</td><td>MassEntity / MassAI eklentilerini etkinleştir</td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/tutorials/navigation/navigation_using_navigationagents.html" target="_blank" rel="noopener"><b>Godot NavigationAgent</b></a></td><td>Godot 4 · yerleşik</td><td>Yol izleme + RVO tabanlı ajan kaçınması (avoidance_enabled).</td><td>NavigationAgent2D/3D düğümü ekle</td></tr><tr><td><a href="https://github.com/Mugen87/yuka" target="_blank" rel="noopener"><b>Yuka</b></a></td><td>JavaScript · açık kaynak</td><td>Web oyunları için YZ kütüphanesi: Reynolds’ın steering davranışlarının çoğu, ayrıca FSM, hedef güdümlü ajanlar, algı, yol bulma. Three.js ile örnekler.</td><td><code>npm install yuka</code></td></tr><tr><td><a href="https://github.com/libgdx/gdx-ai/wiki/Steering-Behaviors" target="_blank" rel="noopener"><b>gdx-ai</b></a></td><td>Java (libGDX) · açık kaynak</td><td>Steering davranışları (öncelik ve ağırlıklı birleştirme dahil), formasyonlar, BT, yol bulma.</td><td>Gradle bağımlılığı</td></tr><tr><td><a href="https://github.com/snape/RVO2" target="_blank" rel="noopener"><b>RVO2 Library</b></a></td><td>C++ · açık kaynak</td><td>ORCA’nın referans uygulaması (UNC). Kalabalık simülasyonu için; C# ve Python bağlamaları var.</td><td>CMake ile derle</td></tr><tr><td><a href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener"><b>The Nature of Code</b></a></td><td>p5.js · ücretsiz kitap</td><td>Daniel Shiffman’ın kitabının “Autonomous Agents” bölümü: bu destedeki her davranışın adım adım p5.js kodu ve videoları.</td><td>Tarayıcıda oku, p5.js editöründe dene</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Projenize steering eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Önce motorun ajanını deneyin</b>: NavMeshAgent / CharacterMovement + RVO çoğu insansı karakter için yeter.</li>
+      <li><b>Kendi steering’iniz</b>: uçan/yüzen yaratıklar, araçlar, uzay gemileri, sürüler, “canlı” dolaşma gibi motorun yapmadığı şeyler için.</li>
+      <li><b>Fizik mi, kinematik mi?</b> Rigidbody kullanıyorsanız kuvveti <code>AddForce</code> ile verin; kinematikse bu destedeki gibi hızı kendiniz entegre edin. İkisini karıştırmayın.</li>
+      <li><b>Locomotion ile bağlayın</b>: hız büyüklüğünü animasyondaki “Speed” parametresine verin (yürü/koş geçişi), yönü karakterin dönüşüne. Ayak kaymasını önlemek için animasyon hızına uyun.</li>
+      <li><b>Ayar araçları</b>: azami hız/kuvvet ve ağırlıkları Inspector’da açın, oyun çalışırken ayarlayın; vektörleri Gizmos ile çizin (demodaki gibi).</li>
+    </ol>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Steering ucuz; pahalı olan <b>komşu arama</b>. Uzamsal ızgara/hash, kuadtree ya da motorun fizik sorguları (OverlapSphere) kullanın. Binlerce birim için Unity Jobs + Burst / ECS, Unreal Mass.</div>
+      <div class="box warn"><span class="bt">Sık hata</span>Steering’i <code>Update</code>’te, fiziği <code>FixedUpdate</code>’te yapıp aynı hıza iki yerden yazmak. Bir yer seçin. Ayrıca dt’siz (kare başına) kodu yüksek FPS’de çalıştırınca her şey hızlanır (Y0).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Normalize’dan önce sıfır uzunluk kontrolünü unutmak (NaN pozisyonlar!)</li><li>İstenen hızı direksiyon kuvveti sanmak (“− velocity” unutulur)</li><li>Azami kuvveti uygulamamak: ajan anında döner, “steering” etkisi kaybolur</li><li>Kuvvetleri her kare sıfırlamamak (p5.js stili acc)</li><li>Boidlerde O(n²) döngü: 500 boidde oyun yavaşlar</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#, 3D ama yerde (y sabit). Kinematik bir Vehicle bileşeni yaz: maxSpeed, maxForce, FixedUpdate’te dt ile Euler entegrasyonu. Davranışlar: Seek, Arrive (slowRadius), Pursue (T = mesafe / maxSpeed, en fazla 1.5 sn), Wander (çember yarıçapı, mesafe, sapma). Birleştirme: öncelikli — önce engel kaçınması (ileriye SphereCast), sonra diğerlerinin ağırlıklı toplamı. OnDrawGizmos ile hız (mavi), istenen hız (yeşil) ve kuvvet (kırmızı) oklarını çiz. Hız büyüklüğünü Animator “Speed” parametresine gönder.”</p><ul class="mini"><li>Hangi davranışları, hangi birleştirme yöntemiyle (ağırlık/öncelik) istediğinizi yazın</li><li>Birim sistemini belirtin: kare başına mı saniye başına mı (dt)</li><li>Rigidbody mi kinematik mi kullanılacağını söyleyin</li><li>Debug için Gizmos ile vektör çizimi isteyin</li><li>Komşu arama için ızgara/fizik sorgusu isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Yaya dinamiği</span>Helbing &amp; Molnár’ın “sosyal kuvvet modeli” (1995): yayaları hedefe çeken ve birbirinden/duvarlardan iten kuvvetlerle modellemek — steering’in bilimsel kuzeni. Tahliye simülasyonlarında, stadyum ve metro tasarımında kullanılır.</div>
+    <div class="box game"><span class="bt">Öğrenilen hareket</span>Unity ML-Agents gibi araçlarla ajanlar, ödül fonksiyonuyla (hedefe ulaş, çarpışma) hareket etmeyi <b>öğrenebilir</b> (Y13). Elle yazılmış steering ile öğrenilmiş politikanın karşılaştırılması güzel bir bitirme projesi.</div>
+    <div class="box low"><span class="bt">Kişilikli kalabalıklar</span>Aynı kalabalıkta acelesi olan, turist, grup hâlinde yürüyen ajanlar: farklı azami hız, kişisel alan (ayrılma yarıçapı) ve hedef davranışları. Açık dünya oyunlarının sokaklarını “canlı” gösteren şey bu çeşitlilik.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Akvaryum</b> — p5.js’te balık sürüsü + bir köpekbalığı (pursue) + yem (seek). Ağırlıkları kaydırıcıyla ayarlanabilir yapın.</li><li><b class="c-green">[kolay]</b> <b>Uzay gemisi</b> — Klavyeyle kontrol edilen oyuncu ve onu pursue ile kovalayan, evade ile mermilerden kaçan düşman gemileri.</li><li><b class="c-amber">[orta]</b> <b>Çoban köpeği</b> — Koyunlar boids, köpek oyuncu (ya da YZ). Koyunlar köpekten flee eder; amaç sürüyü ağıla sokmak. Reynolds’ın kovboy benzetmesinin oyunu!</li><li><b class="c-amber">[orta]</b> <b>Unity sürüsü</b> — 500 kuş, ızgara ile komşu arama; profiler ile O(n²) sürümle karşılaştırın.</li><li><b class="c-red">[zor]</b> <b>Context steering yarışı</b> — Basit bir 2B yarış: araçlar context steering ile çarpışmadan sollama yapsın; ağırlıklı toplam sürümüyle çarpışma sayısını karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Tahliye simülasyonu</b> — Bir binanın planında sosyal kuvvet modeli + akış alanı ile tahliye süresini ölçün; kapı genişliği nasıl etkiliyor?</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Üç katman: <b>karar → yönlendirme → hareket</b>.</li>
+      <li><b>Direksiyon = istenen hız − mevcut hız</b>, azami kuvvetle kırpılır.</li>
+      <li>Seek, flee, <b>arrive</b> (yavaşlama yarıçapı), <b>pursue/evade</b> (gelecek tahmini), <b>wander</b> (çember).</li>
+      <li>Engelden kaçınma (anten), yol izleme; steering yereldir → yol bulma gerekir.</li>
+    </ul>
+    <ul>
+      <li><b>Boids</b>: ayrılma, hizalanma, bütünleşme; ortaya çıkan davranış; ızgarayla O(n²)’den kaçış.</li>
+      <li>Birleştirme: ağırlık, öncelik, <b>context steering</b> (F1 2011, −4000 satır).</li>
+      <li>Kalabalık: RVO/ORCA, akış alanları (Supreme Commander 2, Fieldrunners 2).</li>
+      <li>Araçlar: NavMeshAgent, Unreal RVO/Mass, Godot NavigationAgent, Yuka, gdx-ai, RVO2.</li>
+      <li>Sonraki: <b>A*</b> — haritada en kısa yolu bulmak.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=P_xJMH8VvAE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/P_xJMH8VvAE/hqdefault.jpg" alt=""><span><b>5.1 Autonomous Steering Agents Introduction</b><br>The Coding Train</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=p1Ws1ZhG36g" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/p1Ws1ZhG36g/hqdefault.jpg" alt=""><span><b>5.2 Seeking a Target</b><br>The Coding Train</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=OxHJ-o_bbzs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/OxHJ-o_bbzs/hqdefault.jpg" alt=""><span><b>5.4 Arrive Steering Behavior</b><br>The Coding Train</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=ujsR2vcJlLk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ujsR2vcJlLk/hqdefault.jpg" alt=""><span><b>5.5 Wander Steering Behavior</b><br>The Coding Train</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=IoKfQrlQ7rA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/IoKfQrlQ7rA/hqdefault.jpg" alt=""><span><b>Combining Steering Behaviors: Flocking</b><br>The Coding Train</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=bqtqltqcQhw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/bqtqltqcQhw/hqdefault.jpg" alt=""><span><b>Coding Adventure: Boids</b><br>Sebastian Lague</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=86iQiV3-3IA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/86iQiV3-3IA/hqdefault.jpg" alt=""><span><b>Craig Reynolds — Original 1986 Boids simulation</b><br>arşiv kaydı</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=Q4MU7pkDYmQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Q4MU7pkDYmQ/hqdefault.jpg" alt=""><span><b>5.3 Flee, Pursue, Evade</b><br>The Coding Train</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Reynolds 1987</b> · <a href="https://www.red3d.com/cwr/papers/1987/boids.html" target="_blank" rel="noopener">Flocks, Herds, and Schools: A Distributed Behavioral Model</a> <i>(SIGGRAPH 1987)</i><br>Boids’in doğduğu makale.</div><div class="paper"><b>Reynolds 1999</b> · <a href="https://www.red3d.com/cwr/steer/gdc99/" target="_blank" rel="noopener">Steering Behaviors For Autonomous Characters</a> <i>(GDC 1999)</i><br>Bu destedeki davranışların hepsi; kovboy benzetmesi.</div><div class="paper"><b>Fray 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale.pdf" target="_blank" rel="noopener">Context Steering: Behavior-Driven Steering at the Macro Scale</a> <i>(Game AI Pro 2, Bölüm 18)</i><br>F1 2011; ilgi ve tehlike haritaları.</div><div class="paper"><b>Emerson 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter23_Crowd_Pathfinding_and_Steering_Using_Flow_Field_Tiles.pdf" target="_blank" rel="noopener">Crowd Pathfinding and Steering Using Flow Field Tiles</a> <i>(Game AI Pro, Bölüm 23)</i><br>Supreme Commander 2.</div><div class="paper"><b>Pentheny 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter24_Efficient_Crowd_Simulation_for_Mobile_Games.pdf" target="_blank" rel="noopener">Efficient Crowd Simulation for Mobile Games</a> <i>(Game AI Pro, Bölüm 24)</i><br>Fieldrunners 2: binlerce birim.</div><div class="paper"><b>Sunshine-Hill 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter19_RVO_and_ORCA_How_They_Really_Work.pdf" target="_blank" rel="noopener">RVO and ORCA: How They Really Work</a> <i>(Game AI Pro 3, Bölüm 19)</i><br>Kalabalıkta karşılıklı kaçınma.</div><div class="paper"><b>Helbing &amp; Molnár 1995</b> · <a href="https://arxiv.org/abs/cond-mat/9805244" target="_blank" rel="noopener">Social Force Model for Pedestrian Dynamics</a> <i>(Physical Review E 51)</i><br>Yaya hareketinin kuvvet modeli.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://www.red3d.com/cwr/boids/" target="_blank" rel="noopener">Craig Reynolds: Boids sayfası</a> — tarihçe, filmler, bağlantılar</li><li><a href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener">The Nature of Code: Autonomous Agents</a> — ücretsiz, p5.js</li><li><a href="https://en.wikipedia.org/wiki/Boids" target="_blank" rel="noopener">Wikipedia: Boids</a></li><li><a href="https://andrewfray.wordpress.com/" target="_blank" rel="noopener">Andrew Fray’in blogu (context steering yazıları)</a></li></ul>
+    <ul class="reflist"><li><a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter21_Techniques_for_Formation_Movement_Using_Steering_Circles.pdf" target="_blank" rel="noopener">Game AI Pro: Steering Circles ile formasyon hareketi</a></li><li><a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter40_Racing_Vehicle_Control_Systems_using_PID_Controllers.pdf" target="_blank" rel="noopener">Game AI Pro: Yarış araçlarında PID kontrol</a></li><li><a href="https://mugen87.github.io/yuka/" target="_blank" rel="noopener">Yuka belgeleri ve örnekleri</a></li><li><a href="https://docs.unity3d.com/ScriptReference/AI.NavMeshAgent-obstacleAvoidanceType.html" target="_blank" rel="noopener">Unity: NavMeshAgent.obstacleAvoidanceType</a></li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #4a3a0f 0%, #2c1d0c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">A* ile Yol Bulma</div>
+    <div class="sub">Dijkstra’dan A*’a: sezgisel arama, ızgaralar ve oyunlardaki tuzaklar</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd27a" href="../yz-astar/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
