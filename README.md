@@ -77,6 +77,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y7 | [Steering Davranışları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-steering/) | ✅ hazır |
 | Y8 | [A* ile Yol Bulma](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-astar/) | ✅ hazır |
 | Y9 | [NavMesh](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-navmesh/) | ✅ hazır |
+| Y10 | [Grup Yapay Zekâsı](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-grup/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -132,6 +133,7 @@ yz-oyun-agaclari/   Y6 · XOX’ta minimax, adım adım alfa-beta, Dört Bir Ara
 yz-steering/        Y7 · Kuvvet vektörleri görünen seek/flee/arrive/pursue/evade/wander/yol izleme, boids (ızgara ve kontrol sayacıyla), context steering vs ağırlıklı toplam, seek/arrive, ayrılma ve hizalanma laboratuvarları
 yz-astar/           Y8 · Düzenlenebilir ızgarada BFS/Dijkstra/Greedy/A* yarışı, sezgiler ve ağırlıklı A*, yol yumuşatma, StarCraft hilesi, Factorio hiyerarşisi, JPS; sezgi ve yol maliyeti laboratuvarları
 yz-navmesh/         Y9 · Tıkla-git navmesh (koridor, funnel, kapı, atlama bağlantısı), adım adım funnel, 2B Recast üretimi (aşındırma, bölgeler), nokta-çokgen, çapraz çarpım ve alan laboratuvarları
+yz-grup/            Y10 · Canlı formasyonlar (yuva ataması, dar geçit), kung-fu çemberi ve Belçika YZ saldırı yönetimi, Days Gone tarzı güven ve cephe hattı; kama, izin ve güven laboratuvarları
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

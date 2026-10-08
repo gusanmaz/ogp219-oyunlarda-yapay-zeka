@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grup Yapay Zekâsı</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Grup yapay zekâsı: formasyonlar (lider, yuvalar, atama, dar geçitler), kung-fu çemberi ve Kingdoms of Amalur’un Belçika YZ’si, Days Gone’da güven ve cephe hattı, Killzone 3 komuta zinciri, sosyal gruplar ve kalabalıklar, gdx-ai, Unreal Mass, Smart Objects. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0f4a3a 0%, #1b1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 10</div>
+  <div class="ttl" style="font-size:74px">Grup Yapay Zekâsı</div>
+  <div class="sub"><i>Formasyonlar, saldırı sırası, tim güveni, komuta zinciri</i> — birlikte akıllı görünmek</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegroup"></div>
+  <aside class="notes">Haftalık plandaki grup davranışları konusu. Arka planda bir lider ve on iki üye kama, hat, kare ve çember formasyonları arasında geçiş yapıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Neden grup YZ?</b> — tek tek akıllı, birlikte aptal; ortaya çıkan ve merkezî koordinasyon</li>
+      <li><b>Formasyonlar</b> — lider, slotlar, atama, dar geçitler (Age of Empires)</li>
+      <li><b>Saldırıları yönetmek</b> — kung-fu çemberi ve Kingdoms of Amalur’un “Belçika YZ”si</li>
+      <li><b>Tim koordinasyonu</b> — Days Gone: güven ve cephe hattı</li>
+      <li><b>Komuta zinciri ve kalabalık</b> — Killzone 3 botları, sosyal gruplar</li>
+      <li><b>Kod</b> — formasyon slotları, sahne yöneticisi + üç laboratuvar</li>
+      <li><b>Kütüphaneler</b> — gdx-ai formasyonları, Unreal Mass/Smart Objects, Unity ECS</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir grubu formasyonda yürütebilecek, oyuncuya aynı anda kaç düşmanın saldıracağını adil biçimde sınırlayabilecek, bir timin ne zaman saldırıp ne zaman çekileceğine karar veren bir “tim beyni” kurabilecek ve bunun zorluk ayarıyla bağlantısını kurabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ON DÜŞMAN BİRDEN SALDIRIRSA?</span>
+    <p class="big">Bir aksiyon oyununda on düşman sizi çevreledi. Hepsi aynı anda vursa ne olur? Hepsi aynı anda <b>aynı siperin</b> arkasına koşsa?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Oyuncu iki saniyede ölür ya da düşmanlar birbirinin içine girer: ikisi de “aptal” ya da “haksız” görünür.</li>
+    <li class="fragment">Bireysel YZ (Y2–Y9) iyi olsa bile <b>grup</b> olarak kötü olabilir. Grubun ihtiyaçları: kim nerede duracak, kim saldıracak, kim yan taraftan dolaşacak, ne zaman geri çekilinecek?</li>
+    <li class="fragment">Bu hafta: grubu yöneten küçük sistemler. Çoğu basit; etkileri büyük. Ve çoğu aslında <b>zorluk ayarı</b> düğmesi.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-steering/">Y7 · Steering (seek, arrive, ayrılma)</a><a class="" href="../yz-davranis-agaclari/">Y3 · Davranış Ağaçları</a></div>
+  <div class="prereq"><a class="opt" href="../yz-utility/">Y4 · Utility AI</a><a class="opt" href="../yz-goap/">Y5 · GOAP (F.E.A.R. timleri)</a><a class="opt" href="../yz-astar/">Y8 · A*</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Formasyon üyeleri birer steering ajanıdır (arrive + ayrılma). Tim kararları ise bir davranış ağacına “rol” olarak eklenir. Bunları bilmek yeter.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu destedeki sistemlerin çoğu birkaç sayı ve basit kuraldan oluşur: “ızgara kapasitesi 12, asker 4, trol 8”. Tasarımcı olarak bu sayıları ayarlamak, kod yazmaktan daha büyük etki yaratır.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>formation · slot · leader</td><td>formasyon · yuva · lider</td><td>Grubun şekli · her üyenin şekildeki yeri · şeklin referans noktası</td></tr>
+    <tr><td>slot assignment</td><td>yuva ataması</td><td>Hangi üyenin hangi yuvaya gideceği</td></tr>
+    <tr><td>kung-fu circle</td><td>kung-fu çemberi</td><td>Düşmanların oyuncuya sırayla (tek tek) saldırması</td></tr>
+    <tr><td>attack token / capacity</td><td>saldırı jetonu / kapasitesi</td><td>Aynı anda yapılabilecek saldırı miktarını sınırlayan “bilet” sistemi</td></tr>
+    <tr><td>stage manager</td><td>sahne yöneticisi</td><td>Saldırı izinlerini dağıtan merkezî YZ (Amalur)</td></tr>
+    <tr><td>squad · role</td><td>tim · rol</td><td>Kendisi de bir YZ olan grup · grubun üyeye verdiği görev (bastırma, kanat)</td></tr>
+    <tr><td>confidence · frontline</td><td>güven · cephe hattı</td><td>“Kazanıyor muyuz?” ölçüsü · iki tarafı ayıran çizgi (Days Gone)</td></tr>
+    <tr><td>command hierarchy</td><td>komuta zinciri</td><td>Komutan → tim → birey katmanları (Killzone 3)</td></tr>
+    <tr><td>emergent coordination</td><td>ortaya çıkan koordinasyon</td><td>Kimse plan yapmadan basit kurallardan doğan grup davranışı</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Neden grup YZ?</div>
+  <div class="sub">ortaya çıkan mı, merkezî mi?</div>
+  <ul class="agenda"><li class="on">neden grup YZ?</li><li class="">formasyonlar</li><li class="">saldırıları yönetmek</li><li class="">tim koordinasyonu</li><li class="">komuta zinciri ve kalabalık</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="neden">
+  <h2>Grup davranışının türleri</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Mars &amp; Chanut (Game AI Pro 2, 20. bölüm) grup <b>hareketini</b> üçe ayırır:</p>
+      <ul style="font-size:.84em">
+        <li><b>Sürüler</b> (flocks): sabit düzen yok, yerel kurallar (Y7 boids).</li>
+        <li><b>Formasyonlar</b>: belirli bir şekil, her üyenin yeri belli (asker birlikleri, RTS).</li>
+        <li><b>Küçük sosyal gruplar</b>: arkadaşlarıyla yürüyen insanlar, rehberinin şemsiyesini izleyen turistler.</li>
+      </ul>
+      <p style="font-size:.84em">Bunlara <b>savaş koordinasyonu</b> eklenir: kim saldırır, kim siper alır, kim kanattan dolanır, ne zaman çekilinir?</p>
+    </div>
+    <table class="sum-t" style="font-size:17px">
+      <tr><th></th><th>ortaya çıkan</th><th>merkezî</th></tr>
+      <tr><td>Nasıl?</td><td>Her ajan yerel kurallar + paylaşılan bilgi</td><td>Bir “grup beyni” karar verir, üyelere rol dağıtır</td></tr>
+      <tr><td>Örnek</td><td>Boids; F.E.A.R.’ın kanat “yanılsaması” (Y5)</td><td>Days Gone timleri, Killzone 3 komutanı, Amalur sahne yöneticisi</td></tr>
+      <tr><td>Artı</td><td>Basit, ölçeklenir, sağlam</td><td>Kontrol edilebilir, “planlı” görünür</td></tr>
+      <tr><td>Eksi</td><td>Ne olacağı tam bilinmez</td><td>Tek hata noktası, karmaşık</td></tr>
+    </table>
+  </div>
+  <p class="mini">Gerçek oyunlar ikisini karıştırır: grup “ne yapılacağına” karar verir, bireyler “nasıl”ını kendileri halleder ve daha önemli bir şey olursa (el bombası!) grubun emrini dinlemez.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Formasyonlar</div>
+  <div class="sub">lider, yuvalar, atama</div>
+  <ul class="agenda"><li class="done">neden grup YZ?</li><li class="on">formasyonlar</li><li class="">saldırıları yönetmek</li><li class="">tim koordinasyonu</li><li class="">komuta zinciri ve kalabalık</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="formasyon">
+  <h2>Formasyonun anatomisi</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Bir <b>lider</b> (gerçek bir birim ya da görünmez bir “çapa” noktası) yolu izler (Y8–Y9).</li>
+        <li>Her üyenin liderin <b>yerel çerçevesinde</b> bir yuvası var: “2 m arkada, 1 m sağda”. Lider dönünce yuvalar da döner (Y0’daki döndürme).</li>
+        <li>Üyeler yuvalarına <b>arrive</b> ile gider, birbirinden <b>ayrılma</b> ile uzak durur (Y7).</li>
+        <li><b>Formasyon hızı = en yavaş üyenin hızı</b>: lider, geride kalanları bekler.</li>
+      </ul>
+      <div class="box story"><span class="bt">📜 Age of Empires (Dave Pottinger, 1999)</span>“Koordineli Birim Hareketi” yazısında üç tür varlık ayırır: tek birim, <b>grup</b> (sıkışınca şeklini değiştirebilir) ve <b>formasyon</b> (bir önü, arkası ve iki kanadı var; her birim kendine özgü göreli konumunu korur; formasyonun boşluklarına başka birim giremez). Formasyon engelin etrafından yol bulamazsa öbür tarafta <b>bozulup yeniden kurulabilir</b>.</div>
+    </div>
+    <svg viewBox="0 0 420 300" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--red)"/></marker></defs>
+      <line x1="260" y1="150" x2="350" y2="150" style="stroke:var(--red)" stroke-width="3" marker-end="url(#fa)"/><text x="330" y="140" font-size="14" style="fill:var(--red)">ileri (x)</text>
+      <line x1="260" y1="150" x2="260" y2="230" style="stroke:var(--muted)" stroke-width="2" stroke-dasharray="4 3"/><text x="266" y="230" font-size="14" style="fill:var(--muted)">sağ (y)</text>
+      <circle cx="260" cy="150" r="13" style="fill:var(--red)"/><text x="260" y="128" text-anchor="middle" font-size="14" font-weight="700" style="fill:var(--red)">lider</text>
+      <g style="fill:none;stroke:var(--blue)" stroke-width="2.5">
+        <circle cx="210" cy="100" r="10"/><circle cx="210" cy="200" r="10"/><circle cx="160" cy="50" r="10"/><circle cx="160" cy="250" r="10"/><circle cx="110" cy="0" r="10"/>
+      </g>
+      <g font-size="12" style="fill:var(--ink-2)"><text x="140" y="104">(−50, −50)</text><text x="140" y="214">(−50, +50)</text><text x="80" y="54">(−100, −100)</text><text x="80" y="264">(−100, +100)</text></g>
+      <text x="20" y="290" font-size="13" style="fill:var(--muted)">kama: i. yuva → (−r·s, ±r·s), r = ⌈(i+1)/2⌉</text>
+    </svg>
+  </div>
+</section>
+
+<section data-sec="formasyon">
+  <h2>Canlı: formasyon 🪖</h2>
+  <div class="demo" data-demo="formation"></div>
+</section>
+
+<section data-sec="formasyon">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Liderin arkasına tıklayın: lider döner, yuvalar da döner. <b>Sabit sıra</b> atamasında üyeler birbirinin içinden geçerek eski yuvalarına koşar (çizgiler çaprazlanır). <b>En yakın</b> atamada sorun büyük ölçüde kayboluyor.</li>
+      <li>“Lider bekler”i kapatın: lider hızlıca gidiyor, formasyon dağılıyor. Formasyon hızı neden en yavaş üyeye eşit olmalı?</li>
+      <li>“Dar geçitli duvar”ı açın ve geçidin öbür tarafına tıklayın: geçide yaklaşınca formasyon <b>sütuna</b> dönüşüyor, geçince eski şekline. Pottinger’ın “bozul ve yeniden kur” fikri.</li>
+      <li>Çember formasyonu + 16 üye: koruma çemberi (VIP eskortu). Kama + 3 üye: keşif timi.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="formasyon">
+  <h2>Formasyonun zor kısımları</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Yuva ataması</span>Doğru çözüm, toplam yürüme mesafesini en aza indiren eşleştirmedir (atama problemi; Macar algoritması). Pratikte açgözlü “en yakın boş yuva” ve yön değişince sırayı ayna gibi çevirmek yeterlidir. Ölen üyenin yuvası boşalınca kim doldurur? Kurallar gerekir.</div>
+      <div class="box game"><span class="bt">Ölçeklenen formasyonlar</span>Üye sayısına göre şeklini değiştiren formasyonlar: 4 kişiyle elmas, 12 kişiyle iki sıra, 30 kişiyle blok. Ayrıca araziye göre: açıkta geniş, ormanda dar.</div>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">Dönüş ve “tekerlek” hareketi</span>Bir blok asker anında dönemez; dış uçtakiler daha hızlı yürümelidir. Stephen Bjore (GAP 21. bölüm), Company of Heroes ekibinden Chris Jurney’in GDC 2007 sunumundaki <b>dönüş çemberleri</b> fikrini genişleterek formasyonun hedefe istenen <b>yönde</b> varması için yol üretir.</div>
+      <div class="box warn"><span class="bt">⚠️ Kalabalık ve formasyon</span>İki formasyon karşılaşınca ne olur? Formasyonun bütün olarak bir “büyük ajan” gibi kaçınması, sonra üyelerin yerel kaçınması: iki seviyeli kaçınma (Mars &amp; Chanut).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="formasyon">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · formasyon</div>
+    <div class="q">Lider hızla yürüyor ve formasyondaki ağır zırhlı bir üye sürekli geride kalıyor. En basit doğru çözüm?</div>
+    <div class="opts">
+      <button data-opt="A">Liderin hızını, yuvasından en uzak kalan üyeye göre düşürmek</button>
+      <button data-opt="B">Ağır üyeyi formasyondan çıkarmak</button>
+      <button data-opt="C">Ağır üyeyi her karede yuvasına ışınlamak</button>
+      <button data-opt="D">Yuva aralığını büyütmek</button>
+    </div>
+    <div class="explain">Formasyonun hızı en yavaş üyesinin hızıdır. Lider, üyelerin yuvalarından ne kadar saptığına bakıp yavaşlarsa formasyon bütün kalır (demodaki “lider bekler”). Işınlamak görsel olarak bozuk görünür; aralığı büyütmek sorunu çözmez.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Saldırıları yönetmek</div>
+  <div class="sub">kung-fu çemberi ve Belçika YZ’si</div>
+  <ul class="agenda"><li class="done">neden grup YZ?</li><li class="done">formasyonlar</li><li class="on">saldırıları yönetmek</li><li class="">tim koordinasyonu</li><li class="">komuta zinciri ve kalabalık</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="saldırı">
+  <h2>Kung-fu çemberi</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Dövüş filmlerinin klasik sahnesi: kahramanı onlarca kişi çevirir ama <b>sırayla</b>, birer birer saldırırlar. Oyunlarda da çok yaygın bir teknik: düşmanlar oyuncunun etrafında bir çemberde bekler, bir “saldırı jetonu” alan saldırır, jetonu geri verince sıradaki gelir.</p>
+      <ul style="font-size:.84em">
+        <li><b>Artı</b>: oyuncu bunalmaz, her düşmana odaklanabilir, yazması çok kolay.</li>
+        <li><b>Eksi</b>: hızlı akan bir dövüşte yapay görünür; alan saldırıları anlamsızlaşır; zayıf bir askerle dev bir trol aynı “tek jeton”u kullanır.</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">Jeton sistemleri her yerde</span>Aynı fikir başka şeyler için de kullanılır: “aynı anda en fazla bir el bombası”, “en fazla iki keskin nişancı oyuncuya nişan alsın”, “bir seferde bir düşman bağırsın”. Kaynak: oyuncunun <b>dikkati</b>. Jetonları oyuncu üzerinde tutmak, bütün düşmanlar arasında adil paylaştırır.</div>
+  </div>
+</section>
+
+<section data-sec="saldırı">
+  <h2>Derin hikâye: Kingdoms of Amalur’un “Belçika YZ”si 🧇</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Michael Dawe (Game AI Pro, 28. bölüm): Reckoning, geleneksel bir RPG içinde “gerçek” bir aksiyon oyunu olmak istiyordu; çok sayıda düşman aynı anda. Kung-fu çemberi fazla katıydı. Ekip, çizimleri <b>waffle’a</b> benzediği için içeride “Belçika YZ” denen bir sistem kurdu:</p>
+      <ul style="font-size:.82em">
+        <li>Oyuncunun etrafında 8 yuvalı bir <b>ızgara</b> (XOX tahtası gibi) ve bir <b>ızgara kapasitesi</b> var. Her düşman türünün bir <b>ağırlığı</b> var.</li>
+        <li>Örnek: kapasite 12. Asker (ağırlık 4) izin ister → verilir, kalan 8. Trol (ağırlık 8) → verilir, kalan 0. İkinci asker → <b>reddedilir</b>, dışarıda bekler.</li>
+        <li>Ayrıca bir <b>saldırı kapasitesi</b> (örnekte 10) ve her saldırının ağırlığı: trolün hücumu 6, sopası 4; askerin hamlesi 5, kılıcı 3. Trol hücumu seçer (kalan 4), asker artık sadece kılıç vurabilir.</li>
+        <li>Kararları bireyler değil, merkezî bir <b>sahne yöneticisi</b> (stage manager) verir. Yuvalar aslında oyuncudan eşit uzaklıkta iç (saldırı) ve dış (yaklaşma) çemberlerdir.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">💡 Zorluk = kapasite</span>Kolay modda kapasiteler küçük, zor modda büyük. Aynı karşılaşma, kod değişmeden farklı zorluklarda oynanır. Tasarımcılar her karşılaşmayı farklı yaratıklarla kurarken hep <b>aynı kurallar</b> geçerlidir.</div>
+      <div class="box game"><span class="bt">Neden ağırlık?</span>“Aynı anda en fazla 2 düşman” kuralı, iki askerle iki trolü aynı sayar. Ağırlık, düşmanın <b>tehdidini</b> ölçer: oyuncunun kaldırabileceği toplam tehdit sınırlanır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="saldırı">
+  <h2>Canlı: saldırı izinleri ⚔️</h2>
+  <div class="demo" data-demo="kungfu"></div>
+</section>
+
+<section data-sec="saldırı">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>“Yönetim yok”: herkes içeri dalıyor. Dakikadaki hasara bakın. Sonra “kung-fu çemberi”: tek tek; hasar çok düşük ve sahne yavaş.</li>
+      <li>“Belçika YZ”: ızgara 12. Aynı anda içeride kim var? Trol içerideyken ikinci asker neden bekliyor?</li>
+      <li>Saldırı kapasitesini 4’e indirin: trol hücum (6) yapamıyor, sopaya (4) mecbur. Kapasite = zorluk düğmesi.</li>
+      <li>Izgara kapasitesini 24’e çıkarın: zor mod. Hasar/dakika ne kadar arttı?</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="saldırı">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · saldırı</div>
+    <div class="q">Izgara kapasitesi 12. Sırayla istek gelir: trol (8), asker (4), asker (4). Kimler izin alır?</div>
+    <div class="opts">
+      <button data-opt="A">Trol ve ilk asker</button>
+      <button data-opt="B">Sadece trol</button>
+      <button data-opt="C">Üçü de</button>
+      <button data-opt="D">İki asker</button>
+    </div>
+    <div class="explain">Trol 8 → kalan 4. İlk asker 4 → kalan 0. İkinci asker sığmaz, bekler. Sıra önemlidir: önce iki asker gelseydi (kalan 4), trol (8) sığmazdı. Gerçek sistemlerde bekleme süresi ve yakınlık gibi ölçütlerle sıra adil tutulur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Tim koordinasyonu</div>
+  <div class="sub">Days Gone: güven ve cephe hattı</div>
+  <ul class="agenda"><li class="done">neden grup YZ?</li><li class="done">formasyonlar</li><li class="done">saldırıları yönetmek</li><li class="on">tim koordinasyonu</li><li class="">komuta zinciri ve kalabalık</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="tim">
+  <h2>Derin hikâye: Days Gone (2019) timleri</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Tobias Karlsson (Sony Bend, Game AI Pro Online 2021, 12. bölüm): açık dünyada düşman <b>her yönden</b> gelebilir; doğrusal bir seviyedeki gibi senaryo yazılamaz. Çözüm iki basit fikir: <b>güven</b> ve <b>cephe hattı</b>.</p>
+      <ul style="font-size:.82em">
+        <li><b>Timler birer YZ varlığıdır</b>: ne yapılacağına, hangi üyenin hangi <b>rolü</b> alacağına ve rolün genel olarak nerede yapılacağına karar verir. Her uygun düşman bir time atanır (tek kişilik tim bile).</li>
+        <li><b>Rol</b>, bireyin davranış hiyerarşisine önceden belirlenmiş bir noktada takılan bir alt davranıştır. Daha öncelikli bir şey olursa (el bombasından kaç) birey rolü bırakır. Yeni rol eklemek mevcut davranışları değiştirmeyi gerektirmez (Y3: BT’nin gücü).</li>
+        <li><b>Güven</b>: “tarafımız bu karşılaşmayı kazanıyor mu?” Algılanan dost ve düşman gücünün oranından hesaplanır; beş seviye: <b>panik, endişeli, nötr, kendinden emin, kahraman</b>. Timin güveni üyelerinin ortalaması.</li>
+        <li>Güvene göre tim dört durumdan birindedir: <b>dizil</b> (cephe hattının gerisinde yerini al), <b>çatış</b> (nötr), <b>geri çekil</b> (endişeli ve altı), <b>bastır</b> (kendinden emin ve üstü).</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Cephe hattı</span>Çatışmanın yönü (tim merkezinden düşman merkezine), tim üyelerinin düşmana en fazla ne kadar yaklaşabileceğini gösteren bir çizgi, genişliği, önünde bir <b>tarafsız bölge</b> ve düşmanın kontrol ettiği alan. Bütün konum sorularının cevabı bu basit yapıdan çıkar: kim nerede durur, kim kanattan dolanır.</div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=7TQ-WS3MPlE" target="_blank" rel="noopener">Squad Coordination in ‘Days Gone’</a> (Tobias Karlsson, GDC AI Summit)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tim">
+  <h2>Canlı: güven ve cephe hattı</h2>
+  <div class="demo" data-demo="squad"></div>
+  <p class="mini">Mavi tim sizin kontrolünüzde değil; düşman ve müttefik ekleyip çıkararak <b>güveni</b> değiştirin. Güç oranı düşünce cephe hattı geri çekilir (geri çekil), yükselince ileri itilir (baskı yap). Turuncu bant: tarafsız bölge; kırmızı: düşman alanı. (Güven eşikleri bizim seçimimiz; Days Gone’un gerçek değerleri yayımlanmadı.)</p>
+</section>
+
+<section data-sec="tim">
+  <h2>Roller ve paylaşılan bilgi</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Tipik roller</span>
+        <ul style="font-size:.82em">
+          <li><b>Bastırma</b> (suppressor): düşmanı siperine çivilemek için sürekli ateş</li>
+          <li><b>Kanat</b> (flanker): yandan dolanıp siperi işe yaramaz hâle getirmek</li>
+          <li><b>İlerleyen</b>: siperden sipere, diğerleri örterken</li>
+          <li><b>Koruyucu</b>: bir VIP’in ya da nesnenin yakınında kal</li>
+        </ul>
+        <p class="mini">Rol seçimi utility (Y4) ile yapılabilir: “bu rol için en uygun üye kim?” (mesafe, silah, can).</p></div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Paylaşılan kara tahta</span>Timin ortak hafızası (Y3): son görülen düşman konumu, kim hangi siperde, kim kanatta. F.E.A.R. bunu basit tim davranışlarıyla (siper al, ilerle, sıralı ilerle, ara) ve emirlerle yaptı; üyeler emri kendi hedefleriyle tartıyordu (Y5).</div>
+      <div class="box low"><span class="bt">Oyuncuya anlatın!</span>“Yandan dolaşıyorum!”, “Ön tarafı örtün!” (Y1’de F.E.A.R.’ın diyalogları). Koordinasyon ancak oyuncu fark ederse vardır. Grup YZ’sinin yarısı sesli ve görsel <b>geri bildirimdir</b>.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tim">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · tim</div>
+    <div class="q">Days Gone’da bir tim üyesinin rolü “kanattan dolan”. Tam o sırada yanına bir el bombası düşüyor. Ne olmalı?</div>
+    <div class="opts">
+      <button data-opt="A">Birey, daha öncelikli “el bombasından kaç” davranışını çalıştırır; rol bekler</button>
+      <button data-opt="B">Rol daha önemli: kanada devam eder</button>
+      <button data-opt="C">Tim yeni bir rol atayana kadar donar</button>
+      <button data-opt="D">Bütün tim geri çekilir</button>
+    </div>
+    <div class="explain">Roller bireyin davranış ağacına belli bir öncelik noktasında takılır; daha öncelikli davranışlar doğal olarak önce gelir. Bu, grup kararı ile bireysel hayatta kalma arasındaki dengeyi kurar ve her rol için “el bombası kontrolü” yazmayı gereksiz kılar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Komuta zinciri ve kalabalık</div>
+  <div class="sub">Killzone 3 botları, sosyal gruplar</div>
+  <ul class="agenda"><li class="done">neden grup YZ?</li><li class="done">formasyonlar</li><li class="done">saldırıları yönetmek</li><li class="done">tim koordinasyonu</li><li class="on">komuta zinciri ve kalabalık</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="komuta">
+  <h2>Killzone 3 (2011): komutan → tim → birey</h2>
+  <div class="cols">
+    <svg viewBox="0 0 520 280" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="ka" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <g font-size="15" font-weight="800" text-anchor="middle">
+        <rect x="180" y="10" width="160" height="44" rx="10" style="fill:var(--card);stroke:var(--purple)" stroke-width="3"/><text x="260" y="38" style="fill:var(--ink)">Komutan</text>
+        <rect x="40" y="110" width="150" height="40" rx="10" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="115" y="136" style="fill:var(--ink)">Tim A</text>
+        <rect x="330" y="110" width="150" height="40" rx="10" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="405" y="136" style="fill:var(--ink)">Tim B</text>
+      </g>
+      <g font-size="13" text-anchor="middle"><rect x="10" y="210" width="64" height="32" rx="8" style="fill:var(--card);stroke:var(--green)" stroke-width="2"/><text x="42" y="231" style="fill:var(--ink)">bot</text><rect x="85" y="210" width="64" height="32" rx="8" style="fill:var(--card);stroke:var(--green)" stroke-width="2"/><text x="117" y="231" style="fill:var(--ink)">bot</text><rect x="160" y="210" width="64" height="32" rx="8" style="fill:var(--card);stroke:var(--green)" stroke-width="2"/><text x="192" y="231" style="fill:var(--ink)">bot</text><rect x="300" y="210" width="64" height="32" rx="8" style="fill:var(--card);stroke:var(--green)" stroke-width="2"/><text x="332" y="231" style="fill:var(--ink)">bot</text><rect x="375" y="210" width="64" height="32" rx="8" style="fill:var(--card);stroke:var(--green)" stroke-width="2"/><text x="407" y="231" style="fill:var(--ink)">bot</text><rect x="450" y="210" width="64" height="32" rx="8" style="fill:var(--card);stroke:var(--green)" stroke-width="2"/><text x="482" y="231" style="fill:var(--ink)">bot</text></g>
+      <g style="stroke:var(--ink-2)" stroke-width="2" marker-end="url(#ka)"><line x1="230" y1="56" x2="130" y2="106"/><line x1="290" y1="56" x2="390" y2="106"/><line x1="115" y1="152" x2="42" y2="206"/><line x1="115" y1="152" x2="117" y2="206"/><line x1="115" y1="152" x2="192" y2="206"/><line x1="405" y1="152" x2="332" y2="206"/><line x1="405" y1="152" x2="407" y2="206"/><line x1="405" y1="152" x2="482" y2="206"/></g>
+      <text x="260" y="270" text-anchor="middle" font-size="12" style="fill:var(--muted)">emirler aşağı, bilgi yukarı</text>
+    </svg>
+    <ul style="font-size:.84em">
+      <li>Guerrilla’nın çok oyunculu botları (Straatman, Verweij vd., GAP 29. bölüm) strateji oyunlarından esinlenen <b>hiyerarşik komuta zinciri</b> kullanır.</li>
+      <li><b>Strateji katmanı</b> (komutan): oyun modunu oynar, timlere hedef verir: <i>alana saldır, alanı savun, oyuncuya eşlik et, toplanma noktasına ilerle</i>.</li>
+      <li><b>Tim katmanı</b>: hedefi üyeler için emirlere çevirir; başarı/başarısızlığı komutana bildirir.</li>
+      <li><b>Birey katmanı</b>: botun kendi HTN planlayıcısı (Y5) emirleri izler, ama kendi hayatta kalma kararlarını verir.</li>
+      <li>Konum seçimi için etki haritaları ve taktik konum sorguları (Y12).</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="komuta">
+  <h2>Kalabalıklar ve sosyal gruplar</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Sosyal gruplar</span>Gerçek insanların çoğu kalabalıkta <b>yalnız</b> değil, 2–4 kişilik gruplar hâlinde yürür. Gruplar yan yana (dar yerde V ya da tek sıra) yürür, yavaş üyeyi bekler, birbirine bakar. Mars &amp; Chanut’un örneği: Mont Saint-Michel’de rehberinin şemsiyesini izleyen turist grubu. Bu küçük ayrıntılar açık dünyaları “canlı” gösterir.</div>
+    <div class="box game"><span class="bt">Binlerce varlık</span>Şehir kalabalıkları ve trafik için bireysel BT’ler pahalıdır. Veri odaklı sistemler (Unreal Mass, Unity ECS) binlerce varlığı basit kurallarla yürütür; oyuncuya yakın olanlara daha zengin YZ, uzaktakilere ucuz YZ verilir (Y18: ayrıntı düzeyi / LOD).</div>
+  </div>
+  <p class="mini">Grup navigasyonu boru hattı (Mars &amp; Chanut): grup bir bütün olarak yol bulur ve büyük engellerden kaçar → grup içindeki üyeler kendi yuvalarına/komşularına göre yürür → üyeler yerel çarpışmalardan kaçar.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">yuvalar ve sahne yöneticisi</div>
+  <ul class="agenda"><li class="done">neden grup YZ?</li><li class="done">formasyonlar</li><li class="done">saldırıları yönetmek</li><li class="done">tim koordinasyonu</li><li class="done">komuta zinciri ve kalabalık</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: yerel çerçeveden dünyaya</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Yuva ofseti liderin yerel çerçevesinde verilir: <b>(ileri, sağ)</b>. Dünya koordinatına çevirmek için liderin yön açısı θ kadar döndürüp lider konumuna ekleriz (Y0’daki döndürme):</p>
+      <p style="text-align:center">$$\text{dünya} = \text{lider} + \begin{pmatrix}\cos\theta & -\sin\theta\\ \sin\theta & \cos\theta\end{pmatrix}\begin{pmatrix}\text{ileri}\\ \text{sağ}\end{pmatrix}$$</p>
+      <p class="mini">Unity bunu sizin için yapar: <code>leader.TransformPoint(offset)</code> ya da <code>leader.position + leader.rotation * offset</code>.</p>
+    </div>
+    <div class="box story"><span class="bt">Neden yerel?</span>Formasyonu bir kez tanımlarsınız (“kama”), lider hangi yöne dönerse dönsün doğru kalır. Ofsetler bir ScriptableObject/JSON dosyasında tasarımcı tarafından düzenlenebilir.</div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Formasyon yuvaları ve üye hareketi</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="6-10|13-18|19-21"><script type="text/template">
+public class Formation : MonoBehaviour {
+    public Transform leader;
+    public List<FormationMember> members;
+    public float spacing = 2f;
+
+    Vector3 WedgeOffset(int i) {                     // yerel (x = sağ, z = ileri)
+        int r = (i + 2) / 2;                          // 1, 1, 2, 2, 3, ...
+        float side = (i % 2 == 0) ? -1f : 1f;
+        return new Vector3(side * r * spacing, 0f, -r * spacing);
+    }
+
+    void Update() {
+        float worstLag = 0f;
+        for (int i = 0; i < members.Count; i++) {
+            Vector3 slot = leader.TransformPoint(WedgeOffset(i));   // yerel → dünya
+            members[i].SetTarget(slot);                             // üye: arrive + ayrılma
+            worstLag = Mathf.Max(worstLag, Vector3.Distance(members[i].transform.position, slot));
+        }
+        // formasyon hızı = en yavaş üye: geride kalan varsa lider yavaşlar
+        leader.GetComponent<NavMeshAgent>().speed = Mathf.Lerp(3.5f, 1f, Mathf.InverseLerp(1f, 5f, worstLag));
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def wedge_offset(i, s):
+    r = math.ceil((i + 1) / 2)
+    side = 1 if i % 2 else -1
+    return (-r * s, side * r * s)                  # (ileri, sağ)
+
+def to_world(leader_pos, heading, off):
+    fx, ry = off
+    c, sn = math.cos(heading), math.sin(heading)
+    return (leader_pos[0] + c * fx - sn * ry,
+            leader_pos[1] + sn * fx + c * ry)
+
+slots = [to_world(leader.pos, leader.heading, wedge_offset(i, 30)) for i in range(len(members))]
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Sahne yöneticisi: saldırı izinleri</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="2-3|6|8-15|16-21"><script type="text/template">
+public class StageManager : MonoBehaviour {
+    public int gridCapacity = 12, attackCapacity = 10;   // zorluk ayarı!
+    int gridUsed, attackUsed;
+    readonly Queue<Enemy> requests = new();
+
+    public void RequestSlot(Enemy e) { if (!requests.Contains(e)) requests.Enqueue(e); }
+
+    void Update() {                                      // her karede kuyruğu işle
+        int n = requests.Count;
+        for (int k = 0; k < n; k++) {
+            Enemy e = requests.Dequeue();
+            if (gridUsed + e.gridWeight <= gridCapacity) { gridUsed += e.gridWeight; e.GrantSlot(); }
+            else requests.Enqueue(e);                    // sığmadı: sırada beklemeye devam
+        }
+    }
+    public bool TryAttack(int weight) {                  // saldırı seçerken sorulur
+        if (attackUsed + weight > attackCapacity) return false;
+        attackUsed += weight; return true;
+    }
+    public void EndAttack(int weight) => attackUsed -= weight;
+    public void ReleaseSlot(Enemy e) => gridUsed -= e.gridWeight;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+class StageManager:
+    def __init__(self, grid_capacity=12, attack_capacity=10):
+        self.grid_cap, self.atk_cap = grid_capacity, attack_capacity
+        self.grid_used = self.atk_used = 0
+        self.queue = []
+
+    def request(self, enemy):
+        if enemy not in self.queue:
+            self.queue.append(enemy)
+
+    def update(self):
+        waiting = []
+        for e in self.queue:
+            if self.grid_used + e.weight <= self.grid_cap:
+                self.grid_used += e.weight
+                e.granted = True
+            else:
+                waiting.append(e)
+        self.queue = waiting
+
+    def pick_attack(self, attacks):            # [(ad, ağırlık), ...]
+        fits = [a for a in attacks if self.atk_used + a[1] <= self.atk_cap]
+        if not fits:
+            return None
+        best = max(fits, key=lambda a: a[1])   # sığan en güçlü saldırı
+        self.atk_used += best[1]
+        return best
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>leader.TransformPoint(v)</td><td>yerel → dünya</td><td>Liderin konumu, dönüşü ve ölçeğiyle v’yi dünya koordinatına çevirir</td></tr>
+    <tr><td>(i + 2) / 2 (tam sayı bölmesi)</td><td>tam sayı bölme</td><td>C#’ta int / int küsuratı atar: 1,1,2,2,3…</td></tr>
+    <tr><td>Mathf.InverseLerp(a, b, x)</td><td>ters lerp</td><td>x’in a–b aralığının neresinde olduğu (0–1); Y0</td></tr>
+    <tr><td>Queue · Enqueue · Dequeue</td><td>kuyruk</td><td>İlk gelen ilk çıkar: adil bekleme sırası</td></tr>
+    <tr><td>math.ceil</td><td>yukarı yuvarlama</td><td>⌈1,5⌉ = 2</td></tr>
+    <tr><td>max(fits, key=…)</td><td>ölçüte göre en büyük</td><td>Sığan saldırılardan ağırlığı en büyük olan</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: kama formasyonu</h2>
+  <div class="simlab" data-sim="wedge" data-fns="wedgeSlot" data-lang="js">
+<textarea>
+// i: üye sırası (0, 1, 2, ...)   s: aralık
+// Döndür: liderin yerel çerçevesinde [ileri, sağ]
+// Kama: üyeler ikişer ikişer, her sırada bir adım geri ve
+//   bir adım daha yana; tek i → sağ (+), çift i → sol (−)
+//   i=0 → [-s, -s], i=1 → [-s, +s], i=2 → [-2s, -2s], ...
+function wedgeSlot(i, s) {
+  return [-s * (i + 1), 0];      // şimdilik: sütun!
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu üyeleri tek sıra (sütun) dizer. Kamaya çevirin: sıra numarası <code>r = Math.ceil((i + 1) / 2)</code>. Sonra fareyi gezdirin: lider dönünce kama da dönmeli. Bonus: kendi formasyonunuzu tasarlayın (testi bozar ama eğlencelidir).</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: Belçika YZ izinleri</h2>
+  <div class="ailab" data-lab="belgian" data-lang="python">
+<textarea>
+# requests: [[ad, ağırlık], ...]  (geliş sırasıyla)
+# capacity: oyuncunun ızgara kapasitesi
+# İzin verilenlerin ADLARINI sırayla döndür.
+def grant(requests, capacity):
+    granted = []
+    # TODO
+    return granted
+</textarea>
+    <div class="lab-tasks">Sığmayan isteği atlayın ama <b>durmayın</b>: sonraki küçük istek yine sığabilir (testte var). Boş istek listesi de test ediliyor.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: tim güveni</h2>
+  <div class="ailab" data-lab="confidence" data-lang="python">
+<textarea>
+# allies, enemies: güç listeleri, ör. [1, 0.5, 1]
+# oran = toplam(allies) / toplam(enemies)
+#   < 0.5 → "panicked"   < 0.8 → "worried"
+#   < 1.25 → "neutral"   < 2  → "confident"
+#   aksi hâlde "heroic"; düşman yoksa "heroic"
+def confidence(allies, enemies):
+    return "neutral"
+</textarea>
+    <div class="lab-tasks">Days Gone’un beş seviyesi (eşikler bizim seçimimiz). Müttefik listesi boşsa oran 0 → “panicked”. Sonra düşünün: güveni oyuncuya nasıl <b>gösterirdiniz</b>? (Ses, animasyon, diyalog.)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">motorlar ve oyununuz</div>
+  <ul class="agenda"><li class="done">neden grup YZ?</li><li class="done">formasyonlar</li><li class="done">saldırıları yönetmek</li><li class="done">tim koordinasyonu</li><li class="done">komuta zinciri ve kalabalık</li><li class="done">kod ve laboratuvarlar</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://github.com/libgdx/gdx-ai/wiki/Formation-Motion" target="_blank" rel="noopener"><b>gdx-ai Formation</b></a></td><td>Java (libGDX) · açık kaynak</td><td>Hazır formasyon sistemi: desenler, yuva atama stratejileri (serbest, sabit, göreli), formasyon hareket düzenleyicisi. Kod okumak için de çok iyi.</td><td>Gradle bağımlılığı</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/smart-objects-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Mass + Smart Objects</b></a></td><td>Unreal 5 · yerleşik</td><td>Mass: binlerce varlıklı kalabalık/trafik; Smart Objects: “bu bankta iki kişi oturabilir” gibi rezervasyonlu etkileşimler (bir tür jeton sistemi).</td><td>Plugins → MassEntity, MassAI, SmartObjects</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/environment-query-system-overview-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal EQS + StateTree</b></a></td><td>Unreal · yerleşik</td><td>Tim üyelerine konum seçmek (EQS, Y12) ve tim/rol durumlarını yönetmek (StateTree).</td><td>Yerleşik</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.entities@1.0/manual/index.html" target="_blank" rel="noopener"><b>Unity Entities (ECS)</b></a></td><td>Unity · resmî paket</td><td>Binlerce birimli sürü ve kalabalıklar için veri odaklı yapı; Jobs + Burst ile.</td><td>Package Manager → Entities</td></tr><tr><td><a href="https://arongranberg.com/astar/" target="_blank" rel="noopener"><b>A* Pathfinding Project (RVO)</b></a></td><td>Unity · Pro</td><td>Grup halinde yürüyen birimler için yerel kaçınma ve “aynı hedefe giden birimleri dağıtma”.</td><td>Asset Store</td></tr><tr><td><a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter28_Beyond_the_Kung-Fu_Circle_A_Flexible_System_for_Managing_NPC_Attacks.pdf" target="_blank" rel="noopener"><b>Kendi sisteminiz</b></a></td><td>her motor</td><td>Formasyonlar ve jeton/kapasite sistemleri genelde oyuna özel ve küçüktür (bu destedeki 30–40 satır). Motorların hazır “grup YZ” aracı yok denecek kadar azdır.</td><td>—</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Oyununuza grup YZ’si eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Önce saldırı yönetimi</b>: en ucuz ve en etkili adım. Basit bir jeton/kapasite sistemi, oyunun “adil” hissini hemen değiştirir.</li>
+      <li><b>Grup = YZ varlığı</b>: tim nesnesi yaratın; üyeleri listeler, rol dağıtır, ortak kara tahtayı tutar. Üyelerin BT’sine rol düğümleri ekleyin.</li>
+      <li><b>Konumlar</b>: rollerin nerede yapılacağını basit bir yapıdan (cephe hattı, saldırı çemberi) türetin; ayrıntıyı konum sorgusu (Y12) ile seçin.</li>
+      <li><b>Geri bildirim</b>: rol değişince bağırma/işaret animasyonu.</li>
+      <li><b>Zorluk</b>: kapasiteler, güven eşikleri, kanat dolanma sıklığı.</li>
+    </ol>
+    <div>
+      <div class="box warn"><span class="bt">Sık hatalar</span>
+        <ul style="font-size:.82em">
+          <li>Jetonu alıp ölen düşmanın jetonu geri vermemesi (kapasite sızıntısı)</li>
+          <li>Herkesin aynı siperi seçmesi (rezervasyon yok)</li>
+          <li>Bekleyen düşmanların “aptalca” durması: bekleme çemberinde yavaşça yer değiştirsinler, tehdit etsinler</li>
+          <li>Grup kararını her karede yeniden vermek: titreme (Y2, Y4)</li>
+        </ul></div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Grup kararları saniyede birkaç kez yeter; bireysel hareket her kare. Grup sayısı az, birey sayısı çok: maliyetin çoğu bireyde.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Ölen/devre dışı kalan birimin jetonunu bırakmamak</li><li>Formasyon ofsetini dünya koordinatında yazmak (lider dönünce bozulur)</li><li>Bütün düşmanları tek bir dev betikte yönetmek (her şey merkezî = her şey kırılgan)</li><li>Grup kararını bireyin acil durum tepkilerinin üstüne koymak</li><li>Kapasite/eşikleri koda gömmek; tasarımcının ayarlayamaması</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir aksiyon oyununda düşman saldırılarını yöneten StageManager yaz: oyuncunun gridCapacity ve attackCapacity değerleri ScriptableObject’ten (zorluk seviyesine göre) gelsin; düşman türlerinin gridWeight’i ve saldırılarının weight’leri olsun. İstekler adil bir kuyrukta beklesin; ölen, sersemleyen ya da 15 m’den uzaklaşan düşman jetonunu otomatik bıraksın. Bekleyen düşmanlar 8 m’lik çemberde yavaşça dolaşsın, izin alan 2.5 m’ye yaklaşsın. Debug için Gizmos ile çemberleri ve jeton sahiplerini çiz.”</p><ul class="mini"><li>Grubun kararlarını (roller, durumlar, eşikler) <b>siz</b> tasarlayın; asistan bağlantı kodunu yazsın</li><li>Jeton geri verme kurallarını (ölüm, sersemleme, menzilden çıkma) açıkça listeleyin</li><li>Rolün bireyin BT’sinde hangi öncelikte duracağını söyleyin</li><li>Debug görselleştirmesi: kimde jeton var, cephe hattı, roller</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu: öğrenen takımlar</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">OpenAI Five (2019)</span>Dota 2’de beş ajanlık bir takım, kendine karşı oynayarak (pekiştirmeli öğrenme) dünya şampiyonu takımı yendi. Koordinasyon elle yazılmadı; ortak ödülden “öğrenildi”. Bedeli: aylarca binlerce işlemcide eğitim.</div>
+    <div class="box game"><span class="bt">AlphaStar (2019)</span>StarCraft II’de büyükusta seviyesi (Nature). Birim gruplarını yöneten tek bir sinir ağı; çok ajanlı bir “lig” ile eğitildi. Oyun YZ’si için çok pahalı ama ilham verici.</div>
+    <div class="box low"><span class="bt">Saklambaçta ortaya çıkan alet kullanımı</span>OpenAI (2019): saklananlar ve arayanlar takımları, kimse öğretmeden kutularla barikat kurmayı, rampayı “kilitlemeyi” öğrendi. Basit kurallardan ortaya çıkan grup davranışının öğrenme versiyonu (Y13).</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kung-fu arena</b> — p5.js’te 8 düşmanlı arena: üç saldırı yönetimi modu (yok, tek tek, kapasite) arasında geçiş; oyuncu testleriyle hangisinin eğlenceli olduğunu ölçün.</li><li><b class="c-green">[kolay]</b> <b>Formasyon editörü</b> — Fareyle yuva yerleştirip formasyonu JSON olarak kaydeden küçük bir araç; Unity’de yükleyin.</li><li><b class="c-amber">[orta]</b> <b>Eskort görevi</b> — Bir VIP’i çember formasyonda koruyan 6 muhafız; saldırı gelince ikisi saldırgana yönelir (rol), diğerleri çemberi korur.</li><li><b class="c-amber">[orta]</b> <b>Güven sistemi</b> — Days Gone tarzı: güven seviyeleri + cephe hattı + dört tim durumu; düşman sayısını değiştirerek davranışı test edin.</li><li><b class="c-red">[zor]</b> <b>Komuta zinciri</b> — Bayrak kapmaca: komutan iki time hedef verir (saldır/savun), timler üyelere rol dağıtır, bireyler BT ile yürütür.</li><li><b class="c-purple">[araştırma]</b> <b>Öğrenen kanat</b> — ML-Agents ile iki ajanın “biri bastırır, biri dolanır” davranışını ortak ödülle öğrenip öğrenemediğini deneyin; elle yazılmış rol sistemiyle karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Grup hareketi: sürü, <b>formasyon</b>, sosyal grup; koordinasyon: ortaya çıkan vs merkezî.</li>
+      <li>Formasyon: lider çerçevesinde yuvalar, atama, hız = en yavaş üye, dar geçitte bozul/yeniden kur (Age of Empires).</li>
+      <li>Saldırı yönetimi: kung-fu çemberi; <b>Belçika YZ</b> (ızgara/saldırı kapasitesi, ağırlıklar, sahne yöneticisi) = zorluk düğmesi.</li>
+    </ul>
+    <ul>
+      <li>Tim: <b>Days Gone</b> — timler YZ varlığı, roller BT’ye takılır, <b>güven</b> beş seviye, <b>cephe hattı</b>, dört durum.</li>
+      <li>Komuta zinciri: <b>Killzone 3</b> — komutan → tim → birey.</li>
+      <li>Kalabalık: sosyal gruplar, Mass/ECS, LOD.</li>
+      <li>Sonraki bölüm: <b>algı ve taktik</b> — önce “ne görüyor, ne duyuyor?”.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=7TQ-WS3MPlE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7TQ-WS3MPlE/hqdefault.jpg" alt=""><span><b>Squad Coordination in ‘Days Gone’</b><br>GDC (Tobias Karlsson)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=tGHjB1Bu8b4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/tGHjB1Bu8b4/hqdefault.jpg" alt=""><span><b>Smart Enemy AI — Group Enemy Combat (jeton sistemi, UE5)</b><br>Ali Elzoheiry</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=99xyYhMHgIE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/99xyYhMHgIE/hqdefault.jpg" alt=""><span><b>Advanced Team AI — Coordinated Attack (UE)</b><br>CodeLikeMe</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=9hsxjfUqPcE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/9hsxjfUqPcE/hqdefault.jpg" alt=""><span><b>Dynamic Formations #2: Formations</b><br>Dev Students</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=5sW3o4yqgks" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/5sW3o4yqgks/hqdefault.jpg" alt=""><span><b>Group Movement — Unity RTS Devlog #05</b><br>VigsCodes</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Dawe 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter28_Beyond_the_Kung-Fu_Circle_A_Flexible_System_for_Managing_NPC_Attacks.pdf" target="_blank" rel="noopener">Beyond the Kung-Fu Circle: A Flexible System for Managing NPC Attacks</a> <i>(Game AI Pro, Bölüm 28)</i><br>Kingdoms of Amalur’un Belçika YZ’si.</div><div class="paper"><b>Karlsson 2021</b> · <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter12_Squad_Coordination_in_Days_Gone.pdf" target="_blank" rel="noopener">Squad Coordination in Days Gone</a> <i>(Game AI Pro Online, Bölüm 12)</i><br>Güven ve cephe hattı.</div><div class="paper"><b>Straatman, Verweij vd. 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter29_Hierarchical_AI_for_Multiplayer_Bots_in_Killzone_3.pdf" target="_blank" rel="noopener">Hierarchical AI for Multiplayer Bots in Killzone 3</a> <i>(Game AI Pro, Bölüm 29)</i><br>Komutan → tim → birey.</div><div class="paper"><b>Mars &amp; Chanut 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter20_Hierarchical_Architecture_for_Group_Navigation_Behaviors.pdf" target="_blank" rel="noopener">Hierarchical Architecture for Group Navigation Behaviors</a> <i>(Game AI Pro 2, Bölüm 20)</i><br>Sürü, formasyon, sosyal grup.</div><div class="paper"><b>Bjore 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter21_Techniques_for_Formation_Movement_Using_Steering_Circles.pdf" target="_blank" rel="noopener">Techniques for Formation Movement Using Steering Circles</a> <i>(Game AI Pro, Bölüm 21)</i><br>Formasyonun istenen yönde varması.</div><div class="paper"><b>Pottinger 1999</b> · <a href="https://www.gamedeveloper.com/programming/coordinated-unit-movement" target="_blank" rel="noopener">Coordinated Unit Movement / Implementing Coordinated Movement</a> <i>(Game Developer (Age of Empires))</i><br>RTS’de grup ve formasyon hareketi.</div><div class="paper"><b>Berner vd. (OpenAI) 2019</b> · <a href="https://arxiv.org/abs/1912.06680" target="_blank" rel="noopener">Dota 2 with Large Scale Deep Reinforcement Learning</a> <i>(arXiv 1912.06680)</i><br>OpenAI Five.</div><div class="paper"><b>Vinyals vd. 2019</b> · <a href="https://www.nature.com/articles/s41586-019-1724-z" target="_blank" rel="noopener">Grandmaster level in StarCraft II using multi-agent reinforcement learning</a> <i>(Nature 575)</i><br>AlphaStar.</div><div class="paper"><b>Baker vd. 2019</b> · <a href="https://arxiv.org/abs/1909.07528" target="_blank" rel="noopener">Emergent Tool Use From Multi-Agent Autocurricula</a> <i>(arXiv 1909.07528)</i><br>Saklambaç ajanları.</div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #4a0f2a 0%, #2c0c1d 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Algılama</div>
+    <div class="sub">Görüş konisi, duyma, hafıza: NPC’ler dünyayı nasıl “bilir”?</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ff7a8a" href="../yz-algilama/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
