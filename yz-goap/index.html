@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GOAP ve HTN</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Hedef odaklı eylem planlama (GOAP) ve hiyerarşik görev ağları (HTN): STRIPS, F.E.A.R. ve “Three States and a Plan”, A* ile plan arama, yeniden planlama, Trunk Thumper, Killzone, Horizon Zero Dawn, Shadow of Mordor, CrashKonijn GOAP, Fluid HTN, GTPyhop. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0f3a4a 0%, #1b1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 5</div>
+  <div class="ttl" style="font-size:84px">GOAP ve HTN</div>
+  <div class="sub"><i>Hedef, eylem, plan</i> — F.E.A.R.’ın askerleri neden “akıllı” göründü?</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegoap"></div>
+  <aside class="notes">Haftalık plandaki hedef odaklı eylem planlama (GOAP) konusu; yanına HTN planlayıcıları da ekledik. Arka planda bir askerin planı adım adım yanıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Plan nedir?</b> — tepki vermek ile plan yapmak; Shakey robotu ve STRIPS</li>
+      <li><b>F.E.A.R. ve GOAP</b> — “üç durum ve bir plan”</li>
+      <li><b>A* ile plan aramak</b> — dünya durumları bir graf (adım adım arama)</li>
+      <li><b>Canlı yeniden planlama</b> — kapıyı tutarsanız asker ne yapar?</li>
+      <li><b>Kod</b> — 40 satırlık planlayıcı + iki laboratuvar</li>
+      <li><b>HTN</b> — görevleri alt görevlere bölmek (Transformers, Killzone, Horizon)</li>
+      <li><b>Gerçek oyunlarda</b> — Shadow of Mordor, Tomb Raider, Deus Ex, Horizon Zero Dawn</li>
+      <li><b>Kütüphaneler</b> — CrashKonijn GOAP, ReGoap, Fluid HTN, GTPyhop, unified-planning</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir NPC’nin eylemlerini “ön koşul + etki + maliyet” olarak tanımlayabilecek, A* ile en ucuz planı bulabilecek, plan başarısız olunca yeniden planlayan bir asker yazabilecek ve GOAP ile HTN arasında bilinçli seçim yapabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ALMA ACIKTI (Orkin’in örneği)</span>
+    <p class="big">F.E.A.R.’daki Alma’nın amacı: <b>tok olmak</b>. İki yolu var: <b>pizza ısmarlamak</b> (para gerekir) ya da <b>pasta yapmak</b> (tarif gerekir).</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Parası yoksa? Önce <b>bankamatikten para çeker</b>, sonra pizza ısmarlar. İki eylemlik bir <b>plan</b>.</li>
+    <li class="fragment">Bunu hiçbir yerde “önce para çek, sonra ısmarla” diye yazmadık. Sadece her eylemin <b>neye ihtiyaç duyduğunu</b> (ön koşul) ve <b>neyi değiştirdiğini</b> (etki) söyledik.</li>
+    <li class="fragment">Eylemleri zincirlemek planlayıcının işi. Tasarımcı eylem ve hedef ekler; <b>geçişleri kimse yazmaz</b>. Bugünün konusu bu.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-fsm/">Y2 · Sonlu Durum Makineleri</a><a class="" href="../yz-davranis-agaclari/">Y3 · Davranış Ağaçları</a></div>
+  <div class="prereq"><a class="opt" href="../en-kisa-yollar/">En Kısa Yollar (Dijkstra)</a><a class="opt" href="../oncelik-kuyruklari/">Öncelik Kuyrukları</a><a class="opt" href="../yz-utility/">Y4 · Utility AI</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Planlayıcı, bir graf üzerinde en kısa yolu arar: Dijkstra’yı biliyorsanız A*’ı da anlarsınız. A*’ı Y8’de harita üzerinde ayrıntılı göreceğiz; burada sadece “maliyet + tahmin” fikri yeter.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>GOAP’ta tasarımcının işi <b>tablo doldurmaktır</b>: “bu eylem şunu ister, şunu değiştirir, şu kadar pahalıdır.” Arama kodu bir kez yazılır (ya da hazır alınır). Unity’de CrashKonijn GOAP eylemleri ScriptableObject/kod ile tanımlatır ve planı görsel olarak gösterir.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>planning · plan</td><td>planlama · plan</td><td>Hedefe götüren eylem dizisini önceden bulmak · o dizi</td></tr>
+    <tr><td>goal</td><td>hedef</td><td>Ulaşılmak istenen dünya durumu: “hedef etkisiz = doğru”</td></tr>
+    <tr><td>world state</td><td>dünya durumu</td><td>Planlayıcının bildiği gerçekler: silah dolu mu, hangi odadayım…</td></tr>
+    <tr><td>action · precondition · effect</td><td>eylem · ön koşul · etki</td><td>Eylem, ön koşulları doğruysa yapılabilir; yapılınca etkileri dünyayı değiştirir</td></tr>
+    <tr><td>cost</td><td>maliyet</td><td>Eylemin “pahalılığı”; planlayıcı en ucuz planı arar</td></tr>
+    <tr><td>replanning</td><td>yeniden planlama</td><td>Plan bozulunca yeni durumla baştan plan yapmak</td></tr>
+    <tr><td>STRIPS</td><td>—</td><td>Stanford Research Institute Problem Solver (1971): klasik planlama dili</td></tr>
+    <tr><td>GOAP</td><td>hedef odaklı eylem planlama</td><td>Goal-Oriented Action Planning: STRIPS’in oyunlara uyarlanmış hâli (F.E.A.R.)</td></tr>
+    <tr><td>HTN · compound / primitive task · method</td><td>hiyerarşik görev ağı · bileşik / ilkel görev · yöntem</td><td>Büyük görevleri “tarif kitabındaki” yöntemlerle alt görevlere bölerek plan yapmak</td></tr>
+    <tr><td>working memory</td><td>çalışma belleği</td><td>NPC’nin bildikleri ve hatırladıkları (kara tahtanın akrabası)</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Plan nedir?</div>
+  <div class="sub">refleks ile plan, Shakey ve STRIPS</div>
+  <ul class="agenda"><li class="on">plan nedir?</li><li class="">F.E.A.R. ve GOAP</li><li class="">A* ile plan aramak</li><li class="">canlı: yeniden planlama</li><li class="">kod ve laboratuvarlar</li><li class="">HTN: görevleri bölmek</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="plan nedir?">
+  <h2>Tepki vermek mi, plan yapmak mı?</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Şimdiye kadar: “şimdi ne yapayım?”</span>FSM, davranış ağacı ve utility her an <b>bir sonraki eylemi</b> seçer. Gelecek adımları düşünmez; durum değişince yeniden seçer. Refleks gibi: hızlı, öngörülebilir.</div>
+      <div class="box game"><span class="bt">Planlayıcı: “hedefe nasıl giderim?”</span>Bir <b>hedef</b> verilir; planlayıcı oraya götüren <b>eylem dizisini</b> arar. GPS gibi: “önce şuraya, sonra şuraya”. Yol kapanırsa <b>yeniden rota</b> hesaplar.</div>
+    </div>
+    <div>
+      <table class="sum-t" style="font-size:17px">
+        <tr><th></th><th>FSM / BT</th><th>GOAP / HTN</th></tr>
+        <tr><td>Kim karar sırasını yazar?</td><td>Tasarımcı (oklar, ağaç)</td><td>Planlayıcı (arama)</td></tr>
+        <tr><td>Yeni davranış eklemek</td><td>Geçiş / dal eklemek</td><td>Eylem eklemek</td></tr>
+        <tr><td>Beklenmedik çözümler</td><td>Yok</td><td>Var (bazen istenmeyen!)</td></tr>
+        <tr><td>Maliyet</td><td>Çok ucuz</td><td>Arama yapar: daha pahalı</td></tr>
+        <tr><td>Hata ayıklama</td><td>Kolay</td><td>Plan neden böyle? sorusu zor</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section data-sec="plan nedir?">
+  <h2>Hikâye: Shakey, ilk “düşünen” robot (SRI, 1966–1972) 🤖</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Stanford Research Institute’te kamerası, mesafe ölçeri ve tekerlekleri olan bir robot: <b>Shakey</b> (sarsıla sarsıla hareket ettiği için).</li>
+        <li>Ona “kutuyu diğer odaya it” gibi komutlar veriliyordu. Bunun için iki problem çözülmeliydi: <b>nasıl gideceğim?</b> ve <b>hangi sırayla ne yapacağım?</b></li>
+        <li>Birinci soru için Hart, Nilsson ve Raphael <b>A*</b> algoritmasını yayımladı (1968). İkincisi için Fikes ve Nilsson <b>STRIPS</b> planlayıcısını (1971).</li>
+        <li>Yani oyunlarda kullandığımız <b>yol bulma</b> ve <b>eylem planlama</b> aynı robotun iki beyninden doğdu.</li>
+      </ul>
+      <p style="font-size:.84em" class="fragment">35 yıl sonra Jeff Orkin, F.E.A.R.’da bu ikisini birleştirdi: A*’ı hem harita üzerinde yol, hem de <b>eylem uzayında plan</b> bulmak için kullandı.</p>
+    </div>
+    <div class="box story"><span class="bt">STRIPS’in özü</span>
+      <ul style="font-size:.82em">
+        <li><b>Hedef</b>: istenen dünya durumu</li>
+        <li><b>Eylem</b>: ön koşullar + etkiler (ekle/sil listeleri)</li>
+        <li>Planlayıcı: başlangıç durumundan hedefe götüren eylem dizisini <b>arar</b></li>
+      </ul>
+      <p class="mini">Bugün akademide aynı fikir PDDL diliyle ve Uluslararası Planlama Yarışması’nda yaşıyor.</p></div>
+  </div>
+</section>
+
+<section data-sec="plan nedir?">
+  <h2>Eylemler tablosu: Alma örneği</h2>
+  <div class="cols">
+    <table class="sum-t" style="font-size:18px">
+      <tr><th>eylem</th><th>ön koşul</th><th>etki</th><th>maliyet</th></tr>
+      <tr><td>Pizza ısmarla</td><td>para = ✔</td><td>tok = ✔</td><td>2</td></tr>
+      <tr><td>Pasta yap</td><td>tarif = ✔</td><td>tok = ✔</td><td>8</td></tr>
+      <tr><td>Para çek</td><td>—</td><td>para = ✔</td><td>3</td></tr>
+      <tr><td>Tarif bul</td><td>—</td><td>tarif = ✔</td><td>1</td></tr>
+    </table>
+    <div>
+      <p style="font-size:.86em">Hedef: <b>tok = ✔</b>. Başlangıç: hiçbir şey yok.</p>
+      <ul style="font-size:.84em">
+        <li class="fragment">Plan A: Para çek (3) → Pizza ısmarla (2) = <b>5</b></li>
+        <li class="fragment">Plan B: Tarif bul (1) → Pasta yap (8) = <b>9</b></li>
+        <li class="fragment">Planlayıcı en ucuzunu seçer: <b>Plan A</b>. Bankamatik bozuksa (Para çek başarısız) <b>yeniden planlar</b> → Plan B.</li>
+        <li class="fragment">Maliyetler bir <b>kişilik</b> de olabilir: tembel Alma için pasta 20 maliyetli, hevesli aşçı Alma için 2.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-sec="plan nedir?">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · plan nedir?</div>
+    <div class="q">GOAP’ta “önce şarjör tak, sonra ateş et” sırası nereden gelir?</div>
+    <div class="opts">
+      <button data-opt="A">“Ateş et”in ön koşulu “silah dolu”, “Şarjör tak”ın etkisi “silah dolu”; planlayıcı bu zinciri bulur</button>
+      <button data-opt="B">Tasarımcı iki eylem arasına bir geçiş oku çizer</button>
+      <button data-opt="C">Davranış ağacında sequence düğümü kullanılır</button>
+      <button data-opt="D">Eylemlerin listedeki sırasından</button>
+    </div>
+    <div class="explain">GOAP’ta eylemler arasında elle yazılmış geçiş yoktur. Bir eylemin <b>ön koşulunu</b> başka bir eylemin <b>etkisi</b> sağlıyorsa, planlayıcı ikisini zincirleyebilir. Sıra, aramanın sonucudur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">F.E.A.R. ve GOAP</div>
+  <div class="sub">“Three States and a Plan” (GDC 2006)</div>
+  <ul class="agenda"><li class="done">plan nedir?</li><li class="on">F.E.A.R. ve GOAP</li><li class="">A* ile plan aramak</li><li class="">canlı: yeniden planlama</li><li class="">kod ve laboratuvarlar</li><li class="">HTN: görevleri bölmek</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="F.E.A.R.">
+  <h2>Derin hikâye: F.E.A.R. (Monolith, 2005) 👻</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Oyuncular ve eleştirmenler F.E.A.R.’ın düşmanlarını yıllarca “oyun tarihinin en akıllı askerleri” listelerinde saydı: siper alıyor, körlemesine ateş ediyor, pencereden atlıyor, <b>masayı devirip</b> kendine siper yapıyor, takım hâlinde ilerliyor.</p>
+      <p style="font-size:.84em">Jeff Orkin’in GDC 2006 bildirisi “Three States and a Plan” bu zekânın sırrını açıkladı ve başlığıyla herkesi şaşırttı:</p>
+      <ul style="font-size:.84em">
+        <li>Karakterlerin FSM’inde sadece <b>üç durum</b> var: <b>Goto</b> (bir yere giderken animasyon oynat), <b>Animate</b> (animasyon oynat), <b>UseSmartObject</b> (aslında Animate’in veri güdümlü hâli). Yani gerçekte <b>iki durum</b>!</li>
+        <li>Zor iş, <b>hangi animasyonun ne zaman ve nereye giderken</b> oynatılacağına karar vermek. Bunu FSM değil, bir <b>planlayıcı</b> yapıyor.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Neden planlama?</span>Orkin: “FSM’ler <b>prosedürel</b>dir: her durumda ne yapılacağını ve ne zaman geçileceğini söylersiniz. Planlama <b>bildirimseldir</b>: YZ’ye hedeflerini ve eylemlerini söylersiniz, sıralamayı kendisi bulur.”</div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=PaOLBOuyswI" target="_blank" rel="noopener">Building the AI of F.E.A.R. with GOAP</a> ve <a href="https://www.youtube.com/watch?v=BmOOrh5lq7o" target="_blank" rel="noopener">The AI of F.E.A.R.</a> (AI and Games — kanalın ilk bölümü bu oyundu)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="F.E.A.R.">
+  <h2>Aynı hedefler, farklı eylemler: asker, suikastçı, fare</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Orkin’in örneği: GDC06 adlı hedef setinde sadece iki hedef var: <b>Devriye</b> ve <b>Düşmanı öldür</b>. Aynı seti üç farklı karaktere veriyorlar:</p>
+      <table class="sum-t" style="font-size:17px">
+        <tr><th>karakter</th><th>eylem seti</th><th>davranış</th></tr>
+        <tr><td>Asker</td><td>silahla ateş, siper…</td><td>Devriye gezer, oyuncuyu görünce ateş eder</td></tr>
+        <tr><td>Suikastçı</td><td>görünmezlik, duvara yapışma, yakın dövüş</td><td>Görünmez koşar, duvara yapışır, oyuncuyu görünce atlayıp yumruklar</td></tr>
+        <tr><td>Fare</td><td>sadece yürümek</td><td>Saldıramaz: “öldür” için <b>plan bulamaz</b>, düşük öncelikli “devriye”ye döner</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">💡 Ders: hedef ve eylemi ayır</span>Karakterin <b>ne istediği</b> (hedefler) ile <b>neler yapabildiği</b> (eylemler) ayrı listelerde. Yeni bir düşman türü = mevcut eylemlerden yeni bir karışım. F.E.A.R. ekibi sonradan eklenen bir düşmanı, hayaletin uçma eylemleriyle askerin ateş eylemlerini birleştirerek hızla yaptı.</div>
+      <div class="box story"><span class="bt">Hedefler yarışır</span>Her an en yüksek öncelikli hedef seçilir ve onun için plan aranır. Plan bulunamazsa sıradaki hedef denenir — utility (Y4) ile planlamanın buluşması.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="F.E.A.R.">
+  <h2>Planlamanın üç faydası (Orkin)</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">1) Hedef ile eylemi ayırmak</span>Önceki oyunları No One Lives Forever 2’de hedefler kendi içinde küçük FSM’lerdi ve bilgi paylaşmazlardı. F.E.A.R.’da hepsi ortak bir <b>çalışma belleği</b> kullanır.</div>
+    <div class="box game"><span class="bt">2) Katman katman davranış</span>Önce “kaçın” hedefi + iki eylem (yana yuvarlan, eğil). Sonra “siper al”. Sonra “siperdeyken vurulursan körlemesine ateş et”… Orkin buna soğanın katmanlarını eklemek der. <b>Geçişleri hiç elle yazmadılar.</b></div>
+    <div class="box low"><span class="bt">3) Dinamik problem çözme</span>Asker kapıyı açmaya çalışır; oyuncu kapıyı <b>bedeniyle tutuyorsa</b> açamaz → yeniden planlar, kapıyı <b>tekmeler</b> → yine olmaz → <b>pencereden atlar</b> ve yakın dövüşe girer. Başarısızlıklar belleğe yazılır, sonraki plan onları hesaba katar.</div>
+  </div>
+  <div class="box warn" style="margin-top:10px"><span class="bt">📜 NOLF2’den bir ders</span>Geliştirmenin sonlarında “karanlık bir odaya girince ışığı aç” isteği geldi. Eski sistemde her hedefin içindeki durum makinesine tek tek dokunmak gerekti: riskli ve zahmetli. GOAP’ta: bir <b>Işığı aç</b> eylemi (etkisi: ışık açık) ve “Git” eylemine bir <b>ışık açık</b> ön koşulu. Bitti.</div>
+</section>
+
+<section data-sec="F.E.A.R.">
+  <h2>STRIPS’ten GOAP’a: oyun için dört değişiklik</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>değişiklik</th><th>ne demek?</th><th>neden?</th></tr>
+    <tr><td><b>Eylem başına maliyet</b></td><td>Pizza 2, pasta 8</td><td>Tercih belirtmek; A* ile en ucuz planı aramak</td></tr>
+    <tr><td><b>Sabit boyutlu dünya durumu</b></td><td>Ekle/sil listeleri yerine bir dizi: <code>TargetDead</code>, <code>WeaponLoaded</code>, <code>OnVehicleType</code>, <code>AtNode</code>…</td><td>Hangi eylemin hangi koşulu sağladığını bulmak çok hızlı. Bedeli: aynı anda tek hedef, tek silah düşünülür; hangisi olduğuna planlayıcının dışındaki sistemler karar verir.</td></tr>
+    <tr><td><b>Prosedürel ön koşul</b></td><td>Diziye sığmayan kontroller için kod: “kaçabileceğim güvenli bir yol var mı?”</td><td>Pahalı kontroller (NavMesh’te yol arama) sadece gerektiğinde yapılır</td></tr>
+    <tr><td><b>Prosedürel etki</b></td><td>Etki anında değil, animasyon bitince uygulanır</td><td>Oyunda eylemler zaman alır</td></tr>
+  </table>
+  <p class="mini">F.E.A.R. aramayı hedeften geriye doğru (regressive) yaptı. Sonraki oyunlarda ileri arama da kullanıldı; Éric Jacopin’e göre ileri arama hata ayıklamada daha kolay. Bu destedeki demolar ileri arama yapıyor.</p>
+</section>
+
+<section data-sec="F.E.A.R.">
+  <h2>“Takım taktiği” yanılsaması</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">F.E.A.R.’da genel bir koordinatör, yakındaki askerleri periyodik olarak <b>timlere</b> ayırır. Sadece dört basit tim davranışı var:</p>
+      <ul style="font-size:.84em">
+        <li><b>Get-to-Cover</b>: biri bastırma ateşi yaparken diğerleri sipere</li>
+        <li><b>Advance-Cover</b>: biri ateşle örterken diğerleri daha yakın sipere</li>
+        <li><b>Orderly-Advance</b>: tek sıra ilerle, sondaki arkayı kollasın</li>
+        <li><b>Search</b>: ikili gruplarla odaları ara</li>
+      </ul>
+      <p style="font-size:.84em">Tim davranışı askerlere <b>emir</b> verir; emre uymak da askerin hedeflerinden biridir. Kaçmak gibi daha önemli bir hedef emri geçebilir.</p>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">💡 Kanat saldırısı yok!</span>Orkin: “F.E.A.R.’da karmaşık tim davranışları <b>hiç yok</b>.” Oyuncunun “bak, beni kanattan sardılar!” dediği an çoğu zaman şu: askere geçerli bir sipere gitme emri verilmiş, önünde duvar var, NavMesh arka yoldan dolaştırmış ve asker oyuncunun yanında çıkmış. <b>Kanat saldırısı, yol bulmanın yan etkisi.</b></div>
+      <div class="box game"><span class="bt">🗣️ Ve diyaloglar</span>Y1’de gördüğümüz gibi askerler ne yaptıklarını bağırarak anlatır (“Siper alıyorum!”, “Yandan dolaşıyor!”). Oyuncu bu açıklamaları duyunca ortaya çıkan davranışı <b>plan</b> olarak yorumlar.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="F.E.A.R.">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · F.E.A.R.</div>
+    <div class="q">F.E.A.R.’da fareye “Düşmanı öldür” hedefi verildiğinde ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Saldırı eylemi olmadığı için plan bulunamaz; fare daha düşük öncelikli Devriye hedefine geçer</button>
+      <button data-opt="B">Fare oyuncuya saldırır</button>
+      <button data-opt="C">Oyun hata verir</button>
+      <button data-opt="D">Tasarımcı fare için ayrı bir FSM yazmak zorundadır</button>
+    </div>
+    <div class="explain">Hedefler aynıdır ama eylem setleri farklıdır. Hiçbir eylem zinciri “hedef etkisiz” durumuna götürmüyorsa planlayıcı başarısız olur ve sıradaki hedef denenir. Ayrı kod yazmaya gerek yoktur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">A* ile plan aramak</div>
+  <div class="sub">düğüm = dünya durumu, kenar = eylem</div>
+  <ul class="agenda"><li class="done">plan nedir?</li><li class="done">F.E.A.R. ve GOAP</li><li class="on">A* ile plan aramak</li><li class="">canlı: yeniden planlama</li><li class="">kod ve laboratuvarlar</li><li class="">HTN: görevleri bölmek</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="A* ile plan">
+  <h2>Plan aramak = graf üzerinde en kısa yol</h2>
+  <div class="cols">
+    <svg viewBox="0 0 560 300" style="width:100%" font-family="Source Sans 3">
+      <defs><marker id="pg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
+      <g font-size="14" font-weight="700" text-anchor="middle">
+        <rect x="10" y="125" width="110" height="46" rx="10" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="65" y="153" style="fill:var(--ink)">{ }</text>
+        <rect x="215" y="35" width="120" height="46" rx="10" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="275" y="63" style="fill:var(--ink)">{para}</text>
+        <rect x="215" y="215" width="120" height="46" rx="10" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="275" y="243" style="fill:var(--ink)">{tarif}</text>
+        <rect x="430" y="125" width="120" height="46" rx="10" style="fill:var(--card);stroke:var(--green)" stroke-width="3.5"/><text x="490" y="153" style="fill:var(--ink)">{tok} 🎯</text>
+      </g>
+      <g style="stroke:var(--ink-2)" stroke-width="2.2" marker-end="url(#pg)" fill="none">
+        <line x1="120" y1="138" x2="212" y2="70"/><line x1="120" y1="158" x2="212" y2="228"/>
+        <line x1="335" y1="70" x2="428" y2="138"/><line x1="335" y1="228" x2="428" y2="160"/>
+      </g>
+      <g font-size="13" style="fill:var(--muted)" text-anchor="middle">
+        <text x="150" y="88">Para çek (3)</text><text x="150" y="222">Tarif bul (1)</text>
+        <text x="410" y="88">Pizza (2)</text><text x="410" y="222">Pasta (8)</text>
+      </g>
+    </svg>
+    <ul style="font-size:.86em">
+      <li><b>Düğüm</b>: bir dünya durumu (hangi gerçekler doğru)</li>
+      <li><b>Kenar</b>: o durumda ön koşulu tutan bir eylem; ok, etkilerin uygulandığı yeni duruma gider</li>
+      <li><b>Kenar ağırlığı</b>: eylemin maliyeti</li>
+      <li>Hedef: “tok” gerçeğini içeren herhangi bir durum</li>
+      <li class="fragment">Orkin: “A* aslında genel bir arama algoritmasıdır.” F.E.A.R. aynı A* kodunu hem NavMesh’te yol hem de bu grafta plan bulmak için kullandı.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="A* ile plan">
+  <h2>🎒 Tek slaytta A*</h2>
+  <div class="cols">
+    <ul style="font-size:.86em">
+      <li>Her düğüm için <b>g</b> = başlangıçtan buraya gerçek maliyet, <b>h</b> = buradan hedefe <b>tahmin</b>, <b>f = g + h</b>.</li>
+      <li><b>Açık liste</b> (öncelik kuyruğu): keşfedilmiş ama henüz genişletilmemiş düğümler. Her adımda <b>f’si en küçük</b> olanı çek.</li>
+      <li>Hedefse: bitti, geriye doğru ebeveynleri izleyerek planı çıkar. Değilse: ön koşulu tutan her eylem için yeni düğüm üret, açık listeye koy.</li>
+      <li><b>h = 0</b> ise A* = Dijkstra (En Kısa Yollar destesi). İyi bir h aramayı hızlandırır; h gerçek maliyeti <b>aşmamalı</b> ki en ucuz plan bulunsun.</li>
+    </ul>
+    <div>
+      <div class="box story"><span class="bt">Planlama için sezgi (h)</span>Basit ve yaygın: <b>hedefte olup henüz sağlanmamış gerçek sayısı</b>. “Hedef etkisiz” sağlanmadıysa h = 1. Her eylem en az 1 maliyetliyse ve tek bir eylem birden çok hedef gerçeğini aynı anda sağlamıyorsa bu tahmin asla fazla olmaz.</div>
+      <div class="box low"><span class="bt">⚙️ Neden hızlı?</span>Oyun planları kısadır (genellikle 1–6 eylem) ve bir karakterin eylem sayısı onlarla sınırlıdır. Jacopin, bu yüzden basit bir <b>genişlik öncelikli</b> ileri aramanın bile pratikte yeterli olduğunu gösterir.</div>
+      <p class="mini">A*’ı haritalarda Y8’de ayrıntılı göreceğiz.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="A* ile plan">
+  <h2>Adım adım plan arama 🔎</h2>
+  <div class="demo" data-demo="goapsearch"></div>
+</section>
+
+<section data-sec="A* ile plan">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 İZLEYİCİDE DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Varsayılan durumda adım adım ilerleyin: en ucuz plan <b>Cephane al → Şarjör tak → Kapıdan geç → Ateş et</b> (4). Kesikli kutular üretilmiş ama genişletilmemiş düğümler.</li>
+      <li>“🧠 kapı açılmıyor” kutusunu işaretleyin: plan kapı yerine <b>tekmeyi</b> kullanıyor. İkinci 🧠 kutusunu da işaretleyin: <b>pencere</b>.</li>
+      <li>“🧠 cephanelik boş”: silah doldurulamıyor; tek yol <b>Yumruk</b> (7). Ama dikkat: yumruk her zaman mümkündü, sadece pahalıydı!</li>
+      <li>“sezgiyi kapat”: kaç düğüm genişletildiğini karşılaştırın. Küçük problemde fark az; büyük alanlarda çok önemli.</li>
+      <li>“silah dolu” + “sağ odada”: tek adımlık plan. Planlayıcı gereksiz eylem eklemez.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="A* ile plan">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · A* ile plan</div>
+    <div class="q">Sezgi h = “sağlanmamış hedef gerçeği sayısı”. Hangi durumda bu sezgi gerçek kalan maliyeti <b>aşabilir</b> (ve A* en ucuz planı kaçırabilir)?</div>
+    <div class="opts">
+      <button data-opt="A">Maliyeti 1 olan tek bir eylem iki hedef gerçeğini birden sağlıyorsa</button>
+      <button data-opt="B">Bütün eylemlerin maliyeti 1 ve her eylem tek bir gerçeği sağlıyorsa</button>
+      <button data-opt="C">Hedefte tek bir gerçek varsa ve bütün maliyetler en az 1 ise</button>
+      <button data-opt="D">h her zaman 0 alınırsa</button>
+    </div>
+    <div class="explain">İki gerçek eksikse h = 2 der; ama maliyeti 1 olan tek bir eylem ikisini birden sağlıyorsa gerçek kalan maliyet 1’dir: sezgi <b>fazla tahmin</b> etti. A*’ın en ucuz planı garanti etmesi için h gerçek maliyeti aşmamalı. B ve C’de h her zaman güvenli; D’de h = 0, yani Dijkstra (her zaman güvenli ama yavaş). Bizim askerin hedefinde tek gerçek var: h en fazla 1, her eylem en az 1 maliyetli → güvenli.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Canlı: yeniden planlama</div>
+  <div class="sub">kapıyı tutun, cephaneliği boşaltın</div>
+  <ul class="agenda"><li class="done">plan nedir?</li><li class="done">F.E.A.R. ve GOAP</li><li class="done">A* ile plan aramak</li><li class="on">canlı: yeniden planlama</li><li class="">kod ve laboratuvarlar</li><li class="">HTN: görevleri bölmek</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="yeniden planlama">
+  <h2>F.E.A.R.’ın kapı sahnesi — canlı 🚪</h2>
+  <div class="demo" data-demo="goaplive"></div>
+</section>
+
+<section data-sec="yeniden planlama">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Hiçbir kutu işaretli değilken izleyin: dört adımlık plan sorunsuz yürüyor.</li>
+      <li>“🚪 kapıyı bedeninle tut” → ↺ Baştan. Asker kapıyı açmayı deniyor, <b>başarısız</b> oluyor, “kapı açılmıyor” bilgisini <b>çalışma belleğine</b> yazıyor ve yeniden planlıyor: <b>tekme</b>. O da olmayınca <b>pencere</b>. Orkin’in GDC’de anlattığı sahnenin aynısı.</li>
+      <li>“📭 cephanelik boş” → ↺ Baştan: cephane alamayınca plan yumruğa dönüyor.</li>
+      <li>İkisini birden işaretleyin. Kaç kez yeniden planlıyor? Toplam süre ne kadar uzadı?</li>
+      <li>Günlükte her planın maliyetine bakın: her başarısızlıktan sonra plan biraz <b>daha pahalı</b> ama hâlâ <b>mümkün olan en ucuz</b>.</li>
+    </ol>
+  </div>
+  <p class="mini">Önemli tasarım ayrıntısı: başarısızlık bilgisi bir “gerçek” olarak dünya durumuna yazılıyor (🧠). Eylemlerin ön koşulları da bu gerçeklere bakıyor. Böylece planlayıcı aynı hatayı tekrar etmiyor.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">eylem = veri, planlayıcı = 40 satır</div>
+  <ul class="agenda"><li class="done">plan nedir?</li><li class="done">F.E.A.R. ve GOAP</li><li class="done">A* ile plan aramak</li><li class="done">canlı: yeniden planlama</li><li class="on">kod ve laboratuvarlar</li><li class="">HTN: görevleri bölmek</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: sözlük, kopya ve öncelik kuyruğu</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Dünya durumu = sözlük</span><code>{"loaded": True, "inB": False}</code>. Anahtar → değer. Sözlükte olmayan anahtarı <b>yanlış</b> kabul edeceğiz: <code>s.get("loaded", False)</code>.</div>
+      <div class="box warn"><span class="bt">⚠️ Kopyalamadan değiştirme!</span>Arama, aynı anda birçok olası geleceği dener. Bir eylemin etkisini uygularken <b>orijinal durumu değiştirirseniz</b> diğer dallar da bozulur. Önce kopyala: <code>yeni = dict(s)</code> / <code>{...s}</code> / <code>new Dictionary&lt;,&gt;(s)</code>.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Öncelik kuyruğu</span>“En küçüğü hızlı ver” diyen yapı (Öncelik Kuyrukları destesindeki yığın/heap). Python: <code>heapq.heappush</code>, <code>heapq.heappop</code>. Küçük planlarda basit bir listeyi her adımda sıralamak da yeter.</div>
+      <div class="box low"><span class="bt">Eylem = veri</span>Eylemler kod değil, <b>tablo satırı</b>: ad, ön koşul sözlüğü, etki sözlüğü, maliyet. Tasarımcılar bunları bir dosyada / ScriptableObject’te düzenleyebilir; F.E.A.R.’da GDBEdit adlı veritabanı aracındaydı.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Eylemler ve iki yardımcı</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="3-8|11|13-18|20-25"><script type="text/template">
+using System.Collections.Generic;
+
+public class GoapAction {
+    public string name;
+    public float cost;
+    public Dictionary<string, bool> pre = new();
+    public Dictionary<string, bool> eff = new();
+}
+
+public static class Goap {
+    static bool Get(Dictionary<string, bool> s, string k) => s.TryGetValue(k, out var v) && v;
+
+    // s, cond’daki bütün gerçekleri sağlıyor mu?
+    public static bool Satisfies(Dictionary<string, bool> s, Dictionary<string, bool> cond) {
+        foreach (var kv in cond)
+            if (Get(s, kv.Key) != kv.Value) return false;
+        return true;
+    }
+
+    // Etkileri uygulanmış YENİ bir durum (orijinal değişmez)
+    public static Dictionary<string, bool> Apply(Dictionary<string, bool> s, Dictionary<string, bool> eff) {
+        var n = new Dictionary<string, bool>(s);
+        foreach (var kv in eff) n[kv.Key] = kv.Value;
+        return n;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const actions = [
+  { name: "Cephane al",  pre: { inB: false, armoryEmpty: false }, eff: { hasAmmo: true }, cost: 1 },
+  { name: "Şarjör tak",  pre: { hasAmmo: true }, eff: { loaded: true, hasAmmo: false }, cost: 1 },
+  { name: "Kapıdan geç", pre: { inB: false, doorStuck: false }, eff: { inB: true }, cost: 1 },
+  { name: "Ateş et",     pre: { inB: true, loaded: true }, eff: { targetDead: true }, cost: 1 },
+  { name: "Yumruk",      pre: { inB: true }, eff: { targetDead: true }, cost: 6 },
+];
+
+const get = (s, k) => !!s[k];                         // yoksa false
+const satisfies = (s, cond) => Object.keys(cond).every(k => get(s, k) === cond[k]);
+const apply = (s, eff) => ({ ...s, ...eff });         // kopyala + üzerine yaz
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+actions = [
+    ("Cephane al",  {"inB": False, "armoryEmpty": False}, {"hasAmmo": True}, 1),
+    ("Şarjör tak",  {"hasAmmo": True}, {"loaded": True, "hasAmmo": False}, 1),
+    ("Kapıdan geç", {"inB": False, "doorStuck": False}, {"inB": True}, 1),
+    ("Ateş et",     {"inB": True, "loaded": True}, {"targetDead": True}, 1),
+    ("Yumruk",      {"inB": True}, {"targetDead": True}, 6),
+]
+
+def satisfies(s, cond):
+    return all(s.get(k, False) == v for k, v in cond.items())
+
+def apply(s, eff):
+    n = dict(s)          # kopya!
+    n.update(eff)
+    return n
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Planlayıcı: A* (ya da sezgisiz hâli Dijkstra)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="4-6|8-9|11-14|15-21"><script type="text/template">
+import heapq, itertools
+
+def plan(start, goal, actions):
+    def h(s):                                     # sağlanmamış hedef gerçeği sayısı
+        return sum(1 for k, v in goal.items() if s.get(k, False) != v)
+    key = lambda s: tuple(sorted(k for k, v in s.items() if v))
+    tie = itertools.count()                       # eşitlikte sıra bozulmasın
+    open_ = [(h(start), next(tie), 0, start, [])]
+    best = {key(start): 0}
+    while open_:
+        f, _, g, s, path = heapq.heappop(open_)
+        if satisfies(s, goal):
+            return path, g                        # eylem adları ve toplam maliyet
+        for name, pre, eff, cost in actions:
+            if not satisfies(s, pre):
+                continue
+            s2, g2 = apply(s, eff), g + cost
+            if g2 < best.get(key(s2), float("inf")):
+                best[key(s2)] = g2
+                heapq.heappush(open_, (g2 + h(s2), next(tie), g2, s2, path + [name]))
+    return None, float("inf")                     # plan yok
+
+print(plan({}, {"targetDead": True}, actions))
+# (['Cephane al', 'Şarjör tak', 'Kapıdan geç', 'Ateş et'], 4)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity’nin .NET sürümünde PriorityQueue olmayabilir: küçük planlarda liste + en küçüğü seç yeter
+public static List<GoapAction> Plan(Dictionary<string, bool> start,
+                                    Dictionary<string, bool> goal, List<GoapAction> actions) {
+    var open = new List<Node> { new Node(start, 0f, null, null) };
+    var best = new Dictionary<string, float> { [Key(start)] = 0f };
+    while (open.Count > 0) {
+        int bi = 0;                                           // f’si en küçük düğüm
+        for (int i = 1; i < open.Count; i++)
+            if (open[i].g + H(open[i].s, goal) < open[bi].g + H(open[bi].s, goal)) bi = i;
+        Node n = open[bi]; open.RemoveAt(bi);
+        if (Satisfies(n.s, goal)) return n.Path();
+        foreach (var a in actions) {
+            if (!Satisfies(n.s, a.pre)) continue;
+            var s2 = Apply(n.s, a.eff); float g2 = n.g + a.cost; string k = Key(s2);
+            if (best.TryGetValue(k, out float old) && old <= g2) continue;
+            best[k] = g2;
+            open.Add(new Node(s2, g2, n, a));
+        }
+    }
+    return null;                                              // plan yok
+}
+// Node: (durum, g, ebeveyn, eylem); Path(): ebeveynleri izleyip eylemleri ters sırayla döndürür
+// Key(s): doğru olan anahtarların sıralı birleşimi, ör. "hasAmmo,inB"
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Planı yürütmek ve yeniden planlamak</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="3-5|9-15|17-19|20-21"><script type="text/template">
+public class GoapAgent : MonoBehaviour {
+    public List<GoapAction> actions;                        // tasarımcının eylem listesi
+    Dictionary<string, bool> memory = new();               // çalışma belleği (algı yazar)
+    Queue<GoapAction> plan;
+    float replanTimer;
+
+    void Update() {
+        replanTimer -= Time.deltaTime;
+        if (plan == null || plan.Count == 0 || replanTimer <= 0f) {
+            var goal = ChooseGoal();                        // en öncelikli hedef (utility olabilir!)
+            var p = Goap.Plan(memory, goal, actions);
+            plan = p != null ? new Queue<GoapAction>(p) : null;
+            replanTimer = 1f;                               // dünya değişse de saniyede en fazla 1
+        }
+        if (plan == null) return;                           // sıradaki hedefi dene / boşta bekle
+        var a = plan.Peek();
+        if (!Goap.Satisfies(memory, a.pre)) { plan = null; return; }   // dünya değişti
+        Status r = Execute(a);                              // animasyon, NavMesh hareketi…
+        if (r == Status.Success) { foreach (var kv in a.eff) memory[kv.Key] = kv.Value; plan.Dequeue(); }
+        else if (r == Status.Failure) { RememberFailure(a); plan = null; }  // ör. memory["doorStuck"] = true
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Üç sinyal yeniden planlamayı tetikler: plan bitti, bir eylem başarısız oldu, sıradaki eylemin ön koşulu artık tutmuyor (ör. hedef kaçtı). Ek olarak periyodik yeniden planlama, daha önemli bir hedefin ortaya çıkmasını yakalar.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>Dictionary&lt;string, bool&gt; · dict · {}</td><td>sözlük</td><td>Anahtar → değer tablosu; dünya durumu için ideal</td></tr>
+    <tr><td>s.TryGetValue(k, out var v) · s.get(k, False)</td><td>güvenli okuma</td><td>Anahtar yoksa hata yerine varsayılan değer</td></tr>
+    <tr><td>{ ...s, ...eff } · dict(s); n.update(eff)</td><td>kopyalayıp birleştirme</td><td>Önce s’nin kopyası, sonra eff’teki anahtarlar üzerine yazılır</td></tr>
+    <tr><td>all(... for ...) · every(...)</td><td>hepsi mi?</td><td>Bütün elemanlar için koşul doğruysa True</td></tr>
+    <tr><td>heapq.heappush / heappop</td><td>yığın (heap)</td><td>Python’un öncelik kuyruğu: en küçük ilk çıkar</td></tr>
+    <tr><td>itertools.count()</td><td>sayaç</td><td>Eşit f değerlerinde karşılaştırma hatasını önleyen sıra numarası</td></tr>
+    <tr><td>Queue&lt;T&gt; · Peek · Dequeue</td><td>kuyruk</td><td>Plan adımları: sıradakine bak · sıradakini çıkar</td></tr>
+    <tr><td>float("inf")</td><td>sonsuz</td><td>“Henüz yol bilinmiyor” başlangıç değeri</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: askerin eylem tablosu</h2>
+  <div class="simlab" data-sim="goap" data-fns="actions" data-lang="js">
+<textarea>
+// Eylemleri VERİ olarak yazın:
+//   ad, ön koşul, etki, maliyet.
+// Gerçekler: inB, hasAmmo, loaded,
+//   targetDead, doorStuck, kickFailed,
+//   armoryEmpty (son üçü hafıza)
+// Adlar: "Cephane al", "Şarjör tak",
+//   "Kapıdan geç", "Kapıyı tekmele",
+//   "Pencereden atla", "Ateş et", "Yumruk"
+function actions() {
+  return [
+    { name: "Cephane al", cost: 1,
+      pre: { inB: false, armoryEmpty: false },
+      eff: { hasAmmo: true } },
+    { name: "Şarjör tak", cost: 1,
+      pre: { hasAmmo: true },
+      eff: { loaded: true, hasAmmo: false } },
+    { name: "Kapıdan geç", cost: 1,
+      pre: { inB: false, doorStuck: false },
+      eff: { inB: true } },
+    { name: "Ateş et", cost: 1,
+      pre: { inB: true, loaded: true },
+      eff: { targetDead: true } },
+    // TODO: Kapıyı tekmele (3), Pencereden atla (5),
+    //       Yumruk (6)
+  ];
+}
+</textarea>
+    <div class="lab-tasks">Kapı tutulduğu için başlangıçta asker takılıp kalıyor. Eksik üç eylemi ekleyin: tekme <b>kickFailed</b> değilse çalışır, pencere her zaman, yumruk B odasında. Test beş senaryoda <b>en ucuz plan maliyetini</b> kontrol eder (4, 6, 8, 7, 1). Sonra maliyetlerle oynayın: pencere 2 olursa asker kapıyı hiç denemez mi?</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: en ucuz planın maliyeti</h2>
+  <div class="ailab" data-lab="plancost" data-lang="python">
+<textarea>
+import heapq, itertools
+
+# start, goal: sözlük
+# actions: [[ad, pre, eff, cost], ...]
+# EN UCUZ planın toplam maliyetini döndür.
+# Plan yoksa None.
+# Sözlükte olmayan anahtar = False.
+def plan_cost(start, goal, actions):
+    def ok(s, cond):
+        return all(s.get(k, False) == v for k, v in cond.items())
+    tie = itertools.count()
+    open_ = [(0, next(tie), start)]
+    seen = set()
+    while open_:
+        g, _, s = heapq.heappop(open_)
+        # TODO 1: s hedefi sağlıyorsa g'yi döndür
+        key = tuple(sorted(k for k, v in s.items() if v))
+        if key in seen:
+            continue
+        seen.add(key)
+        # TODO 2: ön koşulu tutan her eylem için
+        #   yeni durum = kopya + etkiler;
+        #   (g + cost, next(tie), yeni) kuyruğa
+    return None
+</textarea>
+    <div class="lab-tasks">İki TODO’yu doldurun (Dijkstra = sezgisiz A*). Testlerde askerin bütün senaryoları, Alma’nın pizza/pasta problemi ve bir etkinin başka bir gerçeği <b>sildiği</b> (False yaptığı) zor bir örnek var.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">HTN: görevleri bölmek</div>
+  <div class="sub">tarif kitabıyla planlama</div>
+  <ul class="agenda"><li class="done">plan nedir?</li><li class="done">F.E.A.R. ve GOAP</li><li class="done">A* ile plan aramak</li><li class="done">canlı: yeniden planlama</li><li class="done">kod ve laboratuvarlar</li><li class="on">HTN: görevleri bölmek</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="HTN">
+  <h2>HTN: hiyerarşik görev ağları</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">GOAP serbestçe arar: “hangi eylemler hedefe götürür?” HTN ise <b>yukarıdan aşağı</b> böler: “bu büyük görevi nasıl yaparım?”</p>
+      <ul style="font-size:.84em">
+        <li><b>Bileşik görev</b> (compound): “Düşmana saldır”. Kendi başına yapılamaz, <b>bölünür</b>.</li>
+        <li><b>Yöntem</b> (method): bir bileşik görevi bölmenin bir yolu + ne zaman geçerli olduğu. “Elinde kütük varsa: düşmana git, kütükle vur.”</li>
+        <li><b>İlkel görev</b> (primitive): doğrudan yapılabilen eylem; koşulu ve etkisi var.</li>
+        <li>Planlayıcı kökten başlar, ilk uygun yöntemi seçer, alt görevleri sırayla ayrıştırır. Bir şey tutmazsa <b>geri izler</b> ve sonraki yöntemi dener.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Benzetme: yemek tarifi</span>“Akşam yemeği hazırla” → (yöntem: misafir varsa) “çorba + ana yemek + tatlı” → “ana yemek” → (yöntem: fırın çalışıyorsa) “fırında tavuk”… Usta aşçının <b>bilgisi</b>, yöntemlerde saklı.</div>
+      <div class="box game"><span class="bt">BT’ye benziyor mu?</span>Troy Humphreys: HTN’ler davranış ağaçlarının modülerliğini taşır, ama BT’lerden farklı olarak eylemlerin <b>etkileri hakkında akıl yürütebilir</b>: “kütüğü vurunca elimde kütük kalmayacak” bilgisini plan sırasında kullanır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="HTN">
+  <h2>Trunk Thumper: köprü bekçisi trol 🧌</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Humphreys’in Game AI Pro’daki örneği (Transformers: Fall of Cybertron ekibinden):</p>
+      <ul style="font-size:.84em">
+        <li><b>Trunk Thumper ol</b> → (düşmanı görüyorsa) <b>Düşmana saldır</b> · (aksi hâlde) <b>Devriye</b></li>
+        <li><b>Düşmana saldır</b> → (elinde kütük varsa) düşmana git, kütükle vur · (yoksa) ağaç bul, ağacı sök, düşmana git, kütükle vur</li>
+        <li><b>Devriye</b> → köprü seç, köprüye git, köprüyü kontrol et</li>
+      </ul>
+      <p style="font-size:.84em">Sonra tasarımcılar fikir değiştirir (“kütük saldırısı çok güçlü, vurduktan sonra kütük kırılsın”): yalnızca bir yöntem ve bir etki değişir.</p>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Neden hızlı?</span>Arama maliyet ve sezgi kullanmaz; yöntemler sıralıdır ve hiyerarşi, ağın büyük kısımlarını baştan eler. Humphreys: bu özellikler sayesinde Fall of Cybertron’daki HTN planlayıcı, önceki oyun <b>War for Cybertron</b>’da kullandıkları <b>GOAP</b> sisteminden belirgin şekilde daha hızlıydı.</div>
+      <div class="box warn"><span class="bt">Bedel</span>HTN “yaratıcı” değildir: yöntemlerde yazmadığınız bir çözümü bulamaz. GOAP’ın pencereden atlama gibi beklenmedik zincirleri HTN’de ancak siz bir yöntem olarak yazarsanız çıkar.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="HTN">
+  <h2>HTN ayrıştırması — adım adım 🧌</h2>
+  <div class="demo" data-demo="htn"></div>
+</section>
+
+<section data-sec="HTN">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Varsayılan: trol düşmanı görüyor ama elinde kütük yok. “kütük yoksa” yöntemi seçiliyor; <b>Ağacı sök</b> görevi planlama sırasındaki dünya durumunu “elinde kütük var” yapıyor ve sonraki <b>Kütükle vur</b> bu sayede uygulanabiliyor.</li>
+      <li>“yakında ağaç var”ı kapatın: <b>Ağaç bul</b> başarısız → geri izleme → saldırı yöntemi kalmadı → kök görev bir sonraki yönteme, <b>Devriye</b>’ye geçiyor.</li>
+      <li>“düşmana yol var”ı kapatın: iki saldırı yöntemi de “Düşmana git”te tıkanıyor. Kaç adım boşa gitti?</li>
+      <li>“düşmanı görüyor”u kapatın: ilk yöntem hiç denenmiyor.</li>
+    </ol>
+  </div>
+  <p class="mini">Yığına dikkat: HTN’de “plan” sadece ilkel görevlerden oluşur; bileşik görevler planlama bitince ortadan kalkar.</p>
+</section>
+
+<section data-sec="HTN">
+  <h2>HTN planlayıcının kalbi (Python)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="2-15|17-23|24-29"><script type="text/template">
+# Alan: bileşik görev → [(koşul, [alt görevler]), ...] · ilkel görev → (koşul, etki)
+methods = {
+    "BeTrunkThumper": [(lambda s: s["sees_enemy"], ["AttackEnemy"]),
+                       (lambda s: True,            ["Patrol"])],
+    "AttackEnemy":    [(lambda s: s["has_trunk"],  ["NavigateToEnemy", "DoTrunkSlam"]),
+                       (lambda s: True,            ["FindTree", "UprootTrunk", "NavigateToEnemy", "DoTrunkSlam"])],
+    "Patrol":         [(lambda s: True,            ["ChooseBridge", "NavigateToBridge", "CheckBridge"])],
+}
+primitives = {
+    "NavigateToEnemy": (lambda s: s["path_to_enemy"], {}),
+    "DoTrunkSlam":     (lambda s: s["has_trunk"],     {"has_trunk": False}),
+    "FindTree":        (lambda s: s["tree_nearby"],   {}),
+    "UprootTrunk":     (lambda s: True,               {"has_trunk": True}),
+    "ChooseBridge": (lambda s: True, {}), "NavigateToBridge": (lambda s: True, {}), "CheckBridge": (lambda s: True, {}),
+}
+
+def decompose(tasks, s, plan=()):
+    if not tasks:
+        return list(plan)                              # bitti
+    task, rest = tasks[0], tasks[1:]
+    if task in primitives:
+        cond, eff = primitives[task]
+        if not cond(s):
+            return None                                # geri izle
+        return decompose(rest, {**s, **eff}, plan + (task,))
+    for cond, subtasks in methods[task]:               # yöntemleri sırayla dene
+        if cond(s):
+            result = decompose(subtasks + rest, s, plan)
+            if result is not None:
+                return result
+    return None
+
+print(decompose(["BeTrunkThumper"], {"sees_enemy": True, "has_trunk": False,
+                                      "tree_nearby": True, "path_to_enemy": True}))
+# ['FindTree', 'UprootTrunk', 'NavigateToEnemy', 'DoTrunkSlam']
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Bu, Dana Nau’nun SHOP/Pyhop planlayıcılarının sade bir hâli. Özyineleme sayesinde geri izleme bedava: bir dal <code>None</code> dönerse döngü bir sonraki yöntemi dener.</p>
+</section>
+
+<section data-sec="HTN">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 4 · HTN</div>
+    <div class="q">Trol düşmanı görüyor, elinde kütük yok ve yakında ağaç da yok. HTN planlayıcı ne üretir?</div>
+    <div class="opts">
+      <button data-opt="A">Saldırı yöntemlerinin ikisi de başarısız olur; geri izleyip Devriye planını üretir</button>
+      <button data-opt="B">Kütük olmadan Kütükle vur’u plana koyar</button>
+      <button data-opt="C">Hata verip durur</button>
+      <button data-opt="D">Kendi başına yeni bir “taş at” eylemi icat eder</button>
+    </div>
+    <div class="explain">İlk saldırı yöntemi “elinde kütük var” koşulunda, ikincisi “Ağaç bul”un koşulunda tıkanır. Planlayıcı geri izleyip kök görevin sonraki yöntemine (Devriye) geçer. HTN alan dosyasında olmayan bir eylemi asla icat etmez — bu hem güvencesi hem sınırıdır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Gerçek oyunlarda</div>
+  <div class="sub">Monolith, Crystal Dynamics, Guerrilla, High Moon</div>
+  <ul class="agenda"><li class="done">plan nedir?</li><li class="done">F.E.A.R. ve GOAP</li><li class="done">A* ile plan aramak</li><li class="done">canlı: yeniden planlama</li><li class="done">kod ve laboratuvarlar</li><li class="done">HTN: görevleri bölmek</li><li class="on">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>GOAP’ın 20 yılı</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">F.E.A.R. (2005) → Shadow of Mordor (2014)</span>Monolith GOAP’ı geliştirmeye devam etti. GDC 2015’teki “Goal-Oriented Action Planning: Ten Years Old and No Fear!” oturumu, sistemin Middle-earth: Shadow of Mordor’da nasıl büyüdüğünü anlatır.</div>
+      <div class="box game"><span class="bt">Tomb Raider (2013) ve devamı</span>Crystal Dynamics aynı oturumda GOAP’ın ürettiği “çoğu zaman yeni ya da beklenmedik” davranışların nasıl <b>hata ayıklandığını ve raporlandığını</b> anlattı. Planlayıcıların gerçek sorunu: beklenmedik davranış hem güzellik hem baş ağrısı.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Deus Ex: Human Revolution — Director’s Cut (2013)</span>Jacopin’in Game AI Pro 2 bölümünde GOAP’ın hâlâ kullanıldığı örnekler arasında sayılır; bu oyunlarda bazen ileri arama tercih edildi.</div>
+      <div class="box game"><span class="bt">Transformers: War for Cybertron (2010)</span>High Moon Studios GOAP kullandı; devam oyununda HTN’e geçti (sonraki slayt).</div>
+      <div class="box story"><span class="bt">Türler</span>GOAP özellikle <b>taktik nişancı</b> ve <b>sızma</b> oyunlarında parlar: kısa planlar, çok sayıda koşul, beklenmedik engeller. Simülasyonlarda (köylüler odun toplar, alet yapar, ev kurar) da sık kullanılır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>HTN: Killzone’dan Horizon’a</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">Killzone 2 ve 3 (Guerrilla)</span>Çok oyunculu botlar HTN ile çalıştı. Killzone 3’te botların ve <b>taretlerin</b> aynı planlayıcıyı kullandığı, akademideki SHOP planlayıcısına (Lisp) dayanan ve alanları C++’a derleyen bir sistem anlatılıyor (Straatman, Verweij vd., Game AI Pro 29. bölüm).</div>
+      <div class="box game"><span class="bt">Transformers: Fall of Cybertron (2012)</span>Önceki oyundaki GOAP’ın yerine HTN; daha hızlı ve tasarımcıların “önce şunu dene” sezgisine daha uygun.</div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Horizon Zero Dawn (2017) ve Forbidden West</span>Makineler bireysel ajan; HTN planlayıcıdan “yeni bölgeye git”, “insana saldır”, “güvenliğe kaç” gibi görevler için plan ister. Sürüleri bir <b>grup ajanı</b> (oyunda fiziksel olarak yok) yönetir: kara tahtasıyla bilgi paylaşır, kimin saldıracağını seçer — sadece planlayıcı “yapabilir” dediği için değil, saldırı <b>ilginç</b> olacağı için. Diğer makineler sıralarını beklerken oyuncunun etrafında döner.</div>
+      <p class="mini">Guerrilla’nın Decima motoru HTN’i geliştirmeye devam ediyor: “HTN Planning in Decima” (Tim Verweij, 2024) Prolog benzeri geri izlemeyi ve oyun içi hata ayıklamayı anlatıyor.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="gerçek oyunlar">
+  <h2>Ne zaman planlayıcı, ne zaman değil?</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th></th><th>FSM / BT</th><th>Utility</th><th>GOAP</th><th>HTN</th></tr>
+    <tr><td>Karar</td><td>kural / öncelik</td><td>puan</td><td>serbest arama</td><td>yöntemlerle bölme</td></tr>
+    <tr><td>Tasarımcı kontrolü</td><td>çok yüksek</td><td>yüksek</td><td>orta</td><td>yüksek</td></tr>
+    <tr><td>Beklenmedik çözüm</td><td>yok</td><td>az</td><td><b>çok</b></td><td>az</td></tr>
+    <tr><td>İşlemci</td><td>çok ucuz</td><td>ucuz</td><td>arama (kontrollü)</td><td>arama (hızlı)</td></tr>
+    <tr><td>Uygun olduğu yer</td><td>basit düşmanlar, boss</td><td>simülasyon, RPG ekip</td><td>taktik nişancı, sızma</td><td>büyük, sürü / tim YZ’si</td></tr>
+  </table>
+  <div class="box warn fragment" style="margin-top:10px"><span class="bt">⚠️ Planlayıcının tuzakları</span>Çok fazla eylem → arama patlar (eylem sayısını ve dünya durumunu küçük tutun). Gerçek dünya plan bitmeden değişir (sık yeniden planlayın ama çok sık değil). Oyuncu davranışı “anlamazsa” zekâ boşa gider (Y1: F.E.A.R. bu yüzden diyalog kullandı).</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b0f3a 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">Unity, C#, Python ve PDDL dünyası</div>
+  <ul class="agenda"><li class="done">plan nedir?</li><li class="done">F.E.A.R. ve GOAP</li><li class="done">A* ile plan aramak</li><li class="done">canlı: yeniden planlama</li><li class="done">kod ve laboratuvarlar</li><li class="done">HTN: görevleri bölmek</li><li class="done">gerçek oyunlarda</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://github.com/crashkonijn/GOAP" target="_blank" rel="noopener"><b>CrashKonijn GOAP</b></a></td><td>Unity · açık kaynak</td><td>Çok iş parçacıklı (Jobs) GOAP, görsel hata ayıklayıcı (planı ve maliyetleri gösterir), ScriptableObject veya kodla yapılandırma, iyi belgeler. Öğrenme eğrisi orta.</td><td>Package Manager → git URL: <code>https://github.com/crashkonijn/GOAP.git?path=/Package</code></td></tr><tr><td><a href="https://github.com/luxkun/ReGoap" target="_blank" rel="noopener"><b>ReGoap</b></a></td><td>C# / Unity · açık kaynak</td><td>Genel amaçlı GOAP kütüphanesi ve Unity örnekleri. Eski ama okunabilir; kendi planlayıcınızı yazmadan önce incelemeye değer.</td><td>Kaynağı projeye kopyala</td></tr><tr><td><a href="https://github.com/ptrefall/fluid-hierarchical-task-network" target="_blank" rel="noopener"><b>Fluid HTN</b></a></td><td>C# (Unity uyumlu) · açık kaynak</td><td>Sade ve hızlı HTN planlayıcı; akıcı (fluent) “domain builder” sözdizimi, kısmi planlar, slotlar.</td><td>Kaynağı / DLL’i projeye ekle</td></tr><tr><td><a href="https://github.com/dananau/GTPyhop" target="_blank" rel="noopener"><b>GTPyhop</b></a></td><td>Python · açık kaynak</td><td>Dana Nau’nun (SHOP’un yazarı) eğitim amaçlı HTN planlayıcısı; görev ve hedefleri birlikte destekler.</td><td><code>pip install gtpyhop</code> ya da tek dosya</td></tr><tr><td><a href="https://github.com/aiplan4eu/unified-planning" target="_blank" rel="noopener"><b>unified-planning</b></a></td><td>Python · açık kaynak</td><td>AIPlan4EU projesi: klasik planlama problemlerini Python’da kur, birçok akademik planlayıcıyla (PDDL) çöz. Oyun içi değil, prototip ve araştırma için.</td><td><code>pip install unified-planning</code></td></tr><tr><td><a href="https://pages.cs.wisc.edu/~dyer/cs540/handouts/gdc2006_orkin_jeff_fear.pdf" target="_blank" rel="noopener"><b>Kendi planlayıcınız</b></a></td><td>her motor</td><td>Bu destedeki 40 satır. Küçük alanlarda (≤ 20 eylem) en esnek ve en anlaşılır yol. Unreal ve Godot’da yerleşik GOAP/HTN yok; StateTree / BT ile birlikte kendi planlayıcınızı çağırabilirsiniz.</td><td>—</td></tr>
+  </table>
+  <p class="mini">Unreal ve Godot için mağazalarda üçüncü taraf GOAP/HTN eklentileri var; kalite ve bakım durumları çok değişken, eklemeden önce son güncelleme tarihine ve örnek projeye bakın.</p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Projenize GOAP eklerken: adım adım</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Dünya durumunu küçük tutun</b>: 10–20 bool/enum. “Hangi düşman?” gibi seçimleri planlayıcının <b>dışında</b> yapın (F.E.A.R.’daki gibi).</li>
+      <li><b>Eylem tablosunu</b> bir hesap tablosunda tasarlayın: ad · ön koşul · etki · maliyet. Her eylem küçük ve tek amaçlı olsun.</li>
+      <li><b>Hedefleri önceliklendirin</b> (sabit sıra ya da utility puanı). En yüksek hedef için plan yoksa sıradakini deneyin.</li>
+      <li><b>Yürütücü</b>: her eylem bir animasyon/hareket; başarı, başarısızlık ve “sürüyor” döndürsün (BT’deki gibi).</li>
+      <li><b>Başarısızlıkları belleğe yazın</b> ve yeniden planlayın.</li>
+      <li><b>Görselleştirin</b>: NPC’nin başında hedef ve planı yazın; arama ağacını kaydedin.</li>
+    </ol>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Planlamayı her karede değil, olaylar olunca (plan bitti, başarısız oldu, yeni algı) yapın. Aramaya düğüm sınırı koyun. Çok sayıda NPC varsa planlamayı karelere yayın; CrashKonijn GOAP bunu iş parçacıklarına dağıtır.</div>
+      <div class="box story"><span class="bt">Melez mimari</span>Yaygın bir kombinasyon: <b>utility</b> hangi hedefin önemli olduğunu seçer → <b>GOAP/HTN</b> planı yapar → her plan adımı küçük bir <b>BT</b> ya da FSM ile yürütülür. F.E.A.R. bile planın altında iki durumlu bir FSM kullanıyordu.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Etkiyi orijinal duruma uygulamak (bütün dallar bozulur)</li><li>Eylemlerin <b>süresini</b> unutmak: etkiler anında uygulanıyor</li><li>Her karede yeniden planlamak (işlemci + kararsızlık)</li><li>Dünya durumuna her şeyi koymak: arama uzayı patlar</li><li>GOAP ile HTN’i karıştıran yarım bir mimari üretmek: hangisini istediğinizi söyleyin</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir asker için GOAP yaz. Dünya durumu Dictionary<string,bool>: inB, hasAmmo, loaded, targetDead, doorStuck, kickFailed. Eylemler ScriptableObject olsun (ad, pre, eff, cost). A* planlayıcı: h = sağlanmamış hedef gerçeği sayısı, en fazla 500 düğüm. GoapAgent: plan bitince, eylem başarısız olunca ya da ön koşul bozulunca yeniden planlasın; başarısız “Kapıdan geç” eylemi memory["doorStuck"]=true yazsın. Planı OnDrawGizmos ile karakterin üstüne yaz. PriorityQueue kullanma (Unity’nin .NET sürümü).”</p><ul class="mini"><li>Eylem tablosunu (ön koşul/etki/maliyet) <b>siz</b> tasarlayın, asistana planlayıcıyı yazdırın</li><li>Durum kopyalamanın (immutability) açıkça yapılmasını isteyin</li><li>Plan bulunamazsa ne olacağını (yedek hedef) belirtin</li><li>Arama için düğüm sınırı ve zaman bütçesi isteyin</li><li>Unit test: “şu başlangıç + şu hedef → şu maliyet” senaryoları</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu: dil modelleri plan yapabilir mi?</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">LLM+P (2023)</span>Liu vd.: dil modelleri uzun planlarda sık hata yapıyor. Çözüm: LLM doğal dildeki problemi <b>PDDL</b>’ye (STRIPS’in torunu) çevirsin, klasik bir planlayıcı çözsün, LLM sonucu tekrar anlatsın. Klasik planlama ölmedi; LLM’e “güvenilir hesap makinesi” oldu.</div>
+    <div class="box game"><span class="bt">Voyager (2023)</span>Wang vd.: Minecraft’ta GPT-4 ile çalışan bir ajan kendi hedeflerini önerir, kod olarak beceriler yazar ve bir <b>beceri kütüphanesi</b> biriktirir. Elle yazılmış eylem tablosunun yerini, dil modelinin ürettiği eylemler alıyor.</div>
+    <div class="box low"><span class="bt">Oyun için anlamı</span>LLM’i <b>her karede</b> karar verici yapmak pahalı ve riskli (Y14). Daha gerçekçi yol: LLM’in hedef seçmesi ya da eylem tablosu önermesi, GOAP/HTN’in güvenilir ve hızlı biçimde yürütmesi. Doğrulanabilir ön koşul/etki yapısı, LLM’in saçmalamasına karşı bir emniyet kemeri.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Alma’nın mutfağı</b> — Pizza/pasta örneğini genişletin: 10 eylem, 3 hedef. Planlayıcınızın bulduğu planları ve maliyetleri tablo olarak yazdırın.</li><li><b class="c-green">[kolay]</b> <b>Oduncu köylü</b> — Unity/p5.js: köylü balta bulur, ağaç keser, odunu depoya taşır; balta kırılınca yeniden planlar. GOAP’ın klasik “ilk proje”si.</li><li><b class="c-amber">[orta]</b> <b>F.E.A.R. odası</b> — Bu destedeki kapı/pencere sahnesini 3B’de: NavMesh + GOAP + başarısızlık belleği. Oyuncu kapıyı gerçekten tutabilsin.</li><li><b class="c-amber">[orta]</b> <b>HTN troll</b> — Trunk Thumper alanını Fluid HTN ile Unity’de kurun; kütük kırılınca yeniden ağaç sökmesini izleyin.</li><li><b class="c-red">[zor]</b> <b>Sürü planlayıcı</b> — Horizon tarzı: bir grup ajanı, üç makineye roller dağıtır; saldıran HTN ile plan yapar, diğerleri bekler.</li><li><b class="c-purple">[araştırma]</b> <b>LLM eylem tablosu</b> — Bir LLM’den yeni bir düşman türü için eylem tablosu (pre/eff/cost JSON) üretmesini isteyin; planlayıcıyla otomatik test edin: kaç tanesi geçerli plan üretiyor?</li><li><b class="c-purple">[araştırma]</b> <b>GOAP vs HTN ölçümü</b> — Aynı problemi iki yöntemle çözüp eylem sayısı arttıkça planlama süresini ölçün; Humphreys’in “HTN daha hızlıydı” gözlemini tekrar edin.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Planlama</b>: hedefe götüren eylem dizisini aramak; Shakey → STRIPS → GOAP.</li>
+      <li>Eylem = <b>ön koşul + etki + maliyet</b>; geçişleri kimse yazmaz.</li>
+      <li>Plan arama = durum grafında <b>A*</b>.</li>
+      <li><b>F.E.A.R.</b>: üç durum, bir plan; hedef/eylem ayrımı; kapı → tekme → pencere; tim taktiği yanılsaması.</li>
+    </ul>
+    <ul>
+      <li><b>Yeniden planlama</b> ve başarısızlık belleği.</li>
+      <li><b>HTN</b>: bileşik görev, yöntem, ilkel görev, geri izleme; Trunk Thumper.</li>
+      <li>Oyunlar: Shadow of Mordor, Tomb Raider, Deus Ex HR DC, Transformers, Killzone, Horizon.</li>
+      <li>Araçlar: CrashKonijn GOAP, ReGoap, Fluid HTN, GTPyhop, unified-planning.</li>
+      <li>Sonraki: <b>oyun ağaçları</b> — rakip de plan yapıyorsa? Minimax ve MCTS.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=PaOLBOuyswI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/PaOLBOuyswI/hqdefault.jpg" alt=""><span><b>Building the AI of F.E.A.R. with Goal Oriented Action Planning</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=BmOOrh5lq7o" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/BmOOrh5lq7o/hqdefault.jpg" alt=""><span><b>The AI of F.E.A.R. — Goal Oriented Action Planning (AI and Games #01)</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=T_sBYgP7_2k" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/T_sBYgP7_2k/hqdefault.jpg" alt=""><span><b>Better AI in Unity — GOAP</b><br>git-amend</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=NCXayT7GVNE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/NCXayT7GVNE/hqdefault.jpg" alt=""><span><b>Hybrid GOAP AI in Unity (Part 1: Foundations)</b><br>Iain McManus</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=n6vn7d5R_2c" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/n6vn7d5R_2c/hqdefault.jpg" alt=""><span><b>Combat AI for Action-Adventure Games [Unity/C#] [GOAP]</b><br>TheHappieCat</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=cm5Jxo31plw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/cm5Jxo31plw/hqdefault.jpg" alt=""><span><b>I Made Complex Game AI Agents in Godot</b><br>Wahaha Yes</span></a>
+  </div>
+  <p class="mini">GDC Vault: <a href="https://gdcvault.com/play/1013282/Three-States-and-a-Plan" target="_blank" rel="noopener">Three States and a Plan</a> (Orkin, 2006) · <a href="https://gdcvault.com/play/1022019/Goal-0riented-Action-Planning-Ten" target="_blank" rel="noopener">GOAP: Ten Years Old and No Fear!</a> (2015) · Guerrilla: <a href="https://www.guerrilla-games.com/read/htn-planning-in-decima" target="_blank" rel="noopener">HTN Planning in Decima</a></p>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Orkin 2006</b> · <a href="https://pages.cs.wisc.edu/~dyer/cs540/handouts/gdc2006_orkin_jeff_fear.pdf" target="_blank" rel="noopener">Three States and a Plan: The A.I. of F.E.A.R.</a> <i>(GDC 2006 bildirisi)</i><br>GOAP’ın kaynağı; bu destedeki F.E.A.R. bilgilerinin çoğu buradan.</div><div class="paper"><b>Fikes &amp; Nilsson 1971</b> · <a href="http://ai.stanford.edu/~nilsson/OnlinePubs-Nils/PublishedPapers/strips.pdf" target="_blank" rel="noopener">STRIPS: A New Approach to the Application of Theorem Proving to Problem Solving</a> <i>(Artificial Intelligence 2(3–4))</i><br>Klasik planlamanın temeli.</div><div class="paper"><b>Humphreys 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter12_Exploring_HTN_Planners_through_Example.pdf" target="_blank" rel="noopener">Exploring HTN Planners through Example</a> <i>(Game AI Pro, Bölüm 12)</i><br>Trunk Thumper; Transformers: Fall of Cybertron.</div><div class="paper"><b>Straatman, Verweij vd. 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter29_Hierarchical_AI_for_Multiplayer_Bots_in_Killzone_3.pdf" target="_blank" rel="noopener">Hierarchical AI for Multiplayer Bots in Killzone 3</a> <i>(Game AI Pro, Bölüm 29)</i><br>Üretimde HTN: botlar ve taretler.</div><div class="paper"><b>Jacopin 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter13_Optimizing_Practical_Planning_for_Game_AI.pdf" target="_blank" rel="noopener">Optimizing Practical Planning for Game AI</a> <i>(Game AI Pro 2, Bölüm 13)</i><br>Planlayıcıyı oyun bütçesine sığdırmak.</div><div class="paper"><b>Anguelov, Humphreys, Mark 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter04_Behavior_Selection_Algorithms.pdf" target="_blank" rel="noopener">Behavior Selection Algorithms</a> <i>(Game AI Pro, Bölüm 4)</i><br>FSM, BT, utility, GOAP, HTN karşılaştırması.</div><div class="paper"><b>Liu vd. 2023</b> · <a href="https://arxiv.org/abs/2304.11477" target="_blank" rel="noopener">LLM+P: Empowering Large Language Models with Optimal Planning Proficiency</a> <i>(arXiv 2304.11477)</i><br>LLM + klasik planlayıcı.</div><div class="paper"><b>Wang vd. 2023</b> · <a href="https://arxiv.org/abs/2305.16291" target="_blank" rel="noopener">Voyager: An Open-Ended Embodied Agent with Large Language Models</a> <i>(arXiv 2305.16291)</i><br>Minecraft’ta beceri kütüphanesi kuran LLM ajanı.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://www.gamedeveloper.com/design/building-the-ai-of-f-e-a-r-with-goal-oriented-action-planning" target="_blank" rel="noopener">Tommy Thompson: Building the AI of F.E.A.R. with GOAP</a></li><li><a href="https://www.gamedeveloper.com/design/behind-the-ai-of-horizon-zero-dawn-part-1-" target="_blank" rel="noopener">Behind the AI of Horizon Zero Dawn (Part 1)</a></li><li><a href="https://www.guerrilla-games.com/read/the-ai-of-horizon-zero-dawn" target="_blank" rel="noopener">Guerrilla: The AI of Horizon Zero Dawn</a></li><li><a href="https://en.wikipedia.org/wiki/Shakey_the_robot" target="_blank" rel="noopener">Wikipedia: Shakey the robot</a></li><li><a href="https://en.wikipedia.org/wiki/Stanford_Research_Institute_Problem_Solver" target="_blank" rel="noopener">Wikipedia: STRIPS</a></li></ul>
+    <ul class="reflist"><li><a href="https://goap.crashkonijn.com/" target="_blank" rel="noopener">CrashKonijn GOAP belgeleri</a></li><li><a href="https://github.com/ptrefall/fluid-hierarchical-task-network" target="_blank" rel="noopener">Fluid HTN</a></li><li><a href="https://github.com/dananau/GTPyhop" target="_blank" rel="noopener">GTPyhop</a></li><li><a href="https://planning.wiki/" target="_blank" rel="noopener">Planning.wiki (PDDL rehberi)</a></li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3a0f4a 0%, #1c0c2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Oyun Ağaçları</div>
+    <div class="sub">Minimax, alfa-beta budama ve Monte Carlo ağaç araması</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #c49bff" href="../yz-oyun-agaclari/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

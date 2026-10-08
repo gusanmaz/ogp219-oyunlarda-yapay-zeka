@@ -72,6 +72,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y2 | [Sonlu Durum Makineleri](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-fsm/) | ✅ hazır |
 | Y3 | [Davranış Ağaçları](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-davranis-agaclari/) | ✅ hazır |
 | Y4 | [Utility AI](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-utility/) | ✅ hazır |
+| Y5 | [GOAP ve HTN](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-goap/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -122,6 +123,7 @@ yz-giris/           Y1 · Oyun YZ’sine giriş (ajan, Pac-Man, zorluk)
 yz-fsm/             Y2 · Sonlu durum makineleri
 yz-davranis-agaclari/ Y3 · Selector/sequence/decorator, tick izleyici, BT’li canlı nöbetçi, kara tahta, olay güdümlü ağaçlar, Halo 2, Alien: Isolation, Unity Behavior, Unreal BT, Beehave, LimboAI
 yz-utility/         Y4 · Yanıt eğrisi editörü, IAUS tarzı asker, Sims tarzı ihtiyaç odası, telafi faktörü ve dual utility laboratuvarları, Zoo Tycoon 2, Guild Wars 2, Dragon Age
+yz-goap/            Y5 · A* plan arama izleyicisi, F.E.A.R. kapı sahnesinde yeniden planlayan canlı asker, Trunk Thumper HTN ayrıştırması, eylem tablosu ve plan maliyeti laboratuvarları
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

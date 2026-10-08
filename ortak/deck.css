@@ -723,3 +723,21 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .uscore.on .ubar > i { background: var(--green); }
 .uneed-row { display: flex; gap: 12px; font-size: 15px; margin-top: 4px; }
 .mono { font-family: "JetBrains Mono", monospace; }
+/* GOAP / HTN */
+.gchip { display: inline-block; border: 1.5px solid var(--green); color: var(--ink); border-radius: 12px; padding: 0 8px; margin: 2px 3px; font-size: 14px; background: var(--card); }
+.gchip.off { border-color: var(--rule); color: var(--muted); }
+.gplan { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 15px; margin: 4px 0; }
+.gcard { display: inline-flex; flex-direction: column; border: 2px solid var(--blue); border-radius: 8px; padding: 2px 10px; background: var(--card); font-weight: 700; line-height: 1.2; }
+.gcard small { font-weight: 400; color: var(--muted); font-size: 11px; }
+.gcard.on { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 22%, var(--card)); }
+.gcard.done { border-color: var(--green); opacity: .7; }
+.gcard.fail { border-color: var(--red); background: color-mix(in srgb, var(--red) 25%, var(--card)); }
+.garrow { color: var(--muted); }
+.gfacts .ctl { font-size: 15px; }
+.gfacts-view { line-height: 1.9; }
+.htn-row { font-size: 15px; line-height: 1.55; white-space: nowrap; }
+.htn-t { display: inline-block; border-radius: 6px; padding: 0 8px; border: 1.5px solid var(--rule); background: var(--card); font-weight: 700; }
+.htn-t.compound { border-color: var(--purple); }
+.htn-t.primitive { border-color: var(--blue); }
+.htn-t.on { background: var(--amber); color: #111; border-color: var(--amber); }
+.htn-m { font-size: 13px; color: var(--muted); font-style: italic; }
