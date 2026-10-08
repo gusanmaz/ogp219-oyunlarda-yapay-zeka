@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prosedürel İçerik Üretimi</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Prosedürel içerik üretimi: tohumlar (Elite, River Raid, pack.png), Perlin gürültüsü ve fBm arazi, No Man’s Sky, hücresel otomat, BSP, sarhoş yürüyüşü, Spelunky, dalga fonksiyonu çöküşü, L-sistemleri, ifade aralığı, PCGML. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #1b3a0d 0%, #102018 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 15</div>
+  <div class="ttl" style="font-size:64px">Prosedürel İçerik Üretimi</div>
+  <div class="sub"><i>Gürültü, zindanlar, dalga fonksiyonu çöküşü, L-sistemleri</i> — dünyayı elle değil, kuralla yapmak</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlepcg"></div>
+  <aside class="notes">Haftalık plandaki PCG konusu. Arka planda Perlin gürültüsünden üretilen, kayan bir arazi: su, kum, çimen, orman, kaya, kar.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.8em">
+      <li><b>PCG nedir? Tohumlar</b> — Elite’in 22 KB’lik evreni, River Raid, Minecraft’ın pack.png tohumu</li>
+      <li><b>Gürültü ve arazi</b> — Perlin’in Oscar’lı fikri, oktavlar, No Man’s Sky’ın 18 kentilyon gezegeni</li>
+      <li><b>Zindanlar ve mağaralar</b> — hücresel otomat, BSP, sarhoş yürüyüşü, Spelunky’nin 4×4 odası</li>
+      <li><b>Kısıt tabanlı üretim</b> — dalga fonksiyonu çöküşü: Bad North, Townscaper</li>
+      <li><b>Dilbilgileri ve L-sistemleri</b> — bitkiler, metinler, görevler</li>
+      <li><b>Tasarım ve değerlendirme</b> — “10.000 kase yulaf lapası”, ifade aralığı, oynanabilirlik testi, PCGML</li>
+      <li><b>Kod</b> — gürültü, mağara, L-sistemi + dört laboratuvar</li>
+      <li><b>Kütüphaneler</b> — FastNoiseLite, Unreal PCG, Godot, DeBroglie, Houdini</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir tohumdan her seferinde aynı dünyayı üretebilecek, gürültüyle arazi, otomatla mağara, Spelunky yöntemiyle oynanabilir seviye, WFC ile kurallara uyan harita ve L-sistemiyle bitki yapabilecek; üretilen içeriğin <b>oynanabilir</b> ve <b>ilginç</b> olduğunu ölçmeyi bileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: MİNECRAFT DÜNYASI NASIL DİSKİNİZE SIĞIYOR?</span>
+    <p class="big">Bir Minecraft dünyası pratikte sonsuz büyüklükte. Ama yeni bir dünyaya girdiğinizde oyun gigabaytlarca harita indirmiyor. Nasıl?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Dünya <b>kaydedilmiyor</b>, <b>hesaplanıyor</b>: tek bir sayı (tohum) + bir algoritma = her seferinde aynı dağlar, aynı mağaralar.</li>
+    <li class="fragment">Sadece sizin <b>değiştirdiğiniz</b> parçalar diske yazılıyor.</li>
+    <li class="fragment">Bu fikir, 1980’lerde belleğin kilobaytla ölçüldüğü bir zorunluluktan doğdu; bugün <b>çeşitlilik</b>, <b>tekrar oynanabilirlik</b> ve <b>üretim maliyeti</b> için kullanılıyor.</li>
+    <li class="fragment">Ve yeni bir soru doğurdu: Rastgele üretilen bir dünya <b>ilginç</b> olabilir mi? Bu dersin ikinci yarısı bu soruya ayrıldı.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, rastgelelik)</a><a class="" href="../yz-astar/">Y8 · A* (ızgara, komşular)</a><a class="" href="../yonsuz-graflar/">Yönsüz Graflar (BFS, flood fill)</a></div>
+  <div class="prereq"><a class="opt" href="../union-find/">Union-Find (bağlantı)</a><a class="opt" href="../yz-taktik/">Y12 · Taktik YZ (bölgeler)</a><a class="opt" href="../yz-ogrenme/">Y13 · Öğrenen YZ (arama ve evrim)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu hafta iki eski tanıdık tekrar sahnede: ızgara ve graf. Mağaranın bağlı olup olmadığını flood fill ile, seviyenin oynanabilir olup olmadığını A* ile test edeceğiz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Gürültü fonksiyonları motorlarda hazır (Unity: Mathf.PerlinNoise, Godot: FastNoiseLite, p5.js: noise()). Bu derste içlerini açacağız, ama kullanmak için sadece parametrelerin anlamını bilmek yeter.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>PCG (procedural content generation)</td><td>prosedürel içerik üretimi</td><td>Oyun içeriğinin algoritmayla, sınırlı ya da dolaylı insan girdisiyle üretilmesi</td></tr>
+    <tr><td>seed · PRNG</td><td>tohum · sözde rastgele sayı üreteci</td><td>Üretecin başlangıç sayısı · aynı tohumdan hep aynı diziyi veren algoritma</td></tr>
+    <tr><td>noise · octave · fBm</td><td>gürültü · oktav · kesirli Brown hareketi</td><td>Yumuşak rastgele fonksiyon · farklı ölçekteki katman · oktavların toplamı</td></tr>
+    <tr><td>cellular automaton</td><td>hücresel otomat</td><td>Her hücrenin komşularına bakarak güncellendiği ızgara kuralı</td></tr>
+    <tr><td>BSP · drunkard’s walk</td><td>ikili alan bölme · sarhoş yürüyüşü</td><td>Alanı yinelemeli bölme · rastgele yürüyerek tünel kazma</td></tr>
+    <tr><td>WFC · entropy · propagation</td><td>dalga fonksiyonu çöküşü · entropi · yayılım</td><td>Kısıt çözen üretim · bir hücrenin kalan seçenek sayısı · kısıtın komşulara aktarılması</td></tr>
+    <tr><td>L-system · grammar · axiom</td><td>L-sistemi · dilbilgisi · aksiyom</td><td>Yeniden yazma kurallarıyla büyüyen dize · kurallar kümesi · başlangıç dizesi</td></tr>
+    <tr><td>expressive range · playability</td><td>ifade aralığı · oynanabilirlik</td><td>Üretecin ne tür içerik ürettiğinin dağılımı · içeriğin bitirilebilir olması</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">PCG nedir? Tohumlar</div>
+  <div class="sub">kilobaytlık evrenler</div>
+  <ul class="agenda"><li class="on">PCG nedir? Tohumlar</li><li class="">gürültü ve arazi</li><li class="">zindanlar ve mağaralar</li><li class="">kısıt tabanlı üretim (WFC)</li><li class="">dilbilgileri ve L-sistemleri</li><li class="">tasarım ve değerlendirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="PCG">
+  <h2>PCG nedir, neden var?</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.84em">Shaker, Togelius ve Nelson’ın tanımı: oyun içeriğinin <b>algoritmayla</b>, sınırlı ya da dolaylı kullanıcı girdisiyle üretilmesi. İçerik = seviyeler, haritalar, zindanlar, bitkiler, silahlar, görevler, isimler, dokular, müzik… (yapay zekâlı NPC’ler genelde “içerik” sayılmaz).</p>
+      <table class="sum-t" style="font-size:15px">
+        <tr><th>neden?</th><th>örnek</th></tr>
+        <tr><td>bellek / boyut</td><td>Elite (1984), River Raid (1982)</td></tr>
+        <tr><td>tekrar oynanabilirlik</td><td>Rogue, Diablo, Spelunky, Hades’in oda sırası</td></tr>
+        <tr><td>ölçek</td><td>Minecraft, No Man’s Sky</td></tr>
+        <tr><td>üretim maliyeti</td><td>SpeedTree ağaçları, Unreal PCG ile orman serpme</td></tr>
+        <tr><td>oyuncuya uyum</td><td>oyuncunun becerisine göre seviye (Y17)</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">PCG’yi sınıflandırmak</span>
+        <ul style="font-size:.82em">
+          <li><b>Çevrimiçi / çevrimdışı</b>: oyun sırasında mı (Minecraft), geliştirmede mi (bir tasarımcının kullandığı orman aracı)?</li>
+          <li><b>Zorunlu / isteğe bağlı</b>: bitirmek için geçilmesi gereken seviye mi, süs bitkisi mi? Zorunlu içerik <b>her zaman oynanabilir</b> olmalı.</li>
+          <li><b>Kurucu / üret ve sına</b>: tek seferde doğru kuran (Spelunky) mı, üretip test eden, beğenmezse yeniden üreten mi?</li>
+          <li><b>Rastgele / deterministik</b>: tohumla belirlenen mi?</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="PCG">
+  <h2>Hikâye: kilobaytlara sığan evrenler</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Elite (1984): 8 galaksi, 2048 gezegen</span>David Braben ve Ian Bell’in uzay ticaret oyunu BBC Micro’da çalışıyordu. Her gezegenin konumu, adı, ekonomisi, fiyatları ve “etoburluğuyla ünlü sanat mezunları” gibi tuhaf tanıtım cümleleri saklanmıyordu: tek bir tohum sayısı sabit bir algoritmadan geçirilip her şey <b>yeniden hesaplanıyordu</b>. Oyun yaklaşık 22 KB’ye sığdı. Yazarlar başta 2⁴⁸ galaksi düşünmüştü; yayıncı Acornsoft, evrenin matematiksel kökeni fark edilmesin diye bunu 8’e indirtti.</div>
+    <div class="box game"><span class="bt">River Raid (1982): 4 KB’de bitmeyen nehir</span>Carol Shaw’un Atari 2600 için tasarladığı Activision oyunu: dikey kayan bir nehirde uçak. Nehrin kıyıları, adalar, düşmanlar <b>saklanmıyordu</b>; sabit bir tohumla başlayan bir <b>doğrusal geri beslemeli kaydırma yazmacı</b> (LFSR, en basit sözde rastgele üreteçlerden biri) oyun sırasında üretiyordu. Tohum sabit olduğu için nehir herkes için <b>aynıydı</b>: ezberlenebilir, ama 4 KB’lik bir kartuştan beklenmeyecek kadar uzun. Shaw, oyun tasarlayan ilk kadınlardan biri olarak anılır.</div>
+  </div>
+  <p class="mini" style="margin-top:8px">Ortak fikir: “rastgele” ama <b>tekrarlanabilir</b>. Bir sonraki slayttaki tohum kavramı bunun anahtarı.</p>
+</section>
+
+<section data-sec="PCG">
+  <h2>Tohum: rastgeleliğin kumandası</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Bilgisayardaki “rastgele” sayılar aslında bir formülden gelir: <b>sözde rastgele sayı üreteci</b> (PRNG). Aynı başlangıç sayısı (tohum) → aynı dizi.</li>
+        <li>En basiti doğrusal eşlik üreteci: <code>x ← (a·x + c) mod m</code>. Laboratuvarda yazacaksınız.</li>
+        <li>Tohum sayesinde: oyuncular dünyalarını <b>paylaşır</b> (Minecraft tohumları), <b>günlük meydan okuma</b> herkese aynı seviyeyi verir (Spelunky), hatalar <b>yeniden üretilir</b> (“tohum 4817’de düşman duvara gömülüyor”), ağ oyununda bütün harita yerine <b>tek bir sayı</b> gönderilir.</li>
+        <li>Dikkat: aynı tohum, ancak <b>aynı sırayla</b> aynı sayıda çağrı yapılırsa aynı sonucu verir. Bir sistemin fazladan bir rastgele sayı çekmesi, bütün dünyayı değiştirir. Çözüm: her sistem için <b>ayrı</b> üreteç (arazi, düşman, ganimet).</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">pack.png: bir resmin tohumunu bulmak</span>Minecraft’ın eski varsayılan doku paketi simgesi küçük (128 × 128) bir dünya manzarasıydı; tohumunu kimse bilmiyordu. YouTuber SalC1’in başlattığı proje, resmi blok blok yeniden kurdu, bulutlar ve şelale gibi ayrıntılardan ipuçları çıkardı ve BOINC dağıtık hesaplama ağıyla (Minecraft@Home) yüz trilyonlarca olası değeri tarayıp adayları azalttı. 8 ay sonra, 5 Eylül 2020’de tohum bulundu: <b>3257840388504953787</b>. Bir tohum, bir dünyanın parmak izidir.</div>
+  </div>
+</section>
+
+<section data-sec="PCG">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · PCG</div>
+    <div class="q">Çok oyunculu bir oyunda iki oyuncu aynı tohumla başlıyor, ama birinin haritası diğerinden farklı çıkıyor. En olası sebep?</div>
+    <div class="opts">
+      <button data-opt="A">Bir istemci üreteçten fazladan ya da farklı sırayla sayı çekti (ör. süs parçacıkları aynı üreteci kullandı)</button>
+      <button data-opt="B">Tohumlar hiçbir zaman güvenilir değildir</button>
+      <button data-opt="C">Perlin gürültüsü her bilgisayarda farklıdır</button>
+      <button data-opt="D">Ağ gecikmesi haritayı değiştirdi</button>
+    </div>
+    <div class="explain">Tohum ancak <b>aynı çağrı dizisi</b> için aynı sonucu garanti eder. Grafik ayarına göre parçacık sayısı değişen bir sistem aynı üreteci kullanırsa diziler kayar. Çözüm: harita üretimi için ayrı, sadece haritanın kullandığı bir üreteç. (Kayan noktalı sayıların farklı işlemcilerde küçük farklar vermesi de nadir ama gerçek bir sorundur.)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Gürültü ve arazi</div>
+  <div class="sub">Perlin’in Oscar’ı</div>
+  <ul class="agenda"><li class="done">PCG nedir? Tohumlar</li><li class="on">gürültü ve arazi</li><li class="">zindanlar ve mağaralar</li><li class="">kısıt tabanlı üretim (WFC)</li><li class="">dilbilgileri ve L-sistemleri</li><li class="">tasarım ve değerlendirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="gürültü">
+  <h2>Hikâye: Tron’dan Oscar’a, Perlin gürültüsü</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Ken Perlin, Disney’in <b>Tron</b> (1982) filminin bilgisayar grafiklerini yapan MAGI şirketinde çalışmıştı. Dönemin bilgisayar görüntüleri pürüzsüz, “makine gibi” görünüyordu.</li>
+        <li>Çözümü: tamamen rastgele değil, <b>yumuşak</b> rastgele bir fonksiyon. Yakın noktalar benzer değer alır, uzak noktalar bağımsızdır. 1985’te SIGGRAPH’ta “An Image Synthesizer” makalesiyle yayımladı.</li>
+        <li>Mermer, ateş, bulut, dalga… Film endüstrisi bu fonksiyonu her yerde kullanmaya başladı. Perlin, 1997’de Sinema Akademisi’nden <b>Teknik Başarı Ödülü</b> aldı: “bilgisayarla üretilmiş yüzeylerde doğal görünümlü dokular” için.</li>
+        <li>Bugün aynı fikir Minecraft’ın dağlarında, No Man’s Sky’ın gezegenlerinde ve neredeyse her açık dünya oyununun arazisinde.</li>
+      </ul>
+    </div>
+    <div class="box low"><span class="bt">Nasıl çalışır? (kısaca)</span>
+      <ol style="font-size:.82em">
+        <li>Tam sayı ızgara noktalarına rastgele <b>eğim</b> vektörleri koy (tohumla).</li>
+        <li>Bir nokta için, çevresindeki 4 köşenin eğimleriyle nokta çarpımını al.</li>
+        <li>Bu 4 değeri, yumuşatılmış ağırlıklarla (6t⁵ − 15t⁴ + 10t³) karıştır.</li>
+      </ol>
+      Daha basit kardeşi <b>değer gürültüsü</b>: köşelere doğrudan rastgele <b>sayılar</b> koyup yumuşakça karıştırmak (laboratuvarda yazacaksınız).</div>
+  </div>
+</section>
+
+<section data-sec="gürültü">
+  <h2>Canlı: gürültüden arazi 🏔️</h2>
+  <div class="demo" data-demo="noise"></div>
+</section>
+
+<section data-sec="gürültü">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Oktavı 1 yapın: yumuşak, “şişirilmiş” tepeler. 8 yapın: kıyılar girintili, dağlar pürüzlü. Her oktav bir öncekinin iki katı sıklıkta, yarısı yükseklikte ayrıntı ekler (doğadaki kıyı şeritleri de böyle: fraktal).</li>
+      <li>Kalıcılığı 0,8’e çıkarın: küçük ayrıntılar büyükler kadar güçlü, arazi “gürültülü” görünür.</li>
+      <li>Deniz seviyesini kaydırın: aynı yükseklik haritası adalar dünyasına ya da kıtaya dönüşür. Biyom eşikleri = tasarımcının düğmeleri.</li>
+      <li>Tohumu yazın, değiştirin, geri yazın: harita birebir geri geliyor mu? Gri görünümde ham yükseklik haritasını görün.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="gürültü">
+  <h2>Hikâye: No Man’s Sky’ın 18 kentilyon gezegeni</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Hello Games’in oyunu 64 bitlik bir tohum uzayı kullanır: 2⁶⁴ ≈ <b>18 kentilyon</b> gezegen. Gezegenler, yaratıklar, bitkiler, gemiler formüllerle üretilir; GDC konuşmalarında arazinin gürültü katmanlarıyla nasıl kesintisiz üretildiği anlatıldı.</li>
+        <li>Ağustos 2016’daki çıkışı büyük bir hayal kırıklığıydı: tanıtımlarda görülen bazı özellikler yoktu, gezegenler bir süre sonra birbirine benziyordu. İngiltere’nin reklam denetim kurumu (ASA), şikâyetler üzerine mağaza sayfasını inceledi.</li>
+        <li>Kasım 2016’daki karar ilginçti: ASA, görüntülerin oyunu “büyük ölçüde temsil ettiğine” karar verdi. Gerekçenin bir kısmı PCG’ydi: tüketici, görüntülerin karşılaşacağı içeriğin <b>türünü</b> gösterdiğini anlar, ama o <b>belirli</b> yaratıkları ve manzaraları görmeyi beklemez.</li>
+        <li>Sonraki yıllarda ücretsiz güncellemelerle (üs kurma, çok oyunculu, gemiler, yeni biyomlar) oyun itibarını büyük ölçüde geri kazandı ve oyun tarihinin en ünlü “geri dönüş” hikâyelerinden biri oldu.</li>
+      </ul>
+    </div>
+    <div class="box warn"><span class="bt">“10.000 kase yulaf lapası” sorunu</span>Kate Compton’ın ünlü benzetmesi: 10.000 kase yulaf lapasını her seferinde farklı yulaf tanesi dizilimiyle üretebilirsiniz; her biri matematiksel olarak eşsizdir, ama <b>oyuncu için hepsi aynı yulaf lapasıdır</b>. Önemli olan, oyuncunun <b>fark edeceği</b> farklılıklardır. Gürültüyle üretilen sonsuz arazi tek başına ilginç değildir; ilginçliği <b>el yapımı</b> parçalar, hedefler ve sürprizler katar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Zindanlar ve mağaralar</div>
+  <div class="sub">Rogue’dan Spelunky’ye</div>
+  <ul class="agenda"><li class="done">PCG nedir? Tohumlar</li><li class="done">gürültü ve arazi</li><li class="on">zindanlar ve mağaralar</li><li class="">kısıt tabanlı üretim (WFC)</li><li class="">dilbilgileri ve L-sistemleri</li><li class="">tasarım ve değerlendirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="zindan">
+  <h2>Üç klasik zindan üreteci</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Hücresel otomat</span>Izgarayı %45 duvarla rastgele doldur. Sonra birkaç tur: “8 komşudan en az 5’i duvarsa duvar ol”. Gürültü birkaç adımda <b>organik mağaraya</b> dönüşür. Sorun: kopuk cepler kalabilir → flood fill ile bul, sil ya da bağla.</div>
+    <div class="box game"><span class="bt">BSP (ikili alan bölme)</span>Alanı ikiye böl, parçaları yine ikiye böl… Her yaprağa bir oda, kardeş odaları koridorla bağla. Sonuç: <b>bağlı</b>, mimari, Rogue tarzı zindan. Kökeni: <b>Rogue</b> (1980), “roguelike” türüne adını veren oyun.</div>
+    <div class="box low"><span class="bt">Sarhoş yürüyüşü</span>Bir noktadan başla, rastgele yürü, geçtiğin yeri kaz. Hedef oran açılınca dur. Tek yürüyüş olduğu için <b>hep bağlı</b>; dolambaçlı, doğal tüneller. Birden çok yürüyüşçü ya da yöne eğilim ekleyerek çeşitlenir.</div>
+  </div>
+  <p class="mini" style="margin-top:10px">Üçü de birkaç satırlık kod; fark, ürettikleri <b>karakterde</b>: organik mağara, mimari zindan, dolambaçlı tünel. Gerçek oyunlar çoğu zaman bunları karıştırır (BSP ile odalar + otomatla mağara bölümleri).</p>
+</section>
+
+<section data-sec="zindan">
+  <h2>Canlı: zindan üreteçleri ⛏️</h2>
+  <div class="demo" data-demo="dungeon"></div>
+</section>
+
+<section data-sec="zindan">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Hücresel otomatta “otomat adımı”nı 0’dan 5’e tek tek artırın: gürültü nasıl mağaraya dönüşüyor? 2–3 adımdan sonra pek bir şey değişmiyor (kararlı hâl).</li>
+      <li>İlk duvar oranını 0,52’ye çıkarın: mağara parçalanır, kırmızı (kopuk) bölgeler çoğalır. 0,40: tek büyük açık alan. Oyuncunun ulaşamadığı bölgeler = boşa giden içerik ya da oyunu bitirilemez yapan hata.</li>
+      <li>BSP’de sarı kesikli çizgiler bölme ağacının yapraklarını gösteriyor. Neden hiç kırmızı bölge yok?</li>
+      <li>Sarhoş yürüyüşünü %10 ile %60 arasında deneyin. Tohumu değiştirdikçe karakter aynı kalıyor mu?</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="zindan">
+  <h2>Derin hikâye: Spelunky, rastgelelik ile el yapımı arasında</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.82em">
+        <li>Derek Yu’nun 2008 platform oyunu (2012’de HD sürümü): her ölümde yeni seviye. Ama platform oyunu, rastgele bir mağara gibi <b>kabaca</b> üretilemez: zıplama mesafeleri, merdivenler, tuzaklar <b>milimetrik</b> olmalı.</li>
+        <li>Çözüm: seviye 4 × 4 = 16 odaya bölünür. Önce <b>çözüm yolu</b>: üst sıradan rastgele bir odadan başlanır, rastgele sola, sağa ya da aşağı gidilir; en alt sırada çıkış.</li>
+        <li>Yol üstündeki her oda, gereken açıklıklara göre (sol–sağ, alta açık, üste açık) el yapımı <b>şablonlardan</b> birini alır. Şablonların içindeki bazı bloklar da rastgeledir. Yol dışındaki odalar kapalı olabilir: hazine, gizli geçit.</li>
+        <li>Sonuç: halat ya da bomba kullanmadan bitirilebilen <b>garantili</b> bir yol, ama her seferinde farklı bir seviye. Rastgele ve elle tasarlanmışın en iyi dengelerinden biri.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Ders: önce yapı, sonra ayrıntı</span>İyi PCG genelde <b>katmanlıdır</b>: önce oynanabilirliği garanti eden yapı (yol, odaların bağlantısı), sonra el yapımı parçalar, en son rastgele süs. Hades’in oda sırası, Dead Cells’in el yapımı odaları birleştiren “seviye iskeleti”, Diablo’nun zindanları da bu ailedendir.</div>
+      <div class="box game"><span class="bt">🎬</span><a href="https://www.youtube.com/watch?v=Uqk5Zf0tw3o" target="_blank" rel="noopener">How (and Why) Spelunky Makes its Own Levels</a> (Game Maker’s Toolkit)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="zindan">
+  <h2>Canlı: Spelunky tarzı seviye 🧗</h2>
+  <div class="demo" data-demo="spelunky"></div>
+</section>
+
+<section data-sec="zindan">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · zindan</div>
+    <div class="q">Hücresel otomatla ürettiğiniz mağarada oyuncunun başlangıcı ile çıkış bazen farklı (kopuk) bölgelerde kalıyor. En sağlam çözüm?</div>
+    <div class="opts">
+      <button data-opt="A">Üret ve sına: flood fill/BFS ile bağlantıyı kontrol et; kopuksa bölgeleri tünelle bağla ya da yeni tohumla yeniden üret</button>
+      <button data-opt="B">Duvar oranını rastgele değiştirmek</button>
+      <button data-opt="C">Oyuncuya kazma aleti vermek</button>
+      <button data-opt="D">Otomat adımını artırmak her zaman çözer</button>
+    </div>
+    <div class="explain">Rastgele bir yöntem garantisi olmayan bir sonuç verir; garanti, <b>sonradan test</b> ederek sağlanır. Flood fill (Yönsüz Graflar destesi) ya da A* ile başlangıçtan çıkışa yol aranır; yoksa en yakın iki bölge arasına tünel kazılır ya da yeniden üretilir. Kazma aleti (C) Spelunky’nin bombası gibi bir tasarım cevabı olabilir, ama zorunlu yolu ona bırakmak riskli.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Kısıt tabanlı üretim</div>
+  <div class="sub">dalga fonksiyonu çöküşü</div>
+  <ul class="agenda"><li class="done">PCG nedir? Tohumlar</li><li class="done">gürültü ve arazi</li><li class="done">zindanlar ve mağaralar</li><li class="on">kısıt tabanlı üretim (WFC)</li><li class="">dilbilgileri ve L-sistemleri</li><li class="">tasarım ve değerlendirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="WFC">
+  <h2>Dalga fonksiyonu çöküşü (WFC)</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Maxim Gumin, 2016’da GitHub’da yayımladı; adı kuantum fiziğinden ödünç, ama algoritma aslında bir <b>kısıt çözücü</b> (daha eski “model sentezi” fikrinin bir çeşidi).</li>
+        <li>Her hücre başta “her karo olabilir” durumunda (süperpozisyon). Kurallar: hangi karo hangisinin yanına gelebilir.</li>
+        <li>Döngü: (1) <b>en az seçeneği kalan</b> (en düşük entropili) hücreyi seç, (2) seçeneklerinden birini (ağırlıklı) rastgele seç: <b>çöktür</b>, (3) bu seçimin sonuçlarını komşulara <b>yay</b>: artık mümkün olmayan karoları sil, değişen komşunun komşularına devam et.</li>
+        <li>Bir hücrenin seçeneği kalmazsa <b>çelişki</b>: baştan başla ya da geri al (backtracking).</li>
+        <li>Sudoku çözerken yaptığınızın aynısı: en kısıtlı kareden başlarsınız, her yazdığınız rakam satır, sütun ve kutudaki seçenekleri azaltır.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Oyunlarda WFC</span><b>Bad North</b> (2018) ve <b>Townscaper</b> (2021): Oskar Stålberg’in WFC çeşitleri; Townscaper’da tıkladığınız her noktada kasaba parçaları kurallara uyacak şekilde kendini “çözer”. <b>Caves of Qud</b> da bazı haritalarında WFC kullanır. Tasarımcı karoları ve kuralları çizer; algoritma sonsuz tutarlı düzen üretir.</div>
+      <div class="box game"><span class="bt">🎬</span><a href="https://www.youtube.com/watch?v=0bcZb-SsnrA" target="_blank" rel="noopener">Oskar Stålberg: WFC in Bad North</a> · <a href="https://www.youtube.com/watch?v=_1fvJ5sHh6A" target="_blank" rel="noopener">How Townscaper Works</a> (AI and Games)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="WFC">
+  <h2>Canlı: kurallara uyan harita ⚛️</h2>
+  <div class="demo" data-demo="wfc"></div>
+</section>
+
+<section data-sec="WFC">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>“1 adım”a birkaç kez basın: çöken hücrenin komşularındaki sayılar (kalan seçenek) nasıl düşüyor? Derin suyun yanında asla çimen yok: kural bunu imkânsız kılıyor.</li>
+      <li>“▶ çalıştır” ile izleyin: hep en az seçenekli hücre çöküyor, bu yüzden harita “dalga” gibi yayılıyor.</li>
+      <li>Çimen ağırlığını 5’e çıkarıp “yeni”: geniş ovalar. Su ağırlığını 5’e: göller ve deniz. Ağırlık = tasarımcının istatistik düğmesi.</li>
+      <li>Kural çok sıkı olursa çelişki sayacı artar. Bu küçük kural kümesinde nadirdir; karmaşık karo setlerinde (Townscaper gibi) geri alma ve akıllı başlangıç şarttır.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Dilbilgileri ve L-sistemleri</div>
+  <div class="sub">yeniden yazma ile büyümek</div>
+  <ul class="agenda"><li class="done">PCG nedir? Tohumlar</li><li class="done">gürültü ve arazi</li><li class="done">zindanlar ve mağaralar</li><li class="done">kısıt tabanlı üretim (WFC)</li><li class="on">dilbilgileri ve L-sistemleri</li><li class="">tasarım ve değerlendirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="L-sistemleri">
+  <h2>L-sistemleri: kurallarla büyüyen bitkiler</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.84em">
+        <li>Biyolog Aristid Lindenmayer, 1968’de alg hücrelerinin büyümesini modellemek için tanımladı. Bir <b>aksiyom</b> (başlangıç dizesi) ve <b>yeniden yazma kuralları</b>: her adımda dizedeki <b>bütün</b> semboller aynı anda kurallarına göre değişir.</li>
+        <li>Alg örneği: <code>A → AB</code>, <code>B → A</code>. A, AB, ABA, ABAAB, ABAABABA… Uzunluklar Fibonacci dizisi!</li>
+        <li>Dizeyi bir “kaplumbağa” çizer: <code>F</code> ileri, <code>+ −</code> dön, <code>[ ]</code> konumu kaydet/geri yükle (dallanma).</li>
+        <li>Prusinkiewicz ve Lindenmayer’in <i>The Algorithmic Beauty of Plants</i> (1990) kitabı bu alanın klasiği ve ücretsiz. Oyun ve filmlerde yaygın ağaç aracı <b>SpeedTree</b> da kural tabanlı üretimin ticari örneği.</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Metin için dilbilgisi: Tracery</span>Kate Compton’ın Tracery kütüphanesi aynı fikri metne uygular:
+<pre style="font-size:13px;margin:6px 0">{ "baslangic": ["#kahraman#, #yer#da #canavar# ile karşılaştı."],
+  "kahraman": ["Yaşlı demirci", "Genç büyücü", "Hancının kızı"],
+  "yer": ["mağara", "orman", "kale"],
+  "canavar": ["bir kurt sürüsü", "uyuyan bir ejderha"] }</pre>
+      Görev açıklamaları, eşya adları, NPC söylentileri… 3 × 3 × 2 = 18 cümle; her yeni kelime çarpımı büyütür. (Türkçede ek uyumu için daha akıllı kurallar gerekir: “mağarada” ama “kalede”.)</div>
+  </div>
+</section>
+
+<section data-sec="L-sistemleri">
+  <h2>Canlı: L-sistemi bahçesi 🌿</h2>
+  <div class="demo" data-demo="lsystem"></div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Tasarım ve değerlendirme</div>
+  <div class="sub">iyi bir üreteci nasıl anlarız?</div>
+  <ul class="agenda"><li class="done">PCG nedir? Tohumlar</li><li class="done">gürültü ve arazi</li><li class="done">zindanlar ve mağaralar</li><li class="done">kısıt tabanlı üretim (WFC)</li><li class="done">dilbilgileri ve L-sistemleri</li><li class="on">tasarım ve değerlendirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="değerlendirme">
+  <h2>Bir üreteci değerlendirmek</h2>
+  <div class="cols">
+    <div>
+      <ol style="font-size:.84em">
+        <li><b>Oynanabilirlik</b>: her içerik bitirilebilir mi? Bir yol bulma ajanıyla (A*, Y8) otomatik test: başlangıçtan çıkışa yol var mı, zıplama mesafeleri yetiyor mu?</li>
+        <li><b>İfade aralığı</b> (Smith ve Whitehead, 2010): üreteci 1000 kez çalıştır, her çıktıyı birkaç ölçüye göre (zorluk, doğrusallık, açık alan oranı) puanla ve 2B bir ısı haritasına koy. Üreteç hep aynı köşede mi kümeleniyor?</li>
+        <li><b>Çeşitlilik ve “yulaf lapası”</b>: oyuncu farkı hissediyor mu? Oyuncu testleri ve “bu ikisini ayırt edebilir misin?” soruları.</li>
+        <li><b>Kontrol</b>: tasarımcı istediğini alabiliyor mu? Parametreler anlaşılır mı?</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Arama tabanlı PCG</span>Togelius ve arkadaşları (2011): içeriği bir <b>arama problemi</b> olarak görün. Rastgele aday üret, bir uygunluk fonksiyonuyla puanla (oynanabilir mi, ne kadar zor, ne kadar çeşitli?), en iyileri evrimleştir (Y13’teki nöroevrimin aynısı, ama ağ yerine harita). Starcraft haritaları, kart oyunu desteleri, bulmacalar bu yolla üretildi.</div>
+      <div class="box low"><span class="bt">Karma girişimli tasarım</span>Tasarımcı çizer, üreteç önerir, tasarımcı seçer ya da düzeltir. Unreal’ın PCG çerçevesi ve Houdini bu fikrin endüstrideki karşılığı: tasarımcı bir çizgi çizer, sistem kenarına orman ve kayalar serper.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="değerlendirme">
+  <h2>🚀 Öncü yöntemler: öğrenerek üretmek</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">PCGML</span>Summerville ve arkadaşları (2018): mevcut el yapımı seviyelerden <b>öğrenen</b> üreteçler. Super Mario seviyelerini dizi olarak öğrenen modeller, Zelda zindanlarının yapısını öğrenen graf modelleri. Az veri en büyük sorun: bir oyunun sadece birkaç düzine seviyesi vardır.</div>
+      <div class="box low"><span class="bt">Dil modelleriyle seviye</span>Seviyeyi metin olarak yazıp (karolar = karakterler) bir dil modeline ürettirmek: MarioGPT (2023) “çok borulu, az düşmanlı bir seviye” gibi komutlarla Mario seviyesi üretti. Y14’teki uyarılar burada da geçerli: üretilen seviyeyi bir ajanla <b>oynayarak</b> doğrulamak şart.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Endüstride bugün</span>
+        <ul style="font-size:.82em">
+          <li><b>Unreal Engine 5.7</b> (Kasım 2025): PCG çerçevesi “üretime hazır” oldu; yeni prosedürel bitki editörü deneysel olarak geldi.</li>
+          <li><b>Houdini</b>: film ve oyunlarda prosedürel modelleme ve dünya inşası standardı.</li>
+          <li>Roguelike’lar (Hades II, Balatro’nun desteleri, Dead Cells) PCG’yi tasarımın merkezine koymaya devam ediyor.</li>
+          <li>Y16’da üretken YZ: görüntü, ses, 3B model ve “oynanabilir dünya modelleri”.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="değerlendirme">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · değerlendirme</div>
+    <div class="q">Bir zindan üretecinin “hep çok benzer seviyeler ürettiğinden” şüpheleniyorsunuz. Bunu nasıl ölçersiniz?</div>
+    <div class="opts">
+      <button data-opt="A">Binlerce seviye üretip birkaç ölçüye (ör. açık alan oranı, en kısa yol uzunluğu) göre puanlar ve dağılımı (ifade aralığı) çizerim</button>
+      <button data-opt="B">Beş seviyeye bakıp karar veririm</button>
+      <button data-opt="C">Tohumu değiştiririm, yeter</button>
+      <button data-opt="D">Ölçülemez, zevk meselesidir</button>
+    </div>
+    <div class="explain">İfade aralığı analizi, üretecin <b>ne üretebildiğinin</b> haritasıdır. Dağılım dar bir bölgede toplanıyorsa parametreler ya da algoritma çeşitlilik vermiyordur. Bu nicel analiz, oyuncu testinin (oyuncu farkı <b>hissediyor mu?</b>) yerini tutmaz; ikisi birlikte kullanılır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">gürültü, otomat, L-sistemi</div>
+  <ul class="agenda"><li class="done">PCG nedir? Tohumlar</li><li class="done">gürültü ve arazi</li><li class="done">zindanlar ve mağaralar</li><li class="done">kısıt tabanlı üretim (WFC)</li><li class="done">dilbilgileri ve L-sistemleri</li><li class="done">tasarım ve değerlendirme</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>Gürültüyle arazi</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="4-6|10-15"><script type="text/template">
+// Unity: Mathf.PerlinNoise ile fBm yükseklik haritası → Terrain
+public float[,] HeightMap(int w, int h, int seed, float scale = 60f, int octaves = 5,
+                          float persistence = 0.5f, float lacunarity = 2f) {
+    var rng = new System.Random(seed);                    // tohum → oktav kaydırmaları
+    var offsets = new Vector2[octaves];
+    for (int o = 0; o < octaves; o++) offsets[o] = new Vector2(rng.Next(-100000, 100000), rng.Next(-100000, 100000));
+    var map = new float[h, w];
+    for (int y = 0; y < h; y++)
+    for (int x = 0; x < w; x++) {
+        float amp = 1, freq = 1, sum = 0, norm = 0;
+        for (int o = 0; o < octaves; o++) {
+            float n = Mathf.PerlinNoise(x / scale * freq + offsets[o].x, y / scale * freq + offsets[o].y);   // 0..1
+            sum += amp * n; norm += amp; amp *= persistence; freq *= lacunarity;
+        }
+        map[y, x] = sum / norm;
+    }
+    return map;   // terrain.terrainData.SetHeights(0, 0, map);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: noise() zaten Perlin + oktav (noiseDetail) içerir
+function setup() {
+  createCanvas(400, 300); noiseSeed(42); noiseDetail(5, 0.5);   // 5 oktav, kalıcılık 0.5
+  loadPixels();
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+    const h = noise(x * 0.01, y * 0.01);                          // 0..1
+    const c = h < 0.4 ? color(40, 90, 160) : h < 0.45 ? color(230, 210, 150)
+            : h < 0.6 ? color(110, 180, 90) : h < 0.7 ? color(60, 120, 60) : color(240);
+    set(x, y, c);
+  }
+  updatePixels();
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="4-11|13-14"><script type="text/template">
+import numpy as np
+
+def value_noise_2d(w, h, cells, rng):
+    lat = rng.random((cells + 1, cells + 1))                  # köşelere rastgele değerler
+    ys, xs = np.mgrid[0:h, 0:w] / np.array([h, w])[:, None, None] * cells
+    i, j = xs.astype(int), ys.astype(int)
+    tx, ty = xs - i, ys - j
+    sx, sy = tx * tx * (3 - 2 * tx), ty * ty * (3 - 2 * ty)    # yumuşatma
+    a, b = lat[j, i], lat[j, i + 1]
+    c, d = lat[j + 1, i], lat[j + 1, i + 1]
+    return (a + (b - a) * sx) * (1 - sy) + (c + (d - c) * sx) * sy
+
+rng = np.random.default_rng(seed=42)
+height = sum(0.5 ** o * value_noise_2d(256, 256, 4 * 2 ** o, rng) for o in range(5))
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Mağara otomatı ve bağlantı testi</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="4-13|15-26"><script type="text/template">
+import random
+from collections import deque
+
+def cave(w, h, seed, fill=0.45, steps=4):
+    rng = random.Random(seed)
+    g = [[1 if rng.random() < fill else 0 for _ in range(w)] for _ in range(h)]
+    def walls(x, y):
+        return sum(1 for dy in (-1, 0, 1) for dx in (-1, 0, 1) if (dx or dy) and
+                   (not (0 <= x + dx < w and 0 <= y + dy < h) or g[y + dy][x + dx]))
+    for _ in range(steps):
+        g = [[1 if walls(x, y) >= 5 or (g[y][x] and walls(x, y) >= 4) else 0
+              for x in range(w)] for y in range(h)]
+    return g
+
+def largest_region(g):                                   # flood fill (BFS)
+    h, w, seen, best = len(g), len(g[0]), set(), set()
+    for sy in range(h):
+        for sx in range(w):
+            if g[sy][sx] or (sx, sy) in seen: continue
+            region, q = {(sx, sy)}, deque([(sx, sy)]); seen.add((sx, sy))
+            while q:
+                x, y = q.popleft()
+                for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                    if 0 <= nx < w and 0 <= ny < h and not g[ny][nx] and (nx, ny) not in seen:
+                        seen.add((nx, ny)); region.add((nx, ny)); q.append((nx, ny))
+            if len(region) > len(best): best = region
+    return best          # geri kalan açık hücreleri duvar yap ya da tünelle bağla
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: aynı kural, Tilemap'e yaz
+bool[,] Step(bool[,] g) {
+    int h = g.GetLength(0), w = g.GetLength(1); var n = new bool[h, w];
+    for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+        int c = 0;
+        for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            int nx = x + dx, ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h || g[ny, nx]) c++;   // dışarısı duvar sayılır
+        }
+        n[y, x] = c >= 5 || (g[y, x] && c >= 4);
+    }
+    return n;
+}
+// tilemap.SetTile(new Vector3Int(x, y, 0), g[y, x] ? wallTile : null);
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:17px">
+    <tr><td>System.Random(seed) · random.Random(seed)</td><td>tohumlu üreteç</td><td>Kendine ait, tohumlanmış bir üreteç nesnesi (paylaşılan global üreteç yerine)</td></tr>
+    <tr><td>noiseSeed · noiseDetail (p5.js)</td><td>gürültü ayarı</td><td>Gürültünün tohumu · oktav sayısı ve kalıcılık</td></tr>
+    <tr><td>Mathf.PerlinNoise(x, y)</td><td>Unity gürültüsü</td><td>0–1 arası 2B Perlin değeri; tohum yok, koordinatı kaydırarak çeşitlenir</td></tr>
+    <tr><td>np.mgrid · astype(int)</td><td>NumPy ızgarası · tam sayıya çevirme</td><td>Bütün piksellerin koordinatları · ondalığı atma</td></tr>
+    <tr><td>deque · popleft</td><td>çift uçlu kuyruk</td><td>BFS için hızlı kuyruk (Kuyruklar destesi)</td></tr>
+    <tr><td>bool[,] · GetLength(0)</td><td>2B dizi</td><td>C# ızgarası; 0 = satır, 1 = sütun</td></tr>
+    <tr><td>Tilemap.SetTile</td><td>karo yerleştirme</td><td>Unity 2D’de ızgaraya karo koymak</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: mağara kuralı</h2>
+  <div class="simlab" data-sim="cave" data-fns="isWall" data-lang="js">
+<textarea>
+// wall:  bu hücre şu an duvar mı? (true/false)
+// walls: 8 komşudan kaçı duvar? (harita dışı = duvar)
+// Döndür: bir sonraki adımda duvar olacak mı?
+// Kural: en az 5 komşu duvarsa duvar;
+//        hücre zaten duvarsa 4 komşu da yeter.
+function isWall(wall, walls) {
+  return wall;   // şimdilik hiçbir şey değişmiyor
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodunda gürültü hiç değişmez. Kuralı yazın: sağda her yarım saniyede bir otomat adımı çalışıyor. Sonra kuralı değiştirip deneyin: “≥ 6” ne yapar? “≥ 3”?</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: kendi rastgele sayı üretecin</h2>
+  <div class="ailab" data-lab="lcg" data-lang="python">
+<textarea>
+# Doğrusal eşlik üreteci (LCG):
+#   x = (1664525 * x + 1013904223) mod 2**32
+# seed: başlangıç x'i,  n: kaç sayı üretilecek
+# Üretilen n sayının LİSTESİNİ döndür (tohumun kendisi listede yok).
+def lcg(seed, n):
+    return []
+</textarea>
+    <div class="lab-tasks">Aynı tohum → aynı liste: “rastgele” dünyaların tekrarlanabilir olmasının sırrı. Sonucu 2³²’ye bölerseniz 0–1 arası sayılar elde edersiniz. (Gerçek oyunlarda daha kaliteli üreteçler kullanılır: PCG32, xorshift, mulberry32.)</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: L-sistemi açılımı</h2>
+  <div class="ailab" data-lab="lsys" data-lang="python">
+<textarea>
+# axiom: başlangıç dizesi, rules: {"F": "F+F", ...}, n: yineleme sayısı
+# Her yinelemede dizedeki HER karakter aynı anda değişir:
+#   kuralı varsa sağ tarafı, yoksa kendisi.
+def expand(axiom, rules, n):
+    return axiom
+</textarea>
+    <div class="lab-tasks">Testlerden biri Lindenmayer’in alg sistemi (A → AB, B → A): uzunluklar 1, 2, 3, 5, 8, 13… Demo bahçesindeki bitkiler tam olarak bu fonksiyonun çıktısını çiziyor.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: 1B değer gürültüsü</h2>
+  <div class="ailab" data-lab="vnoise" data-lang="python">
+<textarea>
+import math
+
+# lattice: tam sayı noktalardaki rastgele değerler (dairesel: indis mod len)
+# x: ondalıklı konum (x >= 0)
+# i = floor(x), t = x - i; a = lattice[i], b = lattice[i+1]
+# yumuşatma s = t*t*(3 - 2*t); sonuç a + (b - a) * s
+def value_noise(x, lattice):
+    return 0.0
+</textarea>
+    <div class="lab-tasks">Bu, gürültünün en sade hâli. Farklı ölçeklerde birkaç tanesini toplarsanız (oktav) demo arazisindeki kesit çizgisini elde edersiniz. Perlin bunun bir adım ötesi: köşelere sayı yerine <b>eğim</b> koyar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">motorlar ve oyununuz</div>
+  <ul class="agenda"><li class="done">PCG nedir? Tohumlar</li><li class="done">gürültü ve arazi</li><li class="done">zindanlar ve mağaralar</li><li class="done">kısıt tabanlı üretim (WFC)</li><li class="done">dilbilgileri ve L-sistemleri</li><li class="done">tasarım ve değerlendirme</li><li class="done">kod ve laboratuvarlar</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://github.com/Auburn/FastNoiseLite" target="_blank" rel="noopener"><b>FastNoiseLite</b></a></td><td>C#, C++, JS, GLSL, Rust…</td><td>Perlin, OpenSimplex2, hücresel (Worley), değer gürültüsü; fBm, “domain warp”. Tek dosya. Godot 4’te yerleşik.</td><td>Tek dosyayı projeye kopyala</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.mathematics@1.3/api/Unity.Mathematics.noise.html" target="_blank" rel="noopener"><b>Unity Mathematics</b></a></td><td>Unity</td><td><code>noise.cnoise</code>, <code>noise.snoise</code>: Burst/Jobs ile hızlı gürültü; Mathf.PerlinNoise’dan esnek.</td><td>Package Manager → Mathematics</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/procedural-content-generation-overview" target="_blank" rel="noopener"><b>Unreal PCG Framework</b></a></td><td>Unreal 5.2+ (5.7’de üretime hazır)</td><td>Düğüm tabanlı prosedürel serpme ve dünya inşası: yüzey örnekleme, filtreler, spline’lar, biyomlar.</td><td>Plugins → Procedural Content Generation Framework</td></tr><tr><td><a href="https://github.com/mxgmn/WaveFunctionCollapse" target="_blank" rel="noopener"><b>WaveFunctionCollapse · DeBroglie</b></a></td><td>C# (Unity)</td><td>Gumin’in özgün WFC’si ve daha esnek DeBroglie (kısıtlar, geri alma, yol kısıtı).</td><td>GitHub / NuGet</td></tr><tr><td><a href="https://www.sidefx.com/products/houdini-engine/" target="_blank" rel="noopener"><b>Houdini Engine</b></a></td><td>Unity / Unreal</td><td>Houdini’de kurulan prosedürel araçları (yol, bina, arazi) motor içinde parametreyle çalıştırma.</td><td>SideFX eklentisi</td></tr><tr><td><a href="https://github.com/galaxykate/tracery" target="_blank" rel="noopener"><b>Tracery</b></a></td><td>JS (bağlantı noktaları: Python, C#)</td><td>Metin dilbilgisi: isimler, söylentiler, görev açıklamaları.</td><td><code>npm install tracery-grammar</code></td></tr><tr><td><a href="https://pypi.org/project/opensimplex/" target="_blank" rel="noopener"><b>Python: numpy · opensimplex · noise</b></a></td><td>Python</td><td>Arazi ve doku prototipleri, ifade aralığı analizleri.</td><td><code>pip install opensimplex</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Oyununuza PCG eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.8em">
+      <li><b>Neyi üreteceğinize karar verin</b>: zorunlu yol mu, süs mü? Zorunlu içerik için garanti (yapı önce) ya da üret-ve-sına.</li>
+      <li><b>Tohum yönetimi</b>: her alt sistem için ayrı üreteç (arazi, düşman, ganimet); tohumu kayıt dosyasına ve hata raporlarına yazın; günlük tohumu tarihten türetin.</li>
+      <li><b>Katmanlar</b>: yapı (yol, bölgeler) → el yapımı parçalar (şablon odalar, setler) → rastgele süs.</li>
+      <li><b>Doğrulama</b>: bağlantı (flood fill), erişilebilirlik (A*), zorluk ölçüsü; başarısızsa yeniden üret ya da onar.</li>
+      <li><b>Performans</b>: büyük dünyalarda parça (chunk) parça, oyuncu yaklaştıkça; ağır işleri iş parçacığına (Unity Jobs) taşıyın.</li>
+      <li><b>Tasarımcı kontrolü</b>: parametreler editörde, önizleme düğmesi, “bu tohumu sabitle” seçeneği.</li>
+    </ol>
+    <div>
+      <div class="box warn"><span class="bt">Sık hatalar</span>
+        <ul style="font-size:.8em">
+          <li>Global <code>Random</code>’ı her yerde kullanmak (tohum tekrarlanamaz hâle gelir).</li>
+          <li>Gürültüyü hep (0, 0) civarında örneklemek: tohum yerine koordinat kaydırması kullanın.</li>
+          <li>Yalnız rastgeleliğe güvenip “ilginç an” tasarlamamak (yulaf lapası).</li>
+          <li>Oyuncunun ilk dakikasını rastgeleliğe bırakmak: başlangıç alanını el yapımı yapın (Minecraft bile doğma noktasını kontrol eder).</li>
+        </ul></div>
+      <div class="box low"><span class="bt">⚙️ Deterministik olmak</span>Ağ oyununda ya da tekrar oynatmada aynı sonucu almak için kayan nokta farklarına dikkat: kritik üretimi tam sayılarla yapın ya da sunucuda üretip gönderin.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>UnityEngine.Random ile System.Random’ı karıştırmak</li><li>Mathf.PerlinNoise’un tohum almadığını unutmak</li><li>Tamsayı taşmaları (LCG’de 32 bit)</li><li>Her karede yeniden üretmek (bir kez üret, sakla)</li><li>Ölçek parametresini 0 yapıp her şeyi aynı değere çekmek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#, 2D Tilemap. Bir zindan üreteci yaz: (1) DungeonSettings ScriptableObject: genişlik, yükseklik, tohum, ilk duvar oranı, otomat adımı. (2) System.Random(seed) ile hücresel otomat mağarası (kural: ≥5 duvar komşu ya da duvarsa ≥4). (3) Flood fill ile en büyük bölgeyi bul, diğer bölgeleri en yakın noktadan tünelle bağla. (4) Başlangıç ve çıkışı en büyük bölgede birbirinden en uzak iki noktaya koy (BFS ile). (5) Tilemap’e yaz; editörde “Yeniden üret” düğmesi ve OnValidate ile canlı önizleme. (6) Aynı tohumun her zaman aynı haritayı verdiğini test eden bir EditMode testi.”</p><ul class="mini"><li>Tohum yönetimini ve alt sistem başına ayrı üreteci açıkça isteyin</li><li>Doğrulama adımını (bağlantı, A* ile erişim) isteyin</li><li>Editörde önizleme ve parametre kontrolü (Unity: [ContextMenu], OnValidate) isteyin</li><li>Algoritmayı adım adım görselleştiren hata ayıklama modu isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Deneyim odaklı PCG</span>Oyuncunun duygusunu (gerilim, merak) hedefleyen üreteçler: oyuncu modeli (Y17) + arama tabanlı PCG. Y&amp;T kitabının 4. ve 7. bölümleri.</div>
+    <div class="box game"><span class="bt">Hikâye ve görev üretimi</span>Dwarf Fortress’in yüzyıllık dünya tarihi simülasyonu, görev dilbilgileri, LLM ile görev yazımı ve tutarlılık sorunu (Y14).</div>
+    <div class="box low"><span class="bt">Kalite–çeşitlilik (QD) arama</span>MAP-Elites gibi algoritmalar: tek bir “en iyi” içerik değil, farklı özelliklerde birçok iyi içerik bulmak. İfade aralığını bilerek doldurmak.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Ada üreteci</b> — p5.js’te fBm + kenarlara doğru azalan maske ile ada; tohum kutusu ve biyom eşikleri.</li><li><b class="c-green">[kolay]</b> <b>Görev üreteci</b> — Tracery benzeri bir dilbilgisiyle 100 farklı yan görev açıklaması; tekrarları sayın, “yulaf lapası” mı?</li><li><b class="c-amber">[orta]</b> <b>Spelunky klonu</b> — Unity 2D: 4 × 4 oda yolu + oda tipine göre 3’er el yapımı şablon + rastgele bloklar; her seviyeyi A* ile test edin.</li><li><b class="c-amber">[orta]</b> <b>WFC şehir</b> — Kendi karo setinizle (yol, ev, park, su) WFC; geri alma ekleyip çelişki oranını ölçün.</li><li><b class="c-red">[zor]</b> <b>Sonsuz dünya</b> — Parça parça yüklenen 3B arazi: gürültü + biyomlar + L-sistemi ağaçları; oyuncu yaklaştıkça üret, uzaklaşınca sil.</li><li><b class="c-purple">[araştırma]</b> <b>İfade aralığı analizi</b> — Üç zindan üretecini (CA, BSP, yürüyüş) 1000’er kez çalıştırın; “açık alan oranı” ve “çıkışa en kısa yol” eksenlerinde ısı haritaları çizip karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>PCG = içeriği algoritmayla üretmek; bellekten (Elite, River Raid) tekrar oynanabilirliğe.</li>
+      <li><b>Tohum</b>: aynı tohum, aynı dünya; ayrı alt sistem üreteçleri.</li>
+      <li><b>Gürültü</b>: Perlin, oktavlar, biyom eşikleri; No Man’s Sky ve yulaf lapası.</li>
+      <li><b>Zindanlar</b>: hücresel otomat, BSP, sarhoş yürüyüşü; Spelunky’nin önce-yol yaklaşımı.</li>
+    </ul>
+    <ul>
+      <li><b>WFC</b>: en az seçenekli hücreyi çöktür, kısıtı yay; Bad North, Townscaper.</li>
+      <li><b>L-sistemleri ve dilbilgileri</b>: bitkiler, metinler.</li>
+      <li><b>Değerlendirme</b>: oynanabilirlik, ifade aralığı, arama tabanlı PCG, PCGML.</li>
+      <li>Sonraki: <b>üretken YZ</b>: görüntü, ses, 3B ve oynanabilir dünya modelleri.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=Uqk5Zf0tw3o" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Uqk5Zf0tw3o/hqdefault.jpg" alt=""><span><b>How (and Why) Spelunky Makes its Own Levels</b><br>Game Maker’s Toolkit</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=wbpMiKiSKm8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/wbpMiKiSKm8/hqdefault.jpg" alt=""><span><b>Procedural Landmass Generation (E01)</b><br>Sebastian Lague</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=0bcZb-SsnrA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0bcZb-SsnrA/hqdefault.jpg" alt=""><span><b>Wave Function Collapse in Bad North</b><br>Oskar Stålberg</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=_1fvJ5sHh6A" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/_1fvJ5sHh6A/hqdefault.jpg" alt=""><span><b>How Townscaper Works</b><br>AI and Games</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=sCRzxEEcO2Y" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/sCRzxEEcO2Y/hqdefault.jpg" alt=""><span><b>Continuous World Generation in No Man’s Sky</b><br>GDC</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=E1B4UoSQMFw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/E1B4UoSQMFw/hqdefault.jpg" alt=""><span><b>Coding Challenge #16: L-System Fractal Trees</b><br>The Coding Train</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Shaker, Togelius &amp; Nelson 2016</b> · <a href="http://pcgbook.com/" target="_blank" rel="noopener">Procedural Content Generation in Games</a> <i>(Springer, ücretsiz çevrimiçi)</i><br>Alanın ders kitabı.</div><div class="paper"><b>Perlin 2002</b> · <a href="https://mrl.cs.nyu.edu/~perlin/paper445.pdf" target="_blank" rel="noopener">Improving Noise</a> <i>(SIGGRAPH 2002)</i><br>Perlin gürültüsünün geliştirilmiş hâli (fade fonksiyonu).</div><div class="paper"><b>Togelius ve ark. 2011</b> · <a href="http://julian.togelius.com/Togelius2011Searchbased.pdf" target="_blank" rel="noopener">Search-Based Procedural Content Generation: A Taxonomy and Survey</a> <i>(IEEE TCIAIG)</i><br>Arama tabanlı PCG.</div><div class="paper"><b>Summerville ve ark. 2018</b> · <a href="https://arxiv.org/abs/1702.00539" target="_blank" rel="noopener">Procedural Content Generation via Machine Learning (PCGML)</a> <i>(IEEE Transactions on Games)</i><br>Öğrenerek üretmek.</div><div class="paper"><b>Prusinkiewicz &amp; Lindenmayer 1990</b> · <a href="http://algorithmicbotany.org/papers/#abop" target="_blank" rel="noopener">The Algorithmic Beauty of Plants</a> <i>(Springer, ücretsiz)</i><br>L-sistemlerinin klasiği.</div><div class="paper"><b>Yannakakis &amp; Togelius 2018</b> · <a href="https://gameaibook.org/" target="_blank" rel="noopener">Artificial Intelligence and Games, 4. bölüm: Generating Content</a> <i>(Springer, ücretsiz)</i><br>Dersin referans kitabı.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: hikâyeler ve rehberler 📰</h2>
+  <ul style="font-size:.78em">
+    <li>Gumin: <a href="https://github.com/mxgmn/WaveFunctionCollapse" target="_blank" rel="noopener">WaveFunctionCollapse</a> · Red Blob Games: <a href="https://www.redblobgames.com/maps/terrain-from-noise/" target="_blank" rel="noopener">Making maps with noise functions</a></li>
+    <li>Kate Compton: <a href="https://galaxykate0.tumblr.com/post/139774965871/so-you-want-to-build-a-generator" target="_blank" rel="noopener">So you want to build a generator…</a></li>
+    <li>No Man’s Sky ve ASA kararı: <a href="https://www.engadget.com/2016/11/30/no-mans-sky-steam-asa-investigation/" target="_blank" rel="noopener">Engadget</a></li>
+    <li>pack.png tohumu: <a href="https://www.pcgamesn.com/minecraft/seed-pack" target="_blank" rel="noopener">PCGamesN</a> · River Raid: <a href="https://en.wikipedia.org/wiki/River_Raid" target="_blank" rel="noopener">Wikipedia</a> · Elite: <a href="https://www.gamedeveloper.com/game-platforms/feature-the-history-of-i-elite-i-" target="_blank" rel="noopener">The History of Elite</a></li>
+    <li>Unreal Engine 5.7: <a href="https://gamefromscratch.com/unreal-engine-5-7-released/" target="_blank" rel="noopener">GameFromScratch özeti</a></li>
+  </ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3a0d3a 0%, #1c0c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Üretken YZ</div>
+    <div class="sub">Görüntü, ses, 3B ve oynanabilir dünya modelleri</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #d79bff" href="../yz-uretken/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

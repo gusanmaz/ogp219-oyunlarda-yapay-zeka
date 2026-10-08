@@ -29,7 +29,7 @@
   const BIOMES = [[-1, '#2a5d9f', 'derin su'], [0, '#3f86c9', 'sığ su'], [0.04, '#e6d49a', 'kum'], [0.22, '#6fb35a', 'çimen'], [0.42, '#3c7f3a', 'orman'], [0.58, '#8a7f74', 'kaya'], [0.72, '#f2f2f2', 'kar']];
   D.noise = function (root) {
     const W = 720, H = 300, cell = 4, GW = W / cell, GH = 230 / cell;
-    const c = { seed: 7, scale: 40, oct: 4, pers: 0.5, lac: 2, water: 0, view: 'biome' };
+    const c = { seed: 7, scale: 60, oct: 5, pers: 0.5, lac: 2, water: -0.1, view: 'biome' };
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     let noise = makePerlin(c.seed);
     const fbm = (x, y) => { let amp = 1, f = 1, s = 0, norm = 0; for (let o = 0; o < c.oct; o++) { s += amp * noise(x * f, y * f); norm += amp; amp *= c.pers; f *= c.lac; } return s / norm; };
@@ -76,7 +76,10 @@
     const g = new Uint8Array(W * H).fill(1), rooms = [], leaves = [];
     const split = (x, y, w, h, d) => {
       if (d === 0 || (w < 16 && h < 12)) { leaves.push({ x, y, w, h }); return; }
-      const horiz = w / h < 1.25 && (h >= 12) ? true : w < 16 ? true : r() < 0.5 && h >= 12;
+      // en-boy oranına göre böl: geniş parçayı dikey, uzun parçayı yatay kes; kareye yakınsa yazı tura
+      const canV = w >= 16, canH = h >= 12;
+      if (!canV && !canH) { leaves.push({ x, y, w, h }); return; }
+      const horiz = !canV ? true : !canH ? false : w / h > 2.2 ? false : r() < 0.4;
       if (horiz) { const s = 5 + Math.floor(r() * (h - 10)); split(x, y, w, s, d - 1); split(x, y + s, w, h - s, d - 1); }
       else { const s = 7 + Math.floor(r() * (w - 14)); split(x, y, s, h, d - 1); split(x + s, y, w - s, h, d - 1); }
     };
@@ -165,8 +168,8 @@
         const x = (i % GW) * cs, y = ((i / GW) | 0) * cs, o = opts[i];
         if (o.length === 1) { ctx.fillStyle = TILES[o[0]].col; ctx.fillRect(x, y, cs - 1, cs - 1); }
         else { // olası karoların küçük şeritleri + seçenek sayısı (entropi)
-          o.forEach((ti, k) => { ctx.fillStyle = TILES[ti].col; ctx.globalAlpha = 0.45; ctx.fillRect(x + (k * (cs - 1)) / o.length, y, (cs - 1) / o.length, cs - 1); });
-          ctx.globalAlpha = 1; SL.drawLabel(ctx, String(o.length), x + cs / 2, y + cs / 2, t.ink, { size: 10, bg: false });
+          o.forEach((ti, k) => { ctx.fillStyle = TILES[ti].col; ctx.globalAlpha = o.length === TILES.length ? 0.18 : 0.45; ctx.fillRect(x + (k * (cs - 1)) / o.length, y, (cs - 1) / o.length, cs - 1); });
+          ctx.globalAlpha = 1; if (o.length < TILES.length) SL.drawLabel(ctx, String(o.length), x + cs / 2, y + cs / 2, t.ink, { size: 10, bg: false });
         }
       }
       const done = opts.every(o => o.length === 1);
@@ -204,9 +207,7 @@
       const sc = Math.min((W - 30) / Math.max(1e-6, mxx - mnx), (H - 40) / Math.max(1e-6, mxy - mny)), ox = (W - (mxx - mnx) * sc) / 2 - mnx * sc, oy = (H - 20 - (mxy - mny) * sc) / 2 - mny * sc + 4;
       ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
       ctx.lineWidth = 1; ctx.lineCap = 'round';
-      const r2 = RNG(seed); const rs = r; // aynı tohumla aynı çizim
-      let i = 0; const r3 = RNG(seed);
-      // ikinci geçiş: aynı rastgele diziyi kullanmak için yeniden yürü
+      // ikinci geçiş: aynı tohumla yeniden yürüyüp çiz (sınır hesabıyla aynı açılar)
       (function () { let x = 0, y = 0, a = L.start * Math.PI / 180; const st = []; const rr = RNG(seed); for (const ch of s) { if (ch === 'F') { const nx = x + Math.cos(a), ny = y + Math.sin(a); const d = st.length; ctx.strokeStyle = key === 'koch' || key === 'dragon' ? t.blue : d > 3 ? t.green : (t.dark ? '#b08a5a' : '#7a5a32'); ctx.beginPath(); ctx.moveTo(ox + x * sc, oy + y * sc); ctx.lineTo(ox + nx * sc, oy + ny * sc); ctx.stroke(); x = nx; y = ny; } else if (ch === '+') a += (ang + (rr() - 0.5) * jitter) * Math.PI / 180; else if (ch === '-') a -= (ang + (rr() - 0.5) * jitter) * Math.PI / 180; else if (ch === '[') st.push([x, y, a]); else if (ch === ']') [x, y, a] = st.pop(); } })();
       SL.drawLabel(ctx, `${L.name} · aksiyom “${L.ax}” · ${n} yineleme · dize uzunluğu ${s.length.toLocaleString('tr')}`, W / 2, H - 10, t.muted, { size: 11 });
       info.innerHTML = `Kurallar: ${Object.entries(L.rules).map(([k, v]) => `<code>${k} → ${v}</code>`).join(' · ')}. Kaplumbağa: <code>F</code> ileri çiz, <code>+</code>/<code>−</code> ${ang}° dön, <code>[</code> konumu kaydet, <code>]</code> geri dön (dal!). ${jitter ? 'Açıya ±' + jitter / 2 + '° rastgelelik eklendi: her ağaç farklı.' : ''}`;

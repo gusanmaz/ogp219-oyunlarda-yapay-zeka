@@ -82,6 +82,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y12 | [Taktik YZ](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-taktik/) | ✅ hazır |
 | Y13 | [Öğrenen YZ](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-ogrenme/) | ✅ hazır |
 | Y14 | [LLM ile NPC’ler](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-llm/) | ✅ hazır |
+| Y15 | [Prosedürel İçerik Üretimi](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-pcg/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -142,6 +143,7 @@ yz-algilama/        Y11 · Görüş bölgeleri, ışık, duruş ve farkındalık
 yz-taktik/          Y12 · Siper seçimi (üret/ele/puanla), Killzone, Crysis 2 TPS, Unreal EQS, etki haritaları ve Kohan II, tehlike maliyetli A*, Gears Tactics
 yz-ogrenme/         Y13 · Pekiştirmeli öğrenme, keşif/sömürü, Q-learning, ödül hilesi (CoastRunners, SupCom 2), nöroevrim, Drivatar, GT Sophy, ARC Raiders, Unity ML-Agents 4
 yz-llm/             Y14 · Sıradaki parça tahmini, Cicero, Generative Agents hafıza akışı, yapılandırılmış çıktı ve denetim hattı, gecikme/maliyet, Fortnite Vader ve Where Winds Meet, Ollama, LLM for Unity, NVIDIA ACE
+yz-pcg/             Y15 · Tohumlar (Elite, River Raid, pack.png), Perlin gürültüsü ve arazi, No Man’s Sky, hücresel otomat, BSP, Spelunky, dalga fonksiyonu çöküşü, L-sistemleri, ifade aralığı
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).
