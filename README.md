@@ -78,6 +78,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 | Y8 | [A* ile Yol Bulma](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-astar/) | ✅ hazır |
 | Y9 | [NavMesh](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-navmesh/) | ✅ hazır |
 | Y10 | [Grup Yapay Zekâsı](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-grup/) | ✅ hazır |
+| Y11 | [Algılama](https://gusanmaz.github.io/ogp219-oyunlarda-yapay-zeka/yz-algilama/) | ✅ hazır |
 
 ## Klasör yapısı
 
@@ -134,6 +135,7 @@ yz-steering/        Y7 · Kuvvet vektörleri görünen seek/flee/arrive/pursue/e
 yz-astar/           Y8 · Düzenlenebilir ızgarada BFS/Dijkstra/Greedy/A* yarışı, sezgiler ve ağırlıklı A*, yol yumuşatma, StarCraft hilesi, Factorio hiyerarşisi, JPS; sezgi ve yol maliyeti laboratuvarları
 yz-navmesh/         Y9 · Tıkla-git navmesh (koridor, funnel, kapı, atlama bağlantısı), adım adım funnel, 2B Recast üretimi (aşındırma, bölgeler), nokta-çokgen, çapraz çarpım ve alan laboratuvarları
 yz-grup/            Y10 · Canlı formasyonlar (yuva ataması, dar geçit), kung-fu çemberi ve Belçika YZ saldırı yönetimi, Days Gone tarzı güven ve cephe hattı; kama, izin ve güven laboratuvarları
+yz-algilama/        Y11 · Görüş bölgeleri, ışık, duruş ve farkındalık sayacıyla canlı muhafız; kapılar üzerinden ses mesafesi ve hafıza; ADSR zarfı; canSee, farkındalık ve ses mesafesi laboratuvarları
 ```
 
 Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).

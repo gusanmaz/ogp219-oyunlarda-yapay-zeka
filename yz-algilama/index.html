@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algılama</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Algı sistemleri: görme (mesafe/açı/ışın, görüş bölgeleri, ışık, duruş), farkındalık seviyeleri, son bilinen konum, ADSR zarfları, duyma ve kapılar üzerinden ses mesafesi, hafıza, adil hile; Thief, Splinter Cell: Blacklist, The Last of Us, Crysis 2, Mark of the Ninja; Unreal AI Perception. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #4a0f2a 0%, #1b1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 11</div>
+  <div class="ttl" style="font-size:90px">Algılama</div>
+  <div class="sub"><i>Görme, duyma, farkındalık, hafıza</i> — NPC dünyayı nasıl “bilir”?</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titleperc"></div>
+  <aside class="notes">Haftalık plandaki algı sistemleri konusu. Arka planda bir muhafızın iki katmanlı görüş alanı ve uzaktan yayılan ses halkaları; muhafızın başında “?” ve “!” yanıp sönüyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Neden algı?</b> — Thief (1998) ve “adil” YZ’nin dört şartı</li>
+      <li><b>Görme</b> — mesafe, açı, ışın; görüş bölgeleri, ışık, duruş (Splinter Cell, The Last of Us)</li>
+      <li><b>Farkındalık ve hafıza</b> — sayaçlar, seviyeler, son bilinen konum, ADSR zarfları (Crysis 2)</li>
+      <li><b>Duyma</b> — ses duvardan geçmez: kapılar ve pencereler üzerinden mesafe</li>
+      <li><b>Diğer duyular ve hile</b> — koku, sosyal bilgi, ortam değişiklikleri; ne zaman hile yapılır?</li>
+      <li><b>Kod</b> — canSee, farkındalık sayacı, ses olayları + üç laboratuvar</li>
+      <li><b>Kütüphaneler</b> — Unreal AI Perception, Unity raycast + kendi sisteminiz, Yuka</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…“gördü / görmedi” yerine kademeli fark eden, ışığa ve duruşa duyarlı, sesi duvarların arkasından doğru mesafeyle duyan, oyuncuyu kaybedince son gördüğü yeri araştıran ve bütün bunları oyuncuya <b>okunabilir</b> biçimde gösteren bir algı sistemi kurabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: YZ’YE OYUNCUNUN YERİNİ SÖYLEMEK ÇOK KOLAY</span>
+    <p class="big"><code>enemy.ThePlayerIsHere(player.position);</code> — tek satır. Neden yapmıyoruz?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Crytek’ten Rich Welsh (Game AI Pro): Matrix filmindeki gibi telefondaki bir ses kahramanı yönlendirebilir; biz de YZ’ye her şeyi söyleyebiliriz. Ama “oyuncu YZ’nin hile yaptığını anladığı anda kendini aldatılmış hisseder.”</li>
+    <li class="fragment">Algı sisteminin işi, YZ’nin bilgisini <b>bilerek kısıtlamak</b>: oyuncuyla benzer sınırlar (görme, duyma, hafıza) koymak.</li>
+    <li class="fragment">Gizlilik oyunlarında bu, oyunun <b>kendisidir</b>. Aksiyon oyunlarında da düşmanın “ne bildiği” dövüşün ritmini belirler.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (nokta çarpım, görüş açısı)</a><a class="" href="../yz-fsm/">Y2 · FSM (nöbetçi)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-davranis-agaclari/">Y3 · Davranış Ağaçları (kara tahta)</a><a class="opt" href="../yz-navmesh/">Y9 · NavMesh (ses yolu)</a><a class="opt" href="../yz-utility/">Y4 · Utility (kesinlik = puan)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Y0’daki “oyuncu görüş açımda mı?” laboratuvarı bu destenin ilk adımıdır. Y2’deki nöbetçinin “görüyor/duydu” bilgisini bu hafta nereden aldığını kuruyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unreal’ın AI Perception bileşeni görme ve duymayı hazır verir; Unity’de birkaç satır <code>Physics.Raycast</code> yeter. Bu destenin asıl dersi kod değil, <b>tasarım</b>: oyuncunun algıyı anlayabilmesi (gösterge, ses, animasyon).</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>perception · stimulus (stim)</td><td>algı · uyaran</td><td>Duyuların dünyadan bilgi alması · algılanabilir olay (görüntü, ses, hasar)</td></tr>
+    <tr><td>field of view (FOV) · line of sight (LOS)</td><td>görüş açısı · görüş hattı</td><td>Gözün baktığı açı · arada engel olmaması</td></tr>
+    <tr><td>raycast</td><td>ışın atma</td><td>Bir noktadan diğerine düz çizginin bir şeye çarpıp çarpmadığını sorma</td></tr>
+    <tr><td>peripheral vision</td><td>çevresel görüş</td><td>Gözün kenarı: hareketi fark eder, ayrıntıyı seçemez</td></tr>
+    <tr><td>certainty · awareness</td><td>kesinlik · farkındalık</td><td>“Ne kadar net görüyorum?” · “Bu kadar süredir görüyorum, artık eminim”</td></tr>
+    <tr><td>last known position (LKP)</td><td>son bilinen konum</td><td>Hedefin en son algılandığı yer; araştırmanın başladığı nokta</td></tr>
+    <tr><td>sound propagation · occlusion</td><td>ses yayılımı · engelleme</td><td>Sesin duvarlar, kapılar üzerinden ilerlemesi ve sönümlenmesi</td></tr>
+    <tr><td>ADSR envelope</td><td>ADSR zarfı</td><td>Attack, Decay, Sustain, Release: algı değerinin zamanla yükselip sönmesi</td></tr>
+    <tr><td>omniscience · cheating</td><td>her şeyi bilme · hile</td><td>YZ’nin görmediği bilgiyi kullanması</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Neden algı?</div>
+  <div class="sub">Thief ve adil YZ’nin dört şartı</div>
+  <ul class="agenda"><li class="on">neden algı?</li><li class="">görme</li><li class="">farkındalık ve hafıza</li><li class="">duyma</li><li class="">diğer duyular ve hile</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="neden">
+  <h2>Derin hikâye: Thief: The Dark Project (1998) 🕯️</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Looking Glass Studios’un baş programcısı Tom Leonard, “Building an AI Sensory System” yazısında: Thief’te oyuncu yavaş hareket eder, çatışmadan kaçar, öldürünce cezalandırılır ve kolayca ölür. “Oyunun merkezi, YZ’nin oyuncu hakkındaki <b>duyusal bilgisinin gelip gitmesidir</b>.”</p>
+      <ul style="font-size:.82em">
+        <li>Görme tek bir koni değil, sıralı <b>beş görüş konisi</b>: doğrudan görüş, çevresel görüş, yukarı/aşağı… Her koninin kendi keskinliği ve “harekete mi ışığa mı duyarlı” ayarı var.</li>
+        <li>Beşinci koni <b>geriye</b> bakar ve sadece <b>harekete</b> duyarlıdır: oyuncu sessiz olsa bile çok yakından takip ederse muhafız “örümcek hissi” ile fark eder.</li>
+        <li>Her nesnenin bir <b>görünürlük</b> değeri var; oyuncunun aydınlığı, ayağının altındaki zeminin ışığına göre hesaplanır. Böylece oyuncu ekrandaki <b>ışık taşı</b> (light gem) göstergesiyle güvende olup olmadığını <b>nesnel</b> olarak görebilir.</li>
+        <li>Sesler anlam etiketleriyle 3B geometride yayılır ve doğru yönden gelir; algı değerleri zamanla filtrelenerek yükselir, bir “kapasitör” gibi yavaşça söner.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">💡 Ders</span>Algı sistemi “tasarımcının ayarlayabileceği, ama çıktısı <b>istikrarlı ve anlaşılır</b>” olmalı. Oyuncu kuralı öğrenebilmeli: “gölgede yavaş yürürsem görünmem.”</div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=Ay-5g36oFfc" target="_blank" rel="noopener">How Stealth Game Guards See and Hear</a> (Game Maker’s Toolkit, School of Stealth #1)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="neden">
+  <h2>İyi bir algı sisteminin dört şartı (Splinter Cell: Blacklist)</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">1) Adalet</span>Gizlilikte yakalanmak, oyunun bitmesi ya da kolun duvara fırlatılması demek. Haksız gelen tek bir yakalanma oyunu bıraktırır.</div>
+    <div class="box game"><span class="bt">2) Tutarlılık</span>Oyuncu, YZ’nin neyi algılayacağını <b>tahmin edebilmeli</b> ki strateji kurabilsin. Gerçek insanlardan farklı olarak! (Ama tutarlı ≠ tekrarlayan: mesafe ve süreler aynı, animasyon ve sözler farklı.)</div>
+  </div>
+  <div class="cols">
+    <div class="box low"><span class="bt">3) İyi geri bildirim</span>Oyuncu YZ’nin ne yaptığını ve <b>neden</b> yaptığını okuyabilmeli: göstergeler, sözler (“Orada biri mi var?”), bakış animasyonları.</div>
+    <div class="box warn"><span class="bt">4) Zekâ</span>Martin Walsh: “Aptal olmamak, akıllı olmak demek değildir; her zaman <b>inandırıcı</b> olmak demektir.”</div>
+  </div>
+  <p class="mini">Martin Walsh, Game AI Pro 2, 28. bölüm; GDC 2014 konuşması: <a href="https://www.youtube.com/watch?v=RFWrKHM0vAg" target="_blank" rel="noopener">Modeling AI Perception and Awareness in Splinter Cell: Blacklist</a>.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Görme</div>
+  <div class="sub">koni, bölgeler, ışık, duruş</div>
+  <ul class="agenda"><li class="done">neden algı?</li><li class="on">görme</li><li class="">farkındalık ve hafıza</li><li class="">duyma</li><li class="">diğer duyular ve hile</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="görme">
+  <h2>Klasik üç kontrol ve sorunu</h2>
+  <div class="cols">
+    <div>
+      <ol style="font-size:.86em">
+        <li><b>Mesafe</b>: yeterince yakın mı? (en ucuz: bir çıkarma, bir uzunluk)</li>
+        <li><b>Açı</b>: görüş açımda mı? (nokta çarpım ≥ cos(yarı açı); Y0)</li>
+        <li><b>Işın</b>: arada duvar var mı? (en pahalı: fizik sorgusu)</li>
+      </ol>
+      <p style="font-size:.84em">Sıra önemlidir: ucuz kontroller pahalıları <b>eler</b>. Yüz NPC × yüz hedef için ışın atmak, uzaktakileri baştan elemekten çok daha pahalıdır.</p>
+    </div>
+    <div class="box warn"><span class="bt">⚠️ Evet/hayır sorunu (Steve Rabin)</span>“Oyuncu 10,001 m uzaktayken görülmez, 1 mm yaklaşınca birden görülür.” Gri alan yok; oyuncular bu sınırı çabucak keşfeder ve sömürür. Ayrıca 0,3 gibi bir sayıyı “%30 görme olasılığı” diye zar atmak daha da kötü: rastgele ve açıklanamaz. Rabin’in önerisi: 0–1 değeri bir <b>tanıma kesinliği</b> olarak yorumlamak (“bir şey gördüm ama ne olduğundan emin değilim”).</div>
+  </div>
+</section>
+
+<section data-sec="görme">
+  <h2>Koni neden kötü bir göz?</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">The Last of Us (Naughty Dog)</span>Uncharted’tan gelen basit koni + ışın sistemiyle oyun testlerinde sorun çıktı: oyuncu NPC’nin <b>hemen yanında</b> görünmüyor, <b>çok uzaktayken</b> fark ediliyordu. Çözüm basit bir kural: <b>görüş açısı mesafeyle ters orantılı</b> — yakında geniş, uzakta dar. (McIntosh, GAP2 34. bölüm)</div>
+      <div class="box game"><span class="bt">Splinter Cell: Blacklist’in tabutu</span>Koni uzaklaştıkça yana genişler: 40 m ötede 15 m yandaki hareketi fark etmek mantıksız. Önce koni yerine kutular, sonra <b>tabut biçimli</b> kutular kullanıldı: önce koni gibi genişler, sonra daralır. Çevresel görüş için ayrı, yakın bir bölge.</div>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">Rabin’in görüş bölgeleri</span>Birkaç bölge, her birinin bir kesinlik değeri: tam önde ve orta mesafede “tatlı nokta” (1,0), ana koni (0,5), çevre (0,25). Hareket eden hedef daha görünür, kamuflajlı hedef daha az. Sonuç bir <b>sayı</b>; davranış bu sayıya göre kademelenir: dön ve bak, yaklaş, alarm.</div>
+      <p class="mini">Bir sonraki demoda “görüş bölgeleri” modeli tam olarak bu: kırmızı tabut (1,0), turuncu koni (0,5), mavi çevre (0,25).</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="görme">
+  <h2>Canlı: görüş bölgeleri, ışık ve farkındalık 👁</h2>
+  <div class="demo" data-demo="vision"></div>
+</section>
+
+<section data-sec="görme">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>“Evet/hayır koni”yi seçin: koninin kenarında bir milim içeri girin, çıkın. Farkındalık bir anda doluyor mu? Sonra “görüş bölgeleri”: uzak kenarlarda yavaş, tatlı noktada hızlı.</li>
+      <li>Gölgeli alanlarda (koyu dikdörtgenler) dolaşın: kesinlik ×0,3. Çömelin: ×0,6. Muhafızın hemen yanından gölgede, çömelerek geçebiliyor musunuz?</li>
+      <li>Muhafızın arkasına çok yakın gelin: yakın çevre bölgesi (“örümcek hissi”). Thief’in arkaya bakan konisi.</li>
+      <li>Görünüp hemen saklanın: muhafız “şüpheli” (?) olup son bilinen konuma bakıyor; “arıyor” seviyesinde oraya yürüyor.</li>
+      <li>“Fark etme süresi”ni 0,3 yapın: haksız mı geldi? 4 yapın: kolay mı? İşte zorluk ayarı.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="görme">
+  <h2>Işık, duruş ve “hangi noktaya bakıyoruz?”</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Splinter Cell: Blacklist — tespit sayacı</span>Oyuncunun iskeletinden “yeterince kemik” görünür olunca bir sayaç başlar. Sayacın süresi oyuncunun bulunduğu <b>görüş bölgesine</b>, mesafeye, aydınlığına ve NPC’nin durumuna göre ölçeklenir. Sayaç ekranda büyüyen bir gösterge olarak çizilir: oyuncunun “görüş hattını kırmak ya da NPC’yi etkisiz hâle getirmek” için ne kadar vakti olduğunu gösterir.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">The Last of Us — tek bir nokta</span>İlk deneme: Joel’in neredeyse her eklemine ışın, ağırlıklı ortalama %60’ı geçerse görünür. Sonuç doğru ama oyuncular bir siperin güvenli olup olmadığını <b>tahmin edemedi</b>. Çözüm: <b>tek nokta</b>. Gizlilikteyken göğsün ortası, çatışmadayken başın tepesi: gizlilikte oyuncu lehine, çatışmada iyi görüş.</div>
+      <div class="box low"><span class="bt">Ve bir sayaç daha</span>TLOU’da da oyuncu görüldüğü her karede sayaç artar, görülmediği her karede azalır; sayaç eşiği geçince algılanmış sayılır (tipik NPC için 1–2 sn; çatışmada çok daha kısa, oyuncu henüz hiç görülmemişse çok daha uzun).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="görme">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · görme</div>
+    <div class="q">Yüz NPC her karede oyuncuyu “görüyor mu” diye kontrol ediyor. Hangi sıra en verimlidir?</div>
+    <div class="opts">
+      <button data-opt="A">Mesafe → açı → ışın</button>
+      <button data-opt="B">Işın → açı → mesafe</button>
+      <button data-opt="C">Açı → ışın → mesafe</button>
+      <button data-opt="D">Sıra fark etmez</button>
+    </div>
+    <div class="explain">Ucuz kontroller önce: mesafe bir çıkarma ve uzunluk; açı bir nokta çarpım; ışın ise fizik motoruna sorgudur. Uzaktaki ya da arkadaki NPC’ler ışına hiç ulaşmadan elenir. Sonuç aynı, maliyet çok farklı.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Farkındalık ve hafıza</div>
+  <div class="sub">seviyeler, son bilinen konum, ADSR</div>
+  <ul class="agenda"><li class="done">neden algı?</li><li class="done">görme</li><li class="on">farkındalık ve hafıza</li><li class="">duyma</li><li class="">diğer duyular ve hile</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="farkındalık">
+  <h2>Algı ≠ farkındalık</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Splinter Cell ekibinin tanımı: farkındalık, algılanan şeyin giderek daha <b>ayrıntılı</b> anlaşılmasını temsil eden <b>kesikli zihinsel durumlardır</b>; zamanla, duyular yoluyla adım adım ulaşılır. Uzakta bir hareket görünce “orada <b>bir şey</b> var” dersiniz; ne olduğunu anlamak zaman alır.</p>
+      <table class="sum-t" style="font-size:17px">
+        <tr><th>seviye</th><th>NPC ne yapar?</th><th>oyuncu ne görür?</th></tr>
+        <tr><td>habersiz</td><td>rutin (devriye)</td><td>—</td></tr>
+        <tr><td>şüpheli</td><td>durur, bakar</td><td>“?” · “Bir ses mi duydum?”</td></tr>
+        <tr><td>arıyor</td><td>son bilinen konuma gider</td><td>“??” · el feneri, tarama</td></tr>
+        <tr><td>alarm</td><td>saldırır, haber verir</td><td>“!” · müzik değişir</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">“!” işaretinin tarihi</span>Metal Gear serisinin muhafızlarının başındaki “!” sesi ve işareti, oyunculara YZ’nin durumunu anında okutan en tanınmış geri bildirimlerden biri. Y2’deki MGS2 alarm evreleri de aynı fikrin <b>bütün üsse</b> yayılmış hâli.</div>
+      <div class="box game"><span class="bt">Son bilinen konum</span>NPC oyuncuyu kaybedince <b>gerçek</b> konumunu değil, son gördüğü yeri bilir ve orayı araştırır. Bu, oyuncuya “kaçma, şaşırtma, arkadan dolanma” fırsatı verir. Splinter Cell: Conviction (2010) bunu oyuncuya görünür kıldı: düşmanların sizi sandığı yerde beyaz bir siluetiniz kalır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="farkındalık">
+  <h2>Crysis 2: hedef izleri ve ADSR zarfları 🎹</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.84em">Crytek’in Target Tracks Perception System’i (Crysis 2 için Kevin Kirst yazdı; Rich Welsh, GAP 31. bölüm):</p>
+      <ul style="font-size:.82em">
+        <li><b>Uyaranlar</b> (stims): görme, ses, silah sesi… veri olarak.</li>
+        <li><b>Algı yöneticisi</b> uyaranları işler, <b>hedef izleri</b> her ajan için olası hedeflere göre uyaranları toplar ve en önemli hedefi seçer.</li>
+        <li>Her uyaran zamanla değişen bir algı değeri üretir: müzik sentezleyicilerinden alınmış <b>ADSR zarfı</b> — yükselme (attack), oturma (decay), sürdürme (sustain), sönme (release).</li>
+        <li>Çevresel görüş, birincil görüşe göre daha <b>uzun yükselme süresiyle</b> tanımlanır: kenardaki hedef daha geç tanınır.</li>
+      </ul>
+    </div>
+    <div class="demo" data-demo="adsr"></div>
+  </div>
+</section>
+
+<section data-sec="farkındalık">
+  <h2>Hafıza ve “ilgi kaynakları” (Mark of the Ninja)</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Mark of the Ninja (Klei, 2012)</span>Motor, sadece hedefleri umursayan dövüş oyunu Shank’ten geliyordu. Gizlilik için muhafızların <b>hedef olmayan</b> şeylere de dikkat etmesi gerekti: sesler, cesetler, kırılmış lambalar. Ekip veri güdümlü bir <b>ilgi kaynağı</b> sistemi kurdu: tasarımcı dünyaya “ilginç şeyler” koyar, ajanlar onları algılayıp önceliklendirir ve <b>araştırır</b>; araştırırken hedeflere karşı da tetikte kalır. (Brook Miles, GAP 32. bölüm)</div>
+    <div class="box game"><span class="bt">Hafıza ne tutar?</span>
+      <ul style="font-size:.82em">
+        <li>Hedef başına: son bilinen konum, yön, zaman, güven (azalır)</li>
+        <li>Olaylar: “burada ceset vardı”, “bu kapı açıktı”</li>
+        <li>Unutma: güven zamanla düşer; düşük güvenli anılar araştırma önceliğini kaybeder</li>
+      </ul>
+      <p class="mini">Y3’te Isla’nın Halo 2 hafıza türleri (davranış başına, nesne başına) ile aynı aile.</p></div>
+  </div>
+</section>
+
+<section data-sec="farkındalık">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · farkındalık</div>
+    <div class="q">Oyuncu bir an görünüp hemen bir duvarın arkasına saklandı. İyi tasarlanmış bir NPC ne yapmalı?</div>
+    <div class="opts">
+      <button data-opt="A">Farkındalığı kademeli düşerken son bilinen konuma bakmalı/gitmeli</button>
+      <button data-opt="B">Oyuncunun gerçek konumuna doğru kovalamalı</button>
+      <button data-opt="C">Hemen her şeyi unutup devriyeye dönmeli</button>
+      <button data-opt="D">Duvarın içinden ateş etmeli</button>
+    </div>
+    <div class="explain">NPC sadece algıladığını bilir: son bilinen konum. Gerçek konuma gitmek hile olur ve oyuncu fark eder; hemen unutmak ise aptal görünür. Farkındalığın yavaşça sönmesi (Thief’in “kapasitörü”, ADSR’ın release’i) ikisinin arasındaki inandırıcı orta yoldur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Duyma</div>
+  <div class="sub">ses duvardan geçmez</div>
+  <ul class="agenda"><li class="done">neden algı?</li><li class="done">görme</li><li class="done">farkındalık ve hafıza</li><li class="on">duyma</li><li class="">diğer duyular ve hile</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="duyma">
+  <h2>Sesin mesafesi düz çizgi değildir</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Basit model: her ses olayının bir <b>gürültü yarıçapı</b> var (koşmak &gt; yürümek &gt; çömelmek; silah &gt; ayak sesi). Dinleyici yarıçap içindeyse duyar.</li>
+        <li>Düz (Öklid) mesafe kullanırsanız oyuncu <b>duvarın arkasından</b> duyulur: haksız.</li>
+        <li>Ses motoru ile hesaplamak da sorunluydu (Splinter Cell: Blacklist): bazı çağrılar çok pahalı, ses verisi derlenmemişse yanlış tespit hataları.</li>
+      </ul>
+      <div class="box story"><span class="bt">Blacklist’in çözümü: TEAS</span>Seviye, <b>darboğazlarla</b> (kapı, pencere) bağlanmış <b>alanlara</b> bölünmüş bir bağlantı grafı. Ses mesafesi = kaynaktan sonraki alana giden en yakın darboğaza + darboğazdan darboğaza + son darboğazdan dinleyiciye. “Kabaca bir yaklaşım, ama pratikte yeterince doğruydu; geçtik ve bir daha geri bakmadık.”</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Gösterilebilir olmalı</span>The Last of Us’ta Clicker’lar kördür ve sesle avlanır. Duymaya başlayınca “huzursuz” bir duruma geçerler: oyuncuya, bulunmadan önce tepki verme şansı. Ekip, iletişimi kötü olan özellikleri <b>kesti</b>: Clicker’ların “havlaması” aslında çok daha iddialı bir tasarımın kalıntısı — havladıkça bir anlığına “görüşlerini açarak” yarasalar gibi çevrenin anlık bir modelini çıkaracaklardı. Ama kör bir karakter tarafından görülen oyuncular kafası karıştı; terk edildi. (GAP2 33. bölüm)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="duyma">
+  <h2>Canlı: kapılar ve pencereler üzerinden duymak 👂</h2>
+  <div class="demo" data-demo="hearing"></div>
+</section>
+
+<section data-sec="duyma">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>A odasının ortasına tıklayın: muhafız (B odası) duyuyor mu? Kırmızı kesikli çizgi sesin izlediği yol: kapı ya da pencere.</li>
+      <li>“Düz çizgi”ye geçin: aynı yere tıklayınca muhafız duvarın öbür tarafından duyuyor. Hangisi adil?</li>
+      <li>Pencerenin yakınına tıklayın: pencere sesi yarıya indirdiği için kapıdan dolanan yol yine de “daha kısa” sayılabilir.</li>
+      <li>Fareyi hızla gezdirin: koşma sesi (küçük halkalar). Yavaş gezdirin: sessiz. Gizlilik oyunlarının temel kuralı.</li>
+      <li>Mor noktalar: muhafızın ses <b>hafızası</b>; zamanla soluyor (güven düşüyor).</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Diğer duyular ve hile</div>
+  <div class="sub">sosyal bilgi, ortam, adil hile</div>
+  <ul class="agenda"><li class="done">neden algı?</li><li class="done">görme</li><li class="done">farkındalık ve hafıza</li><li class="done">duyma</li><li class="on">diğer duyular ve hile</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="diğer">
+  <h2>Görme ve duymanın ötesi</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Sosyal / bağlamsal farkındalık</span>NPC’ler birbirine haber verir: “Orada biri var!” Thief’te bilgi muhafızlar arasında konuşmayla yayılır, ama seviye boyunca <b>zincirleme yayılmayı</b> sınırlayan kontroller vardır (yoksa tek bir hata bütün üssü alarma geçirir).</div>
+      <div class="box game"><span class="bt">Ortam değişiklikleri (Blacklist)</span>Açık bırakılmış kapı, söndürülmüş ışık: NPC fark eder. Ama tek başına fark etmek yetmez; oyuncuya <b>göstermek</b> gerekir: durup kapıya bakmak, “Bu kapı açık mıydı?” demek, temkinli bir tarama yürüyüşü. Sözler ayrıntı düzeyine göre katmanlıydı (çok özel → genel “Bunu ben mi açık bıraktım?”).</div>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">Koku, dokunma, hasar</span>Koku izi bırakan oyuncu (Half-Life’ın koku örneği Thief yazısında anılır), çarpışma ile “dokunma”, hasarın geldiği yön. Unreal’ın algı sistemi görme, duyma, hasar, dokunma, takım ve tahmin “duyularını” hazır sunar.</div>
+      <div class="box warn"><span class="bt">Ölçülebilir kural</span>Her duyu için oyuncunun kendi başına <b>ölçebileceği</b> bir kural olsun: ışık taşı, ayak sesi seviyesi göstergesi, koku bulutu efekti… Ölçülemeyen duyu “hile” gibi hissedilir.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="diğer">
+  <h2>Ne zaman hile yapmak doğru?</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">The Last of Us’ın “hilesi”</span>Çatışma döngüsü: oyuncu kendini gösterir → NPC’ler etrafını sarar ve yaklaşır → 10 sn veya daha uzun süre göremezlerse biri gidip bakar → oyuncu orada değilse aramaya geçilir. Odak testlerinde bu döngü ortalama <b>neredeyse 2 dakika</b> sürdü; oyuncu çoktan gitmiş, NPC’ler tepkisiz görünüyordu. Çözüm: “hile yapmak” — oyuncu NPC’lerin sandığı yerden <b>5 m’den fazla</b> uzaklaştıysa “sıvıştı” sayıldı ve bir NPC hemen o noktaya gönderildi. Döngü ~30 saniyeye indi. Bu sırada NPC’ler oyuncunun yerini çoğu zaman <b>bilmiyordu</b>; sadece temponun hızlanmasına “yardım” edildi.</div>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">Kabul edilebilir hile</span>
+        <ul style="font-size:.82em">
+          <li><b>Görünmez</b>: oyuncu fark etmez (Alien: Isolation’ın yönetmeni uzaylıyı sadece “yöne iter”, konumu söylemez — Y1).</li>
+          <li><b>Oyuncu lehine</b>: TLOU’nun gizlilikte göğüs noktası, Thief’in ayak altı ışığı.</li>
+          <li><b>Tempo için</b>: oyunun akmasını sağlar, kazanmayı değil.</li>
+        </ul></div>
+      <div class="box warn"><span class="bt">Kabul edilemez</span>Duvarın arkasından isabetli ateş, oyuncu saklandığı anda tam yerine gelen düşman, görmediği bir el bombasından kaçış. Oyuncu “bunu bilemezdi” dediği anda güven kaybolur.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="diğer">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · diğer</div>
+    <div class="q">Hangisi oyunculara “adil” gelen bir algı hilesidir?</div>
+    <div class="opts">
+      <button data-opt="A">Gizlilikte görünürlük testini göğüsten, çatışmada başın tepesinden yapmak (TLOU)</button>
+      <button data-opt="B">Düşmanın duvarın arkasındaki oyuncuyu radarla görmesi</button>
+      <button data-opt="C">Oyuncu saklanınca düşmanın gerçek konumunu bilmesi</button>
+      <button data-opt="D">Sesin her zaman düz çizgide hesaplanması</button>
+    </div>
+    <div class="explain">Bu “hile” oyuncu lehinedir ve oyuncunun gözlemleriyle tutarlıdır: gizlilikte biraz daha bağışlayıcı, çatışmada daha net. Diğerleri oyuncunun ölçemeyeceği bilgiyi YZ’ye verir ve haksız hissettirir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">canSee, sayaç, ses olayları</div>
+  <ul class="agenda"><li class="done">neden algı?</li><li class="done">görme</li><li class="done">farkındalık ve hafıza</li><li class="done">duyma</li><li class="done">diğer duyular ve hile</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: nokta çarpım ile açı testi (Y0)</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Bakış yönü <b>f</b> (birim vektör), hedefe vektör <b>t</b>. <code>f · t̂ = cos(θ)</code>. Görüş yarı açısı α ise: <code>f · t̂ ≥ cos(α)</code> → açının içinde.</p>
+      <ul style="font-size:.84em"><li>acos çağırmaya gerek yok (pahalı ve hassas değil); kosinüsü bir kez hesaplayıp saklayın.</li><li><code>t</code>’yi normalize etmeden önce uzunluğu 0 mı diye bakın.</li></ul>
+    </div>
+    <div class="box story"><span class="bt">Işın atma</span>Unity: <code>Physics.Raycast(göz, yön, out hit, mesafe, katmanMaskesi)</code>. Katman maskesiyle sadece <b>görüşü engelleyen</b> katmanları (duvarlar) test edin; cam, çimen, diğer NPC’ler hariç. Unreal: <code>LineTraceSingleByChannel</code> (ECC_Visibility).</div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>canSee: üç kontrol</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="6|10-12|13-14|15"><script type="text/template">
+public class Vision : MonoBehaviour {
+    public float range = 15f, halfAngle = 45f;
+    public LayerMask occluders;                         // sadece duvarlar vb.
+    public Transform eye;
+    float cosHalf;
+    void Awake() { cosHalf = Mathf.Cos(halfAngle * Mathf.Deg2Rad); }
+
+    public bool CanSee(Vector3 target) {
+        Vector3 to = target - eye.position;
+        float d = to.magnitude;
+        if (d > range) return false;                                 // 1) mesafe
+        if (d > 0.01f && Vector3.Dot(eye.forward, to / d) < cosHalf)  // 2) açı
+            return false;
+        return !Physics.Raycast(eye.position, to / d, d, occluders);  // 3) ışın
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: walls = [{x, y, w, h}, ...]; segRect: doğru parçası-dikdörtgen kesişimi
+function canSee(eye, facing, target, range = 250, halfAngle = PI / 4) {
+  const to = p5.Vector.sub(target, eye);
+  const d = to.mag();
+  if (d > range) return false;
+  if (d > 0 && facing.dot(to.copy().div(d)) < cos(halfAngle)) return false;
+  return !walls.some(w => segRect(eye, target, w));
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def can_see(eye, facing, target, walls, rng=250, half_angle=math.radians(45)):
+    tx, ty = target[0] - eye[0], target[1] - eye[1]
+    d = math.hypot(tx, ty)
+    if d > rng:
+        return False
+    if d > 0 and (facing[0] * tx + facing[1] * ty) / d < math.cos(half_angle):
+        return False
+    return not any(seg_rect(eye, target, w) for w in walls)
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Farkındalık sayacı ve son bilinen konum</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="8-15|16-18"><script type="text/template">
+public class Awareness : MonoBehaviour {
+    public float riseTime = 1.5f, decayPerSec = 0.2f;
+    public float value;                         // 0..1
+    public Vector3? lastKnownPos;
+    Vision vision; Transform player;
+
+    void Update() {
+        float certainty = vision.Certainty(player.position);   // 0..1 (bölgeler, ışık, duruş)
+        if (certainty > 0f) {
+            value = Mathf.Min(1f, value + certainty / riseTime * Time.deltaTime);
+            lastKnownPos = player.position;
+        } else {
+            value = Mathf.Max(0f, value - decayPerSec * Time.deltaTime);
+        }
+        // seviyeler: < 0.3 habersiz · < 0.7 şüpheli · < 1 arıyor · 1 alarm
+        blackboard.SetValue("Awareness", value);
+        if (lastKnownPos.HasValue) blackboard.SetValue("LastKnownPos", lastKnownPos.Value);
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def awareness_step(a, certainty, dt, rise=1.5, decay=0.2):
+    if certainty > 0:
+        return min(1.0, a + certainty / rise * dt)
+    return max(0.0, a - decay * dt)
+
+def level(a):
+    return "habersiz" if a < 0.3 else "şüpheli" if a < 0.7 else "arıyor" if a < 1 else "alarm"
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Algı katmanı kara tahtaya yazar, karar katmanı (FSM/BT/utility) okur: Y3’teki ayrım. Böylece algıyı bir kez yazıp her NPC türünde kullanırsınız.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>Ses olayları: yayınla, duyan tepki versin</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-4|10-17"><script type="text/template">
+public static class Noise {
+    public static event System.Action<Vector3, float, GameObject> OnNoise;   // konum, yarıçap, kaynak
+    public static void Emit(Vector3 pos, float radius, GameObject src) => OnNoise?.Invoke(pos, radius, src);
+}
+
+public class Hearing : MonoBehaviour {
+    void OnEnable()  { Noise.OnNoise += Hear; }
+    void OnDisable() { Noise.OnNoise -= Hear; }
+
+    void Hear(Vector3 pos, float radius, GameObject src) {
+        if ((pos - transform.position).sqrMagnitude > radius * radius) return;   // ucuz eleme
+        // duvarlardan geçmesin: navmesh üzerindeki yol uzunluğunu kullan
+        var path = new NavMeshPath();
+        if (!NavMesh.CalculatePath(transform.position, pos, NavMesh.AllAreas, path)) return;
+        float len = 0f;
+        for (int i = 1; i < path.corners.Length; i++) len += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+        if (len <= radius) GetComponent<Awareness>().OnHeard(pos, 1f - len / radius);
+    }
+}
+// Oyuncu koşarken: Noise.Emit(transform.position, 8f, gameObject);
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Navmesh yol uzunluğu, Blacklist’in “darboğaz grafı”nın motorlardaki pratik karşılığıdır (daha pahalı; sadece yarıçap içindeki dinleyiciler için hesaplayın).</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>LayerMask</td><td>katman maskesi</td><td>Işının hangi katmanlara çarpabileceği</td></tr>
+    <tr><td>Mathf.Deg2Rad</td><td>derece → radyan</td><td>Trigonometri fonksiyonları radyan ister</td></tr>
+    <tr><td>Vector3? · HasValue</td><td>boş olabilen tür</td><td>“Henüz bir değer yok” durumunu taşıyabilen değişken</td></tr>
+    <tr><td>event Action&lt;...&gt; · += / -=</td><td>olay · abone ol / ayrıl</td><td>Bir şey olduğunda haber verilecek fonksiyonların listesi</td></tr>
+    <tr><td>OnNoise?.Invoke(...)</td><td>güvenli çağrı</td><td>Abone yoksa hata verme</td></tr>
+    <tr><td>sqrMagnitude</td><td>uzunluğun karesi</td><td>Karekök almadan mesafe karşılaştırması (daha hızlı)</td></tr>
+    <tr><td>NavMesh.CalculatePath</td><td>yol hesapla</td><td>Navmesh üzerinde yolu ve köşelerini verir</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: canSee</h2>
+  <div class="simlab" data-sim="cansee" data-fns="canSee" data-lang="js">
+<textarea>
+// eye: [x, y]   facing: [fx, fy] (birim vektör)
+// target: [x, y]
+// Hazır yardımcı: blocked(a, b) → arada duvar var mı?
+// Görüş: menzil 250, yarı açı 45°
+function canSee(eye, facing, target) {
+  const dx = target[0] - eye[0], dy = target[1] - eye[1];
+  const d = Math.hypot(dx, dy);
+  if (d > 250) return false;
+  // TODO: açı kontrolü (nokta çarpım ≥ cos 45°)
+  // TODO: duvar kontrolü (blocked)
+  return true;
+}
+</textarea>
+    <div class="lab-tasks">Başlangıçta muhafız arkasındakini ve duvarın arkasındakini de “görüyor”. İki kontrolü ekleyin. <code>Math.cos(Math.PI / 4)</code> ≈ 0,707. Uzaklık 0 ise açı kontrolünü atlayın.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: farkındalık adımı</h2>
+  <div class="ailab" data-lab="aware" data-lang="python">
+<textarea>
+# a: şimdiki farkındalık (0..1)  certainty: bu karedeki kesinlik (0..1)
+# dt: kare süresi  rise: tam fark etme süresi (sn)  decay: saniyedeki unutma
+def awareness_step(a, certainty, dt, rise, decay):
+    return a
+</textarea>
+    <div class="lab-tasks">Görülüyorsa (kesinlik &gt; 0) yükselt, görülmüyorsa düşür; 0–1 aralığında tutun. Bu iki satırlık fonksiyon, Thief’ten The Last of Us’a kadar gizlilik oyunlarının kalbi.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: ses mesafesi (darboğazlar)</h2>
+  <div class="ailab" data-lab="sounddist" data-lang="python">
+<textarea>
+import math
+
+# src, dst: [x, y]  wall_x: odaları ayıran duvarın x’i
+# doors: duvardaki açıklıklar [[x, y], ...]
+# Aynı odadaysa düz mesafe; değilse en iyi açıklık üzerinden
+#   |src − kapı| + |kapı − dst| ; hiç açıklık yoksa None
+def sound_distance(src, dst, wall_x, doors):
+    return math.hypot(dst[0] - src[0], dst[1] - src[1])
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu sesi duvardan geçiriyor. “Aynı oda” = ikisi de duvarın aynı tarafında (<code>x &lt; wall_x</code>). Blacklist’in TEAS formülünün tek duvarlı hâli.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">motorlar ve oyununuz</div>
+  <ul class="agenda"><li class="done">neden algı?</li><li class="done">görme</li><li class="done">farkındalık ve hafıza</li><li class="done">duyma</li><li class="done">diğer duyular ve hile</li><li class="done">kod ve laboratuvarlar</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/ai-perception-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal AI Perception</b></a></td><td>Unreal · yerleşik</td><td>AIPerceptionComponent: Sight, Hearing, Damage, Touch, Team, Prediction duyuları; algılanan aktörler ve “son görülme” bilgisi; olaylarla güncellenir. Ses: <code>ReportNoiseEvent</code>; algılanabilir olmak için AIPerceptionStimuliSource.</td><td>AIController’a AIPerception bileşeni + duyu ayarları</td></tr><tr><td><a href="https://docs.unity3d.com/ScriptReference/Physics.Raycast.html" target="_blank" rel="noopener"><b>Unity: Physics + kendi sisteminiz</b></a></td><td>Unity · yerleşik parçalar</td><td>Raycast, OverlapSphere, katman maskeleri, olaylar. Hazır algı bileşeni yok; bu destedeki 40 satırlık sistem iyi bir başlangıç.</td><td>Kod</td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/classes/class_raycast3d.html" target="_blank" rel="noopener"><b>Godot: RayCast / Area</b></a></td><td>Godot 4 · yerleşik</td><td>RayCast2D/3D düğümleri, Area ile duyma yarıçapı, PhysicsDirectSpaceState ile kodda ışın.</td><td>Sahneye RayCast3D/Area3D</td></tr><tr><td><a href="https://mugen87.github.io/yuka/docs/" target="_blank" rel="noopener"><b>Yuka</b></a></td><td>JavaScript · açık kaynak</td><td>Web oyunları için Vision (görüş konisi + engeller) ve MemorySystem (hafıza kayıtları, unutma süresi) sınıfları.</td><td><code>npm install yuka</code></td></tr><tr><td><a href="https://github.com/Unity-Technologies/ml-agents" target="_blank" rel="noopener"><b>ML-Agents ışın sensörleri</b></a></td><td>Unity · açık kaynak</td><td>RayPerceptionSensor: öğrenen ajanlar (Y13) için çevreyi ışınlarla “gören” hazır sensör.</td><td>Package Manager → ML Agents</td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Algı sistemi kurarken</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Algı katmanını ayırın</b>: duyular kara tahtaya yazar (“gördüğüm hedefler”, “duyduğum sesler”, “son bilinen konumlar”); kararlar oradan okur.</li>
+      <li><b>Kesinlik + sayaç</b>: evet/hayır yerine 0–1 ve zamanla yükselen farkındalık.</li>
+      <li><b>Görselleştirin</b>: geliştirirken konileri ve bölgeleri çizin; oyunda oyuncuya göstergeler verin.</li>
+      <li><b>Sesleri olay yapın</b>: her ses kaynağı bir “gürültü olayı” yayınlasın; dinleyiciler abone olsun.</li>
+      <li><b>Oyuncu testi</b>: “Bu yakalanma adil miydi?” diye sorun; ölçemediğiniz şeyi ayarlayamazsınız.</li>
+    </ol>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Algı her karede gerekmez: 5–10 Hz yeterli (NPC’leri farklı karelere yayın). Uzaktaki NPC’ler daha seyrek düşünsün (Y18: LOD). Işınları önbelleğe alın: aynı hedef için bu karede zaten atıldıysa tekrar atmayın.</div>
+      <div class="box warn"><span class="bt">Sık hatalar</span>Gözü ayağa koymak (ışın yerden atılıyor, her şey engelleniyor) · tetikleyici çarpıştırıcıları görüşü engelleyen katmanda bırakmak · sesin duvardan geçmesi · farkındalık hiç düşmüyor (NPC sonsuza kadar alarmda).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Göz konumu yerine karakter pivotundan (ayaklardan) ışın atmak</li><li>Katman maskesi olmadan ışın (kendi çarpıştırıcısına çarpar)</li><li>acos ile her karede açı hesaplamak (gereksiz ve hassasiyet sorunlu)</li><li>Sesin Öklid mesafesiyle duvar arkasından duyulması</li><li>Algıyı her NPC için her karede çalıştırmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Gizlilik oyunu için algı sistemi: (1) Vision: üç görüş bölgesi (tatlı nokta 1.0, koni 0.5, çevre 0.25), occluder LayerMask ile göz hizasından tek ışın; oyuncu gölgedeyse ×0.3, çömeliyse ×0.6. (2) Awareness: riseTime 1.5 sn, decay 0.2/sn, seviyeler 0.3/0.7/1.0; LastKnownPos tut; kara tahtaya yaz. (3) Hearing: static Noise.Emit olayı, dinleyici önce sqrMagnitude ile eler, sonra NavMesh.CalculatePath yol uzunluğuyla kontrol eder. 10 Hz güncelle, NPC’leri karelere yay. Gizmos ile bölgeleri çiz; başının üstünde ?/! göstergesi.”</p><ul class="mini"><li>Görme modelini (bölgeler, kesinlik değerleri), ışık/duruş çarpanlarını ve farkındalık eşiklerini <b>siz</b> belirleyin</li><li>Algının kara tahtaya yazmasını, kararın oradan okumasını isteyin</li><li>Ses olayları için olay (event) tabanlı yapı ve yol uzunluğu kontrolü isteyin</li><li>Gizmos ile koni/bölge çizimi ve oyun içi gösterge isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Oyuncu YZ’yi nasıl algılıyor?</span>Game AI Pro 3, 4. bölüm (“Player Perception of AI Opponents”) ve “You had me at AAAAHHH” (GAP Online 2021): oyuncu YZ’yi çoğunlukla <b>tepkilerinden</b> değerlendirir. Algı sisteminin yarısı, NPC’nin “fark ettiğini” göstermektir.</div>
+    <div class="box game"><span class="bt">Öğrenen gözler</span>ML-Agents’ın ışın sensörleri ya da kamera görüntüsüyle eğitilen ajanlar: elle yazılmış koni yerine algı öğrenilebilir mi? Peki o zaman “adil” olduğunu nasıl garanti edersiniz?</div>
+    <div class="box low"><span class="bt">Akademik vaka</span>“The NPC AI of The Last of Us: A case study” (arXiv 2207.00682): oyunun algı ve davranış sistemlerinin akademik incelemesi.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Işık taşı</b> — p5.js’te gölgeli bir oda; oyuncunun aydınlığını gösteren bir gösterge (Thief) ve görüş bölgeli bir muhafız.</li><li><b class="c-green">[kolay]</b> <b>Gürültü oyunu</b> — Taş atıp muhafızı oyalama: atılan taşın düştüğü yer bir ses olayı; muhafız oraya gider (Mark of the Ninja tarzı).</li><li><b class="c-amber">[orta]</b> <b>Unity gizlilik seviyesi</b> — 3 muhafız, gölge alanları, çömelme, kapıdan geçen ses; ?/! göstergeleri ve farkındalık çubukları.</li><li><b class="c-amber">[orta]</b> <b>Son bilinen konum</b> — Splinter Cell: Conviction gibi: muhafızların sizi sandığı yerde bir siluet bırakın; arkadan dolanma oyununu test edin.</li><li><b class="c-red">[zor]</b> <b>ADSR algı yöneticisi</b> — Crysis 2 tarzı: uyaranlar, hedef izleri, uyaran türüne göre ADSR zarfları; birden çok hedef arasında seçim.</li><li><b class="c-purple">[araştırma]</b> <b>Adalet anketi</b> — Aynı seviyeyi evet/hayır koni ve bölge modeliyle iki gruba oynatın; “yakalanmam adildi” puanlarını karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Algı = YZ’nin bilgisini <b>bilerek kısıtlamak</b>; dört şart: adalet, tutarlılık, geri bildirim, inandırıcılık.</li>
+      <li>Görme: mesafe → açı → ışın; evet/hayır yerine <b>kesinlik</b>; bölgeler, tabut kutular, mesafeyle daralan açı; ışık ve duruş.</li>
+      <li>Farkındalık: sayaçlar, seviyeler, <b>son bilinen konum</b>, ADSR, hafıza ve ilgi kaynakları.</li>
+    </ul>
+    <ul>
+      <li>Duyma: gürültü yarıçapı; mesafe <b>kapılar üzerinden</b> (TEAS / navmesh yolu).</li>
+      <li>Sosyal bilgi, ortam değişiklikleri; adil ve adil olmayan hile (TLOU).</li>
+      <li>Hikâyeler: Thief, Splinter Cell: Blacklist, The Last of Us, Crysis 2, Mark of the Ninja.</li>
+      <li>Araçlar: Unreal AI Perception, Unity raycast, Godot RayCast, Yuka.</li>
+      <li>Sonraki: <b>taktik YZ</b> — siper, etki haritaları, konum seçimi.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=Ay-5g36oFfc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Ay-5g36oFfc/hqdefault.jpg" alt=""><span><b>How Stealth Game Guards See and Hear (School of Stealth #1)</b><br>Game Maker’s Toolkit</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=RFWrKHM0vAg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/RFWrKHM0vAg/hqdefault.jpg" alt=""><span><b>Modeling AI Perception and Awareness in Splinter Cell: Blacklist</b><br>GDC (Martin Walsh)</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=rQG9aUWarwE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/rQG9aUWarwE/hqdefault.jpg" alt=""><span><b>Field of view visualisation (E01)</b><br>Sebastian Lague</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=j1-OyLo77ss" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/j1-OyLo77ss/hqdefault.jpg" alt=""><span><b>How to Add a Field of View for Your Enemies [Unity]</b><br>Comp-3 Interactive</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=PAy7gxn2EQI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/PAy7gxn2EQI/hqdefault.jpg" alt=""><span><b>Unreal AI Perception — Sight</b><br>CodeLikeMe</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=0Hz4k5Sb1tE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0Hz4k5Sb1tE/hqdefault.jpg" alt=""><span><b>Unreal AI Perception — Hearing</b><br>CodeLikeMe</span></a>
+  </div>
+  <p class="mini">GDC Vault: <a href="https://gdcvault.com/play/1026497/Can-You-See-Me-Now" target="_blank" rel="noopener">Can You See Me Now? Building Robust AI Sensory Systems</a></p>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Leonard 2003</b> · <a href="https://www.gamedeveloper.com/programming/building-an-ai-sensory-system-examining-the-design-of-i-thief-the-dark-project-i-" target="_blank" rel="noopener">Building an AI Sensory System: Examining the Design of Thief: The Dark Project</a> <i>(Game Developer)</i><br>Görüş konileri, görünürlük, ses yayılımı, farkındalık.</div><div class="paper"><b>Walsh 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter28_Modeling_Perception_and_Awareness_in_Tom_Clancy%27s_Splinter_Cell_Blacklist.pdf" target="_blank" rel="noopener">Modeling Perception and Awareness in Tom Clancy’s Splinter Cell Blacklist</a> <i>(Game AI Pro 2, Bölüm 28)</i><br>Dört şart, tabut kutular, TEAS ile ses mesafesi.</div><div class="paper"><b>Rabin 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter04_Vision_Zones_and_Object_Identification_Certainty.pdf" target="_blank" rel="noopener">Vision Zones and Object Identification Certainty</a> <i>(Game AI Pro 2, Bölüm 4)</i><br>Görüş bölgeleri ve kesinlik.</div><div class="paper"><b>McIntosh 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter34_Human_Enemy_AI_in_The_Last_of_Us.pdf" target="_blank" rel="noopener">Human Enemy AI in The Last of Us</a> <i>(Game AI Pro 2, Bölüm 34)</i><br>Mesafeyle daralan görüş, tek nokta, tempo hilesi.</div><div class="paper"><b>Welsh 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter31_Crytek%27s_Target_Tracks_Perception_System.pdf" target="_blank" rel="noopener">Crytek’s Target Tracks Perception System</a> <i>(Game AI Pro, Bölüm 31)</i><br>Uyaranlar, hedef izleri, ADSR.</div><div class="paper"><b>Miles 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter32_How_to_Catch_a_Ninja_NPC_Awareness_in_a_2D_Stealth_Platformer.pdf" target="_blank" rel="noopener">How to Catch a Ninja: NPC Awareness in a 2D Stealth Platformer</a> <i>(Game AI Pro, Bölüm 32)</i><br>Mark of the Ninja ilgi kaynakları.</div><div class="paper"><b>Game AI Pro 3, Bölüm 4</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter04_Player_Perception_of_AI_Opponents.pdf" target="_blank" rel="noopener">Player Perception of AI Opponents</a> <i>(Game AI Pro 3)</i><br>Oyuncu YZ’yi nasıl görür?</div><div class="paper"><b>GAP Online 2021, Bölüm 11</b> · <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter11_You_had_me_at_AAAAHHH_On_the_importance_of_reactions_in_game_AI.pdf" target="_blank" rel="noopener">You had me at AAAAHHH: On the importance of reactions in game AI</a> <i>(Game AI Pro Online)</i><br>Tepkilerin önemi.</div><div class="paper"><b>Panwar 2022</b> · <a href="https://arxiv.org/abs/2207.00682" target="_blank" rel="noopener">The NPC AI of The Last of Us: A case study</a> <i>(arXiv 2207.00682)</i><br>Akademik vaka incelemesi.</div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #3a2a0d 0%, #2c1d0c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Taktik YZ</div>
+    <div class="sub">Siper seçimi, etki haritaları, konum sorguları</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd27a" href="../yz-taktik/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
