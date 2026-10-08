@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taktik YZ</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Taktik yapay zekâ: Killzone’un dinamik prosedürel taktikleri, konum seçimi (üret/ele/puanla), Crysis 2 TPS ve Unreal EQS, etki haritaları ve Kohan II, taktik yol bulma, arazi analizi, Gears Tactics’in taktik netlik kuralları. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3a2a0d 0%, #1b1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 12</div>
+  <div class="ttl" style="font-size:90px">Taktik YZ</div>
+  <div class="sub"><i>Siper seçimi, etki haritaları, taktik yol bulma</i> — nerede durmalı, nereden gitmeli?</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titletac"></div>
+  <aside class="notes">Haftalık plandaki taktik YZ konusu. Arka planda iki tarafın etki haritası: mavi ve kırmızı bölgeler, aradaki cephe hattı birimler hareket ettikçe kayıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Taktik nedir?</b> — Killzone’un “dinamik prosedürel taktikleri”</li>
+      <li><b>Konum seçimi</b> — üret, ele, puanla: Killzone, Crysis 2 TPS, Unreal EQS</li>
+      <li><b>Etki haritaları</b> — kim neresini kontrol ediyor? Kohan II’nin “tesadüfi” kanat saldırıları</li>
+      <li><b>Taktik yol bulma</b> — en kısa yol en güvenli yol değildir</li>
+      <li><b>Strateji ve sıra tabanlı taktik</b> — arazi analizi, Gears Tactics’in “taktik netlik” kuralları</li>
+      <li><b>Kod</b> — konum sorgusu, etki haritası + üç laboratuvar</li>
+      <li><b>Kütüphaneler</b> — Unreal EQS, CryENGINE TPS, A* Pathfinding Project etiketleri</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir NPC’nin siper ve saldırı konumunu ağırlıklı puanlarla seçebilecek, etki haritasıyla savaş alanının “kim nerede güçlü” resmini çıkarabilecek, A*’a tehlike maliyeti ekleyerek açıkta koşmayan askerler yapabilecek ve Unreal EQS gibi araçları bilinçli kullanabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ATEŞ ALTINDASINIZ, NEREYE GİDERSİNİZ?</span>
+    <p class="big">Etrafta beş kutu, iki duvar, üç düşman var. Bir asker olarak hangi noktaya koşarsınız ve oraya <b>hangi yoldan</b> gidersiniz?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Muhtemelen: düşmanlardan <b>korunan</b>, ama birini <b>vurabildiğim</b>, çok uzak olmayan, düşmana <b>fazla yakın</b> olmayan bir yer. Birçok ölçütü <b>tartıyorsunuz</b> (Y4’teki utility!).</li>
+    <li class="fragment">Oraya giderken de en kısa yoldan değil, <b>açıkta kalmadan</b> gidiyorsunuz.</li>
+    <li class="fragment">Bunu her seviye için tasarımcının elle işaretlemesi yerine YZ’nin <b>her durumda kendisi hesaplaması</b>: taktik YZ.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-utility/">Y4 · Utility AI (ağırlıklı puan)</a><a class="" href="../yz-astar/">Y8 · A* ile Yol Bulma</a><a class="" href="../yz-algilama/">Y11 · Algılama (görüş hattı)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-grup/">Y10 · Grup YZ</a><a class="opt" href="../yz-navmesh/">Y9 · NavMesh</a><a class="opt" href="../union-find/">Union-Find (bölgeler)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Konum seçimi = noktalara utility puanı vermek. Taktik yol bulma = A*’a ek maliyet. Siper testi = Y11’deki ışın. Yani bu hafta yeni algoritmadan çok, eski araçları <b>uzaya</b> uyguluyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unreal’ın EQS’i konum seçimini tamamen editörden, görsel olarak yaptırır. Etki haritası ise basit bir ızgara ve birkaç toplama işlemidir: hesap tablosunda bile denenebilir.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>tactics · strategy</td><td>taktik · strateji</td><td>Çatışmanın “nasıl”ı (nerede durayım) · savaşın “ne”si (nereye saldırayım)</td></tr>
+    <tr><td>cover (full / partial) · hide spot</td><td>siper (tam / kısmi) · saklanma noktası</td><td>Ateşten koruyan engel · siperin arkasındaki nokta</td></tr>
+    <tr><td>line of fire (LoF)</td><td>ateş hattı</td><td>Silahın hedefe engelsiz ulaştığı çizgi</td></tr>
+    <tr><td>position evaluation function</td><td>konum değerlendirme fonksiyonu</td><td>Bir noktaya birçok ölçütün ağırlıklı toplamı ile puan veren fonksiyon</td></tr>
+    <tr><td>generator · condition · weight</td><td>üreteç · koşul · ağırlık</td><td>Aday noktaları üret · uymayanları ele · kalanları puanla (TPS, EQS)</td></tr>
+    <tr><td>influence map</td><td>etki haritası</td><td>Her hücrede her tarafın “gücü”: kontrol, gerilim, kırılganlık</td></tr>
+    <tr><td>tactical pathfinding</td><td>taktik yol bulma</td><td>Tehlikeli alanları pahalı sayan A*</td></tr>
+    <tr><td>terrain analysis · chokepoint</td><td>arazi analizi · darboğaz</td><td>Haritayı bölgelere ve dar geçitlere ayırma</td></tr>
+    <tr><td>flanking · suppression</td><td>kanattan dolanma · bastırma ateşi</td><td>Yandan saldırmak · düşmanı siperinde tutmak için ateş</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Taktik nedir?</div>
+  <div class="sub">Killzone ve dinamik prosedürel taktikler</div>
+  <ul class="agenda"><li class="on">taktik nedir?</li><li class="">konum seçimi</li><li class="">etki haritaları</li><li class="">taktik yol bulma</li><li class="">strateji ve sıra tabanlı taktik</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="taktik">
+  <h2>Hikâye: Killzone (2004, PS2) — “dinamik prosedürel taktikler”</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Guerrilla’dan Arjen Beij ve Remco Straatman, GDC Europe 2005: o dönemin yaygın yaklaşımı, <b>seviye tasarımcısının yerleştirdiği ipuçları</b> ve <b>tetiklenen senaryolu davranışlardı</b>. Killzone ekibi bunun yerine YZ’ye taktik problemlerin çözümünü <b>dinamik olarak hesaplayacak kurallar</b> verdi.</p>
+      <ul style="font-size:.82em">
+        <li><b>Oyun faydası</b>: herhangi sayıda oyuncuyla çalışır, savaş her yerde olabilir.</li>
+        <li><b>Üretim faydası</b>: YZ davranışı yeniden kullanılır, seviyeler hızlı denenir, iyileştirmeler bütün oyuna bir anda yayılır.</li>
+        <li>“Ateş et ve manevra yap” çatışmasında <b>iyi konum seçmek savaşın yarısıdır</b>. Onlarca dinamik etken: duvara yaslanmak, kısmi siper, yakında siper, ateş hattı, yakınlık, tercih edilen menzil…</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">Killzone’un saldırı konumu örneği</span>Birden çok tehdit var; asıl tehdide saldırılacak, diğerlerinden siper tercih edilecek:
+      <ul style="font-size:.82em">
+        <li>yakınlık: <b>20</b></li>
+        <li>asıl tehdide ateş hattı: kısmi siperle <b>40</b>, değilse 20</li>
+        <li>diğer tehditlerden siper: <b>20</b></li>
+        <li>tercih edilen menzil içinde: <b>10</b></li>
+      </ul>
+      Bütün puanlar toplanır, en yüksek konum seçilir. Tek bir tehdit ya da birden çok tehdit varken aynı fonksiyon farklı yerler seçer.</div>
+  </div>
+</section>
+
+<section data-sec="taktik">
+  <h2>Taktik katmanlar</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th>katman</th><th>soru</th><th>araç</th><th>örnek</th></tr>
+    <tr><td><b>Strateji</b></td><td>Nereye saldıralım, neresi savunulmalı?</td><td>Etki haritası, arazi analizi, MCTS (Y6)</td><td>Kohan II, Total War, Company of Heroes</td></tr>
+    <tr><td><b>Tim taktiği</b></td><td>Kim bastırır, kim dolanır?</td><td>Roller, cephe hattı (Y10)</td><td>Days Gone, F.E.A.R.</td></tr>
+    <tr><td><b>Birey taktiği</b></td><td>Nerede durayım, oraya nasıl gideyim?</td><td>Konum sorgusu, taktik A*</td><td>Killzone, Crysis 2, Bulletstorm</td></tr>
+    <tr><td><b>Hareket</b></td><td>Adım adım nasıl yürürüm?</td><td>Steering, navmesh (Y7, Y9)</td><td>her oyun</td></tr>
+  </table>
+  <p class="mini" style="margin-top:8px">Bu hafta özellikle birey taktiğine ve stratejinin uzamsal kısmına (etki haritaları) odaklanıyoruz.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Konum seçimi</div>
+  <div class="sub">üret → ele → puanla</div>
+  <ul class="agenda"><li class="done">taktik nedir?</li><li class="on">konum seçimi</li><li class="">etki haritaları</li><li class="">taktik yol bulma</li><li class="">strateji ve sıra tabanlı taktik</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="konum">
+  <h2>Konum seçmenin üç adımı</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">1) Üret (generate)</span>Aday noktalar: siperlerin etrafındaki “saklanma noktaları”, ajanın etrafında bir ızgara, hedefin etrafında bir halka, navmesh üzerindeki rastgele noktalar. Tasarımcı da elle koyabilir.</div>
+    <div class="box game"><span class="bt">2) Ele (condition / filter)</span>Kesin kurallar: “tehdide 5 m’den yakın olmasın”, “oraya düşmandan önce varabileyim”, “siperli olsun”. Uymayan aday tamamen çıkar.</div>
+    <div class="box low"><span class="bt">3) Puanla (weight / score)</span>Kalanlar ağırlıklı ölçütlerle puanlanır: yakınlık, siper, menzil, yükseklik, ateş hattı… En yüksek puanlı nokta seçilir (Y4: utility).</div>
+  </div>
+  <p style="font-size:.84em;margin-top:14px">Bu üç adım neredeyse bütün modern konum seçme sistemlerinin ortak iskeletidir: Killzone’un konum değerlendirme fonksiyonları, Crysis 2’nin TPS’i, Unreal’ın EQS’i. Fark, adayların nasıl üretildiği ve ölçütlerin nasıl tanımlandığıdır. Puanlama tarafı doğrudan Y4’teki utility: ölçüt → normalize → ağırlık → toplam.</p>
+</section>
+
+<section data-sec="konum">
+  <h2>Crysis 2: sorgu dili olarak taktik</h2>
+  <div class="cols c46">
+    <div class="box story"><span class="bt">Crysis 2 — Tactical Point System</span>Matthew Jack (GAP 26. bölüm): Far Cry ve Crysis’in yönlü “saklanma çapaları”ndan gelen fikirler Crysis 2’de bir <b>sorgu diline</b> dönüştü. Bir sorgu birden çok “seçenek” içerebilir: ilki sonuç vermezse ikincisi denenir (yedek plan).<br><br>Örnekteki sorgu: “siperim delindi, yakında yeni bir yer bul”. <b>Generation</b> = üret, <b>Conditions</b> = ele, <b>Weights</b> = puanla. Negatif ağırlık “az olsun” demek.</div>
+  <div class="tabs short">
+    <div class="tab" data-label="Crytek sorgu dili (Lua)">
+<pre><code class="language-lua" data-trim data-line-numbers><script type="text/template">
+Query_CoverCompromised_FindNearby = {
+  {   -- Seçenek 1: tehdide karşı yakında bir saklanma noktası
+      Generation = { hidespots_from_target_around_puppet = 15 },
+      Conditions = { min_distance_from_puppet = 5,
+                     canReachBefore_the_target = true },
+      Weights    = { softCover = -10, distance_from_puppet = -1.0 },
+  },
+  {   -- Seçenek 2 (yedek): açıkta ama görüş hattını kesen bir yer
+      Generation = { grid_around_puppet = 10 },
+      Conditions = { min_distance_from_puppet = 5,
+                     max_directness_from_target = 0.1 },
+      Weights    = { visible_from_target = -10, distance_from_puppet = -1.0 },
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="konum">
+  <h2>Canlı: siper seçimi 🎯</h2>
+  <div class="demo" data-demo="position"></div>
+</section>
+
+<section data-sec="konum">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Tehdidi (kırmızı) sürükleyin: gri noktalar elendi (tehdide açık), renkliler puanlandı. Yeşil halka: seçilen konum. Siperin “hangi tarafının” iyi olduğu tehdide göre değişiyor.</li>
+      <li>Askeri (mavi) sürükleyin: yakınlık ağırlığı yüzünden seçim askere yakın siperlere kayıyor.</li>
+      <li>“Siper şart” koşulunu kapatın: siper artık sadece bir ağırlık. Siper ağırlığını 0 yaparsanız asker açık alanda menzil içine koşar: “cesur” bir kişilik.</li>
+      <li>Tercih edilen menzili 80’e indirin (yakın dövüşçü), 340’a çıkarın (keskin nişancı): aynı fonksiyon, farklı karakter (Killzone: “kişilik = hangi etkenler önemli?”).</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="konum">
+  <h2>Unreal EQS ve doğal görünen seçimler</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">Bulletstorm’dan Unreal’a</span>Mieszko Zieliński (GAP 33. bölüm, “Asking the Environment Smart Questions”): Bulletstorm için “şeyleri bul, ele, puanla” yapan bir sistem kuruldu. Bu sistem Unreal Engine 4’e <b>Environment Query System (EQS)</b> olarak girdi; Crysis 2’nin TPS’i de CryENGINE ile herkese açıldı (GAP3 26. bölüm).</div>
+      <ul style="font-size:.82em">
+        <li><b>Üreteçler</b>: bir aktörün etrafında ızgara/halka, navmesh noktaları, belirli türdeki aktörler.</li>
+        <li><b>Testler</b>: mesafe, iz (görünürlük), nokta çarpım (yön), yol bulma (ulaşılabilir mi, ne kadar uzak).</li>
+        <li>Her test ya eleme ya puanlama yapar; puanlar normalize edilip ağırlıkla birleşir. Davranış ağacındaki “Run EQS Query” görevi sonucu kara tahtaya yazar.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">⚠️ Salınım (Eric Johnson, GAP Online 2021)</span>Aynı sorguyu tekrar tekrar çalıştırmak ajanın konumunu güncel tutar; ama hedef belirsizse iki nokta sürekli yer değiştirir. Örnek: hedefe “yandan” yaklaşmak — sol ve sağ eşit iyi. Ajan sola gidince sağ öne geçer, sağa gidince sol… sonuçta hiçbirine bağlanmadan <b>hedefe dümdüz</b> yürür. Çare: mevcut hedefe bonus (atalet, Y4), simetriyi bozan küçük tercih, sorguyu daha seyrek çalıştırmak.</div>
+      <div class="box low"><span class="bt">Normalleştirme seçimi</span>Göreli (adaylar arasında 0–1), kırpılmış (sabit aralık), hedefe göre… Seçim, puanların anlamını değiştirir (Y4’teki ayraçlar).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="konum">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · konum</div>
+    <div class="q">Bir keskin nişancı için konum sorgusunda hangisi “koşul”, hangisi “ağırlık” olmalı?</div>
+    <div class="opts">
+      <button data-opt="A">Koşul: hedefi görebilmek; ağırlık: yükseklik ve hedeften uzaklık</button>
+      <button data-opt="B">Koşul: yükseklik; ağırlık: hedefi görebilmek</button>
+      <button data-opt="C">Hepsi koşul olmalı</button>
+      <button data-opt="D">Hepsi ağırlık olmalı</button>
+    </div>
+    <div class="explain">Hedefi göremeyen bir keskin nişancı konumu işe yaramaz: bu bir <b>olmazsa olmaz</b>, yani koşul (eleme). Yükseklik ve uzaklık ise “ne kadar iyi” sorusudur: ağırlık. Her şeyi koşul yaparsanız çoğu zaman hiç aday kalmaz; her şeyi ağırlık yaparsanız saçma konumlar da arada bir kazanabilir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Etki haritaları</div>
+  <div class="sub">savaş alanının ısı haritası</div>
+  <ul class="agenda"><li class="done">taktik nedir?</li><li class="done">konum seçimi</li><li class="on">etki haritaları</li><li class="">taktik yol bulma</li><li class="">strateji ve sıra tabanlı taktik</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="etki">
+  <h2>Etki haritası fikri</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Harita bir ızgaraya bölünür. Her birim, bulunduğu yerden çevreye <b>gücü kadar</b> etki “yayar”; uzaklaştıkça azalır (doğrusal, üstel…).</li>
+        <li>Her taraf için ayrı katman: mavi etki, kırmızı etki. Katmanlar birleştirilerek yeni sorular cevaplanır:</li>
+      </ul>
+      <table class="sum-t" style="font-size:16px">
+        <tr><th>birleşim</th><th>anlamı</th></tr>
+        <tr><td>mavi − kırmızı</td><td>kontrol: kim nerede baskın? sıfır çizgisi = cephe</td></tr>
+        <tr><td>min(mavi, kırmızı)</td><td>gerilim: iki taraf da güçlü, çatışma bölgesi</td></tr>
+        <tr><td>toplam yüksek, fark küçük</td><td>kırılganlık: dengenin hassas olduğu yer</td></tr>
+        <tr><td>kırmızı düşük, mavi ulaşabilir</td><td>saldırı fırsatı (zayıf nokta)</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Dave Mark: modüler etki haritaları</span>GAP2 30. bölüm: önceden hesaplanmış “damgalar” (her birim türü için etki deseni) haritaya basılır; yakınlık, tehdit gibi katmanlar ayrı tutulur ve ihtiyaç anında <b>çalışma haritalarında</b> birleştirilir (topla, çarp, ters çevir). Bireysel kararlar yine bireylerde, ama savaş alanı hakkında <b>ortak bilgiyle</b>.</div>
+      <div class="box low"><span class="bt">⚙️ Neden ucuz?</span>Izgara sabit boyutta; birimler hareket ettikçe sadece onların damgaları güncellenir. Sorgular O(1): “bu hücrede kim baskın?”</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="etki">
+  <h2>Canlı: etki haritası 🗺️</h2>
+  <div class="demo" data-demo="influence"></div>
+</section>
+
+<section data-sec="etki">
+  <h2>Derin hikâye: Kohan II (2004) ve “planlanmamış” kanat saldırıları</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Kevin Dill (GAP2 31. bölüm), gerçek zamanlı strateji oyunu Kohan II’nin saldırı ve savunma kararlarını etki haritalarına dayandırdı:</p>
+      <ul style="font-size:.82em">
+        <li>Düşman etkisi yükselince YZ <b>saldırının geldiğini</b> erkenden fark eder ve karşılayacak birlik gönderir: oyuncu büyük ordusuyla gelip <b>boş bir kale</b> bulmaz (“savaşmayan düşman eğlenceli değildir”).</li>
+        <li>YZ düşmanın <b>en zayıf</b> olduğu yere saldırır: oyuncu geniş bir savunma kurmak zorunda kalır.</li>
+        <li>Kuvvetlerin hepsini birden göndermez; çatışmaya girenler yerinde kalır. Oyuncu başka yerden takviye getirirse ya sonraki saldırı beklenir ya da az önce boşaltılan <b>yeni zayıf noktaya</b> gidilir.</li>
+        <li>Sonuç ekibi de şaşırttı. İncelemeler şöyle yazdı: “Bilgisayar akıllı savaş taktikleri kullanıyor; kanattan dolanmaya, zayıf noktalarınıza saldırmaya çalışıyor”, “oyuncuyu oyalayıp ikincil bir saldırıdan dikkatini dağıtabiliyor”. YZ bunları <b>açıkça düşünmüyordu</b>: hepsi etki haritalarından ortaya çıktı.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">Hafif hile, fark edilmez</span>Etki haritaları sis perdesinin arkasını biraz “sezdirebilir”. Dill: amaç hiç hile yapmayan bir YZ mi, yoksa sürükleyici bir deneyim mi? İnsanlar kısmi bilgiden sezgiyle tahmin yapar; YZ’ye de bu kadarını vermek, bariz olmadığı ve <b>kusursuz olmadığı</b> sürece fark edilmez. Kohan II’de oyuncular oyunun tekrarını sissiz izleyebiliyordu bile.</div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=6RGquWxNock" target="_blank" rel="noopener">Modular Influence Map System</a> (Dave Mark)</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="etki">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · etki</div>
+    <div class="q">Etki haritasında bir hücrede mavi = 2,1 ve kırmızı = 2,0. Bu hücre için en uygun yorum hangisi?</div>
+    <div class="opts">
+      <button data-opt="A">Gerilimli ve kırılgan: iki taraf da güçlü, denge çok hassas</button>
+      <button data-opt="B">Güvenli mavi bölge</button>
+      <button data-opt="C">Kimsenin olmadığı boş alan</button>
+      <button data-opt="D">Kırmızı kontrolünde</button>
+    </div>
+    <div class="explain">Fark (0,1) çok küçük ama toplam (4,1) yüksek: iki ordu da burada güçlü. Burası savaşın en sıcak noktası; birkaç birimlik bir takviye dengeyi değiştirir. “Kontrol” görünümünde mavi gibi görünür ama “kırılganlık” görünümü asıl durumu söyler.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Taktik yol bulma</div>
+  <div class="sub">en kısa yol en güvenli yol değildir</div>
+  <ul class="agenda"><li class="done">taktik nedir?</li><li class="done">konum seçimi</li><li class="done">etki haritaları</li><li class="on">taktik yol bulma</li><li class="">strateji ve sıra tabanlı taktik</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="taktik yol">
+  <h2>En kısa yolun üç günahı (Killzone)</h2>
+  <div class="cols">
+    <div>
+      <ol style="font-size:.86em">
+        <li><b>Dost ateş hatlarından geçmek</b>: arkadaşının nişan çizgisinin önüne koşmak.</li>
+        <li><b>Düşman ateşine karşı siperi yok saymak</b>: açık alandan dümdüz geçmek.</li>
+        <li><b>Gereksiz yere açıkta kalmak</b>.</li>
+      </ol>
+      <p style="font-size:.84em">Çözüm (Killzone): A*’ta bir bağlantıyı geçme maliyetine, dost ateş hattını kesme ve bir ya da daha fazla tehdidin ateşi altında olma cezası eklemek. Konum değerlendirme fonksiyonlarının <b>aynısı</b>, bu sefer yol üzerinde.</p>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Navmesh üzerinde</span>Daniel Brewer (GAP 27. bölüm): navmesh çokgenleri ya da kenarları için tehlike değeri hesaplayıp A*’ın maliyetine katmak; böylece navmesh’in esnekliği korunur. Y8’deki arazi maliyetinin taktik hâli: bataklık yerine “düşman görüşü”.</div>
+      <div class="box low"><span class="bt">⚙️ Bedel</span>Tehlike haritası her tehdit hareket edince değişir. Görünürlüğü her hücre için ışınla hesaplamak pahalıdır: düşük çözünürlüklü ızgara, saniyede birkaç güncelleme ve önceden hesaplanmış görüş tabloları kullanılır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="taktik yol">
+  <h2>Canlı: tehlike maliyetli A*</h2>
+  <div class="demo" data-demo="tacpath"></div>
+</section>
+
+<section data-sec="taktik yol">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Tehlike maliyeti 0: yeşil yol gri yolla aynı, açık alandan dümdüz geçiyor. 5’e, sonra 10’a çıkarın: yeşil yol önce kısmen, sonra tamamen uzun duvarın “gölgesine” iniyor.</li>
+      <li>Alttaki sayılara bakın: taktik yol kaç adım daha uzun, kaç hücre daha az açıkta? (Birkaç adım fazlası, ateş altında kalan hücrelerin büyük kısmını siler.)</li>
+      <li>Tehdidi duvarın altına sürükleyin: güvenli bölge tersine döner, yol da yukarı çıkar. Oyuncu hareket ettikçe NPC’nin rotası da değişmeli.</li>
+      <li>Başlangıcı ve hedefi taşıyın: bazen gölgede bir yol hiç yoktur ve maliyet ne olursa olsun açıktan geçmek gerekir. O zaman taktik YZ’nin işi <b>hızlı</b> geçmek ya da bastırma ateşi istemektir (Y10).</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Strateji ve sıra tabanlı taktik</div>
+  <div class="sub">arazi analizi, Gears Tactics</div>
+  <ul class="agenda"><li class="done">taktik nedir?</li><li class="done">konum seçimi</li><li class="done">etki haritaları</li><li class="done">taktik yol bulma</li><li class="on">strateji ve sıra tabanlı taktik</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="strateji">
+  <h2>Arazi analizi: bölgeler ve darboğazlar</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Strateji YZ’si haritayı <b>bölgelere</b> (odalar, vadiler, üsler) ve onları bağlayan <b>darboğazlara</b> (köprü, geçit, kapı) ayırır. Bu, haritanın küçük bir grafıdır.</li>
+        <li>Sorular grafa sorulur: “Üssüme kaç yoldan gelinir?”, “Hangi köprüyü tutarsam iki bölgeyi ayırırım?”, “Düşman bu bölgede mi?”</li>
+        <li>Splinter Cell: Blacklist’in ses için kullandığı darboğaz grafı (Y11) aynı yapı.</li>
+      </ul>
+      <div class="box warn"><span class="bt">Değişen harita</span>Oyuncu duvar yıkıp köprü kurabiliyorsa bölgeler de değişir. Dill: “Dinamik bölge hesabı zor ve dikenli bir problemdir; eklemeden önce iyi düşünün!” Karo tabanlı haritalarda <b>hızlı, yerel bir flood fill</b> işe yarar; Company of Heroes bunu muhtemelen ilk çözen oyundu.</div>
+    </div>
+    <div class="box story"><span class="bt">🎒 Bağlantı ve bölgeler</span>Flood fill, BFS’in (Yönsüz Graflar) ızgara hâlidir: bir hücreden başlayıp ulaşılabilen her hücreyi aynı bölgeye boyamak. Union-Find (bağlantı destesi) ise “bu iki hücre aynı bölgede mi?” sorusunu çok hızlı cevaplar; Y8’deki “ulaşılamaz hedef” tuzağının da çaresi.</div>
+  </div>
+</section>
+
+<section data-sec="strateji">
+  <h2>Sıra tabanlı taktik: Gears Tactics’in netlik kuralları</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.84em">Gears Tactics (2020) Gears of War’un siper tabanlı çatışmasını XCOM tarzı sıra tabanlı taktiğe taşıdı (Matthias Siemonsmeier, GAP Online 2021). Sorun: düşman sırası.</p>
+      <ul style="font-size:.82em">
+        <li>Düşmanlar <b>tek tek</b> hareket edince sıra uzun ve sıkıcıydı; üstelik ilk birim hareket edince oyuncu zaten ne olacağını anlıyordu.</li>
+        <li>Hepsi <b>aynı anda</b> hareket edince heyecanlıydı (önündeki dostunu vuran düşman!), ama oyuncu <b>kritik bilgiyi kaçırıyordu</b>.</li>
+        <li>Ders: “En iyi düşman davranışı bile, oyuncu etkisini görüp anlamazsa akılsız ya da rastgele algılanabilir.”</li>
+      </ul>
+    </div>
+    <div class="box game"><span class="bt">Taktik netliğin üç kuralı</span>
+      <ol style="font-size:.84em">
+        <li>Aynı anda, doğrudan saldırıyla <b>birden fazla oyuncu birimine</b> saldırma.</li>
+        <li>Tek bir birimin eylemlerini mümkün olduğunca <b>bölme</b>.</li>
+        <li>Durumu büyük ölçüde değiştiren eylemleri (ör. geri itme) <b>tek başına</b> oynatarak vurgula.</li>
+      </ol>
+      <p class="mini">Taktik YZ sadece doğru kararı vermek değil; o kararı oyuncuya <b>okunabilir</b> sunmaktır (Y11’deki geri bildirim ilkesiyle aynı).</p></div>
+  </div>
+</section>
+
+<section data-sec="strateji">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · strateji</div>
+    <div class="q">Bir RTS YZ’si, oyuncunun ordusunun nereye saldıracağını önceden “sezip” tam o noktaya savunma gönderiyor ve her seferinde haklı çıkıyor. Sorun ne?</div>
+    <div class="opts">
+      <button data-opt="A">Bilgi kusursuz ve bariz: oyuncu hile yaptığını hisseder</button>
+      <button data-opt="B">Etki haritası kullanmak her zaman yasaktır</button>
+      <button data-opt="C">Savunma göndermek yanlıştır</button>
+      <button data-opt="D">Hiçbir sorun yok</button>
+    </div>
+    <div class="explain">Kohan II’nin dersi: etki haritaları sezgiye benzer, <b>kusursuz olmayan</b> bir bilgi verir; YZ bazen doğru, bazen yanlış tahmin eder ve bu yüzden hile fark edilmez. Her seferinde tam isabet ise sisin arkasını gördüğünü ilan eder.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">konum sorgusu ve etki haritası</div>
+  <ul class="agenda"><li class="done">taktik nedir?</li><li class="done">konum seçimi</li><li class="done">etki haritaları</li><li class="done">taktik yol bulma</li><li class="done">strateji ve sıra tabanlı taktik</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>Konum sorgusu: üret, ele, puanla</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="7|9-10|11-15|16"><script type="text/template">
+public class CoverQuery {
+    public float wProx = 20f, wCover = 40f, wRange = 10f, preferredRange = 12f, minDist = 4f;
+    public LayerMask occluders;
+
+    public Vector3? FindBest(Vector3 agent, Vector3 threat, IEnumerable<Vector3> candidates) {
+        Vector3? best = null; float bestScore = float.MinValue;
+        foreach (var p in candidates) {                                   // 1) üret (dışarıdan)
+            float dThreat = Vector3.Distance(p, threat);
+            if (dThreat < minDist) continue;                              // 2) koşul
+            // bitişik siper: tehdit yönünde 1,5 m içinde bir engel (sırtını dayayabileceği kutu)
+            bool covered = Physics.Raycast(p + Vector3.up, (threat - p).normalized, 1.5f, occluders);
+            float prox = Mathf.Clamp01(1f - Vector3.Distance(p, agent) / 30f);
+            float inRange = Mathf.Abs(dThreat - preferredRange) < 4f ? 1f : 0f;
+            float s = wProx * prox + wCover * (covered ? 1f : 0f) + wRange * inRange;   // 3) puan
+            if (s > bestScore) { bestScore = s; best = p; }
+        }
+        return best;
+    }
+}
+// Adaylar: siper nesnelerinin etrafındaki noktalar ya da NavMesh.SamplePosition ile bir ızgara
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def find_best(agent, threat, candidates, covered_fn,
+              w_prox=20, w_cover=40, w_range=10, pref=180, min_dist=40):
+    best, best_s = None, float("-inf")
+    for p in candidates:
+        d_threat = dist(p, threat)
+        if d_threat < min_dist:                       # koşul
+            continue
+        prox = max(0.0, 1 - dist(p, agent) / 500)
+        in_range = 1.0 if abs(d_threat - pref) < 60 else 0.0
+        s = w_prox * prox + w_cover * covered_fn(p, threat) + w_range * in_range
+        if s > best_s:
+            best, best_s = p, s
+    return best
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Etki haritası</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="9-14|16-21"><script type="text/template">
+import numpy as np
+
+class InfluenceMap:
+    def __init__(self, w, h, cell):
+        self.cell, self.w, self.h = cell, w, h
+        self.blue = np.zeros((h, w)); self.red = np.zeros((h, w))
+        ys, xs = np.mgrid[0:h, 0:w]
+        self.cx, self.cy = (xs + 0.5) * cell, (ys + 0.5) * cell      # hücre merkezleri
+
+    def update(self, units, radius):
+        self.blue[:] = 0; self.red[:] = 0
+        for (x, y, side, strength) in units:
+            d = np.hypot(self.cx - x, self.cy - y)
+            stamp = strength * np.clip(1 - d / radius, 0, 1)           # doğrusal azalma
+            (self.blue if side == "b" else self.red)[:] += stamp
+
+    def control(self):  return self.blue - self.red
+    def tension(self):  return np.minimum(self.blue, self.red)
+    def weakest_enemy_cell(self):
+        reachable = self.blue > 0.15
+        score = np.where(reachable, self.red - 0.3 * self.blue, np.inf)
+        return np.unravel_index(np.argmin(score), score.shape)        # (satır, sütun)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: float[,] ızgara; birim başına "damga" (önceden hesaplanmış desen) basmak hızlıdır
+public void Stamp(float[,] map, Vector2Int c, float strength, int radiusCells) {
+    for (int dy = -radiusCells; dy <= radiusCells; dy++)
+    for (int dx = -radiusCells; dx <= radiusCells; dx++) {
+        int x = c.x + dx, y = c.y + dy;
+        if (x < 0 || y < 0 || x >= map.GetLength(1) || y >= map.GetLength(0)) continue;
+        float d = Mathf.Sqrt(dx * dx + dy * dy) / radiusCells;
+        if (d <= 1f) map[y, x] += strength * (1f - d);
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Taktik A* için: adım maliyeti = mesafe × (1 + tehlike[hücre] × k). Y8’deki kodda tek satırlık değişiklik.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>Physics.Raycast(p, yön, mesafe, mask)</td><td>ışın atma</td><td>Bu yönde, bu mesafe içinde maske katmanında bir şey var mı? (siper testi)</td></tr>
+    <tr><td>IEnumerable&lt;T&gt;</td><td>gezilebilir dizi</td><td>Liste, dizi ya da üreteç: foreach ile dolaşılır</td></tr>
+    <tr><td>np.mgrid · np.hypot</td><td>NumPy ızgarası · uzunluk</td><td>Bütün hücreler için koordinat matrisleri; döngüsüz hesap</td></tr>
+    <tr><td>np.clip(x, 0, 1)</td><td>kırpma</td><td>Değerleri 0–1 aralığına sıkıştırır</td></tr>
+    <tr><td>np.where(koşul, a, b)</td><td>koşullu seçim</td><td>Koşul doğruysa a, değilse b (eleme için)</td></tr>
+    <tr><td>np.argmin · unravel_index</td><td>en küçüğün yeri</td><td>Düzleştirilmiş dizideki indeksi (satır, sütun)’a çevirir</td></tr>
+    <tr><td>float[,] · GetLength(0)</td><td>iki boyutlu dizi</td><td>C#’ta ızgara; 0 = satır sayısı, 1 = sütun sayısı</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: konum puanı</h2>
+  <div class="simlab" data-sim="posscore" data-fns="scorePosition" data-lang="js">
+<textarea>
+// dAgent: noktanın askere uzaklığı
+// dThreat: noktanın tehdide uzaklığı
+// covered: nokta tehdide karşı siperli mi? (true/false)
+// Döndür: puan (büyük = iyi). Elemek için -Infinity.
+// Tasarım kuralları:
+//  - siperli > siperli değil
+//  - askere yakın > uzak
+//  - tehdide 50’den yakın: ELE
+//  - tehdide ~180 uzaklık tercih edilir
+function scorePosition(dAgent, dThreat, covered) {
+  return covered ? 1 : 0;
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç sadece siperi önemsiyor: asker en uzak siperlere de gidebilir. Killzone tarzı bir ağırlıklı toplam yazın (yakınlık, siper, menzil) ve koşulu ekleyin. Sağda tehdit fareyi izliyor; askerin seçimi her karede yenileniyor.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: bir hücrenin etkisi</h2>
+  <div class="ailab" data-lab="imap" data-lang="python">
+<textarea>
+import math
+
+# units: [[x, y, güç], ...]  cell: [x, y]  radius: etki yarıçapı
+# Doğrusal azalma: güç × max(0, 1 − mesafe / yarıçap)
+def influence(units, cell, radius):
+    total = 0.0
+    # TODO
+    return total
+</textarea>
+    <div class="lab-tasks">Bütün etki haritası, bu fonksiyonun her hücre için çağrılmasıdır. Sonra düşünün: 100 × 100 ızgara ve 200 birim için kaç kez çağrılır? (Damga ve NumPy neden önemli?)</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: TPS tarzı konum seçimi</h2>
+  <div class="ailab" data-lab="tps" data-lang="python">
+<textarea>
+# cands: [{"d_agent": .., "d_threat": .., "covered": bool}, ...]
+# Koşul: d_threat < min_dist olanları ele
+# Puan: w_prox * max(0, 1 - d_agent/100) + w_cover * (1 if covered else 0)
+# En yüksek puanlı adayın İNDİSİNİ döndür (eşitlikte ilki);
+# aday kalmadıysa None
+def pick_position(cands, min_dist, w_prox, w_cover):
+    return 0
+</textarea>
+    <div class="lab-tasks">Aynı adaylarla ağırlıkları değiştirmek farklı “kişilikler” üretir: testlerde yakınlığı ağır basan ve siperi ağır basan durumlar var.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #1b1036 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">motorlar ve oyununuz</div>
+  <ul class="agenda"><li class="done">taktik nedir?</li><li class="done">konum seçimi</li><li class="done">etki haritaları</li><li class="done">taktik yol bulma</li><li class="done">strateji ve sıra tabanlı taktik</li><li class="done">kod ve laboratuvarlar</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/environment-query-system-quick-start-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal EQS</b></a></td><td>Unreal · yerleşik</td><td>Üreteç + testler (mesafe, iz, nokta çarpım, yol bulma), puan/eleme, görsel hata ayıklama (Gameplay Debugger, EQS test pawn). BT/StateTree’den çağrılır.</td><td>Project Settings → AI System; Content → Artificial Intelligence → Environment Query</td></tr><tr><td><a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter26_Guide_to_Effective_Auto-Generated_Spatial_Queries.pdf" target="_blank" rel="noopener"><b>CryENGINE TPS</b></a></td><td>CryENGINE · yerleşik</td><td>Crysis 2’nin Tactical Point System’i: Lua sorgu dili, seçenek zincirleri, saklanma noktaları.</td><td>Motorla birlikte</td></tr><tr><td><a href="https://arongranberg.com/astar/" target="_blank" rel="noopener"><b>A* Pathfinding Project (etiket ve ceza)</b></a></td><td>Unity</td><td>Düğümlere etiket ve ceza (penalty) vererek taktik yol bulma; “tehlikeli bölge” etiketleri çalışma anında değiştirilebilir.</td><td>Asset Store</td></tr><tr><td><a href="https://docs.unity3d.com/ScriptReference/Physics.Linecast.html" target="_blank" rel="noopener"><b>Unity: kendi sorgu sisteminiz</b></a></td><td>Unity</td><td>Hazır EQS yok; NavMesh.SamplePosition + Physics.Linecast ile bu destedeki sorgu yeter. Asset Store’da EQS benzeri eklentiler var (bakımlarını kontrol edin).</td><td>Kod</td></tr><tr><td><a href="https://docs.scipy.org/doc/scipy/reference/ndimage.html" target="_blank" rel="noopener"><b>NumPy / SciPy</b></a></td><td>Python</td><td>Etki haritaları için dizi işlemleri; <code>scipy.ndimage</code> ile bulanıklaştırma/yayma, flood fill (label) ile bölgeler.</td><td><code>pip install numpy scipy</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Taktik YZ eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Önce siper noktaları</b>: siper nesnelerinin etrafına otomatik noktalar üretin (ya da tasarımcı yerleştirsin). Her noktanın hangi yönden koruduğunu kaydedin.</li>
+      <li><b>Sorguyu veri yapın</b>: üreteç, koşullar, ağırlıklar bir dosyada; davranış (saldırı, geri çekilme, kanat) başına bir sorgu.</li>
+      <li><b>Rezervasyon</b>: iki NPC aynı noktayı seçmesin (Y10’daki jetonların akrabası).</li>
+      <li><b>Salınımı önleyin</b>: mevcut hedefe bonus, sorguyu 0,5–1 sn’de bir çalıştırın.</li>
+      <li><b>Görselleştirin</b>: aday noktaları puan renkleriyle çizin (EQS test pawn gibi). Tasarımcılar ağırlıkları oyun çalışırken ayarlasın.</li>
+    </ol>
+    <div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Işın atmak en pahalı test: ucuz testleri (mesafe, koşullar) önce yapın; aday sayısını sınırlayın; sonuçları birkaç kare önbellekte tutun. Etki haritasını düşük çözünürlükte ve seyrek güncelleyin.</div>
+      <div class="box warn"><span class="bt">Tasarım tuzağı</span>“Mükemmel” taktik oyuncuyu ezebilir. Killzone ve Gears Tactics örneklerindeki gibi asıl hedef, oyuncunun anlayabildiği ve <b>karşılık verebildiği</b> akıllı davranış. Zorluk ayarı (Y17) için ağırlıklar ve koşullar da birer düğmedir.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Siper testini karakterin ayak hizasından yapmak (her şey “siperli” çıkar)</li><li>Puanları normalize etmeden toplamak (metre + 0/1 karışımı)</li><li>Aynı noktayı birden çok NPC’nin seçmesi</li><li>Etki haritasını her karede tüm birimler için sıfırdan hesaplamak</li><li>Tehlike maliyetini çok yüksek verip saçma uzun yollar üretmek</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Bir siper sistemi yaz: sahnedeki “Cover” etiketli nesnelerin kenarlarına 1 m arayla siper noktaları üret (NavMesh.SamplePosition ile navmesh üzerine yapıştır). CoverQuery: koşullar (tehdide en az 4 m, NavMesh yolu var), ağırlıklar (yakınlık 20, tehdit yönünde 1,5 m Raycast ile bitişik siper 40, 10–14 m menzil 10), puanlar 0–1 normalize. Seçilen noktayı rezerve et, NPC ölünce bırak. Sorguyu 0,7 sn’de bir çalıştır ve mevcut noktaya +10 bonus ver. Gizmos ile aday noktaları puanına göre kırmızı→yeşil çiz.”</p><ul class="mini"><li>Ölçütleri, hangilerinin koşul hangilerinin ağırlık olduğunu ve ağırlık değerlerini <b>siz</b> belirleyin</li><li>Siper noktalarının nasıl üretileceğini (nesne etrafı, ızgara, navmesh) yazın</li><li>Nokta rezervasyonu ve salınım önleme isteyin</li><li>Gizmos ile aday noktaları puan renkleriyle çizdirin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Öğrenilen konum değerlendirme</span>Profesyonel oyuncuların maç kayıtlarından “iyi konum” örneklerini öğrenip ağırlıkları otomatik ayarlamak (ters pekiştirmeli öğrenme / taklit öğrenme, Y13).</div>
+    <div class="box game"><span class="bt">Prosedürel seviyelerde taktik</span>Rastgele üretilen haritalarda (Y15) siper noktası, darboğaz ve bölgelerin otomatik çıkarılması; Gears Tactics’in yarı prosedürel haritaları buna örnek.</div>
+    <div class="box low"><span class="bt">Taktik netlik ölçümü</span>Oyuncuların düşman hamlelerini ne kadar “okuyabildiğini” ölçen bir oyuncu deneyi: aynı anda hareket eden düşman sayısı arttıkça anlama oranı nasıl düşüyor?</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Siper bulan asker</b> — p5.js’te bu destedeki konum sorgusu: siper noktaları, tehdit fareyle hareket ediyor, asker en iyi noktaya koşuyor.</li><li><b class="c-green">[kolay]</b> <b>Etki haritası görselleştirici</b> — Bir RTS haritasında iki tarafın birimleri; kontrol, gerilim ve kırılganlık görünümleri arasında geçiş.</li><li><b class="c-amber">[orta]</b> <b>Taktik çatışma</b> — Unity’de 4’e 4 siper tabanlı çatışma: konum sorgusu + tehlike maliyetli navmesh yolu + nokta rezervasyonu.</li><li><b class="c-amber">[orta]</b> <b>Mini RTS stratejisi</b> — Etki haritasıyla saldırı/savunma kararı veren bir YZ: Kohan II’nin “zayıf noktaya saldır, takviye gelince başka yere kay” davranışı ortaya çıkıyor mu?</li><li><b class="c-red">[zor]</b> <b>XCOM benzeri</b> — Sıra tabanlı ızgara taktik: her birim için hareket+eylem kombinasyonlarını utility ile puanlayın; Gears Tactics’in üç netlik kuralını uygulayın.</li><li><b class="c-purple">[araştırma]</b> <b>Arazi analizi</b> — Bir harita görüntüsünden otomatik bölge ve darboğaz çıkaran bir araç (flood fill + iskelet); çıkan grafla savunma planı.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li>Taktik YZ = taktik problemlerin çözümünü <b>dinamik</b> hesaplayan kurallar (Killzone).</li>
+      <li>Konum seçimi: <b>üret → ele → puanla</b>; Killzone ağırlıkları, Crysis 2 TPS, Bulletstorm → Unreal EQS; salınım tuzağı.</li>
+      <li><b>Etki haritaları</b>: kontrol, gerilim, kırılganlık, zayıf nokta; Kohan II’de ortaya çıkan kanat saldırıları.</li>
+    </ul>
+    <ul>
+      <li><b>Taktik yol bulma</b>: A*’a tehlike maliyeti; en kısa ≠ en güvenli.</li>
+      <li>Strateji: bölgeler ve darboğazlar, dinamik bölge hesabının zorluğu.</li>
+      <li>Sıra tabanlı taktik: Gears Tactics’in taktik netlik kuralları.</li>
+      <li>Sonraki bölüm: <b>öğrenen ve üreten YZ</b> — önce pekiştirmeli öğrenme ve ML-Agents.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=6RGquWxNock" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/6RGquWxNock/hqdefault.jpg" alt=""><span><b>Modular Influence Map System (Imap)</b><br>Dave Mark</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=0i7SMSdwbLI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0i7SMSdwbLI/hqdefault.jpg" alt=""><span><b>Tactical pathfinding with influence map (C++ demo)</b><br>Nos42</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=x0d1PMNyhHQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/x0d1PMNyhHQ/hqdefault.jpg" alt=""><span><b>Basic Influence Maps in Unity</b><br>Colin Deane</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=uuXvYk25in4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/uuXvYk25in4/hqdefault.jpg" alt=""><span><b>What is the Environment Query System (EQS) in 15 minutes</b><br>jevinscherriesgamedev</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=b6byrAIgX2I" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/b6byrAIgX2I/hqdefault.jpg" alt=""><span><b>Environment Query System — Advanced AI (UE5)</b><br>Josh Does Coding</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=NLreDo9e49k" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/NLreDo9e49k/hqdefault.jpg" alt=""><span><b>AI Part 13: AI Finding Cover (UE5)</b><br>Ryan Laley</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Beij &amp; Straatman 2005</b> · <a href="https://www.guerrilla-games.com/media/News/Files/gdce05_killzone_ai.pdf" target="_blank" rel="noopener">Killzone’s AI: Dynamic Procedural Tactics</a> <i>(GDC Europe 2005 (slaytlar))</i><br>Konum değerlendirme fonksiyonları, taktik yol bulma.</div><div class="paper"><b>Jack 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter26_Tactical_Position_Selection.pdf" target="_blank" rel="noopener">Tactical Position Selection: An Architecture and Query Language</a> <i>(Game AI Pro, Bölüm 26)</i><br>Crysis 2 TPS.</div><div class="paper"><b>Zieliński 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter33_Asking_the_Environment_Smart_Questions.pdf" target="_blank" rel="noopener">Asking the Environment Smart Questions</a> <i>(Game AI Pro, Bölüm 33)</i><br>Bulletstorm → Unreal EQS.</div><div class="paper"><b>Mark 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter30_Modular_Tactical_Influence_Maps.pdf" target="_blank" rel="noopener">Modular Tactical Influence Maps</a> <i>(Game AI Pro 2, Bölüm 30)</i><br>Damgalar, katmanlar, çalışma haritaları.</div><div class="paper"><b>Dill 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter31_Spatial_Reasoning_for_Strategic_Decision_Making.pdf" target="_blank" rel="noopener">Spatial Reasoning for Strategic Decision Making</a> <i>(Game AI Pro 2, Bölüm 31)</i><br>Kohan II, bölgeler, etki haritaları.</div><div class="paper"><b>Brewer 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter27_Tactical_Pathfinding_on_a_NavMesh.pdf" target="_blank" rel="noopener">Tactical Pathfinding on a NavMesh</a> <i>(Game AI Pro, Bölüm 27)</i><br></div><div class="paper"><b>Johnson 2021</b> · <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter05_Taming_Spatial_Queries_Tips_for_Natural_Position_Selection.pdf" target="_blank" rel="noopener">Taming Spatial Queries: Tips for Natural Position Selection</a> <i>(Game AI Pro Online, Bölüm 5)</i><br>Salınım, normalizasyon.</div><div class="paper"><b>Siemonsmeier 2021</b> · <a href="http://www.gameaipro.com/GameAIProOnlineEdition2021/GameAIProOnlineEdition2021_Chapter03_Gearing_the_Tactics_Genre_Simultaneous_AI_Actions_in_Gears_Tactics.pdf" target="_blank" rel="noopener">Gearing the Tactics Genre: Simultaneous AI Actions in Gears Tactics</a> <i>(Game AI Pro Online, Bölüm 3)</i><br>Taktik netlik kuralları.</div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f3a4a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Öğrenen YZ</div>
+    <div class="sub">Pekiştirmeli öğrenme, Q-learning, Unity ML-Agents</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-ogrenme/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
