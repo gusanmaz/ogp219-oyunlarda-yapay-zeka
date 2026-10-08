@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NavMesh</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Gezinti ağları: yol noktalarının kusurları (Tozour), çokgen grafında A*, koridor ve funnel algoritması, Recast üretim adımları (rasterleştirme, aşındırma, bölgeler), dinamik engeller, ağ dışı bağlantılar, alan maliyetleri, Unity AI Navigation, Unreal, Godot, Recast/Detour. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0f3a4a 0%, #10223a 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 9</div>
+  <div class="ttl" style="font-size:90px">NavMesh</div>
+  <div class="sub"><i>Gezinti ağları, funnel, Recast</i> — 3B dünyada “nereye yürüyebilirim?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlenav"></div>
+  <aside class="notes">Haftalık plandaki gezinti ağı (navigation mesh) konusu. Arka planda yürünebilir alanı örten çokgenler ve üzerlerinden geçen sarı bir yol.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Neden navmesh?</b> — yol noktalarının beş kusuru (Tozour, World of Warcraft örnekleri)</li>
+      <li><b>Navmesh üzerinde yol bulma</b> — çokgen grafında A*, koridor</li>
+      <li><b>Funnel algoritması</b> — koridordan en kısa yola (adım adım)</li>
+      <li><b>Üretim</b> — Recast: rasterleştir, aşındır, böl</li>
+      <li><b>Dinamik dünya</b> — kapılar, engeller, atlama bağlantıları, alan maliyetleri</li>
+      <li><b>Kod</b> — Unity NavMeshAgent, Unreal, Godot + iki laboratuvar</li>
+      <li><b>Motorlarda</b> — NavMeshSurface, Nav Modifier, NavigationRegion, Recast &amp; Detour</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…bir navmesh’in ne olduğunu ve neden yol noktalarından iyi olduğunu açıklayabilecek, çokgen koridorundan en kısa yolu çıkaran funnel algoritmasını izleyebilecek, Unity/Unreal/Godot’da navmesh pişirip ajan yürütebilecek ve kapı, engel, atlama gibi durumları doğru kurabileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: Y8’DEKİ IZGARA 3B DÜNYADA YETER Mİ?</span>
+    <p class="big">Merdivenleri, rampaları, köprüleri, masaların altını olan bir 3B seviyeyi kare ızgaraya nasıl bölersiniz?</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Izgara katları ve eğimleri bilmez; ince kareler milyonlarca düğüm, kaba kareler kaba yollar demektir.</li>
+    <li class="fragment">2000’lerin oyunları elle yerleştirilmiş <b>yol noktaları</b> kullandı: karakterler noktadan noktaya zikzak çizdi, ortadaki kutuya takıldı.</li>
+    <li class="fragment">Bugünün çözümü: yürünebilir zemini <b>dışbükey çokgenlerle</b> örtmek. Az düğüm, tam kapsama, her çokgenin içinde serbest hareket. Unity, Unreal ve Godot’nun hepsi bunu kullanır.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../yz-astar/">Y8 · A* ile Yol Bulma</a><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, çapraz çarpım)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-steering/">Y7 · Steering (yolu izlemek)</a><a class="opt" href="../bst-geometrik/">BST · Geometrik Uygulamalar</a><a class="opt" href="../yonsuz-graflar/">Yönsüz Graflar</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Navmesh, Y8’deki A*’ın çalıştığı graftır; sadece düğümler kare değil çokgen. Funnel algoritması tek bir geometri aracı kullanır: Y0’daki <b>çapraz çarpımın işareti</b> (“bu nokta çizginin solunda mı sağında mı?”).</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Motorlarda navmesh <b>tek tıkla</b> pişirilir (Unity: NavMeshSurface → Bake; Unreal: NavMeshBoundsVolume; Godot: NavigationRegion → Bake). Bu destenin “Motorlarda navmesh” bölümünü önce okuyup oyununuza ekleyebilir, algoritmaları sonra öğrenebilirsiniz.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>navigation mesh (navmesh)</td><td>gezinti ağı</td><td>Yürünebilir zemini örten dışbükey çokgenler kümesi</td></tr>
+    <tr><td>convex polygon</td><td>dışbükey çokgen</td><td>İçindeki herhangi iki noktayı birleştiren doğru içinde kalır: içinde düz yürümek her zaman güvenli</td></tr>
+    <tr><td>portal · corridor</td><td>kapı kenarı · koridor</td><td>İki çokgenin ortak kenarı · yolun geçtiği çokgen dizisi</td></tr>
+    <tr><td>funnel algorithm</td><td>huni algoritması</td><td>Koridordan en kısa (köşelere teğet) yolu çıkarır (“string pulling”)</td></tr>
+    <tr><td>voxel · erosion · agent radius</td><td>hacim hücresi · aşındırma · ajan yarıçapı</td><td>Recast’ın adımları: dünyayı küplere böl, duvarlardan yarıçap kadar uzaklaş</td></tr>
+    <tr><td>tile</td><td>karo</td><td>Büyük haritada navmesh’i parça parça üretme/güncelleme birimi</td></tr>
+    <tr><td>off-mesh link / NavMeshLink</td><td>ağ dışı bağlantı</td><td>Atlama, merdiven, ışınlanma: çokgenlerle bağlı olmayan iki noktayı bağlar</td></tr>
+    <tr><td>carving / dynamic obstacle</td><td>oyma / dinamik engel</td><td>Hareket eden kutunun navmesh’ten delik açması</td></tr>
+    <tr><td>area cost</td><td>alan maliyeti</td><td>Su, çamur, tehlikeli bölge gibi alanları pahalı yapmak</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #10223a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Neden navmesh?</div>
+  <div class="sub">yol noktalarının beş kusuru</div>
+  <ul class="agenda"><li class="on">neden navmesh?</li><li class="">navmesh üzerinde yol bulma</li><li class="">funnel algoritması</li><li class="">navmesh üretimi</li><li class="">dinamik dünya</li><li class="">kod ve laboratuvarlar</li><li class="">motorlarda navmesh</li></ul>
+</section>
+
+<section data-sec="neden navmesh">
+  <h2>Hikâye: “Fixing Pathfinding Once and For All” (Paul Tozour, 2008)</h2>
+  <div class="cols c64">
+    <div>
+      <p style="font-size:.84em">Deneyimli YZ programcısı Paul Tozour, o yıllarda bilgisayarında kurulu olan çok satan oyunların en son yamalı sürümlerinde karakterlerin <b>duvarlara toslayıp</b>, <b>takılıp</b>, <b>zikzak çizdiği</b> sahnelerden bir video derledi ve şunu yazdı: “Bu oyunların çoğu bildiğim kadarıyla yol noktası grafları kullanıyor. Yol noktası grafları artık <b>modası geçmiş</b> bir yöntem.”</p>
+      <p style="font-size:.84em">Örnekleri World of Warcraft’tan: Stormwind şehrinin bir parçası ve Halaa kasabası. Açık bir kasaba alanını kapsamak için <b>çok sayıda</b> yol noktası gerekirken, aynı alan birkaç büyük dışbükey çokgenle anlatılabiliyordu.</p>
+    </div>
+    <div class="box story"><span class="bt">Tozour’un beş nedeni: yol noktaları…</span>
+      <ol style="font-size:.82em">
+        <li>Bazı dünyalarda <b>gülünç sayıda</b> nokta gerektirir (açık alanlar).</li>
+        <li>Karakterleri <b>zikzak</b> çizdirir.</li>
+        <li><b>Yol düzeltmeye</b> izin vermez: grafın dışını bilmediği için köprüdeki bir sandığın solundan mı sağından mı geçileceğini bilemez.</li>
+        <li><b>Farklı hareket eden</b> karakterler için sağlam çalışmaz (büyük, küçük, uçan…).</li>
+        <li>Yol bulmanın ötesinde YZ’nin ihtiyaç duyduğu <b>veriyi</b> taşımaz (nereye siper alınır, nerede saklanılır…).</li>
+      </ol></div>
+  </div>
+</section>
+
+<section data-sec="neden navmesh">
+  <h2>Izgara, yol noktası, navmesh</h2>
+  <svg viewBox="0 0 1180 300" style="width:100%" font-family="Source Sans 3">
+    <g transform="translate(10,20)">
+      <rect x="0" y="0" width="360" height="240" rx="8" style="fill:var(--card);stroke:var(--rule)"/>
+      <rect x="140" y="60" width="80" height="120" style="fill:var(--ink-2)"/>
+      <g style="stroke:var(--rule)" stroke-width="1"><line x1="20" y1="0" x2="20" y2="240"/><line x1="40" y1="0" x2="40" y2="240"/><line x1="60" y1="0" x2="60" y2="240"/><line x1="80" y1="0" x2="80" y2="240"/><line x1="100" y1="0" x2="100" y2="240"/><line x1="120" y1="0" x2="120" y2="240"/><line x1="140" y1="0" x2="140" y2="240"/><line x1="160" y1="0" x2="160" y2="240"/><line x1="180" y1="0" x2="180" y2="240"/><line x1="200" y1="0" x2="200" y2="240"/><line x1="220" y1="0" x2="220" y2="240"/><line x1="240" y1="0" x2="240" y2="240"/><line x1="260" y1="0" x2="260" y2="240"/><line x1="280" y1="0" x2="280" y2="240"/><line x1="300" y1="0" x2="300" y2="240"/><line x1="320" y1="0" x2="320" y2="240"/><line x1="340" y1="0" x2="340" y2="240"/><line x1="0" y1="20" x2="360" y2="20"/><line x1="0" y1="40" x2="360" y2="40"/><line x1="0" y1="60" x2="360" y2="60"/><line x1="0" y1="80" x2="360" y2="80"/><line x1="0" y1="100" x2="360" y2="100"/><line x1="0" y1="120" x2="360" y2="120"/><line x1="0" y1="140" x2="360" y2="140"/><line x1="0" y1="160" x2="360" y2="160"/><line x1="0" y1="180" x2="360" y2="180"/><line x1="0" y1="200" x2="360" y2="200"/><line x1="0" y1="220" x2="360" y2="220"/></g>
+      <polyline points="30,210 50,190 70,170 90,150 110,130 130,110 130,50 150,40 230,40 250,60 270,80 290,100 310,120 330,140" fill="none" style="stroke:var(--red)" stroke-width="3"/>
+      <text x="180" y="270" text-anchor="middle" font-size="17" font-weight="800" style="fill:var(--ink)">Izgara: çok düğüm, basamaklı yol</text>
+    </g>
+    <g transform="translate(410,20)">
+      <rect x="0" y="0" width="360" height="240" rx="8" style="fill:var(--card);stroke:var(--rule)"/>
+      <rect x="140" y="60" width="80" height="120" style="fill:var(--ink-2)"/>
+      <g style="stroke:var(--blue)" stroke-width="2"><line x1="40" y1="200" x2="80" y2="120"/><line x1="80" y1="120" x2="110" y2="40"/><line x1="110" y1="40" x2="250" y2="30"/><line x1="250" y1="30" x2="300" y2="110"/><line x1="300" y1="110" x2="320" y2="200"/><line x1="80" y1="120" x2="110" y2="215"/><line x1="110" y1="215" x2="250" y2="215"/><line x1="250" y1="215" x2="320" y2="200"/></g>
+      <g style="fill:var(--blue)"><circle cx="40" cy="200" r="6"/><circle cx="80" cy="120" r="6"/><circle cx="110" cy="40" r="6"/><circle cx="250" cy="30" r="6"/><circle cx="300" cy="110" r="6"/><circle cx="320" cy="200" r="6"/><circle cx="110" cy="215" r="6"/><circle cx="250" cy="215" r="6"/></g>
+      <text x="180" y="270" text-anchor="middle" font-size="17" font-weight="800" style="fill:var(--ink)">Yol noktası: az düğüm, zikzak, dışı bilinmez</text>
+    </g>
+    <g transform="translate(810,20)">
+      <rect x="0" y="0" width="360" height="240" rx="8" style="fill:var(--card);stroke:var(--rule)"/>
+      <g style="fill:rgba(122,200,255,0.25);stroke:var(--blue)" stroke-width="2">
+        <polygon points="10,10 140,10 140,60 10,230"/><polygon points="140,10 350,10 220,60 140,60"/><polygon points="220,60 350,10 350,230 220,180"/><polygon points="10,230 140,60 140,180 220,180 350,230"/>
+      </g>
+      <rect x="140" y="60" width="80" height="120" style="fill:var(--ink-2)"/>
+      <polyline points="30,210 140,180 220,180 330,140" fill="none" style="stroke:var(--purple)" stroke-width="3.5"/>
+      <text x="180" y="270" text-anchor="middle" font-size="17" font-weight="800" style="fill:var(--ink)">Navmesh: 4 çokgen, köşelere teğet yol</text>
+    </g>
+  </svg>
+  <p class="mini">Navmesh’te her çokgen dışbükey olduğu için çokgen içinde <b>düz çizgide</b> yürümek her zaman güvenli; engelin “kenarını” bildiğimiz için yol köşelere tam teğet geçebilir ve ajan çokgenden çıkmadığı sürece yolu serbestçe düzeltebilir.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #10223a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Navmesh üzerinde yol bulma</div>
+  <div class="sub">çokgen grafında A* ve koridor</div>
+  <ul class="agenda"><li class="done">neden navmesh?</li><li class="on">navmesh üzerinde yol bulma</li><li class="">funnel algoritması</li><li class="">navmesh üretimi</li><li class="">dinamik dünya</li><li class="">kod ve laboratuvarlar</li><li class="">motorlarda navmesh</li></ul>
+</section>
+
+<section data-sec="yol bulma">
+  <h2>Navmesh üzerinde yol bulmanın üç adımı</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">1) Konum bul</span>Başlangıç ve hedef hangi çokgende? “Nokta dışbükey çokgenin içinde mi?” testi (laboratuvar!). Büyük ağlarda önce uzamsal ızgara/ağaç ile adaylar daraltılır.</div>
+    <div class="box game"><span class="bt">2) Çokgen grafında A*</span>Düğüm = çokgen, kenar = portal (ortak kenar). Maliyet genelde portal orta noktaları arası mesafe; sezgi Öklid. Sonuç bir <b>koridor</b>: geçilecek çokgenler dizisi.</div>
+    <div class="box low"><span class="bt">3) Koridordan yol</span>Portalların orta noktalarından geçmek zikzak çizer. <b>Funnel algoritması</b> koridorun içinde kalan en kısa yolu bulur: köşelere teğet, gerektiği kadar dönüş.</div>
+  </div>
+  <p style="font-size:.86em;margin-top:10px">Sonra yolu Y7’deki gibi steering (arrive, kaçınma) ile izleriz. Unity’nin NavMeshAgent’ı bu dördünü birden yapar.</p>
+</section>
+
+<section data-sec="yol bulma">
+  <h2>Canlı: tıkla, git 🧭</h2>
+  <div class="demo" data-demo="navmesh"></div>
+</section>
+
+<section data-sec="yol bulma">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Farklı odalara tıklayın. Mavi çokgenler <b>koridor</b>; A* bu dikdörtgenler üzerinde çalışıyor (12 düğüm!). Y8’deki ızgara aynı alan için yüzlerce düğüm gerektirirdi.</li>
+      <li>“Yol”u <b>portal orta noktaları</b> yapın: kırmızı zikzak. Sonra funnel: mor çizgi köşelere teğet geçiyor ve daha kısa (alttaki uzunluğa bakın).</li>
+      <li>“Kapı açık”ı kapatın: ortadaki dikey geçit kapanır; A* başka bir koridor bulur. Dinamik engel böyle işlenir.</li>
+      <li>“Ada”ya tıklayın: yol yok. “Atlama bağlantısı”nı açın: ajan kenardan adaya atlıyor (turuncu). Bu bir <b>off-mesh link</b>.</li>
+      <li>Çokgenleri gizleyin: oyuncu bunların hiçbirini görmez, sadece akıllı yürüyen bir karakter görür.</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="yol bulma">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · yol bulma</div>
+    <div class="q">Navmesh’teki çokgenlerin dışbükey olması neden önemlidir?</div>
+    <div class="opts">
+      <button data-opt="A">Çokgenin içindeki iki nokta arasında düz yürümek her zaman çokgenin içinde kalır</button>
+      <button data-opt="B">Dışbükey çokgenler daha az bellek kaplar</button>
+      <button data-opt="C">A* sadece dışbükey çokgenlerle çalışır</button>
+      <button data-opt="D">Grafik kartı dışbükey çokgenleri daha hızlı çizer</button>
+    </div>
+    <div class="explain">Dışbükeylik, “bu çokgendeyken düz git” kararını güvenli yapar: içbükey (ör. L şeklinde) bir çokgende düz çizgi duvara çarpabilir. Böylece yol bulma sadece çokgenler <b>arasında</b> yapılır; içeride serbest hareket edilir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Funnel algoritması</div>
+  <div class="sub">koridordan en kısa yola</div>
+  <ul class="agenda"><li class="done">neden navmesh?</li><li class="done">navmesh üzerinde yol bulma</li><li class="on">funnel algoritması</li><li class="">navmesh üretimi</li><li class="">dinamik dünya</li><li class="">kod ve laboratuvarlar</li><li class="">motorlarda navmesh</li></ul>
+</section>
+
+<section data-sec="funnel">
+  <h2>Huni fikri</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Bir <b>tepe noktası</b> (apex; başta başlangıç noktası) ve ondan çıkan iki kenar düşünün: sol kenar ve sağ kenar. Bu bir <b>huni</b>.</li>
+        <li>Sırayla her portala bakın. Portalın sol ucu huninin içindeyse sol kenarı oraya <b>daralt</b>; sağ uç için de aynısı.</li>
+        <li>Bir kenar diğerinin <b>üstünden geçerse</b> huni kapanmış demektir: o köşe yolun bir dönüş noktası olur ve yeni tepe noktası oradan başlar.</li>
+        <li>Hedefe gelince bitti. Sonuç: en az sayıda köşe, en kısa yol.</li>
+      </ul>
+      <p class="mini">Mikko Mononen (Recast’ın yazarı) 2010’da bunun kısa bir sürümünü “Simple Stupid Funnel Algorithm” adıyla blogunda yayımladı; birçok motor ve eklentide (ör. A* Pathfinding Project) kullanılır.</p>
+    </div>
+    <div class="box story"><span class="bt">🎒 Tek geometri aracı: çapraz çarpım</span>a, b, c noktaları için <code>(b − a) × (c − a) = (bx − ax)(cy − ay) − (cx − ax)(by − ay)</code>. İşareti, c’nin a→b çizgisinin <b>solunda</b> mı <b>sağında</b> mı olduğunu söyler (sıfırsa aynı çizgide). Y0’daki çapraz çarpımın aynısı; funnel, nokta-çokgen testi ve görüş hattı hepsi bunu kullanır.</div>
+  </div>
+</section>
+
+<section data-sec="funnel">
+  <h2>Funnel adım adım</h2>
+  <div class="demo" data-demo="funnel"></div>
+</section>
+
+<section data-sec="funnel">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · funnel</div>
+    <div class="q">Neden portal orta noktalarından geçen yol yerine funnel kullanırız?</div>
+    <div class="opts">
+      <button data-opt="A">Orta noktalar zikzak ve gereksiz uzun yol üretir; funnel koridor içindeki en kısa yolu verir</button>
+      <button data-opt="B">Orta noktalar duvarların içinden geçer</button>
+      <button data-opt="C">Funnel A*’ı gereksiz kılar</button>
+      <button data-opt="D">Funnel daha fazla çokgen üretir</button>
+    </div>
+    <div class="explain">Orta noktalar her zaman koridorun <b>içinde</b> kalır (güvenlidir) ama karakter gereksiz yere sağa sola salınır. Funnel, aynı koridorun içinde kalarak köşelere teğet en kısa yolu bulur. A*’ı ortadan kaldırmaz: önce A* koridoru bulur, sonra funnel o koridoru düzleştirir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #10223a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Navmesh üretimi</div>
+  <div class="sub">Recast: voxel’den çokgene</div>
+  <ul class="agenda"><li class="done">neden navmesh?</li><li class="done">navmesh üzerinde yol bulma</li><li class="done">funnel algoritması</li><li class="on">navmesh üretimi</li><li class="">dinamik dünya</li><li class="">kod ve laboratuvarlar</li><li class="">motorlarda navmesh</li></ul>
+</section>
+
+<section data-sec="üretim">
+  <h2>Recast: navmesh’i otomatik üretmek</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Mikko Mononen’in açık kaynak <b>Recast</b> kütüphanesi (yol bulma kısmı <b>Detour</b>) bugün endüstrinin ortak dili: Unreal Engine’in navmesh’i Recast/Detour tabanlıdır; birçok stüdyo ve motor kullanır. Adımlar:</p>
+      <ol style="font-size:.82em">
+        <li><b>Rasterleştirme</b>: seviye geometrisi küçük küplere (voxel) bölünür.</li>
+        <li><b>Yürünebilirlik filtresi</b>: eğimi fazla yüzeyler, tavanı alçak yerler (ajan boyu), basamak yüksekliği kontrolü.</li>
+        <li><b>Aşındırma</b>: ajan yarıçapı kadar duvarlardan geri çekil. Kalan alan = ajanın <b>merkezinin</b> gidebileceği yerler.</li>
+        <li><b>Bölgeler</b>: kalan alan su seviyesi (watershed) benzeri bir yöntemle bölgelere ayrılır.</li>
+        <li><b>Konturlar ve çokgenler</b>: bölge sınırları sadeleştirilip dışbükey çokgenlere bölünür; çokgenler arası portallar çıkarılır.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Ajan boyutu bir parametre</span>Navmesh belirli bir ajan için üretilir: yarıçap, boy, en büyük eğim, basamak yüksekliği. Dev bir golem için başka, kedi için başka navmesh pişirilir (Unity: “Agent Types”). Y8’deki Dragoon sorununun navmesh çözümü budur.</div>
+      <div class="box low"><span class="bt">Karolar (tiles)</span>Açık dünyada navmesh tek parça değil, karolar hâlinde üretilir: oyuncu yaklaştıkça yüklenir, bir duvar yıkılınca sadece o karo yeniden pişirilir.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="üretim">
+  <h2>Canlı: 2B’de Recast fikri</h2>
+  <div class="demo" data-demo="navbuild"></div>
+</section>
+
+<section data-sec="üretim">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Dört düğmeye sırayla basın: geometri → yürünebilir hücreler → aşındırma (turuncu: ajanın merkezi buraya giremez) → çokgenler.</li>
+      <li>Ajan yarıçapını 0’dan 6’ya çıkarın. Sütun ile duvar arasındaki dar geçit hangi yarıçapta kapanıyor? Bu, büyük bir karakterin oradan <b>geçmemesi gerektiği</b> anlamına gelir.</li>
+      <li>Çokgen sayısına bakın: yarıçap büyüdükçe artıyor mu, azalıyor mu? Gerçek Recast dikdörtgen değil, keyfi dışbükey çokgenler üretir; sayı çok daha azdır.</li>
+    </ol>
+  </div>
+  <p class="mini">Bu demo Recast’ın 2B ve sadeleştirilmiş bir taklidi (açgözlü dikdörtgen birleştirme). Gerçek boru hattı 3B’dir, eğim ve yükseklik de içerir ve konturları sadeleştirir.</p>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Dinamik dünya</div>
+  <div class="sub">kapılar, engeller, atlamalar, maliyetler</div>
+  <ul class="agenda"><li class="done">neden navmesh?</li><li class="done">navmesh üzerinde yol bulma</li><li class="done">funnel algoritması</li><li class="done">navmesh üretimi</li><li class="on">dinamik dünya</li><li class="">kod ve laboratuvarlar</li><li class="">motorlarda navmesh</li></ul>
+</section>
+
+<section data-sec="dinamik">
+  <h2>Statik navmesh, dinamik dünya</h2>
+  <div class="cols">
+    <div>
+      <div class="box story"><span class="bt">Hareketli engeller</span>
+        <ul style="font-size:.82em">
+          <li><b>Kaçınma</b> (Unity NavMeshObstacle, carve kapalı): ajanlar engelin etrafından yerel olarak dolaşır; yol değişmez. Hareket eden şeyler (araba, yuvarlanan kaya) için.</li>
+          <li><b>Oyma</b> (carve açık): engel navmesh’te <b>delik</b> açar, yollar yeniden hesaplanır. Duran şeyler için (kapatılan kapı, bırakılan sandık). Pahalıdır; sürekli hareket eden şeyde kullanmayın.</li>
+        </ul></div>
+      <div class="box game"><span class="bt">Ağ dışı bağlantılar (off-mesh links)</span>Atlama, aşağı inme, merdiven, tırmanma, ışınlanma: çokgenlerle bağlı olmayan iki noktayı bir “kenarla” bağlarsınız. Ajan oraya varınca özel bir animasyon oynatılır (Unity NavMeshLink, Unreal Nav Link Proxy, Godot NavigationLink).</div>
+    </div>
+    <div>
+      <div class="box low"><span class="bt">Alan türleri ve maliyetler</span>Navmesh’in bölgeleri “yürünebilir”, “su”, “çamur”, “tehlikeli” gibi alan türleriyle işaretlenir; her türün maliyeti var ve ajan türüne göre bazıları tamamen yasak olabilir. Unity: NavMeshModifier + alan maliyetleri; Unreal: Nav Modifier Volume + Nav Area sınıfları.</div>
+      <div class="box warn"><span class="bt">⚠️ Sık hata</span>Kapıyı fiziksel olarak kapatıp navmesh’e haber vermemek: ajan kapıya kadar yürür, orada sonsuza kadar iter. Ya kapıya oyan bir engel koyun ya da kapalıyken portalı/alanı yasaklayın (demodaki “kapı açık” kutusu).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="dinamik">
+  <h2>Navmesh yetmediğinde: uçan ve tırmanan</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">3B uçuş: seyrek voxel ağaçları</span>Navmesh bir <b>zemin</b> temsilidir. Uzayda, havada ya da su altında hareket eden düşmanlar için 3B uzay gerekir. Warframe ekibi (Daniel Brewer, GAP3 21. bölüm) uçan düşmanlar için uzayı <b>seyrek voxel octree</b> ile temsil edip üstünde A* çalıştırdı: boş büyük bölgeler tek düğüm, engel kenarları ince ayrıntılı.</div>
+    <div class="box game"><span class="bt">Eğilmek, sürünmek, yüzmek</span>Voxel tabanlı navmesh normalde sadece “ayakta durulabilen” yerleri içerir. Kevin Kirst (GAP2 32. bölüm): üretimi genişletip eğilerek, sürünerek, yan yan ya da yüzerek geçilebilen alanları da işaretlemek; ajan yolu izlerken bu bilgiyle duruşunu değiştirir.</div>
+  </div>
+  <p class="mini">Taktik yol bulma (tehlikeli alanlardan kaçınmak, siper siper ilerlemek) navmesh üzerinde maliyetleri değiştirerek yapılır: Daniel Brewer, “Tactical Pathfinding on a NavMesh” (GAP 27. bölüm) — Y12’de.</p>
+</section>
+
+<section data-sec="dinamik">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · dinamik</div>
+    <div class="q">Oyunda sürekli yuvarlanan dev bir kaya var. Unity’de ona hangi ayar uygun?</div>
+    <div class="opts">
+      <button data-opt="A">NavMeshObstacle, carve kapalı: ajanlar yerel olarak kaçınsın</button>
+      <button data-opt="B">NavMeshObstacle, carve açık: her karede navmesh’e delik açsın</button>
+      <button data-opt="C">Navmesh’i her karede yeniden pişir</button>
+      <button data-opt="D">Kayayı static işaretleyip navmesh’e dahil et</button>
+    </div>
+    <div class="explain">Sürekli hareket eden şeyler için oyma pahalıdır ve sürekli yeniden yol hesaplatır; yerel kaçınma yeterlidir. Oyma, bir süre <b>yerinde duran</b> engeller içindir (Unity’nin “Carve Only Stationary” seçeneği de bunu yapar). Static işaretlemek ise kayayı hiç hareket etmeyecekmiş gibi navmesh’e gömer.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">geometri ve motor API’leri</div>
+  <ul class="agenda"><li class="done">neden navmesh?</li><li class="done">navmesh üzerinde yol bulma</li><li class="done">funnel algoritması</li><li class="done">navmesh üretimi</li><li class="done">dinamik dünya</li><li class="on">kod ve laboratuvarlar</li><li class="">motorlarda navmesh</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>Geometri araçları</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-3|5-16|18-22"><script type="text/template">
+def cross(a, b, c):
+    """(b − a) × (c − a): > 0 sol, < 0 sağ, 0 aynı çizgi (y yukarı eksende)"""
+    return (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])
+
+def point_in_convex(poly, p):
+    """Dışbükey çokgende: bütün kenarlara göre aynı tarafta mı?"""
+    sign = 0
+    for i in range(len(poly)):
+        c = cross(poly[i], poly[(i + 1) % len(poly)], p)
+        if c == 0:
+            continue                      # kenarın üstünde: içeride say
+        if sign == 0:
+            sign = 1 if c > 0 else -1
+        elif (c > 0) != (sign > 0):
+            return False
+    return True
+
+def area(poly):
+    """Ayakkabı bağı formülü"""
+    s = sum(poly[i][0] * poly[(i + 1) % len(poly)][1] - poly[(i + 1) % len(poly)][0] * poly[i][1]
+            for i in range(len(poly)))
+    return abs(s) / 2
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+static float Cross(Vector2 a, Vector2 b, Vector2 c) =>
+    (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
+
+static bool PointInConvex(Vector2[] poly, Vector2 p) {
+    int sign = 0;
+    for (int i = 0; i < poly.Length; i++) {
+        float c = Cross(poly[i], poly[(i + 1) % poly.Length], p);
+        if (Mathf.Approximately(c, 0f)) continue;
+        int s = c > 0 ? 1 : -1;
+        if (sign == 0) sign = s;
+        else if (s != sign) return false;
+    }
+    return true;
+}
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Dikkat: ekranda y aşağı doğru büyür; bu “sol” ve “sağ”ın anlamını değiştirir. Nokta-çokgen testi yönden bağımsızdır (işaretlerin <b>aynı</b> olması yeter); funnel’da ise tutarlı bir yön seçmek gerekir.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>Unity: NavMeshAgent ile ajan</h2>
+  <div class="cols">
+    <ol style="font-size:.82em">
+      <li>Package Manager → <b>AI Navigation</b> paketini kurun.</li>
+      <li>Zemin nesnesine <b>NavMeshSurface</b> ekleyin → <b>Bake</b>. Mavi örtü = navmesh.</li>
+      <li>Karaktere <b>NavMeshAgent</b> bileşeni: yarıçap, boy, hız, ivme, dönme hızı, durma mesafesi.</li>
+      <li>Kapı/sandık: <b>NavMeshObstacle</b> (carve). Su/çamur: <b>NavMeshModifier</b> ile alan türü.</li>
+      <li>Atlama/merdiven: <b>NavMeshLink</b>; ajan bağlantıya gelince <code>isOnOffMeshLink</code> olur, animasyonu siz oynatırsınız.</li>
+    </ol>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="8-14|15-17"><script type="text/template">
+using UnityEngine;
+using UnityEngine.AI;
+
+public class ClickToMove : MonoBehaviour {
+    NavMeshAgent agent;
+    void Awake() { agent = GetComponent<NavMeshAgent>(); }
+
+    void Update() {
+        if (Input.GetMouseButtonDown(0) &&
+            Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out var hit)) {
+            // tıklanan noktaya en yakın navmesh noktası (2 m içinde)
+            if (NavMesh.SamplePosition(hit.point, out var nh, 2f, NavMesh.AllAreas))
+                agent.SetDestination(nh.position);
+        }
+        if (agent.isOnOffMeshLink) {                 // atlama bağlantısı
+            agent.CompleteOffMeshLink();             // gerçek oyunda: atlama animasyonu, sonra bunu çağır
+        }
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Unreal ve Godot</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Unreal (C++)">
+<pre><code class="language-cpp" data-trim data-line-numbers><script type="text/template">
+// Seviyeye NavMeshBoundsVolume koyun (P tuşu navmesh’i gösterir).
+// AIController’da:
+#include "AIController.h"
+#include "Navigation/PathFollowingComponent.h"
+
+void AMyAIController::GoTo(const FVector& Target)
+{
+    FAIMoveRequest Req;
+    Req.SetGoalLocation(Target);
+    Req.SetAcceptanceRadius(50.f);
+    MoveTo(Req);                         // yol bulma + funnel + izleme (CharacterMovement)
+}
+// Kapı: Nav Modifier Volume + kapalıyken “NavArea_Null”
+// Atlama: Nav Link Proxy, Smart Link olay ile animasyon
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Godot (GDScript)">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Sahne: NavigationRegion3D (içinde zemin) → Bake NavigationMesh
+# Karakter: CharacterBody3D + NavigationAgent3D
+extends CharacterBody3D
+@onready var agent: NavigationAgent3D = $NavigationAgent3D
+const SPEED := 4.0
+
+func go_to(target: Vector3) -> void:
+    agent.target_position = target
+
+func _physics_process(_delta: float) -> void:
+    if agent.is_navigation_finished():
+        return
+    var next := agent.get_next_path_position()
+    velocity = global_position.direction_to(next) * SPEED
+    move_and_slide()
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Web (three-pathfinding)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+import { Pathfinding } from "three-pathfinding";
+
+const pathfinding = new Pathfinding();
+const ZONE = "level1";
+// navMesh: Blender vb. ile hazırlanmış, sahneden ayrı basit bir mesh
+pathfinding.setZoneData(ZONE, Pathfinding.createZone(navMesh.geometry));
+
+const groupID = pathfinding.getGroup(ZONE, startPos);
+const path = pathfinding.findPath(startPos, targetPos, ZONE, groupID);   // funnel uygulanmış noktalar
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Godot örneğinde dil GDScript; renklendirme Python sözdizimiyle. Web’de Recast’in WebAssembly sürümü <code>recast-navigation-js</code> da var.</p>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: ajan hangi çokgende?</h2>
+  <div class="simlab" data-sim="pip" data-fns="pointInConvex" data-lang="js">
+<textarea>
+// poly: [[x, y], ...] dışbükey çokgenin köşeleri (sıralı)
+// p: [x, y]
+// Döndür: p çokgenin içinde (ya da kenarında) mi?
+function pointInConvex(poly, p) {
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    const c = (b[0] - a[0]) * (p[1] - a[1])
+            - (b[1] - a[1]) * (p[0] - a[0]);
+    if (c < 0) return false;    // ⚠️ sadece bir yön için doğru!
+  }
+  return true;
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu sadece köşeleri belli bir yönde sıralı çokgenlerde çalışır. Çokgen ters yönde sıralanmışsa hep <code>false</code> verir. Düzeltin: ilk sıfır olmayan işareti hatırlayın ve <b>farklı</b> işaret görürseniz <code>false</code> döndürün. Sonra fareyi soldaki çokgenlerin üstünde gezdirin.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: sol mu, sağ mı?</h2>
+  <div class="ailab" data-lab="tri2" data-lang="python">
+<textarea>
+# a, b, c: [x, y]
+# (b − a) × (c − a) işaretini döndür: 1, -1 ya da 0
+def side(a, b, c):
+    return 0
+</textarea>
+    <div class="lab-tasks">Funnel, görüş hattı ve nokta-çokgen testinin ortak taşı. Formül: <code>(bx − ax)(cy − ay) − (cx − ax)(by − ay)</code>. Testlerde aynı çizgi üstündeki ve a = b olan durumlar da var.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: çokgen alanı</h2>
+  <div class="ailab" data-lab="polyarea" data-lang="python">
+<textarea>
+# poly: [[x, y], ...] (saat yönünde ya da tersinde)
+# Döndür: alan (her zaman pozitif)
+def area(poly):
+    return 0
+</textarea>
+    <div class="lab-tasks">Ayakkabı bağı formülü. Navmesh araçları alanı, çok küçük (ajanın sığamayacağı) çokgenleri temizlemek ve rastgele bir noktayı (ör. devriye hedefi) çokgenin <b>alanıyla orantılı</b> seçmek için kullanır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Motorlarda navmesh</div>
+  <div class="sub">araçlar, tuzaklar, entegrasyon</div>
+  <ul class="agenda"><li class="done">neden navmesh?</li><li class="done">navmesh üzerinde yol bulma</li><li class="done">funnel algoritması</li><li class="done">navmesh üretimi</li><li class="done">dinamik dünya</li><li class="done">kod ve laboratuvarlar</li><li class="on">motorlarda navmesh</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/NavMeshSurface.html" target="_blank" rel="noopener"><b>Unity AI Navigation</b></a></td><td>Unity · resmî paket</td><td>NavMeshSurface (pişirme, çalışma anında da), NavMeshAgent (yol + funnel + kaçınma), NavMeshObstacle (oyma), NavMeshLink, NavMeshModifier (alan türü), birden çok ajan türü.</td><td>Package Manager → AI Navigation</td></tr><tr><td><a href="https://arongranberg.com/astar/" target="_blank" rel="noopener"><b>A* Pathfinding Project</b></a></td><td>Unity · ücretsiz + Pro</td><td>Kendi navmesh/recast grafları, ızgara ile karıştırma, çok iş parçacığı, funnel ve yumuşatma; Unity navmesh’inin yetmediği yerlerde.</td><td>Asset Store / UnityPackage</td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/basic-navigation-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Navigation System</b></a></td><td>Unreal · yerleşik</td><td>Recast/Detour tabanlı; NavMeshBoundsVolume, Nav Modifier Volume, Nav Area, Nav Link Proxy, dinamik yeniden üretim (Runtime Generation).</td><td>Seviyeye NavMeshBoundsVolume</td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/tutorials/navigation/navigation_introduction_3d.html" target="_blank" rel="noopener"><b>Godot Navigation</b></a></td><td>Godot 4 · yerleşik</td><td>NavigationRegion2D/3D (pişirme), NavigationAgent (yol + kaçınma), NavigationLink, NavigationObstacle.</td><td>Sahneye NavigationRegion3D → Bake</td></tr><tr><td><a href="https://github.com/recastnavigation/recastnavigation" target="_blank" rel="noopener"><b>Recast &amp; Detour</b></a></td><td>C++ · açık kaynak</td><td>Navmesh üretimi + sorgu + kalabalık (DetourCrowd). Kendi motorunuz için endüstri standardı.</td><td>CMake</td></tr><tr><td><a href="https://github.com/isaac-mason/recast-navigation-js" target="_blank" rel="noopener"><b>recast-navigation-js</b></a></td><td>JavaScript (WebAssembly)</td><td>Recast/Detour’un web sürümü; three.js ve diğer web motorlarıyla.</td><td><code>npm install recast-navigation</code></td></tr><tr><td><a href="https://github.com/donmccurdy/three-pathfinding" target="_blank" rel="noopener"><b>three-pathfinding</b></a></td><td>JavaScript</td><td>Hazır bir navmesh geometrisinde A* + funnel; küçük web oyunları için hafif.</td><td><code>npm install three-pathfinding</code></td></tr>
+  </table>
+  
+</section>
+
+<section data-sec="motorlar">
+  <h2>🧩 Projenize navmesh eklerken: kontrol listesi</h2>
+  <div class="cols">
+    <ol style="font-size:.82em">
+      <li><b>Ajan ölçülerini önce belirleyin</b>: yarıçap, boy, eğim, basamak. Karakter modeli değişirse yeniden pişirin.</li>
+      <li><b>Pişirilecek geometriyi seçin</b>: sadece zemin ve duvarlar; süs objeleri, çimen, küçük çakıllar navmesh’i parçalar.</li>
+      <li><b>Görselleştirin</b>: Unity Scene görünümünde navmesh, Unreal’da P tuşu. Delik, kopuk ada, merdivende boşluk var mı?</li>
+      <li><b>Bağlantıları ekleyin</b>: atlama, inme, merdiven, kapılar.</li>
+      <li><b>Hedefi navmesh’e yapıştırın</b>: tıklanan nokta navmesh dışındaysa <code>SamplePosition</code> ile en yakın noktayı kullanın.</li>
+      <li><b>Steering ile birleştirin</b>: ajanın hız ve dönüşünü animasyonla eşleyin (kayan ayaklar!).</li>
+    </ol>
+    <div>
+      <div class="box warn"><span class="bt">“Ajan takılıyor” sorunlarının çoğu…</span>
+        <ul style="font-size:.8em">
+          <li>Navmesh’te görünmeyen bir boşluk (iki çokgen bağlı değil)</li>
+          <li>Yarıçap pişirmedekinden büyük ajan</li>
+          <li>Fizik çarpıştırıcısı navmesh’e dahil edilmemiş bir engel</li>
+          <li>Rigidbody ile NavMeshAgent’ın aynı anda konumu değiştirmesi</li>
+          <li>Hedefin navmesh dışında olması</li>
+        </ul></div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Büyük dünyada karolu, çalışma anında üretim; yalnızca değişen karoyu yeniden pişirin. Çok sayıda ajan için yol isteklerini sıraya koyun (Unity bunu kendi yapar, “Pathfinding Iterations Per Frame”).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Eski Unity “Navigation” penceresi talimatları (2022 öncesi; artık NavMeshSurface)</li><li>OffMeshLink yerine NavMeshLink karışıklığı</li><li>NavMeshAgent varken transform.position’ı elle değiştirmek (Warp kullanın)</li><li>Hedefi navmesh dışında vermek ve “yol bulamıyor” sanmak</li><li>Godot 3 ile 4 navigasyon API’lerini karıştırmak</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, AI Navigation 2.x. Bir zombi için: NavMeshSurface çalışma anında yeniden pişirilebilsin (oyuncu barikat kurunca). Zombi NavMeshAgent ile oyuncuyu kovalasın; SetDestination’ı her karede değil, oyuncu 1 m’den fazla hareket edince çağırsın. Barikatlar NavMeshObstacle (carve, yalnızca dururken). Pencerelerden atlama için NavMeshLink; bağlantıdayken 0.6 sn süren bir atlama animasyonu oynat, sonra CompleteOffMeshLink. Hız büyüklüğünü Animator “Speed”e gönder. Gizmos ile agent.path köşelerini çiz.”</p><ul class="mini"><li>Motoru ve sürümünü (Unity 6 AI Navigation, UE 5.x, Godot 4.x) açıkça yazın: API’ler sürümler arasında çok değişti</li><li>Ajan ölçülerini ve hangi nesnelerin navmesh’e dahil olacağını söyleyin</li><li>Kapı, atlama, su gibi özel durumları tek tek listeleyin</li><li>Hata ayıklama görselleştirmesi (yol çizgisi, hedef) isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Prosedürel dünyalar</span>Her oyunda yeniden üretilen haritalarda (Y15) navmesh’in hızla, karolar hâlinde, yükleme ekranını uzatmadan üretilmesi. Hangi parametreler ne kadar süre kazandırıyor?</div>
+    <div class="box game"><span class="bt">Yıkılabilir ortam</span>Duvarlar patlayınca navmesh’in yerel güncellenmesi ve bu sırada yolu izleyen ajanların “kör” kalmaması; D* Lite (Y8) gibi artımlı yöntemlerle birleşim.</div>
+    <div class="box low"><span class="bt">Öğrenilmiş hareket + navmesh</span>Pekiştirmeli öğrenmeyle eğitilmiş bir ajan (Y13) navmesh yolunu “rehber” olarak kullanıp zıplama, kayma gibi hareketleri kendisi seçebilir mi? Parkur oyunları için ilginç.</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Tıkla-git</b> — Unity ya da Godot’da bir oda + NavMeshSurface + tıklanan yere yürüyen karakter. Navmesh’i ve yolu ekranda çizin.</li><li><b class="c-green">[kolay]</b> <b>Kapı anahtarı</b> — Oyuncu bir şalteri çekince kapı açılsın; kapalıyken NavMeshObstacle (carve) ile geçit kapansın. Düşman başka yoldan dolaşıyor mu?</li><li><b class="c-amber">[orta]</b> <b>Parkur düşmanı</b> — Platformlar arası atlama ve aşağı inme bağlantıları; düşman oyuncuyu bağlantıları kullanarak kovalasın.</li><li><b class="c-amber">[orta]</b> <b>p5.js navmesh</b> — Bu destedeki dikdörtgen navmesh + funnel’ı kendi seviye editörünüzle yazın.</li><li><b class="c-red">[zor]</b> <b>Mini Recast</b> — 2B bir haritadan otomatik navmesh: rasterleştirme, aşındırma, bölgeler, kontur sadeleştirme, üçgenleme.</li><li><b class="c-purple">[araştırma]</b> <b>Navmesh vs ızgara</b> — Aynı 3B seviyede ızgara A* ve navmesh A* + funnel’ı düğüm sayısı, süre ve yol kalitesiyle karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Navmesh</b>: yürünebilir zemini örten dışbükey çokgenler; yol noktalarının beş kusurunu çözer (Tozour).</li>
+      <li>Yol bulma: konum bul → çokgen grafında A* → <b>koridor</b> → <b>funnel</b>.</li>
+      <li>Funnel: tepe, sol/sağ kenar, çapraz çarpım; köşelere teğet en kısa yol.</li>
+    </ul>
+    <ul>
+      <li>Üretim (Recast): rasterleştir, filtrele, <b>aşındır</b> (ajan yarıçapı), bölgele, çokgenleştir; karolar.</li>
+      <li>Dinamik: kaçınma vs oyma, ağ dışı bağlantılar, alan maliyetleri; uçuş için voxel octree (Warframe).</li>
+      <li>Araçlar: Unity AI Navigation, Unreal Navigation, Godot Navigation, Recast/Detour, three-pathfinding.</li>
+      <li>Sonraki: <b>grup YZ’si</b> — formasyonlar, sürüler, takım koordinasyonu.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar ve okumalar 🎬</h2>
+  <div class="cols">
+    <div class="vids" style="grid-template-columns:repeat(2, 1fr)">
+      <a class="vid" href="https://www.youtube.com/watch?v=-L-WgKMFuhE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/-L-WgKMFuhE/hqdefault.jpg" alt=""><span><b>A* Pathfinding (E01) — navmesh öncesi temel</b><br>Sebastian Lague</span></a>
+      <a class="vid" href="https://www.youtube.com/watch?v=i0x5fj4PqP4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/i0x5fj4PqP4/hqdefault.jpg" alt=""><span><b>Pathfinding — Understanding A*</b><br>Tarodev</span></a>
+    </div>
+    <ul class="reflist"><li><a href="http://www.ai-blog.net/archives/000152.html" target="_blank" rel="noopener">Paul Tozour: Fixing Pathfinding Once and For All (2008)</a> — yol noktaları vs navmesh</li><li><a href="http://digestingduck.blogspot.com/2010/03/simple-stupid-funnel-algorithm.html" target="_blank" rel="noopener">Mikko Mononen: Simple Stupid Funnel Algorithm (2010)</a></li><li><a href="https://recastnav.com/" target="_blank" rel="noopener">Recast Navigation</a> — belgeler ve demo</li><li><a href="https://en.wikipedia.org/wiki/Navigation_mesh" target="_blank" rel="noopener">Wikipedia: Navigation mesh</a></li><li><a href="https://www.gamedev.net/tutorials/programming/artificial-intelligence/navigation-meshes-and-pathfinding-r4880/" target="_blank" rel="noopener">GameDev.net: Navigation Meshes and Pathfinding</a></li><li><a href="https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/NavMeshLink.html" target="_blank" rel="noopener">Unity: NavMeshLink</a></li><li><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/modifying-the-navigation-mesh-in-unreal-engine" target="_blank" rel="noopener">Unreal: Modifying the Navigation Mesh</a></li><li><a href="https://docs.godotengine.org/en/stable/tutorials/navigation/navigation_using_navigationlinks.html" target="_blank" rel="noopener">Godot: Using NavigationLinks</a></li></ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Sturtevant 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter18_Choosing_a_Search_Space_Representation.pdf" target="_blank" rel="noopener">Choosing a Search Space Representation</a> <i>(Game AI Pro, Bölüm 18)</i><br>Izgara, yol noktası, navmesh: artılar ve eksiler.</div><div class="paper"><b>Brewer 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter27_Tactical_Pathfinding_on_a_NavMesh.pdf" target="_blank" rel="noopener">Tactical Pathfinding on a NavMesh</a> <i>(Game AI Pro, Bölüm 27)</i><br>Navmesh üzerinde taktik maliyetler (Y12).</div><div class="paper"><b>Kirst 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter32_Extending_the_Spatial_Coverage_of_a_Voxel-Based_Navigation_Mesh.pdf" target="_blank" rel="noopener">Extending the Spatial Coverage of a Voxel-Based Navigation Mesh</a> <i>(Game AI Pro 2, Bölüm 32)</i><br>Eğilme, sürünme, yüzme alanları.</div><div class="paper"><b>Brewer 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter21_3D_Flight_Navigation_Using_Sparse_Voxel_Octrees.pdf" target="_blank" rel="noopener">3D Flight Navigation Using Sparse Voxel Octrees</a> <i>(Game AI Pro 3, Bölüm 21)</i><br>Warframe’de uçan düşmanlar.</div><div class="paper"><b>Hale &amp; Youngblood 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter19_Creating_High-Order_Navigation_Meshes_through_Iterative_Wavefront_Edge_Expansions.pdf" target="_blank" rel="noopener">Creating High-Order Navigation Meshes through Iterative Wavefront Edge Expansions</a> <i>(Game AI Pro, Bölüm 19)</i><br>Daha az çokgenli navmesh üretimi.</div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Grup Yapay Zekâsı</div>
+    <div class="sub">Formasyonlar, takımlar, koordinasyon: birlikte hareket etmek</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-grup/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+
