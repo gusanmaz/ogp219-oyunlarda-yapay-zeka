@@ -125,7 +125,9 @@
       let mod;
       try {
         const scope = sim.scope || {}, keys = Object.keys(scope);   // simülasyonun öğrenciye verdiği hazır yardımcılar
-        mod = new Function('print', '__g', 'V', ...keys, '"use strict";\n' + SL.guardLoops(shell.cm.getValue()) + `\n;return { ${fns.map(f => `${f}: typeof ${f} === 'function' ? ${f} : null`).join(', ')} };`)(shell.print, SL.makeGuard(200000), SL.V, ...keys.map(k => scope[k]));
+        const guard = SL.makeGuard(200000);
+        mod = new Function('print', '__g', 'V', ...keys, '"use strict";\n' + SL.guardLoops(shell.cm.getValue()) + `\n;return { ${fns.map(f => `${f}: typeof ${f} === 'function' ? ${f} : null`).join(', ')} };`)(shell.print, guard, SL.V, ...keys.map(k => scope[k]));
+        fns.forEach(f => { const raw = mod[f]; if (raw) mod[f] = (...a) => { guard.reset(); return raw(...a); }; });   // döngü sınırı çağrı başına
       } catch (e) { shell.setMsg('err', '⚠️ ' + (e instanceof SyntaxError ? 'Sözdizimi hatası: ' : 'Hata: ') + e.message); return; }
       const missing = fns.filter(f => !mod[f]);
       if (missing.length) { shell.setMsg('err', '⚠️ Kodda şu fonksiyon(lar) bulunamadı: ' + missing.join(', ')); return; }

@@ -741,3 +741,10 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .htn-t.primitive { border-color: var(--blue); }
 .htn-t.on { background: var(--amber); color: #111; border-color: var(--amber); }
 .htn-m { font-size: 13px; color: var(--muted); font-style: italic; }
+/* oyun ağaçları: XOX ve Dört Bir Arada */
+.ttt { display: grid; grid-template-columns: repeat(3, 110px); gap: 8px; flex: none; }
+.ttt-c { position: relative; width: 110px; height: 110px; font: 800 64px "Source Sans 3", sans-serif; border: 2px solid var(--rule); border-radius: 12px; background: var(--card); color: var(--ink); cursor: pointer; }
+.ttt-c.x { color: var(--red); } .ttt-c.o { color: var(--blue); }
+.ttt-c[data-v]:not([data-v=""])::after { content: "değer " attr(data-v); position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; font: 700 15px "JetBrains Mono", monospace; opacity: .9; }
+.ttt-c.good::after { color: var(--blue); } .ttt-c.bad::after { color: var(--red); } .ttt-c.draw::after { color: var(--muted); }
+.c4stats { margin-top: 6px; }

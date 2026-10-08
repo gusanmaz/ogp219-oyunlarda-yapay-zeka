@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oyun Ağaçları</title>
+<meta name="description" content="Oyunlarda Yapay Zekâ — Oyun ağaçları: minimax, alfa-beta budaması, hamle sıralaması, değerlendirme fonksiyonu, ufuk etkisi, yinelemeli derinleştirme, Zobrist hash, Monte Carlo ağaç araması ve UCB1; XOX ve Dört Bir Arada demoları; Turochamp, Deep Blue, Chinook, AlphaGo. Etkileşimli reveal.js ders notu.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3a0f4a 0%, #1b1036 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUNLARDA YAPAY ZEKÂ · HAFTA 6</div>
+  <div class="ttl" style="font-size:80px">Oyun Ağaçları</div>
+  <div class="sub"><i>Minimax, alfa-beta, Monte Carlo ağaç araması</i> — rakip de düşünüyorsa</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titletree"></div>
+  <aside class="notes">Rakibi olan sıra tabanlı oyunlar için arama: minimax, alfa-beta budaması ve MCTS. Arka planda ▲ MAX ve ▼ MIN düğümlerinden oluşan bir oyun ağacı aşağıdan yukarı değerleniyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+  <div class="cols c64">
+    <ol style="font-size:.84em">
+      <li><b>Oyun ağacı nedir?</b> — hangi oyunlar, ne kadar büyük?</li>
+      <li><b>Minimax</b> — “rakibim en iyisini oynayacak” varsayımı (XOX’ta yenilmez YZ)</li>
+      <li><b>Alfa-beta budaması</b> — aynı sonucu çok daha az işle bulmak</li>
+      <li><b>Derinlik ve değerlendirme</b> — satranç ve Dört Bir Arada gibi büyük oyunlar</li>
+      <li><b>MCTS</b> — rastgele oyunlarla akıllı karar (Go, strateji oyunları)</li>
+      <li><b>Kod</b> — minimax, alfa-beta, MCTS + üç laboratuvar</li>
+      <li><b>Tarihten</b> — Turing, Deep Blue’nun “hatası”, Chinook, AlphaGo’nun 37. hamlesi</li>
+      <li><b>Kütüphaneler</b> — python-chess, Stockfish, OpenSpiel, easyAI, chess.js</li>
+    </ol>
+    <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
+      <p>…XOX’ta asla kaybetmeyen bir YZ yazabilecek, alfa-beta budamasını elle izleyebilecek, Dört Bir Arada için değerlendirme fonksiyonu tasarlayabilecek, MCTS’nin nasıl çalıştığını anlatabilecek ve bir masa/kart oyununa rakip YZ ekleyebileceksiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: XOX’TA HİÇ KAYBETMEDİNİZ Mİ?</span>
+    <p class="big">Bir hamle yapmadan önce kafanızdan ne geçiyor? “Ben buraya koyarsam o <b>şuraya</b> koyar, sonra ben <b>şuraya</b>…”</p>
+  </div>
+  <ul style="font-size:.92em">
+    <li class="fragment">Bu cümle bir <b>ağaç</b>: her hamle bir dal, her dalın altında rakibin olası cevapları.</li>
+    <li class="fragment">Önemli varsayım: rakip <b>aptal değil</b>. Size en çok zarar verecek cevabı verecek. Siz de ona.</li>
+    <li class="fragment">XOX’ta bu ağacın tamamını gezmek mümkün: bilgisayar <b>hiç kaybetmez</b>. Satrançta mümkün değil; nasıl idare edildiğini göreceğiz. Go’da daha da zor; orada <b>zar atarak</b> düşünen bir yöntem çıktı: MCTS.</li>
+  </ul>
+</section>
+
+<section data-sec="ön koşullar">
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <div class="prereq"><a class="" href="../agaclar-bst/">İkili Arama Ağaçları (ağaç, özyineleme)</a><a class="" href="../yz-goap/">Y5 · GOAP (durum uzayında arama)</a></div>
+  <div class="prereq"><a class="opt" href="../algoritma-analizi/">Algoritma Analizi (üstel büyüme)</a><a class="opt" href="../hash-tablolari/">Hash Tabloları (geçiş tablosu)</a><a class="opt" href="../yz-utility/">Y4 · Utility (değerlendirme = puan)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Oyun ağacı bir ağaçtır ve minimax özyinelemeli bir yürüyüştür. Y5’te “bir hedefe ulaşmak için” arama yaptık; şimdi aramada bir <b>rakip</b> var. Ağaçların neden bu kadar büyüdüğünü anlamak için üstel büyüme fikri yeter.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu destede her algoritmanın canlı bir oyunu var: önce oynayın, sonra kodu okuyun. Kendi oyununuza rakip eklemek için hazır kütüphaneler (easyAI, OpenSpiel, Stockfish) kullanılabilir; asıl iş oyununuzun kurallarını “hamleleri listele / hamle yap / bitti mi?” fonksiyonlarına ayırmaktır.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>game tree · ply</td><td>oyun ağacı · yarım hamle</td><td>Düğüm = konum, dal = hamle · bir oyuncunun tek hamlesi</td></tr>
+    <tr><td>branching factor</td><td>dallanma katsayısı</td><td>Bir konumdaki ortalama hamle sayısı (satranç ~35, Go ~250)</td></tr>
+    <tr><td>zero-sum · perfect information</td><td>sıfır toplamlı · tam bilgili</td><td>Birinin kazancı diğerinin kaybı · iki taraf da her şeyi görür</td></tr>
+    <tr><td>minimax · MAX / MIN</td><td>—</td><td>MAX puanı en büyüklemeye, MIN en küçüklemeye çalışır</td></tr>
+    <tr><td>evaluation function</td><td>değerlendirme fonksiyonu</td><td>Oyun bitmeden bir konuma “ne kadar iyi” puanı veren tahmin</td></tr>
+    <tr><td>horizon effect</td><td>ufuk etkisi</td><td>Arama derinliğinin hemen ötesindeki felaketi görememek</td></tr>
+    <tr><td>alpha-beta pruning</td><td>alfa-beta budaması</td><td>Sonucu değiştiremeyecek dalları hiç incelememe</td></tr>
+    <tr><td>iterative deepening · transposition table</td><td>yinelemeli derinleştirme · geçiş tablosu</td><td>1, 2, 3… derinlikte ara · görülen konumları hash tablosunda hatırla</td></tr>
+    <tr><td>MCTS · playout · UCB1 / UCT</td><td>Monte Carlo ağaç araması · rastgele oyun · güven sınırı</td><td>Rastgele oyunlarla istatistik toplayan arama · keşif/sömürü dengesi formülü</td></tr>
+  </table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #10223a 100%)">
+  <div class="lv">LEVEL 0</div>
+  <div class="ttl">Oyun ağacı nedir?</div>
+  <div class="sub">hangi oyunlar, ne kadar büyük?</div>
+  <ul class="agenda"><li class="on">oyun ağacı nedir?</li><li class="">minimax</li><li class="">alfa-beta budaması</li><li class="">derinlik ve değerlendirme</li><li class="">Monte Carlo ağaç araması</li><li class="">kod ve laboratuvarlar</li><li class="">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="oyun ağacı">
+  <h2>Hangi oyunlar için?</h2>
+  <table class="sum-t" style="font-size:18px">
+    <tr><th></th><th>tam bilgili (her şey görünür)</th><th>eksik bilgili (gizli bilgi)</th></tr>
+    <tr><td><b>şanssız</b></td><td>XOX, satranç, dama, Go, Dört Bir Arada, <b>Mangala</b>, Othello → <b>minimax / alfa-beta / MCTS</b></td><td>Stratego, Savaş gemileri → çıkarım + arama</td></tr>
+    <tr><td><b>şanslı</b> (zar, kart çekme)</td><td><b>Tavla</b> → zar düğümlü minimax (expectiminimax)</td><td><b>Okey</b>, poker, Hearthstone → bilgi kümeli MCTS, CFR</td></tr>
+  </table>
+  <div class="cols" style="margin-top:12px">
+    <ul style="font-size:.86em">
+      <li>Bu destenin çekirdeği: <b>iki oyunculu, sıra tabanlı, sıfır toplamlı, tam bilgili</b> oyunlar.</li>
+      <li>Video oyunlarında: masa/kart oyunu uyarlamaları, sıra tabanlı taktik (XCOM benzeri), strateji oyunlarının kampanya kararları, bulmaca çözücüler.</li>
+    </ul>
+    <div class="box story"><span class="bt">🇹🇷 Mangala</span>Türkiye’de okullarda da oynanan Mangala, mancala ailesinden tam bilgili, şanssız bir taş oyunu. Minimax ile güçlü bir rakip yazmak için ideal bir proje (son bölüm).</div>
+  </div>
+</section>
+
+<section data-sec="oyun ağacı">
+  <h2>Ağaçlar ne kadar büyük?</h2>
+  <div class="cols">
+    <table class="sum-t" style="font-size:18px">
+      <tr><th>oyun</th><th>dallanma</th><th>büyüklük</th><th>durum</th></tr>
+      <tr><td>XOX</td><td>≤ 9</td><td>255.168 farklı oyun</td><td>çözülmüş: berabere</td></tr>
+      <tr><td>Dört Bir Arada</td><td>≤ 7</td><td>~4,5 × 10¹² konum</td><td>çözülmüş (1988): başlayan, ortadan başlarsa kazanır</td></tr>
+      <tr><td>Dama (İngiliz)</td><td>~10</td><td>~5 × 10²⁰ konum</td><td>çözülmüş (2007): berabere</td></tr>
+      <tr><td>Satranç</td><td>~35</td><td>~10¹²⁰ olası oyun (Shannon sayısı)</td><td>çözülmemiş</td></tr>
+      <tr><td>Go (19×19)</td><td>~250</td><td>~10¹⁷⁰ konum</td><td>çözülmemiş</td></tr>
+    </table>
+    <div>
+      <div class="box warn"><span class="bt">⚠️ Üstel büyüme</span>Dallanma b, derinlik d ise yaprak sayısı yaklaşık <b>b<sup>d</sup></b>. Satrançta 6 yarım hamle: 35⁶ ≈ <b>1,8 milyar</b> konum. Evrendeki atom sayısı ~10⁸⁰; satranç ağacının yanında küçük kalır.</div>
+      <div class="box story"><span class="bt">Ne yapacağız?</span>
+        <ul style="font-size:.84em"><li>Küçük oyunlar: ağacın <b>tamamı</b> (minimax)</li><li>Daha büyük: <b>budama</b> + <b>sınırlı derinlik</b> + <b>tahmin</b> (alfa-beta + değerlendirme)</li><li>Çok büyük, tahmin zor: <b>örnekleme</b> (MCTS)</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyun ağacı">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 1 · oyun ağacı</div>
+    <div class="q">Dallanma katsayısı 30 olan bir oyunda 4 yarım hamle derinliğe kadar kaç yaprak vardır (yaklaşık)?</div>
+    <div class="opts">
+      <button data-opt="A">810.000</button>
+      <button data-opt="B">120</button>
+      <button data-opt="C">900</button>
+      <button data-opt="D">30.000</button>
+    </div>
+    <div class="explain">30⁴ = 30 · 30 · 30 · 30 = <b>810.000</b>. Derinliği bir artırırsanız 24 milyon olur: bu yüzden “biraz daha derin bakmak” çok pahalıdır ve budama bu kadar önemlidir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #10223a 100%)">
+  <div class="lv">LEVEL 1</div>
+  <div class="ttl">Minimax</div>
+  <div class="sub">rakibim en iyi cevabı verecek</div>
+  <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="on">minimax</li><li class="">alfa-beta budaması</li><li class="">derinlik ve değerlendirme</li><li class="">Monte Carlo ağaç araması</li><li class="">kod ve laboratuvarlar</li><li class="">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="minimax">
+  <h2>Minimax fikri</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>İki oyuncu: <b>MAX</b> (biz, ▲) puanı büyütmek, <b>MIN</b> (rakip, ▼) küçültmek istiyor.</li>
+        <li>Yapraklar oyun sonu: kazandım +1, kaybettim −1, berabere 0 (ya da bir puan).</li>
+        <li>Değerler <b>aşağıdan yukarı</b> taşınır: MIN düğümü çocuklarının <b>en küçüğünü</b>, MAX düğümü <b>en büyüğünü</b> alır.</li>
+        <li>Kökte en büyük değerli çocuğa giden hamleyi oynarız.</li>
+      </ul>
+      <div class="box story"><span class="bt">Neden “rakip en iyisini oynar”?</span>Güvenli varsayım: rakip iyi oynarsa bile garanti ettiğimiz sonucu alırız; kötü oynarsa daha da iyisini. Minimax, “en kötü durumda en iyi” sonucu seçer.</div>
+    </div>
+    <svg viewBox="0 0 520 300" style="width:100%" font-family="Source Sans 3">
+      <g style="stroke:var(--rule)" stroke-width="2">
+        <line x1="260" y1="58" x2="100" y2="128"/><line x1="260" y1="58" x2="260" y2="128"/><line x1="260" y1="58" x2="420" y2="128"/>
+        <line x1="100" y1="148" x2="50" y2="220"/><line x1="100" y1="148" x2="100" y2="220"/><line x1="100" y1="148" x2="150" y2="220"/>
+        <line x1="260" y1="148" x2="210" y2="220"/><line x1="260" y1="148" x2="260" y2="220"/><line x1="260" y1="148" x2="310" y2="220"/>
+        <line x1="420" y1="148" x2="370" y2="220"/><line x1="420" y1="148" x2="420" y2="220"/><line x1="420" y1="148" x2="470" y2="220"/>
+      </g>
+      <g font-size="16" font-weight="800" text-anchor="middle">
+        <polygon points="260,18 286,60 234,60" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="260" y="54" style="fill:var(--ink)">3</text>
+        <polygon points="100,158 126,118 74,118" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="100" y="138" style="fill:var(--ink)">3</text>
+        <polygon points="260,158 286,118 234,118" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="260" y="138" style="fill:var(--ink)">2</text>
+        <polygon points="420,158 446,118 394,118" style="fill:var(--card);stroke:var(--blue)" stroke-width="3"/><text x="420" y="138" style="fill:var(--ink)">2</text>
+        <g style="fill:var(--ink)">
+        <text x="50" y="240">3</text><text x="100" y="240">12</text><text x="150" y="240">8</text>
+        <text x="210" y="240">2</text><text x="260" y="240">4</text><text x="310" y="240">6</text>
+        <text x="370" y="240">14</text><text x="420" y="240">5</text><text x="470" y="240">2</text></g>
+      </g>
+      <g font-size="13" style="fill:var(--muted)"><text x="300" y="30">MAX: en büyüğü seç</text><text x="440" y="110">MIN: en küçüğü</text><text x="180" y="280">yapraklar (oyun sonu puanları)</text></g>
+    </svg>
+  </div>
+  <p class="mini">Bu ağaç Russell &amp; Norvig’in “Artificial Intelligence: A Modern Approach” kitabındaki klasik örnek. Sol hamle, rakip ne yaparsa yapsın en az 3 garanti eder.</p>
+</section>
+
+<section data-sec="minimax">
+  <h2>Minimax adım adım</h2>
+  <div class="demo" data-demo="abtree" data-ab="0"></div>
+</section>
+
+<section data-sec="minimax">
+  <h2>XOX: asla kaybetmeyen rakip ❌⭕</h2>
+  <div class="demo" data-demo="ttt"></div>
+</section>
+
+<section data-sec="minimax">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Köşeye oynayın. Boş karelerdeki sayılar YZ’nin <b>her olası hamlesinin</b> minimax değeri: kaç kare “kaybettirir” (kırmızı −)?</li>
+      <li>YZ’yi yenmeye çalışın. Hata payı %0 iken mümkün mü? (Değil: XOX çözülmüş bir oyun.)</li>
+      <li>Hata payını %30 yapın. Artık kazanabiliyor musunuz? <b>Zorluk ayarı</b> böyle yapılır: kusursuz YZ eğlenceli değildir (Y1, Y17).</li>
+      <li>“alfa-beta”yı kapatıp açın: YZ’nin incelediği düğüm sayısı ilk hamlede kaç kat değişiyor?</li>
+      <li>Değerler neden +9, +7 gibi? Derinlik cezası: YZ <b>çabuk kazanmayı</b>, mecbursa <b>geç kaybetmeyi</b> tercih eder (10 − derinlik).</li>
+    </ol>
+  </div>
+</section>
+
+<section data-sec="minimax">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 2 · minimax</div>
+    <div class="q">Bir MIN düğümünün çocuklarının değerleri 7, 3, 9. MIN düğümünün değeri nedir ve neden?</div>
+    <div class="opts">
+      <button data-opt="A">3 — rakip bize en az puan bırakan hamleyi seçer</button>
+      <button data-opt="B">9 — en iyi ihtimal</button>
+      <button data-opt="C">6,3 — ortalama</button>
+      <button data-opt="D">7 — ilk çocuk</button>
+    </div>
+    <div class="explain">MIN düğümünde sıra rakiptedir ve rakip bizim puanımızı <b>en aza</b> indirmek ister: 3. Ortalama almak, rakibin rastgele oynadığını varsaymak olurdu (bu, zarlı oyunlardaki “şans düğümü”nün yaptığı şeydir).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 2</div>
+  <div class="ttl">Alfa-beta budaması</div>
+  <div class="sub">aynı cevap, çok daha az iş</div>
+  <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="done">minimax</li><li class="on">alfa-beta budaması</li><li class="">derinlik ve değerlendirme</li><li class="">Monte Carlo ağaç araması</li><li class="">kod ve laboratuvarlar</li><li class="">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="alfa-beta">
+  <h2>Alfa-beta: “bu dala bakmaya gerek yok”</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li><b>α (alfa)</b>: MAX’ın şimdiye kadar <b>garanti ettiği</b> en iyi değer (alt sınır).</li>
+        <li><b>β (beta)</b>: MIN’in şimdiye kadar garanti ettiği en iyi değer (MAX için üst sınır).</li>
+        <li>Bir düğümde <b>α ≥ β</b> olursa, kalan çocuklar sonucu <b>değiştiremez</b>: budanır ✂.</li>
+      </ul>
+      <p style="font-size:.84em">Örnekteki ikinci MIN düğümü: ilk çocuğu 2. MIN bu dalda <b>en fazla 2</b> verecek. Ama MAX solda zaten <b>3</b> garanti etti. Bu dalın geri kalanı ne olursa olsun MAX onu seçmez → 4 ve 6’ya bakmaya gerek yok.</p>
+    </div>
+    <div class="box story"><span class="bt">Gündelik benzetme</span>İki arkadaş size hediye seçenekleri sunuyor ve <b>en kötüsünü</b> verecekler. Ayşe’nin torbasında en kötüsü 3 lira. Mehmet’in torbasından ilk çıkan 2 lira. Mehmet’in torbasında başka ne olduğunu bilmeye gerek yok: Mehmet’ten <b>en fazla</b> 2 lira alabilirsiniz, Ayşe 3 lira garanti ediyor. Mehmet’in torbasını “budadınız”.</div>
+  </div>
+</section>
+
+<section data-sec="alfa-beta">
+  <h2>Alfa-beta adım adım ✂</h2>
+  <div class="demo" data-demo="abtree" data-ab="1"></div>
+</section>
+
+<section data-sec="alfa-beta">
+  <h2>Sıralama her şeydir</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Alfa-beta <b>her zaman</b> minimax ile aynı sonucu verir; sadece daha az düğüm inceler.</li>
+        <li>Ne kadar budayacağı, hamleleri <b>hangi sırayla</b> denediğinize bağlı. En iyi hamle önce denenirse budama en fazladır.</li>
+        <li>Knuth &amp; Moore (1975): en iyi sıralamada incelenen yaprak sayısı yaklaşık <b>b<sup>d/2</sup></b>. Yani aynı sürede <b>iki kat derin</b> bakabilirsiniz!</li>
+      </ul>
+      <table class="sum-t" style="font-size:17px">
+        <tr><th>satranç, b ≈ 35, d = 6</th><th>yaprak sayısı</th></tr>
+        <tr><td>minimax</td><td>35⁶ ≈ 1.838.265.625</td></tr>
+        <tr><td>alfa-beta (en iyi sıra)</td><td>≈ 2 · 35³ ≈ 85.750</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">İyi sıralama nasıl yapılır?</span>
+        <ul style="font-size:.82em">
+          <li>Oyun bilgisi: Dört Bir Arada’da <b>orta sütunlar</b> önce; satrançta <b>taş alan</b> hamleler önce.</li>
+          <li>Bir önceki aramanın en iyi hamlesi önce (yinelemeli derinleştirme ile birlikte).</li>
+          <li>“Katil hamleler”: başka dallarda budamaya yol açmış hamleler önce.</li>
+        </ul></div>
+      <p class="mini">Dört Bir Arada demosunda “hamle sıralaması” kutusunu kapatıp açarak düğüm sayısını karşılaştırabilirsiniz.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="alfa-beta">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 3 · alfa-beta</div>
+    <div class="q">Alfa-beta budaması açıkken YZ’nin seçtiği hamle, budamasız minimax’ın seçtiğinden farklı olabilir mi?</div>
+    <div class="opts">
+      <button data-opt="A">Hayır — budanan dallar sonucu değiştiremeyecek dallardır; değer aynıdır</button>
+      <button data-opt="B">Evet, alfa-beta tahmin yapar</button>
+      <button data-opt="C">Evet, derinlik azalır</button>
+      <button data-opt="D">Sadece hamle sıralaması kötüyse</button>
+    </div>
+    <div class="explain">Alfa-beta <b>kayıpsız</b> bir optimizasyondur: kökün değeri birebir aynıdır. (Eşit değerli birden çok hamle varsa hangisinin “ilk bulunduğu” farklı olabilir ama değer aynıdır.) Sıralama sadece <b>hızı</b> etkiler.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a0d0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 3</div>
+  <div class="ttl">Derinlik ve değerlendirme</div>
+  <div class="sub">ağacın sonuna gidemiyorsak?</div>
+  <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="done">minimax</li><li class="done">alfa-beta budaması</li><li class="on">derinlik ve değerlendirme</li><li class="">Monte Carlo ağaç araması</li><li class="">kod ve laboratuvarlar</li><li class="">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="değerlendirme">
+  <h2>Sınırlı derinlik + değerlendirme fonksiyonu</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Ağacın sonuna (oyun sonuna) inemiyorsak, <b>d yarım hamle</b> sonra dururuz ve konuma bir <b>tahmini puan</b> veririz.</li>
+        <li>Claude Shannon (1950): satranç için taş değerleri — piyon 1, at/fil 3, kale 5, vezir 9 — ve hareket serbestliği gibi ölçütler.</li>
+        <li>Dört Bir Arada: her 4’lük pencerede kendi 3’lüm (+5), 2’lim (+2), rakibin 3’lüsü (−4); orta sütundaki taşlar (+3). (Demodaki fonksiyon tam olarak bu.)</li>
+        <li>Değerlendirme fonksiyonu YZ’nin <b>oyun bilgisidir</b>: arama ne kadar derin olursa olsun, kötü bir değerlendirme kötü oynatır.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">Ufuk etkisi (horizon effect)</span>4 yarım hamle bakan bir YZ, 5. yarım hamlede vezirini kaybedeceğini görmez. Daha kötüsü: kaçınılmaz kaybı “ufkun ötesine” itmek için anlamsız hamleler yapabilir (ör. bir piyonu feda ederek veziri bir hamle daha “kurtarır”).</div>
+      <div class="box low"><span class="bt">Çareler</span><b>Sakinlik araması</b> (quiescence): taş alışverişi sürerken durma, sakin bir konuma kadar devam et. <b>Seçmeli uzatma</b>: şah, tehdit gibi durumlarda derinliği artır.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="değerlendirme">
+  <h2>Gerçek motorların üç hilesi</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">Yinelemeli derinleştirme</span>Önce derinlik 1, sonra 2, 3, 4… Süre bitince en son <b>tamamlanan</b> derinliğin cevabını oyna. Gereksiz gibi görünür ama sığ aramalar <b>hamle sıralaması</b> için bilgi verir; toplam maliyete etkisi küçüktür (son katman baskındır). Oyunlarda “düşünme süresi” böyle ayarlanır.</div>
+    <div class="box game"><span class="bt">Geçiş tablosu</span>Aynı konuma farklı hamle sıralarıyla ulaşılır (e4 sonra d4 = d4 sonra e4). Hesaplanan konumları bir <b>hash tablosunda</b> sakla: tekrar gelince hazır cevabı kullan. Hash Tabloları destesinin en güzel uygulamalarından!</div>
+    <div class="box low"><span class="bt">Zobrist hash</span>Her (taş, kare) çiftine rastgele 64 bitlik bir sayı ver; konumun hash’i, üzerindeki taşların sayılarının <b>XOR</b>’u. Bir hamle = iki XOR: hash’i sıfırdan hesaplamak gerekmez. 1970’ten beri bütün satranç motorlarında.</div>
+  </div>
+  <p class="mini">Bugünün en güçlü motoru Stockfish hâlâ alfa-beta tabanlıdır; 2020’den beri değerlendirme fonksiyonu küçük, hızlı bir sinir ağı (NNUE). Leela Chess Zero ise AlphaZero gibi MCTS + büyük sinir ağı kullanır.</p>
+</section>
+
+<section data-sec="değerlendirme">
+  <h2>Dört Bir Arada: alfa-beta’ya karşı oynayın 🔴🟡</h2>
+  <div class="demo" data-demo="c4"></div>
+</section>
+
+<section data-sec="değerlendirme">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Derinlik 1 ile oynayın, sonra 5, sonra 7. YZ hangi derinlikte üçlü tuzaklarınızı görmeye başlıyor?</li>
+      <li>Her YZ hamlesinden sonra üstteki sayılara bakın: her sütunun alfa-beta değeri. “KAZAN/KAYIP”: YZ kesin sonucu gördü.</li>
+      <li>“Hamle sıralaması”nı kapatıp derinlik 6–7’de düğüm sayısını ve süreyi karşılaştırın.</li>
+      <li>YZ’ye başlatın, ilk hamleyi nereye yapıyor? (Çözüm: başlayan oyuncu orta sütunla başlarsa kusursuz oyunda kazanır.)</li>
+      <li>Derinlik 7’de bile bazen “aptalca” hamleler mi görüyorsunuz? Bu, ufuk etkisi ve değerlendirme fonksiyonunun sınırıdır.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 4</div>
+  <div class="ttl">Monte Carlo ağaç araması</div>
+  <div class="sub">değerlendirme bilmiyorsak: rastgele oyna, istatistik tut</div>
+  <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="done">minimax</li><li class="done">alfa-beta budaması</li><li class="done">derinlik ve değerlendirme</li><li class="on">Monte Carlo ağaç araması</li><li class="">kod ve laboratuvarlar</li><li class="">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="MCTS">
+  <h2>Go’nun sorunu ve MCTS’nin fikri</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Go’da dallanma ~250 ve iyi bir değerlendirme fonksiyonu yazmak çok zor: “bu konum ne kadar iyi?” sorusuna ustalar bile sezgiyle cevap verir.</li>
+        <li>Fikir: konumu değerlendirmek yerine oradan <b>rastgele binlerce oyun</b> oynat. Kazanma oranı = konumun değeri. (Monte Carlo: kumarhanesiyle ünlü şehir; rastgele örnekleme yöntemlerinin adı.)</li>
+        <li>Akıllı kısım: oyunları <b>umut vadeden</b> dallara daha çok, ama arada az denenmiş dallara da harca. Bunun için bir <b>ağaç</b> büyütülür.</li>
+        <li>2006: Rémi Coulom “Monte Carlo Tree Search” adını verdi (Crazy Stone); aynı yıl Kocsis &amp; Szepesvári <b>UCT</b> formülünü yayımladı. Go programları birkaç yılda amatör ustalar seviyesine çıktı.</li>
+      </ul>
+    </div>
+    <svg viewBox="0 0 560 300" style="width:100%" font-family="Source Sans 3">
+      <g font-size="14" font-weight="700" text-anchor="middle">
+        <rect x="10" y="10" width="125" height="40" rx="8" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="72" y="36" style="fill:var(--ink)">1 · Seçim</text>
+        <rect x="150" y="10" width="125" height="40" rx="8" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="212" y="36" style="fill:var(--ink)">2 · Genişletme</text>
+        <rect x="290" y="10" width="125" height="40" rx="8" style="fill:var(--card);stroke:var(--amber)" stroke-width="2.5"/><text x="352" y="36" style="fill:var(--ink)">3 · Simülasyon</text>
+        <rect x="430" y="10" width="125" height="40" rx="8" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="492" y="36" style="fill:var(--ink)">4 · Geri yayılım</text>
+      </g>
+      <g font-size="12.5" style="fill:var(--ink-2)">
+        <text x="12" y="80">UCB1’i en büyük</text><text x="12" y="96">çocuğa in (ağaçta)</text>
+        <text x="152" y="80">yaprağa yeni bir</text><text x="152" y="96">çocuk ekle</text>
+        <text x="292" y="80">oyunun sonuna kadar</text><text x="292" y="96">rastgele oyna</text>
+        <text x="432" y="80">sonucu yol boyunca</text><text x="432" y="96">yukarı yaz (N, W)</text>
+      </g>
+      <g style="stroke:var(--rule)" stroke-width="2"><line x1="280" y1="130" x2="200" y2="180"/><line x1="280" y1="130" x2="360" y2="180"/><line x1="200" y1="190" x2="160" y2="240"/><line x1="200" y1="190" x2="240" y2="240"/></g>
+      <path d="M240,250 Q245,265 235,280 Q250,290 240,298" fill="none" style="stroke:var(--amber)" stroke-width="2.5" stroke-dasharray="4 3"/>
+      <g font-size="12" text-anchor="middle" font-weight="700">
+        <circle cx="280" cy="125" r="17" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="280" y="129" style="fill:var(--ink)">7/12</text>
+        <circle cx="200" cy="185" r="17" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="200" y="189" style="fill:var(--ink)">5/8</text>
+        <circle cx="360" cy="185" r="17" style="fill:var(--card);stroke:var(--rule)" stroke-width="2"/><text x="360" y="189" style="fill:var(--ink)">2/4</text>
+        <circle cx="160" cy="245" r="15" style="fill:var(--card);stroke:var(--rule)" stroke-width="2"/><text x="160" y="249" style="fill:var(--ink)">3/5</text>
+        <circle cx="240" cy="245" r="15" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="240" y="249" style="fill:var(--ink)">0/0</text>
+      </g>
+      <text x="290" y="290" font-size="12" style="fill:var(--muted)">kazanç / ziyaret</text>
+    </svg>
+  </div>
+</section>
+
+<section data-sec="MCTS">
+  <h2>UCB1: keşif mi, sömürü mü?</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Seçim adımında her çocuk için:</p>
+      <p style="font-size:1.05em;text-align:center">$$\text{UCB1} = \underbrace{\frac{w}{n}}_{\text{şimdiye kadar ne kadar iyi}} + c\,\underbrace{\sqrt{\frac{\ln N}{n}}}_{\text{ne kadar az denendi}}$$</p>
+      <ul style="font-size:.84em">
+        <li><b>w/n</b>: o hamlenin kazanma oranı → <b>sömürü</b> (iyi olana yüklen)</li>
+        <li>ikinci terim: ebeveyn N kez ziyaret edildi, bu çocuk sadece n kez → <b>keşif</b> (az denenene şans ver)</li>
+        <li><b>c</b>: dengeyi ayarlar; teoride √2 ≈ 1,41, pratikte deneyerek</li>
+        <li>Hiç denenmemiş çocuk (n = 0): önce o denenir</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">🎰 Çok kollu haydut</span>Kumarhanede 7 slot makinesi var, hangisinin daha çok ödediğini bilmiyorsunuz. Hep en iyi bildiğinizi çekerseniz, daha iyi bir makineyi hiç keşfedemeyebilirsiniz. Hep rastgele çekerseniz, iyi makineyi bildiğiniz hâlde para kaybedersiniz. UCB1 bu “çok kollu haydut” (multi-armed bandit) probleminin klasik çözümüdür; MCTS her ağaç düğümünü ayrı bir kumarhane gibi görür.</div>
+      <div class="box game"><span class="bt">Oyunda başka nerede?</span>Sturtevant (GAP2 25. bölüm): UCB1’i arama dışında da kullanmak mümkün; ör. bir dövüş oyununda hangi düşman stilinin bu oyuncuya karşı işe yaradığını oynadıkça öğrenmek.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="MCTS">
+  <h2>MCTS’ye karşı oynayın 🎲</h2>
+  <div class="demo" data-demo="c4" data-ai="mcts"></div>
+</section>
+
+<section data-sec="MCTS">
+  <h2>MCTS: güçlü ve zayıf yanlar</h2>
+  <div class="cols">
+    <div class="box game"><span class="bt">👍 Güçlü</span>
+      <ul style="font-size:.84em">
+        <li><b>Değerlendirme fonksiyonu gerekmez</b>: sadece kurallar ve oyun sonu.</li>
+        <li><b>Her an durdurulabilir</b> (anytime): 100 ms verirseniz 100 ms’lik, 1 sn verirseniz daha iyi cevap. Zorluk ayarı = simülasyon sayısı.</li>
+        <li>Asimetrik büyür: umut vadeden dallar derin, kötüler sığ.</li>
+        <li>Eksik bilgili oyunlara uyarlanabilir (Information Set MCTS: kart oyunları).</li>
+      </ul></div>
+    <div class="box warn"><span class="bt">👎 Zayıf</span>
+      <ul style="font-size:.84em">
+        <li><b>Taktik tuzaklar</b>: tek bir doğru cevabı olan keskin konumlarda rastgele oyunlar yanıltıcıdır (Dört Bir Arada demosunda düşük simülasyonla görün).</li>
+        <li>Hızlı ve doğru bir <b>ileri model</b> ister: oyun durumunu kopyalayıp binlerce kez simüle edebilmelisiniz. Grafikle iç içe yazılmış oyun kodunda bu zor!</li>
+        <li>Rastgele oyunlar gerçekçi değilse sonuçlar yanlıdır; “akıllı” simülasyon politikaları gerekir.</li>
+      </ul></div>
+  </div>
+  <p class="mini">AlphaGo’nun sırrı: MCTS’nin rastgele simülasyonlarını ve seçimlerini <b>sinir ağlarıyla</b> yönlendirmek (bir ağ “iyi hamleler”, diğeri “konum değeri” tahmin eder). Y13’te öğrenme tarafını göreceğiz.</p>
+</section>
+
+<section data-sec="MCTS">
+  <div class="quiz" data-answer="A">
+    <div class="qhead">Quiz 4 · MCTS</div>
+    <div class="q">MCTS’de c (keşif katsayısı) çok büyük seçilirse ne olur?</div>
+    <div class="opts">
+      <button data-opt="A">Arama, iyi hamlelere yoğunlaşmak yerine bütün hamleleri neredeyse eşit dener</button>
+      <button data-opt="B">Sadece en iyi bilinen hamle denenir</button>
+      <button data-opt="C">Simülasyonlar daha hızlı biter</button>
+      <button data-opt="D">Değerlendirme fonksiyonu gerekir</button>
+    </div>
+    <div class="explain">c büyükse UCB1’in keşif terimi baskın olur: az denenmiş her hamle cazip görünür ve arama genişliğine yayılır. c çok küçükse ilk şanslı sonucu veren hamleye takılır kalır. İyi c değeri oyuna göre deneyerek bulunur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 5</div>
+  <div class="ttl">Kod ve laboratuvarlar</div>
+  <div class="sub">bir oyun arayüzü, üç algoritma</div>
+  <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="done">minimax</li><li class="done">alfa-beta budaması</li><li class="done">derinlik ve değerlendirme</li><li class="done">Monte Carlo ağaç araması</li><li class="on">kod ve laboratuvarlar</li><li class="">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Ön bilgi: oyunu “kurallar”a ayırmak</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Arama algoritması oyunun <b>grafiğini</b> bilmez; sadece şu dört soruyu sorar:</p>
+      <table class="sum-t" style="font-size:17px">
+        <tr><td><code>Moves(state)</code></td><td>yapılabilecek hamleler</td></tr>
+        <tr><td><code>Apply(state, m)</code> / <code>Undo</code></td><td>hamleyi yap / geri al</td></tr>
+        <tr><td><code>IsOver(state)</code></td><td>oyun bitti mi, kim kazandı?</td></tr>
+        <tr><td><code>Evaluate(state)</code></td><td>bitmediyse tahmini puan</td></tr>
+      </table>
+      <p class="mini">Bu dört fonksiyonu yazdığınız an minimax, alfa-beta ve MCTS oyununuzda çalışır. Oyunun durumunu <b>salt veri</b> (dizi, sınıf) olarak tutun; GameObject’lere, animasyonlara bağlamayın.</p>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">🎒 Kopyalamak mı, geri almak mı?</span>Her dalda tahtanın kopyasını almak kolay ama yavaş (çok bellek). Yapıp <b>geri almak</b> (make/unmake) hızlıdır; satranç motorları böyle yapar. Demodaki Dört Bir Arada YZ’si taşı bırakıp aramadan sonra geri alıyor.</div>
+      <div class="box game"><span class="bt">🎒 Negamax</span>MAX ve MIN için ayrı kod yazmak yerine: “benim için değer = −(rakip için değer)”. Tek fonksiyon, işaret değiştirerek. Kod örneklerinde bunu kullanıyoruz.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Minimax + alfa-beta (negamax biçimi)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-8|11-15|16-24"><script type="text/template">
+public interface IGame {
+    List<int> Moves();               // yapılabilir hamleler (iyi olanlar önce!)
+    void Apply(int move);
+    void Undo(int move);
+    bool IsOver(out int winner);     // winner: 1, 2 ya da 0 (berabere)
+    int  Evaluate(int player);       // bitmemiş konum: player açısından puan
+    int  Current { get; }            // sıradaki oyuncu (1/2)
+}
+
+public static class Search {
+    // Sıradaki oyuncu açısından konumun değeri
+    public static int Negamax(IGame g, int depth, int alpha, int beta) {
+        int me = g.Current;
+        if (g.IsOver(out int w)) return w == 0 ? 0 : (w == me ? 100000 + depth : -100000 - depth);
+        if (depth == 0) return g.Evaluate(me);
+        int best = int.MinValue + 1;
+        foreach (int m in g.Moves()) {
+            g.Apply(m);
+            int v = -Negamax(g, depth - 1, -beta, -alpha);   // rakibin değeri, işaret çevrilmiş
+            g.Undo(m);
+            if (v > best) best = v;
+            if (v > alpha) alpha = v;
+            if (alpha >= beta) break;                       // ✂ budama
+        }
+        return best;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// game: { moves(), apply(m), undo(m), winner() → 1|2|0|null, evaluate(p), current }
+function negamax(game, depth, alpha, beta) {
+  const me = game.current, w = game.winner();
+  if (w !== null) return w === 0 ? 0 : (w === me ? 100000 + depth : -100000 - depth);
+  if (depth === 0) return game.evaluate(me);
+  let best = -Infinity;
+  for (const m of game.moves()) {
+    game.apply(m);
+    const v = -negamax(game, depth - 1, -beta, -alpha);
+    game.undo(m);
+    best = Math.max(best, v);
+    alpha = Math.max(alpha, v);
+    if (alpha >= beta) break;             // ✂
+  }
+  return best;
+}
+
+function bestMove(game, depth) {
+  let best = null, bestV = -Infinity;
+  for (const m of game.moves()) {
+    game.apply(m);
+    const v = -negamax(game, depth - 1, -Infinity, Infinity);
+    game.undo(m);
+    if (v > bestV) { bestV = v; best = m; }
+  }
+  return best;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def negamax(game, depth, alpha=-math.inf, beta=math.inf):
+    me, w = game.current, game.winner()        # winner: 1, 2, 0 (berabere) ya da None
+    if w is not None:
+        return 0 if w == 0 else (100000 + depth if w == me else -100000 - depth)
+    if depth == 0:
+        return game.evaluate(me)
+    best = -math.inf
+    for m in game.moves():
+        game.apply(m)
+        v = -negamax(game, depth - 1, -beta, -alpha)
+        game.undo(m)
+        best = max(best, v)
+        alpha = max(alpha, v)
+        if alpha >= beta:
+            break                               # ✂ budama
+    return best
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">“100000 + depth”: kazanç ne kadar <b>yakınsa</b> o kadar iyi (kalan derinlik büyük). Böylece YZ kazanabilecekken oyunu uzatmaz.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>MCTS (UCT) — 40 satır</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="9-11|12-16|17-21|22-25|26-31"><script type="text/template">
+import math, random
+
+class Node:
+    def __init__(self, move=None, parent=None, player=None):
+        self.move, self.parent, self.player = move, parent, player  # player: bu hamleyi yapan
+        self.kids, self.N, self.W = None, 0, 0.0
+
+def mcts(game, iterations, c=1.41):
+    root = Node(player=3 - game.current)
+    for _ in range(iterations):
+        g, node = game.copy(), root
+        # 1) Seçim: çocukları açılmış düğümlerde UCB1’i en büyük olana in
+        while node.kids and g.winner() is None:
+            node = max(node.kids, key=lambda k: math.inf if k.N == 0 else
+                       k.W / k.N + c * math.sqrt(math.log(node.N) / k.N))
+            g.apply(node.move)
+        # 2) Genişletme
+        if node.kids is None and g.winner() is None:
+            node.kids = [Node(m, node, g.current) for m in g.moves()]
+            node = random.choice(node.kids)
+            g.apply(node.move)
+        # 3) Simülasyon: oyun bitene kadar rastgele
+        while g.winner() is None:
+            g.apply(random.choice(g.moves()))
+        w = g.winner()
+        # 4) Geri yayılım: her düğüm, o hamleyi yapan oyuncu açısından
+        while node:
+            node.N += 1
+            node.W += 1 if w == node.player else 0.5 if w == 0 else 0
+            node = node.parent
+    return max(root.kids, key=lambda k: k.N).move   # en çok ziyaret edilen hamle
+</script></code></pre>
+    </div>
+  </div>
+  <p class="mini">Son satıra dikkat: en yüksek kazanma oranı değil, <b>en çok ziyaret edilen</b> hamle seçilir. Az denenmiş bir hamlenin %100 oranı şans eseri olabilir; çok ziyaret, çok güven demektir.</p>
+</section>
+
+<section data-sec="kod">
+  <h2>🎒 Kod sözlüğü</h2>
+  <table class="gloss" style="font-size:18px">
+    <tr><td>interface IGame</td><td>arayüz</td><td>“Bu metotları sağlayan her sınıf bir oyundur” sözleşmesi; arama algoritması sadece bunu bilir</td></tr>
+    <tr><td>out int winner</td><td>çıkış parametresi</td><td>Fonksiyon bool döndürürken ikinci bir değeri de geri verir</td></tr>
+    <tr><td>int.MinValue + 1</td><td>en küçük tam sayı</td><td>−∞ yerine; +1, işaret çevrilince taşmayı önler</td></tr>
+    <tr><td>-negamax(...)</td><td>işaret çevirme</td><td>Rakip için iyi olan, benim için kötüdür</td></tr>
+    <tr><td>math.inf · Infinity</td><td>sonsuz</td><td>α ve β’nın başlangıç değerleri</td></tr>
+    <tr><td>max(liste, key=...)</td><td>anahtarla en büyük</td><td>UCB1 değeri en büyük çocuğu seç</td></tr>
+    <tr><td>math.log</td><td>doğal logaritma (ln)</td><td>UCB1 formülündeki ln N</td></tr>
+    <tr><td>game.copy()</td><td>kopya</td><td>Simülasyon gerçek oyunu bozmasın</td></tr>
+  </table>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: değerlendirme fonksiyonu</h2>
+  <div class="simlab" data-sim="c4eval" data-fns="evaluate" data-lang="js">
+<textarea>
+// board: 42 elemanlı dizi, satır satır (0 = boş, 1, 2)
+//   hücre (satır r, sütun c) → board[r * 7 + c]
+//   r = 0 en üst satır, r = 5 en alt satır
+// p: puanı istenen oyuncu (1 ya da 2), rakip = 3 - p
+// Döndür: p için konum ne kadar iyi (büyük = iyi)
+function evaluate(board, p) {
+  let score = 0;
+  for (let r = 0; r < 6; r++) {
+    const v = board[r * 7 + 3];          // orta sütun
+    if (v === p) score += 1;
+    else if (v === 3 - p) score -= 1;
+  }
+  // TODO: 4’lük pencereleri tarayın
+  // (yatay, dikey, iki çapraz)
+  return score;
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu “taban YZ” ile aynı: sadece orta sütunu sayıyor. İki YZ de derinlik 3 alfa-beta. 4’lük pencerelerde kendi 3’lünüze (+5), 2’linize (+2), rakibin 3’lüsüne (−4) puan verin; 8 oyunluk turnuvayı kazanın. Sağda iki YZ sürekli maç yapıyor.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: minimax</h2>
+  <div class="ailab" data-lab="minimax" data-lang="python">
+<textarea>
+# node: bir sayı (yaprak) ya da çocuk listesi
+#   ör. [[3, 12, 8], [2, 4, 6], [14, 5, 2]]
+# is_max: bu düğümde sıra MAX’ta mı?
+# Döndür: düğümün minimax değeri
+def minimax(node, is_max):
+    if not isinstance(node, list):
+        return node                  # yaprak
+    # TODO: çocukların değerlerini hesapla
+    #   (sıra bir sonrakine geçer: not is_max)
+    #   MAX ise en büyüğü, MIN ise en küçüğü
+    return 0
+</textarea>
+    <div class="lab-tasks">Ders kitabı ağacı (AIMA) kökte MAX iken 3, MIN iken 2 vermeli. Testlerde farklı derinlik ve dallanmada rastgele ağaçlar ve bir yaprağı doğrudan kök olan ağaç da var.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: UCB1</h2>
+  <div class="ailab" data-lab="ucb" data-lang="python">
+<textarea>
+import math
+
+# w: bu çocuğun toplam kazancı (beraberlik 0.5)
+# n: bu çocuğun ziyaret sayısı
+# N: ebeveynin ziyaret sayısı
+# c: keşif katsayısı
+# Döndür: UCB1 değeri; n == 0 ise None
+def ucb1(w, n, N, c):
+    return w / n
+</textarea>
+    <div class="lab-tasks">Formül: <code>w/n + c·√(ln N / n)</code>. Hiç ziyaret edilmemiş çocuk için <code>None</code> döndürün (gerçek kodda “önce bunu dene” = sonsuz). <code>math.log</code> doğal logaritmadır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #3a2a0d 0%, #10223a 100%)">
+  <div class="lv">LEVEL 6</div>
+  <div class="ttl">Tarihten hikâyeler</div>
+  <div class="sub">Turing’den AlphaGo’ya</div>
+  <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="done">minimax</li><li class="done">alfa-beta budaması</li><li class="done">derinlik ve değerlendirme</li><li class="done">Monte Carlo ağaç araması</li><li class="done">kod ve laboratuvarlar</li><li class="on">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="tarih">
+  <h2>Kâğıt üzerinde satranç: Turing ve Shannon (1948–1952)</h2>
+  <div class="cols">
+    <div class="box story"><span class="bt">Turochamp</span>Alan Turing ve David Champernowne 1948’de bir satranç programının kurallarını tasarladı: <b>Turochamp</b>. O dönemin hiçbir bilgisayarı onu çalıştıramıyordu. Turing 1952 yazında programı <b>elle, adım adım</b> “çalıştırarak” Alick Glennie’ye karşı oynadı ve kaybetti. Kayıtlara geçen ilk bilgisayar satranç oyunu, bilgisayarsız oynandı.</div>
+    <div class="box game"><span class="bt">Shannon 1950</span>Claude Shannon “Programming a Computer for Playing Chess” makalesinde minimax’ı, değerlendirme fonksiyonunu (taş değerleri) ve iki stratejiyi tanımladı: <b>A</b> = her hamleye belli derinliğe kadar bak (kaba kuvvet), <b>B</b> = sadece umut vadeden hamlelere derin bak (seçici). Olası satranç oyunu sayısı için verdiği ~10¹²⁰ tahmini bugün “Shannon sayısı” olarak bilinir.</div>
+  </div>
+  <p class="mini">70 yıldır satranç motorlarının iskeleti Shannon’ın makalesindeki şemadır; değişen arama hızı, budama ve değerlendirme fonksiyonunun kalitesi.</p>
+</section>
+
+<section data-sec="tarih">
+  <h2>Derin hikâye: Deep Blue ve 44. hamle (1997) ♟️</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>IBM’in Deep Blue’su, özel satranç yongalarıyla saniyede yüz milyonlarca konumu inceleyen dev bir <b>alfa-beta</b> makinesiydi. 1996’da Kasparov’a maçı kaybetti; 1997 rövanşında 3½–2½ kazandı.</li>
+        <li>Rövanşın <b>ilk oyununun 44. hamlesinde</b> Deep Blue, Kasparov’a anlamsız görünen bir kale hamlesi yaptı ve kısa süre sonra oyunu bıraktı.</li>
+        <li>Kasparov bu hamleye takıldı: “Makine bu kadar derin bir şey nasıl görebilir?” Sonraki oyunlarda Deep Blue’nun insan müdahalesiyle oynadığından şüphelendi; psikolojik olarak dengesi bozuldu.</li>
+        <li>Yıllar sonra ortaya atılan iddia (Nate Silver’ın “The Signal and the Noise” kitabıyla yayıldı): o hamle bir <b>yazılım hatasının</b> sonucuydu. Deep Blue iyi bir hamle belirleyemeyince “güvenli mod”a düşüp rastgele bir yasal hamle yapmıştı.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box warn"><span class="bt">⚠️ Efsane mi, gerçek mi?</span>Hata iddiası Deep Blue ekibinden Murray Campbell’a dayandırılır; Wikipedia da “iddia edilen” (allegedly) der. Kasparov’un maçı bu yüzden kaybettiği ise tartışmalı: sonraki analizler daha çok Kasparov’un alışılmadık hatalarına işaret eder. Bunu kesin bir gerçek olarak değil, güzel bir uyarı olarak anlatın.</div>
+      <div class="box story"><span class="bt">💡 Ders</span>Oyuncular, YZ’nin anlamadıkları hamlelerine <b>derin bir anlam yükler</b> (Y1: zekâ yanılsaması). Bir hata, dâhice görünebilir.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tarih">
+  <h2>Chinook ve Marion Tinsley: dama çözüldü (1990–2007)</h2>
+  <div class="cols">
+    <div>
+      <ul style="font-size:.86em">
+        <li>Alberta Üniversitesi’nden Jonathan Schaeffer’ın ekibi <b>Chinook</b>’u yazdı: açılış kitabı, derin alfa-beta, iyi bir değerlendirme ve 8 taşa kadar bütün oyun sonlarının veritabanı.</li>
+        <li>Rakibi Marion Tinsley, tarihin en büyük dama oyuncusu sayılır. 1992 maçını Tinsley 4–2 kazandı (33 beraberlik).</li>
+        <li>1994 rövanşında altı berabere oyundan sonra Tinsley <b>pankreas kanseri</b> nedeniyle maçtan çekildi; Chinook insanlara karşı dünya şampiyonluğu kazanan ilk program oldu — ama Tinsley’i hiç yenemedi. Tinsley 1995’te öldü.</li>
+        <li>Schaeffer, Chinook’u yarışmalardan çekip damayı <b>çözmeye</b> karar verdi. 2007’de Science dergisinde yayımladılar: iki taraf kusursuz oynarsa dama <b>berabere</b> biter.</li>
+      </ul>
+    </div>
+    <div class="box story"><span class="bt">💡 Ders</span>“Oyunu çözmek” = her konumun kusursuz oyundaki sonucunu bilmek. XOX ve Dört Bir Arada çözüldü; dama 18 yıllık hesaplamayla çözüldü; satranç ve Go’nun çözülmesi bugünkü bilgisayarlarla mümkün görünmüyor. Bu yüzden onlarda <b>sezgisel</b> (değerlendirme, örnekleme) yöntemlere muhtacız.</div>
+  </div>
+</section>
+
+<section data-sec="tarih">
+  <h2>AlphaGo ve 37. hamle (2016) ⚫⚪</h2>
+  <div class="cols c64">
+    <div>
+      <ul style="font-size:.84em">
+        <li>DeepMind’ın AlphaGo’su, dünyanın en iyilerinden Lee Sedol ile beş oyunluk maç yaptı ve <b>4–1</b> kazandı.</li>
+        <li><b>2. oyun, 37. hamle</b>: AlphaGo beşinci sıraya bir “omuz vuruşu” yaptı. Yorumcular önce hata sandı; profesyonellerin aklına gelmeyecek bir hamleydi. Michael Redmond (9 dan) hamleyi “yaratıcı” ve “benzersiz” diye niteledi; Lee cevap vermek için alışılmadık uzun süre düşündü.</li>
+        <li><b>4. oyun, 78. hamle</b>: Lee Sedol’un hamlesi AlphaGo’yu şaşırttı ve AlphaGo maçtaki <b>tek</b> oyununu kaybetti. Bu hamle de Go dünyasında “tanrısal hamle” olarak anıldı.</li>
+        <li>Teknik olarak: <b>MCTS</b> + hamle olasılıklarını ve konum değerini tahmin eden <b>derin sinir ağları</b>. 2017’de AlphaZero, insan oyunu görmeden sadece kendine karşı oynayarak satranç, shogi ve Go öğrendi.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="box game"><span class="bt">🎬 İzleyin</span><a href="https://www.youtube.com/watch?v=WXuK6gekU1Y" target="_blank" rel="noopener">AlphaGo — The Movie</a> (tam belgesel, Google DeepMind). Lee Sedol’un 78. hamle anı ve ekibin tepkisi, yapay zekâ tarihinin en duygusal sahnelerinden.</div>
+      <div class="box story"><span class="bt">Sonrası</span>Lee Sedol 2019’da profesyonel Go’dan emekli olurken, YZ’nin “yenilemeyecek bir varlık” olduğunu söyledi. Bugün Go oyuncuları YZ ile antrenman yapıyor ve 37. hamle tarzı hamleleri insan oyununa taşıdılar.</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tarih">
+  <h2>Video oyunlarında arama</h2>
+  <div class="cols">
+    <div>
+      <div class="box game"><span class="bt">Total War: Rome II (2013)</span>Creative Assembly, kampanya yapay zekâsının “görev yönetimi” kısmında MCTS tabanlı bir planlayıcı kullandı: az sayıda ordu/kaynak çok sayıda göreve nasıl dağıtılır? Arama uzayı büyük, yol bulma sorguları pahalı; MCTS sabit bir en kötü durum süresi sağladı (Yannakakis &amp; Togelius ders notlarından).</div>
+      <div class="box game"><span class="bt">Berlin ve Xenonauts 2</span>Gijs-Jan Roelofs (GAP3 28. bölüm): Risk benzeri Berlin’de MCTS, utility + davranış ağacı tabanlı en iyi hiyerarşik YZ’ye karşı <b>%73 galibiyet, %15 beraberlik</b> aldı ve oyuncuların yeni stratejilerine elle ayar yapılmadan uyum sağladı. Aynı teknikler XCOM benzeri Xenonauts 2’de denendi.</div>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Kart oyunları</span>Eksik bilgili oyunlarda “bilgi kümeli MCTS” (ISMCTS): rakibin elini bilmediğiniz için olası elleri örnekleyip her biri için arama yapar. Mobil kart oyunlarında ticari olarak kullanıldı (ör. AI Factory’nin Spades’i üzerine yayımlanmış AIIDE 2013 çalışması).</div>
+      <div class="box low"><span class="bt">Platform oyunu bile!</span>“Monte Mario” (Jacobsen, Greve, Togelius, 2014): Mario’yu MCTS ile oynatmak. A* bu ortamda neredeyse kusursuzdu; ama hamlelerin %20’si rastgele bozulunca A* çöktü, MCTS çok daha iyi dayandı. Belirsizlik varsa örnekleme kazanır.</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d3a3a 0%, #10223a 100%)">
+  <div class="lv">LEVEL 7</div>
+  <div class="ttl">Kütüphaneler ve entegrasyon</div>
+  <div class="sub">kendi oyununuza rakip eklemek</div>
+  <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="done">minimax</li><li class="done">alfa-beta budaması</li><li class="done">derinlik ve değerlendirme</li><li class="done">Monte Carlo ağaç araması</li><li class="done">kod ve laboratuvarlar</li><li class="done">tarihten hikâyeler</li><li class="on">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧰 Kütüphaneler ve araçlar</h2>
+  <table class="sum-t libtable" style="font-size:16px">
+    <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
+    <tr><td><a href="https://github.com/niklasf/python-chess" target="_blank" rel="noopener"><b>python-chess</b></a></td><td>Python · açık kaynak</td><td>Satranç kuralları, hamle üretimi, PGN/FEN, UCI motorlarıyla (Stockfish) konuşma. Kendi motorunuz için hazır kurallar.</td><td><code>pip install chess</code></td></tr><tr><td><a href="https://stockfishchess.org/" target="_blank" rel="noopener"><b>Stockfish</b></a></td><td>C++ motor · açık kaynak (GPL)</td><td>Dünyanın en güçlü açık kaynak satranç motoru (alfa-beta + NNUE). Oyununuza UCI protokolüyle ayrı bir süreç olarak bağlanır. Zorluk: “Skill Level” ve düşünme süresi.</td><td>İndir, UCI ile çalıştır; lisans koşullarına dikkat</td></tr><tr><td><a href="https://github.com/jhlywa/chess.js" target="_blank" rel="noopener"><b>chess.js</b></a></td><td>JavaScript · açık kaynak</td><td>Tarayıcıda satranç kuralları, hamle doğrulama; arama yok — üstüne kendi alfa-beta’nızı yazarsınız.</td><td><code>npm install chess.js</code></td></tr><tr><td><a href="https://github.com/Zulko/easyAI" target="_blank" rel="noopener"><b>easyAI</b></a></td><td>Python · açık kaynak</td><td>İki oyunculu oyunlar için küçük çerçeve: oyununuzu bir sınıf olarak tanımlarsınız, Negamax/SSS* hazır gelir. Dört Bir Arada, Nim örnekleri.</td><td><code>pip install easyAI</code></td></tr><tr><td><a href="https://github.com/google-deepmind/open_spiel" target="_blank" rel="noopener"><b>OpenSpiel</b></a></td><td>Python/C++ · açık kaynak (DeepMind)</td><td>Onlarca oyun (Go, poker, tavla…) ve algoritma: minimax, alfa-beta, MCTS, CFR, AlphaZero tarzı öğrenme. Araştırma ve deney için.</td><td><code>pip install open_spiel</code></td></tr><tr><td><a href="https://ludii.games/" target="_blank" rel="noopener"><b>Ludii</b></a></td><td>Java · ücretsiz</td><td>Binden fazla geleneksel oyun (mancala türleri dahil) ve genel oyun oynayan YZ’ler (MCTS). Oyun tanımı dili ile kendi oyununuzu yazıp YZ’ye oynatabilirsiniz.</td><td>Sitesinden indir</td></tr><tr><td><a href="https://www.chessprogramming.org/Alpha-Beta" target="_blank" rel="noopener"><b>Kendi kodunuz (Unity/Godot)</b></a></td><td>her motor</td><td>Masa oyunu uyarlamalarında en yaygın yol: oyun durumunu saf C#/GDScript sınıfı yapıp bu destedeki negamax’ı ya da MCTS’yi yazmak. Motorlarda yerleşik oyun ağacı araması yok.</td><td>—</td></tr>
+  </table>
+  <p class="mini">Chessprogramming wiki, arama tekniklerinin (sıralama, geçiş tablosu, Zobrist, sakinlik araması) en kapsamlı ücretsiz kaynağıdır; satranç dışı oyunlar için de geçerlidir.</p>
+</section>
+
+<section data-sec="kütüphaneler">
+  <h2>🧩 Oyununuza arama tabanlı rakip eklerken</h2>
+  <div class="cols">
+    <ol style="font-size:.84em">
+      <li><b>Kuralları görselden ayırın</b>: <code>GameState</code> saf veri; <code>Moves</code>, <code>Apply/Undo</code>, <code>Winner</code>. Görsel katman sadece bu durumu çizer.</li>
+      <li><b>Önce doğruluk</b>: rastgele hamle yapan bir YZ ile binlerce oyun oynatıp kural hatası arayın (bir tür otomatik test).</li>
+      <li><b>Sonra arama</b>: küçük oyunda minimax, büyükte alfa-beta + değerlendirme ya da MCTS.</li>
+      <li><b>Zaman bütçesi</b>: aramayı ana iş parçacığını dondurmadan yapın (Unity: coroutine/Job/Task; tarayıcı: Web Worker). Yinelemeli derinleştirme ile süre dolunca dur.</li>
+      <li><b>Zorluk</b>: derinlik, simülasyon sayısı, bilerek hata (demodaki gibi), “en iyi 3 hamleden rastgele”.</li>
+    </ol>
+    <div>
+      <div class="box warn"><span class="bt">Eğlenceli rakip ≠ en güçlü rakip</span>Kusursuz bir XOX YZ’si oyuncuyu sıkar. Y17’de dinamik zorluğu göreceğiz; arama tabanlı YZ’lerde en kolay düğme: <b>arama bütçesi</b>.</div>
+      <div class="box low"><span class="bt">⚙️ Performans</span>Tahtayı bit maskeleriyle tutmak (bitboard), hamleleri sıralamak ve geçiş tablosu çoğu zaman algoritmayı değiştirmekten daha çok hız kazandırır. Önce ölçün (Y18).</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="YZ asistanı">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+  <div class="cols">
+    <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Undo’yu unutmak ya da eksik yapmak: tahta bozulur, YZ “hayalet taşlar” görür</li><li>Kazanç puanını derinlikten bağımsız vermek: YZ kazanmayı erteler</li><li>Alfa-beta’da α ve β’yı negamax’ta yer değiştirmeden geçirmek</li><li>MCTS’de kazancı yanlış oyuncu açısından yazmak (YZ rakibi için oynar!)</li><li>Değerlendirme fonksiyonunu oyuncudan bağımsız yazmak (hep oyuncu 1’e göre)</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, C#. Dört Bir Arada (6×7) için saf C# bir GameState sınıfı yaz (bit maskesiz, int[42] yeterli): Moves (orta sütun önce), Apply, Undo, Winner. Negamax + alfa-beta ile derinlik sınırlı arama ve yinelemeli derinleştirme ekle; süre bütçesi 200 ms, ana iş parçacığını dondurmamak için Task.Run kullan. Değerlendirme: 4’lük pencerelerde 3’lü +5, 2’li +2, rakip 3’lü −4, orta sütun taşı +3. Kazanç 100000 + kalan derinlik. Rastgele oyunlarla 1000 maç oynatıp Undo’nun tahtayı bozmadığını doğrulayan bir test de yaz.”</p><ul class="mini"><li>Oyun kurallarını (hamleler, kazanma, beraberlik) <b>siz</b> net yazın; asistan bunları sık atlar</li><li>Negamax mı ayrı MAX/MIN mi istediğinizi, kazanç puanının derinlikle nasıl ölçekleneceğini belirtin</li><li>Undo’nun doğru çalıştığını test eden bir kod isteyin</li><li>Aramayı ana iş parçacığı dışında, süre sınırlı yapmasını isteyin</li></ul></div>
+  </div>
+</section>
+
+<section data-sec="ileri konular">
+  <h2>🔬 Araştırma ucu</h2>
+  <div class="cols3">
+    <div class="box story"><span class="bt">AlphaZero → MuZero</span>AlphaZero kuralları bilip kendine karşı oynayarak öğrendi. MuZero (2020) kuralları bile bilmeden, oyunun bir <b>modelini</b> öğrenip onun içinde MCTS yaptı; Atari oyunlarında da çalıştı. “İleri model” sorununu öğrenmeyle çözmek.</div>
+    <div class="box game"><span class="bt">Genel oyun oynama</span>Tek bir YZ’nin daha önce görmediği oyunları kuralları okuyarak oynaması (General Game Playing, GVGAI yarışmaları, Ludii). MCTS bu alanın ana aracı, çünkü değerlendirme fonksiyonu gerektirmez.</div>
+    <div class="box low"><span class="bt">Dil modelleri ve masa oyunları</span>Büyük dil modelleri satranç gibi oyunlarda sıklıkla <b>kural dışı</b> hamleler önerir; bu yüzden oyunlarda LLM’i bir arama motoruna “danışan” ya da hamle açıklayan bir yardımcı olarak kullanmak daha güvenlidir (Y14).</div>
+  </div>
+</section>
+
+<section data-sec="projeler">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kusurlu XOX</b> — p5.js’te XOX + minimax; üç zorluk: kusursuz, %20 hata, “en iyi 2 hamleden rastgele”. Arkadaşlarınızla test edin: hangisi en eğlenceli?</li><li><b class="c-green">[kolay]</b> <b>Nim / çubuk oyunu</b> — easyAI ile Nim; sonra aynı oyunu kendi minimax’ınızla yazıp karşılaştırın.</li><li><b class="c-amber">[orta]</b> <b>Mangala YZ’si 🇹🇷</b> — Mangala kurallarını saf veri olarak yazın; alfa-beta + değerlendirme (hazinedeki taş farkı, sıradaki tekrar hakkı). Unity ya da web arayüzü.</li><li><b class="c-amber">[orta]</b> <b>Dört Bir Arada turnuvası</b> — Sınıfça değerlendirme fonksiyonu yarışması: bu destedeki laboratuvarın genişletilmiş hâli, derinlik sabit.</li><li><b class="c-red">[zor]</b> <b>Tavla: expectiminimax</b> — Zar düğümleri ekleyerek minimax’ı genişletin (21 farklı zar sonucu ve olasılıkları). Derinlik 2 bile ne kadar pahalı?</li><li><b class="c-purple">[araştırma]</b> <b>Okey için ISMCTS</b> — Okey’de rakip elleri bilinmiyor: olası elleri örnekleyen MCTS ile basit bir okey botu. Kural tabanlı bota karşı kazanma oranı?</li><li><b class="c-purple">[araştırma]</b> <b>MCTS vs alfa-beta</b> — Aynı oyunda eşit süre bütçesiyle iki yöntemi yarıştırın; tahtanın büyüklüğünü (Dört Bir Arada 6×7 → 8×9) arttırdıkça hangisi öne geçiyor?</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+  <div class="cols">
+    <ul>
+      <li><b>Oyun ağacı</b>: konumlar ve hamleler; büyüklük ≈ b<sup>d</sup>.</li>
+      <li><b>Minimax</b>: rakip en iyisini oynar; MAX en büyük, MIN en küçük.</li>
+      <li><b>Alfa-beta</b>: aynı sonuç, çok daha az düğüm; iyi sıralamayla ~b<sup>d/2</sup>.</li>
+      <li><b>Derinlik + değerlendirme</b>, ufuk etkisi, yinelemeli derinleştirme, geçiş tablosu, Zobrist.</li>
+    </ul>
+    <ul>
+      <li><b>MCTS</b>: seçim, genişletme, simülasyon, geri yayılım; UCB1.</li>
+      <li>Hikâyeler: Turochamp, Shannon, Deep Blue’nun 44. hamlesi, Chinook ve Tinsley, AlphaGo’nun 37. hamlesi.</li>
+      <li>Oyunlar: Total War: Rome II, Berlin, Xenonauts 2, kart oyunları.</li>
+      <li>Araçlar: python-chess, Stockfish, chess.js, easyAI, OpenSpiel, Ludii.</li>
+      <li>Sonraki bölüm: <b>hareket</b> — önce steering davranışları.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+  <div class="vids">
+    <a class="vid" href="https://www.youtube.com/watch?v=l-hh51ncgDI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/l-hh51ncgDI/hqdefault.jpg" alt=""><span><b>Algorithms Explained — minimax and alpha-beta pruning</b><br>Sebastian Lague</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=U4ogK0MIzqk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/U4ogK0MIzqk/hqdefault.jpg" alt=""><span><b>Coding Adventure: Chess</b><br>Sebastian Lague</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=UXW2yZndl7U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/UXW2yZndl7U/hqdefault.jpg" alt=""><span><b>Monte Carlo Tree Search</b><br>John Levine</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=STjW3eH0Cik" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/STjW3eH0Cik/hqdefault.jpg" alt=""><span><b>Search: Games, Minimax, and Alpha-Beta (MIT 6.034)</b><br>MIT OpenCourseWare</span></a>
+    <a class="vid" href="https://www.youtube.com/watch?v=WXuK6gekU1Y" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/WXuK6gekU1Y/hqdefault.jpg" alt=""><span><b>AlphaGo — The Movie (tam belgesel)</b><br>Google DeepMind</span></a>
+  </div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>📄 Akademik okumalar</h2>
+  <div class="paper"><b>Shannon 1950</b> · <a href="https://vision.unipv.it/IA1/ProgrammingaComputerforPlayingChess.pdf" target="_blank" rel="noopener">Programming a Computer for Playing Chess</a> <i>(Philosophical Magazine 41)</i><br>Minimax, değerlendirme fonksiyonu, A/B stratejileri.</div><div class="paper"><b>Knuth &amp; Moore 1975</b> · <a href="https://doi.org/10.1016/0004-3702(75)90019-3" target="_blank" rel="noopener">An Analysis of Alpha-Beta Pruning</a> <i>(Artificial Intelligence 6(4))</i><br>Alfa-beta’nın en iyi durumda b^(d/2) analizi.</div><div class="paper"><b>Kocsis &amp; Szepesvári 2006</b> · <a href="https://link.springer.com/chapter/10.1007/11871842_29" target="_blank" rel="noopener">Bandit Based Monte-Carlo Planning</a> <i>(ECML 2006)</i><br>UCT: UCB1’in ağaca uygulanması.</div><div class="paper"><b>Coulom 2006</b> · <a href="https://www.remi-coulom.fr/CG2006/" target="_blank" rel="noopener">Efficient Selectivity and Backup Operators in Monte-Carlo Tree Search</a> <i>(Computers and Games 2006)</i><br>MCTS adının doğduğu makale (Crazy Stone).</div><div class="paper"><b>Browne vd. 2012</b> · <a href="http://www.incompleteideas.net/609%20dropbox/other%20readings%20and%20resources/MCTS-survey.pdf" target="_blank" rel="noopener">A Survey of Monte Carlo Tree Search Methods</a> <i>(IEEE TCIAIG 4(1))</i><br>Alanın en çok atıf alan taraması.</div><div class="paper"><b>Silver vd. 2016</b> · <a href="https://www.nature.com/articles/nature16961" target="_blank" rel="noopener">Mastering the game of Go with deep neural networks and tree search</a> <i>(Nature 529)</i><br>AlphaGo.</div><div class="paper"><b>Schaeffer vd. 2007</b> · <a href="https://webdocs.cs.ualberta.ca/~chinook/" target="_blank" rel="noopener">Checkers Is Solved</a> <i>(Science 317)</i><br>Damanın çözümü (Chinook proje sayfası).</div><div class="paper"><b>Roelofs 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter28_Pitfalls_and_Solutions_When_Using_Monte_Carlo_Tree_Search_for_Strategy_and_Tactical_Games.pdf" target="_blank" rel="noopener">Pitfalls and Solutions When Using MCTS for Strategy and Tactical Games</a> <i>(Game AI Pro 3, Bölüm 28)</i><br>Strateji oyunlarında MCTS: Berlin, Xenonauts 2.</div><div class="paper"><b>Sturtevant 2015</b> · <a href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter25_Monte_Carlo_Tree_Search_and_Related_Algorithms_for_Games.pdf" target="_blank" rel="noopener">Monte Carlo Tree Search and Related Algorithms for Games</a> <i>(Game AI Pro 2, Bölüm 25)</i><br>UCB1’den UCT’ye, oyun içi kullanım fikirleri.</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: okuma 📚</h2>
+  <div class="cols">
+    <ul class="reflist"><li><a href="https://en.wikipedia.org/wiki/Deep_Blue_versus_Garry_Kasparov" target="_blank" rel="noopener">Wikipedia: Deep Blue versus Garry Kasparov</a></li><li><a href="https://en.wikipedia.org/wiki/AlphaGo_versus_Lee_Sedol" target="_blank" rel="noopener">Wikipedia: AlphaGo versus Lee Sedol</a></li><li><a href="https://en.wikipedia.org/wiki/Chinook_(computer_program)" target="_blank" rel="noopener">Wikipedia: Chinook</a></li><li><a href="https://en.wikipedia.org/wiki/Turochamp" target="_blank" rel="noopener">Wikipedia: Turochamp</a></li><li><a href="https://en.wikipedia.org/wiki/Mangala_(game)" target="_blank" rel="noopener">Wikipedia: Mangala</a></li></ul>
+    <ul class="reflist"><li><a href="https://www.chessprogramming.org/Alpha-Beta" target="_blank" rel="noopener">Chessprogramming wiki: Alpha-Beta</a></li><li><a href="https://www.chessprogramming.org/Zobrist_Hashing" target="_blank" rel="noopener">Chessprogramming wiki: Zobrist Hashing</a></li><li><a href="https://en.wikipedia.org/wiki/Monte_Carlo_tree_search" target="_blank" rel="noopener">Wikipedia: Monte Carlo tree search</a></li><li><a href="https://github.com/google-deepmind/open_spiel" target="_blank" rel="noopener">OpenSpiel</a></li></ul>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0f4a3a 0%, #0c1d2c 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Steering Davranışları</div>
+    <div class="sub">Craig Reynolds’ın kuşları: ara, kaç, dolaş, kalabalıkta yürü</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-steering/">SONRAKİ DESTE ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
+

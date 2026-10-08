@@ -174,7 +174,9 @@
   SL.guardLoops = guardLoops;
   SL.makeGuard = function (limit = 3000000) {
     let g = 0;
-    return () => { if (++g > limit) throw new Error('Döngü ' + SL.fmt(limit) + ' turu geçti — sonsuz döngü olabilir mi?'); return true; };
+    const f = () => { if (++g > limit) throw new Error('Döngü ' + SL.fmt(limit) + ' turu geçti — sonsuz döngü olabilir mi?'); return true; };
+    f.reset = () => { g = 0; };   // her yeni dış çağrıda sayaç sıfırlanabilsin
+    return f;
   };
   SL.jsErrorText = function (e) {
     if (e instanceof RangeError && /call stack/i.test(e.message)) return 'Yığın taşması (stack overflow): özyineleme çok derin ya da hiç bitmiyor!';
