@@ -205,6 +205,18 @@
   </div>
 </section>
 
+<section data-ek="oku-budget" data-sec="demo">
+  <div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span>
+    <ol style="font-size:.9em">
+      <li><b>Sol alan</b> oyun dünyası: her nokta bir NPC. Mavi büyük nokta kamera/oyuncu (fareyle sürükleyin); çevresindeki iki kesikli halka LOD sınırları.</li>
+      <li>Nokta rengi = ayrıntı düzeyi: <b>yeşil</b> yakın (LOD 0), <b>mavi</b> orta (LOD 1), <b>gri</b> uzak (LOD 2). <b>Sarı</b> büyük nokta “takip ettiğiniz” ajan: uzakta bile olsa önemli.</li>
+      <li><b>Soluk</b> nokta = uzun süredir düşünmemiş (bayat) ajan. Ne kadar soluksa o kadar uzun süredir güncellenmedi.</li>
+      <li><b>Sağ grafik</b> son 160 karenin süresi: gri taban diğer sistemler (9 ms), üstündeki mor kısım YZ. Kırmızı kesikli çizgi 16,7 ms bütçe; çizgiyi aşan kare <b>kırmızı</b> olur (takılma).</li>
+      <li>Alttaki üç satır: son 60 karede kaç kez bütçe aşıldı, kare başına kaç ajan güncellendi, en bayat ajan kaç karedir bekliyor.</li>
+    </ol>
+  </div>
+</section>
+
 <section data-sec="zaman dilimleme">
   <h2>Canlı: kare bütçesi ⏱️</h2>
   <div class="demo" data-demo="budget"></div>
@@ -224,6 +236,18 @@
 <section data-sec="zaman dilimleme">
   <h2>Canlı: yol isteği kuyruğu 📨</h2>
   <div class="demo" data-demo="pathqueue"></div>
+</section>
+
+<section data-ek="deney-pathq" data-sec="demo">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li><b>Ekranı okuyun:</b> koyu kareler duvar. Mor alan şu an aranan yolun açtığı düğümler; yeşil çizgi yeni bulunan yol (birkaç saniyede solar). Sağda kuyruk uzunluğu, ortalama bekleme ve kare başına açılan düğüm grafiği.</li>
+      <li>“📨 12 NPC aynı anda yol istesin”e bir kez basın: grafik bütçe çizgisinde düz gider, yollar <b>sırayla</b> belirir. Hiçbir karede sıçrama yok.</li>
+      <li>Düğmeye hızlıca 5 kez basın (60 istek): kuyruk kırmızıya döner, ortalama bekleme büyür. Kare süresi hâlâ sabit; bedeli gecikme.</li>
+      <li>Bütçeyi 1000 yapın: bekleme sıfıra yakın. Peki neden hep 1000 yapmıyoruz? (Her düğüm zaman demek: 1000 düğüm bir karenin YZ bütçesini tek başına yiyebilir.)</li>
+      <li>Bütçeyi 20 yapın: uzun bir yol birkaç kareye yayılıyor; mor alan kare kare büyüyor. Arama <b>kaldığı yerden</b> devam ediyor.</li>
+    </ol>
+  </div>
 </section>
 
 <section data-sec="zaman dilimleme">
@@ -430,6 +454,35 @@ function draw() {
 <section data-sec="kod">
   <h2>Unity C# Job System + Burst</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JavaScript: C# işinin (NearestThreatJob) yaptığı hesabın düz hâli + süre ölçümü
+// agents ve threats: [{x, y}, ...].  Her ajan için en yakın tehdidin uzaklığını bul.
+function nearestThreats(agents, threats) {
+  const out = new Float32Array(agents.length);     // sonuçlar art arda duran tek bir dizide
+  for (let i = 0; i < agents.length; i++) {        // C#'ta bu döngünün her turu Execute(i)
+    let best = Infinity;
+    for (let k = 0; k < threats.length; k++) {
+      const dx = agents[i].x - threats[k].x, dy = agents[i].y - threats[k].y;
+      best = Math.min(best, dx * dx + dy * dy);    // karşılaştırırken kök alma (Y0)
+    }
+    out[i] = Math.sqrt(best);                      // kök yalnızca bir kez, en sonda
+  }
+  return out;
+}
+
+// Ölçmeden optimize etme: p5.js'te bir işin kaç ms sürdüğünü görmek
+function draw() {
+  const t0 = performance.now();
+  const d = nearestThreats(agents, threats);
+  const ms = performance.now() - t0;
+  text('en yakın tehdit hesabı: ' + ms.toFixed(2) + ' ms  (bütçe: 16.7)', 10, 20);
+}
+// 2000 ajan × 50 tehdit = 100.000 uzaklık hesabı. C# Jobs bu döngüyü işlemci çekirdeklerine böler;
+// tarayıcıda aynı işi Web Worker'lar yapar. Her iş YALNIZCA kendi out[i] gözünü yazdığı için
+// iki çekirdek aynı veriyi aynı anda değiştiremez: yarış durumu olmaz.
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="6-11|13-18|21-24"><script type="text/template">
 using Unity.Burst;
@@ -472,6 +525,38 @@ struct NearestThreatJob : IJobParallelFor {
     <tr><td>cProfile · pstats</td><td>Python profilleyici</td><td>Fonksiyon başına süre ve çağrı sayısı</td></tr>
     <tr><td>performance.now()</td><td>yüksek çözünürlüklü zaman</td><td>Tarayıcıda milisaniye ölçümü</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: YZ’ye kaç milisaniye kaldı?</h2>
+  <div class="ailab" data-lab="aibudget" data-lang="js">
+<textarea>
+// fps: hedef kare hızı (ör. 60)
+// otherMs: fizik, çizim, ses… diğer sistemlerin bir karede harcadığı süre (ms)
+// YZ'ye kalan süreyi (ms) döndür. Eksi çıkarsa 0 döndür.
+function aiBudget(fps, otherMs) {
+  const frameMs = 16.7;   // TODO: fps'ten hesapla (1 saniye = 1000 ms)
+  return frameMs - otherMs;
+}
+</textarea>
+    <div class="lab-tasks">60 FPS → 16,7 ms; 30 FPS → 33,3 ms; 120 FPS → 8,3 ms. Demodaki gri taban (“diğer sistemler”) 9 ms: 60 FPS’de YZ’ye 7,7 ms kalıyor, 120 FPS’de <b>hiç</b> kalmıyor. Performans konuşmalarının hepsi bu çıkarma işlemiyle başlar.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: sıra bende mi?</h2>
+  <div class="ailab" data-lab="stagger" data-lang="js">
+<textarea>
+// id: ajanın numarası (0, 1, 2, …),  frame: kare numarası
+// n: ajan kaç karede bir düşünsün (ör. 10)
+// Bu kare bu ajanın sırasıysa true döndür.
+// Önemli: bütün ajanlar AYNI karede düşünmemeli (yoksa her n karede bir takılma olur).
+function myTurn(id, frame, n) {
+  return frame % n === 0;   // TODO: herkes aynı karede düşünüyor!
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu “10 karede bir düşün” kuralını uyguluyor ama 100 ajanın hepsi aynı karede düşünüyor: 9 kare boş, 10. kare 100 katı iş. Quiz 1’deki periyodik takılmanın ta kendisi. Çare tek bir toplama: kare numarasına ajanın numarasını ekleyin. (Kademelendirme, İngilizcesi <i>staggering</i>.)</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -590,6 +675,19 @@ def time_until(value, rate, threshold):
     <div class="box story"><span class="bt">Dikkat tabanlı LOD</span>Göz izleme ve oyuncu modeliyle (Y17) “oyuncu neye bakıyor?” tahmini; LOD Trader’ın kritiklik modellerini öğrenerek ayarlamak.</div>
     <div class="box game"><span class="bt">GPU’da YZ</span>Akış alanları, etki haritaları, binlerce ajanın steering’i GPU hesaplamasıyla (compute shader); Game AI Pro’in “Introduction to GPGPU for AI” bölümü.</div>
     <div class="box low"><span class="bt">Sinir ağı çıkarım maliyeti</span>Y13/Y16’daki öğrenilmiş modelleri oyunda çalıştırmak: model küçültme (nicemleme), toplu çıkarım, Inference Engine ile GPU/CPU seçimi.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Oynadığınız bir açık dünya oyununda uzaktaki NPC’lerin “tuhaf” davrandığını (yerinde sayan, birden beliren, duvara yürüyen) gördünüz mü? Şimdi bunun sebebini tahmin edebilir misiniz?</li>
+      <li class="fragment">Ortalama 60 FPS ama saniyede bir takılan oyun mu, sabit 40 FPS oyun mu? Hangisini oynamak istersiniz, neden? Peki bir dövüş oyununda? Bir strateji oyununda?</li>
+      <li class="fragment">Cities: Skylines II’de internet “dişleri” suçladı; asıl sebep başkaydı. Bir oyunun yavaşlığı hakkında okuduğunuz bir iddiayı nasıl doğrulardınız?</li>
+      <li class="fragment">Assassin’s Creed Unity’de 10.000 kişilik kalabalığın yalnızca 40’ı “gerçekten düşünüyor”. Bu bir hile mi? Oyuncu fark etmiyorsa NPC’nin düşünüp düşünmemesi önemli mi?</li>
+      <li class="fragment">Dönem projenizde hangi YZ sistemi en pahalı olacak? Onu ölçmeden optimize etmeye başlasanız en büyük risk ne olur?</li>
+    </ol>
   </div>
 </section>
 

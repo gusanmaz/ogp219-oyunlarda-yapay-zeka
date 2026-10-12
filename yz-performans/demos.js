@@ -121,7 +121,7 @@
     const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
-      btn(`📨 ${c.burst} NPC aynı anda yol istesin`, () => { for (let i = 0; i < c.burst; i++) queue.push({ s: free(), t: free(), t0: frame }); }),
+      btn(`📨 ${c.burst} NPC aynı anda yol istesin`, () => { for (let i = 0; i < c.burst; i++) queue.push({ s: free(), t: free(), t0: frame }); SL.sfx && SL.sfx('knock'); }),
       slider('kare başına düğüm bütçesi', 20, 1000, c.budget, 10, v => { c.budget = v; }), btn('↺ temizle', () => { queue = []; active = null; doneList = []; waits = []; })), C, info);
     mk(); draw(); SL.onTheme(draw);
     return { start: run, stop };
@@ -260,3 +260,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.aibudget = {
+    fn: 'ai_budget', jsFn: 'aiBudget', tol: 1e-9,
+    ref: (fps, other) => Math.max(0, 1000 / fps - other),
+    cases: () => [[60, 9], [30, 9], [120, 9], [60, 16], [60, 20], [50, 12.5], [144, 5], [30, 33.5], [90, 0]],
+    show: (f, o) => `hedef ${f} FPS, diğer sistemler ${o} ms`,
+    hint: (f, o) => `Bir kare 1000 / ${f} = ${Math.round(1000 / f * 100) / 100} ms. Bundan diğer sistemlerin ${o} ms’sini çıkarın; sonuç eksi çıkarsa 0 döndürün (YZ’ye hiç zaman kalmamış).`
+  };
+  SL.AILABS.stagger = {
+    fn: 'my_turn', jsFn: 'myTurn',
+    ref: (id, fr, n) => (fr + id) % n === 0,
+    cases: () => { const cs = [[0, 10, 10], [3, 7, 10], [3, 10, 10], [1, 9, 10], [5, 0, 4], [7, 1, 4], [0, 0, 1], [9, 3, 1], [2, 4, 6], [4, 3, 6]]; for (let i = 0; i < 12; i++) cs.push([Math.floor(Math.random() * 20), Math.floor(Math.random() * 60), 2 + Math.floor(Math.random() * 9)]); return cs; },
+    show: (id, f, n) => `ajan no ${id}, kare ${f}, ${n} karede bir`,
+    hint: (id, f, n) => `Herkes aynı karede düşünmesin diye kare numarasına ajanın numarasını ekleyin: (kare + id) % n === 0. Burada (${f} + ${id}) % ${n} = ${(f + id) % n}.`
+  };
+})();
+/* EK:BİTİŞ */
