@@ -448,6 +448,18 @@
     const deactivate = s => each(s, i => i.stop && i.stop());
     Reveal.on('slidechanged', e => { deactivate(e.previousSlide); activate(e.currentSlide); });
 
+    // Emniyet: içerik 720 piksellik slayt alanına sığmazsa (farklı çözünürlük/yazı tipi, büyüyen demo çıktısı) slaydı küçült
+    const fit = () => {
+      const sl = Reveal.getCurrentSlide(); if (!sl || sl.classList.contains('level')) return;
+      sl.style.zoom = '';
+      const h = sl.scrollHeight, room = 700;
+      if (h > room + 4) sl.style.zoom = Math.max(0.6, room / h).toFixed(3);
+    };
+    let fitT; const fitSoon = () => { clearTimeout(fitT); fitT = setTimeout(fit, 250); };
+    Reveal.on('slidechanged', fitSoon); Reveal.on('ready', fitSoon); Reveal.on('resize', fitSoon); Reveal.on('fragmentshown', fitSoon);
+    document.addEventListener('click', fitSoon); document.addEventListener('keyup', fitSoon);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSoon);
+
     // Kaydırıcı / seçim kutusu değişince odağı bırak → ok tuşları yine slayt değiştirsin
     document.addEventListener('change', e => {
       if (e.target.matches('.reveal input[type=range], .reveal select, .reveal input[type=checkbox]')) e.target.blur();
