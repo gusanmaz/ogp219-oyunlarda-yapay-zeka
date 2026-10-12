@@ -196,14 +196,14 @@ p += v * dt
 </section>
 
 <section data-sec="katmanlar">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 1 · katmanlar</div>
     <div class="q">Bir ajan sağa doğru tam hızla giderken hedef tam arkasında kalırsa “seek” direksiyon kuvveti hangi yönü gösterir?</div>
     <div class="opts">
-      <button data-opt="A">Sola (geriye) — istenen hız sola, mevcut hız sağa; fark büyük ve sola doğru</button>
-      <button data-opt="B">Sağa — ajan zaten o yöne gidiyor</button>
+      <button data-opt="A">Sıfır — hedef görüş alanı dışında</button>
+      <button data-opt="B">Sola (geriye) — istenen hız sola, mevcut hız sağa; fark büyük ve sola doğru</button>
       <button data-opt="C">Yukarı — her zaman dik açıyla döner</button>
-      <button data-opt="D">Sıfır — hedef görüş alanı dışında</button>
+      <button data-opt="D">Sağa — ajan zaten o yöne gidiyor</button>
     </div>
     <div class="explain">İstenen hız hedefe (sola) doğru azami hız; mevcut hız sağa. Fark = istenen − mevcut, sola doğru <b>iki kat</b> büyüklükte bir vektördür (azami kuvvetle kırpılır). Ajan önce yavaşlar, sonra sola hızlanır: frenleyip geri dönen bir araç gibi.</div>
   </div>
@@ -369,14 +369,14 @@ def arrive(self, target, slow_radius):
 </section>
 
 <section data-sec="arrive">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 2 · arrive</div>
     <div class="q">Yavaşlama yarıçapı 100, azami hız 160 olan bir ajan hedefe 25 birim uzaklıktaysa arrive’ın istenen hızı ne kadardır?</div>
     <div class="opts">
-      <button data-opt="A">40</button>
-      <button data-opt="B">160</button>
-      <button data-opt="C">25</button>
-      <button data-opt="D">0</button>
+      <button data-opt="A">160</button>
+      <button data-opt="B">25</button>
+      <button data-opt="C">0</button>
+      <button data-opt="D">40</button>
     </div>
     <div class="explain">Yarıçapın içinde: hız = azami × (mesafe / yarıçap) = 160 × 25/100 = <b>40</b>. Mesafe 0’a indikçe hız da 0’a iner; yarıçapın dışında 160.</div>
   </div>
@@ -471,14 +471,14 @@ def arrive(self, target, slow_radius):
 </section>
 
 <section data-sec="boids">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 3 · boids</div>
     <div class="q">Bir boid sürüsünde boidler sürekli birbirinin üstüne biniyor ve tek bir noktada topaklanıyorsa hangi ağırlık çok düşüktür (ya da hangisi çok yüksek)?</div>
     <div class="opts">
-      <button data-opt="A">Ayrılma çok düşük (ya da bütünleşme çok yüksek)</button>
-      <button data-opt="B">Hizalanma çok yüksek</button>
-      <button data-opt="C">Görüş yarıçapı çok büyük</button>
-      <button data-opt="D">Azami hız çok düşük</button>
+      <button data-opt="A">Azami hız çok düşük</button>
+      <button data-opt="B">Görüş yarıçapı çok büyük</button>
+      <button data-opt="C">Ayrılma çok düşük (ya da bütünleşme çok yüksek)</button>
+      <button data-opt="D">Hizalanma çok yüksek</button>
     </div>
     <div class="explain">Bütünleşme herkesi merkeze çeker; ona karşı koyan tek kuvvet <b>ayrılma</b>dır. Ayrılma zayıfsa ya da bütünleşme baskınsa boidler topaklanır. Hizalanma sadece yönleri eşitler; konum üzerinde doğrudan etkisi yoktur.</div>
   </div>
@@ -550,7 +550,7 @@ def arrive(self, target, slow_radius):
 </section>
 
 <section data-sec="birleştirmek">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 4 · birleştirmek</div>
     <div class="q">Seek hedefe doğru (sağa) 100 birimlik, kaçınma tam tersine (sola) 100 birimlik kuvvet üretiyor. Ağırlıklı toplamda (ağırlıklar 1) ne olur?</div>
     <div class="opts">

@@ -164,14 +164,14 @@
 </section>
 
 <section data-sec="plan nedir?">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 1 · plan nedir?</div>
     <div class="q">GOAP’ta “önce şarjör tak, sonra ateş et” sırası nereden gelir?</div>
     <div class="opts">
       <button data-opt="A">“Ateş et”in ön koşulu “silah dolu”, “Şarjör tak”ın etkisi “silah dolu”; planlayıcı bu zinciri bulur</button>
-      <button data-opt="B">Tasarımcı iki eylem arasına bir geçiş oku çizer</button>
+      <button data-opt="B">Eylemlerin listedeki sırasından</button>
       <button data-opt="C">Davranış ağacında sequence düğümü kullanılır</button>
-      <button data-opt="D">Eylemlerin listedeki sırasından</button>
+      <button data-opt="D">Tasarımcı iki eylem arasına bir geçiş oku çizer</button>
     </div>
     <div class="explain">GOAP’ta eylemler arasında elle yazılmış geçiş yoktur. Bir eylemin <b>ön koşulunu</b> başka bir eylemin <b>etkisi</b> sağlıyorsa, planlayıcı ikisini zincirleyebilir. Sıra, aramanın sonucudur.</div>
   </div>
@@ -264,12 +264,12 @@
 </section>
 
 <section data-sec="F.E.A.R.">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 2 · F.E.A.R.</div>
     <div class="q">F.E.A.R.’da fareye “Düşmanı öldür” hedefi verildiğinde ne olur?</div>
     <div class="opts">
-      <button data-opt="A">Saldırı eylemi olmadığı için plan bulunamaz; fare daha düşük öncelikli Devriye hedefine geçer</button>
-      <button data-opt="B">Fare oyuncuya saldırır</button>
+      <button data-opt="A">Fare oyuncuya saldırır</button>
+      <button data-opt="B">Saldırı eylemi olmadığı için plan bulunamaz; fare daha düşük öncelikli Devriye hedefine geçer</button>
       <button data-opt="C">Oyun hata verir</button>
       <button data-opt="D">Tasarımcı fare için ayrı bir FSM yazmak zorundadır</button>
     </div>
@@ -372,16 +372,16 @@
 </section>
 
 <section data-sec="A* ile plan">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 3 · A* ile plan</div>
     <div class="q">Sezgi h = “sağlanmamış hedef gerçeği sayısı”. Hangi durumda bu sezgi gerçek kalan maliyeti <b>aşabilir</b> (ve A* en ucuz planı kaçırabilir)?</div>
     <div class="opts">
-      <button data-opt="A">Maliyeti 1 olan tek bir eylem iki hedef gerçeğini birden sağlıyorsa</button>
-      <button data-opt="B">Bütün eylemlerin maliyeti 1 ve her eylem tek bir gerçeği sağlıyorsa</button>
-      <button data-opt="C">Hedefte tek bir gerçek varsa ve bütün maliyetler en az 1 ise</button>
-      <button data-opt="D">h her zaman 0 alınırsa</button>
+      <button data-opt="A">h her zaman 0 alınırsa</button>
+      <button data-opt="B">Hedefte tek bir gerçek varsa ve bütün maliyetler en az 1 ise</button>
+      <button data-opt="C">Bütün eylemlerin maliyeti 1 ve her eylem tek bir gerçeği sağlıyorsa</button>
+      <button data-opt="D">Maliyeti 1 olan tek bir eylem iki hedef gerçeğini birden sağlıyorsa</button>
     </div>
-    <div class="explain">İki gerçek eksikse h = 2 der; ama maliyeti 1 olan tek bir eylem ikisini birden sağlıyorsa gerçek kalan maliyet 1’dir: sezgi <b>fazla tahmin</b> etti. A*’ın en ucuz planı garanti etmesi için h gerçek maliyeti aşmamalı. B ve C’de h her zaman güvenli; D’de h = 0, yani Dijkstra (her zaman güvenli ama yavaş). Bizim askerin hedefinde tek gerçek var: h en fazla 1, her eylem en az 1 maliyetli → güvenli.</div>
+    <div class="explain">İki gerçek eksikse h = 2 der; ama maliyeti 1 olan tek bir eylem ikisini birden sağlıyorsa gerçek kalan maliyet 1’dir: sezgi <b>fazla tahmin</b> etti. A*’ın en ucuz planı garanti etmesi için h gerçek maliyeti aşmamalı. C ve B’de h her zaman güvenli; A’da h = 0, yani Dijkstra (her zaman güvenli ama yavaş). Bizim askerin hedefinde tek gerçek var: h en fazla 1, her eylem en az 1 maliyetli → güvenli.</div>
   </div>
 </section>
 
@@ -918,13 +918,13 @@ print(decompose(["BeTrunkThumper"], {"sees_enemy": True, "has_trunk": False,
 </section>
 
 <section data-sec="HTN">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 4 · HTN</div>
     <div class="q">Trol düşmanı görüyor, elinde kütük yok ve yakında ağaç da yok. HTN planlayıcı ne üretir?</div>
     <div class="opts">
-      <button data-opt="A">Saldırı yöntemlerinin ikisi de başarısız olur; geri izleyip Devriye planını üretir</button>
-      <button data-opt="B">Kütük olmadan Kütükle vur’u plana koyar</button>
-      <button data-opt="C">Hata verip durur</button>
+      <button data-opt="A">Kütük olmadan Kütükle vur’u plana koyar</button>
+      <button data-opt="B">Hata verip durur</button>
+      <button data-opt="C">Saldırı yöntemlerinin ikisi de başarısız olur; geri izleyip Devriye planını üretir</button>
       <button data-opt="D">Kendi başına yeni bir “taş at” eylemi icat eder</button>
     </div>
     <div class="explain">İlk saldırı yöntemi “elinde kütük var” koşulunda, ikincisi “Ağaç bul”un koşulunda tıkanır. Planlayıcı geri izleyip kök görevin sonraki yöntemine (Devriye) geçer. HTN alan dosyasında olmayan bir eylemi asla icat etmez — bu hem güvencesi hem sınırıdır.</div>

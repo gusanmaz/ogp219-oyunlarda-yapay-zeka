@@ -161,7 +161,7 @@
 </section>
 
 <section data-sec="algoritmalar">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 1 · algoritmalar</div>
     <div class="q">A*’da h değerini her yerde 0 alırsanız hangi algoritmayı elde edersiniz?</div>
     <div class="opts">
@@ -234,14 +234,14 @@
 </section>
 
 <section data-sec="sezgiler">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 2 · sezgiler</div>
     <div class="q">8 yönlü (çapraz maliyeti √2) bir ızgarada hedef 3 sağda ve 4 yukarıda. Octile sezgisi kaç verir?</div>
     <div class="opts">
-      <button data-opt="A">4 + (√2 − 1)·3 ≈ 5,24</button>
-      <button data-opt="B">7</button>
-      <button data-opt="C">5</button>
-      <button data-opt="D">4</button>
+      <button data-opt="A">4</button>
+      <button data-opt="B">5</button>
+      <button data-opt="C">4 + (√2 − 1)·3 ≈ 5,24</button>
+      <button data-opt="D">7</button>
     </div>
     <div class="explain">Octile: max(3, 4) + (√2 − 1)·min(3, 4) = 4 + 0,414·3 ≈ <b>5,24</b>. Gerçekte 3 çapraz (3√2 ≈ 4,24) + 1 düz = 5,24 adımlık maliyet. Manhattan 7 der (abartılı), Öklid 5 der (iyimser), Chebyshev 4 der (çapraz = 1 varsayımı).</div>
   </div>
@@ -581,12 +581,12 @@ def heuristics(dx, dy):
 </section>
 
 <section data-sec="oyunlar">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 3 · oyunlar</div>
     <div class="q">Oyuncu, birimlerini su ile çevrili ulaşılamaz bir adaya göndermek için tıkladı. Önlem alınmamış bir A* ne yapar?</div>
     <div class="opts">
-      <button data-opt="A">Ulaşılabilen bütün haritayı tarar, sonra “yol yok” der — çok pahalı</button>
-      <button data-opt="B">Hemen “yol yok” der</button>
+      <button data-opt="A">Hemen “yol yok” der</button>
+      <button data-opt="B">Ulaşılabilen bütün haritayı tarar, sonra “yol yok” der — çok pahalı</button>
       <button data-opt="C">En yakın kıyıya gider</button>
       <button data-opt="D">Suyun üstünden yürür</button>
     </div>
@@ -631,14 +631,14 @@ def heuristics(dx, dy):
 </section>
 
 <section data-sec="hızlandırma">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 4 · hızlandırma</div>
     <div class="q">Haritası oyun sırasında sürekli değişen (oyuncunun duvar inşa ettiği) bir oyunda hangisi en zor uygulanır?</div>
     <div class="opts">
-      <button data-opt="A">JPS+ (önceden hesaplanmış sıçrama tabloları)</button>
-      <button data-opt="B">Ağırlıklı A*</button>
-      <button data-opt="C">Zaman dilimleme</button>
-      <button data-opt="D">Ulaşılabilirlik bölgeleri</button>
+      <button data-opt="A">Ulaşılabilirlik bölgeleri</button>
+      <button data-opt="B">Zaman dilimleme</button>
+      <button data-opt="C">Ağırlıklı A*</button>
+      <button data-opt="D">JPS+ (önceden hesaplanmış sıçrama tabloları)</button>
     </div>
     <div class="explain">JPS+ ve goal bounding, harita değişmeyecek varsayımıyla <b>önceden hesaplanan</b> tablolara dayanır; her duvar inşasında tabloları yeniden hesaplamak gerekir. Factorio da bu yüzden kolayca güncellenebilen parça tabanlı bir hiyerarşi seçti. Ağırlıklı A* ve zaman dilimleme haritadan bağımsızdır; bölgeler ise yerel olarak güncellenebilir.</div>
   </div>

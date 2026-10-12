@@ -149,14 +149,14 @@
 </section>
 
 <section data-sec="PCG">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 1 · PCG</div>
     <div class="q">Çok oyunculu bir oyunda iki oyuncu aynı tohumla başlıyor, ama birinin haritası diğerinden farklı çıkıyor. En olası sebep?</div>
     <div class="opts">
-      <button data-opt="A">Bir istemci üreteçten fazladan ya da farklı sırayla sayı çekti (ör. süs parçacıkları aynı üreteci kullandı)</button>
-      <button data-opt="B">Tohumlar hiçbir zaman güvenilir değildir</button>
-      <button data-opt="C">Perlin gürültüsü her bilgisayarda farklıdır</button>
-      <button data-opt="D">Ağ gecikmesi haritayı değiştirdi</button>
+      <button data-opt="A">Tohumlar hiçbir zaman güvenilir değildir</button>
+      <button data-opt="B">Perlin gürültüsü her bilgisayarda farklıdır</button>
+      <button data-opt="C">Ağ gecikmesi haritayı değiştirdi</button>
+      <button data-opt="D">Bir istemci üreteçten fazladan ya da farklı sırayla sayı çekti (ör. süs parçacıkları aynı üreteci kullandı)</button>
     </div>
     <div class="explain">Tohum ancak <b>aynı çağrı dizisi</b> için aynı sonucu garanti eder. Grafik ayarına göre parçacık sayısı değişen bir sistem aynı üreteci kullanırsa diziler kayar. Çözüm: harita üretimi için ayrı, sadece haritanın kullandığı bir üreteç. (Kayan noktalı sayıların farklı işlemcilerde küçük farklar vermesi de nadir ama gerçek bir sorundur.)</div>
   </div>
@@ -278,14 +278,14 @@
 </section>
 
 <section data-sec="zindan">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 2 · zindan</div>
     <div class="q">Hücresel otomatla ürettiğiniz mağarada oyuncunun başlangıcı ile çıkış bazen farklı (kopuk) bölgelerde kalıyor. En sağlam çözüm?</div>
     <div class="opts">
       <button data-opt="A">Üret ve sına: flood fill/BFS ile bağlantıyı kontrol et; kopuksa bölgeleri tünelle bağla ya da yeni tohumla yeniden üret</button>
-      <button data-opt="B">Duvar oranını rastgele değiştirmek</button>
+      <button data-opt="B">Otomat adımını artırmak her zaman çözer</button>
       <button data-opt="C">Oyuncuya kazma aleti vermek</button>
-      <button data-opt="D">Otomat adımını artırmak her zaman çözer</button>
+      <button data-opt="D">Duvar oranını rastgele değiştirmek</button>
     </div>
     <div class="explain">Rastgele bir yöntem garantisi olmayan bir sonuç verir; garanti, <b>sonradan test</b> ederek sağlanır. Flood fill (Yönsüz Graflar sunumu) ya da A* ile başlangıçtan çıkışa yol aranır; yoksa en yakın iki bölge arasına tünel kazılır ya da yeniden üretilir. Kazma aleti (C) Spelunky’nin bombası gibi bir tasarım cevabı olabilir, ama zorunlu yolu ona bırakmak riskli.</div>
   </div>
@@ -410,12 +410,12 @@
 </section>
 
 <section data-sec="değerlendirme">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 3 · değerlendirme</div>
     <div class="q">Bir zindan üretecinin “hep çok benzer seviyeler ürettiğinden” şüpheleniyorsunuz. Bunu nasıl ölçersiniz?</div>
     <div class="opts">
-      <button data-opt="A">Binlerce seviye üretip birkaç ölçüye (ör. açık alan oranı, en kısa yol uzunluğu) göre puanlar ve dağılımı (ifade aralığı) çizerim</button>
-      <button data-opt="B">Beş seviyeye bakıp karar veririm</button>
+      <button data-opt="A">Beş seviyeye bakıp karar veririm</button>
+      <button data-opt="B">Binlerce seviye üretip birkaç ölçüye (ör. açık alan oranı, en kısa yol uzunluğu) göre puanlar ve dağılımı (ifade aralığı) çizerim</button>
       <button data-opt="C">Tohumu değiştiririm, yeter</button>
       <button data-opt="D">Ölçülemez, zevk meselesidir</button>
     </div>

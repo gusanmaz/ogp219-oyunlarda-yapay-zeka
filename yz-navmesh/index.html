@@ -181,12 +181,12 @@
 </section>
 
 <section data-sec="yol bulma">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 1 · yol bulma</div>
     <div class="q">Navmesh’teki çokgenlerin dışbükey olması neden önemlidir?</div>
     <div class="opts">
-      <button data-opt="A">Çokgenin içindeki iki nokta arasında düz yürümek her zaman çokgenin içinde kalır</button>
-      <button data-opt="B">Dışbükey çokgenler daha az bellek kaplar</button>
+      <button data-opt="A">Dışbükey çokgenler daha az bellek kaplar</button>
+      <button data-opt="B">Çokgenin içindeki iki nokta arasında düz yürümek her zaman çokgenin içinde kalır</button>
       <button data-opt="C">A* sadece dışbükey çokgenlerle çalışır</button>
       <button data-opt="D">Grafik kartı dışbükey çokgenleri daha hızlı çizer</button>
     </div>
@@ -223,14 +223,14 @@
 </section>
 
 <section data-sec="funnel">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 2 · funnel</div>
     <div class="q">Neden portal orta noktalarından geçen yol yerine funnel kullanırız?</div>
     <div class="opts">
-      <button data-opt="A">Orta noktalar zikzak ve gereksiz uzun yol üretir; funnel koridor içindeki en kısa yolu verir</button>
-      <button data-opt="B">Orta noktalar duvarların içinden geçer</button>
-      <button data-opt="C">Funnel A*’ı gereksiz kılar</button>
-      <button data-opt="D">Funnel daha fazla çokgen üretir</button>
+      <button data-opt="A">Funnel daha fazla çokgen üretir</button>
+      <button data-opt="B">Funnel A*’ı gereksiz kılar</button>
+      <button data-opt="C">Orta noktalar zikzak ve gereksiz uzun yol üretir; funnel koridor içindeki en kısa yolu verir</button>
+      <button data-opt="D">Orta noktalar duvarların içinden geçer</button>
     </div>
     <div class="explain">Orta noktalar her zaman koridorun <b>içinde</b> kalır (güvenlidir) ama karakter gereksiz yere sağa sola salınır. Funnel, aynı koridorun içinde kalarak köşelere teğet en kısa yolu bulur. A*’ı ortadan kaldırmaz: önce A* koridoru bulur, sonra funnel o koridoru düzleştirir.</div>
   </div>
@@ -314,14 +314,14 @@
 </section>
 
 <section data-sec="dinamik">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 3 · dinamik</div>
     <div class="q">Oyunda sürekli yuvarlanan dev bir kaya var. Unity’de ona hangi ayar uygun?</div>
     <div class="opts">
-      <button data-opt="A">NavMeshObstacle, carve kapalı: ajanlar yerel olarak kaçınsın</button>
-      <button data-opt="B">NavMeshObstacle, carve açık: her karede navmesh’e delik açsın</button>
-      <button data-opt="C">Navmesh’i her karede yeniden pişir</button>
-      <button data-opt="D">Kayayı static işaretleyip navmesh’e dahil et</button>
+      <button data-opt="A">NavMeshObstacle, carve açık: her karede navmesh’e delik açsın</button>
+      <button data-opt="B">Navmesh’i her karede yeniden pişir</button>
+      <button data-opt="C">Kayayı static işaretleyip navmesh’e dahil et</button>
+      <button data-opt="D">NavMeshObstacle, carve kapalı: ajanlar yerel olarak kaçınsın</button>
     </div>
     <div class="explain">Sürekli hareket eden şeyler için oyma pahalıdır ve sürekli yeniden yol hesaplatır; yerel kaçınma yeterlidir. Oyma, bir süre <b>yerinde duran</b> engeller içindir (Unity’nin “Carve Only Stationary” seçeneği de bunu yapar). Static işaretlemek ise kayayı hiç hareket etmeyecekmiş gibi navmesh’e gömer.</div>
   </div>

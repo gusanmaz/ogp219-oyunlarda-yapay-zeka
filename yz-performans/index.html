@@ -128,14 +128,14 @@
 </section>
 
 <section data-sec="bütçe">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 1 · bütçe</div>
     <div class="q">Oyununuzun ortalama kare süresi 11 ms, ama her 3–4 saniyede bir 45 ms’lik kareler var. Oyuncu ne hisseder ve ilk şüpheli ne olmalı?</div>
     <div class="opts">
-      <button data-opt="A">Düzenli takılmalar hisseder; ilk şüpheli aynı anda toplu yapılan pahalı işler (ör. birçok NPC’nin aynı karede yol istemesi)</button>
-      <button data-opt="B">Hiçbir şey, ortalama 60 FPS’nin altında</button>
-      <button data-opt="C">Sadece GPU’ya bakılmalı</button>
-      <button data-opt="D">Ortalama düşük olduğu için optimizasyon gerekmez</button>
+      <button data-opt="A">Ortalama düşük olduğu için optimizasyon gerekmez</button>
+      <button data-opt="B">Sadece GPU’ya bakılmalı</button>
+      <button data-opt="C">Düzenli takılmalar hisseder; ilk şüpheli aynı anda toplu yapılan pahalı işler (ör. birçok NPC’nin aynı karede yol istemesi)</button>
+      <button data-opt="D">Hiçbir şey, ortalama 60 FPS’nin altında</button>
     </div>
     <div class="explain">Göz, ortalamayı değil <b>tutarsızlığı</b> fark eder. Periyodik sıçramaların klasik sebebi, birçok sistemin aynı karede tetiklenmesidir: bütün NPC’lerin aynı anda yeniden plan yapması, aynı saniyede başlayan zamanlayıcılar. Çözüm: işi kademelendirmek ve kuyruğa almak (Level 2).</div>
   </div>
@@ -227,16 +227,16 @@
 </section>
 
 <section data-sec="zaman dilimleme">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 2 · zaman dilimleme</div>
     <div class="q">Yol isteklerini kare başına sınırlı düğümle işleyen bir kuyruk kurdunuz. 30 NPC aynı anda istek yapınca sonuncusu 20 kare bekliyor. Oyuncunun bunu fark etmemesi için en iyi tasarım?</div>
     <div class="opts">
-      <button data-opt="A">Bekleyen NPC hemen hedefe kabaca dönsün/yürümeye başlasın ya da “düşünme” animasyonu oynasın; yakındaki NPC’lerin isteklerine öncelik verin</button>
-      <button data-opt="B">Bütçeyi kaldırın, herkes aynı karede hesaplasın</button>
-      <button data-opt="C">Kuyruğu rastgele karıştırın</button>
-      <button data-opt="D">Bekleyen NPC olduğu yerde donsun</button>
+      <button data-opt="A">Bütçeyi kaldırın, herkes aynı karede hesaplasın</button>
+      <button data-opt="B">Kuyruğu rastgele karıştırın</button>
+      <button data-opt="C">Bekleyen NPC olduğu yerde donsun</button>
+      <button data-opt="D">Bekleyen NPC hemen hedefe kabaca dönsün/yürümeye başlasın ya da “düşünme” animasyonu oynasın; yakındaki NPC’lerin isteklerine öncelik verin</button>
     </div>
-    <div class="explain">Gecikme kaçınılmazsa onu <b>gizleyin</b>: hedefe doğru kaba bir ilk adım, bir tepki animasyonu, yakındakilere öncelik. Bütçeyi kaldırmak (B) sıçramayı geri getirir. Donan NPC (D) en göze batan seçenektir.</div>
+    <div class="explain">Gecikme kaçınılmazsa onu <b>gizleyin</b>: hedefe doğru kaba bir ilk adım, bir tepki animasyonu, yakındakilere öncelik. Bütçeyi kaldırmak (A) sıçramayı geri getirir. Donan NPC (C) en göze batan seçenektir.</div>
   </div>
 </section>
 
@@ -340,14 +340,14 @@
 </section>
 
 <section data-sec="DOD">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 3 · DOD</div>
     <div class="q">2000 NPC’nin konumunu her kare güncelleyen bir sistemde profilleyici, işin hesaplamadan çok “bellek beklemekle” geçtiğini gösteriyor. En etkili değişiklik hangisi?</div>
     <div class="opts">
       <button data-opt="A">Konum ve hızları art arda duran dizilerde (SoA/ECS) tutup döngüyü bu diziler üzerinde, gerekirse iş parçacıklarına bölerek çalıştırmak</button>
-      <button data-opt="B">Her NPC’ye ayrı bir MonoBehaviour.Update eklemek</button>
+      <button data-opt="B">Daha çok sınıf ve kalıtım katmanı eklemek</button>
       <button data-opt="C">Konumları double yerine string tutmak</button>
-      <button data-opt="D">Daha çok sınıf ve kalıtım katmanı eklemek</button>
+      <button data-opt="D">Her NPC’ye ayrı bir MonoBehaviour.Update eklemek</button>
     </div>
     <div class="explain">Bellek bekleme sorunu veri yerleşimiyle çözülür: art arda veri, önbelleğe tek seferde gelir. Unity’de binlerce ayrı Update çağrısının kendisi de maliyetlidir; ECS/Jobs ya da tek bir yönetici döngü tercih edilir.</div>
   </div>

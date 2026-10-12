@@ -389,3 +389,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.tdtarget = {
+    fn: 'td_target', jsFn: 'tdTarget', tol: 1e-9,
+    ref: (r, mx, g, done) => r + (done ? 0 : g * mx),
+    cases: () => { const cs = [[10, 0, 0.9, true], [-0.1, 5, 0.9, false], [-10, 7, 0.9, true], [-0.1, 0, 0.9, false], [0, 2, 0.5, false], [10, 99, 0.9, true]]; for (let i = 0; i < 14; i++) cs.push([[-0.1, 0, 10, -10][i % 4], Math.round(Math.random() * 100) / 10, [0.3, 0.9, 0.99][i % 3], Math.random() < 0.3]); return cs; },
+    show: (r, mx, g, d) => `ödül ${r}, gidilen karenin en iyi Q’su ${mx}, γ = ${g}, bölüm ${d ? 'BİTTİ' : 'sürüyor'}`,
+    hint: (r, mx, g, d) => (d ? 'Bölüm bittiyse (hazine ya da lav) gelecek YOK: hedef sadece ödüldür.' : 'hedef = ödül + γ × (gidilen karenin en iyi Q değeri).')
+  };
+  SL.AILABS.argmaxq = {
+    fn: 'best_action', jsFn: 'bestAction',
+    ref: qs => { let b = 0; qs.forEach((v, i) => { if (v > qs[b]) b = i; }); return b; },
+    cases: () => { const cs = [[[1, 5, 2, 0]], [[0, 0, 0, 0]], [[-3, -1, -2, -9]], [[2, 2, 1, 0]], [[0, 0, 0, 7]]]; for (let i = 0; i < 14; i++) cs.push([Array.from({ length: 4 }, () => Math.round(SL.rand(-10, 10)))]); return cs; },
+    show: qs => `Q değerleri [yukarı, sağ, aşağı, sol] = ${JSON.stringify(qs)}`,
+    hint: () => 'En büyük değerin kendisini değil İNDİSİNİ (kaçıncı eylem olduğunu) döndürün. Eşitlikte ilki kazanır: karşılaştırmada > kullanın, >= değil.'
+  };
+})();
+/* EK:BİTİŞ */

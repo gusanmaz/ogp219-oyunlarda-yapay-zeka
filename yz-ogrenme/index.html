@@ -254,7 +254,7 @@
 </section>
 
 <section data-sec="Q-learning">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 1 · Q-learning</div>
     <div class="q">Eğitimden sonra oyunu oynatırken ε’yu (keşif oranını) ne yapmalıyız?</div>
     <div class="opts">
@@ -359,14 +359,14 @@
 </section>
 
 <section data-sec="ödül">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 2 · ödül</div>
     <div class="q">Bir kale savunma oyununda düşman YZ’sini “verdiği hasar” ile ödüllendirdiniz. Eğitimden sonra ajan kaleye hiç saldırmıyor, sürekli tamir edilen bir duvara ateş ediyor. Ne oldu?</div>
     <div class="opts">
-      <button data-opt="A">Ödül hilesi: duvar hiç yıkılmadığı için sonsuz hasar kaynağı oldu; ödül “kaleyi düşür” niyetini anlatmıyor</button>
-      <button data-opt="B">Ajan yeterince eğitilmedi, daha fazla eğitim çözer</button>
+      <button data-opt="A">ε çok büyük</button>
+      <button data-opt="B">Ödül hilesi: duvar hiç yıkılmadığı için sonsuz hasar kaynağı oldu; ödül “kaleyi düşür” niyetini anlatmıyor</button>
       <button data-opt="C">Öğrenme hızı α çok küçük</button>
-      <button data-opt="D">ε çok büyük</button>
+      <button data-opt="D">Ajan yeterince eğitilmedi, daha fazla eğitim çözer</button>
     </div>
     <div class="explain">Daha fazla eğitim, ajanı bu hilede <b>daha iyi</b> yapar. Sorun ödülde: hasar, kaleyi düşürmek için bir <b>vekil</b> ölçü. Ajan vekili en kolay yoldan optimize etti (CoastRunners’ın lagünü gibi). Çözüm: asıl hedefi (kale düştü) büyük ödülle vermek, tekrar eden hasar kaynaklarını sınırlamak.</div>
   </div>
@@ -498,14 +498,14 @@
 </section>
 
 <section data-sec="oyunlarda">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 3 · oyunlarda</div>
     <div class="q">Bir yapımcı “Düşmanlarımız oyuncudan öğrenecek, her oyunda daha akıllı olacak!” diye pazarlama yapmak istiyor. En doğru teknik uyarı hangisi?</div>
     <div class="opts">
-      <button data-opt="A">Oyun sırasında öğrenme test edilemez ve kötü davranış da öğrenilebilir; genelde eğitim geliştirmede yapılır, oyunda “öğreniyor hissi” tasarımla verilir</button>
-      <button data-opt="B">Bu imkânsızdır, hiçbir oyun oyun sırasında öğrenmez</button>
-      <button data-opt="C">Sorun yok, RL her zaman daha iyi düşman üretir</button>
-      <button data-opt="D">Sadece GPU yetmez, o kadar</button>
+      <button data-opt="A">Bu imkânsızdır, hiçbir oyun oyun sırasında öğrenmez</button>
+      <button data-opt="B">Sorun yok, RL her zaman daha iyi düşman üretir</button>
+      <button data-opt="C">Sadece GPU yetmez, o kadar</button>
+      <button data-opt="D">Oyun sırasında öğrenme test edilemez ve kötü davranış da öğrenilebilir; genelde eğitim geliştirmede yapılır, oyunda “öğreniyor hissi” tasarımla verilir</button>
     </div>
     <div class="explain">Oyun sırasında öğrenen örnekler var (Black &amp; White, Drivatar), yani B yanlış. Ama Drivatar’ın agresiflik sorunu ve Alien: Isolation’ın “öğreniyor gibi görünen” kilitli dalları gösteriyor ki çoğu zaman doğru yol, öğrenmeyi geliştirmede yapmak ve oyunda <b>uyum hissini</b> tasarımla vermektir. ARC Raiders da tam olarak böyle: yürüyüş öğrenildi, oyuncudan değil.</div>
   </div>
@@ -691,6 +691,75 @@ for _ in range(1000):
   </table>
 </section>
 
+<section data-ek="tamkod" data-sec="kod">
+  <h2>📦 Tam kod: p5.js’te Q-öğrenme</h2>
+  <div class="cols c64">
+    <div>
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function step() {
+  const [x, y] = agent;
+  // 1) SEÇ: bazen rastgele (keşif), çoğunlukla en iyisi
+  const a = random() < EPSILON ? floor(random(4))
+                               : argmax(Q[y][x]);
+  // 2) DENE: dünya ne dedi?
+  const { nx, ny, r, done } = world(x, y, a);
+  // 3) GÜNCELLE (Bellman)
+  const target = r + (done ? 0 : GAMMA * max(Q[ny][nx]));
+  Q[y][x][a] += ALPHA * (target - Q[y][x][a]);
+
+  agent = done ? [...START] : [nx, ny];
+}
+</script></code></pre>
+      <p class="mini">Q-öğrenmenin tamamı bu üç adım. <code>Q</code> bir tablodur: her kare için dört sayı (yukarı, sağ, aşağı, sol). Kimse ajana yolu söylemiyor; sadece ödülü görüyor ve tablosunu düzeltiyor.</p>
+    </div>
+    <div class="box game"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span>
+      <p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 90 satır. Önce yavaş izleyin: ajan sarhoş gibi dolaşır. <b>Boşluk</b>’a basın: binlerce bölüm saniyeler içinde geçer, oklar hazineye akmaya başlar.</p>
+      <p><b>Deneyin:</b></p>
+      <ul>
+        <li><code>EPSILON = 0</code>: hiç keşif yok. Öğrenebiliyor mu?</li>
+        <li><code>GAMMA = 0.3</code>: “miyop” ajan — uzak kareler neden boş kalıyor?</li>
+        <li>Adım cezasını <code>-0.1</code>’den <code>-2</code>’ye çekin: ajan lava atlamayı mı seçiyor?</li>
+        <li>Eğitim bittikten sonra yola tıklayıp duvar koyun: yeni yolu buluyor mu?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: en iyi eylem hangisi?</h2>
+  <div class="ailab" data-lab="argmaxq" data-lang="js">
+<textarea>
+// qs: bir karedeki dört Q değeri [yukarı, sağ, aşağı, sol]
+//     ör. [1.0, 5.0, 2.0, 0.0]
+// En büyük değerin İNDİSİNİ döndür (burada 1 = sağ).
+function bestAction(qs) {
+  let best = 0;
+  for (let i = 1; i &lt; qs.length; i++) {
+    // TODO: qs[i] daha büyükse best = i
+  }
+  return best;
+}
+</textarea>
+    <div class="lab-tasks">Eğitilmiş bir Q tablosundan <b>politika</b> böyle okunur: “bu karede en yüksek sayı hangi yönde?” Demodaki oklar tam olarak bu fonksiyonun çıktısı. (Y4’teki “en yüksek puanlı eylem” ile aynı kalıp.)</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: Bellman hedefi</h2>
+  <div class="ailab" data-lab="tdtarget" data-lang="js">
+<textarea>
+// r: bu adımda alınan ödül
+// maxNext: gidilen karenin en iyi Q değeri
+// gamma: indirim (0–1)      done: bölüm bitti mi?
+// hedef = ödül + indirimli gelecek. Bölüm bittiyse gelecek yok.
+function tdTarget(r, maxNext, gamma, done) {
+  return r + gamma * maxNext;   // TODO: done ise sadece r
+}
+</textarea>
+    <div class="lab-tasks">Q-öğrenmenin “öğretmeni” bu sayıdır: tablo her adımda bu hedefe biraz yaklaştırılır. Slayttaki örnek: hazinenin solundaki kare için <code>tdTarget(10, 0, 0.9, true) = 10</code>; onun solundaki için <code>tdTarget(-0.1, 5, 0.9, false) = 4,4</code>.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: Bellman güncellemesi</h2>
   <div class="simlab" data-sim="qlearn" data-fns="qUpdate" data-lang="js">
@@ -813,6 +882,18 @@ def forward(x, W1, b1, W2, b2):
     <div class="box story"><span class="bt">Oyun testi ajanları</span>EA SEED ve Ubisoft La Forge gibi araştırma ekipleri, büyük haritalarda gezinen ve hata arayan RL ajanları üzerinde çalışıyor. Soru: hangi ödül “ilginç” hataları bulmayı teşvik eder? (merak tabanlı ödüller, “keşif bonusu”)</div>
     <div class="box game"><span class="bt">İnsan gibi oynayan ajan</span>GT Sophy’nin zorluğu “yenmek” değil, <b>adil ve eğlenceli</b> yenmekti. İnsan benzerliğini nasıl ölçeriz? Taklit + RL karışımları, “insanlık testi” (Turing testi benzeri) yarışmaları.</div>
     <div class="box low"><span class="bt">Dil + RL</span>SIMA 2 gibi ajanlar dil modeli ile RL’yi birleştiriyor: “kırmızı evin yanındaki ağacı kes” komutunu anlayıp yapan bir ajan. Y14’te LLM tarafını, Y16’da dünya modellerini (Genie 3) göreceğiz.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">CoastRunners’ın teknesi yarışı bitirmeden daireler çizerek rekor kırdı. Okulda, işte ya da oyunlarda “<b>ölçülen şey</b> ile <b>istenen şey</b>” ayrıştığı için insanların da böyle davrandığı bir örnek düşünün.</li>
+      <li class="fragment">“Bu düşman senden öğreniyor!” diye tanıtılan bir oyun oynadınız mı? Bu dersten sonra o iddia hakkında ne düşünüyorsunuz? Gerçekten oyun sırasında öğrenen bir düşman ister miydiniz?</li>
+      <li class="fragment">Bir boss’u pekiştirmeli öğrenmeyle eğitip <b>yenilmez</b> hâle getirdiniz. Tasarımcı “biraz daha kolay olsun ve ikinci fazda öfkelensin” diyor. Elinizde ne var? Davranış ağacıyla yazılmış olsaydı ne yapardınız?</li>
+      <li class="fragment">Yürümeyi RL ile öğrenmiş bir robot (ARC Raiders) ile animatörün elle canlandırdığı bir robot arasındaki farkı oyuncu olarak nasıl fark edersiniz?</li>
+    </ol>
   </div>
 </section>
 

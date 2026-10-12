@@ -134,13 +134,13 @@
 </section>
 
 <section data-sec="oyun ağacı">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 1 · oyun ağacı</div>
     <div class="q">Dallanma katsayısı 30 olan bir oyunda 4 yarım hamle derinliğe kadar kaç yaprak vardır (yaklaşık)?</div>
     <div class="opts">
-      <button data-opt="A">810.000</button>
-      <button data-opt="B">120</button>
-      <button data-opt="C">900</button>
+      <button data-opt="A">120</button>
+      <button data-opt="B">900</button>
+      <button data-opt="C">810.000</button>
       <button data-opt="D">30.000</button>
     </div>
     <div class="explain">30⁴ = 30 · 30 · 30 · 30 = <b>810.000</b>. Derinliği bir artırırsanız 24 milyon olur: bu yüzden “biraz daha derin bakmak” çok pahalıdır ve budama bu kadar önemlidir.</div>
@@ -212,14 +212,14 @@
 </section>
 
 <section data-sec="minimax">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 2 · minimax</div>
     <div class="q">Bir MIN düğümünün çocuklarının değerleri 7, 3, 9. MIN düğümünün değeri nedir ve neden?</div>
     <div class="opts">
       <button data-opt="A">3 — rakip bize en az puan bırakan hamleyi seçer</button>
-      <button data-opt="B">9 — en iyi ihtimal</button>
+      <button data-opt="B">7 — ilk çocuk</button>
       <button data-opt="C">6,3 — ortalama</button>
-      <button data-opt="D">7 — ilk çocuk</button>
+      <button data-opt="D">9 — en iyi ihtimal</button>
     </div>
     <div class="explain">MIN düğümünde sıra rakiptedir ve rakip bizim puanımızı <b>en aza</b> indirmek ister: 3. Ortalama almak, rakibin rastgele oynadığını varsaymak olurdu (bu, zarlı oyunlardaki “şans düğümü”nün yaptığı şeydir).</div>
   </div>
@@ -280,13 +280,13 @@
 </section>
 
 <section data-sec="alfa-beta">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 3 · alfa-beta</div>
     <div class="q">Alfa-beta budaması açıkken YZ’nin seçtiği hamle, budamasız minimax’ın seçtiğinden farklı olabilir mi?</div>
     <div class="opts">
-      <button data-opt="A">Hayır — budanan dallar sonucu değiştiremeyecek dallardır; değer aynıdır</button>
-      <button data-opt="B">Evet, alfa-beta tahmin yapar</button>
-      <button data-opt="C">Evet, derinlik azalır</button>
+      <button data-opt="A">Evet, alfa-beta tahmin yapar</button>
+      <button data-opt="B">Evet, derinlik azalır</button>
+      <button data-opt="C">Hayır — budanan dallar sonucu değiştiremeyecek dallardır; değer aynıdır</button>
       <button data-opt="D">Sadece hamle sıralaması kötüyse</button>
     </div>
     <div class="explain">Alfa-beta <b>kayıpsız</b> bir optimizasyondur: kökün değeri birebir aynıdır. (Eşit değerli birden çok hamle varsa hangisinin “ilk bulunduğu” farklı olabilir ama değer aynıdır.) Sıralama sadece <b>hızı</b> etkiler.</div>
@@ -437,14 +437,14 @@
 </section>
 
 <section data-sec="MCTS">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 4 · MCTS</div>
     <div class="q">MCTS’de c (keşif katsayısı) çok büyük seçilirse ne olur?</div>
     <div class="opts">
-      <button data-opt="A">Arama, iyi hamlelere yoğunlaşmak yerine bütün hamleleri neredeyse eşit dener</button>
-      <button data-opt="B">Sadece en iyi bilinen hamle denenir</button>
+      <button data-opt="A">Değerlendirme fonksiyonu gerekir</button>
+      <button data-opt="B">Arama, iyi hamlelere yoğunlaşmak yerine bütün hamleleri neredeyse eşit dener</button>
       <button data-opt="C">Simülasyonlar daha hızlı biter</button>
-      <button data-opt="D">Değerlendirme fonksiyonu gerekir</button>
+      <button data-opt="D">Sadece en iyi bilinen hamle denenir</button>
     </div>
     <div class="explain">c büyükse UCB1’in keşif terimi baskın olur: az denenmiş her hamle cazip görünür ve arama genişliğine yayılır. c çok küçükse ilk şanslı sonucu veren hamleye takılır kalır. İyi c değeri oyuna göre deneyerek bulunur.</div>
   </div>

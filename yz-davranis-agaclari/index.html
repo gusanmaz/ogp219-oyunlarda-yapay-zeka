@@ -149,7 +149,7 @@
 </section>
 
 <section data-sec="FSM’den ağaca">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 1 · FSM’den ağaca</div>
     <div class="q">Bir davranış ağacında “kaçmak saldırmaktan daha önemlidir” bilgisi nasıl ifade edilir?</div>
     <div class="opts">
@@ -232,14 +232,14 @@
 </section>
 
 <section data-sec="düğüm türleri">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 2 · düğüm türleri</div>
     <div class="q">Sequence → [görüyor mu? = SUCCESS] [yakın mı? = FAILURE] [Ateş et]. Sequence ne döndürür ve “Ateş et” çalışır mı?</div>
     <div class="opts">
-      <button data-opt="A">FAILURE döndürür; “Ateş et” hiç çalışmaz</button>
-      <button data-opt="B">SUCCESS döndürür; ilk çocuk başarılı</button>
+      <button data-opt="A">FAILURE döndürür ama “Ateş et” yine de çalışır</button>
+      <button data-opt="B">FAILURE döndürür; “Ateş et” hiç çalışmaz</button>
       <button data-opt="C">RUNNING döndürür; “Ateş et” çalışır</button>
-      <button data-opt="D">FAILURE döndürür ama “Ateş et” yine de çalışır</button>
+      <button data-opt="D">SUCCESS döndürür; ilk çocuk başarılı</button>
     </div>
     <div class="explain">Sequence ilk <b>başarılı olmayan</b> çocukta durur ve onun cevabını verir. “yakın mı?” başarısız → sequence FAILURE, üçüncü çocuk hiç ziyaret edilmez. Üst selector bu durumda bir sonraki dalı (kovala) dener.</div>
   </div>
@@ -298,13 +298,13 @@
 </section>
 
 <section data-sec="tick">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 3 · tick</div>
     <div class="q">Selector’ün çocukları sırayla FAILURE, RUNNING, SUCCESS cevabı verecek durumda. Selector ne döndürür, üçüncü çocuk tick’lenir mi?</div>
     <div class="opts">
-      <button data-opt="A">RUNNING; üçüncü çocuk tick’lenmez</button>
-      <button data-opt="B">SUCCESS; selector başarılı çocuğu arar</button>
-      <button data-opt="C">FAILURE; ilk çocuk başarısız</button>
+      <button data-opt="A">SUCCESS; selector başarılı çocuğu arar</button>
+      <button data-opt="B">FAILURE; ilk çocuk başarısız</button>
+      <button data-opt="C">RUNNING; üçüncü çocuk tick’lenmez</button>
       <button data-opt="D">RUNNING; ama üçüncü çocuk da tick’lenir</button>
     </div>
     <div class="explain">Selector ilk <b>başarısız olmayan</b> çocukta durur: ikinci çocuk RUNNING → selector de RUNNING der ve üçüncüye hiç gitmez. Bu, “ikinci plan şu an sürüyor, onu bölme” demektir. Sonraki karede ilk çocuk başarılı olursa (yüksek öncelik), ikinci çocuğun işi kesilir.</div>
@@ -866,14 +866,14 @@ if bb["last_seen"] is not None: ...   # koşul okur
 </section>
 
 <section data-sec="olaylar">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 4 · olaylar</div>
     <div class="q">Unreal’da “Kovala” dalının dekoratöründe “Observer aborts: Lower Priority” seçili. Nöbetçi devriye gezerken (sağdaki dal) HasLineOfSight doğru olursa ne olur?</div>
     <div class="opts">
-      <button data-opt="A">Devriye görevi hemen kesilir ve Kovala dalı başlar</button>
-      <button data-opt="B">Devriye bitene kadar beklenir, sonra Kovala başlar</button>
-      <button data-opt="C">Kovala dalı kendi kendini iptal eder</button>
-      <button data-opt="D">Hiçbir şey; dekoratörler sadece ağaç başlarken kontrol edilir</button>
+      <button data-opt="A">Hiçbir şey; dekoratörler sadece ağaç başlarken kontrol edilir</button>
+      <button data-opt="B">Kovala dalı kendi kendini iptal eder</button>
+      <button data-opt="C">Devriye bitene kadar beklenir, sonra Kovala başlar</button>
+      <button data-opt="D">Devriye görevi hemen kesilir ve Kovala dalı başlar</button>
     </div>
     <div class="explain"><b>Lower Priority</b>: dekoratörün koşulu doğru olunca, kendisinden <b>daha düşük öncelikli</b> (daha sağdaki) çalışan dalları iptal eder ve kendi dalını açar. <i>Self</i> ise koşul yanlışa dönünce kendi dalını keser. Bu, reaktifliğin olay güdümlü hâlidir.</div>
   </div>

@@ -158,14 +158,14 @@
 </section>
 
 <section data-sec="neden puan?">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="D">
     <div class="qhead">Quiz 1 · neden puan?</div>
     <div class="q">Bir FPS’te “can &lt; 30 ise kaç” kuralını utility ile yeniden yazmak neyi değiştirir?</div>
     <div class="opts">
-      <button data-opt="A">Kaçma isteği can azaldıkça kademeli artar ve başka etkenlerle tartılabilir</button>
-      <button data-opt="B">NPC artık hiç kaçmaz</button>
-      <button data-opt="C">Kural daha hızlı çalışır</button>
-      <button data-opt="D">Tasarımcının kontrolü tamamen kaybolur</button>
+      <button data-opt="A">NPC artık hiç kaçmaz</button>
+      <button data-opt="B">Kural daha hızlı çalışır</button>
+      <button data-opt="C">Tasarımcının kontrolü tamamen kaybolur</button>
+      <button data-opt="D">Kaçma isteği can azaldıkça kademeli artar ve başka etkenlerle tartılabilir</button>
     </div>
     <div class="explain">Utility, eşiği bir <b>eğriye</b> çevirir: can 31’de de az da olsa kaçma isteği vardır ve düşman sayısı, siperin yakınlığı gibi etkenlerle birlikte değerlendirilir. Eğrileri tasarımcı çizdiği için kontrol kaybolmaz; hız açısından da genelde daha pahalıdır, ucuz değil.</div>
   </div>
@@ -260,14 +260,14 @@ d = normalize(distance, 0, 50)   # 18 m → 0.36
 </section>
 
 <section data-sec="eğriler">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 2 · eğriler</div>
     <div class="q">Bir keskin nişancı “hedef uzaksa daha iyi, ama 80 m’den sonrası fark etmez” istiyor. En uygun yanıt eğrisi?</div>
     <div class="opts">
       <button data-opt="A">Mesafeyi 0–80 m ayraçlarıyla normalleştirip doğrusal ya da kökümsü (k &lt; 1) yükselen eğri</button>
-      <button data-opt="B">Ters (1 − y) eğri</button>
+      <button data-opt="B">Mesafeyi 0–1000 m ile normalleştirip karesel eğri</button>
       <button data-opt="C">Sabit 0,5</button>
-      <button data-opt="D">Mesafeyi 0–1000 m ile normalleştirip karesel eğri</button>
+      <button data-opt="D">Ters (1 − y) eğri</button>
     </div>
     <div class="explain">Ayraçlar 0–80 m olunca 80 m ve üstü zaten 1’e kırpılır. Yükselen bir eğri “uzak iyi” der; k &lt; 1 olan üslü eğri ilk metrelerde hızlı artar. Ters eğri “yakın iyi” demek olurdu; 0–1000 m ayracı ise 80 m’yi 0,08’e sıkıştırıp karesel eğriyle neredeyse sıfırlar.</div>
   </div>
@@ -367,12 +367,12 @@ def compensate(score, n):
 </section>
 
 <section data-sec="birleştirmek">
-  <div class="quiz" data-answer="A">
+  <div class="quiz" data-karildi="1" data-answer="B">
     <div class="qhead">Quiz 3 · birleştirmek</div>
     <div class="q">“İyileş” eyleminin etkenleri: can düşük = 0,8 · medkit var = 0 · düşman uzak = 0,9. Çarpımla puan kaçtır ve bu neden istenen davranıştır?</div>
     <div class="opts">
-      <button data-opt="A">0 — medkit yoksa iyileşmek imkânsız, eylem veto edilmeli</button>
-      <button data-opt="B">0,57 — ortalaması</button>
+      <button data-opt="A">0,57 — ortalaması</button>
+      <button data-opt="B">0 — medkit yoksa iyileşmek imkânsız, eylem veto edilmeli</button>
       <button data-opt="C">0,72 — sıfırı yok sayarız</button>
       <button data-opt="D">1,7 — toplamı</button>
     </div>
