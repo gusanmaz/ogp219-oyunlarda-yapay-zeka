@@ -24,14 +24,14 @@
   /* ---------- FSM diyagramı (SVG) ---------- */
   const NODES = { DEVRIYE: [90, 60], SUPHE: [90, 215], KOVALA: [280, 135], SALDIR: [440, 60], KAC: [300, 290] };
   const EDGES = [['DEVRIYE', 'KOVALA', 'görüyor'], ['DEVRIYE', 'SUPHE', 'ses'], ['SUPHE', 'KOVALA', 'görüyor'], ['SUPHE', 'DEVRIYE', '4 sn'], ['KOVALA', 'SUPHE', 'kaybetti'], ['KOVALA', 'SALDIR', '< 60'], ['SALDIR', 'KOVALA', '> 90'], ['KAC', 'DEVRIYE', 'can > 70', [[248, 296], [15, 300], [10, 95], [42, 72]]]];
-  function fsmSVG(active, flash, exitDist = 90) {
+  function fsmSVG(active, flash, exitDist = 90, mid = 'fa') {   // mid: bu diyagrama özel ok ucu kimliği (aynı kimlik iki slaytta olursa gizli olan seçilir, ok uçları kaybolur)
     const t = T(), col = COLS(t);
-    let s = `<defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
+    let s = `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
     EDGES.forEach(([a, b, lab0, curve]) => {
       const lab = lab0 === '> 90' ? '> ' + exitDist : lab0;
       if (curve) {   // eğri ok (diğer okların arasından geçmesin)
         const on = flash && flash[0] === a && flash[1] === b, [p0, c1, c2, p1] = curve;
-        s += `<path d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p1[0]},${p1[1]}" fill="none" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#fa)"/>`;
+        s += `<path d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p1[0]},${p1[1]}" fill="none" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#${mid})"/>`;
         const lw = lab.length * 6.4 + 10;
         s += `<rect x="${32 - lw / 2}" y="${262}" width="${lw}" height="16" rx="4" fill="${t.card}" opacity=".92"/><text x="32" y="274" text-anchor="middle" font-size="11" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${lab}</text>`;
         return;
@@ -40,7 +40,7 @@
       const twin = EDGES.some(e => e[0] === b && e[1] === a), off = twin ? 9 : 0, px = -uy * off, py = ux * off;
       const on = flash && flash[0] === a && flash[1] === b;
       const sx = x1 + ux * 46 + px, sy = y1 + uy * 26 + py, ex = x2 - ux * 50 + px, ey = y2 - uy * 30 + py;
-      s += `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#fa)"/>`;
+      s += `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#${mid})"/>`;
       const lx = (sx + ex) / 2 + px * 2.2, ly = (sy + ey) / 2 + py * 2.2, lw = lab.length * 6.4 + 10;
       s += `<rect x="${lx - lw / 2}" y="${ly - 10}" width="${lw}" height="16" rx="4" fill="${t.card}" opacity=".92"/><text x="${lx}" y="${ly + 2}" text-anchor="middle" font-size="11" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${lab}</text>`;
     });
@@ -52,8 +52,10 @@
     return `<svg viewBox="0 0 530 330" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
   }
 
+  let fsmCount = 0;
   D.guardfsm = function (root) {
     // data-memory="0": "titreme" kopyası — histerezis ve algı hafızası kapalı başlar; bot oyuncu nöbetçiden yavaşça geri çekilir
+    const mid = 'fa' + (++fsmCount);
     const flicker = root.dataset.memory === '0';
     let hyst = !flicker, bp = V.v(380, 70);
     const bot = (st, dt) => {   // nöbetçi 75 pikselden yakınsa ondan uzaklaş (40 px/sn): tek eşikte titremeyi tetikler
@@ -67,7 +69,7 @@
       return bp;
     };
     const sim = SL.makeGuardArena({ decide: (state, s) => refNext(state, s, hyst ? 90 : 60), bot: flicker ? bot : null, onReset: () => { bp = V.v(380, 70); }, memory: root.dataset.memory != null ? root.dataset.memory === '1' : true, onDraw: st => {
-      diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null, hyst ? 90 : 60);
+      diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null, hyst ? 90 : 60, mid);
       const s = st.sense || {};
       info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b>${s.dist}</b></span><span class="cnt">görüyor <b>${s.seesPlayer ? 'evet' : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('') || '<i>henüz geçiş yok</i>'}</div>`;
     } });

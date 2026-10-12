@@ -814,7 +814,7 @@ def next_state(state, s):
 <section data-sec="HFSM">
   <h2>Hiyerarşik FSM <span class="en">HFSM</span></h2>
   <div class="cols c64">
-    <svg viewBox="0 0 640 300" style="width:100%" font-family="Source Sans 3">
+    <svg viewBox="0 0 640 326" style="width:100%" font-family="Source Sans 3">
       <defs><marker id="ha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs>
       <rect x="10" y="20" width="270" height="200" rx="18" style="fill:color-mix(in srgb, var(--blue) 10%, var(--card));stroke:var(--blue)" stroke-width="3"/><text x="30" y="46" font-size="18" font-weight="700" style="fill:var(--blue)">BARIŞ</text>
       <rect x="350" y="20" width="280" height="200" rx="18" style="fill:color-mix(in srgb, var(--red) 10%, var(--card));stroke:var(--red)" stroke-width="3"/><text x="370" y="46" font-size="18" font-weight="700" style="fill:var(--red)">SAVAŞ</text>
@@ -823,17 +823,21 @@ def next_state(state, s):
         <rect x="160" y="150" width="100" height="40" rx="20" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="210" y="175" style="fill:var(--ink)">Şüphe</text>
         <rect x="380" y="80" width="100" height="40" rx="20" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="430" y="105" style="fill:var(--ink)">Kovala</text>
         <rect x="500" y="150" width="100" height="40" rx="20" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="550" y="175" style="fill:var(--ink)">Saldır</text>
-        <rect x="245" y="245" width="150" height="44" rx="22" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="320" y="273" style="fill:var(--green)">KAÇ</text>
+        <rect x="245" y="268" width="150" height="44" rx="22" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="320" y="296" style="fill:var(--green)">KAÇ</text>
       </g>
       <line x1="282" y1="90" x2="346" y2="90" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ha)"/><text x="314" y="80" text-anchor="middle" font-size="12" style="fill:var(--muted)">görüyor</text>
       <line x1="346" y1="130" x2="282" y2="130" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ha)"/><text x="314" y="150" text-anchor="middle" font-size="12" style="fill:var(--muted)">kaybetti</text>
-      <line x1="320" y1="222" x2="320" y2="242" style="stroke:var(--green)" stroke-width="2.5" marker-end="url(#ha)"/><text x="410" y="236" font-size="12" style="fill:var(--green)">can &lt; 30 (iki üst durumdan da)</text>
+      <defs><marker id="hfsmg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--green)"/></marker></defs>
+      <line x1="225" y1="222" x2="288" y2="265" style="stroke:var(--green)" stroke-width="3" marker-end="url(#hfsmg)"/><text x="246" y="254" text-anchor="end" font-size="13" font-weight="700" style="fill:var(--green)">can &lt; 30</text>
+      <line x1="415" y1="222" x2="352" y2="265" style="stroke:var(--green)" stroke-width="3" marker-end="url(#hfsmg)"/><text x="394" y="254" font-size="13" font-weight="700" style="fill:var(--green)">can &lt; 30</text>
+      <path d="M243,292 C150,296 92,280 90,224" fill="none" style="stroke:var(--ink-2)" stroke-width="2.5" marker-end="url(#ha)"/><text x="120" y="312" text-anchor="middle" font-size="12" style="fill:var(--muted)">can &gt; 70 → Devriye</text>
+      <text x="530" y="250" text-anchor="middle" font-size="12" style="fill:var(--muted)">üst durumdan çıkan ok,</text><text x="530" y="266" text-anchor="middle" font-size="12" style="fill:var(--muted)">içindeki HER alt durum için geçerli</text>
     </svg>
     <div style="font-size:.86em">
       <ul>
         <li>Her durum kendi içinde <b>bir FSM</b> olabilir</li>
         <li>Üst seviyedeki geçiş (BARIŞ → SAVAŞ) içerideki <b>bütün</b> alt durumlar için geçerli: oklar azalır</li>
-        <li>“Can &lt; 30 → KAÇ” artık 5 ok değil, <b>2</b> ok (ya da en üst seviyede 1)</li>
+        <li>“Can &lt; 30 → KAÇ” artık dört ayrı ok değil: <b>iki yeşil ok</b> (BARIŞ’tan ve SAVAŞ’tan). Devriye, Şüphe, Kovala, Saldır — hangisinde olursa olsun çalışır.</li>
         <li class="fragment">Game AI Pro’daki örnek: <b>gece bekçisi</b> kasa ile kapı arasında devriye gezer. “Telefon çaldı → konuş → devriyeye dön” durumunu her devriye durumuna ayrı ayrı eklemek yerine, devriyeyi tek bir üst durum yaparsınız.</li>
       </ul>
     </div>

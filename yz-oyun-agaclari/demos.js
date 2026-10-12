@@ -23,7 +23,7 @@
     return best;
   }
   D.ttt = function (root) {
-    let b = Array(9).fill(null), over = null, ab = true, mistake = 0, aiFirst = false;
+    let b = Array(9).fill(null), over = null, ab = true, mistake = 0, aiFirst = false, thinking = null;   // thinking: YZ'nin bekleyen hamlesi (zamanlayıcı)
     const grid = el('div', { class: 'ttt' }), info = el('div', { class: 'sv-note' }), stats = el('div', { class: 'sv-counters' });
     const cells = [...Array(9)].map((_, i) => { const c = el('button', { class: 'ttt-c', onclick: () => human(i) }); grid.append(c); return c; });
     const analyze = () => {
@@ -35,6 +35,7 @@
       cells.forEach((c, i) => { c.textContent = b[i] || ''; c.className = 'ttt-c ' + (b[i] === 'X' ? 'x' : b[i] === 'O' ? 'o' : ''); c.dataset.v = ''; if (an && an.vals[i] !== null && !b[i]) { const v = an.vals[i]; c.dataset.v = v > 0 ? '+' + v : v; c.classList.add(v > 0 ? 'good' : v < 0 ? 'bad' : 'draw'); } });
     };
     const aiMove = () => {
+      thinking = null;
       const an = analyze();
       let pick;
       const free = b.map((x, i) => (x ? -1 : i)).filter(i => i >= 0);
@@ -45,8 +46,8 @@
       draw(null); setTimeout(() => { if (!over) draw(analyze()); end(); }, 10);
     };
     const end = () => { info.textContent = over === 'O' ? '🤖 YZ kazandı.' : over === 'X' ? '🎉 Kazandınız! (YZ hata payı açık olmalı…)' : over === 'D' ? '🤝 Berabere — kusursuz iki oyuncu arasında XOX her zaman berabere biter.' : 'Sıra sizde (X). Boş karelerdeki sayılar: YZ oraya oynasaydı oyunun minimax değeri (+ = YZ kazanır, − = siz kazanırsınız, 0 = berabere).'; };
-    const human = i => { if (over || b[i]) return; b[i] = 'X'; over = tWin(b); draw(null); end(); if (!over) setTimeout(aiMove, 150); };
-    const reset = () => { b = Array(9).fill(null); over = null; stats.innerHTML = ''; draw(null); end(); if (aiFirst) setTimeout(aiMove, 150); else draw(analyze()); };
+    const human = i => { if (over || b[i] || thinking) return; b[i] = 'X'; over = tWin(b); draw(null); end(); if (!over) { info.textContent = '🤖 YZ düşünüyor…'; thinking = setTimeout(aiMove, 150); } };   // YZ oynayana kadar ikinci tıklama yok sayılır
+    const reset = () => { clearTimeout(thinking); thinking = null; b = Array(9).fill(null); over = null; stats.innerHTML = ''; draw(null); end(); if (aiFirst) thinking = setTimeout(aiMove, 150); else draw(analyze()); };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'gv-row' }, grid, el('div', { class: 'gv-side' },
       el('div', { class: 'sv-controls' }, btn('↺ Yeni oyun', reset, 'primary'),
@@ -235,7 +236,7 @@
   }
 
   D.c4 = function (root) {
-    let b = C4.empty(), over = 0, last = null, thinking = false, overlay = null;
+    let b = C4.empty(), over = 0, last = null, thinking = false, overlay = null, aiTimer = null;
     const cfg = { ai: root.dataset.ai || 'ab', depth: 5, iters: 3000, order: true, aiStarts: false };
     const info = el('div', { class: 'sv-note' }), stats = el('div', { class: 'c4stats' });
     const board = c4Board(c => human(c));
@@ -244,7 +245,7 @@
     const finish = (r, c, who) => { if (C4.winAt(b, r, c)) { over = who; status(who === 1 ? '🎉 Kazandınız!' : '🤖 YZ kazandı.'); return true; } if (C4.full(b)) { over = 3; status('🤝 Berabere.'); return true; } return false; };
     const aiMove = () => {
       thinking = true; status('🤖 düşünüyor…');
-      setTimeout(() => {
+      aiTimer = setTimeout(() => {
         const t0 = performance.now(); let res, txt;
         if (cfg.ai === 'ab') { res = abChoose(b, 2, cfg.depth, c4eval, cfg.order); overlay = res.scores.map(v => (v === null ? null : Math.abs(v) >= 100000 ? (v > 0 ? 'KAZAN' : 'KAYIP') : String(v))); txt = `Alfa-beta, derinlik ${cfg.depth}: <b>${res.n.toLocaleString('tr-TR')}</b> düğüm`; }
         else { res = mcts(b, 2, cfg.iters); overlay = res.stats.map(s => (s ? `%${Math.round(s.w * 100)}` : null)); txt = `MCTS, <b>${cfg.iters.toLocaleString('tr-TR')}</b> simülasyon`; stats.innerHTML = '<div class="mini">Her sütun: ziyaret sayısı (çubuk) ve kazanma oranı</div>' + res.stats.map((s, c) => `<div class="uscore"><span>sütun ${c + 1}</span><span class="ubar wide"><i style="width:${s ? (100 * s.N) / res.iters : 0}%"></i></span><b>${s ? s.N : '-'}</b></div>`).join(''); }
@@ -256,7 +257,7 @@
       }, 30);
     };
     const human = c => { if (over || thinking || c < 0 || c >= C || b[c]) return; const r = C4.drop(b, c, 1); last = [r, c]; overlay = null; show(); if (!finish(r, c, 1)) aiMove(); };
-    const reset = () => { b = C4.empty(); over = 0; last = null; overlay = null; stats.innerHTML = ''; show(); status('Sıra sizde: kırmızı taşınızı bırakmak için bir sütuna tıklayın.'); if (cfg.aiStarts) aiMove(); };
+    const reset = () => { clearTimeout(aiTimer); thinking = false; b = C4.empty(); over = 0; last = null; overlay = null; stats.innerHTML = ''; show(); status('Sıra sizde: kırmızı taşınızı bırakmak için bir sütuna tıklayın.'); if (cfg.aiStarts) aiMove(); };
     const ctl = el('div', { class: 'ctl-col' },
       btn('↺ Yeni oyun', reset, 'primary'),
       el('label', { class: 'ctl' }, 'YZ: ', select({ ab: 'alfa-beta (minimax)', mcts: 'Monte Carlo ağaç araması' }, cfg.ai, v => { cfg.ai = v; })),
