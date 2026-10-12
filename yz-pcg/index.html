@@ -277,6 +277,18 @@
   <div class="demo" data-demo="spelunky"></div>
 </section>
 
+<section data-ek="deney-spelunky" data-sec="demo">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li><b>Ekranı okuyun:</b> 16 kutu = 16 oda. Kutunun köşesindeki sayı ve çerçeve rengi odanın <b>tipini</b> gösterir (sağdaki açıklama). Yeşil çizgi, giriş odasından çıkış odasına garantili yol.</li>
+      <li>“🎲 yeni seviye”ye 10 kez basın. Yol hiç yukarı çıkıyor mu? Neden çıkmıyor? (Algoritma yalnızca sola, sağa ve aşağı gider: geri dönmeyen yol asla kendini kilitlemez.)</li>
+      <li>Bir <b>2</b> odasının hemen altındaki odanın tipi ne? Hep 3 ya da 4: üstü açık olmak zorunda. Oda tipi = “hangi kapılar açık olmalı?” sözleşmesi.</li>
+      <li>Gri (0) odalara bakın: kapalı olabilirler, yol onlardan geçmez. Gerçek Spelunky’de hazine ve gizli geçitler buraya konur: bomba harcayan oyuncuya ödül.</li>
+      <li>Aynı tohumu iki kez yazın: seviye birebir aynı. Spelunky’nin “günlük meydan okuma”sı böyle çalışır: o gün herkes aynı tohumu oynar.</li>
+    </ol>
+  </div>
+</section>
+
 <section data-sec="zindan">
   <div class="quiz" data-karildi="1" data-answer="A">
     <div class="qhead">Quiz 2 · zindan</div>
@@ -363,6 +375,18 @@
 <section data-sec="L-sistemleri">
   <h2>Canlı: L-sistemi bahçesi 🌿</h2>
   <div class="demo" data-demo="lsystem"></div>
+</section>
+
+<section data-ek="deney-lsys" data-sec="demo">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li>Yinelemeyi 1’den başlatıp tek tek artırın: her adımda <b>bütün</b> F’ler aynı anda uzar ve dallanır. Alttaki “dize uzunluğu” nasıl büyüyor? (Üstel: bu yüzden demo belli bir uzunlukta durur.)</li>
+      <li>Açıyı 25°’den 60°’ye, sonra 90°’ye çekin: aynı kural, bambaşka bitki. Kural = iskelet, açı = tasarımcının düğmesi.</li>
+      <li>Rastgeleliği 15 yapıp “🎲 başka ağaç”a basın: aynı türden ama hiçbiri aynı olmayan ağaçlar. Bir ormandaki ağaçlar böyle üretilir.</li>
+      <li>Sistem menüsünden <b>Koch</b> ve <b>ejderha</b> eğrilerini seçin: köşeli parantez (dal) yok, yalnızca dönüş var; yine de fraktal desen çıkıyor.</li>
+      <li>Düşünün: <code>[</code> ve <code>]</code> hangi veri yapısını kullanıyor? (Yığın: “konumu it, dalı çiz, konumu geri çek”.)</li>
+    </ol>
+  </div>
 </section>
 
 <section class="level" data-background-gradient="linear-gradient(135deg, #3a0d2e 0%, #1b1036 100%)">
@@ -495,6 +519,67 @@ height = sum(0.5 ** o * value_noise_2d(256, 256, 4 * 2 ** o, rng) for o in range
 <section data-sec="kod">
   <h2>Mağara otomatı ve bağlantı testi</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: tohumlu mağara + bağlantı testi (editor.p5js.org'a yapıştırın)
+const W = 60, H = 40, CS = 10;
+let g, big;
+
+function setup() { createCanvas(W * CS, H * CS); noStroke(); yeni(3); }
+function mousePressed() { yeni(floor(random(99999))); }      // tıkla: yeni tohum
+
+function yeni(seed) {
+  g = cave(seed, 0.45, 4);
+  big = largestRegion(g);                                   // en büyük açık bölge
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    fill(g[y][x] ? '#4a4f63' : big.has(y * W + x) ? '#efe9dc' : '#f1b3a8');   // kırmızımsı: kopuk cep
+    rect(x * CS, y * CS, CS, CS);
+  }
+}
+
+function cave(seed, fillRatio, steps) {
+  randomSeed(seed);                                         // aynı tohum → aynı mağara
+  let m = [];
+  for (let y = 0; y < H; y++) { m.push([]); for (let x = 0; x < W; x++) m[y].push(random() < fillRatio ? 1 : 0); }
+  for (let s = 0; s < steps; s++) {
+    const n = [];                                           // YENİ ızgaraya yaz: herkes aynı anda değişir
+    for (let y = 0; y < H; y++) { n.push([]); for (let x = 0; x < W; x++) {
+      const w = walls(m, x, y);
+      n[y].push(w >= 5 || (m[y][x] && w >= 4) ? 1 : 0);
+    } }
+    m = n;
+  }
+  return m;
+}
+
+function walls(m, x, y) {                                   // 8 komşudan kaçı duvar? (dışarısı = duvar)
+  let n = 0;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    if (dx === 0 && dy === 0) continue;
+    const nx = x + dx, ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= W || ny >= H || m[ny][nx]) n++;
+  }
+  return n;
+}
+
+function largestRegion(m) {                                 // flood fill (BFS)
+  const seen = new Set(); let best = new Set();
+  for (let sy = 0; sy < H; sy++) for (let sx = 0; sx < W; sx++) {
+    if (m[sy][sx] || seen.has(sy * W + sx)) continue;
+    const region = new Set([sy * W + sx]), q = [[sx, sy]]; seen.add(sy * W + sx);
+    while (q.length) {
+      const [x, y] = q.shift();
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        const k = ny * W + nx;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && !m[ny][nx] && !seen.has(k)) { seen.add(k); region.add(k); q.push([nx, ny]); }
+      }
+    }
+    if (region.size > best.size) best = region;
+  }
+  return best;
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="4-13|15-26"><script type="text/template">
 import random
@@ -559,6 +644,43 @@ bool[,] Step(bool[,] g) {
     <tr><td>bool[,] · GetLength(0)</td><td>2B dizi</td><td>C# ızgarası; 0 = satır, 1 = sütun</td></tr>
     <tr><td>Tilemap.SetTile</td><td>karo yerleştirme</td><td>Unity 2D’de ızgaraya karo koymak</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: yükseklikten biyoma</h2>
+  <div class="ailab" data-lab="biome" data-lang="js">
+<textarea>
+// h: gürültüden gelen yükseklik (−1 … 1 arası)
+// Eşikler: h &lt; 0 → "su" · h &lt; 0.1 → "kum" · h &lt; 0.5 → "çimen" · yoksa "dağ"
+function pickBiome(h) {
+  if (h &lt; 0) return "su";
+  return "çimen";   // TODO: kum ve dağ eksik
+}
+</textarea>
+    <div class="lab-tasks">Demodaki renkli harita tam olarak bunu yapıyor: gürültü bir <b>sayı</b> verir, onu anlamlı bir şeye (su, kum, çimen, dağ) çeviren birkaç <code>if</code>’tir. Eşikleri değiştirmek = dünyayı değiştirmek. İpucu: <code>if</code>’leri küçükten büyüğe sıralarsanız her birinde tek karşılaştırma yeter.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: kaç komşum duvar?</h2>
+  <div class="ailab" data-lab="countwalls" data-lang="js">
+<textarea>
+// grid[y][x]: 1 = duvar, 0 = boş.  (x, y): baktığımız hücre.
+// 8 komşudan kaçı duvar? Harita DIŞINDA kalan komşu da duvar sayılır.
+function countWalls(grid, x, y) {
+  let n = 0;
+  for (let dy = -1; dy &lt;= 1; dy++) {
+    for (let dx = -1; dx &lt;= 1; dx++) {
+      // TODO 1: hücrenin kendisini sayma (dx ve dy ikisi de 0)
+      // TODO 2: harita dışına taşıyorsa duvar say, grid'i okuma
+      if (grid[y + dy][x + dx] === 1) n++;
+    }
+  }
+  return n;
+}
+</textarea>
+    <div class="lab-tasks">Mağara otomatının kalbi bu sayı: bir sonraki laboratuvardaki <code>walls</code> parametresi buradan geliyor. Başlangıç kodu hücrenin kendisini de sayıyor ve kenarda <b>çöküyor</b> (<code>grid[-1]</code> yok). Harita genişliği <code>grid[0].length</code>, yüksekliği <code>grid.length</code>.</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -679,6 +801,50 @@ def value_noise(x, lattice):
     <div class="box game"><span class="bt">Hikâye ve görev üretimi</span>Dwarf Fortress’in yüzyıllık dünya tarihi simülasyonu, görev dilbilgileri, LLM ile görev yazımı ve tutarlılık sorunu (Y14).</div>
     <div class="box low"><span class="bt">Kalite–çeşitlilik (QD) arama</span>MAP-Elites gibi algoritmalar: tek bir “en iyi” içerik değil, farklı özelliklerde birçok iyi içerik bulmak. İfade aralığını bilerek doldurmak.</div>
   </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Minecraft’ta en unutamadığınız yer neresiydi? Onu algoritma mı yaptı, siz mi? “Yulaf lapası” sorununu Minecraft nasıl aşıyor?</li>
+      <li class="fragment">Spelunky ya da Hades’te her ölümde seviye değişiyor; Dark Souls’ta hiç değişmiyor. İkisinde de “ustalaşma” hissi var. Ustalaşılan şey aynı mı?</li>
+      <li class="fragment">Bir yarış oyununa rastgele üretilen pistler eklemek istiyorsunuz. Hangi garantiler <b>şart</b>? Bunları üretirken mi sağlarsınız, ürettikten sonra test ederek mi?</li>
+      <li class="fragment">No Man’s Sky’ın tanıtımındaki yaratıkları oyunda kimse birebir bulamadı; denetim kurumu yine de reklamı yanıltıcı saymadı. Katılıyor musunuz? Prosedürel bir oyunun fragmanı nasıl dürüst olur?</li>
+    </ol>
+  </div>
+</section>
+
+<section data-ek="oyna" data-sec="kaynak">
+  <h2>🕹️ Tarayıcıda oynayın: üreteçlerle 10 dakika</h2>
+  <div class="cols">
+    <div class="box info" style="font-size:.86em"><span class="bt">Dalga fonksiyonu çöküşü</span>
+      <ul>
+        <li><a href="https://oskarstalberg.com/game/wave/wave.html" target="_blank" rel="noopener">Oskar Stålberg: Wave</a> — bir hücreye tıklayın, seçenekler komşularda gözünüzün önünde azalsın. Dersteki demonun 3B hâli.</li>
+        <li><a href="https://oskarstalberg.com/Townscaper/" target="_blank" rel="noopener">Townscaper (tarayıcı sürümü)</a> — tıkladıkça kasaba kendini kurallara göre “çözer”.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.86em"><span class="bt">Gürültü ve haritalar</span>
+      <ul>
+        <li><a href="https://www.redblobgames.com/maps/terrain-from-noise/" target="_blank" rel="noopener">Red Blob Games: gürültüden arazi</a> — her paragrafta kaydırıcılı canlı örnek; oktav, ada maskesi, nem haritasıyla biyom.</li>
+        <li><a href="https://www.redblobgames.com/maps/mapgen4/" target="_blank" rel="noopener">Mapgen4</a> — fareyle dağ ve deniz boyayın; nehirler ve rüzgâr kendiliğinden hesaplanır.</li>
+        <li><a href="https://azgaar.github.io/Fantasy-Map-Generator/" target="_blank" rel="noopener">Azgaar’s Fantasy Map Generator</a> — ülkeleri, şehir adları, dinleriyle bütün bir fantastik dünya.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="box info" style="font-size:.86em"><span class="bt">Zindan</span>
+      <ul>
+        <li><a href="https://watabou.itch.io/one-page-dungeon" target="_blank" rel="noopener">Watabou: One Page Dungeon</a> — her yenilemede elle çizilmiş gibi görünen, hikâyesi de üretilmiş bir zindan.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.86em"><span class="bt">Metin</span>
+      <ul>
+        <li><a href="https://tracery.io/editor/" target="_blank" rel="noopener">Tracery editörü</a> — soldaki dilbilgisini değiştirin, sağda cümleler üresin. Türkçe bir görev üreteci yazmayı deneyin.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="mini">Hepsi ücretsiz ve kurulumsuz. Her birinde kendinize sorun: <b>tasarımcı neyi elle yaptı, neyi algoritmaya bıraktı?</b></p>
 </section>
 
 <section data-sec="projeler">

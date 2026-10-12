@@ -200,7 +200,8 @@
     let key = 'plant', n = LSYS.plant.n, ang = LSYS.plant.ang, jitter = 0, seed = 1;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
-      const t = T(), L = LSYS[key], s = expand(L.ax, L.rules, n), r = RNG(seed);
+      const t = T(), L = LSYS[key], r = RNG(seed);
+      let s = L.ax, done = 0; while (done < n) { const nx = expand(s, L.rules, 1); if (nx.length > 130000) break; s = nx; done++; }
       // önce sınırları bul, sonra ölçekle
       const walk = cb => { let x = 0, y = 0, a = L.start * Math.PI / 180; const st = []; for (const ch of s) { if (ch === 'F') { const nx = x + Math.cos(a), ny = y + Math.sin(a); cb(x, y, nx, ny, st.length); x = nx; y = ny; } else if (ch === '+') a += (ang + (r() - 0.5) * jitter) * Math.PI / 180; else if (ch === '-') a -= (ang + (r() - 0.5) * jitter) * Math.PI / 180; else if (ch === '[') st.push([x, y, a]); else if (ch === ']') [x, y, a] = st.pop(); } };
       let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9; walk((x, y, nx, ny) => { mnx = Math.min(mnx, x, nx); mny = Math.min(mny, y, ny); mxx = Math.max(mxx, x, nx); mxy = Math.max(mxy, y, ny); });
@@ -209,7 +210,7 @@
       ctx.lineWidth = 1; ctx.lineCap = 'round';
       // ikinci geçiş: aynı tohumla yeniden yürüyüp çiz (sınır hesabıyla aynı açılar)
       (function () { let x = 0, y = 0, a = L.start * Math.PI / 180; const st = []; const rr = RNG(seed); for (const ch of s) { if (ch === 'F') { const nx = x + Math.cos(a), ny = y + Math.sin(a); const d = st.length; ctx.strokeStyle = key === 'koch' || key === 'dragon' ? t.blue : d > 3 ? t.green : (t.dark ? '#b08a5a' : '#7a5a32'); ctx.beginPath(); ctx.moveTo(ox + x * sc, oy + y * sc); ctx.lineTo(ox + nx * sc, oy + ny * sc); ctx.stroke(); x = nx; y = ny; } else if (ch === '+') a += (ang + (rr() - 0.5) * jitter) * Math.PI / 180; else if (ch === '-') a -= (ang + (rr() - 0.5) * jitter) * Math.PI / 180; else if (ch === '[') st.push([x, y, a]); else if (ch === ']') [x, y, a] = st.pop(); } })();
-      SL.drawLabel(ctx, `${L.name} · aksiyom “${L.ax}” · ${n} yineleme · dize uzunluğu ${s.length.toLocaleString('tr')}`, W / 2, H - 10, t.muted, { size: 11 });
+      SL.drawLabel(ctx, `${L.name} · aksiyom “${L.ax}” · ${done} yineleme${done < n ? ' (dize çok uzadı, burada durduk)' : ''} · dize uzunluğu ${s.length.toLocaleString('tr')}`, W / 2, H - 10, t.muted, { size: 11 });
       info.innerHTML = `Kurallar: ${Object.entries(L.rules).map(([k, v]) => `<code>${k} → ${v}</code>`).join(' · ')}. Kaplumbağa: <code>F</code> ileri çiz, <code>+</code>/<code>−</code> ${ang}° dön, <code>[</code> konumu kaydet, <code>]</code> geri dön (dal!). ${jitter ? 'Açıya ±' + jitter / 2 + '° rastgelelik eklendi: her ağaç farklı.' : ''}`;
     };
     const setKey = k => { key = k; n = LSYS[k].n; ang = LSYS[k].ang; nS.querySelector('input').value = n; nS.querySelector('b').textContent = n; aS.querySelector('input').value = ang; aS.querySelector('b').textContent = ang; draw(); };
@@ -239,12 +240,12 @@
       rooms.exit = [x, y]; rooms.start = path[0];
     };
     // her oda tipi için basit karo şablonu (# duvar, . boş); sonra rastgele süs
-    const tmpl = (type, r) => {
+    const tmpl = (type, r, rx) => {
       const g = Array.from({ length: RH }, (_, j) => Array.from({ length: RW }, (_, i) => (j === 0 || j === RH - 1 || i === 0 || i === RW - 1 ? '#' : '.')));
-      if (type >= 1) { for (let j = 3; j < 6; j++) { g[j][0] = '.'; g[j][RW - 1] = '.'; } }               // sol-sağ açık
+      if (type >= 1) { for (let j = 3; j < 6; j++) { if (rx > 0) g[j][0] = '.'; if (rx < 3) g[j][RW - 1] = '.'; } }               // sol-sağ açık
       if (type === 2 || type === 4) for (let i = 3; i < 7; i++) g[RH - 1][i] = '.';                      // alt açık
       if (type === 3 || type === 4) for (let i = 3; i < 7; i++) g[0][i] = '.';                           // üst açık
-      for (let k = 0; k < 4; k++) { const i = 1 + Math.floor(r() * (RW - 2)), j = 2 + Math.floor(r() * (RH - 4)); if (type === 0 || r() < 0.5) g[j][i] = '#'; }
+      for (let k = 0; k < 4; k++) { const i = 1 + Math.floor(r() * (RW - 2)), j = 2 + Math.floor(r() * (RH - 4)); if (type === 0 || (r() < 0.5 && j !== 4)) g[j][i] = '#'; }   // yol odasında orta sıra hep açık: yol tıkanmaz
       if (type === 0 && r() < 0.5) for (let i = 1; i < RW - 1; i++) g[4][i] = '#';
       return g;
     };
@@ -252,7 +253,7 @@
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
       const r = RNG(seed * 31 + 1), cols = ['#888', '#5aa9e6', '#e67e5a', '#9be37a', '#c79bff'];
       for (let ry = 0; ry < 4; ry++) for (let rx = 0; rx < 4; rx++) {
-        const type = rooms[ry][rx], g = tmpl(type, r), bx = ox + rx * RW * cs, by = oy + ry * RH * cs;
+        const type = rooms[ry][rx], g = tmpl(type, r, rx), bx = ox + rx * RW * cs, by = oy + ry * RH * cs;
         for (let j = 0; j < RH; j++) for (let i = 0; i < RW; i++) { ctx.fillStyle = g[j][i] === '#' ? (t.dark ? '#5b5145' : '#8a6f4e') : (t.dark ? '#22252f' : '#f3ede1'); ctx.fillRect(bx + i * cs, by + j * cs, cs, cs); }
         ctx.strokeStyle = cols[type]; ctx.lineWidth = 2; ctx.strokeRect(bx + 1, by + 1, RW * cs - 2, RH * cs - 2);
         SL.drawLabel(ctx, String(type), bx + 10, by + 10, cols[type], { size: 10 });
@@ -348,3 +349,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.biome = {
+    fn: 'pick_biome', jsFn: 'pickBiome',
+    ref: h => (h < 0 ? 'su' : h < 0.1 ? 'kum' : h < 0.5 ? 'çimen' : 'dağ'),
+    cases: () => { const cs = [[-0.4], [-0.01], [0], [0.05], [0.1], [0.3], [0.5], [0.9]]; for (let i = 0; i < 12; i++) cs.push([Math.round(SL.rand(-1, 1) * 100) / 100]); return cs; },
+    show: h => `yükseklik h = ${h}`,
+    hint: h => `Eşikler sırayla: h < 0 → "su", h < 0.1 → "kum", h < 0.5 → "çimen", yoksa "dağ". h = ${h} için hangi aralık?`
+  };
+  SL.AILABS.countwalls = {
+    fn: 'count_walls', jsFn: 'countWalls',
+    ref: (g, x, y) => { let n = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const nx = x + dx, ny = y + dy; if (ny < 0 || ny >= g.length || nx < 0 || nx >= g[0].length || g[ny][nx] === 1) n++; } return n; },
+    cases: () => { const G = [[1, 0, 0, 1, 0], [0, 0, 1, 0, 0], [0, 1, 1, 0, 1], [0, 0, 0, 0, 0]]; const cs = [[G, 1, 1], [G, 3, 2], [G, 2, 2], [G, 0, 0], [G, 4, 3], [G, 2, 0], [G, 0, 2]]; for (let i = 0; i < 12; i++) { const g = Array.from({ length: 4 }, () => Array.from({ length: 5 }, () => (Math.random() < 0.45 ? 1 : 0))); cs.push([g, Math.floor(Math.random() * 5), Math.floor(Math.random() * 4)]); } return cs; },
+    show: (g, x, y) => `x = ${x}, y = ${y}, ızgara (1 = duvar): ${g.map(r => r.join('')).join(' / ')}`,
+    hint: (g, x, y) => (x === 0 || y === 0 || x === g[0].length - 1 || y === g.length - 1 ? 'Bu hücre kenarda: harita dışına taşan komşular DUVAR sayılır (grid[-1] okumaya çalışmayın, önce sınırı kontrol edin).' : 'Hücrenin kendisini saymayın: dx ve dy ikisi birden 0 ise atlayın (continue).')
+  };
+})();
+/* EK:BİTİŞ */
