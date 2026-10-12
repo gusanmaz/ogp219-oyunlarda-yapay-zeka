@@ -1,5 +1,5 @@
 /* =====================================================================
-   core.js — Tüm desteler için ortak çekirdek
+   core.js — Tüm sunumlar için ortak çekirdek
    - Tema (açık/koyu), yardımcılar (el, select, slider, btn)
    - Adım adım oynatıcı (FramePlayer) + kontrol çubuğu (transport)
    - Quiz, sekmeler (tabs), kod büyüteci (zoom), satır numaraları
@@ -231,7 +231,7 @@
     let fontSize = baseFont;
     const run = () => shell.onRun && shell.onRun();
     const cm = window.CodeMirror(edHost, {
-      value: original, mode: lang === 'python' ? 'python' : 'javascript', lineNumbers: true,
+      value: original, mode: lang === 'python' ? 'python' : 'javascript', lineNumbers: true, lineWrapping: true,
       indentUnit: lang === 'python' ? 4 : 2, tabSize: 4, theme: 'lab', viewportMargin: Infinity,
       extraKeys: { 'Ctrl-Enter': run, 'Cmd-Enter': run, Tab: c => c.replaceSelection(' '.repeat(c.getOption('indentUnit'))) }
     });
@@ -287,7 +287,7 @@
     root.append(show);
   };
 
-  /* ---------------- .tabs (Python / C# / JS) — seçim tüm destede hatırlanır ---------------- */
+  /* ---------------- .tabs (Python / C# / JS) — seçim tüm sunumda hatırlanır ---------------- */
   const tabGroups = [];
   let prefLang = null;
   try { prefLang = localStorage.getItem('deck-lang'); } catch (e) {}

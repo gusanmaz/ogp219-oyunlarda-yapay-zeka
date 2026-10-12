@@ -1,4 +1,4 @@
-/* "Dengeli Arama Ağaçları" destesine özel demolar (ortak: ../ortak/dengeli.js) */
+/* "Dengeli Arama Ağaçları" sunumuna özel demolar (ortak: ../ortak/dengeli.js) */
 (function () {
   'use strict';
   const { el } = SL;

@@ -1,4 +1,4 @@
-/* "Minimum Yayılan Ağaçlar" destesine özel demolar (ortak: ../ortak/graf.js + mst.js) */
+/* "Minimum Yayılan Ağaçlar" sunumuna özel demolar (ortak: ../ortak/graf.js + mst.js) */
 (function () {
   'use strict';
   const { el } = SL;

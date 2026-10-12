@@ -351,7 +351,7 @@ function kruskal(V, edges) {
 <section data-sec="Prim">
   <h2>Prim algoritması (tembel sürüm)</h2>
   <div class="demo" data-demo="prim"></div>
-  <p class="mini">Mavi = ağaçtaki düğümler. Kesme = “ağaç” vs “ağaç dışı”. Ağacın dışarı uzanan kenarları bir <b>öncelik kuyruğunda</b> (Öncelik Kuyrukları destesi!); her adımda en hafifi alınır. İki ucu da ağaca girmiş kenarlar “bayat” olur: çıkınca atılır (tembellik).</p>
+  <p class="mini">Mavi = ağaçtaki düğümler. Kesme = “ağaç” vs “ağaç dışı”. Ağacın dışarı uzanan kenarları bir <b>öncelik kuyruğunda</b> (Öncelik Kuyrukları sunumu!); her adımda en hafifi alınır. İki ucu da ağaca girmiş kenarlar “bayat” olur: çıkınca atılır (tembellik).</p>
 </section>
 
 <section data-sec="Prim">
@@ -411,7 +411,7 @@ static double Prim(int V, List<(int w, double wt)>[] adj)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-// MinPQ: Öncelik Kuyrukları destesindeki ikili yığın (push/pop/size)
+// MinPQ: Öncelik Kuyrukları sunumundaki ikili yığın (push/pop/size)
 function prim(V, adj) {                 // adj[v] = [[w, ağırlık], ...]
   const marked = new Array(V).fill(false);
   const pq = new MinPQ((a, b) => a[2] - b[2]);   // [v, w, ağırlık]
@@ -519,7 +519,7 @@ def prim(V, adj):
 <section data-sec="oyunda">
   <h2>Labirentler ve kümeleme</h2>
   <div class="cols">
-    <div class="box game"><span class="bt">🌀 Labirent = rastgele ağırlıklı ızgaranın MST’si</span>Izgaradaki her duvara rastgele bir ağırlık ver; MST’yi (Kruskal) bul; MST kenarlarının duvarlarını yık. Sonuç: her hücreye tek yol olan “mükemmel labirent”. (Union–Find destesindeki labirent tam buydu!) Prim ile üretilen labirentler daha kısa, dallı koridorlu olur — tadı farklı.</div>
+    <div class="box game"><span class="bt">🌀 Labirent = rastgele ağırlıklı ızgaranın MST’si</span>Izgaradaki her duvara rastgele bir ağırlık ver; MST’yi (Kruskal) bul; MST kenarlarının duvarlarını yık. Sonuç: her hücreye tek yol olan “mükemmel labirent”. (Union–Find sunumundaki labirent tam buydu!) Prim ile üretilen labirentler daha kısa, dallı koridorlu olur — tadı farklı.</div>
     <div class="box game"><span class="bt">⚔️ Birlikleri k gruba ayır</span>Birim konumlarının MST’sini bul, <b>en ağır k − 1</b> kenarı sil → k bağlı bileşen = k küme (tek bağlantılı kümeleme, Princeton’ın uygulaması). RTS’de seçili 40 birimi otomatik takımlara bölmek ya da ekranda “ordu” etiketlerini gruplamak için.</div>
   </div>
 </section>
@@ -649,7 +649,7 @@ def prim(V, adj):
     <li>Kâğıt-kalem: tinyEWG’de Kruskal ve Prim’i (0’dan) uygulayın; kenarların eklenme sıralarını karşılaştırın.</li>
     <li>Bir kenarın ağırlığı biraz artarsa MST nasıl değişir? MST’de olan ve olmayan kenar için ayrı düşünün.</li>
     <li>p5.js’te: fareyle tıklanan noktaların MST’sini her tıklamada yeniden çizin (tam graf, ağırlık = mesafe).</li>
-    <li>Zindan demosundaki koridorları gerçek bir karo haritasına (0/1 ızgara) dönüştürün ve Yönsüz Graflar destesindeki BFS ile girişten boss’a uzaklığı hesaplayın.</li>
+    <li>Zindan demosundaki koridorları gerçek bir karo haritasına (0/1 ızgara) dönüştürün ve Yönsüz Graflar sunumundaki BFS ile girişten boss’a uzaklığı hesaplayın.</li>
     <li>“Maksimum yayılan ağaç” nasıl bulunur? (İpucu: ağırlıkları eksi yapın.) Oyunda nerede işe yarar?</li>
     <li>🤖 Bir YZ asistanından “Godot/Unity’de Delaunay + MST zindan üreticisi” isteyin. MST kısmını hangi algoritmayla yazdı? Union–Find’da yol sıkıştırma var mı?</li>
   </ol>
@@ -675,9 +675,9 @@ def prim(V, adj):
       <li><a href="https://www.gamedeveloper.com/programming/procedural-dungeon-generation-algorithm" target="_blank">A. Adonaac · Procedural Dungeon Generation Algorithm (TinyKeep)</a></li>
     </ul>
     <ul class="reflist">
-      <li><a href="../union-find/">Union–Find destesi (Kruskal’ın yardımcısı)</a></li>
-      <li><a href="../oncelik-kuyruklari/">Öncelik Kuyrukları destesi (Prim’in yardımcısı)</a></li>
-      <li><a href="../yonlu-graflar/">Önceki deste: Yönlü Graflar</a> · <a href="../">Ders haritası</a></li>
+      <li><a href="../union-find/">Union–Find sunumu (Kruskal’ın yardımcısı)</a></li>
+      <li><a href="../oncelik-kuyruklari/">Öncelik Kuyrukları sunumu (Prim’in yardımcısı)</a></li>
+      <li><a href="../yonlu-graflar/">Önceki sunum: Yönlü Graflar</a> · <a href="../">Ders haritası</a></li>
     </ul>
   </div>
 </section>
@@ -687,7 +687,7 @@ def prim(V, adj):
     <div class="lv">FINAL LEVEL ▶</div>
     <div class="ttl" style="font-size:64px">En Kısa Yollar</div>
     <div class="sub">Dijkstra, DAG’ler, Bellman–Ford — ve oyun yapay zekâsındaki yol bulmanın kapısı</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../en-kisa-yollar/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../en-kisa-yollar/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

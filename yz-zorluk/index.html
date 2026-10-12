@@ -69,7 +69,7 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-utility/">Y4 · Utility AI (puanlama, eğriler)</a><a class="" href="../yz-fsm/">Y2 · FSM (yönetmenin durumları)</a><a class="" href="../yz-ogrenme/">Y13 · Öğrenen YZ (oyuncu modeli, Drivatar)</a></div>
   <div class="prereq"><a class="opt" href="../yz-algilama/">Y11 · Algılama (farkındalık sayacı)</a><a class="opt" href="../yz-pcg/">Y15 · PCG (içeriği oyuncuya göre üretmek)</a><a class="opt" href="../yz-oyun-agaclari/">Y6 · Oyun Ağaçları (zorluk = arama derinliği)</a></div>
   <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>YZ yönetmeni dört durumlu bir FSM; oyuncunun “yoğunluk” değeri Y11’deki farkındalık sayacının kardeşi; lastik bant bir utility eğrisi. Yeni olan, bunları düşmana değil <b>oyuncunun deneyimine</b> uygulamak.</div>
@@ -462,7 +462,7 @@ public static float RubberBand(float gap, float dead = 100f, float full = 500f, 
 <section data-sec="kod">
   <h2>🎒 Kod sözlüğü</h2>
   <table class="gloss" style="font-size:17px">
-    <tr><td>Queue&lt;bool&gt; · Enqueue · Dequeue</td><td>kuyruk</td><td>Son N sonucu tutan kayan pencere (Yığınlar ve Kuyruklar destesi)</td></tr>
+    <tr><td>Queue&lt;bool&gt; · Enqueue · Dequeue</td><td>kuyruk</td><td>Son N sonucu tutan kayan pencere (Yığınlar ve Kuyruklar sunumu)</td></tr>
     <tr><td>recent.Count(w =&gt; w)</td><td>LINQ ile sayma</td><td>Koşulu sağlayan eleman sayısı (using System.Linq)</td></tr>
     <tr><td>Mathf.Lerp(a, b, t)</td><td>doğrusal ara değer</td><td>t = 0 → a, t = 1 → b; zorluğu oyun değişkenlerine eşlemek</td></tr>
     <tr><td>[Range(0, 10)]</td><td>öznitelik</td><td>Inspector’da kaydırıcı: tasarımcı canlı ayarlar</td></tr>
@@ -644,7 +644,7 @@ def next_phase(phase, intensity, t, enemies, peak, sustain, relax):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Oyun YZ’sinde Performans</div>
     <div class="sub">Bütçeler, zaman dilimleme, LOD, profil, çoklu iş parçacığı</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-performans/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-performans/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

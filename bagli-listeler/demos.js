@@ -1,5 +1,5 @@
 /* =====================================================================
-   demos.js — "Bağlı Listeler" destesine özel demolar
+   demos.js — "Bağlı Listeler" sunumuna özel demolar
    (Ortak dizi/liste bileşenleri ../ortak/liste.js içinde)
    ===================================================================== */
 (function () {

@@ -1,4 +1,4 @@
-/* "Yönsüz Graflar" destesine özel demolar (ortak: ../ortak/graf.js) */
+/* "Yönsüz Graflar" sunumuna özel demolar (ortak: ../ortak/graf.js) */
 (function () {
   'use strict';
   const { el } = SL;

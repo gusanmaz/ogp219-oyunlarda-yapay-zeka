@@ -39,7 +39,7 @@
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlebars"></div>
   <aside class="notes">
-    Bu deste Sedgewick &amp; Wayne'in "Algorithms, 4th ed." kitabının 2.1 bölümünü (Elementary Sorts) temel alır; matematik sadeleştirildi, örnekler oyunlardan seçildi.
+    Bu sunum Sedgewick &amp; Wayne'in "Algorithms, 4th ed." kitabının 2.1 bölümünü (Elementary Sorts) temel alır; matematik sadeleştirildi, örnekler oyunlardan seçildi.
     Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları. Arka plandaki çubuklar insertion sort ile sürekli sıralanıyor — öğrencilere "bu ne yapıyor?" diye sorabilirsiniz; ders sonunda cevabı bilecekler.
   </aside>
 </section>
@@ -71,7 +71,7 @@
     <div class="icon-card"><div class="ic">🧠</div><b>Utility AI</b>Her eylemi puanla, en iyisini seç (veya ilk 3’ü)</div>
     <div class="icon-card"><div class="ic">🖼️</div><b>Çizim sırası</b>Kim önde, kim arkada? Her karede sıralama</div>
     <div class="icon-card"><div class="ic">💥</div><b>Çarpışma tespiti</b>Fizik motorları nesneleri x’e göre sıralar</div>
-    <div class="icon-card"><div class="ic">🃏</div><b>Rastgelelik</b>Deste karıştırma, Tetris torbası, loot</div>
+    <div class="icon-card"><div class="ic">🃏</div><b>Rastgelelik</b>Sunum karıştırma, Tetris torbası, loot</div>
   </div>
   <p class="fragment" style="margin-top:22px">Algoritmalar = oyun YZ’sinin <b>kas sistemi</b>. Önce temel hareketleri öğreneceğiz. 💪</p>
   <aside class="notes">Her kutuya ders boyunca geri döneceğiz. Bugün özellikle hedef seçme, çizim sırası ve karıştırma için somut demolar var.</aside>
@@ -1789,7 +1789,7 @@ function nextBag() {
       <p class="mini">Tamamen rastgele seçimde “I” parçası onlarca parça boyunca gelmeyebilir 😩. Modern Tetris oyunları torbayı karıştırıp sırayla dağıtır: iki “I” arasında <b>en fazla 12</b> parça olabilir.</p>
     </div>
   </div>
-  <aside class="notes">Oyun tasarımında "adil rastgelelik" (pseudo-random distribution) çok yaygın: loot tablolarında acıma sayacı (pity timer), kart oyunlarında deste, roguelike'larda oda havuzu.</aside>
+  <aside class="notes">Oyun tasarımında "adil rastgelelik" (pseudo-random distribution) çok yaygın: loot tablolarında acıma sayacı (pity timer), kart oyunlarında sunum, roguelike'larda oda havuzu.</aside>
 </section>
 
 <section data-sec="karıştırma">
@@ -1874,7 +1874,7 @@ function push(open, node) {
       <li>Sonraki kart <b>sıralama makineleri</b> bir kolondaki rakama göre kartları 10 cebe dağıtıyordu. Operatör cepleri sırayla toplayıp bir sonraki kolon için tekrar ediyordu: en anlamsız haneden başlayan <b>taban (radix) sıralaması</b>, karşılaştırma yapmadan sıralama.</li>
       <li>Hollerith’in 1896’da kurduğu şirket birleşmelerle 1924’te adını <b>IBM</b> olarak değiştirdi.</li>
     </ul></div>
-    <div class="box story"><span class="bt">Ders</span>Sıralama, bilgisayardan önce de bir mühendislik problemiydi. Radix sıralaması karşılaştırma yapmadığı için N log N alt sınırına takılmaz (Mergesort destesindeki alt sınır sadece <b>karşılaştırmalı</b> sıralamalar içindir). Obama’nın 2007’deki ünlü cevabındaki soru (“bir milyon 32 bitlik tamsayıyı en iyi nasıl sıralarsın?”) için de beklenen cevap buydu.</div>
+    <div class="box story"><span class="bt">Ders</span>Sıralama, bilgisayardan önce de bir mühendislik problemiydi. Radix sıralaması karşılaştırma yapmadığı için N log N alt sınırına takılmaz (Mergesort sunumundaki alt sınır sadece <b>karşılaştırmalı</b> sıralamalar içindir). Obama’nın 2007’deki ünlü cevabındaki soru (“bir milyon 32 bitlik tamsayıyı en iyi nasıl sıralarsın?”) için de beklenen cevap buydu.</div>
   </div>
   <p class="mini" style="margin-top:6px">Kaynak: <a href="https://en.wikipedia.org/wiki/Herman_Hollerith" target="_blank" rel="noopener">Wikipedia: Herman Hollerith</a> · <a href="https://en.wikipedia.org/wiki/Radix_sort" target="_blank" rel="noopener">Wikipedia: Radix sort</a></p>
 </section>

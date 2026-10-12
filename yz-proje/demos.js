@@ -1,4 +1,4 @@
-/* "Proje: Hepsini Birleştir" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Proje: Hepsini Birleştir" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

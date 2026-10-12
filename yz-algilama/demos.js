@@ -1,4 +1,4 @@
-/* "Algılama" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Algılama" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

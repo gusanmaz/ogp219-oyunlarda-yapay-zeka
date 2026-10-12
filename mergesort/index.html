@@ -34,7 +34,7 @@
   <div class="sub"><i>Böl ve fethet</i> — N² duvarını yıkan ilk algoritma: her zaman N lg N</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlemerge"></div>
-  <aside class="notes">Bu deste Sedgewick &amp; Wayne “Algorithms, 4th ed.” 2.2 (Mergesort) bölümünü temel alır. Temel sıralama destesinin (selection, insertion, shellsort) devamıdır. Arka planda aşağıdan yukarı mergesort çalışıyor.</aside>
+  <aside class="notes">Bu sunum Sedgewick &amp; Wayne “Algorithms, 4th ed.” 2.2 (Mergesort) bölümünü temel alır. Temel sıralama sunumunun (selection, insertion, shellsort) devamıdır. Arka planda aşağıdan yukarı mergesort çalışıyor.</aside>
 </section>
 
 <section>
@@ -362,7 +362,7 @@ private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
 <section data-sec="iyileştirmeler">
   <h2>Üç pratik iyileştirme</h2>
   <div class="cols c3">
-    <div class="box game"><span class="bt">1) Küçük parçalara insertion sort</span>~10 elemanlık parçalar için özyinelemenin yükü fazla. Insertion sort küçük dizilerde çok hızlı (temel sıralama destesi!). <b>%10–15 kazanç</b>.</div>
+    <div class="box game"><span class="bt">1) Küçük parçalara insertion sort</span>~10 elemanlık parçalar için özyinelemenin yükü fazla. Insertion sort küçük dizilerde çok hızlı (temel sıralama sunumu!). <b>%10–15 kazanç</b>.</div>
     <div class="box prop"><span class="bt">2) Zaten sıralı mı?</span><code>a[mid] ≤ a[mid+1]</code> ise iki yarı zaten doğru sırada → birleştirmeyi atla. Sıralı girdide mergesort <b>doğrusal</b> olur!</div>
     <div class="box story"><span class="bt">3) Kopyalamayı azalt</span>Her özyineleme seviyesinde <code>a</code> ile <code>aux</code>’un rollerini değiştirerek kopyalama adımını ortadan kaldırmak.</div>
   </div>
@@ -425,8 +425,8 @@ function sortRange(a, aux, lo, hi) {
       <p>2002’de <b>Tim Peters</b>, Python için mergesort’un pratikte çok hızlı bir çeşidini yazdı: <b>Timsort</b>.</p>
       <ul>
         <li class="fragment">Dizide <b>zaten sıralı parçaları</b> (“koşu”, <span class="en">run</span>) bulur — gerçek verilerde çok olur.</li>
-        <li class="fragment">Kısa koşuları <b>insertion sort</b> ile uzatır (temel sıralama destesi).</li>
-        <li class="fragment">Koşuları <b>birleştirir</b>; bir taraf hep kazanıyorsa <b>dörtnala arama</b> <span class="en">galloping</span> ile atlar (arama destesi!).</li>
+        <li class="fragment">Kısa koşuları <b>insertion sort</b> ile uzatır (temel sıralama sunumu).</li>
+        <li class="fragment">Koşuları <b>birleştirir</b>; bir taraf hep kazanıyorsa <b>dörtnala arama</b> <span class="en">galloping</span> ile atlar (arama sunumu!).</li>
       </ul>
       <p class="fragment">Sonuç: kararlı, en kötü N lg N, neredeyse sıralı veride N’e yakın. Bugün Python, Java (nesneler için), Android ve V8 (JavaScript) Timsort kullanıyor.</p>
     </div>
@@ -501,7 +501,7 @@ function mergeSortBU(a) {
 <section data-sec="yarış">
   <h2>🏁 Yarış: temel sıralamalar vs mergesort</h2>
   <div class="race" data-n="100" data-algs="insertion,shell,merge"></div>
-  <aside class="notes">Temel sıralama destesindeki yarışın devamı. Girdi “Ters sıralı”: insertion çok yavaş, mergesort hep aynı hızda. “Sıralı”: insertion anında biter; mergesort’un “zaten sıralı” kontrolü olmadan N lg N’dir (bu yarıştaki sürüm kontrolsüz).</aside>
+  <aside class="notes">Temel sıralama sunumundaki yarışın devamı. Girdi “Ters sıralı”: insertion çok yavaş, mergesort hep aynı hızda. “Sıralı”: insertion anında biter; mergesort’un “zaten sıralı” kontrolü olmadan N lg N’dir (bu yarıştaki sürüm kontrolsüz).</aside>
 </section>
 
 <section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
@@ -523,7 +523,7 @@ function mergeSortBU(a) {
       <p class="fragment">Karar ağacının yüksekliği = <b>en kötü durumdaki</b> karşılaştırma sayısı.</p>
     </div>
   </div>
-  <aside class="notes">Arama destesindeki “20 soru” oyununun tersi: N! olası cevap arasından doğruyu bulmak için en az lg N! evet/hayır sorusu gerekir. Hiçbir zekice soru sırası bunu azaltamaz.</aside>
+  <aside class="notes">Arama sunumundaki “20 soru” oyununun tersi: N! olası cevap arasından doğruyu bulmak için en az lg N! evet/hayır sorusu gerekir. Hiçbir zekice soru sırası bunu azaltamaz.</aside>
 </section>
 
 <section data-sec="alt sınır · matematik">
@@ -665,7 +665,7 @@ def merge(a, aux, lo, mid, hi):
       <li>Timsort, sıralı parçaları (run) bir yığında tutar ve yığındaki uzunluklar için bir kural (değişmez) korunmalıdır. Algoritma bu kuralı sadece yığının <b>en üstündeki</b> birkaç eleman için kontrol ediyordu; belirli girdilerde kural daha aşağıda bozuluyor, yığın için ayrılan sabit boyut aşılıyor ve program <b>çöküyordu</b>.</li>
       <li>Hata Python’un özgün uygulamasında da vardı. Python düzeltmeyi hızla uyguladı; Java ilk aşamada yığın boyutunu büyüterek sorunu ötelemeyi seçti. Ekip, düzeltilmiş sürümü KeY ile doğruladı.</li>
     </ul></div>
-    <div class="box story"><span class="bt">Ders</span>Yıllarca test edilmiş, milyarlarca kez çalışmış bir kod bile hatalı olabilir: hata sadece çok büyük ve özel girdilerde ortaya çıkıyordu. Değişmez (invariant) düşüncesi bu destedeki birleştirme ispatının ve iyi testlerin temeli. Ayrıca: <b>standart kütüphaneyi kullanın</b>; bu tür hataları sizin için onlar düzeltir.</div>
+    <div class="box story"><span class="bt">Ders</span>Yıllarca test edilmiş, milyarlarca kez çalışmış bir kod bile hatalı olabilir: hata sadece çok büyük ve özel girdilerde ortaya çıkıyordu. Değişmez (invariant) düşüncesi bu sunumdaki birleştirme ispatının ve iyi testlerin temeli. Ayrıca: <b>standart kütüphaneyi kullanın</b>; bu tür hataları sizin için onlar düzeltir.</div>
   </div>
   <p class="mini" style="margin-top:6px">Kaynak: <a href="https://ir.cwi.nl/pub/23709" target="_blank" rel="noopener">de Gouw ve ark. 2015 (CWI)</a> · <a href="https://github.com/python/cpython/blob/main/Objects/listsort.txt" target="_blank" rel="noopener">CPython listsort.txt</a></p>
 </section>
@@ -764,7 +764,7 @@ def merge(a, aux, lo, mid, hi):
     <ul class="reflist">
       <li><a href="https://visualgo.net/en/sorting" target="_blank">VisuAlgo · Sorting (Merge Sort)</a></li>
       <li><a href="https://www.cs.usfca.edu/~galles/visualization/ComparisonSort.html" target="_blank">USFCA · Comparison Sort</a></li>
-      <li><a href="../siralama-temel/">Önceki deste: Temel Sıralama</a> · <a href="../">Ders haritası</a></li>
+      <li><a href="../siralama-temel/">Önceki sunum: Temel Sıralama</a> · <a href="../">Ders haritası</a></li>
     </ul>
   </div>
 </section>
@@ -774,7 +774,7 @@ def merge(a, aux, lo, mid, hi):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:64px">Quicksort</div>
     <div class="sub">Ek bellek istemeyen, pratikte en hızlı sıralama — ve onun riskleri</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../quicksort/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../quicksort/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

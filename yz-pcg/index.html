@@ -70,7 +70,7 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, rastgelelik)</a><a class="" href="../yz-astar/">Y8 · A* (ızgara, komşular)</a><a class="" href="../yonsuz-graflar/">Yönsüz Graflar (BFS, flood fill)</a></div>
   <div class="prereq"><a class="opt" href="../union-find/">Union-Find (bağlantı)</a><a class="opt" href="../yz-taktik/">Y12 · Taktik YZ (bölgeler)</a><a class="opt" href="../yz-ogrenme/">Y13 · Öğrenen YZ (arama ve evrim)</a></div>
   <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu hafta iki eski tanıdık tekrar sahnede: ızgara ve graf. Mağaranın bağlı olup olmadığını flood fill ile, seviyenin oynanabilir olup olmadığını A* ile test edeceğiz.</div>
@@ -287,7 +287,7 @@
       <button data-opt="C">Oyuncuya kazma aleti vermek</button>
       <button data-opt="D">Otomat adımını artırmak her zaman çözer</button>
     </div>
-    <div class="explain">Rastgele bir yöntem garantisi olmayan bir sonuç verir; garanti, <b>sonradan test</b> ederek sağlanır. Flood fill (Yönsüz Graflar destesi) ya da A* ile başlangıçtan çıkışa yol aranır; yoksa en yakın iki bölge arasına tünel kazılır ya da yeniden üretilir. Kazma aleti (C) Spelunky’nin bombası gibi bir tasarım cevabı olabilir, ama zorunlu yolu ona bırakmak riskli.</div>
+    <div class="explain">Rastgele bir yöntem garantisi olmayan bir sonuç verir; garanti, <b>sonradan test</b> ederek sağlanır. Flood fill (Yönsüz Graflar sunumu) ya da A* ile başlangıçtan çıkışa yol aranır; yoksa en yakın iki bölge arasına tünel kazılır ya da yeniden üretilir. Kazma aleti (C) Spelunky’nin bombası gibi bir tasarım cevabı olabilir, ama zorunlu yolu ona bırakmak riskli.</div>
   </div>
 </section>
 
@@ -384,7 +384,7 @@
       </ol>
     </div>
     <div>
-      <div class="box story"><span class="bt">Arama tabanlı PCG</span>Togelius ve arkadaşları (2011): içeriği bir <b>arama problemi</b> olarak görün. Rastgele aday üret, bir uygunluk fonksiyonuyla puanla (oynanabilir mi, ne kadar zor, ne kadar çeşitli?), en iyileri evrimleştir (Y13’teki nöroevrimin aynısı, ama ağ yerine harita). Starcraft haritaları, kart oyunu desteleri, bulmacalar bu yolla üretildi.</div>
+      <div class="box story"><span class="bt">Arama tabanlı PCG</span>Togelius ve arkadaşları (2011): içeriği bir <b>arama problemi</b> olarak görün. Rastgele aday üret, bir uygunluk fonksiyonuyla puanla (oynanabilir mi, ne kadar zor, ne kadar çeşitli?), en iyileri evrimleştir (Y13’teki nöroevrimin aynısı, ama ağ yerine harita). Starcraft haritaları, kart oyunu sunumları, bulmacalar bu yolla üretildi.</div>
       <div class="box low"><span class="bt">Karma girişimli tasarım</span>Tasarımcı çizer, üreteç önerir, tasarımcı seçer ya da düzeltir. Unreal’ın PCG çerçevesi ve Houdini bu fikrin endüstrideki karşılığı: tasarımcı bir çizgi çizer, sistem kenarına orman ve kayalar serper.</div>
     </div>
   </div>
@@ -402,7 +402,7 @@
         <ul style="font-size:.82em">
           <li><b>Unreal Engine 5.7</b> (Kasım 2025): PCG çerçevesi “üretime hazır” oldu; yeni prosedürel bitki editörü deneysel olarak geldi.</li>
           <li><b>Houdini</b>: film ve oyunlarda prosedürel modelleme ve dünya inşası standardı.</li>
-          <li>Roguelike’lar (Hades II, Balatro’nun desteleri, Dead Cells) PCG’yi tasarımın merkezine koymaya devam ediyor.</li>
+          <li>Roguelike’lar (Hades II, Balatro’nun sunumları, Dead Cells) PCG’yi tasarımın merkezine koymaya devam ediyor.</li>
           <li>Y16’da üretken YZ: görüntü, ses, 3B model ve “oynanabilir dünya modelleri”.</li>
         </ul></div>
     </div>
@@ -555,7 +555,7 @@ bool[,] Step(bool[,] g) {
     <tr><td>noiseSeed · noiseDetail (p5.js)</td><td>gürültü ayarı</td><td>Gürültünün tohumu · oktav sayısı ve kalıcılık</td></tr>
     <tr><td>Mathf.PerlinNoise(x, y)</td><td>Unity gürültüsü</td><td>0–1 arası 2B Perlin değeri; tohum yok, koordinatı kaydırarak çeşitlenir</td></tr>
     <tr><td>np.mgrid · astype(int)</td><td>NumPy ızgarası · tam sayıya çevirme</td><td>Bütün piksellerin koordinatları · ondalığı atma</td></tr>
-    <tr><td>deque · popleft</td><td>çift uçlu kuyruk</td><td>BFS için hızlı kuyruk (Kuyruklar destesi)</td></tr>
+    <tr><td>deque · popleft</td><td>çift uçlu kuyruk</td><td>BFS için hızlı kuyruk (Kuyruklar sunumu)</td></tr>
     <tr><td>bool[,] · GetLength(0)</td><td>2B dizi</td><td>C# ızgarası; 0 = satır, 1 = sütun</td></tr>
     <tr><td>Tilemap.SetTile</td><td>karo yerleştirme</td><td>Unity 2D’de ızgaraya karo koymak</td></tr>
   </table>
@@ -737,7 +737,7 @@ def value_noise(x, lattice):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Üretken YZ</div>
     <div class="sub">Görüntü, ses, 3B ve oynanabilir dünya modelleri</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #d79bff" href="../yz-uretken/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #d79bff" href="../yz-uretken/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

@@ -1,4 +1,4 @@
-/* "Sonlu Durum Makineleri" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Sonlu Durum Makineleri" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;
@@ -8,13 +8,13 @@
   const COLS = t => ({ DEVRIYE: t.blue, SUPHE: t.amber, KOVALA: t.red, SALDIR: t.purple, KAC: t.green });
 
   /* referans geçiş fonksiyonu (laboratuvarlarda da beklenen davranış) */
-  const refNext = (state, s) => {
+  const refNext = (state, s, exitDist = 90) => {
     if (s.hp < 30 && state !== 'KAC') return 'KAC';                 // her durumdan
     switch (state) {
       case 'DEVRIYE': return s.seesPlayer ? 'KOVALA' : s.heardNoise ? 'SUPHE' : 'DEVRIYE';
       case 'SUPHE': return s.seesPlayer ? 'KOVALA' : s.timeInState > 4 ? 'DEVRIYE' : 'SUPHE';
       case 'KOVALA': return !s.seesPlayer ? 'SUPHE' : s.dist < 60 ? 'SALDIR' : 'KOVALA';
-      case 'SALDIR': return !s.seesPlayer ? 'SUPHE' : s.dist > 90 ? 'KOVALA' : 'SALDIR';   // histerezis: 60'ta gir, 90'da çık
+      case 'SALDIR': return !s.seesPlayer ? 'SUPHE' : s.dist > exitDist ? 'KOVALA' : 'SALDIR';   // histerezis: 60'ta gir, 90'da çık
       case 'KAC': return s.hp > 70 ? 'DEVRIYE' : 'KAC';
     }
     return state;
@@ -24,10 +24,11 @@
   /* ---------- FSM diyagramı (SVG) ---------- */
   const NODES = { DEVRIYE: [90, 60], SUPHE: [90, 215], KOVALA: [280, 135], SALDIR: [440, 60], KAC: [300, 290] };
   const EDGES = [['DEVRIYE', 'KOVALA', 'görüyor'], ['DEVRIYE', 'SUPHE', 'ses'], ['SUPHE', 'KOVALA', 'görüyor'], ['SUPHE', 'DEVRIYE', '4 sn'], ['KOVALA', 'SUPHE', 'kaybetti'], ['KOVALA', 'SALDIR', '< 60'], ['SALDIR', 'KOVALA', '> 90'], ['KAC', 'DEVRIYE', 'can > 70', [[248, 296], [15, 300], [10, 95], [42, 72]]]];
-  function fsmSVG(active, flash) {
+  function fsmSVG(active, flash, exitDist = 90) {
     const t = T(), col = COLS(t);
     let s = `<defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
-    EDGES.forEach(([a, b, lab, curve]) => {
+    EDGES.forEach(([a, b, lab0, curve]) => {
+      const lab = lab0 === '> 90' ? '> ' + exitDist : lab0;
       if (curve) {   // eğri ok (diğer okların arasından geçmesin)
         const on = flash && flash[0] === a && flash[1] === b, [p0, c1, c2, p1] = curve;
         s += `<path d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p1[0]},${p1[1]}" fill="none" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#fa)"/>`;
@@ -52,16 +53,31 @@
   }
 
   D.guardfsm = function (root) {
-    const sim = SL.makeGuardArena({ decide: refNext, memory: root.dataset.memory != null ? root.dataset.memory === '1' : true, onDraw: st => {
-      diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null);
+    // data-memory="0": "titreme" kopyası — histerezis ve algı hafızası kapalı başlar; bot oyuncu nöbetçiden yavaşça geri çekilir
+    const flicker = root.dataset.memory === '0';
+    let hyst = !flicker, bp = V.v(380, 70);
+    const bot = (st, dt) => {   // nöbetçi 75 pikselden yakınsa ondan uzaklaş (40 px/sn): tek eşikte titremeyi tetikler
+      const away = V.sub(bp, st.g);
+      if (V.len(away) < 75) {
+        const stepTo = d => V.v(SL.clamp(bp.x + d.x * 40 * dt, 20, 700), SL.clamp(bp.y + d.y * 40 * dt, 20, 360));
+        let dir = V.norm(away), n = stepTo(dir);
+        if (V.dist(n, bp) < 40 * dt * 0.5) n = stepTo(V.perp(dir));   // kenara sıkıştıysa kenar boyunca kay
+        bp = n;
+      }
+      return bp;
+    };
+    const sim = SL.makeGuardArena({ decide: (state, s) => refNext(state, s, hyst ? 90 : 60), bot: flicker ? bot : null, onReset: () => { bp = V.v(380, 70); }, memory: root.dataset.memory != null ? root.dataset.memory === '1' : true, onDraw: st => {
+      diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null, hyst ? 90 : 60);
       const s = st.sense || {};
       info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b>${s.dist}</b></span><span class="cnt">görüyor <b>${s.seesPlayer ? 'evet' : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('') || '<i>henüz geçiş yok</i>'}</div>`;
     } });
     const diag = el('div', { class: 'fsm-diag' }), info = el('div');
+    const check = (label, on, fn) => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => fn(e.target.checked) }); cb.checked = on; return cb; })(), ' ' + label);
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Nöbetçiye ateş et (−25 can)', () => sim.shoot(), 'primary'),
-      el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => sim.setMemory(e.target.checked) }); cb.checked = sim.st.memory; return cb; })(), ' algı hafızası (1,2 sn)'),
-      el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses çıkar')),
+    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'),
+      flicker ? check('histerezis (60’ta gir, 90’da çık)', hyst, v => { hyst = v; }) : null,
+      check('algı hafızası (1,2 sn)', sim.st.memory, v => sim.setMemory(v)),
+      el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses çıkar · X = ateş et')),
     el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas), el('div', { class: 'gv-side' }, diag, info)), sim.world.controls());
     sim.world.reset();
     return { start: () => sim.world.start(), stop: () => sim.world.stop() };
@@ -107,7 +123,7 @@
     let bad = false;
     const sim = SL.makeGuardArena({ decide: refNext, displayW: 540, onBad: v => { api.setMsg('err', '⚠️ nextState geçerli bir durum adı döndürmeli (DEVRIYE, SUPHE, KOVALA, SALDIR, KAC). Döndürülen: ' + JSON.stringify(v)); }, onDraw: st => { lbl.textContent = `durum: ${NAMES[st.state]} · can ${Math.round(st.hp)}`; } });
     const lbl = el('div', { class: 'mini' });
-    box.append(sim.world.canvas, el('div', { class: 'sv-controls' }, btn('🔫 ateş et (−25)', () => sim.shoot())), lbl, sim.world.controls({ speed: false }));
+    box.append(sim.world.canvas, el('div', { class: 'sv-controls' }, btn('🔫 ateş et (−25) · X tuşu', () => sim.shoot())), lbl, sim.world.controls({ speed: false }));
     sim.world.reset();
     return {
       world: sim.world,
@@ -140,3 +156,26 @@
     hint: (st, s) => (s.hp < 30 && st !== 'KAC' ? 'Can 30’un altındaysa HER durumdan KAC’a geçilir (önce bunu kontrol edin).' : 'Kurallar tablosunu durum durum kontrol edin.')
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const LIGHT = { YESIL: 'SARI', SARI: 'KIRMIZI', KIRMIZI: 'YESIL' };
+  SL.AILABS.light = {
+    fn: 'next_light', jsFn: 'nextLight',
+    ref: s => LIGHT[s],
+    cases: () => [['YESIL'], ['SARI'], ['KIRMIZI']],
+    show: s => `şu anki durum "${s}"`,
+    hint: () => 'Üç durum, üç geçiş: YESIL → SARI → KIRMIZI → YESIL. Her durum için bir if (ya da bir nesne/tablo) yeter.'
+  };
+  const DOOR = { ACIK: { kapat: 'KAPALI' }, KAPALI: { ac: 'ACIK', kilitle: 'KILITLI' }, KILITLI: { kilidi_ac: 'KAPALI' } };
+  SL.AILABS.door = {
+    fn: 'next_door', jsFn: 'nextDoor',
+    ref: (s, e) => (DOOR[s] && DOOR[s][e]) || s,
+    cases: () => { const cs = []; for (const s of ['ACIK', 'KAPALI', 'KILITLI']) for (const e of ['ac', 'kapat', 'kilitle', 'kilidi_ac']) cs.push([s, e]); return cs; },
+    show: (s, e) => `durum "${s}", olay "${e}"`,
+    hint: (s, e) => (DOOR[s][e] ? `"${s}" durumunda "${e}" olayı kapıyı "${DOOR[s][e]}" yapar.` : `"${s}" durumunda "${e}" olayının anlamı yok: durum DEĞİŞMEMELİ (kilitli kapı açılmaz, açık kapı kilitlenmez).`)
+  };
+})();
+/* EK:BİTİŞ */

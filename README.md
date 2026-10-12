@@ -8,7 +8,7 @@ Oyun yapay zekâsı algoritmalarına geçmeden önce ihtiyaç duyulan temel algo
 
 ## Ders haritası
 
-Büyük konular, Princeton’daki gibi alt konulara (ayrı destelere) bölünmüştür.
+Büyük konular, Princeton’daki gibi alt konulara (ayrı sunumlara) bölünmüştür.
 
 **Bölüm 1 · Temeller**
 
@@ -92,7 +92,7 @@ Sonraki bölüm: oyunlara özel yapay zekâ algoritmaları ve veri yapıları.
 
 ```
 index.html          ders haritası (ana sayfa)
-ortak/              tüm destelerin ortak stil ve kodları
+ortak/              tüm sunumların ortak stil ve kodları
   deck.css          tema ve slayt stilleri
   core.js           tema, kod büyüteci, sekmeler, quiz, adım adım oynatıcı, kod laboratuvarı iskeleti
   siralama.js       sıralama görselleştirmeleri
@@ -154,7 +154,7 @@ yz-performans/      Y18 · Kare bütçesi, ölçüm, zaman dilimleme, yol isteğ
 yz-proje/           Y19 · NPC mimarisi, dönemin tekniklerini birleştiren canlı gizlilik oyunu, proje şablonları, kapsam, tasarım belgesi, hata ayıklama ve test, YZ asistanı kuralları, puanlama
 ```
 
-Her deste kendi klasöründe bir `index.html` ve desteye özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).
+Her sunum kendi klasöründe bir `index.html` ve sunuma özel demoların bulunduğu `demos.js` dosyasından oluşur. Yerelde açmak için `index.html` dosyasını tarayıcıda açmak yeterlidir (kütüphaneler CDN’den yüklenir; internet gerekir).
 
 ## Kaynak
 

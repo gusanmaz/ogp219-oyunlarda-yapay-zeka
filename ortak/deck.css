@@ -789,3 +789,7 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .em-row.em-top { background: color-mix(in srgb, var(--green) 18%, transparent); }
 .em-n { font-weight: 700; }
 .em-s { font-family: 'JetBrains Mono', monospace; text-align: right; }
+
+/* laboratuvar sonuç paneli: test açıklaması okunabilir boyutta */
+.reveal .ll-lab-view .mini { font-size: 17px; line-height: 1.4; margin: 4px 0 8px; opacity: 1; }
+.reveal .ll-lab-view .mini b { font-family: "JetBrains Mono", monospace; font-size: .95em; }

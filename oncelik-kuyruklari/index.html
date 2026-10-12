@@ -78,7 +78,7 @@
     <tr><td>heapify · heapsort</td><td>yığın kurma · yığın sıralaması</td><td>Diziyi yerinde yığına çevirme · yığınla sıralama</td></tr>
     <tr><td>event-driven simulation</td><td>olay güdümlü benzetim</td><td>Zamanı karelerle değil, olaydan olaya atlayarak ilerletmek</td></tr>
   </table>
-  <p class="mini">⚠️ “Yığın” kelimesi Türkçede iki şey için kullanılıyor: <b>stack</b> (Yığınlar ve Kuyruklar destesi) ve <b>heap</b> (bu deste). Bellekteki “heap” (GC’nin yönettiği alan) ise üçüncü, ilgisiz bir anlam! Karışmasın diye İngilizcesini de söyleyeceğiz.</p>
+  <p class="mini">⚠️ “Yığın” kelimesi Türkçede iki şey için kullanılıyor: <b>stack</b> (Yığınlar ve Kuyruklar sunumu) ve <b>heap</b> (bu sunum). Bellekteki “heap” (GC’nin yönettiği alan) ise üçüncü, ilgisiz bir anlam! Karışmasın diye İngilizcesini de söyleyeceğiz.</p>
 </section>
 
 <section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b0f3a 100%)">
@@ -621,7 +621,7 @@ function heapsort(a) {
         <li>İç döngüsü quicksort’unkinden uzun</li>
         <li><b>Kararlı değil</b></li>
       </ul>
-      <p class="mini">Bu yüzden C#’ın <code>Array.Sort</code>’u ve C++’ın <code>std::sort</code>’u <b>introsort</b> kullanır: quicksort ile başla, özyineleme çok derinleşirse <b>heapsort’a geç</b> (Quicksort destesi). Heapsort = sigorta poliçesi.</p>
+      <p class="mini">Bu yüzden C#’ın <code>Array.Sort</code>’u ve C++’ın <code>std::sort</code>’u <b>introsort</b> kullanır: quicksort ile başla, özyineleme çok derinleşirse <b>heapsort’a geç</b> (Quicksort sunumu). Heapsort = sigorta poliçesi.</p>
     </div>
   </div>
 </section>
@@ -724,7 +724,7 @@ def update(now):                   # her karede
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-// JS'te hazır PQ yok → bu destedeki swim/sink ile küçük bir MinPQ
+// JS'te hazır PQ yok → bu sunumdaki swim/sink ile küçük bir MinPQ
 class MinPQ {
   constructor() { this.a = [null]; }                 // a[0] boş
   get size() { return this.a.length - 1; }
@@ -798,7 +798,7 @@ function update(now) {                               // her karede
   <div class="box game" style="font-size:.98em"><span class="bt">🎮 Gelecek bölüm için kanca: A* yol bulma</span>
     <p>Oyunlardaki yol bulmanın kralı <b>A*</b> algoritması bir <b>açık liste</b> <span class="en">open list</span> tutar: “keşfedilmeyi bekleyen kareler”. Her adımda <b>en umut verici</b> kareyi (tahmini toplam maliyeti <b>en küçük</b>) seçer.</p>
     <p class="fragment">“En küçüğü seç, yenilerini ekle, tekrar et” → bu tam olarak bir <b>MinPQ</b>! Açık listeyi sıradan bir listeyle tutan bir A* büyük haritada saniyeler sürer; ikili yığınla milisaniyeler.</p>
-    <p class="fragment mini">Önce “En Kısa Yollar” destesinde Dijkstra’yı (A*’ın atası) MinPQ ile göreceğiz; A*’ın kendisi Oyun Yapay Zekâsı bölümünde.</p>
+    <p class="fragment mini">Önce “En Kısa Yollar” sunumunda Dijkstra’yı (A*’ın atası) MinPQ ile göreceğiz; A*’ın kendisi Oyun Yapay Zekâsı bölümünde.</p>
   </div>
 </section>
 
@@ -926,7 +926,7 @@ function update(now) {                               // her karede
       <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.priorityqueue-2" target="_blank">.NET · PriorityQueue&lt;TElement,TPriority&gt;</a></li>
       <li><a href="https://www.cs.usfca.edu/~galles/visualization/Heap.html" target="_blank">USFCA · Heap görselleştirmesi</a></li>
       <li><a href="https://visualgo.net/en/heap" target="_blank">VisuAlgo · Binary Heap</a></li>
-      <li><a href="../bst-geometrik/">Önceki deste: BST’nin Geometrik Uygulamaları</a> · <a href="../">Ders haritası</a></li>
+      <li><a href="../bst-geometrik/">Önceki sunum: BST’nin Geometrik Uygulamaları</a> · <a href="../">Ders haritası</a></li>
     </ul>
   </div>
 </section>
@@ -936,7 +936,7 @@ function update(now) {                               // her karede
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:64px">Hash Tabloları</div>
     <div class="sub">Sıra gerekmiyorsa daha da hızlı: ortalama sabit zamanda arama</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../hash-tablolari/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../hash-tablolari/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

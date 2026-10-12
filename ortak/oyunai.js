@@ -1,5 +1,5 @@
 /* =====================================================================
-   oyunai.js — Oyun YZ’si destelerinin ortak simülasyon motoru (core.js gerekir)
+   oyunai.js — Oyun YZ’si sunumlarının ortak simülasyon motoru (core.js gerekir)
    - SL.V: 2B vektör yardımcıları ({x, y} nesneleri)
    - SL.World: sabit adımlı (60 Hz) dünya; ⏸/▶, 1 kare ileri, hız, ↺ kontrolleri
    - Çizim: SL.drawAgent, SL.drawCone, SL.drawArrow, SL.drawLabel
@@ -78,13 +78,14 @@
       this.mouse = { x: this.W / 2, y: this.H / 2, inside: false, down: false };
       const pos = e => { const r = this.canvas.getBoundingClientRect(); return { x: ((e.clientX - r.left) * this.W) / r.width, y: ((e.clientY - r.top) * this.H) / r.height }; };
       this.canvas.addEventListener('mousemove', e => { Object.assign(this.mouse, pos(e), { inside: true }); if (o.onMove) o.onMove(this.mouse, e); if (!this.playing) this.draw(); });
-      this.canvas.addEventListener('mouseleave', () => { this.mouse.inside = false; this.mouse.down = false; });
+      // fare alandan çıkınca son konum korunur (inside = true kalır): düğmelere giderken fareyle yönetilen karakter kaçmasın; ↺ Baştan sıfırlar
+      this.canvas.addEventListener('mouseleave', () => { this.mouse.down = false; if (o.stickyMouse === false) this.mouse.inside = false; });
       this.canvas.addEventListener('mousedown', e => { Object.assign(this.mouse, pos(e), { down: true }); if (o.onClick) o.onClick(this.mouse, e); if (!this.playing) this.draw(); });
       window.addEventListener('mouseup', () => { this.mouse.down = false; });
       this.acc = 0; this.last = 0;
       SL.onTheme(() => this.draw());
     }
-    reset() { this.time = 0; this.frame = 0; this.resetFn(this); this.draw(); }
+    reset() { this.time = 0; this.frame = 0; this.mouse.inside = false; this.resetFn(this); this.draw(); }
     tick() { this.update(this.dt, this); this.time += this.dt; this.frame++; }
     draw() { const t = T(), ctx = this.ctx; ctx.clearRect(0, 0, this.W, this.H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, this.W, this.H); this.render(ctx, this, t); if (this.hud) this.hud(this); }
     loop(now) {
@@ -219,7 +220,7 @@ def _run(fname, cases):
   };
   SL.register('.ailab', SL.AILab);
 
-  /* ---------- nöbetçi arenası (FSM ve davranış ağacı desteleri ortak kullanır) ----------
+  /* ---------- nöbetçi arenası (FSM ve davranış ağacı sunumları ortak kullanır) ----------
      decide(öncekiEylem, algı) → yeni eylem adı: DEVRIYE | SUPHE | KOVALA | SALDIR | KAC */
   const GNAMES = (SL.GUARD_NAMES = { DEVRIYE: 'DEVRİYE', SUPHE: 'ŞÜPHE', KOVALA: 'KOVALA', SALDIR: 'SALDIR', KAC: 'KAÇ' });
   const GCOLS = (SL.GUARD_COLS = t => ({ DEVRIYE: t.blue, SUPHE: t.amber, KOVALA: t.red, SALDIR: t.purple, KAC: t.green }));
@@ -239,7 +240,7 @@ def _run(fname, cases):
     const W = 720, H = 380;   // dünya koordinatları sabit (devriye noktaları buna göre); o.displayW yalnızca ekrandaki genişlik
     let decide = o.decide;
     const st = {};
-    const resetState = () => Object.assign(st, { g: V.v(80, 70), heading: 0, state: 'DEVRIYE', tIn: 0, wp: 1, hp: 100, noise: null, heard: false, lastSeen: -99, flash: null, flashT: 0, log: [], switches: [], shotT: 0, muzzle: 0, botT: 0, memory: o.memory !== false });
+    const resetState = () => Object.assign(st, { g: V.v(80, 70), heading: 0, state: 'DEVRIYE', tIn: 0, wp: 1, hp: 100, noise: null, heard: false, lastSeen: -99, flash: null, flashT: 0, log: [], switches: [], shotT: 0, muzzle: 0, botT: 0, lastMouse: null, memory: o.memory !== false });
     resetState();
     const move = (dir, sp, dt) => {
       const try1 = d => { const before = V.copy(st.g), n = V.add(st.g, V.mul(d, sp * dt)); if (!inWall(V.v(n.x, st.g.y))) st.g.x = n.x; if (!inWall(V.v(st.g.x, n.y))) st.g.y = n.y; st.g.x = SL.clamp(st.g.x, 15, W - 15); st.g.y = SL.clamp(st.g.y, 15, H - 15); return V.dist(before, st.g); };
@@ -248,11 +249,12 @@ def _run(fname, cases):
     const turnTo = (a, dt, sp = 4) => { st.heading += SL.clamp(SL.angDiff(st.heading, a), -sp * dt, sp * dt); };
     const w = new SL.World({
       W, H,
-      reset() { resetState(); },
+      reset() { resetState(); if (o.onReset) o.onReset(); },
       onClick(m) { st.noise = V.v(m.x, m.y); st.heard = true; st.noiseT = 0; },
       update(dt, w) {
         st.botT += dt;
-        const p = w.mouse.inside ? V.v(w.mouse.x, w.mouse.y) : V.v(500 + Math.cos(st.botT * 0.4) * 160, 170 + Math.sin(st.botT * 0.7) * 50);
+        if (w.mouse.inside) st.lastMouse = V.v(w.mouse.x, w.mouse.y);   // fare alandan çıkınca oyuncu son yerinde kalır (düğmelere giderken kaçmasın)
+        const p = st.lastMouse ? V.copy(st.lastMouse) : o.bot ? o.bot(st, dt, w) : V.v(500 + Math.cos(st.botT * 0.4) * 160, 170 + Math.sin(st.botT * 0.7) * 50);
         st.player = p;
         // ALGILA
         const to = V.sub(p, st.g), d = V.len(to), fwd = V.fromAngle(st.heading);
@@ -279,7 +281,7 @@ def _run(fname, cases):
         else if (s === 'KOVALA') { const dir = V.norm(to); turnTo(V.angle(dir), dt, 6); move(dir, 125, dt); }
         else if (s === 'SALDIR') { turnTo(V.angle(to), dt, 8); st.shotT -= dt; if (st.shotT <= 0) { st.shotT = 0.6; st.muzzle = 0.1; } }
         else if (s === 'KAC') { const dir = V.norm(V.mul(to, -1)); turnTo(V.angle(dir), dt, 6); move(dir, 115, dt); st.hp = Math.min(100, st.hp + 9 * dt); }
-        st.muzzle -= dt;
+        st.muzzle -= dt; st.hitT = (st.hitT || 0) - dt;
       },
       render(ctx, w, t) {
         const col = GCOLS(t)[st.state];
@@ -290,15 +292,23 @@ def _run(fname, cases):
         const p = st.player || V.v(0, 0);
         if (st.muzzle > 0) { ctx.strokeStyle = t.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(st.g.x, st.g.y); ctx.lineTo(p.x, p.y); ctx.stroke(); }
         ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 7); ctx.fill();
-        SL.drawLabel(ctx, w.mouse.inside ? 'oyuncu (sen)' : 'oyuncu (bot)', p.x, p.y + 20, t.green, { size: 11 });
+        SL.drawLabel(ctx, st.lastMouse ? 'oyuncu (sen)' : 'oyuncu (bot)', p.x, p.y + 20, t.green, { size: 11 });
+        if (st.hitT > 0) { ctx.save(); ctx.globalAlpha = st.hitT * 3; ctx.strokeStyle = t.red; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(st.g.x, st.g.y, 24, 0, 7); ctx.stroke(); ctx.restore(); SL.drawLabel(ctx, '−25', st.g.x + 34, st.g.y - 4, t.red); }
         SL.drawAgent(ctx, st.g, st.heading, col, 14);
         SL.drawLabel(ctx, GNAMES[st.state], st.g.x, st.g.y - 26, col);
         ctx.fillStyle = t.rule; ctx.fillRect(st.g.x - 20, st.g.y + 18, 40, 5); ctx.fillStyle = st.hp < 30 ? t.red : t.green; ctx.fillRect(st.g.x - 20, st.g.y + 18, 40 * st.hp / 100, 5);
         if (o.onDraw) o.onDraw(st);
       }
     });
+    // X tuşu = nöbetçiye ateş et (fareyi düğmeye götürmek oyuncuyu da oynatacağı için klavye kısayolu)
+    const shoot = () => { st.hp = Math.max(0, st.hp - 25); st.hitT = 0.25; };
+    window.addEventListener('keydown', e => {
+      if (!w.running || (e.key !== 'x' && e.key !== 'X') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target && e.target.closest && e.target.closest('.CodeMirror, input, textarea, select')) return;
+      shoot(); if (!w.playing) w.draw(); e.preventDefault();
+    });
     if (o.displayW) w.canvas.style.width = o.displayW + 'px';
-    return { world: w, st, setDecide: f => { decide = f; }, shoot: () => { st.hp = Math.max(0, st.hp - 25); }, setMemory: m => { st.memory = m; } };
+    return { world: w, st, setDecide: f => { decide = f; }, shoot, setMemory: m => { st.memory = m; } };
   };
 
   /* ---------------- demo kaydı: world tabanlı demolar için kısayol ---------------- */

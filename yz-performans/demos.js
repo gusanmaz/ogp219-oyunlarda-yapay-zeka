@@ -1,4 +1,4 @@
-/* "Oyun YZ'sinde Performans" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Oyun YZ'sinde Performans" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

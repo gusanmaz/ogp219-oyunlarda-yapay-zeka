@@ -34,7 +34,7 @@
   <div class="sub"><i>Düğümler, kenarlar, DFS, BFS</i> — oyun dünyasının iskeleti</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlegraph"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.1 Undirected Graphs bölümünü temel alır. Bölüm 5’in (graflar) ilk destesi. Arka planda rastgele bir graf ve rastgele bir kaynaktan yayılan BFS dalgası: renk = kaynağa uzaklık.</aside>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.1 Undirected Graphs bölümünü temel alır. Bölüm 5’in (graflar) ilk sunumu. Arka planda rastgele bir graf ve rastgele bir kaynaktan yayılan BFS dalgası: renk = kaynağa uzaklık.</aside>
 </section>
 
 <section>
@@ -63,7 +63,7 @@
       <li class="fragment">Hiçbir yerden ulaşılamayan, boşa tasarlanmış oda var mı?</li>
     </ul>
   </div>
-  <p class="fragment lead">Odaları <b>noktalar</b>, kapıları <b>çizgiler</b> olarak çizin: bu bir <b>graf</b>. Üç sorunun da cevabı bu destede.</p>
+  <p class="fragment lead">Odaları <b>noktalar</b>, kapıları <b>çizgiler</b> olarak çizin: bu bir <b>graf</b>. Üç sorunun da cevabı bu sunumda.</p>
 </section>
 
 <section>
@@ -140,7 +140,7 @@
     <tr><td>Arkadaş listesi, klanlar</td><td>oyuncu</td><td>arkadaşlık</td></tr>
     <tr><td>Bulmaca / satranç arama</td><td>oyun durumu</td><td>bir hamle</td></tr>
   </table>
-  <p class="mini">Arkadaşlık “karşılıklı” → <b>yönsüz</b> kenar. “Takip ediyor”, “tek yönlü kapı”, “önce bu görev” → <b>yönlü</b> (sonraki deste).</p>
+  <p class="mini">Arkadaşlık “karşılıklı” → <b>yönsüz</b> kenar. “Takip ediyor”, “tek yönlü kapı”, “önce bu görev” → <b>yönlü</b> (sonraki sunum).</p>
 </section>
 
 <section data-sec="terimler">
@@ -178,7 +178,7 @@
     <tr><td><b>komşuluk listeleri</b></td><td class="c-green"><b>E + V</b></td><td>1</td><td>derece(v)</td><td class="c-green"><b>derece(v)</b></td></tr>
   </table>
   <div class="cols" style="margin-top:10px">
-    <div class="box story"><span class="bt">Gerçek graflar seyrek</span>Bir oyun haritasında 10.000 kare var ama her karenin en fazla 4–8 komşusu. Matris: 100 milyon hücre, neredeyse hepsi 0 (Sembol Tablosu Uygulamaları destesindeki seyrek matris!). Liste: ~40.000 kayıt.</div>
+    <div class="box story"><span class="bt">Gerçek graflar seyrek</span>Bir oyun haritasında 10.000 kare var ama her karenin en fazla 4–8 komşusu. Matris: 100 milyon hücre, neredeyse hepsi 0 (Sembol Tablosu Uygulamaları sunumundaki seyrek matris!). Liste: ~40.000 kayıt.</div>
     <div class="box low"><span class="bt">⚙️ Karo haritalar: örtük graf</span>Izgarada komşuluk listesi bile tutmayız: komşular <b>hesaplanır</b> (sağ, sol, üst, alt). Grafın kendisi hiç bellekte yoktur — <span class="en">implicit graph</span>.</div>
   </div>
 </section>
@@ -194,7 +194,7 @@
         <tr><td>adj(v)</td><td>v’nin komşuları</td></tr>
         <tr><td>V() · E()</td><td>düğüm · kenar sayısı</td></tr>
       </table>
-      <div class="box bgk"><span class="bt">🎒 Liste listesi</span><code>adj[v]</code> bir liste; <code>adj</code> bu listelerin listesi. Düğümler 0…V−1 numaralı → dizi indeksi olarak kullanılır. Adlı düğümler (“Mağara”, “Köy”) için önce bir sözlükle isim → numara (önceki deste!).</div>
+      <div class="box bgk"><span class="bt">🎒 Liste listesi</span><code>adj[v]</code> bir liste; <code>adj</code> bu listelerin listesi. Düğümler 0…V−1 numaralı → dizi indeksi olarak kullanılır. Adlı düğümler (“Mağara”, “Köy”) için önce bir sözlükle isim → numara (önceki sunum!).</div>
     </div>
   <div class="tabs short">
     <div class="tab" data-label="Python">
@@ -458,7 +458,7 @@ function depthFirstPaths(G, s) {
     <div class="box prop"><span class="bt">Önerme</span>DFS, s’ye bağlı bütün düğümleri, derecelerinin toplamıyla orantılı sürede işaretler (≤ V + 2E).
       <p class="mini">Her düğüm bir kez işaretlenir; her kenara iki kez (iki ucundan) bakılır. <code>edgeTo[]</code> ile s’den her ulaşılan düğüme bir yol bulunur — ama <b>en kısa</b> olması gerekmez!</p></div>
     <div class="box low"><span class="bt">⚙️ Özyineleme derinliği</span>DFS’de çağrı yığını ulaşılan yol kadar derinleşebilir. 1000 × 1000’lik bir karo haritasında yol 1 milyon kare olabilir → <b>yığın taşması</b> <span class="en">stack overflow</span> (Python’da sınır ~1000!).
-      <p class="mini">Çözüm: özyineleme yerine <b>açık bir yığın</b> (Yığınlar destesi) kullanın. Oyun motorlarında flood fill hep böyle yazılır.</p></div>
+      <p class="mini">Çözüm: özyineleme yerine <b>açık bir yığın</b> (Yığınlar sunumu) kullanın. Oyun motorlarında flood fill hep böyle yazılır.</p></div>
   </div>
 </section>
 
@@ -494,7 +494,7 @@ function depthFirstPaths(G, s) {
     </ol>
     <div class="box story fragment"><span class="bt">Neden en kısa?</span>Kuyruk (FIFO) sayesinde düğümler uzaklık sırasıyla çıkar: önce 1 adımdakilerin hepsi, sonra 2 adımdakiler… Bir düğüme ilk ulaştığımız an, oraya ulaşmanın en kısa yolunu bulmuşuzdur.</div>
   </div>
-  <p class="fragment mini">DFS ile tek fark: <b>yığın</b> yerine <b>kuyruk</b>! (Yığınlar ve Kuyruklar destesindeki flood fill demosunu hatırlayın.)</p>
+  <p class="fragment mini">DFS ile tek fark: <b>yığın</b> yerine <b>kuyruk</b>! (Yığınlar ve Kuyruklar sunumundaki flood fill demosunu hatırlayın.)</p>
 </section>
 
 <section data-sec="BFS">
@@ -575,7 +575,7 @@ function bfs(G, s) {
 </script></code></pre>
     </div>
   </div>
-  <p class="mini">🎒 Python <code>list.pop(0)</code> ve JS <code>shift()</code> diziyi kaydırır → O(N) (Bağlı Listeler destesi!). <code>deque</code> ya da “baş işaretçisi” hilesi O(1).</p>
+  <p class="mini">🎒 Python <code>list.pop(0)</code> ve JS <code>shift()</code> diziyi kaydırır → O(N) (Bağlı Listeler sunumu!). <code>deque</code> ya da “baş işaretçisi” hilesi O(1).</p>
 </section>
 
 <section data-sec="BFS">
@@ -904,7 +904,7 @@ def count_islands(grid):
     <ul class="reflist">
       <li><a href="https://visualgo.net/en/dfsbfs" target="_blank">VisuAlgo · DFS/BFS</a></li>
       <li><a href="https://qiao.github.io/PathFinding.js/visual/" target="_blank">PathFinding.js görselleştirici</a></li>
-      <li><a href="../st-uygulamalari/">Önceki deste: Sembol Tablosu Uygulamaları</a> · <a href="../">Ders haritası</a></li>
+      <li><a href="../st-uygulamalari/">Önceki sunum: Sembol Tablosu Uygulamaları</a> · <a href="../">Ders haritası</a></li>
     </ul>
   </div>
 </section>
@@ -914,7 +914,7 @@ def count_islands(grid):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:64px">Yönlü Graflar</div>
     <div class="sub">Tek yönlü kapılar, teknoloji ağaçları, görev bağımlılıkları, çöp toplayıcı</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yonlu-graflar/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yonlu-graflar/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

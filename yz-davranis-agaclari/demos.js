@@ -1,4 +1,4 @@
-/* "Davranış Ağaçları" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Davranış Ağaçları" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;
@@ -120,7 +120,7 @@
     });
     const sim = SL.makeGuardArena({ decide: brain, displayW: 660, onDraw: () => { diag.innerHTML = treeOutline(tree, last); } });
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Nöbetçiye ateş et (−25 can)', () => sim.shoot(), 'primary'), el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses çıkar · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
+    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'), el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses çıkar · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
       el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas, info), diag), sim.world.controls());
     sim.world.reset();
     return { start: () => sim.world.start(), stop: () => sim.world.stop() };

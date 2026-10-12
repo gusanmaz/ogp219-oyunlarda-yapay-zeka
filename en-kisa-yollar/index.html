@@ -34,7 +34,7 @@
   <div class="sub"><i>Gevşetme, Dijkstra, DAG’ler, Bellman–Ford</i> — oyunlarda yol bulmanın kapısı</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlesp"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.4 Shortest Paths bölümünü temel alır. Bölüm 5’in ve algoritmalar kısmının son destesi; buradan Oyun Yapay Zekâsı bölümüne (A*, navmesh…) geçilecek. Arka planda arazili bir haritada Dijkstra dalgası: koyu yeşil = pahalı arazi; sonunda en ucuz yol kırmızı.</aside>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.4 Shortest Paths bölümünü temel alır. Bölüm 5’in ve algoritmalar kısmının son sunumu; buradan Oyun Yapay Zekâsı bölümüne (A*, navmesh…) geçilecek. Arka planda arazili bir haritada Dijkstra dalgası: koyu yeşil = pahalı arazi; sonunda en ucuz yol kırmızı.</aside>
 </section>
 
 <section>
@@ -58,7 +58,7 @@
     <p class="big">Bir RTS biriminiz haritanın öbür ucuna gidecek. Düz gitse 20 kare ama 12’si bataklık (her biri 6 kat yavaş). Yoldan dolaşsa 30 kare, hepsi hızlı.</p>
   </div>
   <ul style="font-size:.95em">
-    <li class="fragment">BFS (Yönsüz Graflar destesi) <b>adım</b> sayar → bataklıktan geçer: 8 + 12×6 = <b>80</b> birim süre</li>
+    <li class="fragment">BFS (Yönsüz Graflar sunumu) <b>adım</b> sayar → bataklıktan geçer: 8 + 12×6 = <b>80</b> birim süre</li>
     <li class="fragment">Yoldan: 30 × 1 = <b>30</b> birim süre</li>
     <li class="fragment">Kenarların <b>ağırlığı</b> (süre, yakıt, tehlike) varsa “en kısa” = <b>toplam ağırlığı en küçük</b> yol. Bunun için yeni algoritmalar gerekiyor.</li>
   </ul>
@@ -256,7 +256,7 @@ static double[] Dijkstra(List<(int w, double wt)>[] adj, int s, int[] edgeTo)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-// MinHeap: Öncelik Kuyrukları destesindeki ikili yığın, [öncelik, değer]
+// MinHeap: Öncelik Kuyrukları sunumundaki ikili yığın, [öncelik, değer]
 function dijkstra(adj, s) {                 // adj[v] = [[w, ağırlık], ...]
   const V = adj.length;
   const dist = new Array(V).fill(Infinity);
@@ -388,7 +388,7 @@ function dijkstra(adj, s) {                 // adj[v] = [[w, ağırlık], ...]
   <div class="cols c46">
     <div style="font-size:.88em">
       <ul>
-        <li>Düğümleri <b>topolojik sırayla</b> (Yönlü Graflar destesi) ele al, her birinin oklarını gevşet</li>
+        <li>Düğümleri <b>topolojik sırayla</b> (Yönlü Graflar sunumu) ele al, her birinin oklarını gevşet</li>
         <li>Bir düğüme sıra gelince ona gelen <b>bütün</b> oklar zaten gevşetilmiş → değeri kesin</li>
         <li class="fragment"><b>E + V</b> süre (Dijkstra’dan hızlı, PQ yok!)</li>
         <li class="fragment"><b>Negatif ağırlıklarla da</b> çalışır</li>
@@ -668,7 +668,7 @@ def dijkstra(V, adj, s):
   <h2>🏁 Algoritmalar bölümünün sonu</h2>
   <div class="cols">
     <div style="font-size:.88em">
-      <p>18 destede neler topladınız:</p>
+      <p>18 sunumda neler topladınız:</p>
       <ul>
         <li><b>Analiz</b>: büyüme hızları, ölçme, kare bütçesi</li>
         <li><b>Temel yapılar</b>: dizi, bağlı liste, yığın, kuyruk, Union–Find</li>
@@ -716,7 +716,7 @@ def dijkstra(V, adj, s):
     </ul>
     <ul class="reflist">
       <li><a href="https://www.roguebasin.com/index.php/Dijkstra_Maps_Visualized" target="_blank">RogueBasin · Dijkstra Maps Visualized</a></li>
-      <li><a href="../mst/">Önceki deste: Minimum Yayılan Ağaçlar</a></li>
+      <li><a href="../mst/">Önceki sunum: Minimum Yayılan Ağaçlar</a></li>
       <li><a href="../">Ders haritası</a></li>
     </ul>
   </div>

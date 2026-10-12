@@ -1,4 +1,4 @@
-/* "Quicksort" destesine özel demolar (ortak: ../ortak/quicksort.js) */
+/* "Quicksort" sunumuna özel demolar (ortak: ../ortak/quicksort.js) */
 (function () {
   'use strict';
   const { el } = SL;

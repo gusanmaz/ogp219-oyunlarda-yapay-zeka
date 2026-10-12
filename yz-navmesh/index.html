@@ -68,11 +68,11 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-astar/">Y8 · A* ile Yol Bulma</a><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, çapraz çarpım)</a></div>
   <div class="prereq"><a class="opt" href="../yz-steering/">Y7 · Steering (yolu izlemek)</a><a class="opt" href="../bst-geometrik/">BST · Geometrik Uygulamalar</a><a class="opt" href="../yonsuz-graflar/">Yönsüz Graflar</a></div>
   <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Navmesh, Y8’deki A*’ın çalıştığı graftır; sadece düğümler kare değil çokgen. Funnel algoritması tek bir geometri aracı kullanır: Y0’daki <b>çapraz çarpımın işareti</b> (“bu nokta çizginin solunda mı sağında mı?”).</div>
-  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Motorlarda navmesh <b>tek tıkla</b> pişirilir (Unity: NavMeshSurface → Bake; Unreal: NavMeshBoundsVolume; Godot: NavigationRegion → Bake). Bu destenin “Motorlarda navmesh” bölümünü önce okuyup oyununuza ekleyebilir, algoritmaları sonra öğrenebilirsiniz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Motorlarda navmesh <b>tek tıkla</b> pişirilir (Unity: NavMeshSurface → Bake; Unreal: NavMeshBoundsVolume; Godot: NavigationRegion → Bake). Bu sunumun “Motorlarda navmesh” bölümünü önce okuyup oyununuza ekleyebilir, algoritmaları sonra öğrenebilirsiniz.</div>
 </section>
 
 <section>
@@ -586,7 +586,7 @@ def area(poly):
 
 <section data-sec="projeler">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Tıkla-git</b> — Unity ya da Godot’da bir oda + NavMeshSurface + tıklanan yere yürüyen karakter. Navmesh’i ve yolu ekranda çizin.</li><li><b class="c-green">[kolay]</b> <b>Kapı anahtarı</b> — Oyuncu bir şalteri çekince kapı açılsın; kapalıyken NavMeshObstacle (carve) ile geçit kapansın. Düşman başka yoldan dolaşıyor mu?</li><li><b class="c-amber">[orta]</b> <b>Parkur düşmanı</b> — Platformlar arası atlama ve aşağı inme bağlantıları; düşman oyuncuyu bağlantıları kullanarak kovalasın.</li><li><b class="c-amber">[orta]</b> <b>p5.js navmesh</b> — Bu destedeki dikdörtgen navmesh + funnel’ı kendi seviye editörünüzle yazın.</li><li><b class="c-red">[zor]</b> <b>Mini Recast</b> — 2B bir haritadan otomatik navmesh: rasterleştirme, aşındırma, bölgeler, kontur sadeleştirme, üçgenleme.</li><li><b class="c-purple">[araştırma]</b> <b>Navmesh vs ızgara</b> — Aynı 3B seviyede ızgara A* ve navmesh A* + funnel’ı düğüm sayısı, süre ve yol kalitesiyle karşılaştırın.</li></ol>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Tıkla-git</b> — Unity ya da Godot’da bir oda + NavMeshSurface + tıklanan yere yürüyen karakter. Navmesh’i ve yolu ekranda çizin.</li><li><b class="c-green">[kolay]</b> <b>Kapı anahtarı</b> — Oyuncu bir şalteri çekince kapı açılsın; kapalıyken NavMeshObstacle (carve) ile geçit kapansın. Düşman başka yoldan dolaşıyor mu?</li><li><b class="c-amber">[orta]</b> <b>Parkur düşmanı</b> — Platformlar arası atlama ve aşağı inme bağlantıları; düşman oyuncuyu bağlantıları kullanarak kovalasın.</li><li><b class="c-amber">[orta]</b> <b>p5.js navmesh</b> — Bu sunumdaki dikdörtgen navmesh + funnel’ı kendi seviye editörünüzle yazın.</li><li><b class="c-red">[zor]</b> <b>Mini Recast</b> — 2B bir haritadan otomatik navmesh: rasterleştirme, aşındırma, bölgeler, kontur sadeleştirme, üçgenleme.</li><li><b class="c-purple">[araştırma]</b> <b>Navmesh vs ızgara</b> — Aynı 3B seviyede ızgara A* ve navmesh A* + funnel’ı düğüm sayısı, süre ve yol kalitesiyle karşılaştırın.</li></ol>
 </section>
 
 <section data-sec="özet">
@@ -627,7 +627,7 @@ def area(poly):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Grup Yapay Zekâsı</div>
     <div class="sub">Formasyonlar, takımlar, koordinasyon: birlikte hareket etmek</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-grup/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-grup/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

@@ -34,7 +34,7 @@
   <div class="sub"><i>Kümeler, sözlükler, dizinler, seyrek vektörler</i> — hash ve BST iş başında</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlest"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.5 Applications bölümünü temel alır. Arka planda bir yerelleştirme tablosu: anahtarlar aynı kalıyor, değerler dil dil değişiyor. Bu destede yeni bir veri yapısı yok; önceki iki destenin yapılarıyla neler yapılabildiğini görüyoruz.</aside>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.5 Applications bölümünü temel alır. Arka planda bir yerelleştirme tablosu: anahtarlar aynı kalıyor, değerler dil dil değişiyor. Bu sunumda yeni bir veri yapısı yok; önceki iki sunumun yapılarıyla neler yapılabildiğini görüyoruz.</aside>
 </section>
 
 <section>
@@ -65,7 +65,7 @@
     </ul>
   </div>
   <p class="fragment lead">Hepsi bir <b>sembol tablosu</b>: <code>put(anahtar, değer)</code> ve <code>get(anahtar)</code>. Değer bazen yok (küme), bazen sayı (sayaç), bazen liste (dizin).</p>
-  <p class="fragment mini">Hangi uygulama? <b>Hash tablosu</b> (sıra gerekmiyorsa, en hızlı) ya da <b>dengeli BST</b> (sıra gerekiyorsa). Bu destede ikisini de “hazır” kullanacağız: Python <code>dict/set</code>, C# <code>Dictionary/HashSet</code>, JS <code>Map/Set</code>.</p>
+  <p class="fragment mini">Hangi uygulama? <b>Hash tablosu</b> (sıra gerekmiyorsa, en hızlı) ya da <b>dengeli BST</b> (sıra gerekiyorsa). Bu sunumda ikisini de “hazır” kullanacağız: Python <code>dict/set</code>, C# <code>Dictionary/HashSet</code>, JS <code>Map/Set</code>.</p>
 </section>
 
 <section>
@@ -105,7 +105,7 @@
       <tr><td>JavaScript</td><td><code>Set</code></td><td>—</td></tr>
     </table>
   </div>
-  <div class="box game" style="margin-top:10px"><span class="bt">🎮 Oyunda kümeler</span>Açılmış bölümler · kazanılmış başarımlar · ziyaret edilmiş kareler (flood fill ve gelecek destedeki graf aramaları!) · yasaklı kelimeler · bu karede zaten hasar almış düşmanlar (aynı patlama iki kez vurmasın).</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🎮 Oyunda kümeler</span>Açılmış bölümler · kazanılmış başarımlar · ziyaret edilmiş kareler (flood fill ve gelecek sunumdaki graf aramaları!) · yasaklı kelimeler · bu karede zaten hasar almış düşmanlar (aynı patlama iki kez vurmasın).</div>
 </section>
 
 <section data-sec="kümeler">
@@ -430,7 +430,7 @@ const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
         <li class="fragment">Dengeleme ekibi tam olarak bu sayaçlara bakar: “Oyuncuların %60’ı aynı silahı seçiyorsa o silah fazla güçlü.”</li>
       </ul>
     </div>
-    <div class="box low fragment"><span class="bt">⚙️ Hangi sembol tablosu?</span>Sayarken binlerce <code>put</code>/<code>get</code> → <b>hash</b>. Sonuçları <b>alfabetik</b> yazdırmak istersek ya en sonda sıralarız ya da baştan <b>BST</b> (C# <code>SortedDictionary</code>) kullanırız. “En sık 10” için: hepsini sırala (N lg N) ya da 10’luk öncelik kuyruğu (Öncelik Kuyrukları destesi: N lg 10!).</div>
+    <div class="box low fragment"><span class="bt">⚙️ Hangi sembol tablosu?</span>Sayarken binlerce <code>put</code>/<code>get</code> → <b>hash</b>. Sonuçları <b>alfabetik</b> yazdırmak istersek ya en sonda sıralarız ya da baştan <b>BST</b> (C# <code>SortedDictionary</code>) kullanırız. “En sık 10” için: hepsini sırala (N lg N) ya da 10’luk öncelik kuyruğu (Öncelik Kuyrukları sunumu: N lg 10!).</div>
   </div>
 </section>
 
@@ -685,7 +685,7 @@ class SparseVector {
     <div class="box game"><span class="bt">Dünya haritası</span>Minecraft benzeri sonsuz dünya: sadece <b>yüklenmiş</b> bölgeler (chunk) bir sözlükte: <code>(cx, cz) → Chunk</code>. Değiştirilmiş bloklar: <code>(x, y, z) → blok</code>. Boş gökyüzünü kimse saklamaz.</div>
     <div class="box game"><span class="bt">Oyuncu × eşya matrisi</span>1 milyon oyuncu × 10.000 eşya = 10 milyar hücre, ama her oyuncunun ~50 eşyası var. “Bu oyuncuya ne önerelim?” sistemleri seyrek vektörlerle çalışır (iki oyuncunun envanter vektörlerinin iç çarpımı = benzerlik).</div>
   </div>
-  <div class="box story fragment" style="margin-top:10px"><span class="bt">🔮 Sonraki destelere köprü</span>Bir <b>graf</b> da seyrek bir matristir: “düğüm i → düğüm j bağlantısı var mı?” Bir oyun haritasındaki 10.000 bölgenin her biri sadece birkaç komşuya bağlı. Graflarda kullanacağımız <b>komşuluk listeleri</b>, satır başına bir seyrek vektörden başka bir şey değil!</div>
+  <div class="box story fragment" style="margin-top:10px"><span class="bt">🔮 Sonraki sunumlara köprü</span>Bir <b>graf</b> da seyrek bir matristir: “düğüm i → düğüm j bağlantısı var mı?” Bir oyun haritasındaki 10.000 bölgenin her biri sadece birkaç komşuya bağlı. Graflarda kullanacağımız <b>komşuluk listeleri</b>, satır başına bir seyrek vektörden başka bir şey değil!</div>
 </section>
 
 <section data-sec="seyrek">
@@ -818,7 +818,7 @@ function generate(table, start, n) {
       <button data-opt="C">Listenin sıralı kalması</button>
       <button data-opt="D">Hash çakışmalarını azaltmak</button>
     </div>
-    <div class="explain">Listede “ejderha” 3 kez, “köy” 1 kez varsa rastgele seçimde “ejderha” %75 olasılıkla gelir — kaynak metindeki gibi. Bellekten tasarruf için liste yerine bir <b>sayaç</b> sözlüğü de tutulabilir (kelime → kaç kez), sonra ağırlıklı rastgele seçim yapılır (Arama destesindeki “loot tablosu”!).</div>
+    <div class="explain">Listede “ejderha” 3 kez, “köy” 1 kez varsa rastgele seçimde “ejderha” %75 olasılıkla gelir — kaynak metindeki gibi. Bellekten tasarruf için liste yerine bir <b>sayaç</b> sözlüğü de tutulabilir (kelime → kaç kez), sonra ağırlıklı rastgele seçim yapılır (Arama sunumundaki “loot tablosu”!).</div>
   </div>
 </section>
 
@@ -831,7 +831,7 @@ function generate(table, start, n) {
       <li>Bellek içi veri deposu <b>Redis</b>’in <b>sıralı küme</b> (sorted set) türü bunun için yaygın kullanılır: <code>ZADD</code> skoru ekler/günceller, <code>ZREVRANK</code> sıralamayı, <code>ZREVRANGE</code> aralığı verir.</li>
       <li>İçeride <b>iki</b> sembol tablosu birlikte çalışır: bir hash tablosu (oyuncu → skor, O(1)) ve skora göre sıralı bir <b>atlamalı liste</b> (skip list; ekleme, güncelleme, sıra ve aralık için O(log N)). Atlamalı liste, William Pugh’un 1990’da “dengeli ağaçlara olasılıksal bir alternatif” olarak önerdiği yapıdır.</li>
     </ul></div>
-    <div class="box story"><span class="bt">Ders</span>Gerçek sistemler çoğu zaman tek bir veri yapısıyla yetinmez: “anahtardan değere” için hash, “sıraya göre” için ağaç ya da atlamalı liste. Bu destedeki sembol tablosu API’si (get, put, rank, select, aralık) tam olarak bir liderlik tablosunun ihtiyacı.</div>
+    <div class="box story"><span class="bt">Ders</span>Gerçek sistemler çoğu zaman tek bir veri yapısıyla yetinmez: “anahtardan değere” için hash, “sıraya göre” için ağaç ya da atlamalı liste. Bu sunumdaki sembol tablosu API’si (get, put, rank, select, aralık) tam olarak bir liderlik tablosunun ihtiyacı.</div>
   </div>
   <p class="mini" style="margin-top:6px">Kaynak: <a href="https://redis.io/docs/latest/develop/data-types/sorted-sets/" target="_blank" rel="noopener">Redis: Sorted sets</a> · <a href="https://doi.org/10.1145/78973.78977" target="_blank" rel="noopener">Pugh 1990</a></p>
 </section>
@@ -922,7 +922,7 @@ function generate(table, start, n) {
       <li><a href="https://docs.python.org/3/library/collections.html" target="_blank">Python · collections (Counter, defaultdict)</a></li>
     </ul>
     <ul class="reflist">
-      <li><a href="../hash-tablolari/">Önceki deste: Hash Tabloları</a></li>
+      <li><a href="../hash-tablolari/">Önceki sunum: Hash Tabloları</a></li>
       <li><a href="../dengeli-agaclar/">Dengeli Arama Ağaçları (SortedDictionary)</a></li>
       <li><a href="../">Ders haritası</a></li>
     </ul>
@@ -934,7 +934,7 @@ function generate(table, start, n) {
     <div class="lv">BÖLÜM 5 ▶</div>
     <div class="ttl" style="font-size:64px">Yönsüz Graflar</div>
     <div class="sub">Haritalar, ağlar, labirentler: DFS, BFS ve oyun dünyasının iskeleti</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yonsuz-graflar/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yonsuz-graflar/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

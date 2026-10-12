@@ -68,11 +68,11 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektörler, oyun döngüsü)</a></div>
   <div class="prereq"><a class="opt" href="../yonsuz-graflar/">Graflar (ileride yol bulma için)</a></div>
-  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu deste çoğunlukla kavramsal. Pac-Man örneğinde iki vektör işlemi (toplama ve mesafe) kullanacağız; Y0’daki “vektör oyun alanı” yeterli.</div>
-  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu destenin büyük kısmı <b>hikâye ve analiz</b>: oyunları YZ gözlüğüyle izlemeyi öğreniyoruz. Kod laboratuvarları isteğe bağlı.</div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu sunum çoğunlukla kavramsal. Pac-Man örneğinde iki vektör işlemi (toplama ve mesafe) kullanacağız; Y0’daki “vektör oyun alanı” yeterli.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu sunumun büyük kısmı <b>hikâye ve analiz</b>: oyunları YZ gözlüğüyle izlemeyi öğreniyoruz. Kod laboratuvarları isteğe bağlı.</div>
 </section>
 
 <section>
@@ -127,7 +127,7 @@
     </g>
     <text x="550" y="215" text-anchor="middle" font-size="14" style="fill:var(--muted)">Kaynak: Kevin Dill, “What Is Game AI?”, Game AI Pro (2013), Şekil 1.1’den uyarlandı</text>
   </svg>
-  <p class="mini">Bu bölümün karar verme desteleri tam bu çizgi boyunca soldan sağa ilerliyor. Sağa gittikçe karakter daha “kendi kafasına göre” davranır ama tasarımcının istediği deneyimi garanti etmek zorlaşır.</p>
+  <p class="mini">Bu bölümün karar verme sunumları tam bu çizgi boyunca soldan sağa ilerliyor. Sağa gittikçe karakter daha “kendi kafasına göre” davranır ama tasarımcının istediği deneyimi garanti etmek zorlaşır.</p>
 </section>
 
 <section data-sec="nedir">
@@ -219,7 +219,7 @@
       </table>
     </div>
     <div class="box story"><span class="bt">Tek bir hareket kuralı</span>Her hayalet bir <b>hedef kare</b> seçer. Her kavşakta, gidebileceği yönlerden hedefe <b>kuş uçuşu en yakın</b> olanı seçer. Geri dönemez. Eşitlikte sıra: yukarı, sol, aşağı, sağ.
-      <p class="mini">Bütün “kişilik” farkı sadece hedef karenin nasıl seçildiğinde! Kaynak: Jamey Pittman, “The Pac-Man Dossier”.</p></div>
+      <p class="mini">Bütün “kişilik” farkı sadece hedef karenin nasıl seçildiğinde! Kaynak: Jamey Pittman, “The Pac-Man Dossier”. 🎬 Kısa ve güzel bir özet: <a href="https://www.youtube.com/watch?v=hzhtrjkBXXw" target="_blank" rel="noopener">Pac-Man’s Ghosts Were Never a Team</a> (Seeded).</p></div>
   </div>
 </section>
 
@@ -238,7 +238,7 @@
         <li>1. seviyede: 7 sn dağıl → 20 sn kovala → … Mod değişince hepsi <b>geri döner</b> (oyuncuya ipucu!)</li>
         <li><b>Korku</b> <span class="en">frightened</span>: güç hapı yenince rastgele dolaşır</li>
       </ul>
-      <p class="mini">Bu bir <b>sonlu durum makinesi</b>: bir sonraki destenin konusu.</p>
+      <p class="mini">Bu bir <b>sonlu durum makinesi</b>: bir sonraki sunumun konusu.</p>
     </div>
     <div class="box warn"><span class="bt">🐛 Taşma hatası</span>Pac-Man <b>yukarı</b> bakarken Pinky’nin hedefi “4 yukarı” değil “4 yukarı <b>ve 4 sola</b>” çıkar (Inky’nin ara noktası da 2 sola kayar). Neden? Yön, 8 bitlik bir sayı çiftinde saklanıyordu; “yukarı” için yapılan hesap taşınca sol bileşene de sızdı.
       <p class="mini">Hata hiç düzeltilmedi; usta oyuncular Pinky’yi kandırmak için kullanır. Demodaki “1980 taşma hatası” kutusunu kapatıp farkı görün.</p></div>
@@ -299,6 +299,40 @@ def target(ghost, pac, pac_dir, blinky):
     </div>
   </div>
   <p class="mini">🎒 <code>switch</code> / <code>if</code> zinciri: hangi hayalet olduğuna göre farklı kural. <code>mid + (mid − blinky)</code> = Blinky’den <code>mid</code>’e giden ok, bir kez daha <code>mid</code>’in ötesine uzatılır.</p>
+</section>
+
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: Pinky’nin hedefi</h2>
+  <div class="ailab" data-lab="pinky" data-lang="js">
+<textarea>
+// pac: [x, y] Pac-Man'in karesi
+// dir: "up" | "down" | "left" | "right"
+// Pinky, Pac-Man'in 4 kare ÖNÜNÜ hedefler.
+function pinkyTarget(pac, dir) {
+  const D = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const d = D[dir];
+  return [pac[0], pac[1]];   // TODO: 4 kare önü
+}
+</textarea>
+    <div class="lab-tasks">Şu an Pinky tıpkı Blinky gibi doğrudan Pac-Man’i hedefliyor. Yön vektörü <code>d</code>’yi 4 ile çarpıp ekleyin: <code>pac[0] + 4 * d[0]</code>. Tek satır değişince “kovalayan” hayalet “pusu kuran” hayalete dönüşür.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: dağıl mı, kovala mı?</h2>
+  <div class="ailab" data-lab="ghostmode" data-lang="js">
+<textarea>
+// t: seviyenin başından beri geçen süre (saniye)
+// Hayaletler 7 sn DAGIL, sonra 20 sn KOVALA modunda;
+// bu 27 sn'lik tur tekrar eder.
+function ghostMode(t) {
+  const tur = t % 27;      // turun kaçıncı saniyesindeyiz?
+  return "KOVALA";         // TODO: tur 7'den küçükse "DAGIL"
+}
+</textarea>
+    <div class="lab-tasks"><code>%</code> (mod) işleci “tekrar eden zamanlayıcı”ların anahtarıdır; p5.js’te <code>millis() / 1000</code> size <code>t</code>’yi verir. Gerçek oyunda süreler seviyeye göre değişir ve birkaç turdan sonra hayaletler hep kovalar; burada sade hâlini yazıyoruz. (Bu, bir sonraki sunumun konusu olan <b>durum makinesinin</b> en küçük örneği.)</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -430,6 +464,27 @@ def clyde_target(clyde, pac, corner):
   <ul class="agenda"><li class="done">oyun YZ’si nedir?</li><li class="done">ajan ve NPC</li><li class="done">vaka: Pac-Man hayaletleri</li><li class="done">zekâ yanılsaması</li><li class="on">zorluk ayarı ve hile</li><li class="">kısa tarih</li><li class="">bölümün araçları</li></ul>
 </section>
 
+
+
+<section data-ek="gizli" data-sec="zorluk">
+  <h2>📜 Oyuncuya söylenmeyen iyilikler</h2>
+  <div class="cols">
+    <div class="box story" style="font-size:.86em"><span class="bt">👾 Space Invaders (1978): ilk zorluk eğrisi bir kazaydı</span>
+      <p>Tomohiro Nishikado’nun donanımı 55 uzaylıyı aynı anda çizmekte zorlanıyordu. Oyuncu uzaylıları vurdukça çizilecek şey azaldı ve kalanlar kendiliğinden <b>hızlandı</b>. Nishikado bunu hata sayıp düzeltmek yerine oyunda bıraktı: son uzaylı ekranı çılgınca tarar.</p>
+      <p class="mini">Bugün her oyunda gördüğümüz “gittikçe zorlaşma” fikrinin ilk ünlü örneği, yavaş bir işlemcinin yan etkisi.</p>
+    </div>
+    <div class="box game" style="font-size:.86em"><span class="bt">🤫 2017: tasarımcılar itiraf ediyor</span>
+      <p>Tasarımcı Jennifer Scheurle sosyal medyada meslektaşlarına “oyununuzdaki gizli mekanikleri anlatın” dedi. Gelen cevaplardan:</p>
+      <ul>
+        <li><b>BioShock</b>: bir düşmanın size attığı <b>ilk mermi her zaman ıskalar</b> — önce uyarılın, sonra vurulun.</li>
+        <li><b>BioShock</b>: son can puanınızı kaybedecekken 1–2 saniye ölümsüz olursunuz: “kıl payı kurtuldum!”</li>
+        <li><b>Assassin’s Creed, Doom (2016)</b>: can çubuğunun son dilimi göründüğünden daha fazla can taşır.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="mini">Ortak nokta: hiçbiri YZ’yi “daha zeki” yapmıyor; hepsi oyuncunun <b>hissini</b> ayarlıyor. Sizce bunlar hile mi, tasarım mı?</p>
+</section>
+
 <section data-sec="zorluk">
   <h2>Zorluk düğmeleri — kendiniz ayarlayın</h2>
   <div class="demo" data-demo="turret"></div>
@@ -443,7 +498,7 @@ def clyde_target(clyde, pac, corner):
     <div class="box story"><span class="bt">Mario Kart</span>“Lastik bant” <span class="en">rubber banding</span>: geride kalan bilgisayar sürücüleri hızlanır, öndekiler yavaşlar; dağıtılan eşyalar da sıranıza bağlıdır (sondakine güçlüler). Yarış hep sıkışık kalır — ama birinci gidenler “haksızlık” diye kızar.</div>
     <div class="box story"><span class="bt">Crash Bandicoot (1996)</span>Yönetmen Jason Rubin’e göre: üst üste ölen oyuncuya ekstra koruyucu maske, kayalar biraz daha yavaş, daha çok meyve… Oyuncu çoğu zaman fark etmez — amaç da bu.</div>
   </div>
-  <p class="mini" style="margin-top:6px">Daha fazlası: Y17 “Zorluk Ayarı ve Oyuncu Modelleme” destesi. Robin Hunicke’nin 2005 makalesi “The Case for Dynamic Difficulty Adjustment in Games” akademik başlangıç noktası.</p>
+  <p class="mini" style="margin-top:6px">Daha fazlası: Y17 “Zorluk Ayarı ve Oyuncu Modelleme” sunumu. Robin Hunicke’nin 2005 makalesi “The Case for Dynamic Difficulty Adjustment in Games” akademik başlangıç noktası.</p>
 </section>
 
 <section data-sec="zorluk">
@@ -463,7 +518,7 @@ def clyde_target(clyde, pac, corner):
       <p><b>Efsane:</b> İlk Civilization’da (1991) Gandi’nin saldırganlık değeri 1’di. Demokrasiye geçen liderin saldırganlığı 2 azalıyordu. 1 − 2 = −1… ama değer <b>8 bitlik işaretsiz</b> sayıda (0–255) tutulduğundan <b>255</b>’e “taştı” ve barışçı Gandi nükleer silah delisi oldu.</p>
       <p class="fragment"><b>Gerçek:</b> Bu hikâye 2012 civarında internette yayıldı. 2020’de Sid Meier anı kitabında böyle bir hatanın ilk oyunda <b>imkânsız</b> olduğunu söyledi. Civilization V’in (2010) tasarımcıları ise Gandi’nin nükleer silah eğilimini <b>bilerek</b> en üst düzeye ayarlamıştı — bir şaka olarak. Sonraki oyunlarda da göndermeler var.</p>
     </div>
-    <div class="box low fragment"><span class="bt">⚙️ Neden yine de iyi bir ders?</span>Efsane yanlış ama anlattığı hata <b>çok gerçek</b>: işaretsiz bir sayıdan büyük bir sayı çıkarınca “sarar” <span class="en">wrap around</span>. Arama Algoritmaları destesindeki ikili arama taşması (<code>(lo + hi) / 2</code>) ile aynı aile.
+    <div class="box low fragment"><span class="bt">⚙️ Neden yine de iyi bir ders?</span>Efsane yanlış ama anlattığı hata <b>çok gerçek</b>: işaretsiz bir sayıdan büyük bir sayı çıkarınca “sarar” <span class="en">wrap around</span>. Arama Algoritmaları sunumundaki ikili arama taşması (<code>(lo + hi) / 2</code>) ile aynı aile.
       <p class="mini">C#’ta <code>byte b = 1; b -= 2;</code> → 255. Python’da tam sayılar taşmaz; JS’te <code>Uint8Array</code> sarar. Oyun YZ’sindeki “kişilik” değerlerini <b>sınırlandırın</b> (clamp).</p></div>
   </div>
 </section>
@@ -521,7 +576,7 @@ def clyde_target(clyde, pac, corner):
     <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
     <tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/index.html" target="_blank" rel="noopener"><b>Unity AI Navigation</b></a></td><td>Unity</td><td>NavMesh, ajanlar, engeller, bağlantılar (Y9). Hazır yol bulma</td><td>Package Manager → AI Navigation</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html" target="_blank" rel="noopener"><b>Unity Behavior</b></a></td><td>Unity 6</td><td>Görsel davranış ağacı editörü (Y3)</td><td>Package Manager → Behavior</td></tr><tr><td><a href="https://github.com/Unity-Technologies/ml-agents" target="_blank" rel="noopener"><b>Unity ML-Agents</b></a></td><td>Unity + Python</td><td>Pekiştirmeli öğrenme ile ajan eğitimi (Y13)</td><td>paket + <code>pip install mlagents</code></td></tr><tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/artificial-intelligence-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal Engine AI</b></a></td><td>Unreal (C++/Blueprint)</td><td>Davranış ağaçları, StateTree, EQS, AI Perception, MassAI</td><td>Motorla gelir</td></tr><tr><td><a href="https://github.com/limbonaut/limboai" target="_blank" rel="noopener"><b>Godot Navigation + LimboAI / Beehave</b></a></td><td>Godot</td><td>Yol bulma motorda; davranış ağacı ve durum makinesi eklentileri</td><td>AssetLib’den eklenti</td></tr><tr><td><a href="https://github.com/Mugen87/yuka" target="_blank" rel="noopener"><b>Yuka</b></a></td><td>JavaScript</td><td>Tarayıcı oyunları için steering, FSM, hedef tabanlı ajanlar, algılama, yol bulma</td><td><code>npm install yuka</code></td></tr><tr><td><a href="https://github.com/libgdx/gdx-ai" target="_blank" rel="noopener"><b>gdx-ai</b></a></td><td>Java (libGDX)</td><td>Steering, davranış ağaçları, A*, mesajlaşma — öğretici kaynak kodu</td><td>Gradle bağımlılığı</td></tr>
   </table>
-  <p class="mini">Her destede o konunun kütüphanelerini ayrıntılı (nasıl eklenir, ne yapar, ne yapmaz) ele alacağız. Kural: önce kavramı küçük bir örnekle kendiniz yazın, sonra hazır aracı kullanın — hata ayıklarken içini bilmek hayat kurtarır.</p>
+  <p class="mini">Her sunumda o konunun kütüphanelerini ayrıntılı (nasıl eklenir, ne yapar, ne yapmaz) ele alacağız. Kural: önce kavramı küçük bir örnekle kendiniz yazın, sonra hazır aracı kullanın — hata ayıklarken içini bilmek hayat kurtarır.</p>
 </section>
 
 <section data-sec="kaynaklar">
@@ -552,9 +607,22 @@ def clyde_target(clyde, pac, corner):
   </div>
 </section>
 
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">En son oynadığınız oyunda YZ’nin <b>hile yaptığını</b> hissettiğiniz bir an oldu mu? Sizi rahatsız eden hilenin kendisi miydi, yoksa <b>fark etmeniz</b> mi?</li>
+      <li class="fragment">BioShock’ta ilk merminin hep ıskalaması bir yalan. Oyuncuya söylenmeli mi? Rekabetçi (çok oyunculu) bir oyunda aynı şey kabul edilir mi?</li>
+      <li class="fragment">Mario Kart’tan lastik bant etkisini tamamen kaldırsanız yarışlar kimin için daha eğlenceli, kimin için daha sıkıcı olur?</li>
+      <li class="fragment">Pac-Man hayaletleri birbirleriyle hiç “konuşmuyor” ama oyuncular onların takım hâlinde çalıştığını düşünüyor. Bu <b>ortaya çıkan davranışı</b> başka hangi oyunlarda gördünüz?</li>
+    </ol>
+  </div>
+</section>
+
 <section data-sec="projeler">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Pac-Man hayaletleri</b> — p5.js’te bu destedeki labirent ve dört hedefleme kuralıyla bir Pac-Man klonu. Bonus: korku modu.</li><li><b class="c-green">[kolay]</b> <b>YZ analizi</b> — Sevdiğiniz bir oyunun düşmanlarını 30 dk izleyip “algıla–düşün–davran” şemasını çizin; hangi zekâ yanılsaması hilelerini kullanıyor?</li><li><b class="c-amber">[orta]</b> <b>Zorluk düğmeleri</b> — Taret demosunu Unity’ye taşıyın; üç zorluk seviyesini ScriptableObject ile tanımlayın ve 5 arkadaşınızla test edin.</li><li><b class="c-amber">[orta]</b> <b>Mini AI Director</b> — Bir hayatta kalma oyununda “yoğunluk” değeri tutup düşman dalgalarının zamanlamasını buna göre ayarlayın.</li><li><b class="c-purple">[araştırma]</b> <b>Halo deneyini tekrarlayın</b> — Davranışı aynı, canı farklı iki düşman yapın; 10 kişiye “ne kadar zeki?” anketi uygulayıp sonuçları Halo verisiyle karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Efsane mi gerçek mi?</b> — Nükleer Gandi benzeri bir oyun efsanesini (ör. Pac-Man’in 256. seviye hatası) kaynaklarıyla araştırıp sunun.</li></ol>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Pac-Man hayaletleri</b> — p5.js’te bu sunumdaki labirent ve dört hedefleme kuralıyla bir Pac-Man klonu. Bonus: korku modu.</li><li><b class="c-green">[kolay]</b> <b>YZ analizi</b> — Sevdiğiniz bir oyunun düşmanlarını 30 dk izleyip “algıla–düşün–davran” şemasını çizin; hangi zekâ yanılsaması hilelerini kullanıyor?</li><li><b class="c-amber">[orta]</b> <b>Zorluk düğmeleri</b> — Taret demosunu Unity’ye taşıyın; üç zorluk seviyesini ScriptableObject ile tanımlayın ve 5 arkadaşınızla test edin.</li><li><b class="c-amber">[orta]</b> <b>Mini AI Director</b> — Bir hayatta kalma oyununda “yoğunluk” değeri tutup düşman dalgalarının zamanlamasını buna göre ayarlayın.</li><li><b class="c-purple">[araştırma]</b> <b>Halo deneyini tekrarlayın</b> — Davranışı aynı, canı farklı iki düşman yapın; 10 kişiye “ne kadar zeki?” anketi uygulayıp sonuçları Halo verisiyle karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Efsane mi gerçek mi?</b> — Nükleer Gandi benzeri bir oyun efsanesini (ör. Pac-Man’in 256. seviye hatası) kaynaklarıyla araştırıp sunun.</li></ol>
 </section>
 
 <section data-sec="özet">
@@ -591,7 +659,7 @@ def clyde_target(clyde, pac, corner):
 
 <section data-sec="kaynaklar">
   <h2>📄 Akademik okumalar</h2>
-  <div class="paper"><b>Dill 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter01_What_is_Game_AI.pdf" target="_blank" rel="noopener">What Is Game AI?</a> <i>(Game AI Pro, Bölüm 1)</i><br>Bu destenin felsefesi: deneyim, tasarımcı kontrolü, yapay aptallık.</div><div class="paper"><b>Rabin 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter01_The_Illusion_of_Intelligence.pdf" target="_blank" rel="noopener">The Illusion of Intelligence</a> <i>(Game AI Pro 3, Bölüm 1)</i><br>Oyuncular neden kandırılmaya hazır; altı somut yanılsama hilesi.</div><div class="paper"><b>Hunicke 2005</b> · <a href="https://dl.acm.org/doi/10.1145/1178477.1178573" target="_blank" rel="noopener">The Case for Dynamic Difficulty Adjustment in Games</a> <i>(ACM ACE 2005)</i><br>Half-Life üzerinde DDA (Hamlet sistemi): akademik DDA’nın başlangıcı.</div><div class="paper"><b>Yannakakis &amp; Togelius 2025</b> · <a href="https://gameaibook.org/" target="_blank" rel="noopener">Artificial Intelligence and Games (2. baskı)</a> <i>(Springer)</i><br>Alanın akademik haritası: oynamak, üretmek, oyuncuyu modellemek; LLM’ler ve etik.</div>
+  <div class="paper"><b>Dill 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter01_What_is_Game_AI.pdf" target="_blank" rel="noopener">What Is Game AI?</a> <i>(Game AI Pro, Bölüm 1)</i><br>Bu sunumun felsefesi: deneyim, tasarımcı kontrolü, yapay aptallık.</div><div class="paper"><b>Rabin 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter01_The_Illusion_of_Intelligence.pdf" target="_blank" rel="noopener">The Illusion of Intelligence</a> <i>(Game AI Pro 3, Bölüm 1)</i><br>Oyuncular neden kandırılmaya hazır; altı somut yanılsama hilesi.</div><div class="paper"><b>Hunicke 2005</b> · <a href="https://dl.acm.org/doi/10.1145/1178477.1178573" target="_blank" rel="noopener">The Case for Dynamic Difficulty Adjustment in Games</a> <i>(ACM ACE 2005)</i><br>Half-Life üzerinde DDA (Hamlet sistemi): akademik DDA’nın başlangıcı.</div><div class="paper"><b>Yannakakis &amp; Togelius 2025</b> · <a href="https://gameaibook.org/" target="_blank" rel="noopener">Artificial Intelligence and Games (2. baskı)</a> <i>(Springer)</i><br>Alanın akademik haritası: oynamak, üretmek, oyuncuyu modellemek; LLM’ler ve etik.</div>
 </section>
 
 <section data-sec="kaynaklar">
@@ -607,7 +675,7 @@ def clyde_target(clyde, pac, corner):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Sonlu Durum Makineleri</div>
     <div class="sub">Devriye → şüphe → saldırı → kaç: NPC beyninin en klasik hâli</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-fsm/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-fsm/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

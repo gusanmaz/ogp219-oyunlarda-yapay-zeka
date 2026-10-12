@@ -1,5 +1,5 @@
 /* =====================================================================
-   demos.js — "Yığınlar ve Kuyruklar" destesine özel demolar
+   demos.js — "Yığınlar ve Kuyruklar" sunumuna özel demolar
    (Ortak yığın/kuyruk demoları ../ortak/yigin.js içinde)
    ===================================================================== */
 (function () {

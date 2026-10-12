@@ -1,4 +1,4 @@
-/* "Mergesort" destesine özel demolar (ortak: ../ortak/mergesort.js) */
+/* "Mergesort" sunumuna özel demolar (ortak: ../ortak/mergesort.js) */
 (function () {
   'use strict';
   const { el } = SL;

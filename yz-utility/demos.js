@@ -1,4 +1,4 @@
-/* "Utility AI" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Utility AI" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

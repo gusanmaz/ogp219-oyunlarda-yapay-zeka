@@ -1,5 +1,5 @@
 /* =====================================================================
-   demos.js — "Union–Find" destesine özel demolar
+   demos.js — "Union–Find" sunumuna özel demolar
    (Ortak union–find bileşenleri ../ortak/birlesim.js içinde)
    ===================================================================== */
 (function () {

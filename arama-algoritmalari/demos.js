@@ -1,5 +1,5 @@
 /* =====================================================================
-   demos.js — "Arama Algoritmaları" destesine özel demolar
+   demos.js — "Arama Algoritmaları" sunumuna özel demolar
    (Ortak arama demoları ../ortak/arama.js içinde)
    ===================================================================== */
 (function () {

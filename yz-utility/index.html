@@ -69,7 +69,7 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (0–1 aralığı, lerp)</a><a class="" href="../yz-davranis-agaclari/">Y3 · Davranış Ağaçları</a></div>
   <div class="prereq"><a class="opt" href="../yz-fsm/">Y2 · Sonlu Durum Makineleri</a><a class="opt" href="../oncelik-kuyruklari/">Öncelik Kuyrukları (en büyüğü bulmak)</a></div>
   <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Y0’daki “bir değeri 0–1 aralığına getirme” fikri bu dersin temel taşı. Y3’teki ağaçla karşılaştıracağız ve sonunda ikisini birleştireceğiz. Matematik olarak sadece <b>çarpma</b> ve <b>grafik okuma</b> gerekiyor.</div>
@@ -957,7 +957,7 @@ public class ActionAsset : ScriptableObject {
     </div>
     <div>
       <div class="box low"><span class="bt">⚙️ Performans</span>N NPC × M eylem × K etken her düşünmede. 100 NPC × 10 eylem × 4 etken = 4000 eğri değerlendirmesi: saniyede 5 kez rahat. Pahalı etkenleri (görüş ışını) önbelleğe alın, sıfır veren ucuz etkeni öne koyun, NPC’lerin düşünme anlarını karelere yayın.</div>
-      <div class="box story"><span class="bt">Ayar süreci</span>Önce her eylemi tek bir etkenle çalıştırın, sonra etken ekleyin. Her eklemeden sonra 5–10 senaryoyu (bu destedeki lab gibi) otomatik test edin: “çok aç → yemek”, “mermi yok → ateş etme”.</div>
+      <div class="box story"><span class="bt">Ayar süreci</span>Önce her eylemi tek bir etkenle çalıştırın, sonra etken ekleyin. Her eklemeden sonra 5–10 senaryoyu (bu sunumdaki lab gibi) otomatik test edin: “çok aç → yemek”, “mermi yok → ateş etme”.</div>
     </div>
   </div>
 </section>
@@ -982,7 +982,7 @@ public class ActionAsset : ScriptableObject {
 
 <section data-sec="projeler">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Eğri kataloğu</b> — Desmos ya da p5.js ile 6 farklı yanıt eğrisini çizen ve parametrelerini kaydırıcıyla değiştiren küçük bir araç.</li><li><b class="c-green">[kolay]</b> <b>Kedi simülatörü</b> — Bir kedinin 4 ihtiyacı (açlık, uyku, oyun, sevgi) ve evdeki nesneler. Sims tarzı reklamlar ve mesafe zayıflatması.</li><li><b class="c-amber">[orta]</b> <b>Utility asker</b> — Unity’de bu destedeki beş eylemli asker: ScriptableObject eylemler, AnimationCurve etkenleri, puan paneli.</li><li><b class="c-amber">[orta]</b> <b>Kişilikler</b> — Aynı kod, üç farklı eğri seti: korkak, cesur, açgözlü. Oyuncular farkı fark ediyor mu? Küçük bir oyuncu testi yapın.</li><li><b class="c-red">[zor]</b> <b>Utility + BT</b> — Üst seviyede utility “ne yapayım?”, alt seviyede davranış ağacı “nasıl?”. Unreal StateTree 5.5+ ya da kendi motorunuzla.</li><li><b class="c-purple">[araştırma]</b> <b>Şüpheci Sim’ler</b> — Nesne reklamlarını deneyimden güncelleyen ajanlar. Yalancı Joy Booth’a karşı ne kadar sürede “bağışıklık” kazanıyorlar?</li><li><b class="c-purple">[araştırma]</b> <b>Otomatik ayar</b> — Bir eğri setini genetik algoritmayla ayarlayıp elle ayarlanmış setle kıyaslayın: hangisi daha “insan gibi” görünüyor?</li></ol>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Eğri kataloğu</b> — Desmos ya da p5.js ile 6 farklı yanıt eğrisini çizen ve parametrelerini kaydırıcıyla değiştiren küçük bir araç.</li><li><b class="c-green">[kolay]</b> <b>Kedi simülatörü</b> — Bir kedinin 4 ihtiyacı (açlık, uyku, oyun, sevgi) ve evdeki nesneler. Sims tarzı reklamlar ve mesafe zayıflatması.</li><li><b class="c-amber">[orta]</b> <b>Utility asker</b> — Unity’de bu sunumdaki beş eylemli asker: ScriptableObject eylemler, AnimationCurve etkenleri, puan paneli.</li><li><b class="c-amber">[orta]</b> <b>Kişilikler</b> — Aynı kod, üç farklı eğri seti: korkak, cesur, açgözlü. Oyuncular farkı fark ediyor mu? Küçük bir oyuncu testi yapın.</li><li><b class="c-red">[zor]</b> <b>Utility + BT</b> — Üst seviyede utility “ne yapayım?”, alt seviyede davranış ağacı “nasıl?”. Unreal StateTree 5.5+ ya da kendi motorunuzla.</li><li><b class="c-purple">[araştırma]</b> <b>Şüpheci Sim’ler</b> — Nesne reklamlarını deneyimden güncelleyen ajanlar. Yalancı Joy Booth’a karşı ne kadar sürede “bağışıklık” kazanıyorlar?</li><li><b class="c-purple">[araştırma]</b> <b>Otomatik ayar</b> — Bir eğri setini genetik algoritmayla ayarlayıp elle ayarlanmış setle kıyaslayın: hangisi daha “insan gibi” görünüyor?</li></ol>
 </section>
 
 <section data-sec="özet">
@@ -1035,7 +1035,7 @@ public class ActionAsset : ScriptableObject {
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">GOAP</div>
     <div class="sub">F.E.A.R.’ın planlayan askerleri: hedef, eylem ve A* ile plan</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-goap/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-goap/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

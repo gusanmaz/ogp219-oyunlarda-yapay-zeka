@@ -1,4 +1,4 @@
-/* "LLM ile NPC'ler" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "LLM ile NPC'ler" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

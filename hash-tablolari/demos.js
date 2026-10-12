@@ -1,4 +1,4 @@
-/* "Hash Tabloları" destesine özel demolar (ortak: ../ortak/hash.js) */
+/* "Hash Tabloları" sunumuna özel demolar (ortak: ../ortak/hash.js) */
 (function () {
   'use strict';
   const { el } = SL;

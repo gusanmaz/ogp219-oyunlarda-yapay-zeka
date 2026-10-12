@@ -1,4 +1,4 @@
-/* "Zorluk ve Oyuncu Modelleme" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Zorluk ve Oyuncu Modelleme" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

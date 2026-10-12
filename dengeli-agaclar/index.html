@@ -34,7 +34,7 @@
   <div class="sub"><i>2-3 ağaçları, kırmızı-siyah ağaçlar, B-ağaçları</i> — en kötü durumda bile lg N</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlerb"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.3 Balanced Search Trees bölümünü temel alır. Önceki deste: Ağaçlar ve BST. Arka planda 1, 2, 3, …, 31 anahtarları SIRAYLA ekleniyor — sıradan bir BST’de bu bir çizgiye (bağlı listeye) dönüşürdü; burada ağaç dengede kalıyor. Kırmızı çizgiler “kırmızı bağlantılar”.</aside>
+  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.3 Balanced Search Trees bölümünü temel alır. Önceki sunum: Ağaçlar ve BST. Arka planda 1, 2, 3, …, 31 anahtarları SIRAYLA ekleniyor — sıradan bir BST’de bu bir çizgiye (bağlı listeye) dönüşürdü; burada ağaç dengede kalıyor. Kırmızı çizgiler “kırmızı bağlantılar”.</aside>
 </section>
 
 <section>
@@ -89,7 +89,7 @@
 <section data-sec="neden denge?">
   <h2>Hatırlatma: BST’ye sıralı ekleme</h2>
   <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-seq="A C E H L M P R S X" data-h="330" data-hint="▶ Sırayla ekle’ye basın: alfabetik sırayla gelen 10 harf. Sonra karışık sırayla kendiniz deneyin (ör. M E R A C H S X L P)."></div>
-  <aside class="notes">Önceki destede gördük: BST’nin şekli ekleme sırasına bağlı. Sıralı eklemede yükseklik N−1. Rastgele sırada ~2,99 lg N ortalama yükseklik.</aside>
+  <aside class="notes">Önceki sunumda gördük: BST’nin şekli ekleme sırasına bağlı. Sıralı eklemede yükseklik N−1. Rastgele sırada ~2,99 lg N ortalama yükseklik.</aside>
 </section>
 
 <section data-sec="neden denge?">
@@ -387,7 +387,7 @@ function isRed(x) {
       <ul style="font-size:.92em">
         <li>Renklere hiç bakılmıyor</li>
         <li>Ama ağaç dengeli olduğu için en fazla <b>~2 lg N</b> adım</li>
-        <li class="fragment">Önceki destedeki <b>tüm sıralı işlemler</b> (min, max, floor, ceiling, rank, select, range) da <b>aynen</b> çalışır! 🎁</li>
+        <li class="fragment">Önceki sunumdaki <b>tüm sıralı işlemler</b> (min, max, floor, ceiling, rank, select, range) da <b>aynen</b> çalışır! 🎁</li>
       </ul>
       <div class="box story fragment"><span class="bt">Ders</span>İyi bir temsil seçmek = bedava kod. Zor işi sadece <b>ekleme</b> yapacak.</div>
     </div>
@@ -559,7 +559,7 @@ function rotateRight(h) {  // ayna görüntüsü
 h = rotate_left(h)          # h artık yeni kökü gösterir
 h.left = put(h.left, k, v)  # alt ağaç değişmiş olabilir: yeniden bağla
 </code></pre>
-      <p class="mini">Fonksiyon yeni kökü <b>geri döndürür</b>, çağıran onu ilgili bağlantıya <b>atar</b>. BST destesindeki <code>put</code>’ta da aynı kalıp vardı.</p>
+      <p class="mini">Fonksiyon yeni kökü <b>geri döndürür</b>, çağıran onu ilgili bağlantıya <b>atar</b>. BST sunumundaki <code>put</code>’ta da aynı kalıp vardı.</p>
     </div>
     <div class="box bgk"><span class="bt">🎒 Referans hatırlatması</span>
       <p><code>h</code> bir düğümün kendisi değil, ona bakan bir <b>ok</b>. <code>rotate_left(h)</code> içindeki <code>x.left = h</code> düğümlerin oklarını değiştirir; ama dışarıdaki <code>h</code> değişkeni <b>otomatik</b> güncellenmez.</p>
@@ -925,7 +925,7 @@ def rotate_left(h):
 
 <section data-sec="analiz">
   <div class="box warn" style="font-size:1em"><span class="bt">⚠️ SİLME?</span>
-    <p>Önceki destedeki Hibbard silmesi dengeyi bozar (ağaç zamanla √N yüksekliğe kayar).</p>
+    <p>Önceki sunumdaki Hibbard silmesi dengeyi bozar (ağaç zamanla √N yüksekliğe kayar).</p>
     <p>Kırmızı-siyah ağaçta silme de lg N’de yapılabilir: aşağı inerken “borç alarak” her adımda geçici 3- ya da 4-düğümler oluşturulur, en altta silinir, yukarı çıkarken yine aynı üç kuralla onarılır.</p>
     <p class="mini">Kodu ekleme kodundan daha uzun ve inceliklidir; bu derste ayrıntısına girmiyoruz. Merak edenler: algs4 <code>RedBlackBST.java</code> (<code>deleteMin</code>, <code>delete</code>).</p>
   </div>
@@ -1012,7 +1012,7 @@ print(floor(0.12))                       # 0.1
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // JS'te hazır dengeli ağaç yok → kendi kırmızı-siyah ağacımızı kullanalım.
-// floor, BST destesindekinin aynısı (renklere bakmaz):
+// floor, BST sunumundakinin aynısı (renklere bakmaz):
 function floor(x, key) {          // x: ağacın kökü
   let best = null;
   while (x !== null) {
@@ -1029,13 +1029,13 @@ function floor(x, key) {          // x: ağacın kökü
 </script></code></pre>
     </div>
   </div>
-  <p class="mini">🎒 <code>var</code> (C#): türü derleyici çıkarır — <code>SortedSet&lt;double&gt; times = new SortedSet&lt;double&gt;();</code> ile aynı. <code>bisect_right</code>: ikili arama (Arama Algoritmaları destesi) ile “t’den büyük ilk eleman”ın indeksini bulur.</p>
+  <p class="mini">🎒 <code>var</code> (C#): türü derleyici çıkarır — <code>SortedSet&lt;double&gt; times = new SortedSet&lt;double&gt;();</code> ile aynı. <code>bisect_right</code>: ikili arama (Arama Algoritmaları sunumu) ile “t’den büyük ilk eleman”ın indeksini bulur.</p>
 </section>
 
 <section data-sec="oyunda">
   <div class="box ask" style="font-size:1em"><span class="bt">🤔 TARTIŞMA</span>
     <ol>
-      <li class="fragment">Python’da <code>bisect.insort</code> ekleme başına O(N) ama yine de çoğu zaman hızlı çalışır. Neden? (İpucu: bağlı listeler destesindeki <b>önbellek</b> ve <code>memmove</code>)</li>
+      <li class="fragment">Python’da <code>bisect.insort</code> ekleme başına O(N) ama yine de çoğu zaman hızlı çalışır. Neden? (İpucu: bağlı listeler sunumundaki <b>önbellek</b> ve <code>memmove</code>)</li>
       <li class="fragment">Skor tablosunda “oyuncu kaçıncı sırada?” (rank) sorusunu <code>Dictionary</code> ile nasıl yanıtlarsınız? <code>SortedDictionary</code> ile?</li>
       <li class="fragment">Bir RTS’de 10.000 zamanlanmış olay var (“12,5 sn’de birim üret”). Her karede “zamanı gelenleri” çalıştırmak için hangi işlemler gerekiyor?</li>
     </ol>
@@ -1131,7 +1131,7 @@ function floor(x, key) {          // x: ağacın kökü
   <h2>Derin hikâye: Java 8 HashMap’i neden kırmızı-siyah ağaca döner?</h2>
   <div class="cols c64">
     <div><ul style="font-size:.84em">
-      <li>2011’in sonunda (28C3 konferansı) araştırmacılar, birçok web platformunun hash tablolarına <b>kasıtlı çakışan anahtarlar</b> göndererek sunucuları kilitleyebildiklerini gösterdi: bütün anahtarlar aynı kovaya düşünce arama O(1)’den O(n)’e, toplam iş O(n²)’ye çıkıyordu (Hash Tabloları destesi).</li>
+      <li>2011’in sonunda (28C3 konferansı) araştırmacılar, birçok web platformunun hash tablolarına <b>kasıtlı çakışan anahtarlar</b> göndererek sunucuları kilitleyebildiklerini gösterdi: bütün anahtarlar aynı kovaya düşünce arama O(1)’den O(n)’e, toplam iş O(n²)’ye çıkıyordu (Hash Tabloları sunumu).</li>
       <li>Java 8 (2014) buna veri yapısıyla cevap verdi (JEP 180): bir kovadaki eleman sayısı <b>8</b>’i geçerse (ve tablo yeterince büyükse, en az 64 kova) o kovanın bağlı listesi bir <b>kırmızı-siyah ağaca</b> dönüştürülür. En kötü durum O(n)’den <b>O(log n)</b>’e iner.</li>
       <li>Sayı tekrar 6’nın altına düşerse kova yeniden listeye çevrilir: küçük kovalarda liste daha hızlı ve daha az bellek kullanır.</li>
     </ul></div>
@@ -1177,7 +1177,7 @@ function floor(x, key) {          // x: ağacın kökü
 
 <section data-sec="kaynaklar">
   <h2>📄 Akademik okumalar ve kaynaklar</h2>
-  <div class="paper"><b>Adelson-Velsky &amp; Landis 1962</b> · <a href="https://en.wikipedia.org/wiki/AVL_tree" target="_blank" rel="noopener">An Algorithm for the Organization of Information</a> <i>(Soviet Mathematics Doklady 3)</i><br>İlk dengeli ikili ağaç (AVL).</div><div class="paper"><b>Bayer &amp; McCreight 1972</b> · <a href="https://doi.org/10.1007/BF00288683" target="_blank" rel="noopener">Organization and Maintenance of Large Ordered Indexes</a> <i>(Acta Informatica 1)</i><br>B-ağaçları.</div><div class="paper"><b>Guibas &amp; Sedgewick 1978</b> · <a href="https://doi.org/10.1109/SFCS.1978.3" target="_blank" rel="noopener">A Dichromatic Framework for Balanced Trees</a> <i>(FOCS 1978)</i><br>Kırmızı-siyah ağaçlar.</div><div class="paper"><b>Sedgewick 2008</b> · <a href="https://sedgewick.io/wp-content/themes/sedgewick/papers/2008LLRB.pdf" target="_blank" rel="noopener">Left-leaning Red-Black Trees</a> <i>(makale taslağı)</i><br>Bu destedeki LLRB.</div>
+  <div class="paper"><b>Adelson-Velsky &amp; Landis 1962</b> · <a href="https://en.wikipedia.org/wiki/AVL_tree" target="_blank" rel="noopener">An Algorithm for the Organization of Information</a> <i>(Soviet Mathematics Doklady 3)</i><br>İlk dengeli ikili ağaç (AVL).</div><div class="paper"><b>Bayer &amp; McCreight 1972</b> · <a href="https://doi.org/10.1007/BF00288683" target="_blank" rel="noopener">Organization and Maintenance of Large Ordered Indexes</a> <i>(Acta Informatica 1)</i><br>B-ağaçları.</div><div class="paper"><b>Guibas &amp; Sedgewick 1978</b> · <a href="https://doi.org/10.1109/SFCS.1978.3" target="_blank" rel="noopener">A Dichromatic Framework for Balanced Trees</a> <i>(FOCS 1978)</i><br>Kırmızı-siyah ağaçlar.</div><div class="paper"><b>Sedgewick 2008</b> · <a href="https://sedgewick.io/wp-content/themes/sedgewick/papers/2008LLRB.pdf" target="_blank" rel="noopener">Left-leaning Red-Black Trees</a> <i>(makale taslağı)</i><br>Bu sunumdaki LLRB.</div>
 </section>
 <!-- RETRO END -->
 <section data-sec="özet">
@@ -1234,7 +1234,7 @@ function floor(x, key) {          // x: ağacın kökü
       <li><a href="https://www.cs.usfca.edu/~galles/visualization/RedBlack.html" target="_blank">USFCA · Red-Black Tree görselleştirmesi</a></li>
       <li><a href="https://www.cs.usfca.edu/~galles/visualization/BTree.html" target="_blank">USFCA · B-Tree görselleştirmesi</a></li>
       <li><a href="https://www.cs.usfca.edu/~galles/visualization/AVLtree.html" target="_blank">USFCA · AVL Tree görselleştirmesi</a></li>
-      <li><a href="../agaclar-bst/">Önceki deste: Ağaçlar ve BST</a> · <a href="../">Ders haritası</a></li>
+      <li><a href="../agaclar-bst/">Önceki sunum: Ağaçlar ve BST</a> · <a href="../">Ders haritası</a></li>
     </ul>
   </div>
 </section>
@@ -1244,7 +1244,7 @@ function floor(x, key) {          // x: ağacın kökü
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:56px">BST’nin Geometrik Uygulamaları</div>
     <div class="sub">Aralık arama, kd-ağaçları, çarpışma adayları: oyun dünyasında “yakınımda ne var?”</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../bst-geometrik/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../bst-geometrik/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

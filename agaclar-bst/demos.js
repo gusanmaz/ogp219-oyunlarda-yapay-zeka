@@ -1,5 +1,5 @@
 /* =====================================================================
-   demos.js — "Ağaçlar ve İkili Arama Ağaçları" destesine özel demolar
+   demos.js — "Ağaçlar ve İkili Arama Ağaçları" sunumuna özel demolar
    ===================================================================== */
 (function () {
   'use strict';
@@ -7,7 +7,7 @@
   const D = window.DEMOS;
   const T = () => SL.theme();
   const rint = n => Math.floor(Math.random() * n);
-  // Not: binsearch, guess ve log2 demoları ../ortak/arama.js dosyasında (arama destesiyle ortak)
+  // Not: binsearch, guess ve log2 demoları ../ortak/arama.js dosyasında (arama sunumuyla ortak)
 
   /* n-ary ağaç yerleşimi: yapraklar sırayla, iç düğümler çocuklarının ortasında */
   function layoutNary(root, W, H, o = {}) {

@@ -1,4 +1,4 @@
-/* "A* ile Yol Bulma" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "A* ile Yol Bulma" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;
@@ -16,7 +16,7 @@
     zero: () => 0
   };
   SL.ASTAR_HEUR = HEUR;
-  class Heap {   // ikili yığın (Öncelik Kuyrukları destesi)
+  class Heap {   // ikili yığın (Öncelik Kuyrukları sunumu)
     constructor() { this.a = []; }
     get size() { return this.a.length; }
     push(x, k) { const a = this.a; a.push([k, x]); let i = a.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (a[p][0] <= a[i][0]) break; [a[p], a[i]] = [a[i], a[p]]; i = p; } }

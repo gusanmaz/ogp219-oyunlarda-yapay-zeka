@@ -70,7 +70,7 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-utility/">Y4 · Utility AI (eylemin “değeri”)</a><a class="" href="../yz-fsm/">Y2 · FSM (durum kavramı)</a><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, olasılık)</a></div>
   <div class="prereq"><a class="opt" href="../yz-oyun-agaclari/">Y6 · Oyun Ağaçları (UCB, kendi kendine oynama)</a><a class="opt" href="../yz-steering/">Y7 · Steering (ışın sensörleri)</a><a class="opt" href="../yz-taktik/">Y12 · Taktik YZ (ağırlıklar)</a></div>
   <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Q değeri, Y4’teki utility puanının “öğrenilmiş” hâlidir: bu durumda bu eylemin ne kadar iyi olduğu. Fark: ağırlıkları biz değil, deneyim belirler. Matematik olarak sadece toplama, çarpma ve “en büyüğünü seç” gerekiyor.</div>
@@ -568,7 +568,7 @@ public class GridQLearner {
     </div>
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-// p5.js: ızgara dünyasında Q-learning (bu destedeki demo ile aynı mantık)
+// p5.js: ızgara dünyasında Q-learning (bu sunumdaki demo ile aynı mantık)
 const Q = Array.from({ length: W * H }, () => [0, 0, 0, 0]);
 function choose(s, eps) {
   if (random() < eps) return floor(random(4));
@@ -818,7 +818,7 @@ def forward(x, W1, b1, W2, b2):
 
 <section data-sec="projeler">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kendi ızgaram</b> — Bu destedeki Q-learning’i p5.js’te yeniden yazın; anahtarlı kapı ekleyin (durum = konum + anahtar var mı). Ajan önce anahtarı almayı öğreniyor mu?</li><li><b class="c-green">[kolay]</b> <b>FrozenLake’ten LunarLander’a</b> — Gymnasium’da tablo Q-learning ve SB3 PPO; γ ve öğrenme hızını değiştirip getiri grafiklerini karşılaştıran kısa rapor.</li><li><b class="c-amber">[orta]</b> <b>ML-Agents ile kaçan tavşan</b> — YZ asistanı istemindeki ajan: tilkiyi el yazımı, tavşanı RL ile yapın. Ödül hilesi buldu mu? Raporlayın.</li><li><b class="c-amber">[orta]</b> <b>Evrimleşen yarışçılar</b> — Bu destedeki nöroevrimi Unity’ye taşıyın: 3B pist, raycast sensörler; en iyi ağı JSON’a kaydedip başka pistte deneyin.</li><li><b class="c-red">[zor]</b> <b>Karma düşman</b> — Bir davranış ağacı (Y3) düşmanı yapın; “yaklaş ve kaçın” hareket yeteneğini ML-Agents ile eğitip BT’nin bir eylemi olarak çağırın.</li><li><b class="c-purple">[araştırma]</b> <b>Ödül hilesi kataloğu</b> — Kendi küçük oyununuzda üç farklı ödül tasarımıyla eğitip ajanın bulduğu beklenmedik stratejileri belgeleyin (CoastRunners deneyinin küçük bir tekrarı).</li></ol>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kendi ızgaram</b> — Bu sunumdaki Q-learning’i p5.js’te yeniden yazın; anahtarlı kapı ekleyin (durum = konum + anahtar var mı). Ajan önce anahtarı almayı öğreniyor mu?</li><li><b class="c-green">[kolay]</b> <b>FrozenLake’ten LunarLander’a</b> — Gymnasium’da tablo Q-learning ve SB3 PPO; γ ve öğrenme hızını değiştirip getiri grafiklerini karşılaştıran kısa rapor.</li><li><b class="c-amber">[orta]</b> <b>ML-Agents ile kaçan tavşan</b> — YZ asistanı istemindeki ajan: tilkiyi el yazımı, tavşanı RL ile yapın. Ödül hilesi buldu mu? Raporlayın.</li><li><b class="c-amber">[orta]</b> <b>Evrimleşen yarışçılar</b> — Bu sunumdaki nöroevrimi Unity’ye taşıyın: 3B pist, raycast sensörler; en iyi ağı JSON’a kaydedip başka pistte deneyin.</li><li><b class="c-red">[zor]</b> <b>Karma düşman</b> — Bir davranış ağacı (Y3) düşmanı yapın; “yaklaş ve kaçın” hareket yeteneğini ML-Agents ile eğitip BT’nin bir eylemi olarak çağırın.</li><li><b class="c-purple">[araştırma]</b> <b>Ödül hilesi kataloğu</b> — Kendi küçük oyununuzda üç farklı ödül tasarımıyla eğitip ajanın bulduğu beklenmedik stratejileri belgeleyin (CoastRunners deneyinin küçük bir tekrarı).</li></ol>
 </section>
 
 <section data-sec="özet">
@@ -879,7 +879,7 @@ def forward(x, W1, b1, W2, b2):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">LLM ile NPC’ler</div>
     <div class="sub">Konuşan, hatırlayan ve plan yapan karakterler</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #ff9ad5" href="../yz-llm/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ff9ad5" href="../yz-llm/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

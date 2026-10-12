@@ -68,11 +68,11 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../en-kisa-yollar/">En Kısa Yollar (Dijkstra)</a><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, mesafe)</a></div>
   <div class="prereq"><a class="opt" href="../oncelik-kuyruklari/">Öncelik Kuyrukları (yığın)</a><a class="opt" href="../yonsuz-graflar/">Yönsüz Graflar (BFS)</a><a class="opt" href="../union-find/">Union-Find (erişilebilirlik)</a><a class="opt" href="../yz-steering/">Y7 · Steering (yolu izlemek)</a></div>
-  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>A*, Dijkstra’ya tek bir fikir ekler: “hedefe ne kadar kaldığını tahmin et.” Dijkstra’yı En Kısa Yollar destesinden hatırlıyorsanız bu deste çok kolay gelecek; hatırlamıyorsanız Level 1 baştan anlatıyor.</div>
-  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unity’de NavMesh (Y9) ve A* Pathfinding Project, Godot’da AStarGrid2D, Unreal’da NavMesh hazır A* içerir: kod yazmadan yol bulabilirsiniz. Ama “neden takıldı?”, “neden yavaş?” sorularının cevabı bu destede.</div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>A*, Dijkstra’ya tek bir fikir ekler: “hedefe ne kadar kaldığını tahmin et.” Dijkstra’yı En Kısa Yollar sunumundan hatırlıyorsanız bu sunum çok kolay gelecek; hatırlamıyorsanız Level 1 baştan anlatıyor.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unity’de NavMesh (Y9) ve A* Pathfinding Project, Godot’da AStarGrid2D, Unreal’da NavMesh hazır A* içerir: kod yazmadan yol bulabilirsiniz. Ama “neden takıldı?”, “neden yavaş?” sorularının cevabı bu sunumda.</div>
 </section>
 
 <section>
@@ -104,7 +104,7 @@
     <div class="box game"><span class="bt">Yol noktası grafı (waypoints)</span>Tasarımcı haritaya noktalar koyar ve aralarını bağlar. Az düğüm, hızlı arama. 2000’lerin nişancı oyunlarında yaygındı.<p class="mini">Bedeli: elle bakım; noktaların dışındaki alanı “bilmez”.</p></div>
     <div class="box low"><span class="bt">Gezinti ağı (navmesh)</span>Yürünebilir zemin dışbükey çokgenlere bölünür; her çokgen bir düğüm. Bugün 3B oyunların standardı (Unity, Unreal, Godot). Y9’un konusu.<p class="mini">Bedeli: üretmesi karmaşık (motorlar yapar).</p></div>
   </div>
-  <p style="font-size:.86em;margin-top:12px">A* üçünde de <b>aynı</b> çalışır: sadece “komşular kim, geçiş maliyeti ne?” sorusunun cevabı değişir. Bu destede ızgara kullanıyoruz çünkü görmesi en kolayı.</p>
+  <p style="font-size:.86em;margin-top:12px">A* üçünde de <b>aynı</b> çalışır: sadece “komşular kim, geçiş maliyeti ne?” sorusunun cevabı değişir. Bu sunumda ızgara kullanıyoruz çünkü görmesi en kolayı.</p>
 </section>
 
 <section data-sec="problem">
@@ -256,9 +256,9 @@
 <section data-sec="kod">
   <h2>🎒 Ön bilgi: A*’ın üç veri yapısı</h2>
   <div class="cols3">
-    <div class="box story"><span class="bt">Öncelik kuyruğu (açık liste)</span>“f’si en küçük düğümü ver.” Python <code>heapq</code>, C# <code>PriorityQueue</code> (.NET 6+; Unity’de yoksa kendi yığınınız), JS’de kendi yığınınız. Öncelik Kuyrukları destesindeki ikili yığın.</div>
+    <div class="box story"><span class="bt">Öncelik kuyruğu (açık liste)</span>“f’si en küçük düğümü ver.” Python <code>heapq</code>, C# <code>PriorityQueue</code> (.NET 6+; Unity’de yoksa kendi yığınınız), JS’de kendi yığınınız. Öncelik Kuyrukları sunumundaki ikili yığın.</div>
     <div class="box game"><span class="bt">g tablosu</span>“Bu düğüme şimdiye kadar bulduğum en ucuz maliyet.” Sözlük ya da dizi. Daha ucuz yol bulursan güncelle ve kuyruğa yeniden koy.</div>
-    <div class="box low"><span class="bt">came_from (ebeveyn) tablosu</span>“Bu düğüme hangi düğümden geldim?” Hedefe ulaşınca geriye doğru izleyip yolu çıkarırsın. En Kısa Yollar destesindeki <code>edgeTo</code>.</div>
+    <div class="box low"><span class="bt">came_from (ebeveyn) tablosu</span>“Bu düğüme hangi düğümden geldim?” Hedefe ulaşınca geriye doğru izleyip yolu çıkarırsın. En Kısa Yollar sunumundaki <code>edgeTo</code>.</div>
   </div>
   <p class="mini" style="margin-top:10px">“Kuyrukta aynı düğüm iki kez olabilir mi?” Evet: basit uygulamalarda düğümü güncellemek yerine <b>yeniden eklenir</b>; çıkarken “zaten kapalıysa atla” denir (tembel silme). Kod bunu yapıyor.</p>
 </section>
@@ -469,7 +469,7 @@ def heuristics(dx, dy):
   <h2>Sık düşülen tuzaklar</h2>
   <div class="cols">
     <div>
-      <div class="box warn"><span class="bt">1) Ulaşılamayan hedef</span>Hedef bir adanın üstündeyse A* <b>bütün haritayı</b> tarar ve “yol yok” der: oyunun en pahalı araması. Çare: haritayı önceden “bağlantılı bölgelere” ayırın (Union-Find destesi!) ve aynı bölgede değillerse hiç arama yapmayın.</div>
+      <div class="box warn"><span class="bt">1) Ulaşılamayan hedef</span>Hedef bir adanın üstündeyse A* <b>bütün haritayı</b> tarar ve “yol yok” der: oyunun en pahalı araması. Çare: haritayı önceden “bağlantılı bölgelere” ayırın (Union-Find sunumu!) ve aynı bölgede değillerse hiç arama yapmayın.</div>
       <div class="box warn"><span class="bt">2) Herkes aynı karede</span>50 birim tek bir noktaya gider ve orada üst üste biner. Çare: hedef etrafında formasyon/dağıtma, birimler arası kaçınma (Y7: RVO).</div>
       <div class="box warn"><span class="bt">3) Hareketli engeller</span>Yol bulunduktan sonra kapı kapanır. Çare: yolu izlerken önü kontrol et, gerekirse yeniden ara (Y5’teki yeniden planlama).</div>
     </div>
@@ -726,7 +726,7 @@ print([(n.x, n.y) for n in path], runs)
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">NavMesh</div>
     <div class="sub">Yürünebilir zemini çokgenlerle örtmek: Recast, Unity, Unreal, Godot</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-navmesh/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ac8ff" href="../yz-navmesh/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

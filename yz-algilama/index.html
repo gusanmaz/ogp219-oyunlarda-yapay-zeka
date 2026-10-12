@@ -68,11 +68,11 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (nokta çarpım, görüş açısı)</a><a class="" href="../yz-fsm/">Y2 · FSM (nöbetçi)</a></div>
   <div class="prereq"><a class="opt" href="../yz-davranis-agaclari/">Y3 · Davranış Ağaçları (kara tahta)</a><a class="opt" href="../yz-navmesh/">Y9 · NavMesh (ses yolu)</a><a class="opt" href="../yz-utility/">Y4 · Utility (kesinlik = puan)</a></div>
-  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Y0’daki “oyuncu görüş açımda mı?” laboratuvarı bu destenin ilk adımıdır. Y2’deki nöbetçinin “görüyor/duydu” bilgisini bu hafta nereden aldığını kuruyoruz.</div>
-  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unreal’ın AI Perception bileşeni görme ve duymayı hazır verir; Unity’de birkaç satır <code>Physics.Raycast</code> yeter. Bu destenin asıl dersi kod değil, <b>tasarım</b>: oyuncunun algıyı anlayabilmesi (gösterge, ses, animasyon).</div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Y0’daki “oyuncu görüş açımda mı?” laboratuvarı bu sunumun ilk adımıdır. Y2’deki nöbetçinin “görüyor/duydu” bilgisini bu hafta nereden aldığını kuruyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Unreal’ın AI Perception bileşeni görme ve duymayı hazır verir; Unity’de birkaç satır <code>Physics.Raycast</code> yeter. Bu sunumun asıl dersi kod değil, <b>tasarım</b>: oyuncunun algıyı anlayabilmesi (gösterge, ses, animasyon).</div>
 </section>
 
 <section>
@@ -591,7 +591,7 @@ def sound_distance(src, dst, wall_x, doors):
   <h2>🧰 Kütüphaneler ve araçlar</h2>
   <table class="sum-t libtable" style="font-size:16px">
     <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
-    <tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/ai-perception-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal AI Perception</b></a></td><td>Unreal · yerleşik</td><td>AIPerceptionComponent: Sight, Hearing, Damage, Touch, Team, Prediction duyuları; algılanan aktörler ve “son görülme” bilgisi; olaylarla güncellenir. Ses: <code>ReportNoiseEvent</code>; algılanabilir olmak için AIPerceptionStimuliSource.</td><td>AIController’a AIPerception bileşeni + duyu ayarları</td></tr><tr><td><a href="https://docs.unity3d.com/ScriptReference/Physics.Raycast.html" target="_blank" rel="noopener"><b>Unity: Physics + kendi sisteminiz</b></a></td><td>Unity · yerleşik parçalar</td><td>Raycast, OverlapSphere, katman maskeleri, olaylar. Hazır algı bileşeni yok; bu destedeki 40 satırlık sistem iyi bir başlangıç.</td><td>Kod</td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/classes/class_raycast3d.html" target="_blank" rel="noopener"><b>Godot: RayCast / Area</b></a></td><td>Godot 4 · yerleşik</td><td>RayCast2D/3D düğümleri, Area ile duyma yarıçapı, PhysicsDirectSpaceState ile kodda ışın.</td><td>Sahneye RayCast3D/Area3D</td></tr><tr><td><a href="https://mugen87.github.io/yuka/docs/" target="_blank" rel="noopener"><b>Yuka</b></a></td><td>JavaScript · açık kaynak</td><td>Web oyunları için Vision (görüş konisi + engeller) ve MemorySystem (hafıza kayıtları, unutma süresi) sınıfları.</td><td><code>npm install yuka</code></td></tr><tr><td><a href="https://github.com/Unity-Technologies/ml-agents" target="_blank" rel="noopener"><b>ML-Agents ışın sensörleri</b></a></td><td>Unity · açık kaynak</td><td>RayPerceptionSensor: öğrenen ajanlar (Y13) için çevreyi ışınlarla “gören” hazır sensör.</td><td>Package Manager → ML Agents</td></tr>
+    <tr><td><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/ai-perception-in-unreal-engine" target="_blank" rel="noopener"><b>Unreal AI Perception</b></a></td><td>Unreal · yerleşik</td><td>AIPerceptionComponent: Sight, Hearing, Damage, Touch, Team, Prediction duyuları; algılanan aktörler ve “son görülme” bilgisi; olaylarla güncellenir. Ses: <code>ReportNoiseEvent</code>; algılanabilir olmak için AIPerceptionStimuliSource.</td><td>AIController’a AIPerception bileşeni + duyu ayarları</td></tr><tr><td><a href="https://docs.unity3d.com/ScriptReference/Physics.Raycast.html" target="_blank" rel="noopener"><b>Unity: Physics + kendi sisteminiz</b></a></td><td>Unity · yerleşik parçalar</td><td>Raycast, OverlapSphere, katman maskeleri, olaylar. Hazır algı bileşeni yok; bu sunumdaki 40 satırlık sistem iyi bir başlangıç.</td><td>Kod</td></tr><tr><td><a href="https://docs.godotengine.org/en/stable/classes/class_raycast3d.html" target="_blank" rel="noopener"><b>Godot: RayCast / Area</b></a></td><td>Godot 4 · yerleşik</td><td>RayCast2D/3D düğümleri, Area ile duyma yarıçapı, PhysicsDirectSpaceState ile kodda ışın.</td><td>Sahneye RayCast3D/Area3D</td></tr><tr><td><a href="https://mugen87.github.io/yuka/docs/" target="_blank" rel="noopener"><b>Yuka</b></a></td><td>JavaScript · açık kaynak</td><td>Web oyunları için Vision (görüş konisi + engeller) ve MemorySystem (hafıza kayıtları, unutma süresi) sınıfları.</td><td><code>npm install yuka</code></td></tr><tr><td><a href="https://github.com/Unity-Technologies/ml-agents" target="_blank" rel="noopener"><b>ML-Agents ışın sensörleri</b></a></td><td>Unity · açık kaynak</td><td>RayPerceptionSensor: öğrenen ajanlar (Y13) için çevreyi ışınlarla “gören” hazır sensör.</td><td>Package Manager → ML Agents</td></tr>
   </table>
   
 </section>
@@ -676,7 +676,7 @@ def sound_distance(src, dst, wall_x, doors):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Taktik YZ</div>
     <div class="sub">Siper seçimi, etki haritaları, konum sorguları</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd27a" href="../yz-taktik/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd27a" href="../yz-taktik/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

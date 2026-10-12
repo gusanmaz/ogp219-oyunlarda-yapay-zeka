@@ -1,4 +1,4 @@
-/* "Prosedürel İçerik Üretimi" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Prosedürel İçerik Üretimi" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

@@ -1,4 +1,4 @@
-/* "BST'nin Geometrik Uygulamaları" destesine özel demolar (ortak: ../ortak/geometri.js) */
+/* "BST'nin Geometrik Uygulamaları" sunumuna özel demolar (ortak: ../ortak/geometri.js) */
 (function () {
   'use strict';
   const { el } = SL;

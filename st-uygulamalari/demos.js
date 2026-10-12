@@ -1,4 +1,4 @@
-/* "Sembol Tablosu Uygulamaları" destesine özel demolar (ortak: ../ortak/st.js) */
+/* "Sembol Tablosu Uygulamaları" sunumuna özel demolar (ortak: ../ortak/st.js) */
 (function () {
   'use strict';
   const { el } = SL;

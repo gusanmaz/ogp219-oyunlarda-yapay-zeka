@@ -278,7 +278,7 @@ console.log(map.get(key(3, 4)));      // ork ✔
   <h2>Fikir: M tane bağlı liste</h2>
   <div class="cols c64">
     <ul style="font-size:.92em">
-      <li>M kovalı bir dizi; her kova bir <b>bağlı liste</b> (Bağlı Listeler destesi!)</li>
+      <li>M kovalı bir dizi; her kova bir <b>bağlı liste</b> (Bağlı Listeler sunumu!)</li>
       <li class="fragment"><b>put</b>: <code>i = hash(key) % M</code>; i. listede ara; yoksa <b>başına</b> ekle</li>
       <li class="fragment"><b>get</b>: sadece i. listede ara</li>
       <li class="fragment">Çakışan anahtarlar aynı listede <b>sorunsuz</b> yaşar</li>
@@ -391,11 +391,11 @@ function get(key) {
       <ul>
         <li>M çok büyük → boş kovalar, bellek israfı</li>
         <li>M çok küçük → uzun zincirler, yavaş arama</li>
-        <li class="fragment">Bilmiyorsak: <b>büyüt</b>! N/M belli bir sınırı aşınca M’yi 2 katına çıkar, herkesi yeniden hash’le (Yığınlar destesindeki dinamik dizi gibi: ortalamada eleman başına sabit iş)</li>
+        <li class="fragment">Bilmiyorsak: <b>büyüt</b>! N/M belli bir sınırı aşınca M’yi 2 katına çıkar, herkesi yeniden hash’le (Yığınlar sunumundaki dinamik dizi gibi: ortalamada eleman başına sabit iş)</li>
       </ul>
     </div>
   </div>
-  <div class="box low fragment" style="margin-top:10px"><span class="bt">⚙️ Java’nın sigortası</span>Java’nın <code>HashMap</code>’i bir zincir <b>8</b>’i geçerse o zinciri bir <b>kırmızı-siyah ağaca</b> çevirir (Dengeli Ağaçlar destesi!) → en kötü durumda bile lg N.</div>
+  <div class="box low fragment" style="margin-top:10px"><span class="bt">⚙️ Java’nın sigortası</span>Java’nın <code>HashMap</code>’i bir zincir <b>8</b>’i geçerse o zinciri bir <b>kırmızı-siyah ağaca</b> çevirir (Dengeli Ağaçlar sunumu!) → en kötü durumda bile lg N.</div>
 </section>
 
 <section data-sec="ayrı zincirleme">
@@ -664,7 +664,7 @@ function get(key) {
         <li>MMO’da “çevremdeki oyunculara mesaj gönder” (ilgi alanı yönetimi)</li>
         <li>Matthias Müller’in “Ten Minute Physics” videosu: binlerce topun çarpışması tam bu yöntemle (kaynaklarda)</li>
       </ul>
-      <p class="mini">BST’nin Geometrik Uygulamaları destesindeki ızgara ↔ kd-ağacı tartışmasını hatırlayın: düzgün dağılımda ızgara/hash rakipsiz; kümelenmede ağaçlar.</p>
+      <p class="mini">BST’nin Geometrik Uygulamaları sunumundaki ızgara ↔ kd-ağacı tartışmasını hatırlayın: düzgün dağılımda ızgara/hash rakipsiz; kümelenmede ağaçlar.</p>
     </div>
   </div>
 </section>
@@ -876,7 +876,7 @@ def hash_str(s, M):
   <div class="cols c64">
     <div><ul style="font-size:.84em">
       <li>Aralık 2011, 28C3: Alexander Klink ve Julian Wälde, PHP, Java, Python, Ruby ve ASP.NET’in kullandığı hash fonksiyonları için <b>çakışan anahtarlar</b> üretmenin kolay olduğunu gösterdi. Web sunucuları her POST isteğindeki parametreleri bir hash tablosuna koyduğu için tek bir istek bir işlemciyi dakikalarca meşgul edebiliyordu.</li>
-      <li>Cevaplar: Python 3.3 hash rastgeleleştirmesini varsayılan yaptı; yetersiz kalınca Python 3.4 <b>SipHash</b>’e geçti (PEP 456). Java 8 kalabalık kovaları ağaca çevirdi (Dengeli Ağaçlar destesi). .NET (Core/5+) <code>string.GetHashCode</code> değerini <b>her süreçte farklı</b> tohumla hesaplar.</li>
+      <li>Cevaplar: Python 3.3 hash rastgeleleştirmesini varsayılan yaptı; yetersiz kalınca Python 3.4 <b>SipHash</b>’e geçti (PEP 456). Java 8 kalabalık kovaları ağaca çevirdi (Dengeli Ağaçlar sunumu). .NET (Core/5+) <code>string.GetHashCode</code> değerini <b>her süreçte farklı</b> tohumla hesaplar.</li>
       <li>Sonuç: aynı metnin hash kodu, programı her çalıştırdığınızda değişebilir.</li>
     </ul></div>
     <div class="box story"><span class="bt">Ders</span><b>GetHashCode’u asla kaydetmeyin ve ağ üzerinden göndermeyin.</b> Kayıt dosyasında, ağda ya da “tohumdan dünya üretme”de (Y15) kalıcı ve platformdan bağımsız bir değer gerekiyorsa açıkça tanımlanmış bir hash (ör. xxHash, FNV-1a) kullanın. Hash tablosu ise girdi saldırgan olabiliyorsa (çok oyunculu sunucu) rastgele tohumlu hash ister.</div>
@@ -978,7 +978,7 @@ def hash_str(s, M):
       <li><a href="https://www.cs.usfca.edu/~galles/visualization/OpenHash.html" target="_blank">USFCA · Ayrı zincirleme görselleştirmesi</a></li>
       <li><a href="https://www.cs.usfca.edu/~galles/visualization/ClosedHash.html" target="_blank">USFCA · Açık adresleme görselleştirmesi</a></li>
       <li><a href="https://visualgo.net/en/hashtable" target="_blank">VisuAlgo · Hash Table</a></li>
-      <li><a href="../oncelik-kuyruklari/">Önceki deste: Öncelik Kuyrukları</a> · <a href="../">Ders haritası</a></li>
+      <li><a href="../oncelik-kuyruklari/">Önceki sunum: Öncelik Kuyrukları</a> · <a href="../">Ders haritası</a></li>
     </ul>
   </div>
 </section>
@@ -988,7 +988,7 @@ def hash_str(s, M):
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:56px">Sembol Tablosu Uygulamaları</div>
     <div class="sub">Kümeler, sözlükler, dizinler, seyrek vektörler — hash ve BST’yi iş başında görelim</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../st-uygulamalari/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../st-uygulamalari/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

@@ -1,4 +1,4 @@
-/* "Oyun YZ’si İçin Hazırlık" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Oyun YZ’si İçin Hazırlık" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;
@@ -224,3 +224,24 @@
     hint: (g, f) => (Math.hypot(f[0], f[1]) !== 1 ? 'İleri vektörü birim değil — onu da normalize ettin mi?' : 'Hem mesafeyi hem açıyı kontrol et; açıyı nokta çarpım ve cos(FOV/2) ile karşılaştır.')
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.dist2 = {
+    fn: 'distance', jsFn: 'distance',
+    ref: (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]),
+    cases: () => { const cs = [[[2, 3], [5, 7]], [[0, 0], [0, 0]], [[-1, -1], [2, 3]], [[10, 0], [0, 0]]]; for (let i = 0; i < 20; i++) cs.push([[Math.round(SL.rand(-20, 20)), Math.round(SL.rand(-20, 20))], [Math.round(SL.rand(-20, 20)), Math.round(SL.rand(-20, 20))]]); return cs; },
+    show: (a, b) => `a = ${JSON.stringify(a)}, b = ${JSON.stringify(b)}`,
+    hint: () => 'Pisagor: √(dx·dx + dy·dy). JavaScript’te Math.sqrt ya da Math.hypot(dx, dy); Python’da math.hypot(dx, dy).'
+  };
+  SL.AILABS.behind = {
+    fn: 'is_behind', jsFn: 'isBehind',
+    ref: (f, t) => f[0] * t[0] + f[1] * t[1] < 0,
+    cases: () => { const cs = [[[1, 0], [-0.8, 0.6]], [[1, 0], [0.6, 0.8]], [[0, 1], [0, -5]], [[0, -1], [3, -4]], [[-1, 0], [2, 1]]]; while (cs.length < 25) { const c = [[Math.round(SL.rand(-3, 3)), Math.round(SL.rand(-3, 3))], [Math.round(SL.rand(-9, 9)), Math.round(SL.rand(-9, 9))]]; if (c[0][0] * c[1][0] + c[0][1] * c[1][1] !== 0) cs.push(c); } return cs; },
+    show: (f, t) => `ileri = ${JSON.stringify(f)}, hedefe yön = ${JSON.stringify(t)}`,
+    hint: (f, t) => `Nokta çarpım = ${f[0]}·${t[0]} + ${f[1]}·${t[1]} = ${Math.round((f[0] * t[0] + f[1] * t[1]) * 100) / 100}. Negatifse hedef arkada.`
+  };
+})();
+/* EK:BİTİŞ */

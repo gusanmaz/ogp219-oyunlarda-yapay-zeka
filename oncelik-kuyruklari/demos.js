@@ -1,4 +1,4 @@
-/* "Öncelik Kuyrukları" destesine özel demolar (ortak: ../ortak/oncelik.js) */
+/* "Öncelik Kuyrukları" sunumuna özel demolar (ortak: ../ortak/oncelik.js) */
 (function () {
   'use strict';
   const { el } = SL;

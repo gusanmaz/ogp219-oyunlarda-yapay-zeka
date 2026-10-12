@@ -70,11 +70,11 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık</a><a class="" href="../yz-fsm/">Y2 · Sonlu Durum Makineleri</a></div>
   <div class="prereq"><a class="opt" href="../agaclar-bst/">İkili Arama Ağaçları (ağaç yürüyüşü, özyineleme)</a><a class="opt" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar</a></div>
-  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Aynı nöbetçiyi bu kez ağaçla kuracağız; FSM’yi bilmek karşılaştırmayı kolaylaştırır. Ağacı çalıştıran kod <b>özyinelemeli</b> (kendini çağıran) bir fonksiyondur: BST destesindeki ağaç yürüyüşüyle aynı fikir. Bilmiyorsanız sorun değil, 🎒 slaytlarında anlatıyoruz.</div>
-  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Davranış ağacı kurmak için kod yazmak <b>şart değil</b>: Unity Behavior, Unreal Behavior Tree editörü, Behavior Designer ve Beehave tamamen görseldir. Bu destede ağacı çizmeyi ve okumayı öğrenmek, kodu yazmaktan daha önemli. Kod bölümünü ilk okumada hızlı geçebilirsiniz.</div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Aynı nöbetçiyi bu kez ağaçla kuracağız; FSM’yi bilmek karşılaştırmayı kolaylaştırır. Ağacı çalıştıran kod <b>özyinelemeli</b> (kendini çağıran) bir fonksiyondur: BST sunumundaki ağaç yürüyüşüyle aynı fikir. Bilmiyorsanız sorun değil, 🎒 slaytlarında anlatıyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Davranış ağacı kurmak için kod yazmak <b>şart değil</b>: Unity Behavior, Unreal Behavior Tree editörü, Behavior Designer ve Beehave tamamen görseldir. Bu sunumda ağacı çizmeyi ve okumayı öğrenmek, kodu yazmaktan daha önemli. Kod bölümünü ilk okumada hızlı geçebilirsiniz.</div>
 </section>
 
 <section>
@@ -263,7 +263,7 @@
       <li>Sonraki karede <b>yeniden kökten</b>. Daha soldaki bir koşul doğru olduysa ağaç kendiliğinden o dala geçer: <b>reaktiflik</b>.</li>
     </ol>
     <div>
-      <div class="box story"><span class="bt">🎒 Derinlik öncelikli yürüyüş</span>BST destesindeki “önce sol alt ağaç, sonra sağ” yürüyüşüyle aynı: bir düğümün çocuklarını sırayla ve tamamen bitirmeden kardeşine geçmezsin. Fark: burada çocuk cevabına göre <b>erken durabiliriz</b>.</div>
+      <div class="box story"><span class="bt">🎒 Derinlik öncelikli yürüyüş</span>BST sunumundaki “önce sol alt ağaç, sonra sağ” yürüyüşüyle aynı: bir düğümün çocuklarını sırayla ve tamamen bitirmeden kardeşine geçmezsin. Fark: burada çocuk cevabına göre <b>erken durabiliriz</b>.</div>
       <div class="box low"><span class="bt">⚙️ Her kare mi?</span>Küçük ağaçlar için evet. Büyük oyunlarda saniyede 5–10 tick ya da olay güdümlü (Level 4) yapılır.</div>
     </div>
   </div>
@@ -1105,7 +1105,7 @@ print(py_trees.display.unicode_tree(root, show_status=True))
 
 <section data-sec="projeler">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>p5.js nöbetçi</b> — Bu destedeki 60 satırlık motoru p5.js’e taşıyın; aktif yolu ekranda ağaç olarak çizin.</li><li><b class="c-green">[kolay]</b> <b>Kapı ve oda</b> — Kapı örneğini bir Unity sahnesinde Unity Behavior ile kurun: açık kapı, kilitli kapı + anahtar, kırılabilir kapı.</li><li><b class="c-amber">[orta]</b> <b>Grunt ve Elite</b> — Aynı temel ağaçtan iki karakter: biri korkak (fazladan “geri çekil” dalları), biri cesur. Halo 2’nin “özel davranışlar” fikri.</li><li><b class="c-amber">[orta]</b> <b>Kilit açılan dallar</b> — Alien: Isolation gibi: oyuncu bir taktiği 3 kez kullanınca düşmanın ağacında yeni bir dal açılsın (ör. saklanma yerlerini kontrol et).</li><li><b class="c-red">[zor]</b> <b>Olay güdümlü motor</b> — Kendi motorunuza kara tahta + gözlemci (observer) ekleyin: koşullar sadece değer değişince yeniden hesaplansın. Her kare tick ile işlemci süresini karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Evrilen ağaçlar</b> — Basit bir arena oyununda BT’leri genetik programlamayla evrimleştirin (DEFCON makalesi gibi). Sonuçta çıkan ağaçlar okunabilir mi?</li><li><b class="c-purple">[araştırma]</b> <b>LLM tasarımcı</b> — Bir LLM’den doğal dil tarifinden mistreevous MDSL ya da BT.CPP XML ağacı üretmesini isteyin; ürettiklerini otomatik testlerle (bu destedeki 16 algı birleşimi gibi) doğrulayın.</li></ol>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>p5.js nöbetçi</b> — Bu sunumdaki 60 satırlık motoru p5.js’e taşıyın; aktif yolu ekranda ağaç olarak çizin.</li><li><b class="c-green">[kolay]</b> <b>Kapı ve oda</b> — Kapı örneğini bir Unity sahnesinde Unity Behavior ile kurun: açık kapı, kilitli kapı + anahtar, kırılabilir kapı.</li><li><b class="c-amber">[orta]</b> <b>Grunt ve Elite</b> — Aynı temel ağaçtan iki karakter: biri korkak (fazladan “geri çekil” dalları), biri cesur. Halo 2’nin “özel davranışlar” fikri.</li><li><b class="c-amber">[orta]</b> <b>Kilit açılan dallar</b> — Alien: Isolation gibi: oyuncu bir taktiği 3 kez kullanınca düşmanın ağacında yeni bir dal açılsın (ör. saklanma yerlerini kontrol et).</li><li><b class="c-red">[zor]</b> <b>Olay güdümlü motor</b> — Kendi motorunuza kara tahta + gözlemci (observer) ekleyin: koşullar sadece değer değişince yeniden hesaplansın. Her kare tick ile işlemci süresini karşılaştırın.</li><li><b class="c-purple">[araştırma]</b> <b>Evrilen ağaçlar</b> — Basit bir arena oyununda BT’leri genetik programlamayla evrimleştirin (DEFCON makalesi gibi). Sonuçta çıkan ağaçlar okunabilir mi?</li><li><b class="c-purple">[araştırma]</b> <b>LLM tasarımcı</b> — Bir LLM’den doğal dil tarifinden mistreevous MDSL ya da BT.CPP XML ağacı üretmesini isteyin; ürettiklerini otomatik testlerle (bu sunumdaki 16 algı birleşimi gibi) doğrulayın.</li></ol>
 </section>
 
 <section data-sec="özet">
@@ -1169,7 +1169,7 @@ print(py_trees.display.unicode_tree(root, show_status=True))
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Utility AI</div>
     <div class="sub">The Sims’ten Dave Mark’a: kararları puanlarla vermek</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd27a" href="../yz-utility/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #ffd27a" href="../yz-utility/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

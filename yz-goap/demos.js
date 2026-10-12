@@ -1,4 +1,4 @@
-/* "GOAP ve HTN" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "GOAP ve HTN" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;

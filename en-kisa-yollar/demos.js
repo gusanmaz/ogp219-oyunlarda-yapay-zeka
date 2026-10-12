@@ -1,4 +1,4 @@
-/* "En Kısa Yollar" destesine özel demolar (ortak: ../ortak/graf.js + yonlu.js + sp.js) */
+/* "En Kısa Yollar" sunumuna özel demolar (ortak: ../ortak/graf.js + yonlu.js + sp.js) */
 (function () {
   'use strict';
   const { el } = SL;

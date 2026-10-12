@@ -213,7 +213,7 @@ class Digraph {
     <ul>
       <li>C#, Java, JavaScript, Python: hepsinde çöp toplayıcı var. Unity C# betikleri de öyle.</li>
       <li class="fragment">İşaretleme sırasında programın (bir kısmı) durur → oyunda <b>takılma</b> (GC spike). 16,6 ms’lik kare bütçesinde 5 ms’lik bir GC fark edilir!</li>
-      <li class="fragment">Çözüm: her karede yeni nesne <b>üretme</b> <span class="en">allocation</span>. Mermi, partikül, düşman → <b>nesne havuzu</b> <span class="en">object pool</span> (Bağlı Listeler destesi!). <code>string</code> birleştirmeyi ve LINQ’yu <code>Update()</code> içinde azalt.</li>
+      <li class="fragment">Çözüm: her karede yeni nesne <b>üretme</b> <span class="en">allocation</span>. Mermi, partikül, düşman → <b>nesne havuzu</b> <span class="en">object pool</span> (Bağlı Listeler sunumu!). <code>string</code> birleştirmeyi ve LINQ’yu <code>Update()</code> içinde azalt.</li>
       <li class="fragment"><b>Referans sayma</b> (Python’un ana yöntemi, Swift, C++ <code>shared_ptr</code>): her nesne kendisine kaç ok geldiğini sayar, 0 olunca silinir. Hızlı ama <b>döngüleri</b> kaçırır → Python ayrıca döngü bulan bir toplayıcı çalıştırır.</li>
     </ul>
   </div>
@@ -523,7 +523,7 @@ def has_cycle(adj):
       <button data-opt="C">Rastgele bir değer yazar</button>
       <button data-opt="D">Sadece A1’i hesaplar</button>
     </div>
-    <div class="explain">Excel hücreleri bağımlılık grafının topolojik sırasıyla hesaplar. A1 → B1 → C1 → A1 bir döngü: hiçbirini önce hesaplayamazsınız. Excel’in “Döngüsel Başvuru” uyarısı bu destedeki döngü tespitinin ta kendisi.</div>
+    <div class="explain">Excel hücreleri bağımlılık grafının topolojik sırasıyla hesaplar. A1 → B1 → C1 → A1 bir döngü: hiçbirini önce hesaplayamazsınız. Excel’in “Döngüsel Başvuru” uyarısı bu sunumdaki döngü tespitinin ta kendisi.</div>
   </div>
 </section>
 
@@ -608,10 +608,10 @@ function topoSort(adj) {
   <div class="cols c64">
     <div><ul style="font-size:.84em">
       <li>1960: John McCarthy, Lisp’i anlatan makalesinde bellekte artık kullanılmayan hücreleri otomatik geri kazanmanın bir yolunu tarif etti: <b>işaretle ve süpür</b> (mark and sweep).</li>
-      <li>Bellek bir <b>yönlü graftır</b>: nesneler düğüm, referanslar kenar. “Kökler”den (yığındaki değişkenler, statik alanlar) başlayan bir DFS/BFS, ulaşılabilen her nesneyi işaretler; işaretlenmeyen her şey çöptür ve süpürülür. Yani çöp toplama, bu destedeki <b>ulaşılabilirlik</b> sorusunun ta kendisi.</li>
+      <li>Bellek bir <b>yönlü graftır</b>: nesneler düğüm, referanslar kenar. “Kökler”den (yığındaki değişkenler, statik alanlar) başlayan bir DFS/BFS, ulaşılabilen her nesneyi işaretler; işaretlenmeyen her şey çöptür ve süpürülür. Yani çöp toplama, bu sunumdaki <b>ulaşılabilirlik</b> sorusunun ta kendisi.</li>
       <li>Unity, C# betikleri için muhafazakâr bir çöp toplayıcı (Boehm–Demers–Weiser) kullanır ve 2019’dan beri işi karelere bölen <b>artımlı</b> (incremental) modu sunar. Yine de çok fazla nesne ayırmak, toplama sırasında takılmalara yol açar.</li>
     </ul></div>
-    <div class="box story"><span class="bt">Ders</span>Oyunlarda her kare yeni nesne ayırmak (new, LINQ, string birleştirme) çöp toplayıcıya iş çıkarır; grafı her taradığında oyun takılabilir. Bu yüzden nesne havuzları (Bağlı Listeler destesindeki serbest liste) ve “sıfır ayırma” alışkanlığı önemlidir. Grafın ne kadar büyük olduğu = toplayıcının ne kadar çalışacağı.</div>
+    <div class="box story"><span class="bt">Ders</span>Oyunlarda her kare yeni nesne ayırmak (new, LINQ, string birleştirme) çöp toplayıcıya iş çıkarır; grafı her taradığında oyun takılabilir. Bu yüzden nesne havuzları (Bağlı Listeler sunumundaki serbest liste) ve “sıfır ayırma” alışkanlığı önemlidir. Grafın ne kadar büyük olduğu = toplayıcının ne kadar çalışacağı.</div>
   </div>
   <p class="mini" style="margin-top:6px">Kaynak: <a href="https://doi.org/10.1145/367177.367199" target="_blank" rel="noopener">McCarthy 1960</a> · <a href="https://docs.unity3d.com/Manual/performance-incremental-garbage-collection.html" target="_blank" rel="noopener">Unity: Incremental garbage collection</a></p>
 </section>
@@ -702,7 +702,7 @@ function topoSort(adj) {
     </ul>
     <ul class="reflist">
       <li><a href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank">Red Blob Games · Grids and Graphs</a></li>
-      <li><a href="../yonsuz-graflar/">Önceki deste: Yönsüz Graflar</a> · <a href="../">Ders haritası</a></li>
+      <li><a href="../yonsuz-graflar/">Önceki sunum: Yönsüz Graflar</a> · <a href="../">Ders haritası</a></li>
     </ul>
   </div>
 </section>
@@ -712,7 +712,7 @@ function topoSort(adj) {
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:56px">Minimum Yayılan Ağaçlar</div>
     <div class="sub">Kenarların bir maliyeti olunca: Kruskal, Prim ve prosedürel zindan koridorları</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../mst/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../mst/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

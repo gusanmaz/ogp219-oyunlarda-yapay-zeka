@@ -68,7 +68,7 @@
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık</a><a class="" href="../yz-giris/">Y1 · Giriş</a></div>
   <div class="prereq"><a class="opt" href="../yonlu-graflar/">Yönlü Graflar (FSM bir yönlü graftır)</a><a class="opt" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar (yığınlı FSM)</a></div>
   <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>FSM’nin diyagramı bir yönlü graftır: düğümler durumlar, oklar geçişler. Yığınlı FSM ise bildiğimiz yığını kullanır. Ama ikisi de şart değil; burada sıfırdan anlatıyoruz.</div>
@@ -115,7 +115,7 @@
       <li>Aynı anda <b>tek</b> aktif durum</li>
       <li>Oklar: <b>geçişler</b>; üstündeki yazı: <b>koşul</b></li>
       <li class="fragment">Diğer örnekler: kapı (açık/kapalı/kilitli), içecek makinesi, asansör, oyun menüleri, karakter animasyonları (dur/yürü/koş/zıpla)</li>
-      <li class="fragment">🎒 Bir FSM diyagramı = <b>yönlü graf</b> (Yönlü Graflar destesi): düğüm = durum, kenar = geçiş</li>
+      <li class="fragment">🎒 Bir FSM diyagramı = <b>yönlü graf</b> (Yönlü Graflar sunumu): düğüm = durum, kenar = geçiş</li>
     </ul>
   </div>
 </section>
@@ -168,6 +168,18 @@
   <ul class="agenda"><li class="done">durum ve geçiş</li><li class="on">bir nöbetçi tasarlayalım</li><li class="">kod: üç yol</li><li class="">sorunlar ve çözümler</li><li class="">hiyerarşik ve yığınlı FSM</li><li class="">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-ek="durumlar" data-sec="nöbetçi">
+  <h2>Nöbetçinin beş durumu: her biri ne demek?</h2>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;font-size:.66em;line-height:1.32">
+    <div class="box" style="border-left-color:var(--blue);margin:0"><span class="bt" style="color:var(--blue)">🚶 DEVRİYE</span><p><b>Ne yapar?</b> Dört yol noktası arasında sakin sakin yürür.</p><p><b>Aklından geçen:</b> “Her şey yolunda.”</p><p><b>Çıkış:</b> oyuncuyu görürse ya da ses duyarsa.</p></div>
+    <div class="box" style="border-left-color:var(--amber);margin:0"><span class="bt" style="color:var(--amber)">❓ ŞÜPHE</span><p><b>Ne yapar?</b> Sesin geldiği (ya da oyuncuyu son gördüğü) yere gider, durup etrafına bakınır.</p><p><b>Aklından geçen:</b> “Orada bir şey mi vardı?”</p><p><b>Çıkış:</b> görürse kovalar; 4 sn bir şey bulamazsa devriyeye döner.</p></div>
+    <div class="box" style="border-left-color:var(--red);margin:0"><span class="bt" style="color:var(--red)">🏃 KOVALA</span><p><b>Ne yapar?</b> Oyuncuya doğru koşar.</p><p><b>Aklından geçen:</b> “Gördüm seni!”</p><p><b>Çıkış:</b> 60 birimden yakına gelirse saldırır; gözden kaybederse şüpheye düşer.</p></div>
+    <div class="box" style="border-left-color:var(--purple);margin:0"><span class="bt" style="color:var(--purple)">🔫 SALDIR</span><p><b>Ne yapar?</b> Durur, oyuncuya döner, ateş eder.</p><p><b>Aklından geçen:</b> “Menzildesin.”</p><p><b>Çıkış:</b> oyuncu 90 birimden uzaklaşırsa yeniden kovalar; kaybederse şüphe.</p></div>
+    <div class="box" style="border-left-color:var(--green);margin:0"><span class="bt" style="color:var(--green)">💨 KAÇ</span><p><b>Ne yapar?</b> Oyuncudan uzaklaşır, bu sırada canı yavaşça dolar.</p><p><b>Aklından geçen:</b> “Ölmek üzereyim!”</p><p><b>Giriş:</b> <u>hangi durumda olursa olsun</u> can 30’un altına düşünce. <b>Çıkış:</b> can 70’i geçince devriye.</p></div>
+  </div>
+  <p class="mini" style="margin-top:14px">Durum = “şu an <b>ne yapıyorum</b>”. Geçiş = “<b>ne olursa</b> başka bir şey yapmaya başlarım”. Renkler sonraki slaytlardaki tablo, diyagram ve canlı demoda hep aynı.</p>
+</section>
+
 <section data-sec="nöbetçi">
   <h2>Nöbetçinin geçiş tablosu</h2>
   <div class="cols c64">
@@ -195,6 +207,31 @@
   </div>
 </section>
 
+<section data-ek="kilavuz" data-sec="nöbetçi">
+  <h2>Demoyu okuma kılavuzu: ekranda ne var?</h2>
+  <div class="cols" style="font-size:.74em">
+    <div class="box game" style="margin:0"><span class="bt">Sol: oyun alanı</span>
+      <ul>
+        <li><b>Ok biçimli üçgen</b> = nöbetçi. Rengi ve üstündeki yazı <b>şu anki durumu</b>. Altındaki çubuk canı.</li>
+        <li><b>Soluk dilim</b> = görüş konisi (110°, 260 birim). Oyuncuyu görünce kırmızıya döner.</li>
+        <li><b>Yeşil daire</b> = oyuncu. Fareyi alana sokunca <b>siz</b> olursunuz; fare alandan çıkınca oyuncu olduğu yerde kalır.</li>
+        <li><b>Koyu dikdörtgenler</b> = duvar: arkasındaki görülmez.</li>
+        <li><b>Kesikli dikdörtgen</b> = devriye yolu.</li>
+        <li><b>Turuncu halkalar</b> = duyulan ses (tıkladığınız yer).</li>
+      </ul>
+    </div>
+    <div class="box" style="margin:0"><span class="bt">Sağ: nöbetçinin “beyni”</span>
+      <ul>
+        <li><b>Diyagram</b>: dolu kutu = şu anki durum. <b>Kalın kırmızı ok</b> = az önce kullanılan geçiş.</li>
+        <li><b>Sayaçlar</b>: nöbetçinin o anki <i>algısı</i> — can, oyuncuya mesafe, görüyor mu?</li>
+        <li><b>“Son 5 sn’de geçiş”</b>: çok yüksekse nöbetçi kararsız (titreme) demektir.</li>
+        <li><b>Günlük</b>: son geçişler ve zamanları.</li>
+      </ul>
+      <p style="margin-top:10px"><b>Kontroller:</b> fare = oyuncu · tıkla = ses çıkar · <b>X</b> = nöbetçiye ateş et (−25 can) · “1 kare” ile adım adım izleyin.</p>
+    </div>
+  </div>
+</section>
+
 <section data-sec="nöbetçi">
   <h2>Nöbetçi FSM — canlı</h2>
   <div class="demo" data-demo="guardfsm"></div>
@@ -205,10 +242,11 @@
     <ol>
       <li>Nöbetçinin arkasında bir yere tıklayın (ses). ŞÜPHE durumuna geçip oraya gidiyor mu?</li>
       <li>Görüş konisine girin, sonra bir duvarın arkasına saklanın. KOVALA → ŞÜPHE geçişini izleyin: <b>son gördüğü yere</b> gidiyor.</li>
-      <li>Yaklaşıp SALDIR’a geçirin, sonra iki kez “ateş et”. Can 30’un altına düşünce hangi durumda olursa olsun KAÇ’a geçiyor mu?</li>
+      <li>Yaklaşıp SALDIR’a geçirin, sonra klavyeden üç kez <b>X</b>’e basın (her biri −25 can). Can 30’un altına düşünce hangi durumda olursa olsun KAÇ’a geçiyor mu? Can 70’i geçince ne oluyor?</li>
       <li>▶| 1 kare düğmesiyle tek tek ilerleyin: sağdaki diyagramda kırmızı ok = az önce kullanılan geçiş.</li>
     </ol>
   </div>
+  <p class="mini" style="margin-top:14px">🔗 Dışarıda da deneyin: <a href="https://stately.ai/viz" target="_blank" rel="noopener">Stately görselleştirici</a> (durum makinesini yazın, diyagramı canlı çizsin, olay gönderin) · <a href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener">Game Programming Patterns: State</a> (bir platform kahramanının zıplama/eğilme hatalarından FSM’ye) · <a href="https://www.youtube.com/watch?v=hzhtrjkBXXw" target="_blank" rel="noopener">Pac-Man’s Ghosts Were Never a Team</a> (hayalet modları).</p>
 </section>
 
 <section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
@@ -539,13 +577,51 @@ def step(state, g):
   </table>
 </section>
 
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: trafik ışığı</h2>
+  <div class="ailab" data-lab="light" data-lang="js">
+<textarea>
+// state: "YESIL" | "SARI" | "KIRMIZI"
+// Süre dolunca ışığın geçeceği durumu döndür.
+function nextLight(state) {
+  if (state === "YESIL") return "SARI";
+  // TODO: SARI → KIRMIZI, KIRMIZI → YESIL
+  return state;
+}
+</textarea>
+    <div class="lab-tasks">Dünyanın en küçük durum makinesi: 3 durum, 3 geçiş. İki satır ekleyin. p5.js’te bunu <code>draw()</code> içinde bir zamanlayıcıyla çağırıp ışığın rengini <code>state</code>’e göre seçersiniz.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: kapı (olaylı FSM)</h2>
+  <div class="ailab" data-lab="door" data-lang="js">
+<textarea>
+// state: "ACIK" | "KAPALI" | "KILITLI"
+// event: "ac" | "kapat" | "kilitle" | "kilidi_ac"
+// Geçerli bir olaysa yeni durumu, değilse AYNI durumu döndür.
+function nextDoor(state, event) {
+  if (state === "ACIK"   &amp;&amp; event === "kapat") return "KAPALI";
+  if (state === "KAPALI" &amp;&amp; event === "ac")    return "ACIK";
+  // TODO: KAPALI + kilitle → KILITLI
+  // TODO: KILITLI + kilidi_ac → KAPALI
+  return state;
+}
+</textarea>
+    <div class="lab-tasks">Bu sefer geçişi zaman değil <b>olay</b> tetikliyor. Dikkat: kilitli kapı “ac” olayıyla açılmamalı, açık kapı kilitlenememeli — <code>return state</code> satırı bunu bedavaya sağlıyor. Bir FSM’nin gücü: <b>izin verilmeyen geçiş, yazılmamış geçiştir</b>.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: nöbetçinin beynini yaz</h2>
   <div class="simlab" data-sim="guard" data-fns="nextState" data-lang="js">
 <textarea>
-// state: "DEVRIYE" | "SUPHE" | "KOVALA" | "SALDIR" | "KAC"
-// s: { seesPlayer, dist, hp, heardNoise, timeInState }
-// Geçiş tablosuna göre yeni durumu döndür.
+// state: "DEVRIYE" | "SUPHE" | "KOVALA"
+//        | "SALDIR" | "KAC"
+// s: { seesPlayer, dist, hp,
+//      heardNoise, timeInState }
+// Tabloya göre yeni durumu döndür.
 function nextState(state, s) {
   if (state === "DEVRIYE") {
     if (s.seesPlayer) return "KOVALA";
@@ -554,7 +630,8 @@ function nextState(state, s) {
   if (state === "KOVALA") {
     if (s.dist < 60) return "SALDIR";
   }
-  // TODO: SUPHE, SALDIR, KAC ve "can < 30 → KAC (her durumdan)"
+  // TODO: SUPHE, SALDIR, KAC ve
+  //       "can < 30 → KAC" (her durumdan)
   return state;
 }
 </textarea>
@@ -588,14 +665,14 @@ def next_state(state, s):
 <section data-sec="sorunlar">
   <h2>Titreme <span class="en">oscillation / flicker</span></h2>
   <div class="demo" data-demo="guardfsm" data-memory="0"></div>
-  <p class="mini">Bu kopyada “algı hafızası” kapalı. Oyuncuyu (fareyi) tam konisinin kenarında tutun: KOVALA ↔ ŞÜPHE arasında saniyede birkaç kez gidip geliyor (“son 5 sn’de geçiş” sayacı). Kutuyu açın: nöbetçi oyuncuyu 1,2 sn “hatırlıyor” ve titreme biter.</p>
+  <p class="mini">Bu kopyada saldırıya giriş ve çıkış eşiği <b>aynı</b> (60) ve oyuncu (bot) nöbetçi yaklaştıkça yavaşça geri çekiliyor. Nöbetçi tam eşikte KOVALA ↔ SALDIR arasında saniyede defalarca gidip geliyor: “son 5 sn’de geçiş” sayacına ve diyagramdaki oka bakın. <b>Histerezis</b> kutusunu açın: çıkış eşiği 90 olur, titreme anında biter. İkinci kaynak: “algı hafızası” kapalıyken fareyle bir duvar köşesinin tam kenarında durun (KOVALA ↔ ŞÜPHE).</p>
 </section>
 
 <section data-sec="sorunlar">
   <h2>Titremeye üç çare</h2>
   <div class="cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">
     <div class="box story"><span class="bt">1) Histerezis</span>Girmek ve çıkmak için <b>farklı eşikler</b>: “10 m’den yakınsa kovalamaya başla, 15 m’den uzaksa vazgeç.” Arada kalan 5 m: tampon bölge. (Termostatlar da böyle çalışır.)</div>
-    <div class="box story"><span class="bt">2) Hafıza</span>“Gördüm” bilgisini bir süre sakla: son görülme zamanı + konum. Algılama destesinde ayrıntılı (Y11).</div>
+    <div class="box story"><span class="bt">2) Hafıza</span>“Gördüm” bilgisini bir süre sakla: son görülme zamanı + konum. Algılama sunumunda ayrıntılı (Y11).</div>
     <div class="box story"><span class="bt">3) Minimum süre</span>Bir duruma girince en az 0,5 sn kal (<code>timeInState</code>). İnsan da saniyede 10 kez fikir değiştirmez.</div>
   </div>
   <p class="mini" style="margin-top:8px">Y1’deki kural: fikir değiştiren NPC, oyuncunun gözünde “bozuk YZ”dir. Titreme, yapay aptallığın en yaygın kaynağı.</p>
@@ -613,7 +690,7 @@ def next_state(state, s):
       </ul>
       <p class="fragment">N durumlu bir FSM’de olası geçiş sayısı ~N². 20 durumda diyagram bir <b>spagetti tabağına</b> döner.</p>
     </div>
-    <div class="box warn fragment"><span class="bt">Çareler (sonraki bölüm ve desteler)</span>
+    <div class="box warn fragment"><span class="bt">Çareler (sonraki bölüm ve sunumlar)</span>
       <ul style="font-size:.9em">
         <li><b>Hiyerarşi</b>: durumları gruplara topla (HFSM)</li>
         <li><b>Yığın</b>: “öncekine dön” (pushdown)</li>
@@ -677,7 +754,7 @@ def next_state(state, s):
   <h2>Yığınlı FSM <span class="en">pushdown automaton</span></h2>
   <div class="demo" data-demo="pushdown"></div>
   <div class="cols" style="margin-top:8px">
-    <p style="font-size:.86em">Durumları bir <b>yığında</b> tut (Yığınlar destesi!): yeni bir kesinti üste <b>eklenir</b> (push), bitince <b>çıkarılır</b> (pop) ve karakter otomatik olarak <b>kaldığı yerden</b> devam eder. Düz FSM tek bir değişken tuttuğu için nereden geldiğini unutur.</p>
+    <p style="font-size:.86em">Durumları bir <b>yığında</b> tut (Yığınlar sunumu!): yeni bir kesinti üste <b>eklenir</b> (push), bitince <b>çıkarılır</b> (pop) ve karakter otomatik olarak <b>kaldığı yerden</b> devam eder. Düz FSM tek bir değişken tuttuğu için nereden geldiğini unutur.</p>
     <div class="box game"><span class="bt">🎮 Nerede?</span>Oyun menüleri (ana menü → ayarlar → ses → geri, geri), duraklatma ekranı, diyaloglar, “kesinti” davranışları (yaralanma animasyonu, el bombasından kaçma).</div>
   </div>
 </section>
@@ -998,10 +1075,10 @@ print(g.state)          # kovala
   <h2>🧩 Projenize FSM eklerken: adım adım</h2>
   <div class="cols">
     <ol style="font-size:.86em">
-      <li><b>Kâğıtta çizin</b>: durumlar, oklar, koşullar. Tabloya dökün (bu destedeki gibi).</li>
+      <li><b>Kâğıtta çizin</b>: durumlar, oklar, koşullar. Tabloya dökün (bu sunumdaki gibi).</li>
       <li><b>Algıyı ayırın</b>: <code>SeesPlayer()</code>, <code>HeardNoise</code> gibi fonksiyonlar FSM’nin dışında hesaplansın.</li>
       <li><b>Önce en basit hâli</b>: enum + switch ile 2–3 durum. Çalıştığını görün.</li>
-      <li><b>Hata ayıklama görselleri</b>: NPC’nin başına durum adını yazın (Unity: <code>OnDrawGizmos</code> / <code>Handles.Label</code>). Bu destedeki demolar gibi.</li>
+      <li><b>Hata ayıklama görselleri</b>: NPC’nin başına durum adını yazın (Unity: <code>OnDrawGizmos</code> / <code>Handles.Label</code>). Bu sunumdaki demolar gibi.</li>
       <li>Büyüdükçe: durum sınıflarına ya da bir kütüphaneye (UnityHFSM) geçin.</li>
       <li><b>Animasyonla bağ</b>: FSM karar verir, Animator’a parametre gönderir.</li>
     </ol>
@@ -1017,9 +1094,22 @@ print(g.state)          # kovala
   </div>
 </section>
 
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Bugün kullandığınız, <b>oyun olmayan</b> bir şeyin (asansör, çamaşır makinesi, otomat, telefon kilidi) durumlarını ve geçişlerini sayın. Hangi geçiş <b>yasak</b>?</li>
+      <li class="fragment">Metal Gear Solid, nöbetçinin durumunu ekranda sayaçla gösteriyor. Aynı şeyi bir <b>korku</b> oyununda yapar mıydınız? Durumu göstermek ne zaman oyunu bozar?</li>
+      <li class="fragment">Nöbetçinize 6. bir durum ekleyeceksiniz: “arkadaşını yardıma çağır”. Kaç yeni ok çizmeniz gerekir? Bu sayı sizi neden rahatsız etmeli?</li>
+      <li class="fragment">Titreme (KOVALA ↔ ŞÜPHE) bir hata. Peki bir karakterin bilerek <b>kararsız</b> görünmesini isteyeceğiniz bir sahne olabilir mi? Nasıl tasarlardınız?</li>
+    </ol>
+  </div>
+</section>
+
 <section data-sec="projeler">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Trafik ışığı + yaya</b> — p5.js’te trafik ışığı FSM’i ve ışığa uyan yayalar. Bonus: yaya butonu (olay güdümlü geçiş).</li><li><b class="c-green">[kolay]</b> <b>Pac-Man modları</b> — Y1’deki Pac-Man demosuna korku modunu ve “yenildi → evine dön” durumunu ekleyin; diyagramını çizin.</li><li><b class="c-amber">[orta]</b> <b>Gizlilik oyunu</b> — Unity’de 3 nöbetçili bir oda: bu destedeki FSM + görüş konisi + MGS tarzı alarm evreleri (bütün nöbetçileri etkileyen global FSM).</li><li><b class="c-amber">[orta]</b> <b>Yığınlı menü</b> — Oyununuzun menülerini yığınlı FSM ile yazın (ana menü → ayarlar → ses → geri).</li><li><b class="c-red">[zor]</b> <b>HFSM boss</b> — Üç fazlı bir boss: her faz bir üst durum, içinde 3–4 saldırı durumu. UnityHFSM ya da LimboAI ile.</li><li><b class="c-purple">[araştırma]</b> <b>Doom’u okuyun</b> — Doom kaynak kodunda (info.c, p_enemy.c) bir canavarın bütün durumlarını çıkarıp diyagramını çizin. A_Chase hangi koşullarda saldırıya geçiriyor?</li></ol>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Trafik ışığı + yaya</b> — p5.js’te trafik ışığı FSM’i ve ışığa uyan yayalar. Bonus: yaya butonu (olay güdümlü geçiş).</li><li><b class="c-green">[kolay]</b> <b>Pac-Man modları</b> — Y1’deki Pac-Man demosuna korku modunu ve “yenildi → evine dön” durumunu ekleyin; diyagramını çizin.</li><li><b class="c-amber">[orta]</b> <b>Gizlilik oyunu</b> — Unity’de 3 nöbetçili bir oda: bu sunumdaki FSM + görüş konisi + MGS tarzı alarm evreleri (bütün nöbetçileri etkileyen global FSM).</li><li><b class="c-amber">[orta]</b> <b>Yığınlı menü</b> — Oyununuzun menülerini yığınlı FSM ile yazın (ana menü → ayarlar → ses → geri).</li><li><b class="c-red">[zor]</b> <b>HFSM boss</b> — Üç fazlı bir boss: her faz bir üst durum, içinde 3–4 saldırı durumu. UnityHFSM ya da LimboAI ile.</li><li><b class="c-purple">[araştırma]</b> <b>Doom’u okuyun</b> — Doom kaynak kodunda (info.c, p_enemy.c) bir canavarın bütün durumlarını çıkarıp diyagramını çizin. A_Chase hangi koşullarda saldırıya geçiriyor?</li></ol>
 </section>
 
 <section data-sec="özet">
@@ -1072,7 +1162,7 @@ print(g.state)          # kovala
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Davranış Ağaçları</div>
     <div class="sub">Halo 2’den Unreal’a: selector, sequence, decorator ve kara tahta</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-davranis-agaclari/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-davranis-agaclari/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

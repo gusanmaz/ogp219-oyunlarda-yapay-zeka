@@ -1,5 +1,5 @@
 /* =====================================================================
-   demos.js — "Algoritma Analizi" destesine özel demolar
+   demos.js — "Algoritma Analizi" sunumuna özel demolar
    (Ortak analiz demoları ../ortak/analiz.js içinde)
    ===================================================================== */
 (function () {

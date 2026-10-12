@@ -34,14 +34,14 @@
   <div class="sub"><i>Vektörler, nokta çarpım, delta time, oyun döngüsü</i> — NPC’lerin konuştuğu dil</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlevec"></div>
-  <aside class="notes">Bu deste oyun yapay zekâsı bölümünün ön koşul destesidir; haftalık planda yer almaz ama sonraki bütün destelerde (steering, algılama, A*, grup YZ’si) kullanılan matematik ve oyun döngüsü kavramlarını toplar. Arka planda vektörlerle hareket eden oklar hareketli bir hedefi kovalıyor.</aside>
+  <aside class="notes">Bu sunum oyun yapay zekâsı bölümünün ön koşul sunumudur; haftalık planda yer almaz ama sonraki bütün sunumlarda (steering, algılama, A*, grup YZ’si) kullanılan matematik ve oyun döngüsü kavramlarını toplar. Arka planda vektörlerle hareket eden oklar hareketli bir hedefi kovalıyor.</aside>
 </section>
 
 <section>
   <h2>Yeni bölüme hoş geldiniz: Oyun Yapay Zekâsı 🎮🤖</h2>
   <div class="cols c64">
     <div style="font-size:.86em">
-      <p>18 destede algoritma ve veri yapılarını öğrendiniz. Şimdi onları <b>NPC’lere hayat vermek</b> için kullanacağız:</p>
+      <p>18 sunumda algoritma ve veri yapılarını öğrendiniz. Şimdi onları <b>NPC’lere hayat vermek</b> için kullanacağız:</p>
       <ul>
         <li><b>Karar verme</b>: FSM, davranış ağaçları, fayda (utility), GOAP, oyun ağaçları</li>
         <li><b>Hareket</b>: yönlendirme (steering), A*, NavMesh, sürüler</li>
@@ -50,7 +50,7 @@
         <li><b>Mühendislik</b>: hata ayıklama, performans, proje</li>
       </ul>
     </div>
-    <div class="box game"><span class="bt">Her destede neler var?</span>
+    <div class="box game"><span class="bt">Her sunumda neler var?</span>
       <ul style="font-size:.86em">
         <li>🎯 ön koşullar</li><li>📖 kavram + basit matematik</li><li>💻 C# (Unity), JS (p5.js), Python kod</li><li>🕹️ oynanabilir demo + kod laboratuvarı</li><li>🎮 hangi oyunda, nasıl kullanıldı (gerçek hikâyeler)</li><li>🧰 kütüphaneler: nasıl eklenir, ne yapar, ne yapmaz</li><li>🤖 YZ kod asistanıyla çalışırken dikkat</li><li>🚀 proje ve araştırma önerileri</li>
       </ul>
@@ -61,15 +61,15 @@
 <section>
   <h2>Bölümün yol haritası 🗺️</h2>
   <svg viewBox="0 0 1180 430" style="width:100%" font-family="Source Sans 3"><defs><marker id="rm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink-2)"/></marker></defs><g><rect x="10" y="190" width="120" height="46" rx="9" style="fill:var(--card);stroke:var(--amber)" stroke-width="2.5"/><text x="70.0" y="211" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y0 Hazırlık</text><text x="70.0" y="229" text-anchor="middle" font-size="13" style="fill:var(--muted)">vektör, zaman</text></g><g><rect x="160" y="190" width="120" height="46" rx="9" style="fill:var(--card);stroke:var(--amber)" stroke-width="2.5"/><text x="220.0" y="211" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y1 Giriş</text><text x="220.0" y="229" text-anchor="middle" font-size="13" style="fill:var(--muted)">ajan, NPC</text></g><g><rect x="330" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="405.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y2 FSM</text><text x="405.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">durumlar</text></g><g><rect x="498" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="573.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y3 Davranış ağ.</text><text x="573.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">ağaçlar</text></g><line x1="480" y1="40" x2="496" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="666" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="741.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y4 Utility</text><text x="741.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">skorlar</text></g><line x1="648" y1="40" x2="664" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="834" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="909.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y5 GOAP</text><text x="909.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">planlama</text></g><line x1="816" y1="40" x2="832" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="1002" y="20" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--blue)" stroke-width="2.5"/><text x="1077.0" y="41" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y6 Oyun ağaçları</text><text x="1077.0" y="59" text-anchor="middle" font-size="13" style="fill:var(--muted)">minimax</text></g><line x1="984" y1="40" x2="1000" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="40" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="405.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y7 Steering</text><text x="405.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">kuvvetler</text></g><g><rect x="498" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="573.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y8 A*</text><text x="573.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">graflar + PQ</text></g><line x1="480" y1="130" x2="496" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="666" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="741.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y9 NavMesh</text><text x="741.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">Unity</text></g><line x1="648" y1="130" x2="664" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="834" y="110" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--green)" stroke-width="2.5"/><text x="909.0" y="131" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y10 Grup YZ</text><text x="909.0" y="149" text-anchor="middle" font-size="13" style="fill:var(--muted)">sürü</text></g><line x1="816" y1="130" x2="832" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="130" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="200" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--red)" stroke-width="2.5"/><text x="405.0" y="221" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y11 Algılama</text><text x="405.0" y="239" text-anchor="middle" font-size="13" style="fill:var(--muted)">görüş, ses</text></g><g><rect x="498" y="200" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--red)" stroke-width="2.5"/><text x="573.0" y="221" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y12 Taktik</text><text x="573.0" y="239" text-anchor="middle" font-size="13" style="fill:var(--muted)">siper, etki h.</text></g><line x1="480" y1="220" x2="496" y2="220" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="220" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="405.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y13 Öğrenme</text><text x="405.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">RL, ML-Agents</text></g><g><rect x="498" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="573.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y14 LLM NPC</text><text x="573.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">diyalog</text></g><line x1="480" y1="310" x2="496" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="666" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="741.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y15 PCG</text><text x="741.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">üretim</text></g><line x1="648" y1="310" x2="664" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="834" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="909.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y16 Üretken YZ</text><text x="909.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">görsel, ses</text></g><line x1="816" y1="310" x2="832" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="1002" y="290" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--purple)" stroke-width="2.5"/><text x="1077.0" y="311" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y17 Zorluk</text><text x="1077.0" y="329" text-anchor="middle" font-size="13" style="fill:var(--muted)">DDA</text></g><line x1="984" y1="310" x2="1000" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="310" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><g><rect x="330" y="370" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--teal)" stroke-width="2.5"/><text x="405.0" y="391" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y18 Performans</text><text x="405.0" y="409" text-anchor="middle" font-size="13" style="fill:var(--muted)">debug, LOD</text></g><g><rect x="498" y="370" width="150" height="46" rx="9" style="fill:var(--card);stroke:var(--teal)" stroke-width="2.5"/><text x="573.0" y="391" text-anchor="middle" font-size="17" font-weight="700" style="fill:var(--ink)">Y19 Proje</text><text x="573.0" y="409" text-anchor="middle" font-size="13" style="fill:var(--muted)">prototip</text></g><line x1="480" y1="390" x2="496" y2="390" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="280" y1="210" x2="328" y2="390" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/><line x1="130" y1="210" x2="158" y2="210" style="stroke:var(--ink-2)" stroke-width="1.6" marker-end="url(#rm)"/></svg>
-  <p class="mini">Sıra, resmî haftalık planı izler ama <b>ön koşulları en aza indirmek</b> için yeniden düzenlendi: karar verme konuları bir arada, A* steering’den sonra (hareket bilgisini kullanır), taktik YZ algılamadan sonra. Her destenin başında “🎯 bilmeniz gerekenler” slaytı var.</p>
+  <p class="mini">Sıra, resmî haftalık planı izler ama <b>ön koşulları en aza indirmek</b> için yeniden düzenlendi: karar verme konuları bir arada, A* steering’den sonra (hareket bilgisini kullanır), taktik YZ algılamadan sonra. Her sunumun başında “🎯 bilmeniz gerekenler” slaytı var.</p>
 </section>
 
 <section data-sec="ön koşullar">
   <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
-  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili desteye gider.</p>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
   <div class="prereq"><span class="">p5.js temelleri (setup/draw)</span><span class="">biraz C#</span></div>
   <div class="prereq"><a class="opt" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar (oyun döngüsü örnekleri)</a></div>
-  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu deste bölümün “sıfır noktası”. Lise matematiği (koordinat düzlemi, Pisagor, sinüs/kosinüs) yeter; geri kalanını burada adım adım kuruyoruz.</div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu sunum bölümün “sıfır noktası”. Lise matematiği (koordinat düzlemi, Pisagor, sinüs/kosinüs) yeter; geri kalanını burada adım adım kuruyoruz.</div>
   <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bütün formülleri ezberlemeniz gerekmiyor. Her vektör işleminin <b>oyundaki anlamını</b> (mesafe, yön, “önümde mi?”, “sola mı sağa mı?”) anlamanız yeterli; kodu Unity ve p5.js zaten hazır veriyor.</div>
 </section>
 
@@ -101,7 +101,7 @@
       <li><b>Konum</b> <span class="en">position</span>: “orijinden buraya ok”: (3, 2)</li>
       <li><b>Hız</b> <span class="en">velocity</span>: “her saniye bu kadar kay”: (120, 0) piksel/sn</li>
       <li><b>Yön</b> <span class="en">direction</span>: sadece nereye — uzunluğu 1</li>
-      <li><b>Kuvvet / ivme</b>: hızı değiştiren ok (steering destesi!)</li>
+      <li><b>Kuvvet / ivme</b>: hızı değiştiren ok (steering sunumu!)</li>
     </ul>
     <div class="box game"><span class="bt">🎮 Bir NPC’nin her karede sorduğu sorular</span>
       <ul style="font-size:.9em">
@@ -110,7 +110,7 @@
         <li>Oyuncu önümde mi, arkamda mı? → <b>nokta çarpım</b></li>
         <li>Sola mı sağa mı döneyim? → <b>çapraz çarpım</b></li>
       </ul>
-      <p class="mini">Bu destenin tamamı bu dört sorunun cevabı.</p></div>
+      <p class="mini">Bu sunumun tamamı bu dört sorunun cevabı.</p></div>
   </div>
 </section>
 
@@ -225,7 +225,7 @@ direction = normalize(to_player)
 <section data-sec="nokta çarpım">
   <h2>🎮 Görüş konisi: nöbetçi beni görüyor mu?</h2>
   <div class="demo" data-demo="fovdot"></div>
-  <p class="mini">Kural: <code>dot(ileri, normalize(hedef − ben)) ≥ cos(FOV / 2)</code> <b>ve</b> mesafe ≤ menzil. (Gerçek oyunlarda bir de duvar kontrolü — ışın atma — var: Algılama destesi.)</p>
+  <p class="mini">Kural: <code>dot(ileri, normalize(hedef − ben)) ≥ cos(FOV / 2)</code> <b>ve</b> mesafe ≤ menzil. (Gerçek oyunlarda bir de duvar kontrolü — ışın atma — var: Algılama sunumu.)</p>
 </section>
 
 <section data-sec="nokta çarpım">
@@ -305,6 +305,38 @@ def in_fov(guard, forward, target, fov_deg, rng):
       <button data-opt="D">1 — oyuncu tam karşısında</button>
     </div>
     <div class="explain">1·(−0,8) + 0·0,6 = <b>−0,8</b>. Negatif → açı 90°’den büyük → oyuncu NPC’nin arkasında. Bu bilgi “sırttan bıçaklama” (backstab) mekaniğinde kullanılır: dot &lt; −0,7 ise kritik vuruş!</div>
+  </div>
+</section>
+
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: iki nokta arası mesafe</h2>
+  <div class="ailab" data-lab="dist2" data-lang="js">
+<textarea>
+// a, b: [x, y] dizileri. Aralarındaki mesafeyi döndür.
+function distance(a, b) {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  return dx + dy;   // TODO: Pisagor → √(dx² + dy²)
+}
+</textarea>
+    <div class="lab-tasks">Tek satır değişecek. İpucu: <code>Math.sqrt(dx * dx + dy * dy)</code> ya da kısaca <code>Math.hypot(dx, dy)</code>. Quiz 1’deki (2, 3) → (5, 7) örneği 5 vermeli.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: hedef arkamda mı?</h2>
+  <div class="ailab" data-lab="behind" data-lang="js">
+<textarea>
+// forward: NPC'nin baktığı yön [x, y]
+// toTarget: NPC'den hedefe giden ok [x, y]
+// Hedef NPC'nin ARKASINDAYSA true döndür.
+function isBehind(forward, toTarget) {
+  const dot = 0;   // TODO: nokta çarpım = x'ler çarpımı + y'ler çarpımı
+  return dot &lt; 0;
+}
+</textarea>
+    <div class="lab-tasks">Nokta çarpım negatifse açı 90°’den büyüktür: hedef arkadadır. Burada normalize etmeye gerek yok — yalnızca <b>işarete</b> bakıyoruz. (Sırttan bıçaklama mekaniğinin ilk satırı.)</div>
   </div>
 </section>
 
@@ -416,7 +448,11 @@ def angle_diff(a, b):                # b - a, -pi..pi aralığında
       <li>p5.js: <code>p5.Vector.sub(a, b).magSq() &lt; r * r</code></li>
       <li>Python: <code>dx*dx + dy*dy &lt; r*r</code></li>
     </ul>
-    <p class="mini">1000 düşman × 60 kare = saniyede 60.000 karekökten kurtuldunuz. (Öncelik Kuyrukları ve En Kısa Yollar destelerindeki “karşılaştırmak için kök gerekmez” fikri.)</p>
+    <p class="mini">1000 düşman × 60 kare = saniyede 60.000 karekökten kurtuldunuz. (Öncelik Kuyrukları ve En Kısa Yollar sunumlarındaki “karşılaştırmak için kök gerekmez” fikri.)</p>
+  </div>
+  <div class="box story" style="font-size:.82em;margin-top:12px"><span class="bt">📜 Quake III Arena (1999): 0x5F3759DF</span>
+    <p>Karekök o yıllarda o kadar pahalıydı ki Quake III’ün kaynak kodunda vektör normalleştirmek için ünlü bir hile var: sayının bitlerini tam sayı gibi okuyup “sihirli sabit” <code>0x5F3759DF</code>’ten çıkaran ve <b>1/√x</b>’i yaklaşık %1 hatayla, bölme yapmadan veren dört satır. Yanındaki yorum satırı meşhurdur: programcı bile nasıl çalıştığına şaşırmış. Çoğu kişi John Carmack’in yazdığını sanır; kendisi yazmadığını söylüyor, hilenin izi 1980’lere kadar sürülüyor.</p>
+    <p class="mini">Bugün işlemcilerde bunun için hazır komut var; hileyi kullanmayın ama dersi alın: <b>her karede binlerce kez çalışan kodda en ucuz işlemi seçin</b>.</p>
   </div>
 </section>
 
@@ -450,7 +486,7 @@ def angle_diff(a, b):                # b - a, -pi..pi aralığında
         <li>Unity: <code>Update()</code> her karede, <code>FixedUpdate()</code> sabit aralıkla (fizik, varsayılan 0,02 sn), <code>LateUpdate()</code> çizimden hemen önce (kamera).</li>
         <li>p5.js: <code>draw()</code> her karede. Python/pygame: kendi <code>while</code> döngünüz.</li>
       </ul>
-      <p class="mini">Algoritma Analizi destesindeki “kare bütçesi” demosunu hatırlayın.</p>
+      <p class="mini">Algoritma Analizi sunumundaki “kare bütçesi” demosunu hatırlayın.</p>
     </div>
   </div>
 </section>
@@ -689,7 +725,7 @@ while running:
     </div>
     <div class="box low"><span class="bt">⚙️ Zamanlama hileleri</span>
       <ul style="font-size:.88em">
-        <li>Karar her karede değil, <b>saniyede 5–10 kez</b> verilebilir (insan da o kadar hızlı karar vermez) → Performans destesi</li>
+        <li>Karar her karede değil, <b>saniyede 5–10 kez</b> verilebilir (insan da o kadar hızlı karar vermez) → Performans sunumu</li>
         <li>Unity <b>Coroutine</b>: <code>yield return new WaitForSeconds(0.5f);</code> ile “yarım saniye bekle, sonra tekrar düşün”</li>
         <li>Rastgele küçük gecikmeler: 20 düşmanın aynı karede aynı şeyi yapması robotik görünür</li>
       </ul>
@@ -718,6 +754,19 @@ while running:
   <div class="cols">
     <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li><code>Time.deltaTime</code> unutulmuş ya da iki kez çarpılmış</li><li>Sıfır vektörü normalize etmek (NaN, nesne kaybolur)</li><li>Derece/radyan karışıklığı (<code>Mathf.Cos(90)</code>)</li><li>Fizikli nesneyi <code>transform.position</code> ile ışınlamak (Rigidbody’yi bozar)</li><li>Lerp’i kare hızına bağlı kullanmak</li><li>Unity 3B’de y’yi sıfırlamadan yatay mesafe hesaplamak</li></ul></div>
     <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“Unity 6, 3D, C#. Bir Guard bileşeni yaz: oyuncu 10 birim içinde ve 90° görüş konisindeyse ona saniyede 3 birim hızla yürüsün, y eksenini yok saysın, dönüşü saniyede en fazla 180° olsun. deltaTime kullan, sıfır vektör durumunu kontrol et, kodu satır satır Türkçe yorumla.”</p><ul class="mini"><li>Motoru ve sürümü yazın (Unity 6, 2D / 3D)</li><li>Koordinat sistemini söyleyin (y yukarı mı aşağı mı?)</li><li>Hızların birimini isteyin (birim/saniye) ve deltaTime ile çarpılmasını şart koşun</li><li>Kodu çalıştırıp kenar durumlarını deneyin: hedef tam üstteyken, çok hızlıyken</li></ul></div>
+  </div>
+</section>
+
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Bir oyunu hem eski hem yeni bir bilgisayarda oynadınız ve yenisinde her şey “hızlı çekim” gibi. Kodda ne unutulmuş olabilir? Oyuncu olarak bunu başka hangi belirtilerden anlarsınız?</li>
+      <li class="fragment">“Oyuncu önümde mi?” sorusunu açı hesaplayarak (<code>atan2</code>, <code>acos</code>) da cevaplayabiliriz. Oyun motorları neden nokta çarpımı tercih ediyor?</li>
+      <li class="fragment">Dark Souls II’deki silah aşınması hatası konsolda neden hiç görülmedi? Bu size <b>test</b> hakkında ne söylüyor?</li>
+      <li class="fragment">Minecraft’ın Far Lands’i bir hataydı ama oyuncular onu sevdi. Bir hatayı düzeltmemek ne zaman doğru karar olabilir?</li>
+    </ol>
   </div>
 </section>
 
@@ -766,7 +815,7 @@ while running:
     <div class="lv">NEXT LEVEL ▶</div>
     <div class="ttl" style="font-size:60px">Oyun Yapay Zekâsına Giriş</div>
     <div class="sub">Ajan, NPC, zorluk ayarı — ve oyun YZ’si neden “akıllı” değil “eğlenceli” olmalı?</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-giris/">SONRAKİ DESTE ▶</a>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #5ff0a0" href="../yz-giris/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

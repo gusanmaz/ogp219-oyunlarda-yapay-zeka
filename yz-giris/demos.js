@@ -1,4 +1,4 @@
-/* "Oyun Yapay Zekâsına Giriş" destesine özel demolar (ortak: ../ortak/oyunai.js) */
+/* "Oyun Yapay Zekâsına Giriş" sunumuna özel demolar (ortak: ../ortak/oyunai.js) */
 (function () {
   'use strict';
   const { el, btn, slider, select } = SL;
@@ -224,3 +224,25 @@
     hint: (c, p) => `Mesafe = ${Math.hypot(c[0] - p[0], c[1] - p[1]).toFixed(2)}. 8 ve üstüyse Pac-Man’e, değilse köşeye.`
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const DV2 = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  SL.AILABS.pinky = {
+    fn: 'pinky_target', jsFn: 'pinkyTarget',
+    ref: (pac, dir) => [pac[0] + 4 * DV2[dir][0], pac[1] + 4 * DV2[dir][1]],
+    cases: () => { const cs = [[[10, 10], 'right'], [[10, 10], 'up'], [[3, 7], 'left'], [[0, 0], 'down']]; const ds = Object.keys(DV2); for (let i = 0; i < 20; i++) cs.push([[Math.floor(Math.random() * 19), Math.floor(Math.random() * 13)], ds[Math.floor(Math.random() * 4)]]); return cs; },
+    show: (p, d) => `Pac-Man ${JSON.stringify(p)}, yönü “${d}”`,
+    hint: () => 'Yön vektörünü 4 ile çarpıp Pac-Man’in karesine ekleyin. Ekranda y aşağı doğru artar: “up” = [0, −1].'
+  };
+  SL.AILABS.ghostmode = {
+    fn: 'ghost_mode', jsFn: 'ghostMode',
+    ref: t => (t % 27 < 7 ? 'DAGIL' : 'KOVALA'),
+    cases: () => { const cs = [[0], [3], [6.9], [7], [20], [26.9], [27], [30], [34], [53.5], [54], [61]]; for (let i = 0; i < 15; i++) cs.push([Math.floor(Math.random() * 2000) / 10 + 0.05]); return cs; },
+    show: t => `t = ${t} sn`,
+    hint: t => `Bir tur 7 + 20 = 27 sn. t % 27 = ${Math.round((t % 27) * 100) / 100}; bu 7’den küçükse DAGIL.`
+  };
+})();
+/* EK:BİTİŞ */
