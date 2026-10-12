@@ -453,30 +453,32 @@ client = anthropic.Anthropic()                    # ANTHROPIC_API_KEY ortam değ
 NPC_TOOL = {
     "name": "npc_eylem",
     "description": "Hancı Mehmet'in bir sonraki eylemi ve sözü",
+    "strict": True,                               # girdi şemaya birebir uyar
     "input_schema": {
         "type": "object",
         "properties": {
             "eylem": {"type": "string", "enum": ["git", "söyle", "ver"]},
-            "hedef": {"type": "string", "enum": ["han", "demirhane", "kuyu", "orman"]},
-            "söz":   {"type": "string", "maxLength": 200},
+            "hedef": {"type": "string", "enum": ["yok", "han", "demirhane", "kuyu", "orman"]},
+            "söz":   {"type": "string"},
         },
-        "required": ["eylem", "söz"],
+        "required": ["eylem", "hedef", "söz"],
+        "additionalProperties": False,
     },
 }
 
 def npc_cevap(sistem_istemi, gecmis, oyuncu_sozu):
     resp = client.messages.create(
-        model="claude-haiku-4-5-20251001",        # hızlı ve ucuz; sürümü sabitleyin
-        max_tokens=300,
-        system=sistem_istemi,
+        model="claude-haiku-5-5",                 # en hızlı ve en ucuz güncel model
+        max_tokens=1024,
+        system=sistem_istemi + "\nHer cevabını npc_eylem aracını çağırarak ver.",
         tools=[NPC_TOOL],
-        tool_choice={"type": "tool", "name": "npc_eylem"},   # mutlaka bu aracı kullan
+        tool_choice={"type": "auto"},             # yeni modeller "aracı zorla"yı kabul etmeyebilir
         messages=gecmis + [{"role": "user", "content": "Oyuncu dedi ki: " + oyuncu_sozu}],
     )
     for blok in resp.content:
-        if blok.type == "tool_use":
+        if blok.type == "tool_use" and len(blok.input["söz"]) <= 200:
             return blok.input        # sözlük: {"eylem": ..., "söz": ...}  → yine de DOĞRULA!
-    return None
+    return None                      # araç çağırmadıysa / söz çok uzunsa: el yazımı yedek replik
 </script></code></pre>
     </div>
   </div>
