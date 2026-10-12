@@ -16,6 +16,11 @@
     evade: (a, q) => { const T0 = V.dist(a.p, q.p) / (a.maxSpeed + 1e-6); const fut = V.add(q.p, V.mul(q.v, Math.min(T0, 1.5))); return { des: B.flee(a, fut), fut }; }
   };
   const steerTo = (a, desired) => V.limit(V.sub(desired, a.v), a.maxForce);
+  // Tek ajanlı demolar için: (istenen − hız) bir HIZ farkıdır; onu ivmeye çevirmek için bir kazançla çarpıyoruz
+  // (≈ "istenen hıza 0,2 sn'de ulaşmaya çalış"). Kazanç olmazsa düzeltme çok yavaş kalır ve azami kuvvet kaydırıcısı
+  // 2 × azami hızın üstünde hiçbir şeyi değiştirmez.
+  const STEER_GAIN = 5;
+  const steerSharp = (a, desired) => V.limit(V.mul(V.sub(desired, a.v), STEER_GAIN), a.maxForce);
   const integrate = (a, force, dt, W, H, wrap) => {
     a.v = V.limit(V.add(a.v, V.mul(force, dt)), a.maxSpeed);
     a.p = V.add(a.p, V.mul(a.v, dt));
@@ -30,9 +35,10 @@
   const PATH = [V.v(70, 300), V.v(220, 90), V.v(420, 120), V.v(560, 300), V.v(680, 110)];
   D.steer = function (root) {
     const W = 720, H = 380;
-    const cfg = { mode: root.dataset.mode || 'seek', maxSpeed: 180, maxForce: 260, vecs: true, obst: false, slow: 120 };
+    const pathMode = root.dataset.mode === 'path';   // yol izleme slaytı: keskin köşeleri dönebilsin diye daha yavaş ve daha çevik başlar
+    const cfg = { mode: root.dataset.mode || 'seek', maxSpeed: pathMode ? 130 : 180, maxForce: pathMode ? 420 : 260, vecs: true, obst: false, slow: 120 };
     let a, bot, wanderTh = 0, trail = [], info = {};
-    const reset = () => { a = { p: V.v(120, 190), v: V.v(60, 0), maxSpeed: cfg.maxSpeed, maxForce: cfg.maxForce, h: 0 }; bot = { p: V.v(560, 120), v: V.v(-90, 40), t: 0 }; trail = []; wanderTh = 0; };
+    const reset = () => { a = cfg.mode === 'path' ? { p: V.copy(PATH[0]), v: V.setLen(V.sub(PATH[1], PATH[0]), 60), maxSpeed: cfg.maxSpeed, maxForce: cfg.maxForce, h: 0 } : { p: V.v(120, 190), v: V.v(60, 0), maxSpeed: cfg.maxSpeed, maxForce: cfg.maxForce, h: 0 }; bot = { p: V.v(560, 120), v: V.v(-90, 40), t: 0 }; trail = []; wanderTh = 0; };
     reset();
     const avoid = () => {   // ileri bakan “anten”: en yakın engele çarpacaksa yana it
       const ahead = V.add(a.p, V.mul(V.norm(a.v), 90 * (V.len(a.v) / a.maxSpeed) + 20));
@@ -67,20 +73,21 @@
           }
           case 'path': {
             // Reynolds: biraz ilerideki konumu tahmin et, yola izdüşür, yoldan uzaksa yolda biraz ilerideki noktayı ara
-            const fut = V.add(a.p, V.mul(V.norm(a.v), 40));
+            const sp = V.len(a.v), fut = V.add(a.p, V.mul(V.norm(a.v), Math.max(15, sp * 0.25)));   // ~0,25 sn sonraki konum
             let best = null, bd = Infinity, seg = 0;
             for (let i = 0; i < PATH.length - 1; i++) { const A2 = PATH[i], B2 = PATH[i + 1], ab = V.sub(B2, A2); let t = V.dot(V.sub(fut, A2), ab) / V.len2(ab); t = SL.clamp(t, 0, 1); const q = V.add(A2, V.mul(ab, t)); const d = V.dist(fut, q); if (d < bd) { bd = d; best = q; seg = i; } }
-            const dir = V.norm(V.sub(PATH[seg + 1], PATH[seg]));
-            let tgt = V.add(best, V.mul(dir, 30));
-            if (seg === PATH.length - 2 && V.dist(a.p, PATH[PATH.length - 1]) < 30) { a.p = V.copy(PATH[0]); a.v = V.v(60, -60); }
+            // hedef: izdüşümden itibaren YOL BOYUNCA biraz ileri (köşeyi dönerek; düz uzatırsak köşede yolun dışına çıkar)
+            let tgt = best, left = Math.max(30, sp * 0.3), k = seg;
+            while (left > 0 && k < PATH.length - 1) { const toEnd = V.dist(tgt, PATH[k + 1]); if (toEnd >= left) { tgt = V.add(tgt, V.setLen(V.sub(PATH[k + 1], tgt), left)); left = 0; } else { tgt = V.copy(PATH[k + 1]); left -= toEnd; k++; } }
+            if (V.dist(a.p, PATH[PATH.length - 1]) < 24) { a.p = V.copy(PATH[0]); a.v = V.setLen(V.sub(PATH[1], PATH[0]), 60); trail = []; }   // sona vardı: baştan
             info.fut = fut; info.proj = best; info.target = tgt; info.off = bd;
-            des = bd > 18 ? B.seek(a, tgt) : V.setLen(a.v, a.maxSpeed);
+            des = bd > 14 ? B.seek(a, tgt) : V.setLen(a.v, a.maxSpeed);   // yolun içindeyse düzeltme yok: düz devam
             break;
           }
         }
         if (cfg.obst) { const av = avoid(); if (av) { des = V.add(V.mul(des, 0.3), V.mul(av, 1.2)); info.av = true; } }
         info.des = des;
-        const f = steerTo(a, des); info.force = f;
+        const f = steerSharp(a, des); info.force = f;
         integrate(a, f, dt, W, H, false);
         if (w.frame % 3 === 0) { trail.push(V.copy(a.p)); if (trail.length > 140) trail.shift(); }
       },
@@ -115,10 +122,10 @@
       path: ['ilerideki konumu yola izdüşür; yoldan çıkarsa yolda biraz ileriyi ara', 'Mor nokta: tahmin · kırmızı: yoldaki hedef. Sona varınca baştan başlar.']
     };
     const side = el('div', { class: 'gv-side' });
-    const drawSide = () => { side.innerHTML = `<div class="box story"><span class="bt">${modes[cfg.mode]}</span><code>${DESC[cfg.mode][0]}</code><p class="mini">${DESC[cfg.mode][1]}</p></div><div class="mini">🔵 hız · 🟢 istenen hız · 🔴 direksiyon = istenen − hız (azami kuvvetle kırpılır)</div>`; };
+    const drawSide = () => { side.innerHTML = `<div class="box story"><span class="bt">${modes[cfg.mode]}</span><code style="font-size:15px">${DESC[cfg.mode][0]}</code><p style="font-size:18px;line-height:1.35;margin:.5em 0 0">${DESC[cfg.mode][1]}</p></div><div style="font-size:16px;margin-top:10px;line-height:1.5"><b>Oklar:</b> 🔵 mevcut hız · 🟢 istenen hız · 🔴 direksiyon = istenen − hız (azami kuvvetle kırpılır)<br><b>Noktalı iz:</b> ajanın son birkaç saniyede geçtiği yol.</div>`; };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Davranış: ', select(modes, cfg.mode, v => { cfg.mode = v; trail = []; drawSide(); })),
+      el('label', { class: 'ctl' }, 'Davranış: ', select(modes, cfg.mode, v => { const was = cfg.mode; cfg.mode = v; trail = []; drawSide(); if (v === 'path' || was === 'path') reset(); })),
       slider('azami hız', 40, 320, cfg.maxSpeed, 10, v => { cfg.maxSpeed = v; }),
       slider('azami kuvvet', 40, 800, cfg.maxForce, 20, v => { cfg.maxForce = v; }),
       el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.vecs = e.target.checked; } }); x.checked = true; return x; })(), ' vektörler'),
@@ -216,7 +223,7 @@
           des = V.mul(dirs[bi], a.maxSpeed);
           maps = { interest, danger, masked, bi };
         }
-        const f = steerTo(a, des);
+        const f = steerSharp(a, des);
         const before = V.copy(a.p);
         integrate(a, f, dt, W, H, false);
         OB.forEach(o => { const d = V.dist(a.p, o); if (d < o.r + 10) a.p = V.add(o, V.setLen(V.sub(a.p, o), o.r + 10)); });   // engelin içine girme
@@ -258,7 +265,7 @@
         const tgt = w.mouse.inside ? V.v(w.mouse.x, w.mouse.y) : V.v(460, 120);
         const r = fns.arrive([a.p.x, a.p.y], [a.v.x, a.v.y], [tgt.x, tgt.y], 160, 100);
         if (!Array.isArray(r) || r.length !== 2 || !r.every(Number.isFinite)) { w.pause(); api.setMsg('err', '⚠️ arrive bir [x, y] dizisi (istenen hız) döndürmeli. Döndürülen: ' + JSON.stringify(r)); return; }
-        const f = V.limit(V.sub(V.v(r[0], r[1]), a.v), 300);
+        const f = V.limit(V.mul(V.sub(V.v(r[0], r[1]), a.v), STEER_GAIN), 300);
         a.v = V.limit(V.add(a.v, V.mul(f, dt)), 160); a.p = V.add(a.p, V.mul(a.v, dt)); if (V.len(a.v) > 2) a.h = V.angle(a.v);
         if (w.frame % 3 === 0) { trail.push(V.copy(a.p)); if (trail.length > 120) trail.shift(); }
       },
@@ -334,3 +341,25 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const rv = () => [Math.round(SL.rand(-200, 200)), Math.round(SL.rand(-200, 200))];
+  SL.AILABS.steerdiff = {
+    fn: 'steering', jsFn: 'steering',
+    ref: (d, v) => [d[0] - v[0], d[1] - v[1]],
+    cases: () => { const cs = [[[-180, 0], [180, 0]], [[100, 0], [100, 0]], [[0, 160], [160, 0]], [[0, 0], [50, -20]]]; for (let i = 0; i < 16; i++) cs.push([rv(), rv()]); return cs; },
+    show: (d, v) => `istenen hız ${JSON.stringify(d)}, mevcut hız ${JSON.stringify(v)}`,
+    hint: () => 'Reynolds’ın formülü: direksiyon = istenen − mevcut. Bileşen bileşen çıkarın: [dx − vx, dy − vy].'
+  };
+  SL.AILABS.limitvec = {
+    fn: 'limit', jsFn: 'limit', tol: 1e-6,
+    ref: (v, m) => { const L = Math.hypot(v[0], v[1]); return L > m ? [v[0] / L * m, v[1] / L * m] : [v[0], v[1]]; },
+    cases: () => { const cs = [[[300, 400], 100], [[3, 4], 100], [[0, 0], 50], [[-360, 0], 260], [[0, 10], 10]]; for (let i = 0; i < 16; i++) cs.push([rv(), Math.round(SL.rand(20, 300))]); return cs; },
+    show: (v, m) => `vektör ${JSON.stringify(v)}, azami uzunluk ${m}`,
+    hint: (v, m) => { const L = Math.hypot(v[0], v[1]); return L > m ? `Uzunluk ${L.toFixed(1)} > ${m}: yönü koruyup uzunluğu ${m} yapın → her bileşeni (${m} / uzunluk) ile çarpın.` : `Uzunluk ${L.toFixed(1)} ≤ ${m}: vektör aynen dönmeli.`; }
+  };
+})();
+/* EK:BİTİŞ */

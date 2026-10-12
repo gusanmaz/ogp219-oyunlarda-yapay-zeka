@@ -272,6 +272,7 @@ def flee(self, threat):
       <li>Fareyi bir noktada sabit tutun: ajan hedefin etrafında <b>yörüngeye</b> giriyor mu? (Seek’in kusuru.)</li>
       <li>“Flee (kaç)” seçin: kırmızı çember panik yarıçapı. Ajanı bir köşeye sıkıştırabiliyor musunuz?</li>
       <li>▶| 1 kare ile adım adım ilerleyin: her karede yeşil (istenen) ile mavi (mevcut) arasındaki fark = kırmızı.</li>
+      <li>🔗 Kaynağından okuyun ve oynayın: <a href="https://www.red3d.com/cwr/steer/" target="_blank" rel="noopener">Craig Reynolds — Steering Behaviors</a> (her davranışın orijinal çizimi) · <a href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener">The Nature of Code: Autonomous Agents</a> (p5.js ile, tarayıcıda çalışan örnekler).</li>
     </ol>
   </div>
 </section>
@@ -728,6 +729,77 @@ Vector3 Steer(Vector3 desired) => Vector3.ClampMagnitude(desired - velocity, max
   </table>
 </section>
 
+<section data-ek="tamkod" data-sec="kod">
+  <h2>📦 Tam kod: p5.js’te avcı ve sürü</h2>
+  <div class="cols c64">
+    <div>
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// her davranış bir İSTENEN HIZ döndürür
+seek(target)  { return p5.Vector.sub(target, this.pos).setMag(this.maxSpeed); }
+flee(threat)  { return p5.Vector.sub(this.pos, threat).setMag(this.maxSpeed); }
+
+// Reynolds: direksiyon = istenen − mevcut hız
+applyDesired(desired, weight = 1) {
+  const steer = p5.Vector.sub(desired, this.vel)
+                         .mult(5).limit(this.maxForce);
+  this.acc.add(steer.mult(weight));
+}
+
+update(dt) {
+  this.vel.add(p5.Vector.mult(this.acc, dt)).limit(this.maxSpeed);
+  this.pos.add(p5.Vector.mult(this.vel, dt));
+  this.acc.mult(0);
+}
+</script></code></pre>
+      <p class="mini">Bütün steering bu üç parçadır: davranış <b>istenen hızı</b> söyler, <code>applyDesired</code> onu kuvvete çevirir, <code>update</code> kuvveti harekete çevirir. Yeni davranış = istenen hızı hesaplayan yeni bir fonksiyon.</p>
+    </div>
+    <div class="box game"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span>
+      <p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 90 satır: fareye <i>arrive</i> ile gelen bir avcı ve ondan kaçan 70 balıklık bir sürü.</p>
+      <p><b>Deneyin:</b></p>
+      <ul>
+        <li>Avcıda <code>arrive</code> yerine <code>seek</code> yazın: fareyi sabit tutunca ne oluyor?</li>
+        <li>Ayrılma ağırlığını (1.6) sıfırlayın. Sonra bütünleşmeyi (0.9).</li>
+        <li>Avcının azami kuvvetini 420’den 60’a indirin: balıklar artık kolayca kaçıyor mu?</li>
+        <li>Balıklara “fareden kaç” yerine “fareye git” yazın: balık yemi!</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: direksiyon kuvveti</h2>
+  <div class="ailab" data-lab="steerdiff" data-lang="js">
+<textarea>
+// desired: gitmek İSTEDİĞİM hız [x, y]
+// velocity: şu anki hızım [x, y]
+// Reynolds'ın formülü: direksiyon = istenen − mevcut
+function steering(desired, velocity) {
+  return [desired[0], desired[1]];   // TODO: mevcut hızı çıkar
+}
+</textarea>
+    <div class="lab-tasks">Bütün steering davranışlarının ortak son satırı. Sağa 180 hızla giderken sola 180 gitmek istiyorsanız direksiyon <code>[-360, 0]</code> çıkar: “önce fren, sonra geri”. Aynı yöne zaten gidiyorsanız <code>[0, 0]</code>: düzeltmeye gerek yok.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: vektörü kırp (limit)</h2>
+  <div class="ailab" data-lab="limitvec" data-lang="js">
+<textarea>
+// v: [x, y] vektörü   max: izin verilen azami uzunluk
+// Uzunluk max'tan büyükse YÖNÜ koruyup uzunluğu max yap;
+// değilse vektörü aynen döndür.
+function limit(v, max) {
+  const len = Math.hypot(v[0], v[1]);
+  if (len &gt; max) {
+    // TODO: her bileşeni (max / len) ile çarp
+  }
+  return [v[0], v[1]];
+}
+</textarea>
+    <div class="lab-tasks">“Azami hız” ve “azami kuvvet” bu fonksiyonla uygulanır; p5.js’te hazırı <code>v.limit(max)</code>. Karakterin kişiliği bu iki sınırdadır: hızlı ama hantal bir tank, yavaş ama çevik bir kedi.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: seek ve arrive</h2>
   <div class="simlab" data-sim="steer" data-fns="seek,arrive" data-lang="js">
@@ -835,6 +907,18 @@ def alignment(vels, max_speed):
     <div class="box story"><span class="bt">Yaya dinamiği</span>Helbing &amp; Molnár’ın “sosyal kuvvet modeli” (1995): yayaları hedefe çeken ve birbirinden/duvarlardan iten kuvvetlerle modellemek — steering’in bilimsel kuzeni. Tahliye simülasyonlarında, stadyum ve metro tasarımında kullanılır.</div>
     <div class="box game"><span class="bt">Öğrenilen hareket</span>Unity ML-Agents gibi araçlarla ajanlar, ödül fonksiyonuyla (hedefe ulaş, çarpışma) hareket etmeyi <b>öğrenebilir</b> (Y13). Elle yazılmış steering ile öğrenilmiş politikanın karşılaştırılması güzel bir bitirme projesi.</div>
     <div class="box low"><span class="bt">Kişilikli kalabalıklar</span>Aynı kalabalıkta acelesi olan, turist, grup hâlinde yürüyen ajanlar: farklı azami hız, kişisel alan (ayrılma yarıçapı) ve hedef davranışları. Açık dünya oyunlarının sokaklarını “canlı” gösteren şey bu çeşitlilik.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Bir zombi, bir yarış arabası ve bir sinek için <b>azami hız</b> ve <b>azami kuvvet</b> değerlerini (düşük / orta / yüksek) nasıl seçerdiniz? Hangisi “korkutucu”, hangisi “sinir bozucu” hissettirir?</li>
+      <li class="fragment">Boids’te lider yok ama sürü “bir yere gidiyor” gibi görünür. Bir filmde ya da oyunda gördüğünüz bir kalabalığın/sürünün böyle yapıldığını şimdi düşününce tahmin edebiliyor musunuz?</li>
+      <li class="fragment">Steering “yereldir”: ajan sadece burnunun ucunu görür. U biçimli bir duvarın içindeki hedefe neden ulaşamaz? Bunu çözmek için ne eklemek gerekir?</li>
+      <li class="fragment">F1 2011 ekibi klasik steering’i atıp context steering’e geçti ve 4000 satır kod sildi. Bir sistemi “daha akıllı” yapmanın yolu bazen neden <b>daha az</b> kod yazmaktır?</li>
+    </ol>
   </div>
 </section>
 
