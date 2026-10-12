@@ -793,3 +793,6 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 /* laboratuvar sonuç paneli: test açıklaması okunabilir boyutta */
 .reveal .ll-lab-view .mini { font-size: 17px; line-height: 1.4; margin: 4px 0 8px; opacity: 1; }
 .reveal .ll-lab-view .mini b { font-family: "JetBrains Mono", monospace; font-size: .95em; }
+
+/* demo denetim çubuklarındaki ipucu yazıları: projeksiyonda okunabilir boyut */
+.reveal .sv-controls .mini, .reveal .demo > .mini, .reveal .demo .gv-row + .mini { font-size: 16px; opacity: .9; line-height: 1.35; }

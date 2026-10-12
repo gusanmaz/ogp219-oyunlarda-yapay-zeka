@@ -241,3 +241,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.falloff = {
+    fn: 'falloff', jsFn: 'falloff', tol: 1e-9,
+    ref: (s, d, r) => s * Math.max(0, 1 - d / r),
+    cases: () => { const cs = [[1, 0, 200], [1, 100, 200], [1, 200, 200], [1, 300, 200], [3, 50, 200], [2, 150, 100]]; for (let i = 0; i < 14; i++) cs.push([[1, 2, 3][i % 3], Math.round(SL.rand(0, 300)), [100, 200][i % 2]]); return cs; },
+    show: (s, d, r) => `güç ${s}, mesafe ${d}, yarıçap ${r}`,
+    hint: (s, d, r) => (d >= r ? 'Yarıçapın dışında etki 0 olmalı (negatif değil!): Math.max(0, …).' : 'güç × (1 − mesafe / yarıçap). Birimin üstünde tam güç, yarıçapın yarısında yarım güç.')
+  };
+  SL.AILABS.control = {
+    fn: 'control', jsFn: 'control',
+    ref: (b, r) => (b - r > 0.5 ? 'mavi' : r - b > 0.5 ? 'kirmizi' : b + r > 1 ? 'cephe' : 'bos'),
+    cases: () => { const cs = [[3, 0.5], [0.4, 2.9], [2.1, 2.0], [0.1, 0.2], [0, 0], [1.6, 1.0], [1.0, 1.6], [0.6, 0.5]]; for (let i = 0; i < 12; i++) { let b, r; do { b = Math.round(Math.random() * 30) / 10; r = Math.round(Math.random() * 30) / 10; } while (Math.abs(Math.abs(b - r) - 0.5) < 0.051 || Math.abs(b + r - 1) < 0.051); cs.push([b, r]); } return cs; },
+    show: (b, r) => `mavi etki ${b}, kırmızı etki ${r}`,
+    hint: (b, r) => `Fark = ${(b - r).toFixed(1)}, toplam = ${(b + r).toFixed(1)}. Önce farka bakın (0,5’ten büyükse bir taraf baskın); fark küçükse toplama bakın (1’den büyükse cephe, değilse boş).`
+  };
+})();
+/* EK:BİTİŞ */

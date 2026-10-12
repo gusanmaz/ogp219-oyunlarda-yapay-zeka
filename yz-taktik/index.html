@@ -399,6 +399,24 @@ Query_CoverCompromised_FindNearby = {
 <section data-sec="kod">
   <h2>Konum sorgusu: üret, ele, puanla</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js — candidates: p5.Vector dizisi; coveredFn(p, threat) → 0 ya da 1
+function findBest(agent, threat, candidates, coveredFn,
+                  wProx = 20, wCover = 40, wRange = 10, pref = 180, minDist = 40) {
+  let best = null, bestScore = -Infinity;
+  for (const p of candidates) {                           // 1) ÜRET: adaylar
+    const dThreat = p.dist(threat);
+    if (dThreat < minDist) continue;                      // 2) ELE: koşul
+    const prox = max(0, 1 - p.dist(agent) / 500);         // 3) PUANLA
+    const inRange = abs(dThreat - pref) < 60 ? 1 : 0;
+    const s = wProx * prox + wCover * coveredFn(p, threat) + wRange * inRange;
+    if (s > bestScore) { bestScore = s; best = p; }
+  }
+  return best;
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="7|9-10|11-15|16"><script type="text/template">
 public class CoverQuery {
@@ -446,6 +464,38 @@ def find_best(agent, threat, candidates, covered_fn,
 <section data-sec="kod">
   <h2>Etki haritası</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js — ızgara: w × h hücre, her hücre "cell" piksel
+class InfluenceMap {
+  constructor(w, h, cell) {
+    this.w = w; this.h = h; this.cell = cell;
+    this.blue = new Float32Array(w * h); this.red = new Float32Array(w * h);
+  }
+  update(units, radius) {                                 // units: [{ x, y, side: "b" | "r", strength }]
+    this.blue.fill(0); this.red.fill(0);
+    for (const u of units) {
+      const layer = u.side === "b" ? this.blue : this.red;
+      for (let gy = 0; gy < this.h; gy++) for (let gx = 0; gx < this.w; gx++) {
+        const d = dist((gx + 0.5) * this.cell, (gy + 0.5) * this.cell, u.x, u.y);
+        layer[gy * this.w + gx] += u.strength * max(0, 1 - d / radius);     // doğrusal azalma
+      }
+    }
+  }
+  control(i) { return this.blue[i] - this.red[i]; }       // > 0 mavi baskın, < 0 kırmızı
+  tension(i) { return min(this.blue[i], this.red[i]); }   // iki taraf da güçlü: çatışma bölgesi
+  weakestEnemyCell() {                                    // mavinin ulaşabildiği, kırmızının en zayıf olduğu hücre
+    let best = -1, bestScore = Infinity;
+    for (let i = 0; i < this.blue.length; i++) {
+      if (this.blue[i] <= 0.15) continue;
+      const s = this.red[i] - 0.3 * this.blue[i];
+      if (s < bestScore) { bestScore = s; best = i; }
+    }
+    return best;                                          // x = best % w, y = floor(best / w)
+  }
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="9-14|16-21"><script type="text/template">
 import numpy as np
@@ -501,6 +551,41 @@ public void Stamp(float[,] map, Vector2Int c, float strength, int radiusCells) {
     <tr><td>np.argmin · unravel_index</td><td>en küçüğün yeri</td><td>Düzleştirilmiş dizideki indeksi (satır, sütun)’a çevirir</td></tr>
     <tr><td>float[,] · GetLength(0)</td><td>iki boyutlu dizi</td><td>C#’ta ızgara; 0 = satır sayısı, 1 = sütun sayısı</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: etki uzaklıkla azalır</h2>
+  <div class="ailab" data-lab="falloff" data-lang="js">
+<textarea>
+// strength: birimin gücü (ör. 1, 2, 3)
+// d: hücrenin birime uzaklığı    radius: etki yarıçapı
+// Doğrusal azalma: birimin üstünde tam güç, yarıçapta 0.
+function falloff(strength, d, radius) {
+  return strength * (1 - d / radius);   // TODO: yarıçapın dışında negatif çıkıyor!
+}
+</textarea>
+    <div class="lab-tasks">Etki haritasının tek formülü. Yarıçapın dışında sonuç negatif olmamalı: <code>Math.max(0, …)</code> (p5.js’te <code>max</code>). Haritadaki her hücre, bütün birimler için bu değeri toplar.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: bu hücre kimin?</h2>
+  <div class="ailab" data-lab="control" data-lang="js">
+<textarea>
+// blue, red: bir hücredeki mavi ve kırmızı etki
+// Döndür:
+//   "mavi"    → mavi, kırmızıdan 0.5'ten fazla büyük
+//   "kirmizi" → kırmızı, maviden 0.5'ten fazla büyük
+//   "cephe"   → fark küçük AMA toplam 1'den büyük (iki taraf da güçlü)
+//   "bos"     → fark küçük ve toplam küçük
+function control(blue, red) {
+  if (blue - red &gt; 0.5) return "mavi";
+  // TODO: kirmizi, cephe, bos
+  return "bos";
+}
+</textarea>
+    <div class="lab-tasks">İki katmanı birleştirince harita “konuşmaya” başlar: fark = <b>kontrol</b>, ikisinin de yüksek olması = <b>gerilim</b>. Quiz 2’deki hücre (mavi 2,1 · kırmızı 2,0) burada <code>"cephe"</code> çıkar.</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -604,6 +689,18 @@ def pick_position(cands, min_dist, w_prox, w_cover):
     <div class="box story"><span class="bt">Öğrenilen konum değerlendirme</span>Profesyonel oyuncuların maç kayıtlarından “iyi konum” örneklerini öğrenip ağırlıkları otomatik ayarlamak (ters pekiştirmeli öğrenme / taklit öğrenme, Y13).</div>
     <div class="box game"><span class="bt">Prosedürel seviyelerde taktik</span>Rastgele üretilen haritalarda (Y15) siper noktası, darboğaz ve bölgelerin otomatik çıkarılması; Gears Tactics’in yarı prosedürel haritaları buna örnek.</div>
     <div class="box low"><span class="bt">Taktik netlik ölçümü</span>Oyuncuların düşman hamlelerini ne kadar “okuyabildiğini” ölçen bir oyuncu deneyi: aynı anda hareket eden düşman sayısı arttıkça anlama oranı nasıl düşüyor?</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Kohan II’nin YZ’si kanat saldırısını hiç “düşünmedi”; etki haritası onu en zayıf noktaya gönderdi ve eleştirmenler “taktik deha” dedi. F.E.A.R.’daki yanılsamayla (Y5) ne ortak? Zekâ nerede: kodda mı, izleyenin kafasında mı?</li>
+      <li class="fragment">Aynı konum sorgusunda siper ağırlığını 0 yaparsanız asker “cesur”, 100 yaparsanız “korkak” olur. Sevdiğiniz bir oyundaki üç düşman türünü yalnızca <b>ağırlıklarla</b> tarif edin.</li>
+      <li class="fragment">En kısa yol 33 adım ve 20 adımı ateş altında; taktik yol 38 adım ve 2 adımı ateş altında. Hangi durumda NPC yine de <b>kısa</b> yolu seçmeli?</li>
+      <li class="fragment">Strateji oyununda YZ, sis perdesinin arkasını etki haritasıyla “biraz sezdiriyor”. Bu hile mi? İnsan oyuncu da görmediği yeri tahmin etmez mi?</li>
+    </ol>
   </div>
 </section>
 
