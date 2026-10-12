@@ -24,7 +24,7 @@
     const mkU = () => ({ p: V.v(SL.rand(60, 160), SL.rand(120, 260)), v: V.v(), h: 0, slot: -1 });
     const reset = () => { L = { p: V.v(140, 190), v: V.v(), h: 0, maxSpeed: 110 }; units = Array.from({ length: cfg.n }, mkU); target = V.v(560, 190); };
     reset();
-    const Game AI Pro = { x: 380, y0: 140, y1: 240 };   // duvardaki geçit
+    const GAP = { x: 380, y0: 140, y1: 240 };   // duvardaki geçit
     const assign = () => {
       // slotlara birim ata: sabit sıra ya da açgözlü en yakın
       units.forEach(u => (u.slot = -1));
@@ -45,10 +45,10 @@
         const des = d > 2 ? V.setLen(off, Math.min(sp, d * 1.5)) : V.v();
         L.v = V.add(L.v, V.limit(V.sub(des, L.v), 200 * dt)); L.p = V.add(L.p, V.mul(L.v, dt)); if (V.len(L.v) > 5) L.h = V.angle(L.v);
         // duvar: geçitten başka yerden geçme
-        if (cfg.wall) [L, ...units].forEach(a => { if (Math.abs(a.p.x - Game AI Pro.x) < 10 && (a.p.y < Game AI Pro.y0 || a.p.y > Game AI Pro.y1)) { a.p.x = a.p.x < Game AI Pro.x ? Game AI Pro.x - 10 : Game AI Pro.x + 10; a.v.x = 0; } });
+        if (cfg.wall) [L, ...units].forEach(a => { if (Math.abs(a.p.x - GAP.x) < 10 && (a.p.y < GAP.y0 || a.p.y > GAP.y1)) { a.p.x = a.p.x < GAP.x ? GAP.x - 10 : GAP.x + 10; a.v.x = 0; } });
         // slotlar: lider çerçevesinde; dar geçitte sütuna geç
         let shape = cfg.shape;
-        const nearGap = cfg.wall && Math.abs(L.p.x - Game AI Pro.x) < 140;
+        const nearGap = cfg.wall && Math.abs(L.p.x - GAP.x) < 140;
         if (nearGap) shape = 'column';
         slots = units.map((_, i) => toWorld(L.p, L.h, SHAPES[shape](i, units.length, cfg.s)));
         assignT -= dt; if (assignT <= 0) { assign(); assignT = 0.5; }
@@ -62,7 +62,7 @@
         w.nearGap = nearGap; w.lag = lag;
       },
       render(ctx, w, t) {
-        if (cfg.wall) { ctx.fillStyle = t.dark ? '#4a4f63' : '#3d4255'; ctx.fillRect(Game AI Pro.x - 8, 0, 16, Game AI Pro.y0); ctx.fillRect(Game AI Pro.x - 8, Game AI Pro.y1, 16, H - Game AI Pro.y1); }
+        if (cfg.wall) { ctx.fillStyle = t.dark ? '#4a4f63' : '#3d4255'; ctx.fillRect(GAP.x - 8, 0, 16, GAP.y0); ctx.fillRect(GAP.x - 8, GAP.y1, 16, H - GAP.y1); }
         ctx.strokeStyle = t.green; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(target.x, target.y, 10, 0, 7); ctx.stroke(); ctx.setLineDash([]);
         slots.forEach((s, k) => { ctx.strokeStyle = t.muted; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(s.x, s.y, 9, 0, 7); ctx.stroke(); });
         units.forEach(u => { const s = slots[u.slot]; if (!s) return; ctx.strokeStyle = t.dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.moveTo(u.p.x, u.p.y); ctx.lineTo(s.x, s.y); ctx.stroke(); });
