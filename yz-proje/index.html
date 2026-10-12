@@ -133,6 +133,19 @@
   <ul class="agenda"><li class="done">bir NPC’nin anatomisi</li><li class="on">hepsi bir arada: canlı örnek</li><li class="">proje seçimi ve kapsam</li><li class="">YZ tasarım belgesi</li><li class="">hata ayıklama ve test</li><li class="">YZ asistanıyla çalışmak</li><li class="">teslim, sunum ve değerlendirme</li><li class="">buradan sonra</li></ul>
 </section>
 
+<section data-ek="oku-stealth" data-sec="demo">
+  <div class="box ask" style="font-size:1em"><span class="bt">🧭 OYUNU OKUMA KILAVUZU (bir sonraki slayt)</span>
+    <ol style="font-size:.9em">
+      <li><b>Siz</b> yeşil topsunuz. <b>Tıklayın:</b> oraya A* ile yürür (yeşil çizgi). Amaç: 5 sarı altını toplayıp sağ alttaki ÇIKIŞ’a varmak.</li>
+      <li><b>X tuşu:</b> farenin durduğu yere taş atar (3 hak). Ses halkasının içindeki muhafız oraya gidip 3 saniye bakınır: dikkat dağıtma. Altın toplamak da ses çıkarır!</li>
+      <li><b>Muhafızın rengi = durumu:</b> mavi devriye, sarı incele, kırmızı kovala. Üstündeki küçük çubuk <b>farkındalık</b>: koninin içinde kaldıkça dolar; 0,4’te şüphelenir, 1’de kovalar.</li>
+      <li><b>Kesikli çizgi</b> muhafızın A* yolu; <b>çarpı</b> kara tahtadaki “son görülen/duyulan yer”. Alt satırda üç muhafızın kara tahtası yazıyla da görünür.</li>
+      <li><b>Sağ panel:</b> altın, taş, yakalanma, muhafız görüş menzili (yönetmen ayarlar), YZ’nin kare başına süresi, toplam A* çağrısı.</li>
+      <li>Üstteki kutucuklar hata ayıklama katmanları ve sistemleri açıp kapatır. Ses açık: yakalanınca ve fark edilince duyarsınız.</li>
+    </ol>
+  </div>
+</section>
+
 <section data-sec="canlı örnek">
   <h2>Canlı: gizlilik mini oyunu 🥷</h2>
   <div class="demo" data-demo="stealth"></div>
@@ -144,7 +157,7 @@
       <li><b>Yol (Y8)</b>: haritaya tıklayın; yeşil çizgi A* yolu. Muhafızların kesikli çizgileri de A*.</li>
       <li><b>Algılama + farkındalık (Y11)</b>: bir muhafızın konisine girin: çubuk yeşil → sarı (incele) → kırmızı (kovala). Uzaktan görünmek daha yavaş doldurur.</li>
       <li><b>Hafıza / kara tahta</b>: görüş alanından çıkın: muhafız “son görülen yer”e (çarpı) gider, etrafına bakar, 3 sn sonra vazgeçer. “Hafıza”yı kapatın: görüş kesildiği an unutur. Hangisi daha inandırıcı?</li>
-      <li><b>İşitme</b>: altın toplamak ses dalgası çıkarır; yakındaki muhafız oraya gelir. İşitmeyi kapatıp karşılaştırın.</li>
+      <li><b>İşitme</b>: altın toplamak ses dalgası çıkarır; yakındaki muhafız oraya gelir. İşitmeyi kapatıp karşılaştırın. <b>X tuşu</b> ile farenin olduğu yere taş atın (3 hak): muhafızı bilerek başka yere çekip arkasından geçin.</li>
       <li><b>Yönetmen (Y17)</b>: her yakalanışta muhafızların görüşü kısalır; uzun süre yakalanmazsanız yavaşça uzar. Sağ panelde günlük.</li>
       <li><b>Performans (Y18)</b>: sağ panelde YZ’nin kare başına süresi ve A* çağrı sayısı. Kovalama sırasında çağrı sayısı nasıl artıyor?</li>
     </ol>
@@ -256,7 +269,31 @@
 <section data-sec="test">
   <h2>Karar fonksiyonunu test edilebilir yazmak</h2>
   <div class="tabs short">
-    <div class="tab" data-label="C# (Unity)">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JavaScript: saf karar fonksiyonu — p5.js'e, çizime, zamana bağlı değil
+function decide(bb) {
+  if (bb.sees && bb.awareness >= 1) return "kovala";
+  if (bb.awareness >= 0.4 || bb.heardNoise) return "incele";
+  return "devriye";
+}
+
+// En basit birim testi: beklenen ile çıkan aynı mı? (editor.p5js.org konsolunda çalışır)
+function test(ad, cikan, beklenen) {
+  console.log((cikan === beklenen ? "✅ " : "❌ ") + ad + (cikan === beklenen ? "" : " → çıkan: " + cikan + ", beklenen: " + beklenen));
+}
+
+test("görüyor ve emin → kovala",     decide({ sees: true,  awareness: 1.2, heardNoise: false }), "kovala");
+test("görüyor ama emin değil → incele", decide({ sees: true,  awareness: 0.6, heardNoise: false }), "incele");
+test("ses duydu → incele",            decide({ sees: false, awareness: 0,   heardNoise: true  }), "incele");
+test("hiçbir şey yok → devriye",      decide({ sees: false, awareness: 0,   heardNoise: false }), "devriye");
+test("görmüyor ama çok şüpheli → incele (kovala DEĞİL)", decide({ sees: false, awareness: 1.3, heardNoise: false }), "incele");
+
+// Neden işe yarar? Karar hatasını bulmak için oyunu açıp muhafızın önüne yürümeniz gerekmez:
+// beş satır, bir saniyede çalışır. Karar fonksiyonunu her değiştirdiğinizde tekrar çalıştırın.
+</script></code></pre>
+    </div>
+        <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="2-8|11-18"><script type="text/template">
 // Saf fonksiyon: Unity’ye bağımlı değil → EditMode testinde saniyeler içinde çalışır
 public static class GuardBrain {
@@ -301,6 +338,80 @@ def test_idle_patrols():
     assert decide({"sees": False, "awareness": 0.1, "heard_noise": False}) == "devriye"
 </script></code></pre>
     </div>
+  </div>
+</section>
+
+<section data-ek="tamkod" data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile gizlilik oyunu</h2>
+  <div class="cols c64">
+    <div>
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function muhafizGuncelle(m, dt) {
+  const kt = m.kt;                          // KARA TAHTA
+  // 1) ALGILA
+  kt.goruyor = goruyorMu(m);                // menzil+koni+duvar
+  if (ses && ses.yeni && uzaklik(ses.p, m.p) < ses.r) {
+    kt.sesDuydu = true; kt.sonGorulen = hucre(ses.p);
+  }
+  // 2) HATIRLA
+  if (kt.goruyor) { kt.farkindalik += dt;
+                    kt.sonGorulen = hucre(oyuncu); }
+  else            { kt.farkindalik -= dt * 0.12; }
+  // 3) KARAR VER  (saf fonksiyon)
+  kt.durum = kararVer(kt);
+  // 4) DAVRAN
+  if (kt.durum === 'devriye')     devriyeGez(m, dt);
+  else if (kt.durum === 'incele') sonGorulenYereGit(m, dt);   // A*
+  else                            oyuncuyuKovala(m, dt);      // A*
+}
+</script></code></pre>
+      <p class="mini">Bir NPC’nin bir karesi (sadeleştirilmiş): dört katman, aralarındaki tek bağ <b>kara tahta</b>. Örnekteki gerçek kod aynı iskelete sınırları (0–1,5), “bakmadan unutma” kuralını ve yol yenilemeyi ekler.</p>
+    </div>
+    <div class="box game"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span>
+      <p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz oyunu aç</b></a> — yaklaşık 200 satır p5.js: A*, görüş konisi, farkındalık, kara tahta, üç durumlu karar, ses.</p>
+      <p><b>Kontroller:</b> tıkla = yürü · <b>X</b> = taş at · <b>R</b> = baştan</p>
+      <p><b>Projeniz için başlangıç noktası:</b></p>
+      <ul>
+        <li><code>kararVer</code>’e dördüncü durum ekleyin (“alarm ver”: diğer muhafızları çağır, Y10).</li>
+        <li>Yakalandıkça <code>GORUS</code>’ü kısaltan bir yönetmen yazın (Y17).</li>
+        <li>Haritayı hücresel otomatla üretin (Y15); A* ile çıkışa yol var mı test edin.</li>
+        <li><code>astar</code> çağrılarını sayın; kovalama sırasında kaç oluyor? (Y18)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: muhafız beni görüyor mu?</h2>
+  <div class="ailab" data-lab="cansee" data-lang="js">
+<textarea>
+// dist: muhafız ile oyuncu arası uzaklık
+// angle: oyuncunun, muhafızın baktığı yöne göre açısı (derece; solda ise EKSİ)
+// hasLos: arada duvar YOKSA true (görüş hattı açık)
+// range: görüş menzili,  halfFov: koninin yarı açısı (derece)
+// Üç koşulun üçü de sağlanıyorsa true döndür.
+function canSee(dist, angle, hasLos, range, halfFov) {
+  return dist &lt;= range;   // TODO: koni ve duvar kontrolü eksik (arkasını ve duvarın ötesini de görüyor!)
+}
+</textarea>
+    <div class="lab-tasks">ALGILA katmanı (Y11). Oyundaki koni tam olarak bu üç test: <b>menzil</b>, <b>açı</b>, <b>görüş hattı</b>. Sıra önemli: en ucuz test (uzaklık) önce, en pahalı test (duvar ışını) en sonda yapılır (Y18). Dikkat: oyuncu soldaysa açı eksi gelir.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: farkındalık çubuğu</h2>
+  <div class="ailab" data-lab="awstep" data-lang="js">
+<textarea>
+// aw: şimdiki farkındalık (0 … 1.5)
+// sees: muhafız oyuncuyu şu an görüyor mu?
+// dt: geçen süre (saniye)
+// Görüyorsa saniyede 1 ARTAR (en çok 1.5); görmüyorsa saniyede 0.12 AZALIR (en az 0).
+function awarenessStep(aw, sees, dt) {
+  if (sees) return aw + dt;   // TODO: 1.5 sınırı yok
+  return aw;                  // TODO: görmeyince hiç azalmıyor (muhafız asla unutmuyor)
+}
+</textarea>
+    <div class="lab-tasks">HATIRLA katmanı. Muhafızın üstündeki çubuk bu sayı. Hızlı dolup yavaş boşalması bilerek: bir anlık görünme şüphe yaratır, ama muhafız hemen unutmaz. Sıradaki laboratuvarda bu sayıya bakan KARAR fonksiyonunu yazacaksınız: böylece ALGILA → HATIRLA → KARAR zincirinin üç halkasını da kendiniz yazmış olacaksınız.</div>
   </div>
 </section>
 
@@ -479,6 +590,19 @@ def select_behavior(order, conditions):
     <tr><td>Herkese uygun zorluk</td><td>Zorluk seçenekleri</td><td>YZ yönetmeni, DDA (Y17)</td></tr>
     <tr><td>Kalabalık sahneler</td><td>Kademelendirme (Y18)</td><td>LOD, DOTS/Mass (Y18)</td></tr>
   </table>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Canlı oyunda “hafıza”yı kapatınca muhafızlar görüş kesilir kesilmez unutuyor. Hangisi daha <b>eğlenceli</b>, hangisi daha <b>adil</b>? İkisi aynı şey mi?</li>
+      <li class="fragment">Dönem boyunca gördüğünüz tekniklerden hangisi sizi en çok şaşırttı (“bu kadar basit miymiş?” ya da “bu kadar zor muymuş?”)? Projenizde kullanacak mısınız?</li>
+      <li class="fragment">Projenizin YZ’si çok iyi çalışıyor ama oyuncular fark etmiyor. Sorun YZ’de mi, geri bildirimde mi? Oyuncuya NPC’nin ne düşündüğünü göstermenin üç yolunu sayın.</li>
+      <li class="fragment">Altı haftanız var ve üçüncü haftada hâlâ oynanabilir bir sürüm yok. Neyi kesersiniz? Kapsamı küçültmek başarısızlık mı?</li>
+      <li class="fragment">YZ kod asistanı kodun %80’ini yazdıysa proje kimin? Sunumda hangi soruyu cevaplayabilmeniz gerekir?</li>
+    </ol>
+  </div>
 </section>
 
 <section data-sec="projeler">
