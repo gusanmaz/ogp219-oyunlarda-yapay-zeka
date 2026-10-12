@@ -271,3 +271,25 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.safeparse = {
+    fn: 'safe_parse', jsFn: 'safeParse',
+    ref: t => { try { const o = JSON.parse(t); return o && typeof o === 'object' && !Array.isArray(o) ? o : null; } catch (e) { return null; } },
+    cases: () => [['{"eylem": "git", "hedef": "kuyu"}'], ['{"eylem": "git", "hedef": '], ['Tabii, hemen!'], ['{"eylem": "söyle", "söz": "Hoş geldin"}'], ['[1, 2, 3]'], ['42'], ['{}'], ['{"a": {"b": 1}}'], ['']],
+    show: t => `modelin metni: ${JSON.stringify(t)}`,
+    hint: () => 'JSON.parse bozuk metinde HATA fırlatır: try { … } catch (e) { return null; } ile sarın. Sonuç bir nesne değilse (sayı, dizi) yine null döndürün.'
+  };
+  const OK = ['git', 'söyle', 'ver'];
+  SL.AILABS.allowed = {
+    fn: 'is_allowed', jsFn: 'isAllowed',
+    ref: (a, q) => { if (!a || !OK.includes(a.eylem)) return false; if (a.eylem === 'ver') return q === true; return true; },
+    cases: () => [[{ eylem: 'git', hedef: 'kuyu' }, false], [{ eylem: 'ver', hedef: 'altın' }, false], [{ eylem: 'ver', hedef: 'altın' }, true], [{ eylem: 'uç' }, true], [{ eylem: 'söyle', söz: 'Selam' }, false], [null, true], [{ eylem: 'sil_kayıt' }, false], [{ eylem: 'git' }, true], [{}, true]],
+    show: (a, q) => `model önerisi ${JSON.stringify(a)}, görev tamamlandı mı: ${q}`,
+    hint: (a, q) => (a && a.eylem === 'ver' ? 'Ödül vermeye MODEL karar veremez: “ver” yalnızca oyunun kendi bayrağı (questDone) true ise geçerlidir.' : 'Eylem izinli listede (git, söyle, ver) değilse ya da öneri boşsa false.')
+  };
+})();
+/* EK:BİTİŞ */

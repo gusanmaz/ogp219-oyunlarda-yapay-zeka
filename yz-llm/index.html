@@ -545,9 +545,42 @@ public class OllamaNpc : MonoBehaviour {
     <tr><td>JSON.parse · JsonUtility.FromJson · json.loads</td><td>JSON okuma</td><td>Metni nesneye çevirir; bozuk metinde <b>hata fırlatır</b></td></tr>
     <tr><td>try { } catch { }</td><td>hata yakalama</td><td>Hata olursa programı çökertmeden yedek yola geçmek</td></tr>
     <tr><td>enum (şemada)</td><td>izinli değerler listesi</td><td>Model sadece bu değerlerden birini yazabilir</td></tr>
-    <tr><td>tool_choice</td><td>araç seçimi</td><td>Modeli belirli bir aracı kullanmaya zorlar: cevap hep yapılandırılmış</td></tr>
+    <tr><td>strict · tool_choice</td><td>katı şema · araç seçimi</td><td><code>strict</code>: araç girdisi şemaya birebir uyar. <code>tool_choice: auto</code>: aracı çağırıp çağırmamaya model karar verir; çağırmazsa yedek replik devreye girer</td></tr>
     <tr><td>System.Action&lt;T&gt;</td><td>geri çağırma</td><td>“İş bitince bunu çalıştır” diye verilen fonksiyon</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: modelin JSON’una güvenme</h2>
+  <div class="ailab" data-lab="safeparse" data-lang="js">
+<textarea>
+// text: dil modelinin döndürdüğü metin. JSON olabilir de, olmayabilir de.
+// Geçerli bir JSON NESNESİ ise onu, değilse null döndür.
+function safeParse(text) {
+  const obj = JSON.parse(text);   // TODO: bozuk metinde program çöker!
+  return obj;                     // TODO: nesne değilse (sayı, dizi…) null
+}
+</textarea>
+    <div class="lab-tasks">LLM’li her oyunun ilk satırı. <code>JSON.parse</code> bozuk metinde hata fırlatır ve oyununuz çöker; <code>try / catch</code> ile sarıp <code>null</code> döndürün. <code>null</code> gelince NPC el yazımı yedek repliğini söyler (“Hmm, ne dedin yolcu?”).</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: karar oyunda, modelde değil</h2>
+  <div class="ailab" data-lab="allowed" data-lang="js">
+<textarea>
+// action: modelin ÖNERDİĞİ eylem, ör. { eylem: "ver", hedef: "altın" }  (null da olabilir)
+// questDone: oyunun KENDİ bayrağı — görev gerçekten bitti mi?
+// Eylem uygulanabilirse true döndür.
+function isAllowed(action, questDone) {
+  const OK = ["git", "söyle", "ver"];
+  if (!action || !OK.includes(action.eylem)) return false;
+  // TODO: "ver" (ödül) yalnızca questDone true ise geçerli
+  return true;
+}
+</textarea>
+    <div class="lab-tasks">“LLM’e <b>yetki</b> vermeyin, <b>söz hakkı</b> verin.” Where Winds Meet’te oyuncular NPC’yi görevin bittiğine ikna edip ödülü aldı; bu tek satır olsaydı alamazlardı. Model “görev bitti” dese bile oyun kendi bayrağına bakar.</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -670,6 +703,18 @@ def trim_history(messages, max_tokens):
     <div class="box story"><span class="bt">Tutarlılık ve kişilik</span>Uzun oyunlarda karakterin kişiliği “kayıyor” mu? Kişilik tutarlılığını ölçen testler, özet tabanlı uzun hafıza, karakter kartlarının otomatik güncellenmesi.</div>
     <div class="box game"><span class="bt">LLM + klasik planlayıcı</span>Cicero ve Voyager gibi: dil modeli hedef ve kod üretir, klasik sistem (GOAP, HTN, A*) güvenle uygular. Hangi işi kim yapmalı? Ölçülebilir karşılaştırmalar.</div>
     <div class="box low"><span class="bt">Küçük modeller ve damıtma</span>Büyük modelin bir karakter için ürettiği diyaloglarla küçük bir modeli eğitmek (distillation): cihazda çalışan, tek karaktere özel, ucuz ve hızlı model.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Bir NPC ile istediğiniz her şeyi konuşabildiğiniz bir oyun oynadınız mı (ya da videosunu izlediniz mi)? İlk 5 dakikadan sonra ne oldu: daha mı ilginçleşti, yoksa ne yapacağınızı mı bilemediniz?</li>
+      <li class="fragment">Fortnite’ın Darth Vader’ı ilk gün küfrettirildi. Siz o ekipte olsaydınız yayından <b>önce</b> hangi testleri yapardınız? Oyuncuların yaratıcılığına karşı bir filtre listesi yeter mi?</li>
+      <li class="fragment">Ölmüş bir aktörün sesini yapay zekâyla konuşturmak: aile izin verdi, sendika karşı çıktı. Siz hangi taraftasınız? Seslendirme sanatçısı olsaydınız cevabınız değişir miydi?</li>
+      <li class="fragment">İyi bir yazarın yazdığı 20 replik mi, bir dil modelinin ürettiği sonsuz ama vasat replik mi? Hangi tür oyunda hangisi kazanır?</li>
+    </ol>
   </div>
 </section>
 
