@@ -259,3 +259,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.canenter = {
+    fn: 'can_enter', jsFn: 'canEnter',
+    ref: (cap, used, w) => used + w <= cap,
+    cases: () => { const cs = [[12, 0, 4], [12, 4, 8], [12, 12, 4], [12, 8, 4], [12, 9, 4], [10, 0, 10], [10, 0, 11]]; for (let i = 0; i < 14; i++) { const cap = [6, 8, 12, 16, 24][i % 5]; cs.push([cap, Math.floor(Math.random() * (cap + 1)), [2, 3, 4, 8][Math.floor(Math.random() * 4)]]); } return cs; },
+    show: (c, u, w) => `kapasite ${c}, kullanılan ${u}, yeni gelenin ağırlığı ${w}`,
+    hint: (c, u, w) => `Kalan yer = ${c} − ${u} = ${c - u}. Ağırlık ${w} buna ${w <= c - u ? 'sığıyor' : 'sığmıyor'}. Tam dolduran istek de kabul edilir (≤).`
+  };
+  SL.AILABS.slotworld = {
+    fn: 'slot_world', jsFn: 'slotWorld', tol: 1e-6,
+    ref: (L, f, r, o) => [L[0] + f[0] * o[0] + r[0] * o[1], L[1] + f[1] * o[0] + r[1] * o[1]],
+    cases: () => { const cs = [[[100, 100], [1, 0], [0, 1], [-30, 20]], [[100, 100], [0, 1], [-1, 0], [-30, 20]], [[0, 0], [1, 0], [0, 1], [0, 0]], [[50, 80], [-1, 0], [0, -1], [-20, -20]]]; for (let i = 0; i < 12; i++) { const a = Math.random() * 6.28, f = [Math.cos(a), Math.sin(a)]; cs.push([[Math.round(SL.rand(0, 400)), Math.round(SL.rand(0, 300))], f, [-f[1], f[0]], [Math.round(SL.rand(-60, 0)), Math.round(SL.rand(-60, 60))]]); } return cs; },
+    show: (L, f, r, o) => `lider ${JSON.stringify(L)}, ileri ${JSON.stringify(f.map(x => +x.toFixed(2)))}, sağ ${JSON.stringify(r.map(x => +x.toFixed(2)))}, yuva [ileri, sağ] = ${JSON.stringify(o)}`,
+    hint: () => 'dünya = lider + ileri × yuva[0] + sağ × yuva[1]. Her bileşen için ayrı ayrı: x = L[0] + f[0]·o[0] + r[0]·o[1].'
+  };
+})();
+/* EK:BİTİŞ */

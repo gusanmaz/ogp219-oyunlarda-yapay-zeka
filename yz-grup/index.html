@@ -517,6 +517,41 @@ class StageManager:
   </table>
 </section>
 
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: bu düşman içeri girebilir mi?</h2>
+  <div class="ailab" data-lab="canenter" data-lang="js">
+<textarea>
+// capacity: oyuncunun etrafındaki toplam "tehdit kapasitesi" (ör. 12)
+// used: şu an içerideki düşmanların ağırlık toplamı
+// weight: izin isteyen düşmanın ağırlığı (asker 4, trol 8)
+// Sığıyorsa true döndür.
+function canEnter(capacity, used, weight) {
+  return true;   // TODO: used + weight kapasiteyi aşmamalı
+}
+</textarea>
+    <div class="lab-tasks">Kingdoms of Amalur’un “Belçika YZ”sinin kalbi tek bir karşılaştırma. Şu an herkes içeri dalıyor (“yönetim yok” modu). Kapasite 12 iken: trol (8) girer, sonra asker (4) girer, ikinci asker bekler. Zorluk seviyesi = <code>capacity</code> sayısı.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: yuvam dünyada nerede?</h2>
+  <div class="ailab" data-lab="slotworld" data-lang="js">
+<textarea>
+// leader: liderin konumu [x, y]
+// forward: liderin baktığı yön (birim vektör)   right: liderin sağı (birim vektör)
+// offset: yuvanın liderin YEREL çerçevesindeki yeri [ileri, sağ]
+//   ör. [-30, 20] = "30 geride, 20 sağda"
+// Yuvanın dünya koordinatını [x, y] döndür.
+function slotWorld(leader, forward, right, offset) {
+  const x = leader[0] + forward[0] * offset[0];   // TODO: + right[0] * offset[1]
+  const y = leader[1] + forward[1] * offset[0];   // TODO: + right[1] * offset[1]
+  return [x, y];
+}
+</textarea>
+    <div class="lab-tasks">Formasyonu bir kez yerel çerçevede tanımlarsınız (“30 geride, 20 sağda”); lider nereye dönerse dönsün bu fonksiyon yuvanın dünyadaki yerini verir. p5.js’te <code>forward = p5.Vector.fromAngle(heading)</code>, <code>right = createVector(-forward.y, forward.x)</code>.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: kama formasyonu</h2>
   <div class="simlab" data-sim="wedge" data-fns="wedgeSlot" data-lang="js">
@@ -619,6 +654,18 @@ def confidence(allies, enemies):
     <div class="box story"><span class="bt">OpenAI Five (2019)</span>Dota 2’de beş ajanlık bir takım, kendine karşı oynayarak (pekiştirmeli öğrenme) dünya şampiyonu takımı yendi. Koordinasyon elle yazılmadı; ortak ödülden “öğrenildi”. Bedeli: aylarca binlerce işlemcide eğitim.</div>
     <div class="box game"><span class="bt">AlphaStar (2019)</span>StarCraft II’de büyükusta seviyesi (Nature). Birim gruplarını yöneten tek bir sinir ağı; çok ajanlı bir “lig” ile eğitildi. Oyun YZ’si için çok pahalı ama ilham verici.</div>
     <div class="box low"><span class="bt">Saklambaçta ortaya çıkan alet kullanımı</span>OpenAI (2019): saklananlar ve arayanlar takımları, kimse öğretmeden kutularla barikat kurmayı, rampayı “kilitlemeyi” öğrendi. Basit kurallardan ortaya çıkan grup davranışının öğrenme versiyonu (Y13).</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Dövüş filmlerinde kötü adamlar kahramana <b>sırayla</b> saldırır. Oyunlarda bunu fark ettiğiniz bir an oldu mu (Batman: Arkham, Assassin’s Creed, God of War…)? Sizi rahatsız etti mi, yoksa “havalı” mı hissettirdi?</li>
+      <li class="fragment">Zor modda düşmanları daha <b>akıllı</b> yapmak yerine sadece “aynı anda saldırabilen düşman kapasitesini” artırmak hile mi? Oyuncu farkı nasıl hisseder?</li>
+      <li class="fragment">Bir tim “geri çekil” kararı verdi ama bir üyesi tam o an oyuncuyu vurma fırsatı yakaladı. Emre mi uymalı, fırsatı mı değerlendirmeli? Bu kararı kim vermeli: tim mi, birey mi?</li>
+      <li class="fragment">Bir şehirde yürüyen 500 NPC’nin her birine davranış ağacı vermek pahalı. Oyuncu hangisinin “gerçekten düşündüğünü” nasıl anlar? Buna göre hangilerine ucuz YZ verirdiniz?</li>
+    </ol>
   </div>
 </section>
 
