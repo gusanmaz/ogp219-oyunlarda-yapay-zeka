@@ -35,6 +35,22 @@
   SL.clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   SL.angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
 
+  /* ---------------- küçük ses efektleri (Web Audio; ilk kullanıcı hareketinde açılır) ---------------- */
+  let actx = null;
+  SL.sfx = function (kind) {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      const t0 = actx.currentTime, g = actx.createGain(); g.connect(actx.destination);
+      const tone = (type, f0, f1, dur, vol) => { const o = actx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + dur); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur); o.connect(g); o.start(t0); o.stop(t0 + dur + 0.02); };
+      if (kind === 'shot') tone('sawtooth', 620, 90, 0.16, 0.16);          // "piyuv"
+      else if (kind === 'alert') tone('square', 520, 880, 0.14, 0.07);      // fark edildin
+      else if (kind === 'waka') tone('square', 340 + 160 * ((SL._waka = !SL._waka) ? 1 : 0), 300, 0.07, 0.05);   // yem
+      else if (kind === 'lose') tone('sawtooth', 500, 60, 0.6, 0.12);                                              // yakalandın
+      else tone('triangle', 240, 70, 0.11, 0.3);                           // "tak": yere düşen bir şey
+    } catch (e) { /* ses yoksa sessizce geç */ }
+  };
+
   /* ---------------- çizim yardımcıları ---------------- */
   SL.drawAgent = function (ctx, p, heading, col, size = 11, o = {}) {
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(heading);
@@ -250,7 +266,7 @@ def _run(fname, cases):
     const w = new SL.World({
       W, H,
       reset() { resetState(); if (o.onReset) o.onReset(); },
-      onClick(m) { st.noise = V.v(m.x, m.y); st.heard = true; st.noiseT = 0; },
+      onClick(m) { st.noise = V.v(m.x, m.y); st.heard = true; st.noiseT = 0; SL.sfx('knock'); },
       update(dt, w) {
         st.botT += dt;
         if (w.mouse.inside) st.lastMouse = V.v(w.mouse.x, w.mouse.y);   // fare alandan çıkınca oyuncu son yerinde kalır (düğmelere giderken kaçmasın)
@@ -271,6 +287,8 @@ def _run(fname, cases):
           st.log.unshift(`${w.time.toFixed(1)} sn: ${GNAMES[st.state]} → ${GNAMES[next]}`); st.log.length = Math.min(st.log.length, 6);
           st.switches.push(w.time);
           if (next === 'SUPHE' && st.state !== 'DEVRIYE') { st.noise = V.copy(p); }   // son görülen yer
+          if (next === 'KOVALA' && (st.state === 'DEVRIYE' || st.state === 'SUPHE')) { st.bang = '!'; st.bangT = 0.9; SL.sfx('alert'); }   // "!" — fark edildin
+          else if (next === 'SUPHE') { st.bang = '?'; st.bangT = 0.9; }
           st.state = next; st.tIn = 0; st.heard = false;
         }
         st.tIn += dt; st.flashT -= dt; st.switches = st.switches.filter(x => x > w.time - 5);
@@ -281,7 +299,7 @@ def _run(fname, cases):
         else if (s === 'KOVALA') { const dir = V.norm(to); turnTo(V.angle(dir), dt, 6); move(dir, 125, dt); }
         else if (s === 'SALDIR') { turnTo(V.angle(to), dt, 8); st.shotT -= dt; if (st.shotT <= 0) { st.shotT = 0.6; st.muzzle = 0.1; } }
         else if (s === 'KAC') { const dir = V.norm(V.mul(to, -1)); turnTo(V.angle(dir), dt, 6); move(dir, 115, dt); st.hp = Math.min(100, st.hp + 9 * dt); }
-        st.muzzle -= dt; st.hitT = (st.hitT || 0) - dt;
+        st.muzzle -= dt; st.hitT = (st.hitT || 0) - dt; st.bangT = (st.bangT || 0) - dt;
       },
       render(ctx, w, t) {
         const col = GCOLS(t)[st.state];
@@ -296,12 +314,13 @@ def _run(fname, cases):
         if (st.hitT > 0) { ctx.save(); ctx.globalAlpha = st.hitT * 3; ctx.strokeStyle = t.red; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(st.g.x, st.g.y, 24, 0, 7); ctx.stroke(); ctx.restore(); SL.drawLabel(ctx, '−25', st.g.x + 34, st.g.y - 4, t.red); }
         SL.drawAgent(ctx, st.g, st.heading, col, 14);
         SL.drawLabel(ctx, GNAMES[st.state], st.g.x, st.g.y - 26, col);
+        if (st.bangT > 0) { const k = Math.min(1, (0.9 - st.bangT) * 8), y = Math.max(22, st.g.y - 14 - 8 * k), bx = st.g.x + 30; ctx.save(); ctx.globalAlpha = Math.min(1, st.bangT * 4); ctx.font = `900 ${Math.round(18 + 14 * k)}px "Bungee", "Source Sans 3"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 5; ctx.strokeStyle = t.dark ? '#000' : '#fff'; ctx.strokeText(st.bang, bx, y); ctx.fillStyle = st.bang === '!' ? t.red : t.amber; ctx.fillText(st.bang, bx, y); ctx.restore(); }
         ctx.fillStyle = t.rule; ctx.fillRect(st.g.x - 20, st.g.y + 18, 40, 5); ctx.fillStyle = st.hp < 30 ? t.red : t.green; ctx.fillRect(st.g.x - 20, st.g.y + 18, 40 * st.hp / 100, 5);
         if (o.onDraw) o.onDraw(st);
       }
     });
     // X tuşu = nöbetçiye ateş et (fareyi düğmeye götürmek oyuncuyu da oynatacağı için klavye kısayolu)
-    const shoot = () => { st.hp = Math.max(0, st.hp - 25); st.hitT = 0.25; };
+    const shoot = () => { st.hp = Math.max(0, st.hp - 25); st.hitT = 0.25; SL.sfx('shot'); };
     window.addEventListener('keydown', e => {
       if (!w.running || (e.key !== 'x' && e.key !== 'X') || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.target && e.target.closest && e.target.closest('.CodeMirror, input, textarea, select')) return;

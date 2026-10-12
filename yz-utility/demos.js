@@ -272,3 +272,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.norm01 = {
+    fn: 'normalize', jsFn: 'normalize',
+    ref: (v, lo, hi) => Math.max(0, Math.min(1, (v - lo) / (hi - lo))),
+    cases: () => { const cs = [[18, 0, 50], [70, 0, 100], [80, 0, 50], [-5, 0, 50], [0, 0, 50], [50, 0, 50], [15, 10, 20]]; for (let i = 0; i < 18; i++) { const lo = Math.round(SL.rand(0, 20)), hi = lo + Math.round(SL.rand(5, 80)); cs.push([Math.round(SL.rand(lo - 20, hi + 20)), lo, hi]); } return cs; },
+    show: (v, lo, hi) => `değer ${v}, ayraçlar ${lo}–${hi}`,
+    hint: (v, lo, hi) => (v > hi ? `${v}, üst ayraçtan (${hi}) büyük: sonuç 1’e kırpılmalı.` : v < lo ? `${v}, alt ayraçtan (${lo}) küçük: sonuç 0’a kırpılmalı.` : '(değer − min) / (max − min). 18, 0–50 aralığında 0,36 eder.')
+  };
+  SL.AILABS.bestact = {
+    fn: 'best_action', jsFn: 'bestAction',
+    ref: sc => { let best = null, bs = -Infinity; for (const k in sc) if (sc[k] > bs) { bs = sc[k]; best = k; } return best; },
+    cases: () => { const names = ['ates', 'siper', 'sarjor', 'iyiles', 'kac']; const cs = [[{ ates: 0.62, siper: 0.71, iyiles: 0.18 }], [{ kac: 0.9, ates: 0.1 }], [{ sarjor: 0.4 }], [{ ates: 0, siper: 0, kac: 0.01 }]]; for (let i = 0; i < 18; i++) { const o = {}, used = new Set(); names.forEach(n => { if (Math.random() < 0.75) { let v; do { v = Math.round(Math.random() * 100) / 100; } while (used.has(v)); used.add(v); o[n] = v; } }); if (Object.keys(o).length) cs.push([o]); } return cs; },
+    show: sc => `puanlar ${JSON.stringify(sc)}`,
+    hint: () => '“En büyüğü bul” kalıbı: en iyi puanı −Infinity ile başlatın; daha büyüğünü görünce hem puanı hem ADI hatırlayın.'
+  };
+})();
+/* EK:BİTİŞ */

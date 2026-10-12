@@ -80,11 +80,11 @@
         const opts = ORDER.filter(k => k !== REV[a.dir] && !wall(a.c + DIRS[k][0], a.r + DIRS[k][1]));
         return opts.length ? opts[Math.floor(Math.random() * opts.length)] : REV[a.dir];
       });
-      if (g.pellets[g.pac.r] && g.pellets[g.pac.r][g.pac.c]) { g.pellets[g.pac.r][g.pac.c] = false; g.score++; if (!g.pellets.some(r => r.some(Boolean))) g.pellets = MAZE.map(row => row.split('').map(ch => ch === '.')); }
+      if (g.pellets[g.pac.r] && g.pellets[g.pac.r][g.pac.c]) { g.pellets[g.pac.r][g.pac.c] = false; g.score++; if (mouseTile) SL.sfx('waka'); if (!g.pellets.some(r => r.some(Boolean))) g.pellets = MAZE.map(row => row.split('').map(ch => ch === '.')); }
       g.ghosts.forEach(gh => step(gh, 7, dt, a => choose(a, g.target(a), false)));
       const pp = g.pos(g.pac);
       g.inv = Math.max(0, g.inv - dt);
-      if (g.inv <= 0 && g.ghosts.some(gh => V.dist(g.pos(gh), pp) < 0.7)) { g.caught++; g.reset(); }
+      if (g.inv <= 0 && g.ghosts.some(gh => V.dist(g.pos(gh), pp) < 0.7)) { g.caught++; if (mouseTile) SL.sfx('lose'); g.reset(); }
     };
     g.pos = a => V.v(a.c + DIRS[a.dir][0] * a.prog, a.r + DIRS[a.dir][1] * a.prog);
     g.draw = (ctx, S, ox, oy, showT) => {

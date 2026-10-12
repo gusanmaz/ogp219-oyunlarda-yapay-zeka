@@ -500,6 +500,27 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
   </div>
 </section>
 
+<section data-ek="kilavuz" data-sec="the sims">
+  <h2>Sim odasını okuma kılavuzu</h2>
+  <div class="cols" style="font-size:.74em">
+    <div class="box game" style="margin:0"><span class="bt">Sol: oda</span>
+      <ul>
+        <li><b>Kutular</b> = akıllı nesneler: buzdolabı, yatak, TV, telefon, tuvalet. Her biri bir ihtiyaca <b>reklam</b> veriyor.</li>
+        <li><b>Yuvarlak yüz</b> = Sim. Üstündeki yazı: şu an yaptığı eylem ve kalan süresi.</li>
+        <li>Bir nesneye <b>tıklarsanız</b> Sim’e emir vermiş olursunuz (oyundaki gibi); 2 sn sonra yine kendi kararlarına döner.</li>
+      </ul>
+    </div>
+    <div class="box" style="margin:0"><span class="bt">Sağ: Sim’in kafasının içi</span>
+      <ul>
+        <li><b>Üstteki 5 çubuk</b> = ihtiyaçlar. 100 = tam dolu, 0 = <b>kriz</b>. Zamanla kendiliğinden boşalırlar.</li>
+        <li><b>Alttaki mor çubuklar</b> = her eylemin <b>o anki puanı</b>. Her kare yeniden hesaplanır. <span class="c-green"><b>Yeşil</b></span> yazılı olan seçilen eylem.</li>
+        <li><b>Kriz sayacı</b>: bir ihtiyaç 0’a düştü. <b>Ort. mutluluk</b>: beş çubuğun ortalaması. <b>Fikir değiştirme</b>: Sim kaç kez eylem değiştirdi.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="mini" style="margin-top:12px">Dikkat: “eylemi bitir, sonra karar ver” seçiliyken yeşil eylem her zaman en yüksek puanlı olmayabilir — Sim başladığı işi bitiriyor. Buna <b>atalet</b> diyoruz. 🔗 Eğri denemek için: <a href="https://www.desmos.com/calculator" target="_blank" rel="noopener">Desmos</a> · izleyin: <a href="https://www.youtube.com/watch?v=9gf2MT-IOsg" target="_blank" rel="noopener">The Genius AI Behind The Sims</a>.</p>
+</section>
+
 <section data-sec="The Sims">
   <h2>Canlı: ihtiyaçlarla yaşayan bir Sim 🙂</h2>
   <div class="demo" data-demo="simroom"></div>
@@ -745,6 +766,42 @@ class UtilityBrain:
   </table>
 </section>
 
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: 0–1 aralığına getir</h2>
+  <div class="ailab" data-lab="norm01" data-lang="js">
+<textarea>
+// v: ham değer (ör. mesafe 18 m)
+// min, max: "kitap ayraçları" (ör. 0 ve 50)
+// 0–1 arasında bir sayı döndür; dışarı taşanı kırp.
+function normalize(v, min, max) {
+  const x = (v - min) / (max - min);
+  return x;   // TODO: 0'dan küçükse 0, 1'den büyükse 1
+}
+</textarea>
+    <div class="lab-tasks">Utility AI’ın ilk adımı. Kırpma için <code>Math.max(0, Math.min(1, x))</code> (p5.js’te <code>constrain(x, 0, 1)</code>). Kırpmazsanız 80 m’deki düşman “1,6 puan” alır ve bütün çarpımları bozar.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: en yüksek puanlı eylem</h2>
+  <div class="ailab" data-lab="bestact" data-lang="js">
+<textarea>
+// scores: { eylemAdı: puan, ... }
+//   ör. { ates: 0.62, siper: 0.71, iyiles: 0.18 }
+// En yüksek puanlı eylemin ADINI döndür.
+function bestAction(scores) {
+  let best = null, bestScore = -Infinity;
+  for (const name in scores) {
+    // TODO: scores[name] daha büyükse
+    //       hem bestScore'u hem best'i güncelle
+  }
+  return best;
+}
+</textarea>
+    <div class="lab-tasks">Bütün utility sistemlerinin son satırı budur: puanları hesapla, <b>en büyüğü seç</b>. Yukarıdaki örnekte cevap <code>"siper"</code>.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: Sim’in puan fonksiyonu</h2>
   <div class="simlab" data-sim="sims" data-fns="score" data-lang="js">
@@ -978,6 +1035,18 @@ public class ActionAsset : ScriptableObject {
     <div class="box low"><span class="bt">LLM + utility</span>Dil modeli her kare karar vermek için pahalı ve öngörülemez. Ama bir karakterin <b>kişilik tarifinden</b> (“korkak ama açgözlü bir tüccar”) eğri parametreleri üretmesi, sonra utility sisteminin hızlı ve güvenilir şekilde çalışması mümkün (Y14).</div>
   </div>
   <p class="mini">Ayrıca: utility puanlarını oyuncuya göstermek (Sims’in ihtiyaç çubukları gibi) bir <b>tasarım</b> kararıdır: YZ’yi okunabilir yapar ve oyuncuya “zekâ yanılsaması” verir (Y1).</p>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Bu akşam ne yapacağınıza nasıl karar veriyorsunuz? Üç seçenek ve her birini etkileyen ikişer “etken” yazın. Hangi etken sizde bir <b>veto</b> (sıfır olunca seçenek tamamen düşüyor)?</li>
+      <li class="fragment">Joy Booth Sim’i “mutlu” gösteriyor ama hayatını kötüleştiriyor. Gerçek hayatta ve oyunlarda bunun karşılığı ne? Bir tasarımcı böyle bir nesneyi <b>bilerek</b> koyar mı?</li>
+      <li class="fragment">Aynı askere iki farklı eğri seti verdiniz: biri “korkak”, biri “gözü kara”. Kodda tek satır değişmedi. Oyuncu bu farkı nasıl <b>fark eder</b>? Fark etmesi için ne eklerdiniz?</li>
+      <li class="fragment">Utility ile yazılmış bir NPC saçma bir şey yaptı. Davranış ağacındaki bir hatayı bulmakla bunu bulmak arasında ne fark var? Hangi aracı isterdiniz?</li>
+    </ol>
+  </div>
 </section>
 
 <section data-sec="projeler">
