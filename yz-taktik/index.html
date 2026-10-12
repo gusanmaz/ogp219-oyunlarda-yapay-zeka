@@ -151,7 +151,7 @@
 <section data-sec="konum">
   <h2>Crysis 2: sorgu dili olarak taktik</h2>
   <div class="cols c46">
-    <div class="box story"><span class="bt">Crysis 2 — Tactical Point System</span>Matthew Jack (GAP 26. bölüm): Far Cry ve Crysis’in yönlü “saklanma çapaları”ndan gelen fikirler Crysis 2’de bir <b>sorgu diline</b> dönüştü. Bir sorgu birden çok “seçenek” içerebilir: ilki sonuç vermezse ikincisi denenir (yedek plan).<br><br>Örnekteki sorgu: “siperim delindi, yakında yeni bir yer bul”. <b>Generation</b> = üret, <b>Conditions</b> = ele, <b>Weights</b> = puanla. Negatif ağırlık “az olsun” demek.</div>
+    <div class="box story"><span class="bt">Crysis 2 — Tactical Point System</span>Matthew Jack (Game AI Pro, 26. bölüm): Far Cry ve Crysis’in yönlü “saklanma çapaları”ndan gelen fikirler Crysis 2’de bir <b>sorgu diline</b> dönüştü. Bir sorgu birden çok “seçenek” içerebilir: ilki sonuç vermezse ikincisi denenir (yedek plan).<br><br>Örnekteki sorgu: “siperim delindi, yakında yeni bir yer bul”. <b>Generation</b> = üret, <b>Conditions</b> = ele, <b>Weights</b> = puanla. Negatif ağırlık “az olsun” demek.</div>
   <div class="tabs short">
     <div class="tab" data-label="Crytek sorgu dili (Lua)">
 <pre><code class="language-lua" data-trim data-line-numbers><script type="text/template">
@@ -195,7 +195,7 @@ Query_CoverCompromised_FindNearby = {
   <h2>Unreal EQS ve doğal görünen seçimler</h2>
   <div class="cols">
     <div>
-      <div class="box game"><span class="bt">Bulletstorm’dan Unreal’a</span>Mieszko Zieliński (GAP 33. bölüm, “Asking the Environment Smart Questions”): Bulletstorm için “şeyleri bul, ele, puanla” yapan bir sistem kuruldu. Bu sistem Unreal Engine 4’e <b>Environment Query System (EQS)</b> olarak girdi; Crysis 2’nin TPS’i de CryENGINE ile herkese açıldı (GAP3 26. bölüm).</div>
+      <div class="box game"><span class="bt">Bulletstorm’dan Unreal’a</span>Mieszko Zieliński (Game AI Pro, 33. bölüm, “Asking the Environment Smart Questions”): Bulletstorm için “şeyleri bul, ele, puanla” yapan bir sistem kuruldu. Bu sistem Unreal Engine 4’e <b>Environment Query System (EQS)</b> olarak girdi; Crysis 2’nin TPS’i de CryENGINE ile herkese açıldı (Game AI Pro 3, 26. bölüm).</div>
       <ul style="font-size:.82em">
         <li><b>Üreteçler</b>: bir aktörün etrafında ızgara/halka, navmesh noktaları, belirli türdeki aktörler.</li>
         <li><b>Testler</b>: mesafe, iz (görünürlük), nokta çarpım (yön), yol bulma (ulaşılabilir mi, ne kadar uzak).</li>
@@ -203,7 +203,7 @@ Query_CoverCompromised_FindNearby = {
       </ul>
     </div>
     <div>
-      <div class="box warn"><span class="bt">⚠️ Salınım (Eric Johnson, GAP Online 2021)</span>Aynı sorguyu tekrar tekrar çalıştırmak ajanın konumunu güncel tutar; ama hedef belirsizse iki nokta sürekli yer değiştirir. Örnek: hedefe “yandan” yaklaşmak — sol ve sağ eşit iyi. Ajan sola gidince sağ öne geçer, sağa gidince sol… sonuçta hiçbirine bağlanmadan <b>hedefe dümdüz</b> yürür. Çare: mevcut hedefe bonus (atalet, Y4), simetriyi bozan küçük tercih, sorguyu daha seyrek çalıştırmak.</div>
+      <div class="box warn"><span class="bt">⚠️ Salınım (Eric Johnson, Game AI Pro Online 2021)</span>Aynı sorguyu tekrar tekrar çalıştırmak ajanın konumunu güncel tutar; ama hedef belirsizse iki nokta sürekli yer değiştirir. Örnek: hedefe “yandan” yaklaşmak — sol ve sağ eşit iyi. Ajan sola gidince sağ öne geçer, sağa gidince sol… sonuçta hiçbirine bağlanmadan <b>hedefe dümdüz</b> yürür. Çare: mevcut hedefe bonus (atalet, Y4), simetriyi bozan küçük tercih, sorguyu daha seyrek çalıştırmak.</div>
       <div class="box low"><span class="bt">Normalleştirme seçimi</span>Göreli (adaylar arasında 0–1), kırpılmış (sabit aralık), hedefe göre… Seçim, puanların anlamını değiştirir (Y4’teki ayraçlar).</div>
     </div>
   </div>
@@ -247,7 +247,7 @@ Query_CoverCompromised_FindNearby = {
       </table>
     </div>
     <div>
-      <div class="box story"><span class="bt">Dave Mark: modüler etki haritaları</span>GAP2 30. bölüm: önceden hesaplanmış “damgalar” (her birim türü için etki deseni) haritaya basılır; yakınlık, tehdit gibi katmanlar ayrı tutulur ve ihtiyaç anında <b>çalışma haritalarında</b> birleştirilir (topla, çarp, ters çevir). Bireysel kararlar yine bireylerde, ama savaş alanı hakkında <b>ortak bilgiyle</b>.</div>
+      <div class="box story"><span class="bt">Dave Mark: modüler etki haritaları</span>Game AI Pro 2, 30. bölüm: önceden hesaplanmış “damgalar” (her birim türü için etki deseni) haritaya basılır; yakınlık, tehdit gibi katmanlar ayrı tutulur ve ihtiyaç anında <b>çalışma haritalarında</b> birleştirilir (topla, çarp, ters çevir). Bireysel kararlar yine bireylerde, ama savaş alanı hakkında <b>ortak bilgiyle</b>.</div>
       <div class="box low"><span class="bt">⚙️ Neden ucuz?</span>Izgara sabit boyutta; birimler hareket ettikçe sadece onların damgaları güncellenir. Sorgular O(1): “bu hücrede kim baskın?”</div>
     </div>
   </div>
@@ -262,7 +262,7 @@ Query_CoverCompromised_FindNearby = {
   <h2>Derin hikâye: Kohan II (2004) ve “planlanmamış” kanat saldırıları</h2>
   <div class="cols c64">
     <div>
-      <p style="font-size:.84em">Kevin Dill (GAP2 31. bölüm), gerçek zamanlı strateji oyunu Kohan II’nin saldırı ve savunma kararlarını etki haritalarına dayandırdı:</p>
+      <p style="font-size:.84em">Kevin Dill (Game AI Pro 2, 31. bölüm), gerçek zamanlı strateji oyunu Kohan II’nin saldırı ve savunma kararlarını etki haritalarına dayandırdı:</p>
       <ul style="font-size:.82em">
         <li>Düşman etkisi yükselince YZ <b>saldırının geldiğini</b> erkenden fark eder ve karşılayacak birlik gönderir: oyuncu büyük ordusuyla gelip <b>boş bir kale</b> bulmaz (“savaşmayan düşman eğlenceli değildir”).</li>
         <li>YZ düşmanın <b>en zayıf</b> olduğu yere saldırır: oyuncu geniş bir savunma kurmak zorunda kalır.</li>
@@ -310,7 +310,7 @@ Query_CoverCompromised_FindNearby = {
       <p style="font-size:.84em">Çözüm (Killzone): A*’ta bir bağlantıyı geçme maliyetine, dost ateş hattını kesme ve bir ya da daha fazla tehdidin ateşi altında olma cezası eklemek. Konum değerlendirme fonksiyonlarının <b>aynısı</b>, bu sefer yol üzerinde.</p>
     </div>
     <div>
-      <div class="box story"><span class="bt">Navmesh üzerinde</span>Daniel Brewer (GAP 27. bölüm): navmesh çokgenleri ya da kenarları için tehlike değeri hesaplayıp A*’ın maliyetine katmak; böylece navmesh’in esnekliği korunur. Y8’deki arazi maliyetinin taktik hâli: bataklık yerine “düşman görüşü”.</div>
+      <div class="box story"><span class="bt">Navmesh üzerinde</span>Daniel Brewer (Game AI Pro, 27. bölüm): navmesh çokgenleri ya da kenarları için tehlike değeri hesaplayıp A*’ın maliyetine katmak; böylece navmesh’in esnekliği korunur. Y8’deki arazi maliyetinin taktik hâli: bataklık yerine “düşman görüşü”.</div>
       <div class="box low"><span class="bt">⚙️ Bedel</span>Tehlike haritası her tehdit hareket edince değişir. Görünürlüğü her hücre için ışınla hesaplamak pahalıdır: düşük çözünürlüklü ızgara, saniyede birkaç güncelleme ve önceden hesaplanmış görüş tabloları kullanılır.</div>
     </div>
   </div>
@@ -358,7 +358,7 @@ Query_CoverCompromised_FindNearby = {
   <h2>Sıra tabanlı taktik: Gears Tactics’in netlik kuralları</h2>
   <div class="cols">
     <div>
-      <p style="font-size:.84em">Gears Tactics (2020) Gears of War’un siper tabanlı çatışmasını XCOM tarzı sıra tabanlı taktiğe taşıdı (Matthias Siemonsmeier, GAP Online 2021). Sorun: düşman sırası.</p>
+      <p style="font-size:.84em">Gears Tactics (2020) Gears of War’un siper tabanlı çatışmasını XCOM tarzı sıra tabanlı taktiğe taşıdı (Matthias Siemonsmeier, Game AI Pro Online 2021). Sorun: düşman sırası.</p>
       <ul style="font-size:.82em">
         <li>Düşmanlar <b>tek tek</b> hareket edince sıra uzun ve sıkıcıydı; üstelik ilk birim hareket edince oyuncu zaten ne olacağını anlıyordu.</li>
         <li>Hepsi <b>aynı anda</b> hareket edince heyecanlıydı (önündeki dostunu vuran düşman!), ama oyuncu <b>kritik bilgiyi kaçırıyordu</b>.</li>

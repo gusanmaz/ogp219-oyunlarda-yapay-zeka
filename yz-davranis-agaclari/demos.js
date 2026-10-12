@@ -118,10 +118,23 @@
       last = Object.fromEntries(trace);
       info.innerHTML = Object.entries({ 'can az': c.lowHp, 'görüyor': c.sees, 'yakın': c.close, 'iz var': c.clue }).map(([k, v]) => `<span class="cnt">${k}: <b class="${v ? 'c-green' : 'c-red'}">${v ? 'evet' : 'hayır'}</b></span>`).join('');
     });
-    const sim = SL.makeGuardArena({ decide: brain, displayW: 660, onDraw: () => { diag.innerHTML = treeOutline(tree, last); } });
+    // iki görünüm: "ağaç" (alan küçülür, altta tam genişlikte ağaç) ve "liste" (alan büyük, sağda girintili liste)
+    let view = 'tree';
+    const treeBox = el('div', { class: 'bt-diag' }), hint = el('div', { class: 'gv-side' });
+    const sim = SL.makeGuardArena({ decide: brain, displayW: 660, onDraw: () => { if (view === 'tree') treeBox.innerHTML = treeSVG(tree, last, { H: 200 }); else diag.innerHTML = treeOutline(tree, last); } });
+    hint.innerHTML = '<div class="box" style="margin:0;font-size:.82em"><span class="bt">Nasıl okunur?</span><ul><li>Alttaki ağaçta <b>renkli yol</b> = nöbetçinin bu karedeki kararı.</li><li><span class="c-green"><b>yeşil</b></span> koşul tuttu · <span class="c-red"><b>kırmızı</b></span> tutmadı · <span class="c-amber"><b>turuncu</b></span> çalışan eylem · soluk = hiç sorulmadı.</li><li>Soldaki dal = yüksek öncelik. Canı azalt (X): karar en sola kayar.</li></ul></div>';
+    const apply = () => {
+      const tr = view === 'tree';
+      sim.world.canvas.style.width = (tr ? 470 : 660) + 'px';
+      treeBox.style.display = tr ? '' : 'none'; hint.style.display = tr ? '' : 'none'; diag.style.display = tr ? 'none' : '';
+      toggle.textContent = tr ? '☰ Liste görünümü' : '🌳 Ağaç görünümü';
+      if (!sim.world.playing) sim.world.draw();
+    };
+    const toggle = btn('', () => { view = view === 'tree' ? 'list' : 'tree'; apply(); });
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'), el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses · X = ateş · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
-      el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas, info), diag), sim.world.controls());
+    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'), toggle, el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses · X = ateş · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
+      el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas, info), diag, hint), sim.world.controls(), treeBox);
+    apply();
     sim.world.reset();
     return { start: () => sim.world.start(), stop: () => sim.world.stop() };
   };

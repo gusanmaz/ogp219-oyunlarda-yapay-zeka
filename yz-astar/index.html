@@ -547,11 +547,11 @@ def heuristics(dx, dy):
   <div class="cols">
     <div>
       <div class="box game"><span class="bt">Jump Point Search (JPS)</span>Harabor &amp; Grastien (2011): açık bir ızgarada aynı uzunlukta yüzlerce simetrik yol vardır ve A* hepsini açar. JPS, düz çizgide “ilginç bir şey” (bir köşe, engelin ucu) olana kadar <b>sıçrar</b>; aradaki düğümleri listeye hiç koymaz. Sonuç yine en kısa yol.</div>
-      <div class="box low"><span class="bt">JPS+ ve Goal Bounding</span>Steve Rabin (GDC 2015, GAP2 14. bölüm): sıçrama mesafelerini <b>önceden hesaplamak</b> (JPS+) — testinde geleneksel A*’dan <b>116 kat</b> hızlı; bir de “bu yönden gidilince hangi hedeflere varılır” kutularını (goal bounding) ekleyince 1000 kattan fazla. Bedeli: harita <b>statik</b> ve maliyetler <b>tekdüze</b> olmalı.</div>
+      <div class="box low"><span class="bt">JPS+ ve Goal Bounding</span>Steve Rabin (GDC 2015, Game AI Pro 2, 14. bölüm): sıçrama mesafelerini <b>önceden hesaplamak</b> (JPS+) — testinde geleneksel A*’dan <b>116 kat</b> hızlı; bir de “bu yönden gidilince hangi hedeflere varılır” kutularını (goal bounding) ekleyince 1000 kattan fazla. Bedeli: harita <b>statik</b> ve maliyetler <b>tekdüze</b> olmalı.</div>
     </div>
     <div>
       <div class="box story"><span class="bt">Hepsini önceden hesapla</span>Küçük haritalarda bütün düğüm çiftleri için “ilk adım” tablosu (Floyd–Warshall) tutulabilir: yol bulma = tablo okuma. Bellek düğüm sayısının karesiyle büyür.</div>
-      <div class="box story"><span class="bt">Her açıda yol: Theta*</span>Arama sırasında görüş hattı varsa ebeveyni “atlayarak” bağlar; sonradan yumuşatmaya gerek kalmadan doğal, kesintisiz açılı yollar (GAP2 16. bölüm).</div>
+      <div class="box story"><span class="bt">Her açıda yol: Theta*</span>Arama sırasında görüş hattı varsa ebeveyni “atlayarak” bağlar; sonradan yumuşatmaya gerek kalmadan doğal, kesintisiz açılı yollar (Game AI Pro 2, 16. bölüm).</div>
       <div class="box game"><span class="bt">Binlerce birim tek hedef</span>Y7’deki akış alanları: hedeften bir kez Dijkstra, sonra her birim kendi hücresinin okunu izler (Supreme Commander 2, kule savunma oyunları).</div>
     </div>
   </div>

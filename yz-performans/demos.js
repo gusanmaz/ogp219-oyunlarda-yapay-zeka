@@ -157,7 +157,7 @@
       SL.drawLabel(ctx, `NPC 0 açlık: ${h0.toFixed(2)}${c.mode === 'events' ? ' (istenince formülle hesaplandı)' : ''}`, gx, gy + gh + 40, th.blue, { size: 11, align: 'left' });
       info.innerHTML = c.mode === 'frame'
         ? `Kare tabanlı: ${c.n} NPC’nin açlığı her kare güncelleniyor; iş, NPC sayısıyla doğru orantılı ve <b>her kare</b> ödeniyor.`
-        : `Olay tabanlı (David “Rez” Graham, GAP Online 2021): açlık doğrusal arttığı için her NPC’nin <b>ne zaman</b> acıkacağı önceden hesaplanır ve öncelik kuyruğuna (yığın) konur. Kare başına iş sadece o an gerçekleşen olaylar kadar; açlık değeri gerekince <code>açlık = başlangıç + hız · geçen süre</code> ile hesaplanır.`;
+        : `Olay tabanlı (David “Rez” Graham, Game AI Pro Online 2021): açlık doğrusal arttığı için her NPC’nin <b>ne zaman</b> acıkacağı önceden hesaplanır ve öncelik kuyruğuna (yığın) konur. Kare başına iş sadece o an gerçekleşen olaylar kadar; açlık değeri gerekince <code>açlık = başlangıç + hız · geçen süre</code> ile hesaplanır.`;
     };
     const run = () => { if (timer) return; timer = setInterval(() => { tick(); draw(); }, 33); };
     const stop = () => { if (timer) { clearInterval(timer); timer = null; } };

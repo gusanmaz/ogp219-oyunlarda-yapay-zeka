@@ -80,7 +80,7 @@
 <section>
   <h2>Mini sözlük</h2>
   <table class="gloss" style="font-size:19px">
-    <tr><td>behavior tree (BT)</td><td>davranış ağacı</td><td>Kararları iç içe öncelik listeleri ve adım dizileri olarak tutan ağaç</td></tr>
+    <tr><td>behavior tree (BT)</td><td>davranış ağacı</td><td>Kararları iç içe öncelik listeleri ve adım dizileri olarak tutan ağaç. Bu sunumda <b>BT</b> hep bunun kısaltmasıdır (ikili ağaç — <i>binary tree</i> — değil!)</td></tr>
     <tr><td>node · root · leaf</td><td>düğüm · kök · yaprak</td><td>Ağacın parçaları; yapraklar asıl işi (koşul/eylem) yapar</td></tr>
     <tr><td>tick</td><td>tık / değerlendirme</td><td>Ağaca “şimdi ne yapayım?” diye sorma; kökten başlar</td></tr>
     <tr><td>SUCCESS · FAILURE · RUNNING</td><td>başarılı · başarısız · sürüyor</td><td>Her düğümün ebeveynine verdiği üç cevaptan biri</td></tr>
@@ -887,7 +887,7 @@ if bb["last_seen"] is not None: ...   # koşul okur
       <div class="box warn"><span class="bt">3) Pahalı koşullar her tick</span>Görüş ışını, yol bulma… Çare: algıyı ayrı katmanda saniyede birkaç kez hesaplayıp kara tahtaya yaz; ya da servisler/olaylar.</div>
     </div>
     <div>
-      <div class="box story"><span class="bt">📜 Anthony Francis (Google robotik, GAP3 9. bölüm)</span>
+      <div class="box story"><span class="bt">📜 Anthony Francis (Google robotik, Game AI Pro 3, 9. bölüm)</span>
         <ul style="font-size:.82em">
           <li><b>Çok fazla düzenleyici sınıf</b>: “beceri”, “modül”, “görev” için ayrı kök sınıflar yazmayın; BT’nin kendi kavramları yeterli.</li>
           <li><b>Erkenden dil icat etmek</b>: Not, And, Or, If… düğümleri ekledikçe ağaç bir programlama diline dönüşür. Gerçekten gerekene kadar bekleyin.</li>
@@ -903,11 +903,11 @@ if bb["last_seen"] is not None: ...   # koşul okur
   <div class="cols">
     <div>
       <div class="box game"><span class="bt">The Last of Us (2013)</span>Naughty Dog’un insan düşmanlarında üst seviye kararlar <b>“beceriler”</b> (skills): panik, ilerle, yakın dövüş, silahlı çatışma, saklan, araştır… Beceriler <b>öncelik sıralı</b>; her kare her biri “çalışmak istiyor musun?” diye sorulur ve en öncelikli olan kazanır — bir selector. Her becerinin içi ise kendi <b>FSM</b>’i (Game AI Pro 2, 34. bölüm).</div>
-      <div class="box story"><span class="bt">Final Fantasy XV (2016)</span>Durum makinesi + davranış ağacı aynı editörde: büyük resim FSM, her durumun içi BT (GAP3 11. bölüm).</div>
+      <div class="box story"><span class="bt">Final Fantasy XV (2016)</span>Durum makinesi + davranış ağacı aynı editörde: büyük resmi bir durum makinesi (FSM) çizer, her durumun <b>içinde</b> bir davranış ağacı (BT = <i>behavior tree</i>) çalışır (Game AI Pro 3, 11. bölüm).</div>
     </div>
     <div>
-      <div class="box low"><span class="bt">Utility + BT</span>Bill Merrill (GAP 10. bölüm): mevcut bir BT’ye “<b>utility selector</b>” eklemek — çocukları sırayla değil, <b>puanına</b> göre dener. Y4’ün konusu.</div>
-      <div class="box low"><span class="bt">Planlayıcı + BT</span>Kinect Star Wars’taki Jedi YZ’si: BT’yi “simüle edip” birkaç adım ilerisini planlayan melez yapı (Hilburn, GAP 8. bölüm). Y5’teki GOAP’a köprü.</div>
+      <div class="box low"><span class="bt">Utility + BT</span>Bill Merrill (Game AI Pro, 10. bölüm): mevcut bir BT’ye “<b>utility selector</b>” eklemek — çocukları sırayla değil, <b>puanına</b> göre dener. Y4’ün konusu.</div>
+      <div class="box low"><span class="bt">Planlayıcı + BT</span>Kinect Star Wars’taki Jedi YZ’si: BT’yi “simüle edip” birkaç adım ilerisini planlayan melez yapı (Hilburn, Game AI Pro, 8. bölüm). Y5’teki GOAP’a köprü.</div>
       <div class="box game"><span class="bt">Unreal StateTree</span>Unreal’ın yeni aracı: durum makinesinin <b>durumlarını</b>, BT’nin <b>seçicileriyle</b> birleştirir. Y2’de de değindik.</div>
     </div>
   </div>
@@ -944,11 +944,11 @@ if bb["last_seen"] is not None: ...   # koşul okur
   <div class="cols">
     <div>
       <div class="box game"><span class="bt">Spore (2008)</span>Yaratık YZ’si önce başka bir sistemle yazılmış, sorun çıkınca ekip Halo tarzı BT’ye geçmiş. Chris Hecker, Isla ve Bungie ekibiyle konuşup sistemi “sürüm 1.5” olarak tasarladığını ve belgelerini yayımladığını anlatıyor.</div>
-      <div class="box game"><span class="bt">Kingdoms of Amalur: Reckoning (2012)</span>BT yapısı C++’ta, <b>yaprak davranışları Lua betiklerinde</b>. Tasarımcılar motoru yeniden derlemeden davranış yazabildi (Dawe, GAP 7. bölüm).</div>
+      <div class="box game"><span class="bt">Kingdoms of Amalur: Reckoning (2012)</span>BT yapısı C++’ta, <b>yaprak davranışları Lua betiklerinde</b>. Tasarımcılar motoru yeniden derlemeden davranış yazabildi (Dawe, Game AI Pro, 7. bölüm).</div>
       <div class="box game"><span class="bt">Mafia III (2016)</span>Açık dünya düşmanlarında BT, algı / pozisyon seçimi / siper sistemlerini birbirine bağlayan “tutkal”. İlginç ayrıntı: ateş ederken “ıskala mı vur mu” kararını BT değil, ayrı bir sistem veriyor; BT sadece ne zaman ateşe başlanacağına karar veriyor.</div>
     </div>
     <div>
-      <div class="box game"><span class="bt">Paragon botları (Epic, 2016)</span>Unreal’ın kendi BT’siyle: bir “ana ağaç” genel yapıyı tanımlar, kahramana özel kısımlar <b>parametre</b> olarak verilir (GAP3 32. bölüm, Mieszko Zieliński).</div>
+      <div class="box game"><span class="bt">Paragon botları (Epic, 2016)</span>Unreal’ın kendi BT’siyle: bir “ana ağaç” genel yapıyı tanımlar, kahramana özel kısımlar <b>parametre</b> olarak verilir (Game AI Pro 3, 32. bölüm, Mieszko Zieliński).</div>
       <div class="box game"><span class="bt">Motorlara yerleşti</span>BT bugün AAA’da en yaygın karar yapılarından biri: Unreal (2014’ten beri), CryEngine (“Modular Behavior Tree”), Unity 6 (Behavior paketi) motorla birlikte gelir. Yani öğrendiğiniz kavramlar doğrudan iş ilanlarındaki araçlara karşılık gelir.</div>
       <div class="box story"><span class="bt">🤖 Oyunların dışında: robotlar</span>BT oyunlardan <b>robotiğe</b> geçti: ROS 2’nin navigasyon yığını Nav2, görevlerini BehaviorTree.CPP ağaçlarıyla tanımlar. Colledanchise &amp; Ögren’in kitabı tam bu geçişi anlatır. Oyun geliştiricisi olarak öğrendiğiniz şey, robotik mühendisliğinde de iş görür.</div>
     </div>
