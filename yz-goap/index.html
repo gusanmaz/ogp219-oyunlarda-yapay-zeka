@@ -331,6 +331,29 @@
   </div>
 </section>
 
+<section data-ek="kilavuz" data-sec="arama">
+  <h2>Arama ağacını okuma kılavuzu</h2>
+  <div class="cols" style="font-size:.76em">
+    <div class="box" style="margin:0"><span class="bt">Kutular ve çizgiler</span>
+      <ul>
+        <li>Her <b>kutu</b> bir <b>dünya durumu</b>; üstünde o duruma hangi eylemle gelindiği yazar. En üstteki BAŞLANGIÇ.</li>
+        <li>Her <b>çizgi</b> bir eylem: ön koşulu tuttuğu için o durumdan yapılabiliyor.</li>
+        <li><b>g</b> = buraya kadar harcanan maliyet · <b>h</b> = hedefe kalan tahmin · planlayıcı hep <b>g + h</b>’si en küçük kutuyu açar.</li>
+        <li><b>Kesikli kutu</b> = üretildi ama henüz açılmadı (bekleme listesinde).</li>
+        <li><span class="c-green"><b>Yeşil yol</b></span> = bulunan en ucuz plan.</li>
+      </ul>
+    </div>
+    <div class="box game" style="margin:0"><span class="bt">Üstteki kutucuklar: “dünya nasıl başlasın?”</span>
+      <ul>
+        <li><b>silah dolu · yedek şarjör var · sağ odada</b>: askerin başlangıç durumu.</li>
+        <li><b>🧠 ile başlayanlar</b>: askerin <i>hafızası</i> — daha önce denedi ve olmadı (kapı açılmıyor, tekme işe yaramadı, cephanelik boş).</li>
+        <li><b>sezgiyi kapat</b>: h = 0. Aynı plan bulunur ama daha çok kutu açılır.</li>
+      </ul>
+      <p class="mini">Önce “İleri ▶|” ile tek tek ilerleyin ve her adımda “şimdi hangi kutuyu açar?” diye tahmin edin.</p>
+    </div>
+  </div>
+</section>
+
 <section data-sec="A* ile plan">
   <h2>Adım adım plan arama 🔎</h2>
   <div class="demo" data-demo="goapsearch"></div>
@@ -584,6 +607,43 @@ public class GoapAgent : MonoBehaviour {
     <tr><td>Queue&lt;T&gt; · Peek · Dequeue</td><td>kuyruk</td><td>Plan adımları: sıradakine bak · sıradakini çıkar</td></tr>
     <tr><td>float("inf")</td><td>sonsuz</td><td>“Henüz yol bilinmiyor” başlangıç değeri</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: bu eylem şu an yapılabilir mi?</h2>
+  <div class="ailab" data-lab="cando" data-lang="js">
+<textarea>
+// state: dünya durumu, ör. { loaded: true, inB: false }
+// pre:   eylemin ön koşulu, ör. { inB: true, loaded: true }
+// Ön koşuldaki HER gerçek durumda aynıysa true döndür.
+// Durumda olmayan anahtar false sayılır.
+function canDo(state, pre) {
+  for (const k in pre) {
+    const value = state[k] || false;
+    // TODO: value, pre[k]'ye eşit değilse false döndür
+  }
+  return true;
+}
+</textarea>
+    <div class="lab-tasks">Planlayıcının sorduğu ilk soru. “Ateş et”in ön koşulu <code>{ inB: true, loaded: true }</code>: asker B odasında değilse ya da silah boşsa bu eylem aday bile olamaz.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: eylemin etkisini uygula</h2>
+  <div class="ailab" data-lab="applyeff" data-lang="js">
+<textarea>
+// state: dünya durumu     eff: eylemin etkisi
+// Etkiler uygulanmış YENİ bir durum döndür.
+// (Orijinal state değişmemeli: arama başka dallarda onu kullanıyor!)
+function applyEffects(state, eff) {
+  const next = state;        // TODO: kopyasını al → { ...state }
+  for (const k in eff) next[k] = eff[k];
+  return next;
+}
+</textarea>
+    <div class="lab-tasks">“Şarjör tak”ın etkisi <code>{ loaded: true, hasAmmo: false }</code>. Kopya almadan değiştirirseniz planlayıcı aynı anda denediği diğer gelecekleri de bozar — GOAP yazan herkesin en az bir kez düştüğü tuzak. Bu iki fonksiyon + bir öncelik kuyruğu = planlayıcı.</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -873,6 +933,18 @@ print(decompose(["BeTrunkThumper"], {"sees_enemy": True, "has_trunk": False,
     <div class="box story"><span class="bt">LLM+P (2023)</span>Liu vd.: dil modelleri uzun planlarda sık hata yapıyor. Çözüm: LLM doğal dildeki problemi <b>PDDL</b>’ye (STRIPS’in torunu) çevirsin, klasik bir planlayıcı çözsün, LLM sonucu tekrar anlatsın. Klasik planlama ölmedi; LLM’e “güvenilir hesap makinesi” oldu.</div>
     <div class="box game"><span class="bt">Voyager (2023)</span>Wang vd.: Minecraft’ta GPT-4 ile çalışan bir ajan kendi hedeflerini önerir, kod olarak beceriler yazar ve bir <b>beceri kütüphanesi</b> biriktirir. Elle yazılmış eylem tablosunun yerini, dil modelinin ürettiği eylemler alıyor.</div>
     <div class="box low"><span class="bt">Oyun için anlamı</span>LLM’i <b>her karede</b> karar verici yapmak pahalı ve riskli (Y14). Daha gerçekçi yol: LLM’in hedef seçmesi ya da eylem tablosu önermesi, GOAP/HTN’in güvenilir ve hızlı biçimde yürütmesi. Doğrulanabilir ön koşul/etki yapısı, LLM’in saçmalamasına karşı bir emniyet kemeri.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">F.E.A.R.’ın askerleri oyuncuyu aslında <b>kanattan sarmıyor</b>; yol bulma onları tesadüfen yanınızdan çıkarıyor. Bunu öğrenmek oyundan aldığınız keyfi azaltır mı? Tasarımcı bu “kazayı” nasıl bilerek büyüttü?</li>
+      <li class="fragment">Planlayıcı, tasarımcının hiç düşünmediği bir çözüm buldu (asker pencereden atladı). Bu ne zaman harika bir an, ne zaman bir <b>hata raporu</b> olur?</li>
+      <li class="fragment">Bir hayatta kalma oyununda köylü: odun topla → balta yap → ağaç kes → ev kur. Bunu davranış ağacıyla mı, GOAP ile mi yazardınız? Oyuna her ay yeni eşya eklenecekse cevabınız değişir mi?</li>
+      <li class="fragment">Sabah okula gelmek için yaptığınız planı GOAP gibi yazın: hedef, 4–5 eylem, ön koşullar, etkiler, maliyetler. Otobüs gelmezse planınız nasıl değişiyor?</li>
+    </ol>
   </div>
 </section>
 

@@ -356,3 +356,26 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const KEYS = ['loaded', 'hasAmmo', 'inB', 'doorStuck'];
+  const rndState = () => { const o = {}; KEYS.forEach(k => { if (Math.random() < 0.6) o[k] = Math.random() < 0.5; }); return o; };
+  SL.AILABS.cando = {
+    fn: 'can_do', jsFn: 'canDo',
+    ref: (s, pre) => Object.keys(pre).every(k => (s[k] || false) === pre[k]),
+    cases: () => { const cs = [[{ loaded: true, inB: true }, { inB: true, loaded: true }], [{ loaded: false, inB: true }, { inB: true, loaded: true }], [{ inB: true }, { inB: true, loaded: true }], [{}, { doorStuck: false }], [{ hasAmmo: true }, {}], [{ doorStuck: true }, { inB: false, doorStuck: false }]]; for (let i = 0; i < 20; i++) cs.push([rndState(), rndState()]); return cs; },
+    show: (s, pre) => `durum ${JSON.stringify(s)}, ön koşul ${JSON.stringify(pre)}`,
+    hint: () => 'Ön koşuldaki HER anahtar için durumdaki değer aynı olmalı. Durumda hiç olmayan anahtar false sayılır: (state[k] || false) === pre[k].'
+  };
+  SL.AILABS.applyeff = {
+    fn: 'apply_effects', jsFn: 'applyEffects',
+    ref: (s, eff) => Object.assign({}, s, eff),
+    cases: () => { const cs = [[{ hasAmmo: true }, { loaded: true, hasAmmo: false }], [{}, { inB: true }], [{ inB: false, loaded: true }, { inB: true }], [{ loaded: true }, {}]]; for (let i = 0; i < 16; i++) cs.push([rndState(), rndState()]); return cs; },
+    show: (s, eff) => `durum ${JSON.stringify(s)}, etki ${JSON.stringify(eff)}`,
+    hint: () => 'Önce durumun KOPYASINI alın ({ ...state }), sonra etkideki anahtarları kopyanın üzerine yazın. Kısa yolu: { ...state, ...eff }.'
+  };
+})();
+/* EK:BİTİŞ */
