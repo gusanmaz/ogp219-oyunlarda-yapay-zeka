@@ -341,6 +341,7 @@
       <li>“Hamle sıralaması”nı kapatıp derinlik 6–7’de düğüm sayısını ve süreyi karşılaştırın.</li>
       <li>YZ’ye başlatın, ilk hamleyi nereye yapıyor? (Çözüm: başlayan oyuncu orta sütunla başlarsa kusursuz oyunda kazanır.)</li>
       <li>Derinlik 7’de bile bazen “aptalca” hamleler mi görüyorsunuz? Bu, ufuk etkisi ve değerlendirme fonksiyonunun sınırıdır.</li>
+      <li>🔗 Kusursuz oyuncuyla kıyaslayın: <a href="https://connect4.gamesolver.org/" target="_blank" rel="noopener">connect4.gamesolver.org</a> her sütun için “kaç hamlede kazanılır/kaybedilir”i gösterir. Satranç için: <a href="https://lichess.org/analysis" target="_blank" rel="noopener">Lichess analiz tahtası</a> (tarayıcıda Stockfish).</li>
     </ol>
   </div>
 </section>
@@ -623,6 +624,39 @@ def mcts(game, iterations, c=1.41):
   </table>
 </section>
 
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: bu düğümün değeri ne?</h2>
+  <div class="ailab" data-lab="pickval" data-lang="js">
+<textarea>
+// values: çocukların değerleri, ör. [3, 12, 8]
+// isMax: sıra bizde mi (true) yoksa rakipte mi (false)?
+// Düğümün minimax değerini döndür.
+function nodeValue(values, isMax) {
+  if (isMax) return Math.max(...values);   // biz: en büyüğü
+  return values[0];                        // TODO: rakip en KÜÇÜĞÜ seçer
+}
+</textarea>
+    <div class="lab-tasks">Minimax’ın tek kuralı: sıra bizdeyse en büyüğü, rakipteyse en küçüğü. Ders kitabı ağacının alt satırı <code>[3, 12, 8] → 3</code>, <code>[2, 4, 6] → 2</code>, <code>[14, 5, 2] → 2</code>; kök <code>[3, 2, 2] → 3</code>.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: ağaç ne kadar büyük?</h2>
+  <div class="ailab" data-lab="leafcount" data-lang="js">
+<textarea>
+// b: dallanma (her konumda kaç hamle var)
+// d: derinlik (kaç yarım hamle ileri bakıyoruz)
+// En alttaki yaprak sayısını döndür.
+function leafCount(b, d) {
+  let n = 1;
+  // TODO: n'yi d kez b ile çarp
+  return n;
+}
+</textarea>
+    <div class="lab-tasks">Üstel büyümeyi parmaklarınızla hissedin: <code>leafCount(30, 4)</code> = 810.000, <code>leafCount(30, 5)</code> = 24 milyon. Bir <code>for</code> döngüsü ya da <code>b ** d</code> yeter. Satranç motorlarının neden <b>budamak</b> zorunda olduğunun cevabı bu sayı.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: değerlendirme fonksiyonu</h2>
   <div class="simlab" data-sim="c4eval" data-fns="evaluate" data-lang="js">
@@ -814,6 +848,18 @@ def ucb1(w, n, N, c):
     <div class="box story"><span class="bt">AlphaZero → MuZero</span>AlphaZero kuralları bilip kendine karşı oynayarak öğrendi. MuZero (2020) kuralları bile bilmeden, oyunun bir <b>modelini</b> öğrenip onun içinde MCTS yaptı; Atari oyunlarında da çalıştı. “İleri model” sorununu öğrenmeyle çözmek.</div>
     <div class="box game"><span class="bt">Genel oyun oynama</span>Tek bir YZ’nin daha önce görmediği oyunları kuralları okuyarak oynaması (General Game Playing, GVGAI yarışmaları, Ludii). MCTS bu alanın ana aracı, çünkü değerlendirme fonksiyonu gerektirmez.</div>
     <div class="box low"><span class="bt">Dil modelleri ve masa oyunları</span>Büyük dil modelleri satranç gibi oyunlarda sıklıkla <b>kural dışı</b> hamleler önerir; bu yüzden oyunlarda LLM’i bir arama motoruna “danışan” ya da hamle açıklayan bir yardımcı olarak kullanmak daha güvenlidir (Y14).</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">XOX’u asla kaybetmeyen bir rakibe karşı oynamak eğlenceli mi? Demodaki “hata payı” kaydırıcısını bir oyunda <b>zorluk seviyesi</b> olarak sunsaydınız kolay/orta/zor için hangi değerleri seçerdiniz?</li>
+      <li class="fragment">Deep Blue’nun 44. hamlesi belki de bir hataydı ama Kasparov onu deha sandı. Bir oyunun YZ’si “hata yapınca” oyuncuların bunu <b>strateji</b> sandığı bir an hatırlıyor musunuz?</li>
+      <li class="fragment">Satrançta iyi bir değerlendirme fonksiyonu yazmak kolay (taş say), Go’da çok zor. Sevdiğiniz bir sıra tabanlı oyun için “bu konum ne kadar iyi?” sorusuna üç ölçüt yazın.</li>
+      <li class="fragment">Bir strateji oyununun YZ’si 10 hamle ilerisini kusursuz görseydi, <b>hile yapmadan</b> bile oyuncular ona “hileci” der miydi? Neden?</li>
+    </ol>
   </div>
 </section>
 

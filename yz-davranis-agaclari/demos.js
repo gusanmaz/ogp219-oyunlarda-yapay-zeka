@@ -139,16 +139,34 @@
       const order = [];
       const visit = (n) => { order.push(['enter', n]); let r; if (n.type === 'cond') r = senses[n.key] ? 'SUCCESS' : 'FAILURE'; else if (n.type === 'act') { r = 'RUNNING'; ctx.action = n.action; } else if (n.type === 'seq') { r = 'SUCCESS'; for (const k of n.kids) { const c = visit(k); if (c !== 'SUCCESS') { r = c; break; } } } else if (n.type === 'sel') { r = 'FAILURE'; for (const k of n.kids) { const c = visit(k); if (c !== 'FAILURE') { r = c; break; } } } else { const c = visit(n.kids[0]); r = c === 'SUCCESS' ? 'FAILURE' : c === 'FAILURE' ? 'SUCCESS' : c; } order.push(['exit', n, r]); return r; };
       visit(tree);
+      // her adımı düz Türkçeyle anlat: ne soruldu, cevap ne, bundan sonra ne olacak
+      const par = {}; (function walk(n) { (n.kids || []).forEach(k => { par[k.id] = n; walk(k); }); })(tree);
+      const evet = Object.keys(senses).map(k => `${NAMES[k]}: <b>${senses[k] ? 'evet' : 'hayır'}</b>`).join(' · ');
       const F = [], st = {};
-      F.push({ st: {}, note: 'Tick başlıyor: kökten başla.' });
+      F.push({ st: {}, note: `<b>Soru:</b> algı şöyleyken (${evet}) nöbetçi ne yapmalı? Ağaç bunu <b>kökten</b> başlayıp dalları <b>soldan sağa</b> deneyerek bulur. “İleri ▶|” ile adım adım izleyin.` });
       order.forEach(([k, n, r]) => {
-        if (k === 'enter') { st[n.id] = 'ENTER'; F.push({ st: Object.assign({}, st), cur: n.id, note: `▶ “${n.name}” (${DESC[n.type]}${n.type === 'cond' ? ': ' + NAMES[n.key] + '?' : ''})` }); }
-        else { st[n.id] = r; F.push({ st: Object.assign({}, st), cur: n.id, note: `◀ “${n.name}” → ${r === 'SUCCESS' ? 'BAŞARILI' : r === 'FAILURE' ? 'BAŞARISIZ' : 'ÇALIŞIYOR'}` }); }
+        const root0 = !par[n.id], underRoot = par[n.id] === tree;
+        let t;
+        if (k === 'enter') {
+          st[n.id] = 'ENTER';
+          if (n.type === 'sel') t = `<b>“${n.name}”</b> bir seçici (<b>?</b>): dallarını soldan sağa dener, işe yarayan <b>ilk</b> dalda durur.`;
+          else if (n.type === 'seq') t = `Sıradaki dal: <b>“${n.name}”</b>. Bu bir dizi (<b>→</b>): önce koşullarını sorar; hepsi tutarsa eylemini yapar.`;
+          else if (n.type === 'cond') t = `Soru: <b>“${n.name}”</b>`;
+          else t = underRoot ? `Öndeki dalların hiçbiri tutmadı → son çare: <b>“${n.name}”</b>.` : `Koşulların hepsi tuttu → eylem: <b>“${n.name}”</b>.`;
+        } else {
+          st[n.id] = r;
+          if (n.type === 'cond') t = r === 'SUCCESS' ? `“${n.name}” → <b class="c-green">EVET ✓</b>. Dizi bir sonraki adımına geçer.` : `“${n.name}” → <b class="c-red">HAYIR ✗</b>. Dizi burada durur; kalan adımlarına hiç bakmaz.`;
+          else if (n.type === 'act') t = `“${n.name}” <b class="c-amber">çalışıyor ⏳</b> — nöbetçinin bu karedeki işi bu.`;
+          else if (n.type === 'seq') t = r === 'FAILURE' ? `<b>“${n.name}” dalı tutmadı ✗</b> → kök sıradaki (bir sağdaki) dala geçer.` : `<b>“${n.name}” dalı çalışıyor ⏳</b> → kök burada durur; sağdaki dallara <b>hiç bakılmaz</b> (gri kalırlar).`;
+          else t = root0 ? `Kök de yukarıya “${r === 'RUNNING' ? 'çalışıyor' : r === 'SUCCESS' ? 'başarılı' : 'başarısız'}” der: karar verildi.` : `“${n.name}” → ${r === 'SUCCESS' ? 'başarılı' : r === 'FAILURE' ? 'başarısız' : 'çalışıyor'}.`;
+        }
+        F.push({ st: Object.assign({}, st), cur: n.id, note: t });
       });
-      F.push({ st: Object.assign({}, st), note: `Tick bitti. Seçilen eylem: ${SL.GUARD_NAMES[ctx.action] || ctx.action}. (Bir sonraki karede her şey yeniden, kökten.)` });
+      F.push({ st: Object.assign({}, st), note: `<b>Sonuç:</b> nöbetçi bu karede <b>${SL.GUARD_NAMES[ctx.action] || ctx.action}</b> yapıyor. Renkli yol = verilen karar; gri düğümlere hiç bakılmadı. Sonraki karede her şey <b>yeniden kökten</b> sorulur — algı değiştiyse cevap da değişir.` });
+      F.forEach((f, q) => { f.note = `<span style="opacity:.6">Adım ${q}/${F.length - 1} ·</span> ` + f.note; });
       fp.load(F);
     };
-    const fp = new SL.FramePlayer(f => { diag.innerHTML = treeSVG(tree, f.st, { H: 250 }); note.textContent = f.note; }, { speed: 2 });
+    const fp = new SL.FramePlayer(f => { diag.innerHTML = treeSVG(tree, f.st, { H: 250 }); note.innerHTML = f.note; }, { speed: 1 });
     const boxes = Object.keys(senses).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { senses[k] = e.target.checked; build(); } }); cb.checked = senses[k]; return cb; })(), ' ' + NAMES[k]));
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, el('b', null, 'Algı: '), ...boxes), diag, legend('<span style="--c:var(--blue)">şu an değerlendiriliyor</span>'), SL.transport(fp, { min: 0.5, max: 8 }), note);

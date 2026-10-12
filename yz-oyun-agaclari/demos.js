@@ -353,3 +353,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.pickval = {
+    fn: 'node_value', jsFn: 'nodeValue',
+    ref: (vals, isMax) => (isMax ? Math.max(...vals) : Math.min(...vals)),
+    cases: () => { const cs = [[[3, 12, 8], false], [[2, 4, 6], false], [[14, 5, 2], false], [[3, 2, 2], true], [[7, 3, 9], false], [[-1], true]]; for (let i = 0; i < 18; i++) { const n = 1 + Math.floor(Math.random() * 5); cs.push([Array.from({ length: n }, () => Math.floor(Math.random() * 41) - 20), Math.random() < 0.5]); } return cs; },
+    show: (v, m) => `çocukların değerleri ${JSON.stringify(v)}, sıra ${m ? 'MAX’ta (biz)' : 'MIN’de (rakip)'}`,
+    hint: (v, m) => (m ? 'Sıra bizdeyse en BÜYÜK değeri seçeriz: Math.max(...values).' : 'Sıra rakipteyse bize en KÜÇÜK değeri bırakır: Math.min(...values).')
+  };
+  SL.AILABS.leafcount = {
+    fn: 'leaf_count', jsFn: 'leafCount',
+    ref: (b, d) => Math.pow(b, d),
+    cases: () => [[30, 4], [3, 2], [9, 1], [2, 10], [7, 0], [35, 3], [10, 6], [250, 2], [5, 5], [4, 8]],
+    show: (b, d) => `dallanma ${b}, derinlik ${d}`,
+    hint: () => 'Her seviyede düğüm sayısı b ile çarpılır: b · b · … (d kez) = b üzeri d. Derinlik 0 ise tek bir yaprak vardır (kökün kendisi).'
+  };
+})();
+/* EK:BİTİŞ */
