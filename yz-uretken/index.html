@@ -468,6 +468,95 @@ public class StyleClassifier : MonoBehaviour {
   </table>
 </section>
 
+<section data-ek="tamkod" data-sec="kod">
+  <h2>📦 Tam kod (1/2): p5.js ile oyuncak difüzyon</h2>
+<pre style="zoom:.84;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js: oyuncak difüzyon — saf gürültü adım adım kalbe dönüşür (editor.p5js.org)
+const STEPS = 40;
+let data = [], pts = [], adim = 0;
+
+function setup() {
+  createCanvas(500, 500); frameRate(12);
+  for (let i = 0; i < 120; i++) {                     // "veri kümesi": kalp eğrisinin 120 noktası
+    const t = TWO_PI * i / 120;
+    data.push([0.055 * 16 * pow(sin(t), 3),
+              -0.055 * (13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t))]);
+  }
+  yeni();
+}
+function mousePressed() { yeni(); }                   // tıkla: yeni gürültüyle baştan
+
+function yeni() {                                     // saf gürültü: her nokta rastgele bir yerde
+  pts = []; adim = 0;
+  for (let i = 0; i < 250; i++) pts.push([randomGaussian(0, 1.2), randomGaussian(0, 1.2)]);
+}
+function sigma(k) { return 0.02 * pow(60, k); }       // gürültü seviyesi: k=1 → 1.2, k=0 → 0.02
+</script></code></pre>
+</section>
+
+<section data-ek="tamkod2" data-sec="kod">
+  <h2>📦 Tam kod (2/2): gürültü giderici ve çizim</h2>
+<pre style="zoom:.74;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// İdeal gürültü giderici: "bu nokta verideki hangi noktaların gürültülü hâli olabilir?"
+// Yakın veri noktaları yüksek ağırlık alır; sonuç ağırlıklı ortalama.
+function denoise(x, y, s) {
+  const d = data.map(([a, b]) => ((x - a) ** 2 + (y - b) ** 2) / (2 * s * s));
+  const m = min(d);                                   // en küçüğü çıkar: exp() sıfıra yuvarlanmasın
+  let sw = 0, sx = 0, sy = 0;
+  data.forEach(([a, b], i) => { const w = exp(-(d[i] - m)); sw += w; sx += w * a; sy += w * b; });
+  return [sx / sw, sy / sw];
+}
+
+function draw() {
+  background(250);
+  if (adim < STEPS) {
+    const s = sigma(1 - adim / STEPS), sn = sigma(1 - (adim + 1) / STEPS), k = sn / s;
+    pts = pts.map(([x, y]) => {
+      const [cx, cy] = denoise(x, y, s);              // temiz hâlini tahmin et
+      return [cx + (x - cx) * k, cy + (y - cy) * k];  // o yöne BİRAZ git (ısınma kodundaki nudge)
+    });
+    adim++;
+  }
+  noStroke();
+  fill(0, 25); for (const [a, b] of data) circle(250 + a * 190, 250 + b * 190, 10);   // veri (soluk)
+  fill(140, 60, 220); for (const [x, y] of pts) circle(250 + x * 190, 250 + y * 190, 5);
+  fill(60); text('adım ' + adim + '/' + STEPS + '   (tıkla: yeni gürültü)', 10, 20);
+}
+</script></code></pre>
+  <p class="mini">İki parçayı alt alta <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın. Deneyin: <code>STEPS</code>’i 5 yapın (şekil kaba kalır); <code>data</code>’yı kendi baş harfinizin noktalarıyla değiştirin.</p>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: yayın öncesi yer tutucu taraması</h2>
+  <div class="ailab" data-lab="placeholders" data-lang="js">
+<textarea>
+// files: projedeki varlık dosyalarının adları
+// Adında "PLACEHOLDER" geçenleri (büyük/küçük harf fark etmez) liste olarak döndür.
+// Liste boş değilse yayın DURDURULUR.
+function findPlaceholders(files) {
+  return [];   // TODO: şimdilik her şeyi "temiz" sanıyor
+}
+</textarea>
+    <div class="lab-tasks">Clair Obscur’un iki ödülüne mal olan şey, yayına kaçan birkaç yer tutucu dokuydu. Bu beş satırlık kontrol, her yayın öncesi otomatik çalışsaydı yakalardı. İpucu: <code>files.filter(...)</code> ve <code>f.toUpperCase().includes("PLACEHOLDER")</code>.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: temize doğru bir adım</h2>
+  <div class="ailab" data-lab="nudge" data-lang="js">
+<textarea>
+// p: gürültülü nokta [x, y]
+// clean: gürültü gidericinin tahmin ettiği temiz nokta [x, y]
+// k: gürültünün ne kadarı KALSIN (0 … 1).  k = 1 → hiç kıpırdama,  k = 0 → doğrudan temize atla
+// Yeni nokta = temiz + (nokta − temiz) · k
+function nudge(p, clean, k) {
+  return clean;   // TODO: şimdilik tek adımda atlıyor (k'yı kullanmıyor)
+}
+</textarea>
+    <div class="lab-tasks">Difüzyonun bütün “sihri” bu satırın 40 kez tekrarı: temiz hâli tahmin et, o yöne <b>biraz</b> git, tekrar tahmin et. Tek adımda atlamak (başlangıç kodu) bulanık bir ortalama verir; küçük adımlar ayrıntıyı ortaya çıkarır. Bir sonraki laboratuvarda “temiz hâli tahmin et” kısmını yazacaksınız.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: gürültü giderici</h2>
   <div class="simlab" data-sim="denoise" data-fns="denoise" data-lang="js">
@@ -580,6 +669,48 @@ def most_likely_next(seq, note):
     <div class="box story"><span class="bt">Kontrol edilebilir dünya modelleri</span>Tasarımcının kuralları (kapı kilitli, anahtar envanterde) kesin olarak koruyan, sinir ağı + klasik motor karması sistemler.</div>
     <div class="box game"><span class="bt">Tarz tutarlılığı</span>Bir oyunun bütün varlıklarında aynı sanat tarzını koruyan, az örnekten öğrenen (birkaç düzine çizim) modeller; sanatçı kontrolünde ince ayar.</div>
     <div class="box low"><span class="bt">Etik veri ve atıf</span>Eğitim verisinin izinli olduğu modeller, çıktının hangi eserlere “benzediğini” gösteren atıf sistemleri, sanatçılara gelir paylaşımı.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Çok sevdiğiniz bir oyunun bazı görsellerinin üretken YZ ile yapıldığını öğrenseniz fikriniz değişir mi? Arka plan dokusu, ana karakter, seslendirme: çizgi nerede?</li>
+      <li class="fragment">Clair Obscur’un ödülleri birkaç yer tutucu doku yüzünden geri alındı. Karar adil miydi? Kural “hiç kullanılmamış olmalı” mı olmalı, “yayındaki üründe olmamalı” mı?</li>
+      <li class="fragment">ARC Raiders’ta seslendirme sanatçılarına sesleri için ödeme yapıldı ve rızaları alındı; yine de eleştirildi. Rıza ve ödeme yeterli mi? Eksik olan ne olabilir?</li>
+      <li class="fragment">Bir dünya modeli Doom’u “hayal edebiliyor”. Bu bir oyun mu, yoksa oyunun videosu mu? Demodaki duvardan geçen topu düşünün: bir oyunu oyun yapan nedir?</li>
+    </ol>
+  </div>
+  <p class="mini">Bu soruların tek doğru cevabı yok; amaç gerekçeli düşünmek. Sınıfta farklı bölümlerden (sanat, kod, ses) öğrenciler varsa önce onlara söz verin.</p>
+</section>
+
+<section data-ek="oyna" data-sec="kaynak">
+  <h2>🕹️ Tarayıcıda deneyin</h2>
+  <div class="cols">
+    <div class="box info" style="font-size:.86em"><span class="bt">Nasıl çalışıyor?</span>
+      <ul>
+        <li><a href="https://poloclub.github.io/diffusion-explainer/" target="_blank" rel="noopener">Diffusion Explainer</a> — Stable Diffusion’ın içini adım adım gösteren etkileşimli sayfa: istem, tohum ve yönlendirme ölçeğini değiştirip gürültünün görüntüye dönüşmesini izleyin.</li>
+        <li><a href="https://projector.tensorflow.org/" target="_blank" rel="noopener">Embedding Projector</a> — binlerce kelimenin gömme vektörü 3B’de; bir kelimeye tıklayın, en yakın komşularını görün.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.86em"><span class="bt">Dünya modelleri</span>
+      <ul>
+        <li><a href="https://gamengen.github.io/" target="_blank" rel="noopener">GameNGen</a> — sinir ağının “hayal ettiği” Doom’un videoları. Sayaçlara ve kapılara dikkat edin: nerede tutarsızlaşıyor?</li>
+        <li><a href="https://oasis.decart.ai/" target="_blank" rel="noopener">Oasis (Decart)</a> — tarayıcıda oynanabilen, Minecraft benzeri bir dünya modeli. Arkanızı dönüp tekrar bakın: dünya aynı mı?</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="box info" style="font-size:.86em"><span class="bt">Üretin</span>
+      <ul>
+        <li><a href="https://huggingface.co/spaces/microsoft/TRELLIS.2" target="_blank" rel="noopener">TRELLIS 2 demosu</a> — bir görsel yükleyin, 3B model alın. Tel kafes görünümüne bakın: animasyona uygun mu?</li>
+        <li><a href="https://huggingface.co/spaces/facebook/MusicGen" target="_blank" rel="noopener">MusicGen demosu</a> — “8-bit boss fight music” yazın. Sayfadaki lisans notunu bulun.</li>
+      </ul>
+    </div>
+    <div class="box warn" style="font-size:.86em"><span class="bt">Denerken</span>
+      <p>Her araçta üç şeyi not edin: <b>lisans</b> (ticari kullanım?), <b>tekrarlanabilirlik</b> (tohum var mı?), <b>oyuna hazırlık</b> (çıktı doğrudan kullanılabilir mi, ne kadar elden geçmeli?).</p>
+    </div>
   </div>
 </section>
 

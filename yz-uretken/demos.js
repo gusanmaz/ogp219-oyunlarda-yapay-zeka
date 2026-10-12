@@ -81,7 +81,7 @@
       for (let i = 0; i < nData; i++) { const a = Math.floor(r() * 4), ns = realStep(s, a); model.set(s + '|' + a, ns); s = ns; if (r() < 0.02) s = [1, 1]; }
     };
     // model: gördüğü (durum, eylem) için ezberlediğini söyler; görmediyse “genelde ne olur?” diye tahmin eder: o yöne bir kare git (duvarı bilmez!)
-    const dreamStep = (s, a) => model.get(s + '|' + a) || [s[0] + ACTS[a][0], s[1] + ACTS[a][1]];
+    const dreamStep = (s, a) => model.get(s + '|' + a) || [Math.min(11, Math.max(0, s[0] + ACTS[a][0])), Math.min(8, Math.max(0, s[1] + ACTS[a][1]))];
     const act = a => { real = realStep(real, a); dream = dreamStep(dream, a); hist.push(a); if (real[0] !== dream[0] || real[1] !== dream[1]) errs++; draw(); };
     const drawMaze = (ox, pos, label, col, t, isDream) => {
       MAZE.forEach((row, y) => [...row].forEach((ch, x) => { ctx.fillStyle = ch === '#' ? (t.dark ? '#4a4f63' : '#3d4255') : (t.dark ? '#2b2f40' : '#efe9dc'); ctx.fillRect(ox + x * cs, 30 + y * cs, cs - 1, cs - 1); }));
@@ -95,7 +95,7 @@
       drawMaze(20, real, 'GERÇEK OYUN (kurallı motor)', t.blue, t, false);
       drawMaze(380, dream, 'DÜNYA MODELİ (öğrenilmiş “rüya”)', t.purple, t, true);
       const inWall = MAZE[dream[1]] && MAZE[dream[1]][dream[0]] === '#';
-      info.innerHTML = `Model ${nData} adımlık rastgele oyun kaydıyla eğitildi ve ${model.size} farklı (durum, eylem) çifti gördü. Ok tuşlarıyla (aşağıdaki düğmeler) iki dünyayı aynı anda oynatın. Hamle sayısı ${hist.length}, ayrışma ${errs}. ${inWall ? '<b>Model duvarın içinden geçti!</b> Bu durumu hiç görmediği için “genelde bir kare ilerlenir” diye genelledi: halüsinasyon.' : ''} Ayrışınca hata <b>birikir</b>: model artık kendi hatalı tahmininin üzerine tahmin yürütüyor.`;
+      info.innerHTML = `Model ${nData} adımlık rastgele oyun kaydıyla eğitildi ve ${model.size} farklı (durum, eylem) çifti gördü. Üstteki ok düğmeleriyle iki dünyayı <b>aynı anda</b> oynatın: mavi top gerçek oyun, mor top modelin “rüyası”. Hamle sayısı ${hist.length}, ayrışma ${errs}. ${inWall ? '<b>Model duvarın içinden geçti!</b> Bu durumu hiç görmediği için “genelde bir kare ilerlenir” diye genelledi: halüsinasyon.' : ''} Ayrışınca hata <b>birikir</b>: model artık kendi hatalı tahmininin üzerine tahmin yürütüyor.`;
     };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
@@ -122,14 +122,14 @@
       out.forEach((n, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'triangle'; o.frequency.value = NOTES[n]; g.gain.setValueAtTime(0, t0 + i * 0.3); g.gain.linearRampToValueAtTime(0.25, t0 + i * 0.3 + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.3 + 0.28); o.connect(g).connect(ac.destination); o.start(t0 + i * 0.3); o.stop(t0 + i * 0.3 + 0.3); });
     };
     const draw = () => {
-      view.innerHTML = out.length ? out.map(n => `<span class="mk-n">${n}</span>`).join('') : '<i>“üret”e basın</i>';
+      view.innerHTML = out.length ? out.map(n => `<span class="mk-n">${n}</span>`).join('') : '<i>“üret ve çal”a basın</i>';
       const c = counts();
       table.innerHTML = '<table class="mk-tab"><tr><th>şu nota</th><th>sonra gelenler (kaç kez)</th></tr>' + Object.keys(c).map(k => `<tr><td><b>${k}</b></td><td>${Object.entries(c[k]).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ×${v}`).join(' · ')}</td></tr>`).join('') + '</table>';
       info.innerHTML = 'Model, eğitim melodilerinde hangi notadan sonra hangisinin kaç kez geldiğini biliyor (Y14’teki minicik dil modeliyle aynı fikir, kelime yerine nota). Müzik üreten büyük modeller (Suno, MusicGen, Stable Audio) ses dalgasını ya da onun sıkıştırılmış kodlarını aynı “sıradakini tahmin et” ya da difüzyon mantığıyla üretir.';
     };
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Eğitim: ', select({ a: 'melodi A (Twinkle)', b: 'melodi B (Mary)', both: 'ikisi birden' }, corpus, v => { corpus = v; out = []; draw(); })),
-      slider('sıcaklık', 0.2, 3, temp, 0.1, v => { temp = v; }), btn('🎼 üret', gen), btn('🔊 çal', play), btn('▶ eğitim melodisini çal', () => { out = seqs()[0].slice(0, 16); draw(); play(); })),
+      slider('sıcaklık', 0.2, 3, temp, 0.1, v => { temp = v; }), btn('🎼 üret ve çal', () => { gen(); play(); }), btn('🔊 tekrar çal', play), btn('▶ eğitim melodisini çal', () => { out = seqs()[0].slice(0, 16); draw(); play(); })),
       el('div', { class: 'cols' }, view, table), info);
     draw();
   };
@@ -238,3 +238,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.placeholders = {
+    fn: 'find_placeholders', jsFn: 'findPlaceholders',
+    ref: files => files.filter(f => f.toUpperCase().includes('PLACEHOLDER')),
+    cases: () => [[['duvar.png', 'gazete_PLACEHOLDER_01.png', 'kahraman.png']], [['a.png', 'b.wav']], [[]], [['placeholder_ses.wav', 'PLACEHOLDER.png', 'Placeholder_ikon.png']], [['yer_tutucu.png', 'kapi_PLACEHOLDER.png', 'place.png', 'holder.png']], [['x_PLACEHOLDER_y.fbx']]],
+    show: f => `dosyalar: ${JSON.stringify(f)}`,
+    hint: () => 'files.filter(f => …) ile süzün. Büyük/küçük harf fark etmesin: f.toUpperCase().includes("PLACEHOLDER").'
+  };
+  SL.AILABS.nudge = {
+    fn: 'nudge', jsFn: 'nudge', tol: 1e-9,
+    ref: (p, c, k) => [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k],
+    cases: () => { const cs = [[[10, 0], [0, 0], 0.5], [[4, 8], [2, 2], 1], [[4, 8], [2, 2], 0], [[-3, 5], [1, 1], 0.25]]; for (let i = 0; i < 10; i++) cs.push([[Math.round(SL.rand(-9, 9)), Math.round(SL.rand(-9, 9))], [Math.round(SL.rand(-9, 9)), Math.round(SL.rand(-9, 9))], [0.1, 0.5, 0.8, 0.9][i % 4]]); return cs; },
+    show: (p, c, k) => `gürültülü nokta ${JSON.stringify(p)}, tahmini temiz hâli ${JSON.stringify(c)}, k = ${k}`,
+    hint: (p, c, k) => `Her eksen için: temiz + (nokta − temiz) · k. k = 1: yerinde kalır; k = 0: doğrudan temiz noktaya atlar. x için: ${c[0]} + (${p[0]} − ${c[0]}) · ${k}.`
+  };
+})();
+/* EK:BİTİŞ */
