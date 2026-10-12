@@ -291,6 +291,7 @@
   const tabGroups = [];
   let prefLang = null;
   try { prefLang = localStorage.getItem('deck-lang'); } catch (e) {}
+  if (!prefLang) prefLang = 'JavaScript';   // varsayılan sekme: JavaScript (p5.js); öğrenci başka dil seçerse o hatırlanır
   SL.Tabs = function (root) {
     const panes = [...root.querySelectorAll(':scope > .tab')];
     const head = el('div', { class: 'tab-head' });
