@@ -228,6 +228,7 @@
       <li>Ağırlık w = 3: düğüm sayısı düşüyor; yol maliyeti değişti mi? “Labirent”te dene: ağırlık orada işe yarıyor mu?</li>
       <li>8 yön açıkken sezgiyi “Manhattan” yapın: yol maliyeti octile ile aynı mı? (Abartılı sezgi.)</li>
       <li>“g değerleri”ni açıp adım adım oynatın: her karede başlangıçtan gerçek uzaklık yazıyor.</li>
+      <li>🔗 Bu konunun en iyi etkileşimli anlatımı: <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">Red Blob Games — Introduction to A*</a> (sayfadaki her şekil oynanabilir). Onlarca algoritmayı yan yana denemek için: <a href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener">PathFinding.js görselleştirici</a>.</li>
     </ol>
   </div>
 </section>
@@ -371,6 +372,78 @@ function astar(grid, start, goal) {      // grid[y][x] === 1 → duvar; düğüm
     <tr><td>grid[ny]?.[nx]</td><td>isteğe bağlı zincirleme</td><td>Satır yoksa hata vermeden undefined</td></tr>
     <tr><td>a ?? b</td><td>boşsa varsayılan</td><td>a undefined/null ise b</td></tr>
   </table>
+</section>
+
+<section data-ek="tamkod" data-sec="kod">
+  <h2>📦 Tam kod: p5.js’te A*</h2>
+  <div class="cols c64">
+    <div>
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+while (open.length > 0) {
+  const cur = popSmallestF(open);          // f = g + h en küçük
+  if (same(cur, target)) return rebuild(cameFrom, cur);
+  for (const [n, cost] of neighbors(cur)) {
+    const ng = g[key(cur)] + cost;         // n'ye bu yoldan maliyet
+    if (ng < (g[key(n)] ?? Infinity)) {    // daha ucuzsa
+      g[key(n)] = ng;
+      cameFrom[key(n)] = cur;              // nereden geldim?
+      open.push({ cell: n, f: ng + heuristic(n, target) });
+    }
+  }
+}
+return null;                               // yol yok
+</script></code></pre>
+      <p class="mini">A*’ın tamamı bu döngüdür. Üç tablo: <code>open</code> (sırada bekleyenler), <code>g</code> (buraya en ucuz maliyet), <code>cameFrom</code> (buraya nereden geldim). <code>heuristic</code>’i 0 yaparsanız Dijkstra olur.</p>
+    </div>
+    <div class="box game"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span>
+      <p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 110 satır: fareyle duvar çizin, sarı ajan farenin olduğu kareye yol bulup yürüsün. Açık mavi kareler A*’ın baktığı yerler.</p>
+      <p><b>Deneyin:</b></p>
+      <ul>
+        <li><b>H</b> tuşu: sezgiyi kapatın (Dijkstra). “Bakılan kare” kaç katına çıktı?</li>
+        <li><b>D</b> tuşu: çapraz hareketi kapatın; yol nasıl değişti?</li>
+        <li>Ajanı duvarlarla tamamen kapatın: “yol: YOK” ve bütün alan mavi — en pahalı arama.</li>
+        <li>Kodda sezgiyi 3 ile çarpın: daha az kare, ama yol hâlâ en kısa mı?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: Manhattan mesafesi</h2>
+  <div class="ailab" data-lab="manh" data-lang="js">
+<textarea>
+// a, b: [x, y] ızgara kareleri
+// 4 yönlü harekette en az kaç adım gerekir?
+function manhattan(a, b) {
+  const dx = a[0] - b[0];
+  const dy = a[1] - b[1];
+  return dx + dy;     // TODO: farklar negatif olabilir!
+}
+</textarea>
+    <div class="lab-tasks">Adını Manhattan’ın ızgara biçimli sokaklarından alır: çapraz gidemezsiniz, yatay + dikey blok sayarsınız. A*’ın 4 yönlü ızgaralardaki sezgisi (<code>h</code>) tam olarak budur. İpucu: <code>Math.abs</code>.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: yolu geriye doğru çıkar</h2>
+  <div class="ailab" data-lab="repath" data-lang="js">
+<textarea>
+// cameFrom: { "x,y": "geldiğim karenin x,y'si" ya da null (başlangıç) }
+//   ör. { "0,0": null, "1,0": "0,0", "1,1": "1,0" }
+// goal: hedef karenin anahtarı, ör. "1,1"
+// Başlangıçtan hedefe kareleri SIRAYLA döndür: ["0,0", "1,0", "1,1"]
+function reconstruct(cameFrom, goal) {
+  const path = [];
+  let cur = goal;
+  while (cur !== null) {
+    path.push(cur);
+    cur = null;          // TODO: bir önceki kareye git
+  }
+  return path;           // TODO: sıra ters! (hedef → başlangıç)
+}
+</textarea>
+    <div class="lab-tasks">A* hedefe ulaşınca elinde bir yol değil, “her kareye nereden geldim” tablosu olur. Yol, hedeften geriye doğru ekmek kırıntılarını izleyerek çıkarılır ve sonra ters çevrilir (<code>path.reverse()</code>).</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -670,6 +743,18 @@ print([(n.x, n.y) for n in path], runs)
     <div class="box story"><span class="bt">Çoklu ajan yol bulma (MAPF)</span>Depo robotları gibi yüzlerce ajanın <b>birbirine çarpmadan</b> aynı anda yol bulması: Conflict-Based Search (Sharon vd., 2015) ve türevleri. Oyunlarda RTS birimleri için ilham verici; mapf.info ve Moving AI’da benchmarklar var.</div>
     <div class="box game"><span class="bt">Değişen dünyada: D* Lite</span>Koenig &amp; Likhachev (2002): harita değişince her şeyi baştan aramak yerine eski aramayı <b>onarır</b>. Mars gezginleri gibi robotlarda; oyunlarda yıkılabilir ortamlar için.</div>
     <div class="box low"><span class="bt">Öğrenilmiş sezgiler</span>“Neural A*” (Yonetani vd., 2021) gibi çalışmalar, sezgiyi ya da hangi düğümlerin açılacağını sinir ağıyla öğrenir. Oyun haritalarında ne kadar işe yarar? Açık bir bitirme projesi sorusu.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">StarCraft ekibi işçilerin birbirinin içinden geçmesine izin vererek sorunu “çözdü”. Bu tembellik mi, iyi mühendislik mi? Oyuncu olarak fark etmiş miydiniz?</li>
+      <li class="fragment">Bir strateji oyununda en kısa yol köprüden, ama köprü düşman kulelerinin menzilinde. YZ’nin köprüden kaçınmasını A*’a nasıl “anlatırsınız”? (İpucu: maliyet sadece mesafe olmak zorunda değil.)</li>
+      <li class="fragment">%5 daha uzun ama 5 kat hızlı bulunan bir yol mu, kusursuz ama oyunu takılttıran bir yol mu? Hangi tür oyunda cevabınız değişir?</li>
+      <li class="fragment">Navigasyon uygulamanız (Google Haritalar vb.) sizce dünyanın bütün sokaklarında düz A* mı çalıştırıyor? Bu dersteki hangi fikirleri kullanıyor olabilir?</li>
+    </ol>
   </div>
 </section>
 

@@ -142,14 +142,15 @@
     const GW = 24, GH = 13;
     const G = Object.assign({ W: GW, H: GH, brush: 'wall' }, (() => { const c = new Array(GW * GH).fill(1); for (let y = 2; y <= 10; y++) c[y * GW + 15] = Infinity; for (let x = 8; x <= 15; x++) { c[2 * GW + x] = Infinity; c[10 * GW + x] = Infinity; } return { cost: c, s: 6 * GW + 3, g: 6 * GW + 21 }; })());
     const algos = [['bfs', 'BFS'], ['dijkstra', 'Dijkstra'], ['greedy', 'Greedy best-first'], ['astar', 'A*']];
-    const views = algos.map(() => gridView(G, 18)), labs = algos.map(() => el('div', { class: 'mini' }));
+    const views = algos.map(() => gridView(G, 18)), labs = algos.map(() => el('div', { style: 'font-size:15px;margin:2px 0 6px' }));
     const grid = el('div', { class: 'cmp4' }); algos.forEach(([, n], i) => grid.append(el('div', null, el('b', null, n), views[i].canvas, labs[i])));
     let results = [];
     const fp = new SL.FramePlayer(f => { results.forEach((r, i) => { views[i].draw(r, f.k, { algo: algos[i][0] }); labs[i].innerHTML = `genişletilen: <b>${Math.min(f.k, r.expanded)}</b>${f.k >= r.expanded ? ` / ${r.expanded} · maliyet <b>${isFinite(r.cost) ? r.cost.toFixed(1) : '—'}</b>` : ''}`; }); }, { speed: 40 });
     const run = () => { results = algos.map(([a]) => search(G, G.s, G.g, { algo: a, diag: true })); const n = Math.max(...results.map(r => r.expanded)); const F = []; for (let k = 0; k <= n + 1; k += 2) F.push({ k }); fp.load(F); fp.play(); };
     views.forEach(v => attachEditor(v, G, run));
     root.setAttribute('data-prevent-swipe', '');
-    root.append(grid, SL.transport(fp, { min: 5, max: 300, unit: 'kare/sn' }), el('div', { class: 'mini' }, 'Herhangi bir ızgarada duvar çizin ya da B/H’yi sürükleyin: dördü aynı haritada yeniden yarışır.'));
+    const legend = el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:.8em"><span class="bt">Nasıl okunur?</span><ul><li><b>B</b> başlangıç, <b>H</b> hedef, koyu kareler duvar.</li><li><b>Renkli kareler</b> = algoritmanın <b>baktığı</b> (genişlettiği) yerler. Mavi: başlangıca yakın → kırmızı: uzak.</li><li><b>Sarı kenar</b> = sırada bekleyenler (açık liste).</li><li><b>Kırmızı çizgi</b> = bulunan yol.</li><li>Alttaki sayılar: kaç kareye bakıldı (<b>az = hızlı</b>) ve yolun maliyeti (<b>az = kısa</b>).</li></ul><p style="margin:.4em 0 0"><b>Soru:</b> hangisi hem az kareye bakıyor hem en kısa yolu buluyor?</p></div>' });
+    root.append(el('div', { class: 'gv-row' }, grid, legend), SL.transport(fp, { min: 5, max: 300, unit: 'kare/sn' }), el('div', { style: 'font-size:16px' }, 'Herhangi bir ızgarada duvar çizin ya da B/H’yi sürükleyin: dördü aynı haritada yeniden yarışır.'));
     run(); SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
   };
@@ -277,3 +278,26 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const rc = () => [Math.floor(Math.random() * 30), Math.floor(Math.random() * 20)];
+  SL.AILABS.manh = {
+    fn: 'manhattan', jsFn: 'manhattan',
+    ref: (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]),
+    cases: () => { const cs = [[[0, 0], [3, 4]], [[5, 5], [5, 5]], [[7, 2], [1, 9]], [[0, 9], [9, 0]]]; for (let i = 0; i < 16; i++) cs.push([rc(), rc()]); return cs; },
+    show: (a, b) => `a = ${JSON.stringify(a)}, b = ${JSON.stringify(b)}`,
+    hint: () => 'Yatay fark + dikey fark; farklar negatif çıkabileceği için mutlak değer alın: Math.abs(a[0] − b[0]) + Math.abs(a[1] − b[1]).'
+  };
+  const mkChain = () => { const n = 2 + Math.floor(Math.random() * 6); const cells = [[Math.floor(Math.random() * 9), Math.floor(Math.random() * 9)]]; while (cells.length < n) { const [x, y] = cells[cells.length - 1], c = Math.random() < 0.5 ? [x + 1, y] : [x, y + 1]; cells.push(c); } const cf = {}; cells.forEach((c, i) => { cf[c.join(',')] = i ? cells[i - 1].join(',') : null; }); cf['99,99'] = '98,99'; return [cf, cells[n - 1].join(','), cells.map(c => c.join(','))]; };
+  SL.AILABS.repath = {
+    fn: 'reconstruct', jsFn: 'reconstruct',
+    ref: (cf, goal) => { const out = []; for (let c = goal; c != null; c = cf[c]) out.push(c); return out.reverse(); },
+    cases: () => { const cs = [[{ '0,0': null, '1,0': '0,0', '1,1': '1,0', '2,1': '1,1' }, '2,1'], [{ '4,4': null }, '4,4'], [{ '0,0': null, '0,1': '0,0', '1,0': '0,0' }, '0,1']]; for (let i = 0; i < 12; i++) { const [cf, g] = mkChain(); cs.push([cf, g]); } return cs; },
+    show: (cf, g) => `geldiğim-yer tablosu ${JSON.stringify(cf)}, hedef "${g}"`,
+    hint: () => 'Hedeften başlayın, cameFrom[kare] ile geriye gidin, null görünce durun. Toplanan liste hedeften başlangıca doğrudur: sonunda ters çevirin (reverse).'
+  };
+})();
+/* EK:BİTİŞ */
