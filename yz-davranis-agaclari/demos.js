@@ -120,7 +120,7 @@
     });
     const sim = SL.makeGuardArena({ decide: brain, displayW: 660, onDraw: () => { diag.innerHTML = treeOutline(tree, last); } });
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'), el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses çıkar · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
+    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'), el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses · X = ateş · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
       el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas, info), diag), sim.world.controls());
     sim.world.reset();
     return { start: () => sim.world.start(), stop: () => sim.world.stop() };
@@ -267,3 +267,26 @@
     hint: n => (n[0] === 'not' ? 'Ters çevirici: SUCCESS↔FAILURE, RUNNING aynen kalır.' : 'Sequence: SUCCESS olmayan ilk çocukta dur. Selector: FAILURE olmayan ilk çocukta dur. Boş sequence = SUCCESS, boş selector = FAILURE.')
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const ST = ['SUCCESS', 'FAILURE', 'RUNNING'];
+  const rndList = () => { const n = Math.floor(Math.random() * 5); return Array.from({ length: n }, () => ST[Math.floor(Math.random() * 3)]); };
+  SL.AILABS.selres = {
+    fn: 'selector', jsFn: 'selector',
+    ref: rs => { for (const r of rs) if (r !== 'FAILURE') return r; return 'FAILURE'; },
+    cases: () => { const cs = [[['FAILURE', 'SUCCESS', 'FAILURE']], [['FAILURE', 'FAILURE']], [['FAILURE', 'RUNNING', 'SUCCESS']], [['SUCCESS']], [[]]]; for (let i = 0; i < 20; i++) cs.push([rndList()]); return cs; },
+    show: rs => `çocukların cevapları: ${JSON.stringify(rs)}`,
+    hint: () => 'Selector = “B planı”: FAILURE olmayan İLK cevabı döndür (SUCCESS de olabilir, RUNNING de). Hepsi FAILURE ise (ya da liste boşsa) FAILURE.'
+  };
+  SL.AILABS.seqres = {
+    fn: 'sequence', jsFn: 'sequence',
+    ref: rs => { for (const r of rs) if (r !== 'SUCCESS') return r; return 'SUCCESS'; },
+    cases: () => { const cs = [[['SUCCESS', 'FAILURE', 'SUCCESS']], [['SUCCESS', 'SUCCESS']], [['SUCCESS', 'RUNNING', 'FAILURE']], [['FAILURE']], [[]]]; for (let i = 0; i < 20; i++) cs.push([rndList()]); return cs; },
+    show: rs => `çocukların cevapları: ${JSON.stringify(rs)}`,
+    hint: () => 'Sequence = “tarif”: SUCCESS olmayan İLK cevabı döndür. Hepsi SUCCESS ise (ya da liste boşsa) SUCCESS.'
+  };
+})();
+/* EK:BİTİŞ */

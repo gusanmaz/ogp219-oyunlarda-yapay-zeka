@@ -311,6 +311,30 @@
   </div>
 </section>
 
+<section data-ek="kilavuz" data-sec="tick">
+  <h2>Canlı ağacı okuma kılavuzu</h2>
+  <div class="cols" style="font-size:.74em">
+    <div class="box game" style="margin:0"><span class="bt">Sol: aynı nöbetçi, aynı arena</span>
+      <ul>
+        <li>Y2’deki sahnenin aynısı: <b>üçgen</b> = nöbetçi, <b>yeşil daire</b> = oyuncu (fareyle siz), <b>dilim</b> = görüş konisi, <b>koyu kutular</b> = duvar.</li>
+        <li>Nöbetçinin üstündeki yazı artık bir “durum” değil, ağacın bu karede seçtiği <b>eylem</b>.</li>
+        <li>Alttaki dört sayaç ağacın o karede sorduğu <b>koşulların cevapları</b>: can az mı, görüyor mu, yakın mı, iz var mı?</li>
+      </ul>
+      <p><b>Kontroller:</b> fare = oyuncu · tıkla = ses (iz bırakır) · <b>X</b> = ateş et (−25 can).</p>
+    </div>
+    <div class="box" style="margin:0"><span class="bt">Sağ: ağaç, satır satır</span>
+      <ul>
+        <li>Ağaç yukarıdan aşağı liste olarak yazılı; <b>girinti</b> = çocuk. Üstteki dal = <b>yüksek öncelik</b>.</li>
+        <li><b>?</b> selector · <b>→</b> sequence · <b>◆</b> koşul · <b>▶</b> eylem.</li>
+        <li><span class="c-green"><b>Yeşil</b></span> = başarılı · <span class="c-red"><b>kırmızı</b></span> = başarısız · <span class="c-amber"><b>turuncu</b></span> = çalışıyor · <b>renksiz</b> = bu karede hiç sorulmadı.</li>
+        <li>Turuncu satırları kökten aşağı izleyin: o yol, nöbetçinin <b>şu anki kararı</b>.</li>
+      </ul>
+      <p class="mini">Önce “Durdur” + “1 kare” ile tek tek ilerleyip listeyi okuyun; sonra oynatın.</p>
+    </div>
+  </div>
+  <p class="mini" style="margin-top:12px">🔗 Dışarıda da deneyin: <a href="https://nikkorn.github.io/mistreevous-visualiser/" target="_blank" rel="noopener">mistreevous görselleştirici</a> (ağacı metinle yazın, canlı çalışsın) · <a href="https://www.behaviortree.dev/" target="_blank" rel="noopener">BehaviorTree.CPP belgeleri</a> (düğüm türleri, animasyonlu anlatım).</p>
+</section>
+
 <section data-sec="tick">
   <h2>Canlı: davranış ağaçlı nöbetçi 🌳</h2>
   <div class="demo" data-demo="btguard"></div>
@@ -646,6 +670,41 @@ while running:
     <tr><td>a ? b : c</td><td>üçlü (ternary) işleç</td><td>“a doğruysa b, değilse c”</td></tr>
     <tr><td>readonly</td><td>salt okunur</td><td>Yapıcıda bir kez atanır, sonra değişmez</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: selector ne döndürür?</h2>
+  <div class="ailab" data-lab="selres" data-lang="js">
+<textarea>
+// results: çocukların sırayla vereceği cevaplar, ör.
+//   ["FAILURE", "RUNNING", "SUCCESS"]
+// Selector'ın cevabını döndür.
+function selector(results) {
+  for (const r of results) {
+    if (r === "SUCCESS") return r;   // TODO: RUNNING de durdurur!
+  }
+  return "FAILURE";
+}
+</textarea>
+    <div class="lab-tasks">Selector, <b>FAILURE olmayan</b> ilk çocukta durur. Başlangıç kodu RUNNING’i atlayıp arkasındaki SUCCESS’e gidiyor — Quiz 3’teki hatanın aynısı. Koşulu <code>r !== "FAILURE"</code> yapın.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: sequence ne döndürür?</h2>
+  <div class="ailab" data-lab="seqres" data-lang="js">
+<textarea>
+// results: çocukların sırayla vereceği cevaplar.
+// Sequence'ın cevabını döndür.
+function sequence(results) {
+  for (const r of results) {
+    // TODO: SUCCESS olmayan ilk cevabı döndür
+  }
+  return "FAILURE";   // TODO: hepsi başarılıysa ne dönmeli?
+}
+</textarea>
+    <div class="lab-tasks">Selector’ın ayna görüntüsü: <b>SUCCESS olmayan</b> ilk çocukta dur; hepsi başarılıysa SUCCESS. Boş bir sequence’ın cevabı da SUCCESS’tir (“yapılacak adım kalmadı”). Bu iki küçük fonksiyon, bir davranış ağacı motorunun kalbidir.</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -1101,6 +1160,18 @@ print(py_trees.display.unicode_tree(root, show_status=True))
     <div class="box low"><span class="bt">LLM ile BT üretmek</span>BTGenBot (2024): küçük bir dil modeli, doğal dilden robot görevleri için BehaviorTree.CPP XML’i üretiyor. Oyun için fikir: <b>LLM ağacı tasarlar, ağaç güvenle çalışır</b> — LLM’in her kare karar vermesi yerine (Y14), çıktısı okunabilir ve test edilebilir bir ağaç olur.</div>
   </div>
   <p class="mini">Bu üç yön, “davranışı elle yazmak” ile “davranışı öğrenmek” (Y13) arasındaki köprü. Bitirme projesi için iyi konular.</p>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Nöbetçi ağacında “Kovala” dalını “Saldır” dalının <b>soluna</b> alırsanız ne olur? Bu hatayı kodu çalıştırmadan, sadece ağaca bakarak nasıl görürsünüz?</li>
+      <li class="fragment">Alien: Isolation’da uzaylı “öğreniyor” gibi görünüyor ama aslında önceden yazılmış dallar açılıyor. Oyuncuyu bu şekilde “kandırmak” sizce sorun mu? Gerçek makine öğrenmesi kullansalardı ne kazanır, ne kaybederlerdi?</li>
+      <li class="fragment">Bir kapı, bir ışık düğmesi ve bir boss düşünün. Hangisi için FSM, hangisi için davranış ağacı seçerdiniz? Kararınızı hangi soru belirledi?</li>
+      <li class="fragment">Davranış ağacı her karede kökten yeniden düşünüyor. Bu ne zaman bir <b>özellik</b> (hemen tepki), ne zaman bir <b>sorun</b> (yarım kalan işler)?</li>
+    </ol>
+  </div>
 </section>
 
 <section data-sec="projeler">
