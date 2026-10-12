@@ -108,8 +108,8 @@
     let stack = ['DEVRİYE'], plain = 'DEVRİYE', log = [];
     const view = el('div', { class: 'cols' });
     const draw = () => {
-      view.innerHTML = `<div><div class="mini"><b>Yığınlı FSM</b> (en üstteki = şu anki durum):</div><div class="pd-stack">${stack.slice().reverse().map((s, i) => `<div class="${i === 0 ? 'top' : ''}">${s}</div>`).join('')}</div></div>` +
-        `<div><div class="mini"><b>Düz FSM</b> (tek değişken):</div><div class="pd-stack"><div class="top">${plain}</div></div><div class="mini" style="margin-top:8px">${log.slice(-4).map(l => `<div>${l}</div>`).join('')}</div></div>`;
+      view.innerHTML = `<div><div class="mini" style="font-size:15px"><b>Yığınlı FSM</b> (en üstteki = şu anki durum):</div><div class="pd-stack">${stack.slice().reverse().map((s, i) => `<div class="${i === 0 ? 'top' : ''}">${s}</div>`).join('')}</div></div>` +
+        `<div><div class="mini" style="font-size:15px"><b>Düz FSM</b> (tek değişken):</div><div class="pd-stack"><div class="top">${plain}</div></div><div class="mini" style="margin-top:8px;font-size:14px;line-height:1.35">${log.slice(-3).map(l => `<div>${l}</div>`).join('')}</div></div>`;
     };
     const ev = (name, fn) => btn(name, () => { fn(); draw(); });
     root.append(el('div', { class: 'sv-controls' },
