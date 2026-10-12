@@ -34,13 +34,13 @@
       const nl = L[i], nr = Rr[i];
       // sağ kenarı daraltmayı dene
       if (tri2(apex, right, nr) <= 0) {
-        if (V.dist(apex, right) < 1e-9 || tri2(apex, left, nr) > 0) { right = nr; ri = i; if (trace) trace.push({ apex, left, right, note: 'sağ kenar daraldı' }); }
-        else { pts.push(left); apex = left; ai = li; left = apex; right = apex; li = ai; ri = ai; i = ai; if (trace) trace.push({ apex, left, right, note: 'sağ kenar sol kenarın üstünden geçti → sol köşe yeni tepe noktası' }); continue; }
+        if (V.dist(apex, right) < 1e-9 || tri2(apex, left, nr) > 0) { right = nr; ri = i; if (trace) trace.push({ apex, left, right, i, kind: 'Rn', pts: pts.slice(), note: 'sağ kenar daraldı' }); }
+        else { pts.push(left); apex = left; ai = li; left = apex; right = apex; li = ai; ri = ai; i = ai; if (trace) trace.push({ apex, left, right, i, kind: 'Rx', pts: pts.slice(), note: 'sağ kenar sol kenarın üstünden geçti → sol köşe yeni tepe noktası' }); continue; }
       }
       // sol kenarı daraltmayı dene
       if (tri2(apex, left, nl) >= 0) {
-        if (V.dist(apex, left) < 1e-9 || tri2(apex, right, nl) < 0) { left = nl; li = i; if (trace) trace.push({ apex, left, right, note: 'sol kenar daraldı' }); }
-        else { pts.push(right); apex = right; ai = ri; left = apex; right = apex; li = ai; ri = ai; i = ai; if (trace) trace.push({ apex, left, right, note: 'sol kenar sağ kenarın üstünden geçti → sağ köşe yeni tepe noktası' }); continue; }
+        if (V.dist(apex, left) < 1e-9 || tri2(apex, right, nl) < 0) { left = nl; li = i; if (trace) trace.push({ apex, left, right, i, kind: 'Ln', pts: pts.slice(), note: 'sol kenar daraldı' }); }
+        else { pts.push(right); apex = right; ai = ri; left = apex; right = apex; li = ai; ri = ai; i = ai; if (trace) trace.push({ apex, left, right, i, kind: 'Lx', pts: pts.slice(), note: 'sol kenar sağ kenarın üstünden geçti → sağ köşe yeni tepe noktası' }); continue; }
       }
     }
     if (V.dist(pts[pts.length - 1], end) > 1e-9) pts.push(end);
@@ -135,7 +135,7 @@
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Yol: ', select({ funnel: 'funnel (en kısa, köşeleri teğet)', mid: 'portal orta noktaları (zikzak)' }, cfg.mode, v => { cfg.mode = v; plan(); })),
       cb('çokgenler ve portallar', 'showPolys'), cb('kapı açık', 'door', () => plan()), cb('atlama bağlantısı (adaya)', 'link', () => plan())),
-      w.canvas, w.controls(), el('div', { class: 'mini' }, 'Yürünebilir alana tıklayın: hedef. Mavi = A*’ın bulduğu çokgen koridoru, yeşil çizgiler = portallar, mor = funnel yolu.'));
+      w.canvas, w.controls(), el('div', { style: 'font-size:17px;line-height:1.4;margin-top:6px', html: '<b>Yürünebilir (açık renkli) bir yere tıklayın:</b> ajan oraya gider. <span style="color:#4f8cff"><b>Mavi çokgenler</b></span> = A*’ın seçtiği çokgen koridoru · <span class="c-green"><b>yeşil çizgiler</b></span> = portallar (komşu çokgenlerin ortak kenarı) · <span class="c-purple"><b>mor çizgi</b></span> = koridorun içindeki en kısa yol (funnel). Koyu alan duvar.' }));
     w.reset();
     return { start: () => w.start(), stop: () => w.stop() };
   };
@@ -144,16 +144,30 @@
   D.funnel = function (root) {
     const W = 720, H = 300;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), note = el('div', { class: 'sv-note' });
+    C.style.width = '960px'; C.style.height = '400px';   // slaytta büyük göster (iç çözünürlük aynı)
     // zikzaklı bir koridor: portallar [sol, sağ]
     const start = V.v(40, 150), end = V.v(690, 70);
     const P = [[V.v(130, 40), V.v(130, 120)], [V.v(230, 180), V.v(230, 270)], [V.v(330, 130), V.v(330, 230)], [V.v(430, 30), V.v(430, 120)], [V.v(530, 120), V.v(530, 260)], [V.v(620, 40), V.v(620, 140)]];
     const tr = []; const path = funnel(start, end, P, tr);
-    const frames = [{ note: 'Başlangıç: tepe noktası (apex) = başlangıç. Huni ilk portalın iki ucuna açılır.', apex: start, left: P[0][0], right: P[0][1], k: 0 }];
-    tr.forEach((s, i) => frames.push(Object.assign({ k: i + 1 }, s, { note: '• ' + s.note })));
-    frames.push({ note: `Bitti: ${path.length - 2} köşe noktasıyla en kısa yol (mor). Huni her portaldan geçerken daralır; bir kenar diğerinin üstünden geçince köşe yolun parçası olur.`, done: true });
+    const pname = i => (i >= P.length ? 'hedef' : `${i + 1}. portal`);
+    const TXT = {
+      Rn: f => `<b>${pname(f.i)}</b>: sağ ucu (Ğ) huninin <b>içinde</b> → <span class="c-red"><b>sağ kenar</b></span> ona çekildi. Huni daraldı.`,
+      Ln: f => `<b>${pname(f.i)}</b>: sol ucu (S) huninin <b>içinde</b> → <span class="c-blue"><b>sol kenar</b></span> ona çekildi. Huni daraldı.`,
+      Rx: f => `Sağ kenar, sol kenarın <b>öbür tarafına</b> geçmek zorunda kaldı: düz gitmek artık imkânsız. Yol <b>sol köşeden</b> dönüyor → o köşe yola eklendi (mor) ve yeni <b>tepe</b> oldu. Huni oradan yeniden açılır.`,
+      Lx: f => `Sol kenar, sağ kenarın <b>öbür tarafına</b> geçmek zorunda kaldı: düz gitmek artık imkânsız. Yol <b>sağ köşeden</b> dönüyor → o köşe yola eklendi (mor) ve yeni <b>tepe</b> oldu. Huni oradan yeniden açılır.`
+    };
+    const frames = [{ note: '<b>Amaç:</b> açık renkli koridorun içinde kalarak başlangıçtan (mavi) hedefe (yeşil) <b>en kısa</b> yolu bulmak. Yeşil çizgiler portallar (çokgenlerin ortak kenarları). <b>Huni</b> = tepe noktasından görülebilen aralık; ilk portalın iki ucuna açılarak başlar.', apex: start, left: P[0][0], right: P[0][1], k: 0, i: 0, pts: [start] }];
+    tr.forEach((s, i) => frames.push(Object.assign({ k: i + 1 }, s, { note: TXT[s.kind](s) })));
+    frames.push({ note: `<b>Bitti:</b> ${path.length - 2} köşeden dönen en kısa yol (mor). Bir ipi iki ucundan çekip gerdiğinizi düşünün: ip yalnızca duvar köşelerine değer. Buna “ip germe” (string pulling) da denir.`, done: true });
+    frames.forEach((f, q) => { f.note = `<span style="opacity:.6">Adım ${q}/${frames.length - 1} ·</span> ` + f.note; });
     const draw = f => {
-      const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
-      P.forEach((p, i) => { ctx.strokeStyle = t.green; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); ctx.stroke(); SL.drawLabel(ctx, 'S', p[0].x, p[0].y - 10, t.blue, { size: 10 }); SL.drawLabel(ctx, 'Ğ', p[1].x, p[1].y + 10, t.red, { size: 10 }); });
+      const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.dark ? '#2a2e42' : '#4a4f63'; ctx.fillRect(0, 0, W, H);   // duvar
+      // koridor = navmesh çokgenleri: başlangıç odası, portallar arası dörtgenler, hedef odası
+      const cells = [[V.v(15, Math.min(P[0][0].y, start.y - 35)), V.v(P[0][0].x, P[0][0].y), V.v(P[0][1].x, P[0][1].y), V.v(15, Math.max(P[0][1].y, start.y + 35))]];
+      for (let i = 0; i < P.length - 1; i++) cells.push([P[i][0], P[i + 1][0], P[i + 1][1], P[i][1]]);
+      const Lp = P[P.length - 1]; cells.push([Lp[0], V.v(W - 10, Math.min(Lp[0].y, end.y - 35)), V.v(W - 10, Math.max(Lp[1].y, end.y + 35)), Lp[1]]);
+      cells.forEach(c => { ctx.fillStyle = t.dark ? '#1c2540' : '#e9f0ff'; ctx.strokeStyle = t.dark ? '#1c2540' : '#e9f0ff'; ctx.lineWidth = 1; ctx.beginPath(); c.forEach((q, k) => (k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y))); ctx.closePath(); ctx.fill(); ctx.stroke(); });
+      P.forEach((p, i) => { ctx.strokeStyle = t.green; ctx.lineWidth = !f.done && f.i === i ? 6 : 3; ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x, p[1].y); ctx.stroke(); SL.drawLabel(ctx, 'S', p[0].x, p[0].y - 10, t.blue, { size: 10 }); SL.drawLabel(ctx, 'Ğ', p[1].x, p[1].y + 10, t.red, { size: 10 }); });
       ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(start.x, start.y, 7, 0, 7); ctx.fill(); ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(end.x, end.y, 7, 0, 7); ctx.fill();
       if (f.done) { ctx.strokeStyle = t.purple; ctx.lineWidth = 4; ctx.beginPath(); path.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke(); }
       else if (f.apex) {
@@ -162,10 +176,11 @@
         ctx.strokeStyle = t.red; ctx.beginPath(); ctx.moveTo(f.apex.x, f.apex.y); ctx.lineTo(f.right.x, f.right.y); ctx.stroke();
         ctx.fillStyle = t.amber; ctx.beginPath(); ctx.arc(f.apex.x, f.apex.y, 8, 0, 7); ctx.fill(); SL.drawLabel(ctx, 'tepe', f.apex.x, f.apex.y + 18, t.amber, { size: 11 });
       }
-      note.textContent = f.note;
+      if (!f.done && f.pts && f.pts.length > 1) { ctx.strokeStyle = t.purple; ctx.lineWidth = 4; ctx.beginPath(); f.pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke(); f.pts.slice(1).forEach(p => { ctx.fillStyle = t.purple; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 7); ctx.fill(); }); }   // şimdiye kadar kesinleşen yol
+      note.innerHTML = f.note;
     };
-    const fp = new SL.FramePlayer(draw, { speed: 1.5 });
-    root.append(C, SL.transport(fp, { min: 0.5, max: 8 }), note, el('div', { class: 'mini' }, 'S = portalın sol ucu, Ğ = sağ ucu (yürüyüş yönüne göre). Mavi: huninin sol kenarı, kırmızı: sağ kenarı.'));
+    const fp = new SL.FramePlayer(draw, { speed: 1 });
+    root.append(C, SL.transport(fp, { min: 0.5, max: 8 }), note, el('div', { style: 'font-size:16px;margin-top:6px', html: '<b>S</b> = portalın sol ucu, <b>Ğ</b> = sağ ucu (yürüyüş yönüne göre). <span class="c-blue"><b>Mavi</b></span> = huninin sol kenarı, <span class="c-red"><b>kırmızı</b></span> = sağ kenarı, turuncu = tepe noktası, kalın yeşil = şu an bakılan portal.' }));
     fp.load(frames); SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
   };
@@ -273,3 +288,25 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const rp = () => [Math.round(SL.rand(0, 400)), Math.round(SL.rand(0, 300))];
+  SL.AILABS.portalmid = {
+    fn: 'portal_mid', jsFn: 'portalMid',
+    ref: (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2],
+    cases: () => { const cs = [[[130, 40], [130, 120]], [[0, 0], [10, 0]], [[5, 5], [5, 5]], [[-4, 2], [6, 8]]]; for (let i = 0; i < 14; i++) cs.push([rp(), rp()]); return cs; },
+    show: (a, b) => `portalın uçları ${JSON.stringify(a)} ve ${JSON.stringify(b)}`,
+    hint: () => 'Orta nokta = iki ucun ortalaması: [(ax + bx) / 2, (ay + by) / 2].'
+  };
+  SL.AILABS.inrect = {
+    fn: 'in_rect', jsFn: 'inRect',
+    ref: (p, r) => p[0] >= r.x && p[0] <= r.x + r.w && p[1] >= r.y && p[1] <= r.y + r.h,
+    cases: () => { const R = { x: 100, y: 50, w: 200, h: 120 }; const cs = [[[150, 100], R], [[50, 100], R], [[150, 200], R], [[100, 50], R], [[300, 170], R], [[301, 100], R], [[150, 49], R]]; for (let i = 0; i < 16; i++) cs.push([rp(), { x: Math.round(SL.rand(0, 200)), y: Math.round(SL.rand(0, 150)), w: Math.round(SL.rand(20, 200)), h: Math.round(SL.rand(20, 150)) }]); return cs; },
+    show: (p, r) => `nokta ${JSON.stringify(p)}, dikdörtgen ${JSON.stringify(r)}`,
+    hint: () => 'Dört koşulun DÖRDÜ de tutmalı: x ≥ sol, x ≤ sağ (r.x + r.w), y ≥ üst, y ≤ alt (r.y + r.h). Kenarın üstü içeride sayılır.'
+  };
+})();
+/* EK:BİTİŞ */

@@ -175,6 +175,7 @@
       <li>“Kapı açık”ı kapatın: ortadaki dikey geçit kapanır; A* başka bir koridor bulur. Dinamik engel böyle işlenir.</li>
       <li>“Ada”ya tıklayın: yol yok. “Atlama bağlantısı”nı açın: ajan kenardan adaya atlıyor (turuncu). Bu bir <b>off-mesh link</b>.</li>
       <li>Çokgenleri gizleyin: oyuncu bunların hiçbirini görmez, sadece akıllı yürüyen bir karakter görür.</li>
+      <li>🔗 Gerçeğini görün: <a href="https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/index.html" target="_blank" rel="noopener">Unity AI Navigation belgeleri</a> (NavMeshSurface → Bake) · funnel’ın kaynağı: <a href="http://digestingduck.blogspot.com/2010/03/simple-stupid-funnel-algorithm.html" target="_blank" rel="noopener">Mikko Mononen — Simple Stupid Funnel Algorithm</a> · navmesh üzerinde A* oynanabilir anlatım: <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">Red Blob Games</a>.</li>
     </ol>
   </div>
 </section>
@@ -479,6 +480,38 @@ const path = pathfinding.findPath(startPos, targetPos, ZONE, groupID);   // funn
   <p class="mini">Godot örneğinde dil GDScript; renklendirme Python sözdizimiyle. Web’de Recast’in WebAssembly sürümü <code>recast-navigation-js</code> da var.</p>
 </section>
 
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: ajan bu çokgende mi?</h2>
+  <div class="ailab" data-lab="inrect" data-lang="js">
+<textarea>
+// p: [x, y] ajanın konumu
+// r: { x, y, w, h } dikdörtgen bir navmesh çokgeni (sol üst köşe + genişlik, yükseklik)
+// p dikdörtgenin içinde (ya da kenarında) ise true döndür.
+function inRect(p, r) {
+  const yatay = p[0] &gt;= r.x &amp;&amp; p[0] &lt;= r.x + r.w;
+  const dikey = true;   // TODO: aynı kontrol y için
+  return yatay &amp;&amp; dikey;
+}
+</textarea>
+    <div class="lab-tasks">Navmesh’te yol bulmanın <b>ilk adımı</b>: “ajan ve hedef hangi çokgende?” Canlı demodaki çokgenler dikdörtgen olduğu için bu dört karşılaştırma yeter. Keyfi dışbükey çokgenler için birazdan çapraz çarpımlı sürümünü yazacaksınız.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: portalın orta noktası</h2>
+  <div class="ailab" data-lab="portalmid" data-lang="js">
+<textarea>
+// a, b: portalın iki ucu [x, y]
+// (portal = iki komşu çokgenin ortak kenarı)
+// Orta noktayı [x, y] olarak döndür.
+function portalMid(a, b) {
+  return [a[0], a[1]];   // TODO: iki ucun ortalaması
+}
+</textarea>
+    <div class="lab-tasks">En basit navmesh yolu: koridordaki her portalın orta noktasından geç. Her zaman güvenlidir (koridorun içinde kalır) ama zikzak çizer; funnel bunu düzeltir. A* da çokgenler arası mesafeyi genelde bu orta noktalarla ölçer.</div>
+  </div>
+</section>
+
 <section data-sec="laboratuvar">
   <h2>🧪 Canlı laboratuvar: ajan hangi çokgende?</h2>
   <div class="simlab" data-sim="pip" data-fns="pointInConvex" data-lang="js">
@@ -581,6 +614,18 @@ def area(poly):
     <div class="box story"><span class="bt">Prosedürel dünyalar</span>Her oyunda yeniden üretilen haritalarda (Y15) navmesh’in hızla, karolar hâlinde, yükleme ekranını uzatmadan üretilmesi. Hangi parametreler ne kadar süre kazandırıyor?</div>
     <div class="box game"><span class="bt">Yıkılabilir ortam</span>Duvarlar patlayınca navmesh’in yerel güncellenmesi ve bu sırada yolu izleyen ajanların “kör” kalmaması; D* Lite (Y8) gibi artımlı yöntemlerle birleşim.</div>
     <div class="box low"><span class="bt">Öğrenilmiş hareket + navmesh</span>Pekiştirmeli öğrenmeyle eğitilmiş bir ajan (Y13) navmesh yolunu “rehber” olarak kullanıp zıplama, kayma gibi hareketleri kendisi seçebilir mi? Parkur oyunları için ilginç.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Oynadığınız bir oyunda bir karakterin bir kapıya, merdivene ya da köşeye <b>takılıp kaldığını</b> gördünüz mü? Bu derste öğrendiklerinizle sebebini tahmin edin: navmesh’te delik mi, haber verilmeyen kapı mı, birim boyu mu?</li>
+      <li class="fragment">Aynı seviyede hem bir fare hem bir dev dolaşacak. Tek navmesh yeter mi? Dev, farenin geçtiği delikten geçmeye çalışırsa ne olur?</li>
+      <li class="fragment">Oyuncu bir duvarı patlatıp yeni bir geçit açtı. Navmesh’in bunu “öğrenmesi” için ne yapılmalı? Bütün haritayı yeniden üretmek neden kötü bir fikir?</li>
+      <li class="fragment">Uçan bir ejderha ya da yüzen bir köpekbalığı için navmesh işe yarar mı? Yaramazsa ne kullanılır?</li>
+    </ol>
   </div>
 </section>
 
