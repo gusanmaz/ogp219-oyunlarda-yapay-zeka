@@ -120,13 +120,14 @@
   D.rubber = function (root) {
     const W = 720, H = 300, LAP = 3000, N = 5;
     const c = { band: 0.6, dead: 120, maxB: 0.25, player: 1.0 };
-    let cars, timer = null, done = false, res = [];
-    const reset = () => { const r = RNG(11); cars = Array.from({ length: N }, (_, i) => ({ me: i === 0, x: 0, base: i === 0 ? 0 : [0.86, 0.95, 1.12, 1.22][i - 1], col: i })); done = false; res = []; };
+    let cars, timer = null, done = false, res = [], nitro = 0, nitroLeft = 3;
+    const reset = () => { const r = RNG(11); cars = Array.from({ length: N }, (_, i) => ({ me: i === 0, x: 0, base: i === 0 ? 0 : [0.86, 0.95, 1.12, 1.22][i - 1], col: i })); done = false; res = []; nitro = 0; nitroLeft = 3; };
     const mult = gap => { const a = Math.abs(gap); if (a < c.dead) return 1; const s = clamp((a - c.dead) / 600, 0, 1) * c.maxB * c.band * 4; return gap > 0 ? 1 - Math.min(c.maxB, s) : 1 + Math.min(c.maxB, s); };
     const step = () => {
       const me = cars[0];
-      cars.forEach(k => { if (k.fin) return; const v = k.me ? 3 * c.player : 3 * k.base * mult(k.x - me.x); k.x += v; if (k.x >= LAP) { k.fin = true; res.push(k); } });
-      if (cars.every(k => k.fin)) done = true;
+      cars.forEach(k => { if (k.fin) return; const v = k.me ? 3 * c.player * (nitro > 0 ? 1.35 : 1) : 3 * k.base * mult(k.x - me.x); k.x += v; if (k.x >= LAP) { k.fin = true; res.push(k); } });
+      if (nitro > 0) nitro--;
+      if (cars.every(k => k.fin)) { done = true; SL.sfx && SL.sfx(res[0] && res[0].me ? 'alert' : 'lose'); }
     };
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
@@ -142,18 +143,18 @@
         ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'; ctx.fillRect(CX - 700 * SC, y - 12, 1400 * SC, 24);
         ctx.fillStyle = cols[i]; ctx.fillRect(x - 12, y - 8, 24, 16);
         const m = k.me ? 1 : mult(gap);
-        SL.drawLabel(ctx, k.me ? 'SİZ' : `YZ ${i} ×${m.toFixed(2)}`, 640, y, k.me ? t.blue : m > 1.001 ? t.green : m < 0.999 ? t.red : t.muted, { size: 11, align: 'left', bg: false });
+        SL.drawLabel(ctx, k.me ? (nitro > 0 ? 'SİZ 🚀' : 'SİZ') : `YZ ${i} ×${m.toFixed(2)}`, 640, y, k.me ? t.blue : m > 1.001 ? t.green : m < 0.999 ? t.red : t.muted, { size: 11, align: 'left', bg: false });
       });
       SL.drawLabel(ctx, 'ölü bölge (lastik bant yok)', CX, 252, t.green, { size: 10 });
       ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'; ctx.fillRect(20, 266, 520, 8); ctx.fillStyle = t.blue; ctx.fillRect(20, 266, 520 * Math.min(1, me.x / LAP), 8);
       SL.drawLabel(ctx, 'yarışın ilerlemesi', 550, 270, t.muted, { size: 10, align: 'left', bg: false });
       if (done) SL.drawLabel(ctx, 'Sıralama: ' + res.map(k => (k.me ? 'SİZ' : 'YZ ' + cars.indexOf(k))).join(' › '), W / 2, H - 10, t.ink, { size: 12 });
-      info.innerHTML = 'Görünüm <b>size göre</b>: her araba, sizden ne kadar önde ya da geride olduğuna göre çiziliyor. Nic Melder’in (Game AI Pro) eğrisi: yakınınızda (yeşil ölü bölge) hiçbir değişiklik yok, böylece yan yana yarışırken “hile” görünmez. Öndeki YZ uzaklaştıkça yavaşlar (kırmızı çarpan), arkadaki hızlanır (yeşil). Lastik bant gücünü 0 yapıp yarışı yeniden başlatın: araçlar dağılır. Tercihen önce YZ’nin <b>sürüş becerisi</b> düşürülür, yetmezse aracın gücü.';
+      info.innerHTML = 'Görünüm <b>size göre</b>: her araba, sizden ne kadar önde ya da geride olduğuna göre çiziliyor. Nic Melder’in (Game AI Pro) eğrisi: yakınınızda (yeşil ölü bölge) hiçbir değişiklik yok, böylece yan yana yarışırken “hile” görünmez. Öndeki YZ uzaklaştıkça yavaşlar (kırmızı çarpan), arkadaki hızlanır (yeşil). Lastik bant gücünü 0 yapıp yarışı yeniden başlatın: araçlar dağılır. Tercihen önce YZ’nin <b>sürüş becerisi</b> düşürülür, yetmezse aracın gücü. <b>🚀 Nitro</b> (yarış başına 3 hak) sizi kısa süre hızlandırır: öne geçince arkadaki YZ’lerin çarpanı nasıl değişiyor?';
     };
     const run = () => { if (timer) return; timer = setInterval(() => { for (let k = 0; k < 2; k++) step(); draw(); if (done) { clearInterval(timer); timer = null; } }, 30); };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
-      btn('🏁 yarışı başlat', () => { reset(); run(); }), slider('lastik bant gücü', 0, 1, c.band, 0.1, v => { c.band = v; }), slider('ölü bölge', 0, 400, c.dead, 20, v => { c.dead = v; }),
+      btn('🏁 yarışı başlat', () => { reset(); run(); }), btn('🚀 nitro (3 hak)', () => { if (!timer || nitroLeft <= 0 || nitro > 0) return; nitroLeft--; nitro = 90; SL.sfx && SL.sfx('shot'); }), slider('lastik bant gücü', 0, 1, c.band, 0.1, v => { c.band = v; }), slider('ölü bölge', 0, 400, c.dead, 20, v => { c.dead = v; }),
       slider('sizin hızınız', 0.8, 1.3, c.player, 0.02, v => { c.player = v; })), C, info);
     reset(); draw(); SL.onTheme(draw);
     return { stop() { if (timer) { clearInterval(timer); timer = null; } } };
@@ -215,7 +216,7 @@
           if (ok.some(o => o.bad)) return { ok: false, msg: '⚠️ adjust her zaman bir sayı döndürmeli.' };
           const worst = Math.min(...ok.map(o => o.inBand)), jump = Math.max(...ok.map(o => o.maxJump));
           if (jump > 1.5) return { ok: false, msg: `❌ Zorluk bir adımda ${jump.toFixed(2)} kadar zıplıyor: oyuncu fark eder. Değişimi küçük tutun (≤ 1,5).` };
-          if (worst < 0.6) return { ok: false, msg: `❌ 30. karşılaşmadan sonra zamanın sadece %${Math.round(worst * 100)}’i akış bandında (%50–85 kazanma şansı). Hedef: en az %60. Oyuncu hızla gelişiyor: kazandıkça zorluğu artırın.` };
+          if (worst < 0.45) return { ok: false, msg: `❌ 30. karşılaşmadan sonra zamanın sadece %${Math.round(worst * 100)}’i akış bandında (%50–85 kazanma şansı). Hedef: en az %45. Oyuncu hızla gelişiyor: son sonuçların ortalaması hedefin (ör. %70) üstündeyse zorluğu artırın, altındaysa azaltın; adım çok küçükse zorluk beceriye yetişemez.` };
           return { ok: true, msg: `✅ Üç farklı oyuncuda zamanın en az %${Math.round(worst * 100)}’i akış bandında; en büyük zorluk sıçraması ${jump.toFixed(2)}. Grafiğe bakın: zorluk becerinin peşinden gidiyor mu?` };
         } catch (e) { return { ok: false, msg: '⚠️ ' + SL.jsErrorText(e) }; }
       }
@@ -261,3 +262,24 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  SL.AILABS.winrate = {
+    fn: 'win_rate', jsFn: 'winRate', tol: 1e-9,
+    ref: r => (r.length ? r.reduce((a, b) => a + b, 0) / r.length : 0.5),
+    cases: () => { const cs = [[[1, 1, 0, 1, 1]], [[0, 0, 0]], [[1]], [[]], [[1, 0]], [[0, 1, 1, 0, 0]]]; for (let i = 0; i < 8; i++) cs.push([Array.from({ length: 1 + Math.floor(Math.random() * 5) }, () => (Math.random() < 0.6 ? 1 : 0))]); return cs; },
+    show: r => `son sonuçlar: ${JSON.stringify(r)} (1 = oyuncu kazandı)`,
+    hint: r => (r.length ? 'Kazanma oranı = 1’lerin sayısı / toplam karşılaşma sayısı. 1’leri toplayıp recent.length’e bölün.' : 'Liste boş: henüz veri yok. Sıfıra bölmeyin; “bilmiyorum” anlamında 0.5 döndürün.')
+  };
+  SL.AILABS.limitstep = {
+    fn: 'limit_step', jsFn: 'limitStep', tol: 1e-9,
+    ref: (o, w, m) => Math.max(0, Math.min(10, o + Math.max(-m, Math.min(m, w - o)))),
+    cases: () => { const cs = [[5, 9, 1.5], [5, 5.4, 1.5], [5, 1, 1.5], [9.5, 12, 1.5], [0.5, -3, 1.5], [3, 3, 0.5], [9.8, 10.1, 0.5]]; for (let i = 0; i < 10; i++) cs.push([Math.round(Math.random() * 100) / 10, Math.round((Math.random() * 14 - 2) * 10) / 10, [0.5, 1, 1.5][i % 3]]); return cs; },
+    show: (o, w, m) => `şimdiki zorluk ${o}, istenen ${w}, adım sınırı ${m}`,
+    hint: (o, w, m) => `Önce değişimi sınırla: fark = istenen − şimdiki = ${Math.round((w - o) * 100) / 100}; bunu −${m} … +${m} arasına kırp. Sonra sonucu 0 … 10 arasına kırp.`
+  };
+})();
+/* EK:BİTİŞ */

@@ -140,6 +140,18 @@
   </div>
 </section>
 
+<section data-ek="oku-flow" data-sec="demo">
+  <div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span>
+    <ol style="font-size:.9em">
+      <li><b>Sol kare</b> akış kanalı: yatay eksen oyuncunun becerisi, dikey eksen oyunun zorluğu. Yeşil şerit <b>akış</b>, üstü kırmızı <b>kaygı</b> (oyun becerinin çok üstünde), altı mavi <b>sıkıntı</b>.</li>
+      <li><b>Siyah çizgi</b> 120 karşılaşma boyunca bir oyuncunun yolculuğu; sarı nokta şu an bulunduğu yer. Oyuncu öğrendikçe çizgi sağa gider; zorluk arttıkça yukarı.</li>
+      <li><b>Sağ üst</b>: mor çizgi her karşılaşmada kazanma olasılığı (yeşil bant %50–80). Altındaki şerit: yeşil kazandı, kırmızı kaybetti.</li>
+      <li><b>Sağ alt</b> üç çubuk: oyuncu zamanının yüzde kaçını akışta, kaygıda, sıkıntıda geçirdi. Karşılaştıracağınız sayı bu.</li>
+      <li>Simülasyondaki oyuncu, dengeli maçlarda daha hızlı öğrenir (çok kolay ya da çok zor karşılaşmadan az şey öğrenilir).</li>
+    </ol>
+  </div>
+</section>
+
 <section data-sec="akış">
   <h2>Canlı: akışta tutmak 🌊</h2>
   <div class="demo" data-demo="flow"></div>
@@ -245,6 +257,18 @@
 <section data-sec="lastik bant">
   <h2>Canlı: lastik bant 🏎️</h2>
   <div class="demo" data-demo="rubber"></div>
+</section>
+
+<section data-ek="deney-rubber" data-sec="demo">
+  <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
+    <ol style="font-size:.9em">
+      <li><b>Ekranı okuyun:</b> görünüm size göre. Ortadaki kesikli çizgi sizsiniz; sağdaki arabalar önünüzde, soldakiler arkanızda. Sağdaki <code>×1.00</code> o YZ’nin hız çarpanı: kırmızı = yavaşlatılıyor, yeşil = hızlandırılıyor.</li>
+      <li>“🏁 yarışı başlat”: yeşil şeridin (ölü bölge) içindeki arabanın çarpanı hep ×1.00. Yan yana yarışta hile yok.</li>
+      <li>Lastik bant gücünü 0 yapıp yeniden başlatın: hızlı YZ’ler kaybolur, yavaşlar geride kalır; yarış 10 saniyede “biter”. 1 yapın: herkes dibinizde.</li>
+      <li><b>🚀 Nitro</b>’ya basıp öne geçin: az önce yeşil olan çarpanlar ne oldu? Arkaya düşünce ne oluyor? Oyun sizi hem yakalıyor hem bekliyor.</li>
+      <li>Ölü bölgeyi 0 yapın: yanınızdaki araba bile ayarlanıyor. Gerçek bir oyunda bunu nasıl fark ederdiniz?</li>
+    </ol>
+  </div>
 </section>
 
 <section data-sec="lastik bant">
@@ -365,6 +389,38 @@
 <section data-sec="kod">
   <h2>DDA ve YZ yönetmeni</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JavaScript (p5.js): zorluk yönetmeni — son 5 karşılaşmaya bakar, küçük adımlarla ayarlar
+class DifficultyDirector {
+  constructor() {
+    this.difficulty = 5;          // 0 … 10
+    this.targetWinRate = 0.7;     // oyuncu karşılaşmaların %70'ini kazansın
+    this.step = 0.4;
+    this.recent = [];             // son 5 sonucun kayan penceresi (true = oyuncu kazandı)
+  }
+  reportEncounter(playerWon) {    // her karşılaşma sonunda çağır
+    this.recent.push(playerWon);
+    if (this.recent.length > 5) this.recent.shift();
+    if (this.recent.length < 3) return;                    // az veriyle karar verme
+    const wins = this.recent.filter(w => w).length;
+    const winRate = wins / this.recent.length;
+    this.difficulty = constrain(this.difficulty + (winRate - this.targetWinRate) * this.step * 2, 0, 10);
+  }
+  // Zorluğu oyuncunun doğrudan GÖREMEYECEĞİ değişkenlere uygula:
+  get enemyAccuracy()     { return lerp(0.35, 0.80, this.difficulty / 10); }
+  get enemyReactionTime() { return lerp(0.90, 0.25, this.difficulty / 10); }
+  get healthDropChance()  { return lerp(0.35, 0.08, this.difficulty / 10); }
+}
+
+// Kullanım:
+const director = new DifficultyDirector();
+function karsilasmaBitti(oyuncuKazandi) {
+  director.reportEncounter(oyuncuKazandi);
+  print('zorluk', nf(director.difficulty, 1, 2), 'düşman isabeti', nf(director.enemyAccuracy, 1, 2));
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="6-11|12-15"><script type="text/template">
 public class DifficultyDirector : MonoBehaviour {
@@ -469,6 +525,37 @@ public static float RubberBand(float gap, float dead = 100f, float full = 500f, 
     <tr><td>10 ** x · Math.pow</td><td>üs alma</td><td>Elo’daki 10 tabanlı beklenti formülü</td></tr>
     <tr><td>class PRD { constructor … }</td><td>JS sınıfı</td><td>Durum (n) tutan küçük nesne</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: oyuncu ne kadar kazanıyor?</h2>
+  <div class="ailab" data-lab="winrate" data-lang="js">
+<textarea>
+// recent: son karşılaşmaların sonuçları, ör. [1, 1, 0, 1, 1]  (1 = oyuncu kazandı, 0 = kaybetti)
+// Kazanma oranını (0 … 1) döndür. Liste boşsa 0.5 döndür ("henüz bilmiyorum").
+function winRate(recent) {
+  let wins = 0;
+  for (const r of recent) wins += r;
+  return wins;   // TODO: orana çevir; boş listeye dikkat
+}
+</textarea>
+    <div class="lab-tasks">Her DDA sisteminin ilk adımı <b>ölçmek</b>. Tek bir sonuca değil, son birkaç karşılaşmanın ortalamasına bakıyoruz: oyuncu bir kez şanssız diye oyunu kolaylaştırmak salınım yaratır. Bir sonraki laboratuvardaki <code>recent</code> parametresi tam olarak bu liste.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: zorluğu fark ettirmeden değiştir</h2>
+  <div class="ailab" data-lab="limitstep" data-lang="js">
+<textarea>
+// oldD: şimdiki zorluk,  wanted: sistemin istediği yeni zorluk
+// maxStep: bir adımda izin verilen en büyük değişim
+// 1) Değişimi −maxStep … +maxStep arasına sınırla.  2) Sonucu 0 … 10 arasına kırp.
+function limitStep(oldD, wanted, maxStep) {
+  return wanted;   // TODO: şimdilik istediği kadar zıplıyor
+}
+</textarea>
+    <div class="lab-tasks">Quiz 1’deki “%30 in, %30 çık” sisteminin ilacı. Oyuncu zorluğun 5’ten 9’a fırladığını hemen hisseder; 5 → 5,5 → 6 diye sürünmesini hissetmez. İpucu: <code>Math.max(-maxStep, Math.min(maxStep, wanted - oldD))</code>.</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -586,6 +673,19 @@ def next_phase(phase, intensity, t, enemies, peak, sustain, relax):
     <div class="box story"><span class="bt">Duygusal hesaplama</span>Oyuncunun duygusunu (gerilim, sıkıntı, hayal kırıklığı) kamera, ses ya da fizyolojik sinyallerden tahmin edip deneyimi uyarlamak. Y&amp;T kitabının “Modeling Players” bölümü.</div>
     <div class="box game"><span class="bt">Deneyim odaklı PCG</span>Oyuncu modeli + içerik üretimi (Y15): oyuncunun tarzına göre seviye üretmek (Solver’a daha çok bulmaca, Runner’a daha çok parkur).</div>
     <div class="box low"><span class="bt">Pekiştirmeli DDA</span>Zorluk ayarını bir RL ajanına öğretmek (Y13): ödül = oyuncunun oyunda kalması ve memnuniyeti. Ödül hilesine dikkat: “oyunda tutmak” ile “eğlendirmek” aynı şey değil.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Bir oyunun size gizlice yardım ettiğini sonradan öğrendiğiniz oldu mu (ya da bu derste öğrendiniz mi)? Başarınız gözünüzde değer kaybetti mi?</li>
+      <li class="fragment">Mario Kart’ın mavi kabuğu: öndeki oyuncuyu cezalandırmak adil mi? Arkadaşlarınızla oynarken kabuk olmasaydı oyun daha mı iyi olurdu?</li>
+      <li class="fragment">XCOM ekranda %85 yazıp aslında daha yüksek bir şansla zar atıyor. Bu yalan mı, iyi tasarım mı? Peki ekranda %85 yazıp daha <b>düşük</b> şans uygulasaydı?</li>
+      <li class="fragment">Rekabetçi bir oyunda beceriye göre eşleştirme (SBMM) her maçı “terletir”. Arkadaşlarınızla rahat oynamak isterken sistem sizi hep dengi rakiplerle eşleştirmeli mi?</li>
+      <li class="fragment">Bir oyun şirketi oyuncu modelini “bu oyuncu bırakmak üzere, ona kolay bir maç verelim” diye kullanıyor. “Bu oyuncu harcamaya yatkın, ona pahalı eşyalı bir rakip gösterelim” diye kullansa? Çizgi nerede?</li>
+    </ol>
   </div>
 </section>
 
