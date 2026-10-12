@@ -170,7 +170,18 @@
     const run = () => {
       const tr = []; const r = tick(tree, s, { action: null }, tr);
       diag.innerHTML = treeSVG(tree, Object.fromEntries(tr), { H: 230 });
-      out.innerHTML = r === 'SUCCESS' ? '✅ Kök BAŞARILI: karakter odaya girdi. Yeşil yol hangi planın işe yaradığını gösteriyor.' : '❌ Kök BAŞARISIZ: üç planın üçü de başarısız oldu — üst düğüm (ör. “Kaç”) başka bir şey denemeli.';
+      // her planın neden başarılı / başarısız olduğunu ya da neden hiç denenmediğini cümleyle anlat
+      const P = [
+        ['1. plan · Kapıdan gir', s.open ? 'kapı açık → içeri yürüdü' : 'kapı açık değil', s.open],
+        ['2. plan · Anahtarla', s.key ? 'anahtar cebimde → kilidi açtı, içeri yürüdü' : 'anahtar cebimde değil (kapının çürük olup olmaması bu planı ilgilendirmez)', s.key],
+        ['3. plan · Kır', s.weak ? 'kapı çürük → tekme işe yaradı, içeri yürüdü' : 'kapı sağlam → tekme işe yaramadı', s.weak]];
+      let done = false;
+      const lines = P.map(([name, why, ok]) => {
+        if (done) return `<div style="opacity:.55">⚪ <b>${name}</b>: hiç denenmedi — daha öncelikli bir plan zaten işe yaradı (gri düğümler)</div>`;
+        if (ok) { done = true; return `<div class="c-green">✅ <b>${name}</b>: ${why}</div>`; }
+        return `<div class="c-red">❌ <b>${name}</b>: ${why} → sıradaki plana geç</div>`;
+      }).join('');
+      out.innerHTML = lines + `<div style="margin-top:6px">${r === 'SUCCESS' ? '<b>Sonuç:</b> kök BAŞARILI — karakter odada. Planlar <b>soldan sağa</b> denenir ve ilk işe yarayanda durulur; anahtarınız varsa çürük kapıyı bile tekmelemez.' : '<b>Sonuç:</b> kök BAŞARISIZ — üç plan da tutmadı. Üst düğüm başka bir şey denemeli (ör. pencereye bak).'}</div>`;
     };
     const boxes = Object.keys(s).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { s[k] = e.target.checked; run(); } }); cb.checked = s[k]; return cb; })(), ' ' + NAMES[k]));
     root.append(el('div', { class: 'sv-controls' }, el('b', null, 'Dünya: '), ...boxes), diag, legend(), out);
