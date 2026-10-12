@@ -132,6 +132,17 @@
       </ul>
     </div>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js — draw() içinde her kare (kütle = 1)
+const dt = deltaTime / 1000;                    // saniye
+const force = steering().limit(maxForce);       // davranışlardan gelen kuvvet
+vel.add(p5.Vector.mult(force, dt));             // ivme → hız
+vel.limit(maxSpeed);
+pos.add(p5.Vector.mult(vel, dt));               // hız → konum
+const heading = vel.heading();                  // gittiği yöne baksın
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Her FixedUpdate’te (kütle = 1)
@@ -294,6 +305,20 @@ def flee(self, threat):
         <li>Park eden araba, köşeye gelen asker, yanınıza koşup duran köpek…</li>
       </ul>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js — direksiyon vektörü döndürür (istenen − mevcut)
+arrive(target, slowRadius) {
+  const offset = p5.Vector.sub(target, this.pos);
+  const d = offset.mag();
+  if (d < 0.001) return p5.Vector.mult(this.vel, -1);            // dur
+  const speed = d < slowRadius ? this.maxSpeed * d / slowRadius   // yaklaşınca yavaşla
+                               : this.maxSpeed;
+  const desired = offset.setMag(speed);
+  return p5.Vector.sub(desired, this.vel);
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 Vector2 Arrive(Vector2 target, float slowRadius) {

@@ -184,6 +184,16 @@
     <div>
       <p style="font-size:.86em">Mesafe metre, can puan, mermi adet… Hepsini karşılaştırabilmek için önce <b>0–1</b> aralığına getiririz. Mike Lewis buna “kitap ayraçları” (bookends) der: bir <b>en az</b> ve bir <b>en çok</b> değer seçilir.</p>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js'te hazırı var: constrain(x, 0, 1)
+function normalize(v, min, max) {
+  return constrain((v - min) / (max - min), 0, 1);
+}
+const d = normalize(distance, 0, 50);   // 18 m → 0,36
+const h = normalize(hp, 0, maxHp);      // 70/100 → 0,70
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Y0’daki "ters lerp": değer, aralığın neresinde?
@@ -295,6 +305,16 @@ d = normalize(distance, 0, 50)   # 18 m → 0.36
     <div>
       <p style="font-size:.86em">Çarpımın kaybettirdiğini, etken sayısına göre <b>geri ver</b>:</p>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function compensate(score, n) {
+  if (n < 2 || score === 0) return score;
+  const mod    = 1 - 1 / n;                // n=2 → 0,5 · n=5 → 0,8
+  const makeUp = (1 - score) * mod;        // kaybın bir kısmı
+  return score + makeUp * score;           // puana orantılı ekle
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 float Compensate(float score, int n)
@@ -377,6 +397,21 @@ def compensate(score, n):
   </div>
   <div>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Ağırlıklı rastgele: puanları bir "çark"a diz, rastgele bir nokta seç
+function weightedRandom(opts) {          // opts: [{ action, score }, ...]
+  let total = 0;
+  for (const o of opts) total += o.score;
+  let r = random(total);                 // p5.js: 0 ile total arası
+  for (const o of opts) {
+    r -= o.score;
+    if (r <= 0) return o.action;
+  }
+  return opts[opts.length - 1].action;   // yuvarlama hatasına karşı
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Ağırlıklı rastgele: puanları bir "çark"a diz, rastgele bir nokta seç
@@ -551,6 +586,19 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
     <div>
       <p style="font-size:.86em">Utility AI’ın kodu, programlamanın en eski kalıplarından biridir: bir listedeki <b>en büyük</b> elemanı bulmak.</p>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+let best = null;
+let bestScore = -Infinity;            // "çok küçük bir sayı" ile başla
+for (const a of actions) {
+  const s = a.score(npc);
+  if (s > bestScore) {                // daha iyisini bulduysan hatırla
+    bestScore = s;
+    best = a;
+  }
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 Action best = null;
@@ -697,6 +745,34 @@ best = max(actions, key=lambda name: score(actions[name], npc))
 <section data-sec="kod">
   <h2>Beyni karar sıklığı ve ataletle sarmak</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class UtilityBrain {
+  constructor(actions, thinkInterval = 0.25, inertia = 1.25) {
+    this.actions = actions;              // [{ name, score(npc), run(npc, dt) }, ...]
+    this.thinkInterval = thinkInterval;  // saniyede 4 karar
+    this.inertia = inertia;              // mevcut eyleme bonus
+    this.current = null;
+    this.timer = 0;
+  }
+  update(npc, dt) {                      // draw() içinde her kare: brain.update(npc, deltaTime / 1000)
+    this.timer -= dt;
+    if (this.timer <= 0) {
+      this.timer = this.thinkInterval;
+      let best = this.current;
+      let bestScore = best ? best.score(npc) * this.inertia : 0;
+      for (const a of this.actions) {
+        const s = a.score(npc);
+        if (s > bestScore) { bestScore = s; best = a; }
+      }
+      if (best !== this.current) console.log(`${this.current?.name} → ${best?.name} (${bestScore.toFixed(2)})`);
+      this.current = best;
+    }
+    if (this.current) this.current.run(npc, dt);   // seçilen eylemi her kare yürüt
+  }
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="3-4|12-21|23"><script type="text/template">
 public class UtilityBrain : MonoBehaviour {

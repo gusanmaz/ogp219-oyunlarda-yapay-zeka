@@ -447,6 +447,20 @@ def can_see(eye, facing, target, walls, rng=250, half_angle=math.radians(45)):
 <section data-sec="kod">
   <h2>Farkındalık sayacı ve son bilinen konum</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js — draw() içinde her kare: a = awarenessStep(a, certainty, deltaTime / 1000)
+function awarenessStep(a, certainty, dt, rise = 1.5, decay = 0.2) {
+  if (certainty > 0) return min(1, a + certainty / rise * dt);   // görülüyor: kesinlikle orantılı yüksel
+  return max(0, a - decay * dt);                                 // görülmüyor: yavaşça unut
+}
+function level(a) {
+  return a < 0.3 ? "habersiz" : a < 0.7 ? "şüpheli" : a < 1 ? "arıyor" : "alarm";
+}
+// görüldüğü her kare son bilinen konumu güncelle:
+if (certainty > 0) lastKnownPos = player.pos.copy();
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="8-15|16-18"><script type="text/template">
 public class Awareness : MonoBehaviour {
@@ -527,6 +541,41 @@ public class Hearing : MonoBehaviour {
     <tr><td>sqrMagnitude</td><td>uzunluğun karesi</td><td>Karekök almadan mesafe karşılaştırması (daha hızlı)</td></tr>
     <tr><td>NavMesh.CalculatePath</td><td>yol hesapla</td><td>Navmesh üzerinde yolu ve köşelerini verir</td></tr>
   </table>
+</section>
+
+<section data-ek="isinma1" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: bu sesi duyar mı?</h2>
+  <div class="ailab" data-lab="hears" data-lang="js">
+<textarea>
+// listener: muhafızın konumu [x, y]
+// sound: sesin çıktığı yer [x, y]
+// radius: sesin gürültü yarıçapı (koşmak &gt; yürümek &gt; çömelmek)
+// Muhafız yarıçapın içindeyse true döndür.
+function hears(listener, sound, radius) {
+  const d = 0;   // TODO: iki nokta arası mesafe (Math.hypot)
+  return d &lt;= radius;
+}
+</textarea>
+    <div class="lab-tasks">En basit işitme modeli: her sesin bir yarıçapı var. Bu sürüm sesi <b>duvardan geçirir</b> (haksız!); birazdan kapı ve pencereler üzerinden ölçen sürümünü göreceksiniz. p5.js’te: <code>dist(x1, y1, x2, y2)</code>.</div>
+  </div>
+</section>
+
+<section data-ek="isinma2" data-sec="ısınma">
+  <h2>🌱 Isınma kodu: farkındalık seviyesi</h2>
+  <div class="ailab" data-lab="awlevel" data-lang="js">
+<textarea>
+// a: farkındalık sayacı (0 ile 1 arası)
+// Seviyeyi döndür: "habersiz" | "supheli" | "ariyor" | "alarm"
+//   a &lt; 0.3 → habersiz     a &lt; 0.7 → supheli
+//   a &lt; 1   → ariyor       aksi hâlde → alarm
+function level(a) {
+  if (a &lt; 0.3) return "habersiz";
+  // TODO: kalan üç seviye
+  return "alarm";
+}
+</textarea>
+    <div class="lab-tasks">Algı sürekli bir sayıdır (0–1); davranış ise <b>kademelidir</b>: dur ve bak (?), gidip araştır (??), saldır (!). Bu dört satır, sayıyı oyuncunun okuyabileceği dört duruma çevirir — Metal Gear’ın “!” işaretinin arkasındaki fikir.</div>
+  </div>
 </section>
 
 <section data-sec="laboratuvar">
@@ -627,6 +676,18 @@ def sound_distance(src, dst, wall_x, doors):
     <div class="box story"><span class="bt">Oyuncu YZ’yi nasıl algılıyor?</span>Game AI Pro 3, 4. bölüm (“Player Perception of AI Opponents”) ve “You had me at AAAAHHH” (Game AI Pro Online 2021): oyuncu YZ’yi çoğunlukla <b>tepkilerinden</b> değerlendirir. Algı sisteminin yarısı, NPC’nin “fark ettiğini” göstermektir.</div>
     <div class="box game"><span class="bt">Öğrenen gözler</span>ML-Agents’ın ışın sensörleri ya da kamera görüntüsüyle eğitilen ajanlar: elle yazılmış koni yerine algı öğrenilebilir mi? Peki o zaman “adil” olduğunu nasıl garanti edersiniz?</div>
     <div class="box low"><span class="bt">Akademik vaka</span>“The NPC AI of The Last of Us: A case study” (arXiv 2207.00682): oyunun algı ve davranış sistemlerinin akademik incelemesi.</div>
+  </div>
+</section>
+
+<section data-ek="tartisma" data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+  <div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span>
+    <ol>
+      <li class="fragment">Bir gizlilik oyununda yakalandığınızda “<b>haksızlık!</b>” dediğiniz bir an hatırlıyor musunuz? Sizi gören şey neydi ve neden haksız geldi: bilemeyeceğiniz bir şey mi, yoksa göremediğiniz bir gösterge mi?</li>
+      <li class="fragment">Thief’in ışık taşı ve Splinter Cell’in dolan göstergesi oyuncuya “şu an ne kadar görünürsün” der. Bu göstergeleri kaldırsanız oyun daha <b>gerçekçi</b> mi olur, daha <b>kötü</b> mü?</li>
+      <li class="fragment">The Last of Us’ta düşmanlar 10 saniye sonra oyuncunun yerini “hileyle” öğreniyor, çünkü yoksa çatışma 2 dakika sürüp sıkıyordu. Tempo için yapılan hile kabul edilebilir mi? Sınır nerede?</li>
+      <li class="fragment">Gerçek bir insan sizi 1 saniyede tanır; oyundaki muhafız 2 saniye bakıp “bir şey mi gördüm?” der. Bu <b>aptallık</b> mı, yoksa oyunun size verdiği bir <b>hediye</b> mi?</li>
+    </ol>
   </div>
 </section>
 

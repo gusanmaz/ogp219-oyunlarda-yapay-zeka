@@ -504,6 +504,37 @@ def apply(s, eff):
 <section data-sec="kod">
   <h2>Planlayıcı: A* (ya da sezgisiz hâli Dijkstra)</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// JavaScript — küçük planlarda öncelik kuyruğu yerine "en küçüğü bul" yeter
+const satisfies = (s, cond) => Object.keys(cond).every(k => (s[k] || false) === cond[k]);
+const applyEff  = (s, eff)  => ({ ...s, ...eff });               // KOPYA üzerinde
+
+function plan(start, goal, actions) {
+  const h = s => Object.keys(goal).filter(k => (s[k] || false) !== goal[k]).length;   // sağlanmamış hedef sayısı
+  const key = s => Object.keys(s).filter(k => s[k]).sort().join(",");
+  const open = [{ f: h(start), g: 0, s: start, path: [] }];
+  const best = { [key(start)]: 0 };
+  while (open.length > 0) {
+    let bi = 0;                                                  // f'si en küçük olanı çek
+    for (let i = 1; i < open.length; i++) if (open[i].f < open[bi].f) bi = i;
+    const { g, s, path } = open.splice(bi, 1)[0];
+    if (satisfies(s, goal)) return { path, cost: g };            // eylem adları ve toplam maliyet
+    for (const a of actions) {
+      if (!satisfies(s, a.pre)) continue;
+      const s2 = applyEff(s, a.eff), g2 = g + a.cost;
+      if (g2 < (best[key(s2)] ?? Infinity)) {
+        best[key(s2)] = g2;
+        open.push({ f: g2 + h(s2), g: g2, s: s2, path: [...path, a.name] });
+      }
+    }
+  }
+  return null;                                                   // plan yok
+}
+// plan({}, { targetDead: true }, actions)
+// → { path: ["Cephane al", "Şarjör tak", "Kapıdan geç", "Ateş et"], cost: 4 }
+</script></code></pre>
+    </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="4-6|8-9|11-14|15-21"><script type="text/template">
 import heapq, itertools
@@ -565,6 +596,34 @@ public static List<GoapAction> Plan(Dictionary<string, bool> start,
 <section data-sec="kod">
   <h2>Planı yürütmek ve yeniden planlamak</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js — draw() içinde her kare agent.update(deltaTime / 1000)
+class GoapAgent {
+  constructor(actions) {
+    this.actions = actions;            // tasarımcının eylem listesi
+    this.memory = {};                  // çalışma belleği (algı yazar)
+    this.plan = null;                  // kalan eylemler (kuyruk)
+    this.replanTimer = 0;
+  }
+  update(dt) {
+    this.replanTimer -= dt;
+    if (!this.plan || this.plan.length === 0 || this.replanTimer <= 0) {
+      const goal = this.chooseGoal();                       // en öncelikli hedef (utility olabilir!)
+      const p = plan(this.memory, goal, this.actions);
+      this.plan = p ? p.path.map(n => this.actions.find(a => a.name === n)) : null;
+      this.replanTimer = 1;                                 // saniyede en fazla 1 kez
+    }
+    if (!this.plan || this.plan.length === 0) return;       // boşta bekle
+    const a = this.plan[0];
+    if (!satisfies(this.memory, a.pre)) { this.plan = null; return; }   // dünya değişti
+    const r = this.execute(a, dt);                          // "RUNNING" | "SUCCESS" | "FAILURE"
+    if (r === "SUCCESS") { Object.assign(this.memory, a.eff); this.plan.shift(); }
+    else if (r === "FAILURE") { this.rememberFailure(a); this.plan = null; }   // ör. memory.doorStuck = true
+  }
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="3-5|9-15|17-19|20-21"><script type="text/template">
 public class GoapAgent : MonoBehaviour {
@@ -779,6 +838,42 @@ def plan_cost(start, goal, actions):
 <section data-sec="HTN">
   <h2>HTN planlayıcının kalbi (Python)</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Alan: bileşik görev → [[koşul, [alt görevler]], ...] · ilkel görev → [koşul, etki]
+const methods = {
+  BeTrunkThumper: [[s => s.seesEnemy, ["AttackEnemy"]],
+                   [s => true,        ["Patrol"]]],
+  AttackEnemy:    [[s => s.hasTrunk,  ["NavigateToEnemy", "DoTrunkSlam"]],
+                   [s => true,        ["FindTree", "UprootTrunk", "NavigateToEnemy", "DoTrunkSlam"]]],
+  Patrol:         [[s => true,        ["ChooseBridge", "NavigateToBridge", "CheckBridge"]]],
+};
+const primitives = {
+  NavigateToEnemy: [s => s.pathToEnemy, {}],
+  DoTrunkSlam:     [s => s.hasTrunk,    { hasTrunk: false }],
+  FindTree:        [s => s.treeNearby,  {}],
+  UprootTrunk:     [s => true,          { hasTrunk: true }],
+  ChooseBridge: [s => true, {}], NavigateToBridge: [s => true, {}], CheckBridge: [s => true, {}],
+};
+function decompose(tasks, s, plan = []) {
+  if (tasks.length === 0) return plan;                     // bitti
+  const [task, ...rest] = tasks;
+  if (primitives[task]) {
+    const [cond, eff] = primitives[task];
+    if (!cond(s)) return null;                             // geri izle
+    return decompose(rest, { ...s, ...eff }, [...plan, task]);
+  }
+  for (const [cond, subtasks] of methods[task]) {          // yöntemleri sırayla dene
+    if (!cond(s)) continue;
+    const result = decompose([...subtasks, ...rest], s, plan);
+    if (result) return result;
+  }
+  return null;
+}
+// decompose(["BeTrunkThumper"], { seesEnemy: true, hasTrunk: false, treeNearby: true, pathToEnemy: true })
+// → ["FindTree", "UprootTrunk", "NavigateToEnemy", "DoTrunkSlam"]
+</script></code></pre>
+    </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="2-15|17-23|24-29"><script type="text/template">
 # Alan: bileşik görev → [(koşul, [alt görevler]), ...] · ilkel görev → (koşul, etki)

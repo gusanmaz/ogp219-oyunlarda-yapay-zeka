@@ -772,6 +772,14 @@ def tick(node, s):
         <li>Unreal’da kara tahta ayrı bir varlık (asset), Unity Behavior’da “Blackboard variables”.</li>
       </ul>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js — en basit hâli: bir nesne
+const bb = { target: null, lastSeen: null, ammo: 30 };
+bb.lastSeen = player.pos.copy();        // algı yazar
+if (bb.lastSeen !== null) { /* ... */ } // koşul okur
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Unreal C++: algı yazar, ağaç okur

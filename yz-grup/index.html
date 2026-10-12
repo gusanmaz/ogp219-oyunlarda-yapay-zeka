@@ -395,6 +395,30 @@
 <section data-sec="kod">
   <h2>Formasyon yuvaları ve üye hareketi</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// p5.js
+function wedgeOffset(i, s) {                       // yerel: [ileri, sağ]
+  const r = Math.ceil((i + 1) / 2);                // 1, 1, 2, 2, 3, ...
+  const side = i % 2 ? 1 : -1;
+  return [-r * s, side * r * s];
+}
+function toWorld(leaderPos, heading, off) {        // yerel → dünya: döndür + ötele
+  const c = cos(heading), sn = sin(heading);
+  return createVector(leaderPos.x + c * off[0] - sn * off[1],
+                      leaderPos.y + sn * off[0] + c * off[1]);
+}
+// draw() içinde her kare:
+let worstLag = 0;
+members.forEach((m, i) => {
+  const slot = toWorld(leader.pos, leader.heading, wedgeOffset(i, 30));
+  m.target = slot;                                 // üye: arrive + ayrılma
+  worstLag = max(worstLag, m.pos.dist(slot));
+});
+// formasyon hızı = en yavaş üye: geride kalan varsa lider yavaşlar
+leader.maxSpeed = map(constrain(worstLag, 20, 100), 20, 100, 120, 30);
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="6-10|13-18|19-21"><script type="text/template">
 public class Formation : MonoBehaviour {
@@ -445,6 +469,34 @@ slots = [to_world(leader.pos, leader.heading, wedge_offset(i, 30)) for i in rang
 <section data-sec="kod">
   <h2>Sahne yöneticisi: saldırı izinleri</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class StageManager {
+  constructor(gridCapacity = 12, attackCapacity = 10) {   // zorluk ayarı!
+    this.gridCap = gridCapacity; this.atkCap = attackCapacity;
+    this.gridUsed = 0; this.atkUsed = 0;
+    this.queue = [];
+  }
+  request(enemy) { if (!this.queue.includes(enemy)) this.queue.push(enemy); }
+  update() {                                       // her kare: sıradakilere yer var mı?
+    const waiting = [];
+    for (const e of this.queue) {
+      if (this.gridUsed + e.weight <= this.gridCap) { this.gridUsed += e.weight; e.granted = true; }
+      else waiting.push(e);
+    }
+    this.queue = waiting;
+  }
+  release(enemy) { this.gridUsed -= enemy.weight; enemy.granted = false; }   // öldü ya da çekildi
+  pickAttack(attacks) {                            // [{ name, weight }, ...]
+    const fits = attacks.filter(a => this.atkUsed + a.weight <= this.atkCap);
+    if (fits.length === 0) return null;
+    const best = fits.reduce((x, y) => (y.weight > x.weight ? y : x));   // sığan en güçlü saldırı
+    this.atkUsed += best.weight;
+    return best;
+  }
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="2-3|6|8-15|16-21"><script type="text/template">
 public class StageManager : MonoBehaviour {

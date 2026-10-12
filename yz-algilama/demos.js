@@ -96,8 +96,9 @@
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Görüş modeli: ', select({ zones: MODELS.zones.ad, bool: MODELS.bool.ad }, cfg.model, v => { cfg.model = v; })),
       cb('ışık/gölge', 'light'), cb('çömel', 'crouch'), cb('bölgeleri göster', 'showZones')),
-      el('div', { class: 'sv-controls' }, slider('fark etme süresi (sn)', 0.3, 4, cfg.rise, 0.1, v => { cfg.rise = v; }), slider('unutma hızı (/sn)', 0.05, 1, cfg.decay, 0.05, v => { cfg.decay = v; }), el('span', { class: 'mini' }, 'Fare = oyuncu (yeşil). Kırmızı bölge: kesinlik 1 · turuncu: 0,5 · mavi: 0,25.')),
-      w.canvas, w.controls());
+      el('div', { class: 'sv-controls' }, slider('fark etme süresi (sn)', 0.3, 4, cfg.rise, 0.1, v => { cfg.rise = v; }), slider('unutma hızı (/sn)', 0.05, 1, cfg.decay, 0.05, v => { cfg.decay = v; }), el('span', { class: 'mini' }, 'Fare = oyuncu')),
+      el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, w.canvas), el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:17px;line-height:1.35"><span class="bt">Ekranda ne var?</span><ul><li><b>Ok</b> = muhafız; kesikli çizgi devriye yolu. <b>Yeşil daire</b> = oyuncu (fare).</li><li><span class="c-red"><b>Kırmızı bölge</b></span>: tam önü, “tatlı nokta” → kesinlik <b>1</b></li><li><span class="c-amber"><b>Turuncu</b></span>: ana görüş → <b>0,5</b> · <span class="c-blue"><b>mavi</b></span>: çevre/arka yakın → <b>0,25</b></li><li><b>Gri dikdörtgenler</b> = gölge (kesinlik ×0,3). Koyu çubuklar duvar.</li><li>Üstteki yazı: o anki <b>kesinlik</b> ve biriken <b>farkındalık</b> (0–1).</li><li>Farkındalık doldukça: habersiz → <b>?</b> şüpheli → <b>??</b> arıyor → <b>!</b> alarm.</li></ul></div>' })),
+      w.controls());
     w.reset();
     return { start: () => w.start(), stop: () => w.stop() };
   };
@@ -126,7 +127,7 @@
     };
     const w = new SL.World({
       W, H, reset,
-      onClick(m) { emit(V.v(m.x, m.y), cfg.loud); },
+      onClick(m) { emit(V.v(m.x, m.y), cfg.loud); SL.sfx('knock'); },
       update(dt, w) {
         // hızlı fare hareketi = koşma = ayak sesi
         if (w.mouse.inside) { const m = V.v(w.mouse.x, w.mouse.y); if (lastM) { const sp = V.dist(m, lastM) / dt; if (sp > 500 && Math.random() < 0.15) emit(m, cfg.loud * 0.5); } lastM = m; } else lastM = null;
@@ -152,7 +153,9 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Ses mesafesi: ', select({ path: 'açıklıklar üzerinden (Splinter Cell TEAS)', euclid: 'düz çizgi (duvardan geçer!)' }, cfg.mode, v => { cfg.mode = v; })),
-      slider('gürültü yarıçapı', 80, 450, cfg.loud, 10, v => { cfg.loud = v; })), w.canvas, w.controls());
+      slider('gürültü yarıçapı', 80, 450, cfg.loud, 10, v => { cfg.loud = v; })),
+      el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, w.canvas), el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:17px;line-height:1.35"><span class="bt">Ekranda ne var?</span><ul><li>İki oda: <b>A</b> (sol) ve <b>B</b> (sağ). Ortadaki koyu duvar sesi geçirmez.</li><li>Duvarda iki açıklık: altta <b>kapı</b>, üstte <b>pencere</b> (sesi yarıya indirir).</li><li><b>Mavi ok</b> = muhafız (B odasında). <b>Yeşil daire</b> = siz (fare).</li><li><b>Tıkla</b> = o noktada gürültü. Halka = sesin yarıçapı. Tıklayınca gerçekten ses çıkar 🔊</li><li><span class="c-red"><b>Kırmızı kesikli çizgi</b></span> = sesin muhafıza ulaşırken izlediği yol.</li><li><b>Mor noktalar</b> = muhafızın duyduğu yerler (hafıza); zamanla solar.</li></ul></div>' })),
+      w.controls());
     w.reset();
     return { start: () => w.start(), stop: () => w.stop() };
   };
@@ -259,3 +262,25 @@
     return { start() { if (!running) { running = true; tick(); } }, stop() { running = false; clearTimeout(timer); } };
   };
 })();
+
+/* EK:BAŞLA — ısınma laboratuvarları */
+(function () {
+  'use strict';
+
+  const LV = a => (a < 0.3 ? 'habersiz' : a < 0.7 ? 'supheli' : a < 1 ? 'ariyor' : 'alarm');
+  SL.AILABS.awlevel = {
+    fn: 'level', jsFn: 'level',
+    ref: LV,
+    cases: () => { const cs = [[0], [0.29], [0.3], [0.5], [0.69], [0.7], [0.99], [1]]; for (let i = 0; i < 12; i++) cs.push([Math.round(Math.random() * 100) / 100]); return cs; },
+    show: a => `farkındalık = ${a}`,
+    hint: () => 'Eşikler: 0,3’ün altı habersiz · 0,7’nin altı supheli · 1’in altı ariyor · 1 (ve üstü) alarm. Küçükten büyüğe sırayla kontrol edin.'
+  };
+  SL.AILABS.hears = {
+    fn: 'hears', jsFn: 'hears',
+    ref: (l, s, r) => Math.hypot(l[0] - s[0], l[1] - s[1]) <= r,
+    cases: () => { const cs = [[[0, 0], [3, 4], 5], [[0, 0], [3, 4], 4.9], [[10, 10], [10, 10], 0], [[0, 0], [100, 0], 300], [[0, 0], [300, 10], 300]]; for (let i = 0; i < 15; i++) cs.push([[Math.round(SL.rand(0, 400)), Math.round(SL.rand(0, 300))], [Math.round(SL.rand(0, 400)), Math.round(SL.rand(0, 300))], [80, 150, 300][i % 3] + 0.5]); return cs; },
+    show: (l, s, r) => `dinleyici ${JSON.stringify(l)}, ses ${JSON.stringify(s)}, gürültü yarıçapı ${r}`,
+    hint: (l, s, r) => `Mesafe = ${Math.hypot(l[0] - s[0], l[1] - s[1]).toFixed(1)}; yarıçap ${r}. Mesafe ≤ yarıçap ise duyar.`
+  };
+})();
+/* EK:BİTİŞ */

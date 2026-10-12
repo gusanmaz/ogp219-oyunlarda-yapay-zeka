@@ -571,6 +571,45 @@ def negamax(game, depth, alpha=-math.inf, beta=math.inf):
 <section data-sec="kod">
   <h2>MCTS (UCT) — 40 satır</h2>
   <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+class Node {
+  constructor(move = null, parent = null, player = null) {
+    this.move = move; this.parent = parent; this.player = player;   // player: bu hamleyi yapan
+    this.kids = null; this.N = 0; this.W = 0;
+  }
+}
+function mcts(game, iterations, c = 1.41) {
+  const root = new Node(null, null, 3 - game.current);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  for (let it = 0; it < iterations; it++) {
+    const g = game.copy(); let node = root;
+    // 1) Seçim: UCB1'i en büyük çocuğa in
+    while (node.kids && g.winner() === null) {
+      const parent = node;
+      const ucb = k => (k.N === 0 ? Infinity : k.W / k.N + c * Math.sqrt(Math.log(parent.N) / k.N));
+      node = parent.kids.reduce((a, b) => (ucb(b) > ucb(a) ? b : a));
+      g.apply(node.move);
+    }
+    // 2) Genişletme
+    if (node.kids === null && g.winner() === null) {
+      node.kids = g.moves().map(m => new Node(m, node, g.current));
+      node = pick(node.kids);
+      g.apply(node.move);
+    }
+    // 3) Simülasyon: oyun bitene kadar rastgele
+    while (g.winner() === null) g.apply(pick(g.moves()));
+    const w = g.winner();                          // 1, 2 ya da 0 (berabere)
+    // 4) Geri yayılım: her düğüm, o hamleyi yapan oyuncu açısından
+    for (; node; node = node.parent) {
+      node.N += 1;
+      node.W += w === node.player ? 1 : w === 0 ? 0.5 : 0;
+    }
+  }
+  return root.kids.reduce((a, b) => (b.N > a.N ? b : a)).move;   // en çok ziyaret edilen hamle
+}
+</script></code></pre>
+    </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="9-11|12-16|17-21|22-25|26-31"><script type="text/template">
 import math, random
