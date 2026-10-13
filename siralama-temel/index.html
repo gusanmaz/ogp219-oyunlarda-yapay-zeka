@@ -498,7 +498,7 @@ private static void exch(Comparable[] a, int i, int j)
 
 <section data-sec="selection sort">
   <h2>Selection sort — animasyon</h2>
-  <div class="sortviz" data-alg="selection" data-n="14" data-speed="6" data-h="290"></div>
+  <div class="sortviz" data-alg="selection" data-n="14" data-speed="6" data-h="380"></div>
   <div class="legend-bar">
     <span style="--c:var(--bar-cmp)">karşılaştırılan</span><span style="--c:var(--bar-min)">şu anki en küçük (min)</span>
     <span style="--c:var(--bar-swap)">takaslanan</span><span style="--c:var(--bar-final)">son yerinde</span>
@@ -549,7 +549,7 @@ function selectionSort(a) {
 }
 </script></code></pre>
     </div>
-    <div class="tab" data-label="Java (kitap)">
+    <div class="tab" data-label="Java">
 <pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
 public static void sort(Comparable[] a)
 {
@@ -596,7 +596,7 @@ public static void sort(Comparable[] a)
       Selection sort, N elemanlı bir dizide <b>~N²/2 karşılaştırma</b> ve <b>N yer değiştirme</b> yapar.
       <div class="spacer"></div>
       <span class="bt" style="color:var(--ink-2)">Kanıt (fikir)</span>
-      <span class="mini">Soldaki tabloda her satır bir tur, her mavi kare bir karşılaştırma. Mavi kareler karenin yarısı ≈ N²/2. Her turda tam 1 takas → N takas.</span>
+      <span style="font-size:.8em">Soldaki tabloda her satır bir tur, her mavi kare bir karşılaştırma. Mavi kareler karenin yarısı kadar: ≈ N²/2. Her turda tam 1 takas var: N takas.</span>
     </div>
   </div>
   <aside class="notes">"~" (tilde) işaretini burada tanıtın: "yaklaşık olarak, büyük N için baskın terim". Gauss hilesi düğmesiyle iki üçgenin dikdörtgen yaptığını gösterin.</aside>
@@ -824,7 +824,7 @@ function findNearest(enemies, me) {
 
 <section data-sec="insertion sort">
   <h2>Insertion sort — animasyon</h2>
-  <div class="sortviz" data-alg="insertion" data-n="14" data-speed="6" data-h="290"></div>
+  <div class="sortviz" data-alg="insertion" data-n="14" data-speed="6" data-h="380"></div>
   <div class="legend-bar">
     <span style="--c:var(--bar-cmp)">karşılaştırılan</span><span style="--c:var(--bar-swap)">takaslanan</span>
     <span style="--c:var(--bar-sorted)">sıralı ama son yerinde olmayabilir</span><span style="--c:var(--bar-final)">bitti</span>
@@ -864,7 +864,7 @@ function insertionSort(a) {
 }
 </script></code></pre>
     </div>
-    <div class="tab" data-label="Java (kitap)">
+    <div class="tab" data-label="Java">
 <pre><code class="language-java" data-trim data-line-numbers><script type="text/template">
 public static void sort(Comparable[] a)
 {
@@ -1335,7 +1335,7 @@ function draw() {   // saniyede 60 kez!
 <section data-sec="shellsort">
   <h2>Insertion sort’un zayıf noktası 🐌</h2>
   <p>En küçük eleman dizinin <b>en sonundaysa</b>, ona yer açmak için herkes teker teker kayar: <b>N−1</b> takas, hep <b>birer adım</b>.</p>
-  <div class="sortviz" data-alg="insertion" data-input="lastsmall" data-n="30" data-speed="20" data-controls="n" data-h="230"></div>
+  <div class="sortviz" data-alg="insertion" data-input="lastsmall" data-n="30" data-speed="20" data-controls="n" data-h="300"></div>
   <p class="fragment">Fikir: Elemanlar <b>uzak mesafelere</b> tek hamlede atlayabilseydi? 🦘</p>
 </section>
 
@@ -1373,8 +1373,8 @@ function draw() {   // saniyede 60 kez!
 
 <section data-sec="shellsort">
   <h2>Shellsort — animasyon</h2>
-  <div class="sortviz" data-alg="shell" data-n="60" data-speed="40" data-controls="n,input,hseq" data-h="270"></div>
-  <p class="mini">Alttaki renkli şerit: aynı renk = aynı h-grubu. h dizisini değiştirip karşılaştırma sayısını izleyin.</p>
+  <div class="sortviz" data-alg="shell" data-n="60" data-speed="40" data-controls="n,input,hseq" data-h="360"></div>
+  <p style="font-size:.7em;color:var(--ink-2)">Alttaki renkli şerit: aynı renk = aynı h-grubu. h dizisini değiştirip karşılaştırma sayısını izleyin.</p>
 </section>
 
 <section data-sec="shellsort">
@@ -1746,18 +1746,19 @@ function shuffle(a) {
 
 <section data-sec="karıştırma · oyunda">
   <h2>🎮 Tetris’in “7-torba” sistemi <span class="en">7-bag randomizer</span></h2>
+  <p style="font-size:.8em;margin:.1em 0 .4em">Her parça zar atar gibi rastgele seçilirse uzun çubuk (“I”) onlarca parça boyunca gelmeyebilir 😩. Modern Tetris oyunları 7 parçayı bir <b>torbaya</b> koyar, torbayı <b>karıştırır</b> ve sırayla dağıtır; torba bitince yenisini karıştırır. Böylece iki “I” arasında <b>en fazla 12</b> parça olur.</p>
   <div class="cols c64">
     <div class="demo" data-demo="tetris"></div>
     <div>
-  <div class="tabs">
+  <div class="tabs" style="font-size:.8em">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import random
 PIECES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L']
 
 def next_bag():
-    bag = PIECES[:]       # 7 parçanın kopyası
-    random.shuffle(bag)   # Fisher–Yates
+    bag = PIECES[:]       # kopyala
+    random.shuffle(bag)   # karıştır
     return bag            # sırayla dağıt
 </script></code></pre>
     </div>
@@ -1767,9 +1768,9 @@ static readonly char[] Pieces = { 'I', 'O', 'T', 'S', 'Z', 'J', 'L' };
 
 static List<char> NextBag()
 {
-    var bag = new List<char>(Pieces);   // 7 parçanın kopyası
-    Shuffle(bag);                       // Fisher–Yates (önceki slayt)
-    return bag;                         // sırayla dağıt
+    var bag = new List<char>(Pieces);  // kopyala
+    Shuffle(bag);                      // karıştır
+    return bag;                        // sırayla dağıt
 }
 </script></code></pre>
     </div>
@@ -1778,17 +1779,17 @@ static List<char> NextBag()
 const PIECES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 
 function nextBag() {
-  const bag = PIECES.slice();   // 7 parçanın kopyası
-  shuffle(bag);                 // Fisher–Yates (önceki slayt)
-  return bag;                   // sırayla dağıt
+  const bag = PIECES.slice();  // kopyala
+  shuffle(bag);                // karıştır
+  return bag;                  // sırayla dağıt
 }
 </script></code></pre>
     </div>
   </div>
-      <p class="mini">Tamamen rastgele seçimde “I” parçası onlarca parça boyunca gelmeyebilir 😩. Modern Tetris oyunları torbayı karıştırıp sırayla dağıtır: iki “I” arasında <b>en fazla 12</b> parça olabilir.</p>
+      <p style="font-size:.66em;color:var(--ink-2)"><code>shuffle</code> önceki slayttaki Knuth (Fisher–Yates) karıştırmasıdır. Soldaki alt sırada her boşluk yeni bir torbanın başladığı yerdir.</p>
     </div>
   </div>
-  <aside class="notes">Oyun tasarımında "adil rastgelelik" (pseudo-random distribution) çok yaygın: loot tablolarında acıma sayacı (pity timer), kart oyunlarında sunum, roguelike'larda oda havuzu.</aside>
+  <aside class="notes">Oyun tasarımında "adil rastgelelik" (pseudo-random distribution) çok yaygın: loot tablolarında acıma sayacı (pity timer), kart oyunlarında çekme yığını, roguelike'larda oda havuzu.</aside>
 </section>
 
 <section data-sec="karıştırma">

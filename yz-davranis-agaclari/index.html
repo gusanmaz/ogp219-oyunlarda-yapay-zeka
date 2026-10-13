@@ -93,6 +93,27 @@
   </table>
 </section>
 
+<section data-sec="önce basit bir örnek">
+  <h2>Önce günlük hayat: acıktınız 🍕</h2>
+  <p style="font-size:.8em;margin:.1em 0 .3em">Kafanızda hazır bir <b>“olmazsa şu” listesi</b> var: önce dolaba bak; olmazsa sipariş ver; o da olmazsa bakkala in. Listeyi <b>soldan sağa</b> dener, <b>ilk tutanda durursunuz</b>. Bu listeye <b>selector</b> (seçici) denir ve <b>?</b> ile gösterilir.</p>
+  <div class="demo" data-demo="btfood1"></div>
+  <aside class="notes">Sunumun en önemli üç slaytı bunlar; acele etmeyin. Her senaryoda önce “hangi kutu yeşil olacak, hangisi gri kalacak?” diye sorun, sonra oynatın. Vurgu: selector soldan sağa dener, ilk tutanda durur; hepsi tutmazsa kendisi de başarısız olur. Alttaki kutucuklarla öğrenciler kendi senaryolarını kurabilir.</aside>
+</section>
+
+<section data-sec="önce basit bir örnek">
+  <h2>Her çare aslında bir tarif 📋</h2>
+  <p style="font-size:.8em;margin:.1em 0 .3em">“Sipariş ver” tek hamle değil; <b>sırayla</b> yapılacak adımlar: şarj var mı? → uygulamayı aç → para yetiyor mu? → onayla. <b>Bir adım olmazsa gerisi yapılmaz</b>, tarif yarıda kalır. Bu adım dizisine <b>sequence</b> (dizi) denir ve <b>→</b> ile gösterilir. Yuvarlak kutu <b>soru</b> (koşul), köşeli kutu <b>iş</b> (eylem).</p>
+  <div class="demo" data-demo="btfood2"></div>
+  <aside class="notes">“Para yok” senaryosunda uygulamanın açıldığına ama onayın gri kaldığına dikkat çekin: sequence ilk olmayan adımda durur. Selector ile tam ters: selector ilk OLANDA durur, sequence ilk OLMAYANDA durur.</aside>
+</section>
+
+<section data-sec="önce basit bir örnek">
+  <h2>İkisini birleştirin: ilk davranış ağacınız 🌳</h2>
+  <p style="font-size:.78em;margin:.1em 0 .3em">Üstte <b>?</b> hangi planın deneneceğini seçer; altta her plan bir <b>→</b> tarifidir. Okuma kuralı: <b>yukarıdan aşağı, soldan sağa</b>. Her düğüm işi bitince üstündekine tek kelime söyler: <span class="c-green"><b>oldu</b></span> ya da <span class="c-red"><b>olmadı</b></span>. Davranış ağacı bundan ibaret; gerisi ayrıntı.</p>
+  <div class="demo" data-demo="btfood"></div>
+  <aside class="notes">Beş senaryoyu sırayla oynatın. “Dolap boş, para yok”ta ağaç Sipariş planının ortasında vazgeçip Bakkal planına geçer: en öğretici senaryo bu. Sonra öğrencilere sorun: “Annenizi arayıp yemek istemek” planını nereye eklerdiniz? (İstenen önceliğe göre araya tek bir dal.) Oyun karakterinin beyni de aynı kalıptır: “karnını doyur” yerine “oyuncuyla baş et”.</aside>
+</section>
+
 <section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #10223a 100%)">
   <div class="lv">LEVEL 0</div>
   <div class="ttl">FSM’den ağaca</div>
@@ -198,9 +219,9 @@
 </section>
 
 <section data-sec="düğüm türleri">
-  <h2>Klasik örnek: odaya gir 🚪</h2>
+  <h2>Aynı kalıp, oyun karakteriyle: odaya gir 🚪</h2>
   <div class="demo" data-demo="btdoor"></div>
-  <p class="mini">Üstteki üç kutu <b>dünyanın durumunu</b> belirler; ağaç buna göre üç planı <b>soldan sağa</b> dener. Renkler: <span class="c-green"><b>yeşil</b></span> = denendi, oldu · <span class="c-red"><b>kırmızı</b></span> = denendi, olmadı · <b>gri</b> = sıra ona hiç gelmedi. Her plan yalnızca <i>kendi</i> koşuluna bakar: “Anahtarla” planı için tek soru cebinizde anahtar olup olmadığıdır.</p>
+  <p class="mini">Ağaç hep aynı; değişen yalnızca <b>dünya</b>. Beş senaryoyu sırayla deneyin ve her birinde ağacın hangi dalda durduğunu <b>önce tahmin edin</b>. Renkler: <span class="c-green"><b>yeşil</b></span> = denendi, oldu · <span class="c-red"><b>kırmızı</b></span> = denendi, olmadı · <b>gri</b> = sıra ona hiç gelmedi.</p>
 </section>
 
 <section data-sec="düğüm türleri">

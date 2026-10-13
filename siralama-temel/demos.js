@@ -114,7 +114,7 @@
 
   /* ---------- 4) Gauss üçgeni: N(N-1)/2 ---------- */
   D.gauss = function (root) {
-    const W = 470, H = 340;
+    const W = 440, H = 400;
     const c = el('canvas'); const ctx = SL.setupCanvas(c, W, H);
     let N = 8, mirror = false;
     const info = el('div', { class: 'gauss-info' });
@@ -123,7 +123,7 @@
       ctx.clearRect(0, 0, W, H);
       const s = Math.min((W - 60) / N, (H - 40) / N);
       const ox = 50, oy = 10;
-      ctx.font = `600 ${Math.min(14, s * 0.5)}px "JetBrains Mono"`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.font = `600 ${Math.min(17, s * 0.5)}px "JetBrains Mono"`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
       for (let i = 0; i < N; i++) {
         ctx.fillStyle = t.muted; ctx.fillText('i=' + i, ox - 6, oy + i * s + s / 2);
         for (let j = 0; j < N; j++) {
@@ -692,7 +692,7 @@
         const row = el('div', { class: 'tet-row' });
         s.forEach((p, i) => row.append(el('span', { class: 'tet' + (k === 'bag' && i % 7 === 0 ? ' bag' : ''), style: `background:${COL[p]}` }, p)));
         seqEl.append(el('div', { class: 'race-title' }, name), row,
-          el('div', { class: 'mini' }, '100.000 parçada en uzun “I” kuraklığı: ', el('b', { class: k === 'bag' ? 'c-green' : 'c-red' }, drought(big) + ' parça')));
+          el('div', { class: 'tet-cap' }, '100.000 parçada en uzun “I” kuraklığı: ', el('b', { class: k === 'bag' ? 'c-green' : 'c-red' }, drought(big) + ' parça')));
       });
     };
     root.append(el('div', { class: 'sv-controls' }, btn('🎲 Yeniden üret', run, 'primary')), seqEl);

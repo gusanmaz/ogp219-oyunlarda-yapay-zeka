@@ -285,7 +285,7 @@ html, body, .reveal-viewport { background: var(--bg); color: var(--ink); }
 .shuf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .shuf-svg { width: 100%; }
 
-.tet-wrap { font-size: 16px; }
+.tet-wrap { font-size: 16px; } .tet-cap { font-size: 17px; color: var(--ink-2); margin-bottom: 10px; }
 .tet-row { display: flex; flex-wrap: wrap; gap: 3px; margin: 4px 0 6px; }
 .tet { width: 31px; height: 31px; border-radius: 4px; display: grid; place-items: center; font: 700 13px "JetBrains Mono"; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.4); }
 .tet.bag { margin-left: 8px; }
@@ -698,6 +698,12 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .pd-stack > div.top { background: var(--purple); color: #fff; }
 /* davranış ağacı diyagramı */
 .bt-diag { min-height: 120px; }
+.btd-sc .btn { font-size: 15px; padding: 5px 10px; } .btd-sc { gap: 6px 8px; }
+.btd-story { font-size: 19px; background: color-mix(in srgb, var(--amber) 14%, var(--card)); border-left: 5px solid var(--amber); border-radius: 8px; padding: 6px 12px; margin: 4px 0 6px; }
+.btd-wrap { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.btd-log { font-size: 16px; line-height: 1.32; } .btd-log div { padding: 2px 6px; border-radius: 6px; } .btd-log span { display: inline-block; width: 20px; font-weight: 900; }
+.btd-log .l-ok span { color: var(--green); } .btd-log .l-no span { color: var(--red); } .btd-log .l-no { color: var(--red); } .btd-log .now { background: color-mix(in srgb, var(--blue) 14%, var(--card)); } .btd-log .hint { color: var(--muted); }
+.btd-moral { font-size: 15.5px; margin-top: 6px; color: var(--ink-2); } .btd-own { font-size: 14px; color: var(--muted); } .btd-own .ctl { margin-left: 8px; }
 .bt-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); margin: 2px 0 6px; }
 .bt-legend span[style]::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--c); margin-right: 5px; vertical-align: -1px; }
 .tree-note { min-height: 1.6em; }

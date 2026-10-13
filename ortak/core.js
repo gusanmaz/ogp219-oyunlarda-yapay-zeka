@@ -451,12 +451,41 @@
     // Emniyet: içerik 720 piksellik slayt alanına sığmazsa (farklı çözünürlük/yazı tipi, büyüyen demo çıktısı) slaydı küçült
     const fit = () => {
       const sl = Reveal.getCurrentSlide(); if (!sl || sl.classList.contains('level')) return;
-      sl.style.zoom = '';
+      sl.style.zoom = ''; codeFit(sl);
       const h = sl.scrollHeight, room = 700;
       const used0 = bottom(sl);
       if (h > room + 4 && used0 > room - 40) { sl.style.zoom = Math.max(0.6, room / h).toFixed(3); return; }
-      grow(sl);
+      grow(sl); growText(sl);
     };
+    // zoom uygulanmış öğelerde offsetHeight yanıltır; ekrandaki dikdörtgenden ölç
+    const bottomR = sl => { const r0 = sl.getBoundingClientRect(), sc = r0.width / sl.offsetWidth || 1; let b = 0; for (const c of sl.children) { if (!c.offsetHeight || getComputedStyle(c).position === 'absolute') continue; b = Math.max(b, (c.getBoundingClientRect().bottom - r0.top) / sc); } return b; };
+    // Tablo ya da kod içeren, çizimsiz bir slaytta sayfanın altı boş kalıyorsa içeriği büyüt (küçük tablo + boş sayfa olmasın).
+    const growText = sl => {
+      const kids = [...sl.children].filter(c => !c.matches('h1, h2, aside, .abbr-foot, script, style'));
+      kids.forEach(c => { if (c.dataset.gz) { c.style.zoom = ''; delete c.dataset.gz; } });
+      if (sl.classList.contains('no-grow') || sl.classList.contains('title') || !sl.querySelector('table, pre')) return;
+      if (sl.querySelector('canvas, svg, iframe, video, img, .CodeMirror, textarea, [data-demo], [data-sim], [data-lab]') || (demoSel && sl.querySelector(demoSel))) return;
+      if (kids.some(c => c.style.zoom)) return;
+      const h2 = sl.querySelector(':scope > h2'), top = h2 ? h2.offsetTop + h2.offsetHeight : 0, ch = bottom(sl) - top;
+      if (ch < 40) return;
+      let z = Math.min(1.34, (610 - top) / ch); if (z < 1.1) return;
+      const wide = () => { const R = sl.getBoundingClientRect().right + 2; return kids.some(c => c.scrollWidth > c.clientWidth + 3 || c.getBoundingClientRect().right > R || [...c.querySelectorAll('table, td, pre')].some(e => e.getBoundingClientRect().right > R)); };
+      for (let k = 0; k < 8; k++) {
+        kids.forEach(c => { c.style.zoom = z.toFixed(3); c.dataset.gz = 1; }); codeFit(sl);
+        if (bottomR(sl) <= 640 && !wide()) return;
+        z *= 0.95; if (z < 1.08) break;
+      }
+      kids.forEach(c => { c.style.zoom = ''; delete c.dataset.gz; }); codeFit(sl);
+    };
+    // Kod bloğu yatayda taşıyorsa (yorumlar sağda kesiliyorsa) yazıyı sığana kadar küçült; %72'nin altına inmez.
+    const codeFit = sl => sl.querySelectorAll('pre code').forEach(c => {
+      if (!c.clientWidth) return;
+      c.style.fontSize = '';
+      if (c.scrollWidth <= c.clientWidth + 2) return;
+      const px = parseFloat(getComputedStyle(c).fontSize), pad = 30;
+      const f = Math.max(0.72, (c.clientWidth - pad) / (c.scrollWidth - pad) * 0.985);
+      c.style.fontSize = (px * f).toFixed(2) + 'px';
+    });
     // içeriğin gerçek alt kenarı (mutlak konumlu ve gizli öğeler hariç)
     const bottom = sl => { let b = 0; for (const c of sl.children) { if (!c.offsetHeight || getComputedStyle(c).position === 'absolute') continue; b = Math.max(b, c.offsetTop + c.offsetHeight); } return b; };
     // Tersi: slaytta tek bir demo var ve altı boş kalıyorsa demoyu büyüt (sıkışık görünmesin).

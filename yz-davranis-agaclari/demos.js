@@ -188,35 +188,126 @@
   };
 
   /* ---------- kapı örneği: selector = B planı, sequence = tarif ---------- */
+  /* ---------- senaryolu ağaç: aynı ağaç, farklı dünya → farklı yol ----------
+     Düğümlere yes/no cümleleri eklenir; her senaryo bir dünya durumudur. */
+  const C = (name, key, yes, no) => mk('cond', name, { key, yes, no });
+  const A = (name, ok, yes, no) => mk('act', name, { action: name, ok, yes, no });
+  function scenario(root, o) {
+    const tree = o.tree, s = Object.assign({}, o.SC[o.start || 0][1]);
+    const byId = {}; (function w(n) { byId[n.id] = n; (n.kids || []).forEach(w); })(tree);
+    const say = (n, r) => {
+      const ok = r === 'SUCCESS';
+      if (n === tree) return ok ? o.win : o.fail;
+      if (n.type === 'seq') return ok ? `<b>“${n.name}” planı tuttu.</b>` : `<b>“${n.name}” planı tutmadı</b> → sıradakine geç.`;
+      return (ok ? n.yes : n.no) || n.name;
+    };
+    const story = el('div', { class: 'btd-story' }), diag = el('div', { class: 'bt-diag' }), log = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
+    let trace = [], cur = 0;
+    const draw = k => {
+      const part = trace.slice(0, k);
+      diag.innerHTML = treeSVG(tree, Object.fromEntries(part), { W: o.W || 800, H: o.H || 250 });
+      log.innerHTML = part.length ? part.map(([id, r], i) => `<div class="${r === 'SUCCESS' ? 'l-ok' : 'l-no'}${i === k - 1 ? ' now' : ''}"><span>${r === 'SUCCESS' ? '✓' : '✗'}</span>${say(byId[id], r)}</div>`).join('') : '<div class="hint">▶ Oynat’a basın: ağaç yukarıdan aşağı, soldan sağa adım adım gezilecek.</div>';
+      const done = k === trace.length, visited = new Set(trace.map(x => x[0])), skipped = Object.values(byId).filter(n => !visited.has(n.id) && (n.type === 'cond' || n.type === 'act')).length;
+      moral.innerHTML = !done ? '' : '💡 ' + (o.moral ? o.moral(s, skipped, trace[trace.length - 1][1] === 'SUCCESS') : (skipped ? `Gri kalan <b>${skipped}</b> yaprağa sıra hiç gelmedi.` : 'Hiç gri düğüm yok: her şey denendi.'));
+      if (k > 0 && k !== cur && SL.sfx) { const r = trace[k - 1][1] === 'SUCCESS'; try { SL.sfx(done ? (r ? 'alert' : 'lose') : r ? 'waka' : 'tak'); } catch (e) {} }
+      cur = k;
+    };
+    const fp = new SL.FramePlayer(k => draw(k), { speed: 1.4 });
+    const keys = Object.keys(o.NAMES), boxes = {};
+    const load = (txt, play) => {
+      trace = []; tick(tree, s, { action: null }, trace);
+      story.innerHTML = '📖 ' + (txt || 'Kendi senaryonuz: ' + keys.map(k => (s[k] ? '✔ ' : '✘ ') + o.NAMES[k]).join(' · '));
+      keys.forEach(k => (boxes[k].checked = !!s[k]));
+      cur = 0; fp.load(Array.from({ length: trace.length + 1 }, (_, i) => i)); if (play) fp.play();
+    };
+    const scBtns = o.SC.map(([name, st, txt]) => { const b = btn(name, () => { Object.assign(s, st); scBtns.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(txt, true); }); return b; });
+    keys.forEach(k => { boxes[k] = el('input', { type: 'checkbox', onchange: e => { s[k] = e.target.checked; scBtns.forEach(x => x.classList.remove('primary')); load(null, true); } }); });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...scBtns), story,
+      el('div', { class: 'btd-wrap' }, el('div', {}, diag, o.simple ? (() => { const d = el('div', { class: 'bt-legend' }); d.innerHTML = '<span style="--c:var(--green)">denendi, oldu</span><span style="--c:var(--red)">denendi, olmadı</span><span style="--c:var(--rule)">sıra ona hiç gelmedi</span>'; return d; })() : legend()), el('div', {}, log, moral)),
+      el('div', { class: 'sv-controls' }, SL.transport(fp, { min: 0.4, max: 6 }), el('span', { class: 'btd-own' }, 'Kendi senaryonuz: ', ...keys.map(k => el('label', { class: 'ctl' }, boxes[k], ' ' + o.NAMES[k])))));
+    const st = o.start || 0; scBtns[st].classList.add('primary'); load(o.SC[st][2], false);
+    SL.onTheme(() => fp.render());
+    return { stop: () => fp.pause() };
+  }
+
+  /* 1) yalnızca selector: acıkınca B planı listesi */
+  D.btfood1 = function (root) {
+    nid = 600;
+    return scenario(root, {
+      H: 230, W: 760, simple: true, start: 0,
+      tree: sel('Karnını doyur',
+        A('Dolaptakini ye', 'fridge', 'Dolabı açtı: dünden kalan makarna var, yedi.', 'Dolabı açtı: bomboş.'),
+        A('Sipariş ver', 'phone', 'Telefondan pizza söyledi.', 'Telefona uzandı: şarjı bitmiş.'),
+        A('Bakkala git', 'shop', 'Bakkala indi, ekmek peynir aldı.', 'Bakkala indi: kepenk kapalı.')),
+      NAMES: { fridge: 'dolapta yemek var', phone: 'telefon şarjlı', shop: 'bakkal açık' },
+      SC: [
+        ['🍝 Dolap dolu', { fridge: true, phone: true, shop: true }, 'Akşam eve geldiniz, acıktınız. Dolapta dünden kalan makarna var.'],
+        ['📱 Dolap boş', { fridge: false, phone: true, shop: true }, 'Dolap boş. Telefonunuz şarjlı.'],
+        ['🏪 Dolap boş, şarj bitik', { fridge: false, phone: false, shop: true }, 'Dolap boş, telefonun şarjı bitmiş. Bakkal açık.'],
+        ['😭 Gece 3', { fridge: false, phone: false, shop: false }, 'Gece 3: dolap boş, şarj bitik, bakkal kapalı.']],
+      win: '<b>“Karnını doyur” BAŞARILI:</b> bir çare tuttu 🎉', fail: '<b>“Karnını doyur” BAŞARISIZ:</b> hiçbir çare tutmadı. Aç yatılacak 😭',
+      moral: (s, skip, ok) => ok ? (skip ? `İlk tutan çarede <b>durdu</b>; sağdaki ${skip} çareye bakmadı bile. Selector (?) budur: “olmazsa sıradaki”.` : 'Son çare tuttu: önce soldakilerin hepsi denendi.') : 'Selector ancak <b>bütün</b> çocukları başarısız olursa başarısız olur.'
+    });
+  };
+  /* 2) yalnızca sequence: bir plan = adım adım tarif */
+  D.btfood2 = function (root) {
+    nid = 620;
+    return scenario(root, {
+      H: 230, W: 760, simple: true, start: 0,
+      tree: seq('Sipariş ver',
+        C('telefon şarjlı mı?', 'phone', 'Telefona baktı: şarj var.', 'Telefona baktı: şarj bitmiş.'),
+        A('Uygulamayı aç', true, 'Yemek uygulamasını açtı.'),
+        C('para yetiyor mu?', 'money', 'Bakiyeye baktı: yetiyor.', 'Bakiyeye baktı: yetmiyor.'),
+        A('Siparişi onayla', true, 'Siparişi onayladı. Pizza yolda!')),
+      NAMES: { phone: 'telefon şarjlı', money: 'para yetiyor' },
+      SC: [
+        ['🍕 Her şey yolunda', { phone: true, money: true }, 'Telefon şarjlı, hesapta para var.'],
+        ['💸 Para yok', { phone: true, money: false }, 'Telefon şarjlı ama ay sonu: hesapta para yok.'],
+        ['🪫 Şarj bitik', { phone: false, money: true }, 'Para var ama telefonun şarjı bitmiş.']],
+      win: '<b>“Sipariş ver” BAŞARILI:</b> bütün adımlar tamam 🎉', fail: '<b>“Sipariş ver” BAŞARISIZ:</b> bir adım olmadı, tarif yarıda kaldı.',
+      moral: (s, skip, ok) => ok ? 'Sequence (→) ancak <b>bütün</b> adımlar olursa başarılıdır.' : `İlk olmayan adımda <b>durdu</b>${skip ? `; sağdaki ${skip} adıma hiç geçmedi` : ''}. Sequence (→) budur: “bir adım olmazsa tarif çöker”.`
+    });
+  };
+  /* 3) ikisi birlikte: ilk davranış ağacı */
+  D.btfood = function (root) {
+    nid = 640;
+    return scenario(root, {
+      H: 250, W: 860, simple: true, start: 1,
+      tree: sel('Karnını doyur',
+        seq('Evde ye', C('dolap dolu mu?', 'fridge', 'Dolabı açtı: makarna var.', 'Dolabı açtı: bomboş.'), A('Isıt, ye', true, 'Isıttı, yedi.')),
+        seq('Sipariş ver', C('şarj var mı?', 'phone', 'Telefona baktı: şarj var.', 'Telefona baktı: şarj bitmiş.'), C('para var mı?', 'money', 'Bakiyeye baktı: yetiyor.', 'Bakiyeye baktı: yetmiyor.'), A('Onayla', true, 'Siparişi onayladı. Pizza yolda!')),
+        seq('Bakkala git', C('bakkal açık mı?', 'shop', 'Camdan baktı: bakkalın ışığı yanıyor.', 'Camdan baktı: kepenk kapalı.'), A('Alışveriş yap', true, 'İndi, ekmek peynir aldı.'))),
+      NAMES: { fridge: 'dolapta yemek', phone: 'şarj var', money: 'para var', shop: 'bakkal açık' },
+      SC: [
+        ['🍝 Dolap dolu', { fridge: true, phone: true, money: true, shop: true }, 'Dolapta makarna var. Telefon, para, bakkal: hepsi hazır ama gerek kalacak mı?'],
+        ['🍕 Dolap boş', { fridge: false, phone: true, money: true, shop: true }, 'Dolap boş. Telefon şarjlı, hesapta para var.'],
+        ['💸 Dolap boş, para yok', { fridge: false, phone: true, money: false, shop: true }, 'Dolap boş, telefon şarjlı ama para yok. Bakkal açık (veresiye yazar).'],
+        ['🪫 Dolap boş, şarj bitik', { fridge: false, phone: false, money: true, shop: true }, 'Dolap boş, şarj bitik. Bakkal açık.'],
+        ['😭 Gece 3', { fridge: false, phone: false, money: false, shop: false }, 'Gece 3: dolap boş, şarj bitik, para yok, bakkal kapalı.']],
+      win: '<b>Kök BAŞARILI:</b> bir plan tuttu, karın doydu 🎉', fail: '<b>Kök BAŞARISIZ:</b> üç plan da tutmadı. Aç yatılacak 😭',
+      moral: (s, skip, ok) => ok ? (skip ? `Gri kalan <b>${skip}</b> yaprağa sıra hiç gelmedi. Üstte “?” plan seçer, altta “→” seçilen planı adım adım yürütür.` : 'En sağdaki plan tuttu: soldakilerin hepsi önce denendi ve olmadı.') : 'Her planın ilk sorusu “hayır” dedi; hiçbir eyleme sıra gelmedi.'
+    });
+  };
+  /* 4) aynı kalıp, oyun örneği: odaya gir */
   D.btdoor = function (root) {
     nid = 500;
-    const okAct = (name, ok) => mk('act', name, { action: name, ok });
-    const tree = sel('Odaya gir',
-      seq('Kapıdan gir', cond('kapı açık mı?', 'open'), okAct('İçeri yürü', true)),
-      seq('Anahtarla', cond('anahtar var mı?', 'key'), okAct('Kilidi aç', true), okAct('İçeri yürü', true)),
-      seq('Kır', okAct('Kapıyı tekmele', 'weak'), okAct('İçeri yürü', true)));
-    const s = { open: false, key: false, weak: true };
-    const NAMES = { open: 'kapı açık', key: 'anahtar cebimde', weak: 'kapı çürük (tekme işe yarar)' };
-    const diag = el('div', { class: 'bt-diag' }), out = el('div', { class: 'sv-note' });
-    const run = () => {
-      const tr = []; const r = tick(tree, s, { action: null }, tr);
-      diag.innerHTML = treeSVG(tree, Object.fromEntries(tr), { H: 230 });
-      // her planın neden başarılı / başarısız olduğunu ya da neden hiç denenmediğini cümleyle anlat
-      const P = [
-        ['1. plan · Kapıdan gir', s.open ? 'kapı açık → içeri yürüdü' : 'kapı açık değil', s.open],
-        ['2. plan · Anahtarla', s.key ? 'anahtar cebimde → kilidi açtı, içeri yürüdü' : 'anahtar cebimde değil (kapının çürük olup olmaması bu planı ilgilendirmez)', s.key],
-        ['3. plan · Kır', s.weak ? 'kapı çürük → tekme işe yaradı, içeri yürüdü' : 'kapı sağlam → tekme işe yaramadı', s.weak]];
-      let done = false;
-      const lines = P.map(([name, why, ok]) => {
-        if (done) return `<div style="opacity:.55">⚪ <b>${name}</b>: hiç denenmedi — daha öncelikli bir plan zaten işe yaradı (gri düğümler)</div>`;
-        if (ok) { done = true; return `<div class="c-green">✅ <b>${name}</b>: ${why}</div>`; }
-        return `<div class="c-red">❌ <b>${name}</b>: ${why} → sıradaki plana geç</div>`;
-      }).join('');
-      out.innerHTML = lines + `<div style="margin-top:6px">${r === 'SUCCESS' ? '<b>Sonuç:</b> kök BAŞARILI — karakter odada. Planlar <b>soldan sağa</b> denenir ve ilk işe yarayanda durulur; anahtarınız varsa çürük kapıyı bile tekmelemez.' : '<b>Sonuç:</b> kök BAŞARISIZ — üç plan da tutmadı. Üst düğüm başka bir şey denemeli (ör. pencereye bak).'}</div>`;
-    };
-    const boxes = Object.keys(s).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { s[k] = e.target.checked; run(); } }); cb.checked = s[k]; return cb; })(), ' ' + NAMES[k]));
-    root.append(el('div', { class: 'sv-controls' }, el('b', null, 'Dünya: '), ...boxes), diag, legend(), out);
-    run(); SL.onTheme(run);
+    return scenario(root, {
+      H: 250, W: 860, start: 1,
+      tree: sel('Odaya gir',
+        seq('Kapıdan gir', C('kapı açık mı?', 'open', 'Kapı koluna bastı: kapı açık.', 'Kapı koluna bastı: kilitli.'), A('İçeri yürü', true, 'İçeri yürüdü.')),
+        seq('Anahtarla', C('anahtar var mı?', 'key', 'Cebini yokladı: anahtar var.', 'Cebini yokladı: anahtar yok.'), A('Kilidi aç', true, 'Anahtarı çevirdi, kilit açıldı.'), A('İçeri yürü', true, 'İçeri yürüdü.')),
+        seq('Kır', A('Kapıyı tekmele', 'weak', 'Tekmeyi bastı: çürük tahta kırıldı.', 'Tekmeyi bastı: çelik kapı kımıldamadı (ayağı acıdı).'), A('İçeri yürü', true, 'İçeri yürüdü.'))),
+      NAMES: { open: 'kapı açık', key: 'anahtar cebimde', weak: 'kapı çürük' },
+      SC: [
+        ['🚪 Kapı aralık', { open: true, key: false, weak: false }, 'Nöbetçi koridorun sonundaki odaya girmek istiyor. Kapı zaten aralık duruyor.'],
+        ['🔑 Kilitli, anahtar cepte', { open: false, key: true, weak: false }, 'Kapı kilitli ve sağlam bir çelik kapı. Ama nöbetçinin cebinde anahtar var.'],
+        ['🦶 Anahtar yok, kapı çürük', { open: false, key: false, weak: true }, 'Kapı kilitli, anahtar yok. Kapı eski, çürük bir tahta kapı.'],
+        ['🧱 Anahtar yok, kapı çelik', { open: false, key: false, weak: false }, 'Kapı kilitli, anahtar yok, kapı çelik. Elde hiçbir çare kalmadı.'],
+        ['🤔 Anahtar var, kapı da çürük', { open: false, key: true, weak: true }, 'İki çare birden var: anahtar cepte, kapı da çürük. Hangisini seçer?']],
+      win: '<b>Kök BAŞARILI:</b> bir plan tuttu, karakter odada 🎉', fail: '<b>Kök BAŞARISIZ:</b> üç plan da tutmadı. Üstteki düğüm başka bir şey denemeli (pencere?).',
+      moral: (s, skip, ok) => !ok ? 'Hiç gri düğüm yok: ağaç her çareyi denedi, hiçbiri tutmadı.' : (s.key && s.weak && !s.open ? 'Anahtar varken kapıyı tekmelemedi: “Anahtarla” planı solda, yani <b>daha öncelikli</b>.' : `Gri kalan <b>${skip}</b> yaprak hiç çalışmadı: daha öncelikli bir plan tutunca selector durur.`)
+    });
   };
 
   /* ---------- statik görünüm: FSM’deki nöbetçinin ağaç hâli ---------- */
