@@ -73,7 +73,7 @@
 
 <main class="wrap">
   <h2>Ders haritası 🗺️</h2>
-  <p class="lead">Konu sırası Princeton’ın <a href="https://algs4.cs.princeton.edu/lectures/" target="_blank" rel="noopener">Algorithms (Sedgewick &amp; Wayne)</a> dersini temel alır; anlatım sadeleştirildi ve oyun örnekleriyle zenginleştirildi. Büyük konular, Princeton’daki gibi alt konulara (ayrı sunumlara) bölünmüştür. Temel algoritmalar ve veri yapıları bölümünün 18 sunumunun hepsi hazır; Bölüm 6–11: oyun yapay zekâsı (haftalık ders planı + ek ileri konular; sıra, ön koşulları en aza indirecek şekilde düzenlendi).</p>
+  <p class="lead">Konu sırası Princeton’ın <a href="https://algs4.cs.princeton.edu/lectures/" target="_blank" rel="noopener">Algorithms (Sedgewick &amp; Wayne)</a> dersini temel alır; anlatım sadeleştirildi ve oyun örnekleriyle zenginleştirildi. Büyük konular, Princeton’daki gibi alt konulara (ayrı sunumlara) bölünmüştür. Temel algoritmalar ve veri yapıları bölümünün 18 sunumunun hepsi hazır; Bölüm 6: oyun geometrisi ve fiziği (Sedgewick’te olmayan ama oyunlarda her gün kullanılan algoritmalar). Bölüm 7–12: oyun yapay zekâsı (haftalık ders planı + ek ileri konular; sıra, ön koşulları en aza indirecek şekilde düzenlendi).</p>
 
   <div class="part">BÖLÜM 1 · TEMELLER</div>
   <ol class="units" start="1">
@@ -113,13 +113,20 @@
     <li class="unit ready"><div class="no">18</div><div><h3>En Kısa Yollar <span class="en">shortest paths</span></h3><p>Dijkstra · DAG’de en kısa yol · Bellman–Ford · oyunlarda yol bulmaya köprü</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="en-kisa-yollar/">Slaytlar ▶</a></div></li>
   </ol>
 
-  <div class="part">BÖLÜM 6 · OYUN YAPAY ZEKÂSINA GİRİŞ</div>
+  <!--GEO-->
+  <div class="part">BÖLÜM 6 · OYUN GEOMETRİSİ VE FİZİĞİ</div>
+  <ol class="units">
+    <li class="unit ready" data-slug="geo-temeller"><div class="no">G1</div><div><h3>Geometri Temelleri <span class="en">orientation, intersection, convex hull</span></h3><p>Yön testi (çapraz çarpım) · doğru parçası kesişimi · nokta çokgenin içinde mi · ayakkabı bağı formülü · dışbükey zarf</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="geo-temeller/">Slaytlar ▶</a></div></li>
+  </ol>
+  <!--/GEO-->
+
+  <div class="part">BÖLÜM 7 · OYUN YAPAY ZEKÂSINA GİRİŞ</div>
   <ol class="units">
     <li class="unit ready" data-slug="yz-hazirlik"><div class="no">Y0</div><div><h3>Oyun YZ’si İçin Hazırlık <span class="en">vectors &amp; game loop</span></h3><p>Ön koşul sunumu: vektörler, nokta/çapraz çarpım, açı, lerp, delta time, oyun döngüsü, Unity ve p5.js temelleri</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-hazirlik/">Slaytlar ▶</a></div></li>
     <li class="unit ready" data-slug="yz-giris"><div class="no">Y1</div><div><h3>Oyun Yapay Zekâsına Giriş <span class="en">introduction to game AI</span></h3><p>Hafta 1 · ajan, NPC, algıla-düşün-davran, zorluk ayarı, oyun YZ’si ile akademik YZ farkı, Pac-Man hayaletleri</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-giris/">Slaytlar ▶</a></div></li>
   </ol>
 
-  <div class="part">BÖLÜM 7 · KARAR VERME</div>
+  <div class="part">BÖLÜM 8 · KARAR VERME</div>
   <ol class="units">
     <li class="unit ready" data-slug="yz-fsm"><div class="no">Y2</div><div><h3>Sonlu Durum Makineleri <span class="en">finite state machines</span></h3><p>Hafta 2 · durumlar, geçişler, hiyerarşik FSM, Unity Animator, kütüphaneler</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-fsm/">Slaytlar ▶</a></div></li>
     <li class="unit ready" data-slug="yz-davranis-agaclari"><div class="no">Y3</div><div><h3>Davranış Ağaçları <span class="en">behavior trees</span></h3><p>Hafta 7 · selector, sequence, decorator, blackboard, Halo 2, Unity Behavior / Unreal BT</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-davranis-agaclari/">Slaytlar ▶</a></div></li>
@@ -128,7 +135,7 @@
     <li class="unit ready" data-slug="yz-oyun-agaclari"><div class="no">Y6</div><div><h3>Oyun Ağaçları <span class="en">minimax, alpha-beta, MCTS</span></h3><p>Ek konu · sıra tabanlı oyunlarda arama: satranç, Go, kart oyunları</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-oyun-agaclari/">Slaytlar ▶</a></div></li>
   </ol>
 
-  <div class="part">BÖLÜM 8 · HAREKET VE YOL BULMA</div>
+  <div class="part">BÖLÜM 9 · HAREKET VE YOL BULMA</div>
   <ol class="units">
     <li class="unit ready" data-slug="yz-steering"><div class="no">Y7</div><div><h3>Yönlendirme Davranışları <span class="en">steering behaviors</span></h3><p>Hafta 5 · seek, flee, arrive, wander, pursuit, engelden kaçınma</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-steering/">Slaytlar ▶</a></div></li>
     <li class="unit ready" data-slug="yz-astar"><div class="no">Y8</div><div><h3>A* ile Yol Bulma <span class="en">A* pathfinding</span></h3><p>Hafta 3 · graf ve ızgara temsili, sezgisel fonksiyonlar, yol düzeltme, JPS</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-astar/">Slaytlar ▶</a></div></li>
@@ -136,13 +143,13 @@
     <li class="unit ready" data-slug="yz-grup"><div class="no">Y10</div><div><h3>Grup Yapay Zekâsı <span class="en">flocking &amp; formations</span></h3><p>Hafta 10 · boids, sürü davranışı, formasyonlar, kalabalık simülasyonu</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-grup/">Slaytlar ▶</a></div></li>
   </ol>
 
-  <div class="part">BÖLÜM 9 · ALGI VE TAKTİK</div>
+  <div class="part">BÖLÜM 10 · ALGI VE TAKTİK</div>
   <ol class="units">
     <li class="unit ready" data-slug="yz-algilama"><div class="no">Y11</div><div><h3>Algılama Sistemleri <span class="en">perception</span></h3><p>Hafta 6 · görüş konisi, işitme, hafıza ve dikkat; Thief, Metal Gear, Alien: Isolation</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-algilama/">Slaytlar ▶</a></div></li>
     <li class="unit ready" data-slug="yz-taktik"><div class="no">Y12</div><div><h3>Taktik Yapay Zekâ <span class="en">tactical AI</span></h3><p>Hafta 11 · siper, kuşatma, mevzi seçimi, etki haritaları, EQS</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-taktik/">Slaytlar ▶</a></div></li>
   </ol>
 
-  <div class="part">BÖLÜM 10 · ÖĞRENEN VE ÜRETEN YAPAY ZEKÂ</div>
+  <div class="part">BÖLÜM 11 · ÖĞRENEN VE ÜRETEN YAPAY ZEKÂ</div>
   <ol class="units">
     <li class="unit ready" data-slug="yz-ogrenme"><div class="no">Y13</div><div><h3>Öğrenme Tabanlı Oyun YZ’si <span class="en">reinforcement learning &amp; ML-Agents</span></h3><p>Hafta 12 · pekiştirmeli öğrenme, Q-öğrenme, Unity ML-Agents, gerçek hikâyeler</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-ogrenme/">Slaytlar ▶</a></div></li>
     <li class="unit ready" data-slug="yz-llm"><div class="no">Y14</div><div><h3>Büyük Dil Modelleriyle NPC’ler <span class="en">LLM-driven NPCs</span></h3><p>Ek konu · diyalog, hafıza, araç çağırma, Generative Agents, maliyet ve güvenlik</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-llm/">Slaytlar ▶</a></div></li>
@@ -151,7 +158,7 @@
     <li class="unit ready" data-slug="yz-zorluk"><div class="no">Y17</div><div><h3>Zorluk Ayarı ve Oyuncu Modelleme <span class="en">dynamic difficulty adjustment</span></h3><p>Ek konu · AI Director, lastik bant etkisi, oyuncu analitiği</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-zorluk/">Slaytlar ▶</a></div></li>
   </ol>
 
-  <div class="part">BÖLÜM 11 · MÜHENDİSLİK VE PROJE</div>
+  <div class="part">BÖLÜM 12 · MÜHENDİSLİK VE PROJE</div>
   <ol class="units">
     <li class="unit ready" data-slug="yz-performans"><div class="no">Y18</div><div><h3>YZ Hata Ayıklama ve Performans <span class="en">debugging &amp; optimization</span></h3><p>Hafta 13 · görselleştirme, profil çıkarma, LOD AI, güncelleme sıklığı</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-performans/">Slaytlar ▶</a></div></li>
     <li class="unit ready" data-slug="yz-proje"><div class="no">Y19</div><div><h3>Proje: YZ Modüllü Oyun Prototipi <span class="en">project guide</span></h3><p>Hafta 14 · proje fikirleri, değerlendirme ölçütleri, sunum</p></div><div class="actions"><span class="badge ok">hazır</span><a class="go" href="yz-proje/">Slaytlar ▶</a></div></li>

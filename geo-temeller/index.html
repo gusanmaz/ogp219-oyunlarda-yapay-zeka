@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geometri Temelleri</title>
+<meta name="description" content="Oyun geometrisi: yön testi (çapraz çarpım), doğru parçası kesişimi, nokta çokgenin içinde mi (ışın atma), ayakkabı bağı formülü, dışbükey zarf (monoton zincir); p5.js kodları ve canlı demolar.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d2f3a 0%, #101a24 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G1</div>
+  <div class="ttl" style="font-size:64px">Geometri Temelleri</div>
+  <div class="sub"><i>Yön testi, kesişim, nokta çokgenin içinde mi, dışbükey zarf</i> — her oyunun görünmeyen cetveli</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo1"></div>
+  <aside class="notes">Yeni bölümün ilk sunumu. Arka planda hareket eden noktaların dışbükey zarfı canlı hesaplanıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Yön testi</b> — tek bir çapraz çarpım: sol mu, sağ mı, düz mü?</li><li><b>Kesişim</b> — iki doğru parçası kesişiyor mu; mermi duvara nerede çarptı?</li><li><b>Nokta çokgenin içinde mi?</b> — ışın atma kuralı; haritada bölge seçmek</li><li><b>Alan ve dönüş yönü</b> — ayakkabı bağı formülü</li><li><b>Dışbükey zarf</b> — lastik bant, sırala + yığın (monoton zincir)</li><li><b>Kod</b> — p5.js ile dört fonksiyon + beş laboratuvar</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>bir merminin duvara çarpıp çarpmadığını, tıklanan noktanın hangi bölgede olduğunu ve bir nokta bulutunun dış sınırını <b>açı, sinüs, bölme kullanmadan</b>, yalnızca çarpma ve çıkarmayla hesaplayabileceksiniz. Çarpışma, görüş ve navmesh sunumlarının hepsi bu dört fonksiyonun üstüne kurulu.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: HARİTADA TIKLADIĞIM YER HANGİ ÜLKE?</span>
+<p>Bir strateji oyununda haritaya tıklıyorsunuz ve oyun “Anadolu” bölgesini seçiyor. Bölgenin sınırı yüzlerce köşeli, girintili çıkıntılı bir çokgen. Oyun, tıkladığınız noktanın o çokgenin <b>içinde</b> olduğunu nasıl anlıyor?</p>
+<ul style="font-size:.9em"><li><span class="fragment">“Merkezine uzaklığa bakarım” → çalışmaz: uzun, kıvrık bir bölgenin merkezi dışarıda bile kalabilir.</span></li><li><span class="fragment">“Bütün pikselleri önceden boyarım” → çalışır! Bazı oyunlar tam olarak bunu yapar (birazdan).</span></li><li><span class="fragment">Geometrik cevap şaşırtıcı derecede basit: noktadan bir yöne <b>ışın</b> gönder, sınırı kaç kez kestiğini say.</span></li><li><span class="fragment">Bu sunumdaki her şey tek bir küçük sorunun tekrarı: <b>“Bu nokta, şu doğrunun hangi tarafında?”</b></span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektör, çapraz çarpım)</a><a class="" href="../yiginlar-kuyruklar/">Yığınlar (push / pop)</a><a class="" href="../mergesort/">Sıralama (N log N)</a></div>
+  <div class="prereq"><a class="opt" href="../bst-geometrik/">BST’nin Geometrik Uygulamaları</a><a class="opt" href="../algoritma-analizi/">Algoritma Analizi (büyüme hızı)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Y0’da çapraz çarpımı “hedef solumda mı, sağımda mı?” için kullanmıştık. Bu sunum o tek satırı alıp dört ayrı algoritmaya dönüştürüyor. Dışbükey zarf ise iki eski tanıdığı birleştiriyor: <b>sıralama</b> ve <b>yığın</b>.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bütün sunumda trigonometri yok. Bilmeniz gereken tek formül iki çarpma ve bir çıkarma; gerisi <code>if</code> ve döngü.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:17px"><tr><td>orientation test · CCW</td><td>yön testi · saat yönünün tersi</td><td>Üç noktanın sola mı, sağa mı döndüğünü söyleyen işaret</td></tr><tr><td>cross product</td><td>çapraz çarpım</td><td>2B’de tek sayı: a.x·b.y − a.y·b.x; işareti yönü, büyüklüğü alanı verir</td></tr><tr><td>collinear</td><td>doğrusal</td><td>Üç noktanın aynı doğru üzerinde olması (çapraz = 0)</td></tr><tr><td>line segment</td><td>doğru parçası</td><td>İki uç noktası olan, sonsuz olmayan doğru</td></tr><tr><td>point in polygon · ray casting</td><td>nokta çokgende · ışın atma</td><td>Bir noktanın kapalı şeklin içinde olup olmadığı · ışın gönderip kesişim sayma</td></tr><tr><td>convex · concave</td><td>dışbükey · içbükey</td><td>Girintisi olmayan şekil · girintisi olan şekil</td></tr><tr><td>convex hull</td><td>dışbükey zarf</td><td>Bir nokta kümesini saran en küçük dışbükey çokgen (lastik bant)</td></tr><tr><td>winding order</td><td>dönüş yönü</td><td>Köşelerin saat yönünde mi, tersine mi sıralandığı</td></tr><tr><td>epsilon · robustness</td><td>eşik payı · sağlamlık</td><td>Kayan nokta hatasına karşı küçük tolerans · sınır durumlarda yanlış cevap vermeme</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Yön testi</div><div class="sub">sol mu, sağ mı, düz mü?</div></div>
+</section>
+
+<section data-sec="yön">
+  <h2>Tek soru: C, A→B’nin hangi tarafında?</h2>
+<div class="cols c64">
+<div>
+<p style="font-size:.86em">A’dan B’ye yürüyorsunuz. C noktası solunuzda mı, sağınızda mı?</p>
+<p style="font-size:.86em">$$\text{çapraz} = (B_x - A_x)(C_y - A_y) - (B_y - A_y)(C_x - A_x)$$</p>
+<ul style="font-size:.8em"><li><b>pozitif</b> → bir tarafta, <b>negatif</b> → öbür tarafta</li><li><b>sıfır</b> → üçü aynı doğru üzerinde</li><li>büyüklüğü = ABC üçgeninin alanının <b>2 katı</b></li><li>açı yok, karekök yok, bölme yok: <b>çok ucuz ve tam sayılarla hatasız</b></li></ul></div>
+<div><div class="box warn" style="font-size:.82em"><span class="bt">⚠️ Ekranda y aşağı doğru!</span><p>Matematik kitabında pozitif = <b>sola</b> dönüş (saat yönünün tersi). Ekran koordinatında (p5.js, Unity UI) y aşağı arttığı için aynı sayı <b>sağa</b> dönüş demek.</p><p class="mini">Ezberlemeyin: bildiğiniz bir üçgenle bir kez deneyin, işareti not edin (Y0’daki işaret tuzağı).</p></div><div class="box game" style="font-size:.8em;margin-top:10px"><span class="bt">🎮 Nerede?</span>Taret hedefe hangi yöne dönsün · araç şeridin hangi tarafında · üçgen bana mı bakıyor (arka yüz ayıklama) · düşman çizgiyi geçti mi</div></div>
+</div>
+</section>
+
+<section data-sec="yön">
+  <h2>Canlı: yön testi 🧭</h2>
+<div class="demo" data-demo="orient"></div>
+  <aside class="notes">C’yi doğrunun üzerinden geçirin: sayı işaret değiştirir. C’yi doğruya paralel kaydırın: sayı değişmez (alan aynı).</aside>
+</section>
+
+<section data-sec="yön">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> siyah ok A→B; kesikli çizgi o okun sonsuz uzantısı. Düzlem ikiye ayrılıyor: mavi yarı (çapraz &gt; 0) ve turuncu yarı (çapraz &lt; 0).</li><li>C’yi kesikli çizginin üzerinden karşıya geçirin: alttaki sayının <b>işareti</b> o anda değişir.</li><li>C’yi çizgiye <b>paralel</b> kaydırın: sayı hiç değişmiyor. Neden? (Üçgenin tabanı ve yüksekliği aynı kalıyor: alan aynı.)</li><li>C’yi çizgiden uzaklaştırın: sayı büyür. Sayı “ne kadar solda” sorusunun da kaba bir ölçüsü.</li><li>A ile B’nin yerini değiştirin (B’yi A’nın soluna sürükleyin): renkler yer değiştirir. Yön testi <b>yöne</b> bağlıdır: A→B ile B→A zıt cevap verir.</li></ol></div>
+</section>
+
+<section data-sec="yön">
+  <h2>Hikâye: “neredeyse sıfır” ve duvardan geçen karakter</h2>
+<div class="cols c64">
+<div><ul style="font-size:.78em"><li>Çapraz tam 0 çıkarsa üç nokta doğrusaldır. Ama ondalıklı sayılarla hesap yapınca sonuç <code>0.0000001</code> ya da <code>−0.0000001</code> çıkabilir: aynı üç nokta için, sırasına göre <b>farklı cevap</b>.</li><li>Sonuç: karakter iki duvarın birleştiği köşeden “sızar”, mermi iki üçgenin tam arasından geçer, navmesh’te ajan bir kenarın üstünde titrer.</li><li><b>Üç çare:</b> (1) koordinatları tam sayı tutmak (ızgara oyunları, eski konsollar); (2) küçük bir <b>eşik payı</b>: <code>abs(çapraz) &lt; ε</code> ise “doğrusal” say; (3) ve tutarlılık: aynı kenarı her yerde aynı uç sırasıyla sınamak.</li></ul></div>
+<div><div class="box story" style="font-size:.8em"><span class="bt">📜 1996: sağlam yön testi</span><p>Jonathan Shewchuk, yön testinin kayan noktalı sayılarla <b>her zaman doğru</b> işaret vermesini sağlayan “uyarlamalı hassas” yöntemleri yayımladı. Bugün üçgenleme ve geometri kütüphanelerinin çoğu onun dört küçük fonksiyonunu kullanır.</p><p class="mini">Ders: bu sunumdaki en basit satır, geometri kodunun en çok hata çıkaran satırıdır.</p></div></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Kesişim</div><div class="sub">mermi duvara çarptı mı?</div></div>
+</section>
+
+<section data-sec="kesişim">
+  <h2>İki doğru parçası kesişiyor mu?</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Mermi bu karede A’dan B’ye gitti. Duvar C–D. Çarptı mı?</li><li><b>Fikir:</b> ikisi de birbirini ikiye ayırmalı.</li><li>C ve D, AB doğrusunun <b>farklı</b> taraflarında mı? → iki yön testi</li><li>A ve B, CD doğrusunun <b>farklı</b> taraflarında mı? → iki yön testi</li><li>Dördü de “evet” → kesişiyor. Toplam <b>dört</b> çapraz çarpım.</li><li>Özel durum: bir uç tam öbür parçanın üstünde (çapraz = 0) → “kutu içinde mi?” diye bak.</li></ul></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Nerede kesişiyor?</span><p>$$t = \frac{(C - A) \times (D - C)}{(B - A) \times (D - C)}$$</p><p>Kesişim = <code>A + t·(B − A)</code>. <code>t</code> 0 ile 1 arasında: merminin yolunun <b>yüzde kaçında</b> çarptığı. Birden çok duvar varsa <b>en küçük t</b> ilk çarpılandır.</p><p class="mini">Payda 0 ise parçalar paraleldir.</p></div></div>
+</div>
+</section>
+
+<section data-sec="kesişim">
+  <h2>Canlı: kesişim testi ✂️</h2>
+<div class="demo" data-demo="segint"></div>
+</section>
+
+<section data-sec="kesişim">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> mavi AB merminin bir karedeki yolu, sarı CD duvar. Sağdaki tabloda dört yön testinin işareti (+, −, 0) ve altında iki koşul.</li><li>B’yi duvarın öbür tarafına geçirin: “C ve D, AB’nin farklı tarafında” zaten doğruydu; şimdi ikinci koşul da ✔ oluyor ve kırmızı halka beliriyor.</li><li>AB’yi uzatmadan, duvarın <b>hizasında ama ucundan ötede</b> tutun: birinci koşul ✘. Doğrular kesişir, <b>parçalar</b> kesişmez.</li><li>“⇄ paralel yap”: dört işaretin ikisi aynı, kesişim yok; formüldeki payda 0.</li><li>Bir ucu öbür parçanın tam üstüne getirmeye çalışın: işaret 0 olur. İşte eşik payının gerektiği an.</li></ol></div>
+</section>
+
+<section data-sec="kesişim">
+  <h2>Hikâye: duvardan geçen mermi (tünelleme)</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Mermiyi her karede bir <b>nokta</b> olarak düşünürseniz: bu karede duvarın önünde, sonraki karede arkasında. Hiçbir karede duvarın <i>içinde</i> değil → çarpışma yok!</li><li>Hızlı mermi + ince duvar + düşük kare hızı = <b>tünelleme</b>. Oyun tarihinin en eski hatalarından.</li><li>Çare: merminin bu karedeki <b>yolunu</b> (önceki konum → yeni konum) bir doğru parçası olarak düşünüp duvarla <b>kesişim</b> testi yapmak. Bu sunumdaki fonksiyonun tam kullanım yeri.</li><li>Motorlardaki adı: “sürekli çarpışma tespiti” (Unity: <code>Collision Detection → Continuous</code>).</li></ul></div>
+<div><div class="box game" style="font-size:.82em"><span class="bt">🎮 Hız koşucularının sevdiği hata</span><p>Aynı açık karakterler için de geçerlidir: karakter bir karede çok yol alırsa duvarın öbür tarafına geçer. Birçok oyunun hız koşusu (speedrun) rekoru, karakteri bir karede çok hızlandırıp duvardan geçirme hilelerine dayanır.</p><p class="mini">Meraklısına: pannenkoek2012’nin “SM64’s Invisible Walls Explained” videosu, Super Mario 64’ün üçgen tabanlı çarpışma testlerindeki sınır durumlarını saatlerce inceler (Kaynaklar). Fizik sunumunda (G5) sabit zaman adımıyla tekrar döneceğiz.</p></div></div>
+</div>
+</section>
+
+<section data-sec="kesişim">
+  <div class="quiz" data-karildi="1" data-answer="C">
+    <div class="qhead">Quiz 1 · kesişim</div>
+    <div class="q">Bir mermi bu karede A’dan B’ye gidiyor ve yolu üç duvarı kesiyor. Kesişim parametreleri t = 0,7, t = 0,2 ve t = 0,45. Mermi hangi duvarda durmalı?</div>
+    <div class="opts"><button data-opt="A">t = 0,7 olan: en uzaktaki</button><button data-opt="B">t = 0,45 olan: ortadaki</button><button data-opt="C">t = 0,2 olan: yol üzerindeki ilk duvar</button><button data-opt="D">Üçünde birden</button></div>
+    <div class="explain"><code>t</code>, A’dan B’ye yolun yüzde kaçında çarpıldığını söyler. En küçük <code>t</code> en önce karşılaşılan duvardır; mermi orada durur ve diğerlerine hiç ulaşmaz. Işın izleme (raycast) fonksiyonlarının “en yakın çarpma” mantığı tam olarak budur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Nokta çokgenin içinde mi?</div><div class="sub">ışın gönder, kesişim say</div></div>
+</section>
+
+<section data-sec="içinde">
+  <h2>Işın atma kuralı</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Noktadan herhangi bir yöne (biz sağa) sonsuz bir <b>ışın</b> gönder.</li><li>Çokgenin kenarlarını kaç kez kesiyor, say.</li><li><b>Tek</b> → içeride. <b>Çift</b> (ya da 0) → dışarıda.</li><li>Neden? Sonsuzda kesinlikle dışarıdasınız. Sınırı her geçişte iç ↔ dış değişir.</li><li>İçbükey, girintili, yüzlerce köşeli şekillerde de çalışır. Maliyet: kenar sayısı kadar.</li><li>Köşeden tam geçme tuzağı: bir kenarı “y’si <b>alt uç dahil, üst uç hariç</b>” sayarak çözülür (koddaki <code>(a.y &gt; p.y) !== (b.y &gt; p.y)</code>).</li></ul></div>
+<div><div class="box info" style="font-size:.82em"><span class="bt">Dışbükeyse daha da kolay</span><p>Girintisi olmayan çokgende nokta, <b>bütün kenarların aynı tarafındaysa</b> içeridedir: kenar başına bir yön testi, ilk “öbür taraf”ta dur.</p><p class="mini">Üçgen için: üç yön testi. Navmesh’te “ajan hangi üçgende?” sorusu böyle cevaplanır (Y9).</p></div><div class="box game" style="font-size:.8em;margin-top:10px"><span class="bt">🎮 Nerede?</span>Haritada bölge/ülke seçme · tetik alanı (“oyuncu bu odaya girdi mi?”) · fare bu düğmenin/hex’in üstünde mi · balık ağın içinde mi</div></div>
+</div>
+</section>
+
+<section data-sec="içinde">
+  <h2>Canlı: içeride mi, dışarıda mı? 🎯</h2>
+<div class="demo" data-demo="pip"></div>
+</section>
+
+<section data-sec="içinde">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri nokta sizsiniz (fareyi izler). Mor kesikli çizgi sağa giden ışın; kırmızı numaralı noktalar kenarlarla kesişimleri. Altta sayım ve sonuç; içerideyken şekil yeşile döner.</li><li>Fareyi soldan sağa yavaşça geçirin: sayı 4 → 3 → 2 → 1 → 0 diye düşer; tek sayılarda yeşil.</li><li>Girintinin (şeklin sol ortasındaki çentik) içine girin: şeklin “kutusunun” içindesiniz ama dışarıdasınız. Merkeze uzaklık ya da kutu testi burada yanılırdı.</li><li>Tıklayıp noktayı sabitleyin, sonra bir köşeyi sürükleyip ışının üstünden geçirin: kesişim sayısı 2 artar ya da azalır, sonuç değişmez.</li><li>Noktayı bir köşeyle <b>tam aynı yüksekliğe</b> getirmeye çalışın. Sayım bozuluyor mu? (Bozulmamalı: “alt uç dahil, üst uç hariç” kuralı bunu çözer.)</li></ol></div>
+</section>
+
+<section data-sec="içinde">
+  <h2>Hikâye: en iyi geometri, hiç geometri yapmamak</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Paradox’un büyük strateji oyunlarında (Europa Universalis, Hearts of Iron) harita binlerce eyalete bölünür. Fare hangi eyaletin üstünde?</li><li>Oyun bunu çokgen testiyle yapmaz. Oyun dosyalarında <code>provinces.bmp</code> adlı bir resim vardır: her eyalet <b>kendine özgü tek bir renkle</b> boyanmıştır.</li><li>Tıkladığınız pikselin rengine bakılır, renk bir tabloda aranır: eyalet bulundu. Maliyet sabit; şeklin karmaşıklığından bağımsız.</li><li>Mod yapanlar haritayı bir resim programında boyayarak düzenler.</li></ul></div>
+<div><div class="box story" style="font-size:.8em"><span class="bt">Ders</span><p>Bir soruyu <b>önceden hesaplayıp</b> tabloya koyabiliyorsanız, çalışma anında algoritmaya gerek kalmaz (Y18’deki “hesaplanabileni güncelleme”).</p><p>Bedeli: bellek ve esneklik. Sınırlar oyun sırasında değişiyorsa (çizilen bölgeler, hareketli tetik alanları) ışın atma gerekir.</p><p class="mini">Aynı hile 3B’de nesne seçmede de kullanılır: her nesneyi gizli bir tamponda ayrı renkle çiz, tıklanan pikselin rengini oku.</p></div></div>
+</div>
+</section>
+
+<section data-sec="içinde">
+  <h2>Alan ve dönüş yönü: ayakkabı bağı formülü</h2>
+<div class="cols c64">
+<div><p style="font-size:.84em">Köşeleri sırayla dolaş, her kenar için bir çapraz çarpım topla:</p><p style="font-size:.84em">$$\text{Alan} = \tfrac{1}{2}\,\Big|\sum_i (x_i\,y_{i+1} - x_{i+1}\,y_i)\Big|$$</p><ul style="font-size:.8em"><li>Mutlak değer almadan önceki <b>işaret</b>, köşelerin dönüş yönünü söyler (saat yönü mü, tersi mi).</li><li>İçbükey çokgende de doğru.</li><li>Adı çarpımların çapraz desenine benzediği için: ayakkabı bağı.</li></ul></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Nerede?</span><ul style="font-size:.92em"><li><b>Arka yüz ayıklama:</b> ekranda saat yönünün tersine görünen üçgen size sırtını dönmüştür; çizilmez. Grafik kartı her üçgen için bu işarete bakar.</li><li>Bölge kontrolü oyunlarında “kimin toprağı daha büyük?”</li><li>Bir çokgenin ağırlık merkezi; kütle = alan × yoğunluk (G5).</li><li>Dışbükey zarf ve üçgenleme algoritmaları köşelerin <b>tutarlı yönde</b> olmasını ister.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="içinde">
+  <div class="quiz" data-karildi="1" data-answer="A">
+    <div class="qhead">Quiz 2 · içeride mi?</div>
+    <div class="q">U harfi biçimindeki bir bölgenin tam ortasındaki boşlukta (U’nun iki kolu arasında) duran bir nokta için sağa giden ışın kaç kenar keser ve sonuç nedir?</div>
+    <div class="opts"><button data-opt="A">2 kenar (sağ kolun iki yüzü) → çift → dışarıda</button><button data-opt="B">1 kenar → tek → içeride</button><button data-opt="C">0 kenar → dışarıda</button><button data-opt="D">3 kenar → tek → içeride</button></div>
+    <div class="explain">Işın sağ kola bir yüzünden girer, öbür yüzünden çıkar: 2 kesişim, çift, dışarıda. “Şeklin sınırlayıcı kutusunun içinde mi?” testi burada yanlış “içeride” derdi; ışın atma içbükey şekillerde de doğru cevap verir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Dışbükey zarf</div><div class="sub">nokta bulutunun lastik bandı</div></div>
+</section>
+
+<section data-sec="zarf">
+  <h2>Dışbükey zarf nedir, oyunda ne işe yarar?</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Tahtaya çiviler çakın, etrafına bir <b>lastik bant</b> geçirin ve bırakın. Bandın değdiği çiviler: dışbükey zarfın köşeleri.</li><li>Tanım: bütün noktaları içine alan <b>en küçük dışbükey çokgen</b>.</li><li>N nokta için en iyi algoritmalar <b>N log N</b>: sıralamadan hızlı olamaz (sıralamayı zarfa indirgeyebilirsiniz!).</li><li>Üç klasik: hediye paketleme (Jarvis, basit ama N·h), Graham taraması (açıya göre sırala), <b>monoton zincir</b> (x’e göre sırala; bugün anlatacağımız).</li></ul></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Nerede?</span><ul style="font-size:.92em"><li><b>Çarpışma şekli:</b> 5.000 üçgenli bir kaya modelinin yerine 20 köşeli zarfı kullanılır. Dışbükey şekillerin çarpışması çok daha hızlı test edilir (G3).</li><li>Seçili birliklerin etrafına çizilen sınır; bir takımın “kapladığı alan”.</li><li>Bir nokta kümesinin en uzak iki noktası, en küçük saran dikdörtgeni: önce zarf.</li><li>Navmesh üretiminde engellerin sadeleştirilmesi (Y9).</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="zarf">
+  <h2>Monoton zincir: sırala + yığın</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li>Noktaları <b>x’e göre sırala</b> (eşitlikte y).</li><li><b>1. tur</b> (soldan sağa): her nokta için, yığının son iki noktası ile yeni nokta <b>yanlış yöne</b> dönüyorsa (yön testi ≤ 0) sonuncuyu <b>at</b>; dönüş doğru olana kadar tekrarla. Sonra yeni noktayı <b>ekle</b>.</li><li><b>2. tur</b> (sağdan sola): aynısı; öbür yarı çıkar.</li><li>İki zinciri birleştir.</li><li>Her nokta yığına <b>bir kez girer, en çok bir kez çıkar</b> → turlar doğrusal. Toplam maliyet sıralamanın: <b>N log N</b>.</li></ol></div>
+<div><div class="box info" style="font-size:.82em"><span class="bt">Tanıdık parçalar</span><p><b>Sıralama</b> (Mergesort sunumu) + <b>yığın</b> (Yığınlar sunumu) + <b>yön testi</b> (bu sunum). Yeni hiçbir fikir yok; üçünün birleşimi.</p><p class="mini">“≤ 0” yerine “&lt; 0” yazarsanız aynı kenar üzerindeki ara noktalar da zarfta kalır. Çoğu oyun kullanımında istenmez.</p></div></div>
+</div>
+</section>
+
+<section data-sec="zarf">
+  <h2>Canlı: zarfı adım adım kur 🪢</h2>
+<div class="demo" data-demo="hull"></div>
+</section>
+
+<section data-sec="zarf">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri noktalar girdi; üstlerindeki sayı x’e göre sıra numarası. Sarı: şu an bakılan nokta. Mavi çizgi: yığındaki zincir. Kırmızı: atılacak nokta. Yeşil: biten 1. tur zinciri.</li><li>“1 adım ▶” ile ilerleyin ve alttaki cümleyi okuyun: her adım ya “yığına koy” ya “yığından at”.</li><li>Bir noktanın önce yığına girip birkaç adım sonra <b>atıldığını</b> bulun. O an içe kıvrılan bir köşe oluşmuştu.</li><li>“⏭ sonuç”tan sonra şeklin içine tıklayıp nokta ekleyin: zarf değişmez. Dışına tıklayın: zarf o noktaya doğru genişler, bazı eski köşeler içeride kalır.</li><li>Nokta sayısını 40 yapın: zarfın köşe sayısı pek artmıyor. Rastgele noktalarda zarf, nokta sayısından çok daha küçüktür: çarpışma şekli olarak bu yüzden ucuzdur.</li></ol></div>
+</section>
+
+<section data-sec="zarf">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 3 · zarf</div>
+    <div class="q">Monoton zincirde bir nokta yığına eklendikten sonra yığından atılıyor. Bu nokta hakkında ne söylenebilir?</div>
+    <div class="opts"><button data-opt="A">Bir daha yığına geri gelebilir</button><button data-opt="B">Kesinlikle zarfın köşesi değildir; o turda bir daha incelenmez</button><button data-opt="C">Sıralama yanlış yapılmıştır</button><button data-opt="D">Zarfın en soldaki noktasıdır</button></div>
+    <div class="explain">Atılan nokta, komşularının oluşturduğu çizginin “iç” tarafında kalmıştır; o zincirde bir daha yeri yoktur. Her nokta bir kez girip en çok bir kez çıktığı için iki tur toplam doğrusal zaman alır; algoritmanın maliyetini baştaki sıralama belirler.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">Kod ve laboratuvarlar</div><div class="sub">dört fonksiyon, hepsi çapraz çarpım</div></div>
+</section>
+
+<section data-sec="kod">
+  <h2>Yön testi ve kesişim</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Noktalar {x, y}. Bütün dosyanın temeli: tek bir çıkarma-çarpma.
+function cross(a, b, c) {                       // a → b yönüne göre c nerede?
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}                                               // > 0: bir tarafta, < 0: öbür tarafta, 0: aynı doğruda
+
+function onSegment(a, b, p) {                   // p, a–b doğrusundaysa: parçanın İÇİNDE mi?
+  return min(a.x, b.x) <= p.x && p.x <= max(a.x, b.x) &&
+         min(a.y, b.y) <= p.y && p.y <= max(a.y, b.y);
+}
+
+function segmentsIntersect(a, b, c, d) {        // ab ve cd parçaları kesişiyor mu?
+  const d1 = cross(a, b, c), d2 = cross(a, b, d);
+  const d3 = cross(c, d, a), d4 = cross(c, d, b);
+  if (d1 * d2 < 0 && d3 * d4 < 0) return true;  // ikisi de öbürünü ikiye ayırıyor
+  if (d1 === 0 && onSegment(a, b, c)) return true;   // özel durumlar: bir uç öbür parçaya değiyor
+  if (d2 === 0 && onSegment(a, b, d)) return true;
+  if (d3 === 0 && onSegment(c, d, a)) return true;
+  if (d4 === 0 && onSegment(c, d, b)) return true;
+  return false;
+}
+
+function hitPoint(a, b, c, d) {                 // kesişim noktası (kesiştiklerini biliyorsak)
+  const rx = b.x - a.x, ry = b.y - a.y, sx = d.x - c.x, sy = d.y - c.y;
+  const t = ((c.x - a.x) * sy - (c.y - a.y) * sx) / (rx * sy - ry * sx);
+  return { x: a.x + t * rx, y: a.y + t * ry, t };   // t: a'dan b'ye yolun yüzde kaçı
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def cross(a, b, c):                      # noktalar (x, y) demetleri
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+def on_segment(a, b, p):
+    return (min(a[0], b[0]) <= p[0] <= max(a[0], b[0]) and
+            min(a[1], b[1]) <= p[1] <= max(a[1], b[1]))
+
+def segments_intersect(a, b, c, d):
+    d1, d2 = cross(a, b, c), cross(a, b, d)
+    d3, d4 = cross(c, d, a), cross(c, d, b)
+    if d1 * d2 < 0 and d3 * d4 < 0:
+        return True
+    return ((d1 == 0 and on_segment(a, b, c)) or (d2 == 0 and on_segment(a, b, d)) or
+            (d3 == 0 and on_segment(c, d, a)) or (d4 == 0 and on_segment(c, d, b)))
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: Vector2 ile aynı testler
+static float Cross(Vector2 a, Vector2 b, Vector2 c) =>
+    (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+
+static bool SegmentsIntersect(Vector2 a, Vector2 b, Vector2 c, Vector2 d) {
+    float d1 = Cross(a, b, c), d2 = Cross(a, b, d), d3 = Cross(c, d, a), d4 = Cross(c, d, b);
+    return d1 * d2 < 0f && d3 * d4 < 0f;      // genel durum; uç dokunmaları için eşik payı ekleyin
+}
+// Hazırı: Physics2D.Linecast(a, b) bir collider'a çarpıyor mu diye bakar (dar aşama motorun işi).
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Çokgen içinde mi, alan, dışbükey zarf</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Nokta çokgenin içinde mi? (ışın atma; içbükey şekilde de çalışır)
+function inside(p, poly) {                      // poly: [{x, y}, ...] köşeler sırayla
+  let ic = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];             // a–b kenarı
+    const arasinda = (a.y > p.y) !== (b.y > p.y);                         // p.y iki ucun arasında mı?
+    if (arasinda && p.x < a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y))  // kesişim p'nin sağında mı?
+      ic = !ic;                                 // her kesişimde iç ↔ dış
+  }
+  return ic;
+}
+
+// Alan: ayakkabı bağı formülü
+function polygonArea(poly) {
+  let s = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    s += a.x * b.y - b.x * a.y;
+  }
+  return abs(s) / 2;                            // işaret = köşelerin dönüş yönü
+}
+
+// Dışbükey zarf: monoton zincir (sırala + yığın), O(N log N)
+function convexHull(points) {
+  const P = points.slice().sort((a, b) => a.x - b.x || a.y - b.y);
+  if (P.length < 3) return P;
+  const zincir = dizi => {
+    const h = [];
+    for (const p of dizi) {
+      while (h.length >= 2 && cross(h[h.length - 2], h[h.length - 1], p) <= 0) h.pop();   // içe kıvrılanı at
+      h.push(p);
+    }
+    h.pop();                                    // son nokta öbür zincirin ilk noktası
+    return h;
+  };
+  return zincir(P).concat(zincir(P.slice().reverse()));
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def inside(p, poly):
+    ic = False
+    n = len(poly)
+    for i in range(n):
+        a, b = poly[i], poly[i - 1]
+        if (a[1] > p[1]) != (b[1] > p[1]) and \
+           p[0] < a[0] + (p[1] - a[1]) * (b[0] - a[0]) / (b[1] - a[1]):
+            ic = not ic
+    return ic
+
+def convex_hull(points):
+    P = sorted(set(map(tuple, points)))
+    if len(P) < 3:
+        return P
+    def zincir(dizi):
+        h = []
+        for p in dizi:
+            while len(h) >= 2 and cross(h[-2], h[-1], p) <= 0:
+                h.pop()
+            h.append(p)
+        return h[:-1]
+    return zincir(P) + zincir(P[::-1])
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile geometri oyun alanı</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.8;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+let noktalar = [], fareNoktasi;
+
+function setup() { createCanvas(720, 420); }
+function mousePressed() { noktalar.push({ x: mouseX, y: mouseY }); }   // tıkla: nokta ekle
+function keyPressed() { if (key === 'c' || key === 'C') noktalar = []; }
+
+function draw() {
+  background(250);
+  const zarf = convexHull(noktalar);
+  const fare = { x: mouseX, y: mouseY };
+  const icerde = zarf.length >= 3 && inside(fare, zarf);
+
+  fill(icerde ? color(60, 180, 90, 60) : color(0, 12));    // fare zarfın içindeyse yeşil
+  stroke(40); strokeWeight(2);
+  beginShape(); for (const p of zarf) vertex(p.x, p.y); endShape(CLOSE);
+
+  noStroke();
+  for (const p of noktalar) { fill(zarf.includes(p) ? 'crimson' : 120); circle(p.x, p.y, 10); }
+  fill(40); text('nokta ' + noktalar.length + ' · zarf köşesi ' + zarf.length +
+       ' · alan ' + round(polygonArea(zarf)) + (icerde ? ' · fare İÇERİDE' : ''), 10, 20);
+}
+</script></code></pre><p class="mini">Bu 20 satır + önceki iki slayttaki fonksiyonlar (<code>cross</code>, <code>inside</code>, <code>polygonArea</code>, <code>convexHull</code>).</p></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 70 satır: tıklayarak nokta ekleyin; zarf, alanı ve “fare içeride mi?” canlı hesaplanır.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><code>convexHull</code>’da <code>&lt;= 0</code>’ı <code>&gt;= 0</code> yapın: ne çıkıyor?</li><li>Noktaları hareket ettirin (her karede küçük rastgele adım): zarf canlı güncellensin.</li><li>İki ayrı renk nokta kümesi tutun; zarfları kesişiyor mu? (ipucu: <code>segmentsIntersect</code>)</li><li><b>C</b> tuşu temizler.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: çapraz çarpım</h2>
+  <div class="ailab" data-lab="cross" data-lang="js">
+<textarea>
+// a, b, c: [x, y] dizileri.   a → b yönüne göre c nerede?
+// Döndür: (b.x − a.x)·(c.y − a.y) − (b.y − a.y)·(c.x − a.x)
+function cross(a, b, c) {
+  const abx = b[0] - a[0], aby = b[1] - a[1];
+  const acx = c[0] - a[0], acy = c[1] - a[1];
+  return abx * acx + aby * acy;   // TODO: bu NOKTA çarpım; çapraz çarpım olmalı
+}
+</textarea>
+    <div class="lab-tasks">Bu sunumun tek formülü. Başlangıç kodu yanlışlıkla nokta çarpımı hesaplıyor (Y0’daki “önümde mi?” testi). Çapraz çarpımda terimler <b>çapraz</b> eşleşir ve aradaki işlem <b>çıkarmadır</b>: <code>abx * acy − aby * acx</code>.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: çokgenin alanı</h2>
+  <div class="ailab" data-lab="area" data-lang="js">
+<textarea>
+// pts: çokgenin köşeleri sırayla [[x, y], ...]
+// Ayakkabı bağı: her kenar (a → b) için  a.x·b.y − b.x·a.y  topla; alan = |toplam| / 2
+function polygonArea(pts) {
+  let s = 0;
+  for (let i = 0; i &lt; pts.length - 1; i++) {     // TODO: son köşeden ilk köşeye dönen kenar eksik
+    const a = pts[i], b = pts[i + 1];
+    s += a[0] * b[1] - b[0] * a[1];
+  }
+  return s / 2;                                  // TODO: köşeler ters sıradaysa eksi çıkar
+}
+</textarea>
+    <div class="lab-tasks">İki küçük hata var: döngü son kenarı (son köşe → ilk köşe) atlıyor ve köşeler ters yönde verildiğinde alan eksi çıkıyor. İpucu: <code>pts[(i + 1) % pts.length]</code> ve <code>Math.abs</code>.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: nokta çokgenin içinde mi?</h2>
+  <div class="simlab" data-sim="inside" data-fns="inside" data-lang="js">
+<textarea>
+// p: [x, y]   poly: köşeler sırayla [[x, y], ...]
+// Sağa giden ışın kenarları TEK sayıda kesiyorsa true döndür.
+// Her kenar (a–b) için iki koşul:
+//   1) p'nin y'si iki ucun ARASINDA mı?   (a[1] &gt; p[1]) !== (b[1] &gt; p[1])
+//   2) kesişimin x'i p'nin SAĞINDA mı?    p[0] &lt; a[0] + (p[1] - a[1]) * (b[0] - a[0]) / (b[1] - a[1])
+function inside(p, poly) {
+  let ic = false;
+  for (let i = 0; i &lt; poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    // TODO: iki koşul da doğruysa  ic = !ic;
+  }
+  return ic;
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu hep “dışarıda” der: sağdaki bütün noktalar gri, şeklin içindekiler kırmızı halkalı (yanlış). İki koşulu yazınca içerideki noktalar yeşile döner ve halkalar kaybolur. İki farklı içbükey şekille sınanıyor.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: iki parça kesişiyor mu?</h2>
+  <div class="ailab" data-lab="segx" data-lang="python">
+<textarea>
+# a, b, c, d: [x, y] listeleri.  ab ve cd doğru parçaları kesişiyorsa (dokunma dahil) True.
+def cross(a, b, c):
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+def segments_intersect(a, b, c, d):
+    return False
+</textarea>
+    <div class="lab-tasks">Dört yön testi. Genel durum: <code>d1</code> ile <code>d2</code> zıt işaretli <b>ve</b> <code>d3</code> ile <code>d4</code> zıt işaretli. Sonra dört özel durum: bir çapraz 0 ise o uç, öbür parçanın kutusunun içindeyse dokunuyorlar. Testlerde aynı doğru üzerinde üst üste binen ve uç uca değen parçalar da var.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: dışbükey zarf</h2>
+  <div class="ailab" data-lab="hull" data-lang="python">
+<textarea>
+# points: [[x, y], ...]  (aynı nokta birden çok kez gelebilir)
+# Zarfın köşelerini (x, sonra y'ye göre) SIRALI liste olarak döndür.
+# Aynı kenar üzerindeki ara noktalar zarfa girmez. 3'ten az farklı nokta varsa hepsini döndür.
+def cross(o, a, b):
+    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+def convex_hull(points):
+    return sorted(points)
+</textarea>
+    <div class="lab-tasks">Monoton zincir: sırala; soldan sağa bir yığınla zincir kur (<code>while len(h) &gt;= 2 and cross(h[-2], h[-1], p) &lt;= 0: h.pop()</code>); sağdan sola tekrar et; iki zinciri son elemanları hariç birleştir. Testler sonucu sıralı beklediği için en sonda <code>sorted(...)</code> döndürün.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Araçlar ve kapanış</div><div class="sub">hazırı var; içini bilmek hata ayıklatır</div></div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Motorlarda ve kütüphanelerde</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>p5.js</b></td><td>p5.collide2D eklentisi</td><td><code>collideLineLine</code>, <code>collidePointPoly</code>, <code>collidePolyPoly</code>… hazır 2B testler</td></tr>
+<tr><td><b>Unity</b></td><td><code>Physics2D.Linecast / Raycast</code> · <code>Collider2D.OverlapPoint</code> · <code>PolygonCollider2D</code></td><td>Parça–şekil kesişimi, nokta şeklin içinde mi; konveks <code>MeshCollider</code> en çok 255 üçgen</td></tr>
+<tr><td><b>Unreal</b></td><td><code>FMath::SegmentIntersection2D</code> · <code>FGeomTools2D</code> · ConvexHull2D</td><td>Aynı fonksiyonların motor sürümleri</td></tr>
+<tr><td><b>Godot</b></td><td><code>Geometry2D</code></td><td><code>segment_intersects_segment</code>, <code>is_point_in_polygon</code>, <code>convex_hull</code></td></tr>
+<tr><td><b>Python</b></td><td>Shapely</td><td>Seviye araçları ve analiz için: kesişim, birleşim, zarf, alan</td></tr>
+<tr><td><b>C++ / C#</b></td><td>Clipper2</td><td>Çokgen kesme, birleştirme, genişletme (navmesh üreticilerinin iş atı)</td></tr>
+</table>
+<p class="mini">Hazır fonksiyonu kullanın; ama işaret hatası, eşik payı ve “köşeden geçen ışın” sorunlarını ancak içini bilen biri teşhis edebilir.</p>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.9em"><li>Ekran koordinatında (y aşağı) sol/sağ işaretini ters almak</li><li>Kesişimde uç dokunmalarını ve paralel durumu (payda 0) atlamak</li><li>Işın atmada köşeden geçen ışını iki kez saymak</li><li>Zarfta doğrusal noktalar ve yinelenen noktalar</li><li>Kayan nokta karşılaştırmasında <code>== 0</code> kullanmak</li></ul></div></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js. <code>{x, y}</code> noktalarla çalışan bir <code>geo.js</code> yaz: <code>cross</code>, <code>segmentsIntersect</code> (uç dokunması ve üst üste binme dahil), <code>hitPoint</code> (t parametresiyle), <code>inside</code> (ışın atma, köşe kuralı açıklamalı), <code>polygonArea</code>, <code>convexHull</code> (monoton zincir, doğrusal noktalar hariç). Koordinat sistemi: y aşağı. Her fonksiyon için <code>console.assert</code> ile en az 5 test: paralel, doğrusal, uç uca, içbükey şekil, yinelenen nokta.”</p><ul style="font-size:.9em"><li>Koordinat sistemini (y yukarı mı aşağı mı) mutlaka söyleyin</li><li>Sınır durumlarını siz sayın; testleri onlar için isteyin</li><li>Görsel bir test sayfası isteyin: fareyle sürükleyip gözle doğrulayın</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Bir strateji oyununda bölge seçimi için “renkli resim” (Paradox) ile “ışın atma” arasında nasıl seçim yapardınız? Hangi oyun özelliği kararı değiştirir?</li><li class="fragment">Karakterin çarpışma şekli olarak modelin kendisi yerine dışbükey zarfı kullanılıyor. Oyuncu bunu ne zaman fark eder? (İpucu: halka, kemer, L biçimli nesneler.)</li><li class="fragment">Mermi duvarın tam köşesinden geçti: bir oyuncu “vurdum”, öbürü “ıskaladın” diyor. Eşik payını kimin lehine ayarlarsınız? Rekabetçi bir oyunda cevap değişir mi?</li><li class="fragment">Bu sunumdaki dört algoritmanın hepsi tek bir formüle dayanıyor. Dönem boyunca böyle “küçük ama her yerde” başka hangi fikirleri gördünüz?</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Lazer ve aynalar</b> — p5.js’te bir lazer ışını ve fareyle döndürülen ayna parçaları: ışın–parça kesişimi ve yansıma; hedefi vurunca seviye biter.</li><li><b class="c-green">[kolay]</b> <b>Bölge seçici</b> — Elle çizilmiş 6 içbükey bölgeli bir harita; fare hangi bölgenin üstündeyse o parlasın (ışın atma). Aynısını renkli resim hilesiyle yapıp karşılaştırın.</li><li><b class="c-amber">[orta]</b> <b>Sürü sınırı</b> — Y7’deki boids sürüsünün dışbükey zarfını her karede çizin; alanını “sürü ne kadar dağınık?” ölçüsü olarak grafiğe dökün.</li><li><b class="c-amber">[orta]</b> <b>Tünelleme deneyi</b> — Hızlı bir mermi ve ince bir duvar: nokta testiyle kaç karede bir kaçırıyor? Parça kesişimiyle düzeltin; kare hızına göre grafik.</li><li><b class="c-red">[zor]</b> <b>Çizerek seviye</b> — Oyuncu fareyle kapalı bir şekil çizsin; içindeki düşmanlar (ışın atma) yakalansın. Kendini kesen çizimleri kesişim testiyle reddedin.</li><li><b class="c-purple">[araştırma]</b> <b>Sağlamlık avı</b> — Yön testini ondalıklı sayılarla milyonlarca “neredeyse doğrusal” üçlüde çalıştırın; A,B,C ile B,C,A sıralarının farklı cevap verdiği durumları bulun ve görselleştirin.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Yön testi:</b> tek çapraz çarpım; işaret = taraf, büyüklük = alan × 2. Ekranda y aşağı!</li><li><b>Kesişim:</b> dört yön testi; <code>t</code> parametresi “yolun yüzde kaçında”. Tünellemenin ilacı.</li><li><b>Nokta çokgende:</b> ışın gönder, kesişim say: tek = içeride. Önceden hesaplanabiliyorsa renkli resim.</li><li><b>Alan:</b> ayakkabı bağı; işareti dönüş yönü (arka yüz ayıklama).</li><li><b>Dışbükey zarf:</b> sırala + yığın + yön testi = N log N; çarpışma şekillerinin temeli.</li><li>Hepsi çarpma ve çıkarma; trigonometri yok. En büyük tuzak: sınır durumları ve eşik payı.</li><li><b>Sonraki:</b> uzaysal bölümleme: “yakınımda kim var?” sorusunu binlerce nesne için hızlı cevaplamak.</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=eu6i7WJeinw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/eu6i7WJeinw/hqdefault.jpg" alt=""><span><b>Cross products | Essence of linear algebra, chapter 10</b><br>3Blue1Brown</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=HYAgJN3x4GA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/HYAgJN3x4GA/hqdefault.jpg" alt=""><span><b>Gamedev Maths: point in triangle</b><br>Sebastian Lague</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=RSXM9bgqxJM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/RSXM9bgqxJM/hqdefault.jpg" alt=""><span><b>Checking if a point is inside a polygon is RIDICULOUSLY simple (ray casting)</b><br>Inside code</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=B2AJoQSZf4M" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/B2AJoQSZf4M/hqdefault.jpg" alt=""><span><b>Convex Hull Algorithm: Graham Scan and Jarvis March</b><br>Stable Sort</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=YsXCVsDFiXA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/YsXCVsDFiXA/hqdefault.jpg" alt=""><span><b>SM64’s Invisible Walls Explained Once and for All</b><br>pannenkoek2012</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=XD5ShmE2i5c" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/XD5ShmE2i5c/hqdefault.jpg" alt=""><span><b>Paradox and when Maps Mess Up</b><br>Rosencreutz</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar 📚</h2>
+<ul style="font-size:.78em"><li>Jeffrey Thompson: <a href="https://www.jeffreythompson.org/collision-detection/" target="_blank" rel="noopener">Collision Detection</a> — her test için çalışan, okunur örnekler (Processing/p5.js)</li><li>Jonathan Shewchuk: <a href="https://www.cs.cmu.edu/~quake/robust.html" target="_blank" rel="noopener">Adaptive Precision Floating-Point Arithmetic and Fast Robust Predicates</a> (1996)</li><li>cp-algorithms: <a href="https://cp-algorithms.com/geometry/convex-hull.html" target="_blank" rel="noopener">Convex hull construction</a> — monoton zincir ve Graham taraması</li><li>Wikipedia: <a href="https://en.wikipedia.org/wiki/Point_in_polygon" target="_blank" rel="noopener">Point in polygon</a> · <a href="https://en.wikipedia.org/wiki/Shoelace_formula" target="_blank" rel="noopener">Shoelace formula</a> · <a href="https://en.wikipedia.org/wiki/Convex_hull_algorithms" target="_blank" rel="noopener">Convex hull algorithms</a></li><li>Sedgewick &amp; Wayne, <i>Algorithms</i> 4. baskı: <a href="https://algs4.cs.princeton.edu/99hull/" target="_blank" rel="noopener">Convex Hull</a> (Graham taraması, yığınla)</li><li>Paradox haritaları: <a href="https://eu4.paradoxwikis.com/Map_modding" target="_blank" rel="noopener">EU4 Wiki · Map modding</a> (provinces.bmp)</li><li>Christer Ericson, <i>Real-Time Collision Detection</i> (2005): oyun geometrisinin başvuru kitabı; 3. ve 5. bölümler bu sunumun konuları</li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Uzaysal Bölümleme</div>
+    <div class="sub">Izgara, uzaysal hash, dörtlü ağaç, BVH</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../geo-uzaysal/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
