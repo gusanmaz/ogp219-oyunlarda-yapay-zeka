@@ -642,6 +642,46 @@ function get(key) {
 </section>
 
 <section data-sec="oyunda">
+  <h2>Problem: “yakınımda kim var?” ve uzaysal hash fikri</h2>
+  <div class="cols c46">
+    <div style="font-size:.8em">
+      <div class="box warn" style="font-size:.95em"><span class="bt">Herkesi herkesle sınamak</span>
+        <p>Çarpışma, patlama alanı, “en yakın düşman”, sürü davranışı: hepsi aynı soruyu sorar: <b>bu nesnenin yakınında kimler var?</b></p>
+        <p>En basit yol her çifti sınamak: N nesne için N · (N − 1) / 2 çift. 1.000 mermi ve düşman: <b>499.500</b> test, <b>her karede</b>. 10.000 nesne: 50 milyon.</p>
+        <p class="mini">Oysa bir nesnenin gerçekten yakınında olanlar bir avuç.</p>
+      </div>
+      <ul>
+        <li><b>Fikir:</b> dünyayı eşit karelere (hücrelere) böl. Her nesneyi <b>içinde bulunduğu hücreye</b> yaz.</li>
+        <li>Bir nesnenin komşularını ararken yalnızca <b>kendi hücresine ve 8 komşu hücreye</b> bak. Uzaktaki hücrelerin içindekiler hiç sınanmaz.</li>
+        <li><b>Hash tablosu nerede?</b> Hücreleri dev bir 2B dizide tutmak yerine, <b>anahtarı hücre koordinatı</b> olan bir hash tablosunda: yalnızca dolu hücreler yer kaplar; dünya sonsuz olabilir.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.78em"><span class="bt">Elle hesap: hücre boyu 50 piksel</span>
+      <table class="sum-t" style="font-size:20px"><tr><th>nesne</th><th>konum (x, y)</th><th>hücre = (⌊x/50⌋, ⌊y/50⌋)</th><th>anahtar</th></tr><tr><td>A</td><td>(130, 75)</td><td>(2, 1)</td><td>“2,1”</td></tr><tr><td>B</td><td>(160, 90)</td><td>(3, 1)</td><td>“3,1”</td></tr><tr><td>C</td><td>(140, 60)</td><td>(2, 1)</td><td>“2,1”</td></tr><tr><td>D</td><td>(620, 410)</td><td>(12, 8)</td><td>“12,8”</td></tr></table>
+      <p>Tablo: “2,1” → [A, C] · “3,1” → [B] · “12,8” → [D]</p>
+      <ul style="font-size:.95em">
+        <li><b>A’nın yakınında kim var?</b> A’nın hücresi (2, 1). Bakılacak 9 hücre: (1…3, 0…2). Bunlardan dolu olanlar “2,1” ve “3,1” → adaylar <b>C ve B</b>.</li>
+        <li>D hiç sınanmadı: hücresi çok uzakta.</li>
+        <li>Adaylara <b>gerçek</b> uzaklık testi yapılır (aday olmak, çarpışmak demek değildir).</li>
+      </ul>
+      <p class="mini">Dört nesnede kazanç küçük: 6 çift yerine 2 test. Demodaki 400 nesnede: 79.800 çift yerine birkaç yüz test.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <div class="box ask" style="font-size:.86em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span>
+    <ul>
+      <li>Noktalar hareket eden nesneler; ince çizgiler hücre sınırları. Her karede tablo baştan kurulur: her nesne kendi hücresinin listesine eklenir.</li>
+      <li><b>Fareyi bir nesnenin üstüne getirin:</b> sarı 3 × 3 alan, o nesne için bakılan hücreler. Yalnızca o alandaki nesneler adaydır.</li>
+      <li>Alttaki sayaçlar: uzaysal hash ile yapılan test sayısı ve aynı iş için kaba kuvvetin yapacağı test sayısı.</li>
+      <li><b>Hücre boyutunu büyütün:</b> her hücrede çok nesne birikir, test sayısı artar (en uçta tek hücre = kaba kuvvet). <b>Küçültün:</b> testler azalır ama nesne çapından küçük hücrede komşular kaçırılmaya başlar.</li>
+      <li>Kural: hücre boyu ≈ en büyük nesnenin çapı (ya da sorgu yarıçapı).</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="oyunda">
   <h2>🎮 Uzaysal hash ızgarası <span class="en">spatial hashing</span></h2>
   <div class="demo" data-demo="spatialhash"></div>
   <p class="mini">Her nesne bulunduğu hücreye (anahtar = hücre koordinatı) konur. Bir nesne sadece kendi hücresi ve 8 komşusundakilerle test edilir. Fareyi bir parçacığın üstüne getirin: sarı 3×3 alan. Hücre boyutunu değiştirip test sayısına bakın.</p>
@@ -662,9 +702,22 @@ function get(key) {
       <ul>
         <li>Parçacık sistemleri, sürü (boids) simülasyonları</li>
         <li>MMO’da “çevremdeki oyunculara mesaj gönder” (ilgi alanı yönetimi)</li>
-        <li>Matthias Müller’in “Ten Minute Physics” videosu: binlerce topun çarpışması tam bu yöntemle (kaynaklarda)</li>
+        <li>Matthias Müller’in “Ten Minute Physics” videosu: binlerce topun çarpışması tam bu yöntemle (bir sonraki slayt)</li>
       </ul>
       <p class="mini">BST’nin Geometrik Uygulamaları sunumundaki ızgara ↔ kd-ağacı tartışmasını hatırlayın: düzgün dağılımda ızgara/hash rakipsiz; kümelenmede ağaçlar.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda · video">
+  <h2>🎬 Ara: binlerce top, tek hash tablosu</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/D2M8jTtKi44" title="Ten Minute Physics: Finding collisions among thousands of objects blazing fast" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Finding collisions among thousands of objects blazing fast</b><br><span class="mini">Ten Minute Physics (Matthias Müller) · 11 dk · <a href="https://www.youtube.com/watch?v=D2M8jTtKi44" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önceki fikrin aynısı, tarayıcıda çalışan kodla: hücre koordinatından hash, sayarak sıralama ile “yoğun” tablo ve binlerce topun çarpışması.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda hücre koordinatları tek bir sayıya nasıl çevriliyor? Tablonun boyu nesne sayısına göre nasıl seçiliyor? İki farklı hücre aynı tablo gözüne düşerse (çakışma) sonuç <b>yanlış</b> mı olur, yoksa yalnızca <b>yavaş</b> mı?</div>
+      <p class="mini">Devamı: <a href="../geo-uzaysal/">G2 · Uzaysal Bölümleme</a> (ızgara, quadtree, BVH; elle izleme, kod ve ölçümler).</p>
     </div>
   </div>
 </section>
