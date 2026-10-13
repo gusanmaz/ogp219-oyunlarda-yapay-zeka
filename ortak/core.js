@@ -503,7 +503,7 @@
       let z = Math.min(1.42, grownMax, (640 - other) / dh);
       if (z < 1.1) return;
       const wide = () => { if (d.scrollWidth > d.clientWidth + 2) return true; const R = d.getBoundingClientRect().right + 1; for (const e of d.querySelectorAll('*')) { if (e.offsetWidth && e.getBoundingClientRect().right > R) return true; } return false; };
-      for (let k = 0; k < 10; k++) { d.style.zoom = z.toFixed(3); if (bottom(sl) <= 650 && !wide()) break; z *= 0.95; if (z < 1.08) { d.style.zoom = ''; return; } }
+      for (let k = 0; k < 10; k++) { d.style.zoom = z.toFixed(3); if (bottomR(sl) <= 650 && !wide()) break; z *= 0.95; if (z < 1.08) { d.style.zoom = ''; return; } }
       grownMax = z;
     };
     // Kısaltma sözlüğü: slaytta geçen kısaltmaların açılımı, yer varsa slaytın altında küçük bir satırda gösterilir.

@@ -148,7 +148,7 @@
     let spikes = 3;
     const W = 760, H = 260;
     const c = el('canvas'); const ctx = SL.setupCanvas(c, W, H);
-    const info = el('div', { class: 'lf-info' });
+    const info = el('div', { class: 'lf-info' }), how = el('p', { class: 'lf-how' });
     const quickselect = (arr, k) => {
       const a = arr.slice(); let lo = 0, hi = a.length - 1, cmp = 0;
       while (hi > lo) {
@@ -169,13 +169,13 @@
       ctx.clearRect(0, 0, W, H);
       const maxT = Math.max(...ft), bw = W / N;
       ft.forEach((v, i) => { ctx.fillStyle = v > 33 ? t.s2 : t.s1; const h = (v / maxT) * (H - 30); ctx.fillRect(i * bw, H - h, Math.max(bw, 1), h); });
-      const line = (v, col, lab) => { const y = H - (v / maxT) * (H - 30); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = col; ctx.font = '700 13px "Source Sans 3"'; ctx.fillText(lab, W - 150, y - 4); };
+      const line = (v, col, lab) => { const y = H - (v / maxT) * (H - 30); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.setLineDash([]); ctx.font = '700 15px "Source Sans 3"'; const tw = ctx.measureText(lab).width; ctx.fillStyle = t.card; ctx.globalAlpha = 0.9; ctx.fillRect(10, y - 24, tw + 12, 20); ctx.globalAlpha = 1; ctx.fillStyle = col; ctx.fillText(lab, 16, y - 9); };
       line(avg, t.ink, `ortalama ${avg.toFixed(1)} ms`); line(p99, t.red, `%99’luk ${p99.toFixed(1)} ms`);
       info.innerHTML = `<div class="big">Ortalama FPS: <b>${(1000 / avg).toFixed(0)}</b></div><div class="big">Medyan FPS: <b>${(1000 / p50).toFixed(0)}</b></div><div class="big c-red">%1 low FPS: <b>${(1000 / p99).toFixed(0)}</b></div>` +
-        `<p class="mini">1000 karenin süresi (ms). Turuncu = takılma. Ortalama “60 FPS” gösterir ama oyuncu takılmaları hisseder: <b>%1 low</b> (en kötü %1’lik karelerin eşiği) bunu yakalar.</p>` +
-        `<p class="mini">Medyan ve %99’luk değer <b>quickselect</b> ile bulundu: ${fmt(c1)} + ${fmt(c2)} karşılaştırma (tam sıralama ~${fmt(Math.round(N * Math.log2(N)))}).</p>`;
+'';
+      how.innerHTML = `Her çubuk bir karenin çizim süresi (ms); 1000 kare var, <b style="color:${t.s2}">turuncu</b> olanlar takılan kareler. `+`Ortalama “60 FPS’e yakın” gösterir ama oyuncu takılmaları hisseder. <b>%1 low</b>, en yavaş %1’lik karelerin eşiğidir (99. yüzdelik) ve takılmayı yakalar. Medyan ve 99. yüzdelik burada <b>quickselect</b> ile bulundu: ${fmt(c1)} + ${fmt(c2)} karşılaştırma. Bütün diziyi sıralasaydık yaklaşık ${fmt(Math.round(N * Math.log2(N)))} karşılaştırma gerekirdi.`;
     };
-    root.append(el('div', { class: 'sv-controls' }, slider('Takılma sıklığı', 0, 8, spikes, 1, v => { spikes = v; run(); }), btn('🎲 Yeni ölçüm', run, 'primary')), el('div', { class: 'lf-wrap' }, c, info));
+    root.append(el('div', { class: 'sv-controls' }, slider('Takılma sıklığı', 0, 8, spikes, 1, v => { spikes = v; run(); }), btn('🎲 Yeni ölçüm', run, 'primary')), el('div', { class: 'lf-wrap' }, c, info), how);
     SL.onTheme(run); run();
   };
 
