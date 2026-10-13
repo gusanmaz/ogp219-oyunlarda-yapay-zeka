@@ -459,9 +459,9 @@
 
 <section data-sec="MCTS">
   <h2>Önce basit hâli: hangi lokanta daha iyi? 🍜</h2>
-  <p style="font-size:.78em;margin:.1em 0 .3em">Yeni bir şehre taşındınız; üç lokanta var ve hangisinin iyi olduğunu bilmiyorsunuz. 60 akşam yemek yiyeceksiniz. <b>Bildiğiniz iyi yere mi</b> gitmeli, yoksa <b>az denediğinize bir şans daha mı</b> vermeli? Üç stratejiyi sırayla oynatın ve memnun kalınan akşam sayılarını karşılaştırın.</p>
+  <p style="font-size:.78em;margin:.1em 0 .3em">Yeni bir şehre taşındınız; üç lokanta var ve hangisinin iyi olduğunu bilmiyorsunuz. 100 akşam yemek yiyeceksiniz. <b>Bildiğiniz iyi yere mi</b> gitmeli, yoksa <b>az denediğinize bir şans daha mı</b> vermeli? Üç stratejiyi sırayla oynatın ve memnun kalınan akşam sayılarını karşılaştırın.</p>
   <div class="demo" data-demo="bandit"></div>
-  <aside class="notes">MCTS’nin “seçim” adımındaki ikilemi (keşif / sömürü) ağaç olmadan gösterir. Gerçek oranlar gizli: Köşe %45, Pasaj %75, Meydan %60; oynatma bitince görünür. “Hep bildiğine git” birkaç kez yeniden çalıştırılınca bazen iyi lokantayı (Pasaj) ilk akşam kötü çıktığı için sonsuza dek bırakır. “Rastgele” hangisinin iyi olduğunu öğrenir ama kullanmaz. UCB1 ikisini dengeler. Sonraki slayttaki formül, kartlardaki “UCB puanı”nın nasıl hesaplandığını söyler; önce sezgi, sonra formül.</aside>
+  <aside class="notes">MCTS’nin “seçim” adımındaki ikilemi (keşif / sömürü) ağaç olmadan gösterir. Gerçek oranlar gizli: Köşe %30, Pasaj %80, Meydan %50; oynatma bitince görünür. 20.000 denemelik ölçüm (100 akşamda memnun kalınan akşam): rastgele ortalama 53; “hep bildiğine git” ortalama 70 ama çok oynak (her on denemenin birinde 39 ve altı: Pasaj ilk akşam kötü çıkınca sonsuza dek bırakılır); UCB1 ortalama 74 ve kararlı (on denemenin dokuzunda 68 ve üstü). “Rastgele” hangisinin iyi olduğunu öğrenir ama kullanmaz; UCB1 ikisini dengeler. Sonraki slayttaki formül, kartlardaki “UCB puanı”nın nasıl hesaplandığını söyler; önce sezgi, sonra formül.</aside>
 </section>
 
 <section data-sec="MCTS">

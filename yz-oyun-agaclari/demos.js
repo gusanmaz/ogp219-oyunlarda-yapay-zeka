@@ -221,7 +221,7 @@
 
   /* ================= hikâyeli giriş: hangi lokanta? (keşif mi, bildiğin mi) ================= */
   D.bandit = function (root) {
-    const P = [0.45, 0.75, 0.6], NM = ['🍜 Köşe', '🍛 Pasaj', '🥙 Meydan'], NIGHTS = 60;
+    const P = [0.3, 0.8, 0.5], NM = ['🍜 Köşe', '🍛 Pasaj', '🥙 Meydan'], NIGHTS = 100;
     const ST = {
       greedy: ['😌 Hep bildiğine git', 'Her birini bir kez dene; sonra hep o ana kadar oranı en iyi olana git.'],
       random: ['🎲 Hep rastgele', 'Her akşam zar at. Hiçbir şey öğrenmiyormuş gibi davran.'],
@@ -233,7 +233,7 @@
       out.push({ n: n.slice(), w: w.slice(), tot, t: 0, note: 'Üç lokanta var. Hangisinin daha iyi olduğunu <b>bilmiyorsunuz</b>; ancak yiyerek öğrenebilirsiniz. ▶ Oynat.' });
       for (let t = 1; t <= NIGHTS; t++) {
         let k, why;
-        const sc = [0, 1, 2].map(i => (n[i] === 0 ? Infinity : w[i] / n[i] + 1.2 * Math.sqrt(Math.log(t) / n[i])));
+        const sc = [0, 1, 2].map(i => (n[i] === 0 ? Infinity : w[i] / n[i] + 0.7 * Math.sqrt(Math.log(t) / n[i])));
         if (mode === 'random') { k = Math.floor(Math.random() * 3); why = 'zar attı'; }
         else if (n.includes(0)) { k = n.indexOf(0); why = 'hiç denenmemişti'; }
         else if (mode === 'greedy') { k = [0, 1, 2].reduce((a, b) => (w[b] / n[b] > w[a] / n[a] ? b : a)); why = 'şimdiye kadarki oranı en iyi'; }
@@ -242,7 +242,7 @@
         out.push({ n: n.slice(), w: w.slice(), tot, t, k, ok, sc: mode === 'ucb' ? sc : null, note: `<b>${t}. akşam:</b> ${NM[k]} (${why}) → ${ok ? 'beğendi 😋' : 'beğenmedi 😖'}` });
       }
       const fav = n.indexOf(Math.max(...n));
-      out.push({ n: n.slice(), w: w.slice(), tot, t: NIGHTS, final: true, note: `<b>${NIGHTS} akşamın ${tot} tanesinde</b> memnun kaldı. En çok gidilen: ${NM[fav]} (${n[fav]} kez). Gerçekte en iyisi ${NM[1]} idi. ` + (mode === 'greedy' ? (fav === 1 ? 'Bu sefer şanslıydı; “Yeniden” ile birkaç kez deneyin: ilk akşam şanssız geçerse iyi lokantaya bir daha hiç uğramaz.' : 'İlk akşam şanssız geçen iyi lokantaya bir daha hiç uğramadı: <b>keşif yok</b>.') : mode === 'random' ? 'Hangisinin iyi olduğunu öğrendi ama bilgisini <b>kullanmadı</b>: akşamların üçte ikisi kötü lokantalarda geçti.' : 'Önce hepsini yokladı, sonra iyi olana yüklendi; kötüleri arada bir yeniden denedi. MCTS her düğümde tam bunu yapar.') });
+      out.push({ n: n.slice(), w: w.slice(), tot, t: NIGHTS, final: true, note: `<b>${NIGHTS} akşamın ${tot} tanesinde</b> memnun kaldı. En çok gidilen: ${NM[fav]} (${n[fav]} kez). Gerçekte en iyisi ${NM[1]} idi. ` + (mode === 'greedy' ? (fav === 1 ? 'Bu sefer şanslıydı. “Yeniden” ile birkaç kez deneyin: iyi lokanta ilk akşam kötü çıkarsa ona bir daha hiç uğramaz ve sonuç 40’ın altına düşer.' : 'İlk akşam şanssız geçen iyi lokantaya bir daha hiç uğramadı: <b>keşif yok</b>.') : mode === 'random' ? 'Hangisinin iyi olduğunu öğrendi ama bilgisini <b>kullanmadı</b>: akşamların üçte ikisi daha kötü lokantalarda geçti.' : 'Önce hepsini yokladı, sonra iyi olana yüklendi; ötekileri arada bir yeniden denedi. Her çalıştırmada sonuç birbirine yakın çıkar (çoğunlukla 68–80): <b>güvenilir</b>. MCTS her düğümde tam bunu yapar.') });
       return out;
     };
     const cards = el('div', { class: 'bd-cards' }), note = el('div', { class: 'sv-note' }), stat = el('div', { class: 'sv-counters' }), how = el('div', { class: 'btd-story' });
@@ -255,7 +255,7 @@
           `<div class="bd-true">${f.final ? 'gerçek oran: %' + P[i] * 100 : 'gerçek oran: gizli'}</div></div>`;
       }).join('');
       note.innerHTML = f.note;
-      stat.innerHTML = `<span class="cnt">akşam <b>${f.t}</b> / ${NIGHTS}</span><span class="cnt ok">memnun kalınan akşam <b>${f.tot}</b></span><span class="cnt">her akşam en iyisine gidilseydi ≈ <b>${Math.round(f.t * 0.75)}</b></span>`;
+      stat.innerHTML = `<span class="cnt">akşam <b>${f.t}</b> / ${NIGHTS}</span><span class="cnt ok">memnun kalınan akşam <b>${f.tot}</b></span><span class="cnt">her akşam en iyisine gidilseydi ≈ <b>${Math.round(f.t * 0.8)}</b></span>`;
       if (pl.idx !== last && f.k !== undefined && SL.sfx) { try { SL.sfx(f.ok ? 'waka' : 'tak'); } catch (e) {} }
       last = pl.idx;
     };
