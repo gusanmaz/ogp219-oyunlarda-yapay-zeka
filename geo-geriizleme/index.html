@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geri İzleme: Envanter ve Bulmacalar</title>
+<meta name="description" content="Oyunlarda geri izleme (backtracking): seç-dene-geri al iskeleti ve N vezir, ızgara envanterde otomatik yerleştirme, sudoku çözücü ve en kısıtlı değişken kuralı, Sokoban için durum uzayı araması ve geri al yığını, sırt çantası problemi ve dal-sınır; Simon Tatham ve PuzzleScript kaynak kodundan örnekler; p5.js kodları ve oynanabilir demolar.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 75% 15%, #3a0d2a 0%, #1a1824 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G8</div>
+  <div class="ttl" style="font-size:64px">Geri İzleme: Envanter ve Bulmacalar</div>
+  <div class="sub"><i>Seç, dene, olmadıysa geri al</i> — çanta düzenleme, sudoku, Sokoban ve “bu bulmacanın çözümü var mı?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo8"></div>
+  <aside class="notes">Sağdaki tahtada 8 vezir problemi geri izlemeyle çözülüyor: vezirler satır satır konur, çıkmaza girince geri alınır.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Geri izleme kalıbı</b> — seç → dene → geri al; N vezir ile dört satırlık iskelet</li><li><b>Çanta: eşyalar sığar mı?</b> — ızgara envanter ve “otomatik düzenle” düğmesi; sıra neden her şeyi değiştirir</li><li><b>Kısıt bulmacaları</b> — sudoku: hangi hücreyle başlamalı? Bulmaca üretmek ve “tek çözümlü mü?”</li><li><b>Durum uzayında arama</b> — Sokoban: oyuncunun “geri al” tuşu, makinenin çözücüsü; çıkmazları erken görmek</li><li><b>En değerli yük</b> — taşıma kapasitesi altında en iyi ganimet: al / alma ağacı ve sınırla budama</li><li><b>Her adımda</b> — elle izleme → canlı demo → kod (JavaScript / Python / C#) → gerçek oyun kaynak kodu</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>geri izleme iskeletini ezbere yazabilecek; bir ızgara envanter için “sığar mı / otomatik yerleştir” fonksiyonunu, bir bulmaca için çözücü ve “çözülebilir mi, tek çözümlü mü” denetimini kurabilecek; aramayı budama ve sıralamayla binlerce kat hızlandırmanın yollarını açıklayabileceksiniz.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: ÇANTA TETRİSİ</span>
+<p>Resident Evil 4’te (2005) oyuncular saatlerini silah çantasını düzenleyerek geçirdi: tüfeği yatır, pompalıyı döndür, otları köşeye sıkıştır… Oyunun 2023’teki yeni sürümüne tek tuşla “otomatik düzenle” eklendi. O tuşa basınca bilgisayar ne yapıyor?</p>
+<ul style="font-size:.9em"><li><span class="fragment">Sizin yaptığınızın aynısını: bir eşyayı bir yere koyuyor, sıradakini deniyor; sığmayan çıkınca bir öncekini <b>kaldırıp</b> başka yere koyuyor.</span></li><li><span class="fragment">Buna <b>geri izleme</b> (backtracking) denir. Bilgisayar bilimindeki en genel “bulmaca çözme” yöntemidir.</span></li><li><span class="fragment">Aynı dört satır şunları da çözer: sudoku, Sokoban, bulmaca seviyesinin çözülebilir olup olmadığı, rastgele üretilen zindanda anahtarların kapılardan önce bulunup bulunamayacağı, hangi ganimetin taşınacağı.</span></li><li><span class="fragment">Asıl hüner denemekte değil, <b>denememeyi bilmekte</b>: iyi bir budama ve doğru sıra, bir milyon denemeyi ona indirir. Bu sunumda ikisini de ölçeceğiz.</span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar (yığın: son giren ilk çıkar)</a><a class="" href="../yonsuz-graflar/">Yönsüz Graflar (DFS, BFS)</a><a class="" href="../algoritma-analizi/">Algoritma Analizi (üstel büyüme)</a></div>
+  <div class="prereq"><a class="opt" href="../hash-tablolari/">Hash Tabloları (görülen durumlar kümesi)</a><a class="opt" href="../yz-pcg/">Y15 · Prosedürel Üretim (dalga fonksiyonu çöküşü)</a><a class="opt" href="../yz-goap/">Y6 · GOAP (durum uzayında plan arama)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Derinlik öncelikli arama (DFS) bir labirentte “git, çıkmazsa dön” diyordu. Geri izleme aynı fikirdir; ama labirent önceden çizilmiş değildir: düğümler, yaptığınız <b>seçimlerle</b> ortaya çıkar.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Özyineleme (kendini çağıran fonksiyon) bu sunumun tek zor yeri. Her fonksiyon aynı üç satırdan oluşur: seç, dene, geri al. İlk örnekte (4 vezir) çağrıları tahtada tek tek izleyeceğiz; ondan sonrası aynı kalıbın tekrarıdır.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:16px"><tr><td>backtracking</td><td>geri izleme</td><td>Adım adım seçim yap; çıkmaza girince son seçimi geri alıp bir sonrakini dene</td></tr><tr><td>search tree · state space</td><td>arama ağacı · durum uzayı</td><td>Olası seçim dizilerinin ağacı · ulaşılabilen bütün durumların kümesi</td></tr><tr><td>pruning</td><td>budama</td><td>İşe yaramayacağı belli olan dalı hiç açmamak</td></tr><tr><td>constraint satisfaction (CSP)</td><td>kısıt sağlama problemi</td><td>Değişkenlere, bütün kuralları sağlayan değerler atama (sudoku, vezirler, yerleştirme)</td></tr><tr><td>most constrained variable (MRV)</td><td>en kısıtlı değişken</td><td>Sıradaki seçim için en az seçeneği kalan yeri alma kuralı</td></tr><tr><td>grid inventory</td><td>ızgara envanter</td><td>Eşyaların biçimleriyle yer kapladığı çanta (“envanter tetrisi”)</td></tr><tr><td>undo · softlock</td><td>geri al · kilitlenme</td><td>Son hamleyi iptal etme · oyunun bitirilemez duruma düşmesi</td></tr><tr><td>deadlock</td><td>çıkmaz durum</td><td>Hiçbir hamle dizisiyle çözüme varılamayan durum (köşeye sıkışmış kutu)</td></tr><tr><td>knapsack · branch and bound</td><td>sırt çantası problemi · dal-sınır</td><td>Kapasite altında en değerli seçim · “en iyimser tahmin bile yetmiyorsa” dalı kesme</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Geri izleme kalıbı</div><div class="sub">seç, dene, geri al</div></div>
+</section>
+
+<section data-sec="kalıp">
+  <h2>Problem: 8 vezir</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">♛ Bulmacaların “merhaba dünya”sı</span><ul style="font-size:.92em"><li>8 × 8 satranç tahtasına 8 vezir koyun; hiçbiri öbürünü tehdit etmesin (aynı satır, sütun ya da çaprazda iki vezir olmasın).</li><li>1848’de bir satranç dergisinde soruldu; Gauss da uğraştı. 92 çözümü var.</li><li>Oyunlarda aynı yapıda sorular: “bu parçaları, birbirini ezmeden yerleştir”, “bu kurallara uyan bir düzen bul”.</li><li>Bulmaca oyunlarında doğrudan karşımıza çıkar: The 7th Guest (1993) ve Professor Layton serisinde vezir bulmacaları var.</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Kaba kuvvet: hepsini dene</span><ul style="font-size:.92em"><li>Her satıra bir vezir koyacağımızı biliyoruz. Her satır için 8 sütun seçeneği: 8⁸ = <b>16.777.216</b> tahta.</li><li>Her tahtayı kur, 28 vezir çiftini sına. Bilgisayar için yapılabilir; ama…</li><li>10 vezir: 10¹⁰ = 10 milyar. 20 vezir: 10²⁶. Evrenin yaşı yetmez.</li><li>İsraf nerede? İlk iki veziri <b>aynı sütuna</b> koyan 2 milyon tahtanın hepsi daha ikinci vezirde ölüydü; yine de 8 vezirin tamamını dizip öyle sınadık.</li></ul><p><b>Fikir:</b> tahtayı baştan sona kurup sonra sınama. Vezirleri <b>birer birer</b> koy; kural bozulduğu an dur, o dalın altındaki her şeyi <b>hiç kurmadan</b> at.</p></div></div>
+</div>
+</section>
+
+<section data-sec="kalıp">
+  <h2>Fikir: seç → dene → geri al</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Satır satır in. Bulunduğun satırda soldan sağa sütunları dene.</li><li><b>Güvenli</b> bir sütun bulursan: veziri koy (<b>seç</b>) ve bir alt satır için aynı işi yap (<b>dene</b>).</li><li>Alt satırlar çözüme ulaştıysa: bitti.</li><li>Ulaşamadıysa: az önce koyduğun veziri kaldır (<b>geri al</b>) ve bu satırda bir sonraki sütuna geç.</li><li>Bu satırda hiçbir sütun olmadıysa: “buradan çözüm yok” diye üst satıra haber ver; o da kendi vezirini geri alacak.</li></ul><p class="mini">Geri alınan vezirlerin durduğu yer bir <b>yığın</b>dır (son konan ilk kalkar). Özyinelemede bu yığını programlama dili kendisi tutar: her fonksiyon çağrısı bir satırı “hatırlar”.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: 4 vezir (satır, sütun 1’den sayılıyor)</span><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">adım</th><th style="text-align:left;">olay</th><th style="text-align:left;">tahta (satır → sütun)</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">satır 1: sütun 1 güvenli → koy</td><td style="text-align:left;">1</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">satır 2: 1 ✗, 2 ✗, 3 ✓ → koy</td><td style="text-align:left;">1, 3</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">satır 3: 1 ✗ 2 ✗ 3 ✗ 4 ✗ → <b>çıkmaz</b></td><td style="text-align:left;">1, 3</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;"><b>geri al</b> (satır 2); sütun 4 ✓ → koy</td><td style="text-align:left;">1, 4</td></tr><tr><td style="text-align:left;">5</td><td style="text-align:left;">satır 3: 1 ✗, 2 ✓ → koy</td><td style="text-align:left;">1, 4, 2</td></tr><tr><td style="text-align:left;">6</td><td style="text-align:left;">satır 4: hepsi ✗ → çıkmaz; geri al; satır 3: 3 ✗ 4 ✗; geri al; satır 2 bitti; <b>geri al</b> (satır 1)</td><td style="text-align:left;">—</td></tr><tr><td style="text-align:left;">7</td><td style="text-align:left;">satır 1: sütun 2 → koy; satır 2: 4 ✓; satır 3: 1 ✓; satır 4: 3 ✓</td><td style="text-align:left;"><b>2, 4, 1, 3</b> ✔</td></tr></table><p class="mini">Toplam 26 kare sınandı, 8 vezir kondu, 4’ü geri alındı. Kaba kuvvet: 4⁴ = 256 tahta.</p></div></div>
+</div>
+</section>
+
+<section data-sec="kalıp">
+  <h2>Canlı: vezirler satır satır ♛</h2>
+<div class="demo" data-demo="queens"></div>
+</section>
+
+<section data-sec="kalıp">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> solda tahta; mavi daireler konmuş vezirler; pembe kareler onların tehdit ettiği yerler. Kırmızı çarpı: az önce sınanıp tehdit altında bulunan kare. Sarı çerçeve: geri alınan vezirin yeri. Sağda o anki adımın açıklaması ve sayaçlar.</li><li><b>N = 4</b>, hızı en düşüğe alın ve <b>“⏭ tek adım”</b> ile ilerleyin: önceki slayttaki tabloyu satır satır izleyin. Sayaçlar 26 / 8 / 4’te durmalı.</li><li><b>N = 6</b>: ilk vezir sütun 1’deyken algoritma 25 kez geri alır. İlk veziri taşımadan çözüm yoktur; algoritma bunu ancak altındaki bütün dalları tüketince “anlar”.</li><li><b>N = 8</b>, hızı artırın: 876 kare sınanır, 113 vezir konur, 105’i geri alınır. Kaba kuvvetin 16,7 milyon tahtasına karşı.</li><li>Soru: pembe karelere hiç vezir konmuyor. Bu “budama”yı kodda hangi satır yapıyor? (Bir sonraki slayt: <code>guvenliMi</code>.)</li></ol></div>
+</section>
+
+<section data-sec="kalıp">
+  <h2>Kod: geri izlemenin iskeleti</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// N vezir: vezirler[satir] = o satırdaki vezirin sütunu.  Satır satır yerleştiririz.
+function guvenliMi(vezirler, satir, sutun) {
+  for (let i = 0; i < satir; i++) {
+    if (vezirler[i] === sutun) return false;                        // aynı sütun
+    if (Math.abs(vezirler[i] - sutun) === satir - i) return false;  // aynı çapraz
+  }
+  return true;                                                      // (aynı satır olamaz: satır başına bir vezir)
+}
+
+function yerlestir(vezirler, satir, n) {
+  if (satir === n) return true;                  // TABAN: bütün satırlar doldu → çözüm
+  for (let sutun = 0; sutun < n; sutun++) {
+    if (!guvenliMi(vezirler, satir, sutun)) continue;   // BUDA: bu dalı hiç açma
+    vezirler[satir] = sutun;                     // SEÇ
+    if (yerlestir(vezirler, satir + 1, n)) return true; // DENE: gerisi çözülüyor mu?
+    vezirler.length = satir;                     // GERİ AL: seçimi sil, sıradaki sütuna geç
+  }
+  return false;                                  // bu satırda hiçbir sütun olmadı → çağıran geri alacak
+}
+
+const cozum = [];
+if (yerlestir(cozum, 0, 8)) console.log(cozum);   // [0, 4, 7, 5, 2, 6, 1, 3]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def guvenli_mi(vezirler, satir, sutun):
+    return all(v != sutun and abs(v - sutun) != satir - i for i, v in enumerate(vezirler))
+
+def yerlestir(vezirler, n):
+    """İlk çözümü bul (liste yerinde doldurulur)."""
+    satir = len(vezirler)
+    if satir == n:
+        return True
+    for sutun in range(n):
+        if guvenli_mi(vezirler, satir, sutun):
+            vezirler.append(sutun)          # SEÇ
+            if yerlestir(vezirler, n):      # DENE
+                return True
+            vezirler.pop()                  # GERİ AL
+    return False
+
+def count_queens(n, vezirler=None):
+    """BÜTÜN çözümleri say: bulunca durma, saymaya devam et."""
+    vezirler = vezirler or []
+    if len(vezirler) == n:
+        return 1
+    toplam = 0
+    for sutun in range(n):
+        if guvenli_mi(vezirler, len(vezirler), sutun):
+            toplam += count_queens(n, vezirler + [sutun])     # kopyayla: geri almaya gerek yok
+    return toplam
+
+print(count_queens(8))      # 92
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// C#: aynı kalıp. Unity'de uzun süren aramayı kareyi dondurmadan yapmak için Coroutine ya da Task kullanın.
+static bool GuvenliMi(List<int> vezirler, int satir, int sutun) {
+    for (int i = 0; i < satir; i++)
+        if (vezirler[i] == sutun || Math.Abs(vezirler[i] - sutun) == satir - i) return false;
+    return true;
+}
+
+static bool Yerlestir(List<int> vezirler, int n) {
+    int satir = vezirler.Count;
+    if (satir == n) return true;
+    for (int sutun = 0; sutun < n; sutun++) {
+        if (!GuvenliMi(vezirler, satir, sutun)) continue;
+        vezirler.Add(sutun);                              // SEÇ
+        if (Yerlestir(vezirler, n)) return true;          // DENE
+        vezirler.RemoveAt(vezirler.Count - 1);            // GERİ AL
+    }
+    return false;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kalıp">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>if (satir === n) return true</code></td><td style="text-align:left;"><b>taban durum:</b> yapacak seçim kalmadı</td><td style="text-align:left;">Özyinelemenin durduğu yer. Buraya ancak bütün satırlar kurallara uyarak dolduysa gelinir.</td></tr><tr><td style="text-align:left;"><code>for (sutun …)</code></td><td style="text-align:left;">bu adımın <b>seçenekleri</b></td><td style="text-align:left;">Her geri izleme probleminde soru aynı: “bu adımda neler seçilebilir?”</td></tr><tr><td style="text-align:left;"><code>if (!guvenliMi(…)) continue</code></td><td style="text-align:left;"><b>budama</b></td><td style="text-align:left;">Kuralı bozan seçeneğin altındaki bütün ağaç hiç açılmaz. Kaba kuvvetten farkın tamamı bu satır.</td></tr><tr><td style="text-align:left;"><code>vezirler[satir] = sutun</code></td><td style="text-align:left;"><b>seç</b></td><td style="text-align:left;">Durumu değiştir.</td></tr><tr><td style="text-align:left;"><code>if (yerlestir(…, satir + 1)) return true</code></td><td style="text-align:left;"><b>dene</b></td><td style="text-align:left;">Kalan problemi (daha küçük, aynı biçimde) kendine sor. “true” gelirse yukarı aynen ilet.</td></tr><tr><td style="text-align:left;"><code>vezirler.length = satir</code></td><td style="text-align:left;"><b>geri al</b></td><td style="text-align:left;">Durumu seçimden önceki hâline getir. En sık unutulan satır: unutulursa eski vezirler tahtada kalır.</td></tr><tr><td style="text-align:left;"><code>return false</code></td><td style="text-align:left;">bu adımda hiçbir seçenek olmadı</td><td style="text-align:left;">Çağıran, kendi seçimini geri alıp bir sonrakini deneyecek.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Geri izleme, çözüm varsa <b>bulur</b>, yoksa bütün ağacı tüketip “yok” der (eksiksizdir). En kötü durumda süre üsteldir: dallanma b, derinlik d ise b<sup>d</sup> düğüm. Budama bu sayıyı azaltır ama üsteli genelde yok etmez; bu yüzden pratikte her şey budamanın ve seçim sırasının kalitesine bağlıdır.</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: bu kare güvenli mi?</h2>
+  <div class="ailab" data-lab="safe" data-lang="js">
+<textarea>
+// queens[i]: i. satırdaki vezirin sütunu (yalnızca row'dan ÖNCEKİ satırlar dolu).
+// (row, col) karesine vezir konabilir mi? Aynı sütunda ya da aynı çaprazda vezir varsa false.
+function safe(queens, row, col) {
+  return true;
+}
+</textarea>
+    <div class="lab-tasks">Önceki her vezir için: <code>for (let i = 0; i &lt; row; i++)</code> içinde <code>if (queens[i] === col) return false;</code> (aynı sütun) ve <code>if (Math.abs(queens[i] - col) === row - i) return false;</code> (çapraz: yatay uzaklık = dikey uzaklık). Döngü biterse <code>return true</code>.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: kaç çözüm var?</h2>
+  <div class="ailab" data-lab="nqueens" data-lang="python">
+<textarea>
+# N×N tahtaya N veziri birbirini tehdit etmeden yerleştirmenin KAÇ farklı yolu var?
+# count_queens(4) → 2,  count_queens(6) → 4,  count_queens(8) → 92
+def count_queens(n):
+    return 0
+</textarea>
+    <div class="lab-tasks">İç içe bir yardımcı fonksiyon yazın: <code>def yerlestir(vezirler):</code> · <code>if len(vezirler) == n: return 1</code> · <code>toplam = 0</code> · her <code>sutun</code> için güvenliyse (<code>all(v != sutun and abs(v - sutun) != len(vezirler) - i for i, v in enumerate(vezirler))</code>) <code>toplam += yerlestir(vezirler + [sutun])</code> · <code>return toplam</code>. En sonda <code>return yerlestir([])</code>. İlk çözümde durmayın: hepsini sayın.</div>
+  </div>
+</section>
+
+<section data-sec="kalıp">
+  <div class="quiz" data-karildi="1" data-answer="C">
+    <div class="qhead">Quiz 1 · geri izleme</div>
+    <div class="q">Bir geri izleme fonksiyonu yazdınız; küçük örneklerde doğru, büyüklerde “çözüm yok” diyor (oysa var). Tahtayı yazdırınca, artık geçerli olmayan eski seçimlerin hâlâ üstünde durduğunu görüyorsunuz. Hangi satır eksik?</div>
+    <div class="opts"><button data-opt="A">Taban durum (seçim kalmadıysa true)</button><button data-opt="B">Budama (kuralı bozan seçeneği atla)</button><button data-opt="C">Geri alma (özyinelemeli çağrı başarısız dönünce seçimi sil)</button><button data-opt="D">Seçenekler üzerindeki döngü</button></div>
+    <div class="explain">Seç – dene – geri al üçlüsünün üçüncüsü eksik. Başarısız bir denemeden sonra durum eski hâline getirilmezse, sonraki seçenekler kirli bir tahta üzerinde sınanır ve geçerli seçenekler de “çakışıyor” görünür. Taban durum eksik olsaydı fonksiyon hiç bitmezdi; budama eksik olsaydı sonuç doğru ama çok yavaş olurdu.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Çanta: eşyalar sığar mı?</div><div class="sub">ızgara envanter ve otomatik düzenleme</div></div>
+</section>
+
+<section data-sec="çanta">
+  <h2>Problem: envanter tetrisi</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Biçimi olan eşyalar</span><ul style="font-size:.92em"><li><b>Diablo (1996):</b> kılıç 1 × 3, zırh 2 × 3, iksir 1 × 1. Çantanın alanı değil <b>biçimi</b> önemli.</li><li><b>Resident Evil 4 (2005):</b> silah çantası başlı başına bir mini oyun. Yeni sürümde (2023) “otomatik düzenle” tuşu.</li><li><b>Escape from Tarkov, DayZ:</b> çanta içinde çanta; yelek, sırt çantası, cepler.</li><li><b>Backpack Hero, Dredge, Save Room:</b> oyunun <b>kendisi</b> çanta düzenlemek.</li><li>Motorun cevaplaması gereken sorular: “bu eşya <b>buraya</b> sığar mı?”, “çantada <b>herhangi bir</b> yere sığar mı?”, “yerdeki ganimetin <b>hepsi</b> sığar mı; nasıl?”</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: sığdığı ilk yere koy</span><p>Eşyaları sırayla al; çantayı tara; sığdığı ilk yere bırak; geri dönme (<b>açgözlü</b> yerleştirme).</p><ul style="font-size:.92em"><li>Hızlı ve basit. Çoğu zaman da çalışır.</li><li>Ama bazen <b>yanlış “sığmıyor” der</b>: ilk eşyayı kötü yere koyduysa sonradan gelen büyük eşyaya yer kalmaz; oysa başka bir düzende hepsi sığardı.</li><li>Oyuncu elle sığdırabildiği şeyi “otomatik düzenle”nin sığdıramadığını görürse o tuşa bir daha basmaz.</li></ul><p><b>Çözüm:</b> aynı “ilk yere koy” kuralı; ama sığmayan eşya çıkınca vazgeçme: <b>bir öncekini kaldır</b>, onu bir sonraki uygun yere koy, yeniden dene. Vezirlerdeki kalıbın aynısı; “sütun” yerine “konum ve yön”.</p></div></div>
+</div>
+</section>
+
+<section data-sec="çanta">
+  <h2>Fikir: aynı kalıp; ve sıra neden önemli?</h2>
+<div class="cols c46">
+<div><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;"></th><th style="text-align:left;">N vezir</th><th style="text-align:left;">çanta</th></tr><tr><td style="text-align:left;">adım</td><td style="text-align:left;">sıradaki satır</td><td style="text-align:left;">sıradaki eşya</td></tr><tr><td style="text-align:left;">seçenekler</td><td style="text-align:left;">8 sütun</td><td style="text-align:left;">her yön × her (x, y)</td></tr><tr><td style="text-align:left;">budama</td><td style="text-align:left;">tehdit altında mı?</td><td style="text-align:left;">taşıyor ya da dolu kareye geliyor mu?</td></tr><tr><td style="text-align:left;">geri al</td><td style="text-align:left;">veziri kaldır</td><td style="text-align:left;">eşyanın karelerini boşalt</td></tr><tr><td style="text-align:left;">taban</td><td style="text-align:left;">satırlar bitti</td><td style="text-align:left;">eşyalar bitti</td></tr></table><ul style="font-size:.8em;margin-top:8px"><li><b>Bedava budama:</b> eşyaların toplam alanı çantadan büyükse hiç deneme.</li><li><b>Sıra:</b> hangi eşyayı önce koymalı? <b>En zoru</b>: büyük ve uzun olanları. Küçükler sonradan boşluklara girer; tersi olmaz.</li><li>Genel ilke: <b>başarısız olacaksan erken ol</b>. Zor seçim başta yapılırsa, yanlışlığı ağacın tepesinde, ucuzken anlaşılır.</li></ul></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: 4 × 2 çanta, bıçak (1 × 2) ve tüfek (4 × 1)</span><p><b>Sıra 1: önce bıçak, sonra tüfek</b></p><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">deneme</th><th style="text-align:left;">bıçak</th><th style="text-align:left;">tüfek</th><th style="text-align:left;">sonuç</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">dik, (0,0)</td><td style="text-align:left;">boş tam satır yok</td><td style="text-align:left;"><b>geri al</b></td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">dik, (1,0)</td><td style="text-align:left;">yok</td><td style="text-align:left;">geri al</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">dik, (2,0)</td><td style="text-align:left;">yok</td><td style="text-align:left;">geri al</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">dik, (3,0)</td><td style="text-align:left;">yok</td><td style="text-align:left;">geri al</td></tr><tr><td style="text-align:left;">5</td><td style="text-align:left;">yatık, (0,0)</td><td style="text-align:left;">(0,1) ✓</td><td style="text-align:left;"><b>sığdı</b></td></tr></table><p class="mini">Dik duran bıçak iki satırı da keser; tüfeğe tam satır kalmaz. 5 yerleştirme, 4 geri alma. Açgözlü yöntem 1. denemede “sığmıyor” derdi.</p><p><b>Sıra 2: önce tüfek, sonra bıçak</b></p><p class="mini">Tüfek (0,0); bıçak dik sığmaz, yatık (0,1) ✓. <b>2 yerleştirme, 0 geri alma.</b></p><p class="mini">Demodaki 10 eşyalı çantada aynı fark: büyükten küçüğe <b>10</b> deneme, küçükten büyüğe <b>2.248</b>.</p></div></div>
+</div>
+</section>
+
+<section data-sec="çanta">
+  <h2>Canlı: çantayı bilgisayar düzenlesin 🎒</h2>
+<div class="demo" data-demo="bag"></div>
+</section>
+
+<section data-sec="çanta">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> solda 8 × 5 çanta; sağda eşyalar, deneneceği sırayla (yerleşenler soluk ve ✓). Altında son olay ile “yerleştirme denemesi” ve “geri alma” sayaçları.</li><li><b>Silah çantası, küçükten büyüğe</b> (başlangıç): ▶. Otlar ve mermiler sol üst köşeyi doldurur; sıra tüfeğe gelince yer kalmamıştır. Algoritma küçükleri tek tek söküp taşır: 2.248 deneme. Hızı artırın ya da “⏩ sonuna git”.</li><li>Sırayı <b>“büyükten küçüğe”</b> yapın: 10 deneme, sıfır geri alma. Aynı eşyalar, aynı algoritma.</li><li><b>“Döndürmek serbest”i kapatın</b> (büyükten küçüğe): 1.432 denemeden sonra “SIĞMIYOR”. Algoritma bunu ancak <b>bütün</b> yerleşimleri tüketerek söyleyebilir: “yok” demek “var” demekten pahalıdır.</li><li><b>Şekilli eşyalar</b> (L, T, Z biçimleri): büyükten küçüğe 104, küçükten büyüğe 78.786 deneme. Biçim karmaşıklaştıkça sıra daha da önem kazanır.</li><li><b>Sığmayan</b> çanta: toplam alan 37 kare (40’tan az!) ama üç uzun silah 5 satıra sığmaz. Alan denetimi gerekli, yeterli değil.</li></ol></div>
+</section>
+
+<section data-sec="çanta">
+  <h2>Kod: “buraya sığar mı?” ve otomatik yerleştirme</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const GEN = 8, YUK = 5;                                   // çanta: 8 × 5 kare
+
+// w × h eşya, sol üst köşesi (x, y)'ye konursa: çantadan taşmıyor ve bütün kareleri boş mu?
+function sigarMi(izgara, w, h, x, y) {
+  if (x < 0 || y < 0 || x + w > GEN || y + h > YUK) return false;
+  for (let yy = y; yy < y + h; yy++)
+    for (let xx = x; xx < x + w; xx++)
+      if (izgara[yy][xx] !== -1) return false;
+  return true;
+}
+function doldur(izgara, w, h, x, y, deger) {
+  for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) izgara[yy][xx] = deger;
+}
+
+// esyalar[i] = { w, h }.  i. eşyadan başlayarak hepsini yerleştirmeyi dene.
+function yerlestir(esyalar, i, izgara) {
+  if (i === esyalar.length) return true;                  // TABAN: hepsi yerleşti
+  const e = esyalar[i];
+  const yonler = e.w === e.h ? [[e.w, e.h]] : [[e.w, e.h], [e.h, e.w]];    // yatık, sonra 90° dönmüş
+  for (const [w, h] of yonler)
+    for (let y = 0; y < YUK; y++)
+      for (let x = 0; x < GEN; x++) {
+        if (!sigarMi(izgara, w, h, x, y)) continue;       // BUDA
+        doldur(izgara, w, h, x, y, i);                    // SEÇ
+        if (yerlestir(esyalar, i + 1, izgara)) { e.x = x; e.y = y; e.w = w; e.h = h; return true; }   // DENE
+        doldur(izgara, w, h, x, y, -1);                   // GERİ AL
+      }
+  return false;
+}
+
+function otomatikYerlestir(esyalar) {
+  const alan = esyalar.reduce((t, e) => t + e.w * e.h, 0);
+  if (alan > GEN * YUK) return false;                     // en ucuz budama: toplam alan sığmıyorsa hiç deneme
+  esyalar.sort((a, b) => b.w * b.h - a.w * a.h);          // büyükten küçüğe: zor olanı önce koy
+  const izgara = Array.from({ length: YUK }, () => Array(GEN).fill(-1));
+  return yerlestir(esyalar, 0, izgara);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+GEN, YUK = 8, 5
+
+def sigar_mi(izgara, w, h, x, y):
+    if x < 0 or y < 0 or x + w > GEN or y + h > YUK:
+        return False
+    return all(izgara[yy][xx] == -1 for yy in range(y, y + h) for xx in range(x, x + w))
+
+def doldur(izgara, w, h, x, y, deger):
+    for yy in range(y, y + h):
+        for xx in range(x, x + w):
+            izgara[yy][xx] = deger
+
+def yerlestir(esyalar, i, izgara, sonuc):
+    if i == len(esyalar):
+        return True
+    w0, h0 = esyalar[i]
+    for w, h in ([(w0, h0)] if w0 == h0 else [(w0, h0), (h0, w0)]):
+        for y in range(YUK):
+            for x in range(GEN):
+                if sigar_mi(izgara, w, h, x, y):
+                    doldur(izgara, w, h, x, y, i)             # SEÇ
+                    if yerlestir(esyalar, i + 1, izgara, sonuc):
+                        sonuc[i] = (x, y, w, h)
+                        return True
+                    doldur(izgara, w, h, x, y, -1)            # GERİ AL
+    return False
+
+esyalar = sorted([(6, 2), (5, 2), (2, 2), (2, 2), (1, 2), (1, 2), (2, 1), (2, 1), (1, 1), (1, 1)],
+                 key=lambda e: -e[0] * e[1])                  # büyükten küçüğe
+izgara = [[-1] * GEN for _ in range(YUK)]
+sonuc = {}
+print(yerlestir(esyalar, 0, izgara, sonuc), sonuc)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: ızgara envanter çoğu zaman bir int[,] (ya da Item[,]) dizisidir.
+int[,] izgara = new int[YUK, GEN];          // -1: boş; değilse eşya kimliği
+
+bool SigarMi(int w, int h, int x, int y) {
+    if (x < 0 || y < 0 || x + w > GEN || y + h > YUK) return false;
+    for (int yy = y; yy < y + h; yy++)
+        for (int xx = x; xx < x + w; xx++)
+            if (izgara[yy, xx] != -1) return false;
+    return true;
+}
+
+// "Otomatik düzenle" düğmesi: slayttaki yerlestir() ile aynı; uzun sürebilecek aramayı sınırlayın.
+int deneme;
+bool Yerlestir(List<Esya> esyalar, int i) {
+    if (i == esyalar.Count) return true;
+    if (++deneme > 50_000) return false;                 // sigorta: oyuncuyu bekletme, "sığdıramadım" de
+    // ... yönler × y × x döngüsü: SigarMi → Doldur → Yerlestir(i + 1) → Doldur(-1) ...
+    return false;
+}
+// Asset Store'da hazır ızgara envanter paketleri var; "auto-sort" özelliği olanlar tam bunu yapar.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="çanta">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>izgara[yy][xx] !== -1</code></td><td style="text-align:left;">kare dolu</td><td style="text-align:left;">Izgara, her karede “hangi eşya” bilgisini tutar: −1 boş. Önce satır (y), sonra sütun (x).</td></tr><tr><td style="text-align:left;"><code>x + w &gt; GEN</code></td><td style="text-align:left;">sağdan taşıyor</td><td style="text-align:left;">Sınır denetimi önce: yoksa dizi dışına bakarsınız.</td></tr><tr><td style="text-align:left;"><code>sigarMi</code></td><td style="text-align:left;">tek bir konum için evet / hayır</td><td style="text-align:left;">Oyuncu eşyayı sürüklerken yeşil / kırmızı gölgeyi veren fonksiyon da budur.</td></tr><tr><td style="text-align:left;"><code>yonler</code></td><td style="text-align:left;">yatık ve 90° dönmüş</td><td style="text-align:left;">Kare eşyada ikisi aynı: boşuna iki kat iş yapma. L, T gibi biçimlerde dört yön (ve ayna) olur.</td></tr><tr><td style="text-align:left;"><code>doldur(…, i)</code> / <code>doldur(…, -1)</code></td><td style="text-align:left;">seç / geri al</td><td style="text-align:left;">Aynı fonksiyon, iki değer. Geri alma, seçimin tam tersi olmalı.</td></tr><tr><td style="text-align:left;"><code>alan &gt; GEN * YUK → false</code></td><td style="text-align:left;">bir satırlık budama</td><td style="text-align:left;">Aramaya girmeden cevap. Her geri izlemede önce “bedava” denetimleri arayın.</td></tr><tr><td style="text-align:left;"><code>sort(… b.w * b.h - a.w * a.h)</code></td><td style="text-align:left;">büyükten küçüğe</td><td style="text-align:left;">Algoritmaya dokunmadan 200 kat hız. Daha da iyisi: en uzun kenara göre sıralamak.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>n eşya ve K kareli çantada arama ağacı en çok (2K)<sup>n</sup> düğümlüdür (her eşya için 2 yön × K konum). Dikdörtgenleri bir dikdörtgene sığdırma problemi NP-zordur: her durumda hızlı çalışan bir yöntem bilinmiyor. Oyun çantaları küçük olduğu (40–100 kare) ve iyi sıralama çoğu zaman geri almayı sıfıra indirdiği için pratikte sorun olmaz; yine de bir <b>deneme sınırı</b> koyun.</div>
+</section>
+
+<section data-sec="çanta">
+  <h2>Oyunlarda: çantadan pentominoya</h2>
+<div class="cols c46">
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 Tasarımcının kararları</span><ul style="font-size:.88em"><li><b>Otomatik düzenleme ne kadar iyi olmalı?</b> Resident Evil 4’te çantayı düzenlemek oyunun zevklerinden biri; yeni sürümde tuş var ama elle düzenlemek hâlâ serbest. Backpack Hero’da düzenleme <b>oyunun kendisi</b>: otomatik çözücü olsaydı oyun kalmazdı.</li><li><b>“Yerden alınca sığar mı?”</b> Diablo’da eşyayı alınca oyun ilk uygun yere koyar (açgözlü); sığmazsa “yer yok” der ve düzenlemeyi oyuncuya bırakır. Hızlı ve öngörülebilir.</li><li><b>Ganimet üretimi:</b> “bu sandıktan çıkanların hepsi oyuncunun çantasına sığabilmeli” kuralı varsa, üretici her sandığı çözücüyle sınar (Y15: üret ve sına).</li><li><b>Bina / üs yerleştirme:</b> strateji oyununda YZ’nin binaları haritaya dizmesi aynı problemdir; kareler arazi, eşyalar bina.</li></ul></div></div>
+<div><div class="box story" style="font-size:.78em"><span class="bt">Aynı problemin ünlü akrabaları</span><ul style="font-size:.88em"><li><b>Pentomino:</b> beş kareden oluşan 12 parçayı 6 × 10’luk kutuya sığdır. 2.339 çözümü var; ilkini bulmak geri izlemeyle saniyeden kısa sürer. Arthur C. Clarke’ın romanlarına ve sayısız bulmaca oyununa (Blokus, Katamino, The Talos Principle’ın kapı bulmacaları) girdi.</li><li><b>Tam örtme ve “dans eden bağlar”:</b> Donald Knuth 2000’de bu tür “her kareyi tam bir kez ört” problemleri için geri almayı çok ucuzlatan bir veri yapısı yayımladı (Dancing Links): elemanı bağlı listeden çıkarıp <b>aynı işaretçilerle</b> geri takmak. Bağlı Listeler sunumundaki çift yönlü listenin en şık kullanımı.</li><li><b>Tetris parçaları</b> da (dört kare: tetromino) aynı ailedendir; çanta oyunlarına “envanter tetrisi” denmesi bundan.</li><li><b>Gerçek dünya:</b> kamyon yükleme, kumaş kesimi, çip üzerinde devre yerleşimi.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: eşya buraya sığar mı?</h2>
+  <div class="simlab" data-sim="fits" data-fns="fits" data-lang="js">
+<textarea>
+// grid[y][x]: 0 = boş, başka sayı = dolu.  Izgara: grid.length satır, grid[0].length sütun.
+// w × h boyutunda bir eşya, sol üst köşesi (x, y)'ye konabilir mi?
+function fits(grid, w, h, x, y) {
+  return grid[y][x] === 0;   // TODO: yalnızca sol üst kareye bakıyor
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu yalnızca tek kareye bakar: 6 × 2’lik tüfek sağdan taşsa bile “sığar” der ve sağdaki görsel ilk hatada durur. İki parça: (1) sınır: <code>if (x &lt; 0 || y &lt; 0 || x + w &gt; grid[0].length || y + h &gt; grid.length) return false;</code> (2) iki döngü: <code>for (let yy = y; yy &lt; y + h; yy++) for (let xx = x; xx &lt; x + w; xx++) if (grid[yy][xx] !== 0) return false;</code> sonra <code>return true;</code>.</div>
+  </div>
+</section>
+
+<section data-sec="çanta">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 2 · çanta</div>
+    <div class="q">Oyununuzun “otomatik düzenle” tuşu eşyaları çantaya <b>küçükten büyüğe</b> sırayla yerleştiriyor ve dolu çantalarda oyun yarım saniye donuyor. En etkili düzeltme?</div>
+    <div class="opts"><button data-opt="A">Çantayı küçültmek</button><button data-opt="B">Eşyaları büyükten küçüğe sıralayıp öyle denemek</button><button data-opt="C">Geri almayı kaldırıp ilk sığdığı yere koymak</button><button data-opt="D">Aramayı her karede bir kez çalıştırmak</button></div>
+    <div class="explain">Küçük eşyalar önce konunca boşluğu parçalar; büyük eşyaya sıra geldiğinde yer kalmaz ve algoritma küçükleri tek tek söküp yeniden dizer (demoda 10 yerine 2.248 deneme). En zor eşyayı önce koymak, başarısızlığı ağacın tepesinde ucuza yakalar. Geri almayı kaldırmak hızlandırır ama sığabilecek çantalara “sığmıyor” dedirtir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Kısıt bulmacaları</div><div class="sub">sudoku: hangi hücreyle başlamalı?</div></div>
+</section>
+
+<section data-sec="kısıt">
+  <h2>Problem: kurallara uyan bir doldurma bul</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Sudoku ve akrabaları</span><ul style="font-size:.92em"><li>9 × 9 tahta; her satırda, her sütunda ve her 3 × 3 kutuda 1–9 rakamları birer kez.</li><li>Aynı kalıpta onlarca bulmaca: Kakuro, Nonogram (Picross), KenKen, Minesweeper’da “bu kare kesin mayın mı?”, The Witness’ın panel kuralları.</li><li>Ortak yapı: <b>değişkenler</b> (hücreler), <b>değerler</b> (rakamlar), <b>kısıtlar</b> (kurallar). Adı: kısıt sağlama problemi.</li><li>Oyun programcısının üç işi: <b>çöz</b> (ipucu vermek için), <b>denetle</b> (bu bulmacanın çözümü <b>tek</b> mi?), <b>üret</b> (her gün yeni bulmaca).</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İskelet hazır; ama hangi hücre?</span><p>Vezirlerdeki kalıp aynen uygulanır: boş bir hücre seç, uyan rakamları sırayla dene, olmazsa geri al.</p><p><b>İlk akla gelen sıra:</b> soldan sağa, yukarıdan aşağı ilk boş hücre.</p><ul style="font-size:.92em"><li>Çalışır; gazete bulmacasını birkaç bin denemede çözer.</li><li>Ama ilk boş hücrenin 3–4 adayı olabilir. Yanlışını seçerseniz hata ancak satırlar sonra, onlarca hücre doldurulduktan sonra ortaya çıkar.</li><li>Bu sıraya <b>karşı</b> tasarlanmış bulmacalar var: ilk satırı 9 8 7 6 5 4 3 2 1 olan, 17 ipuçlu bir bulmaca “ilk boş hücre” yöntemine milyonlarca deneme yaptırır.</li></ul><p>İnsan nasıl çözüyor? “Şu hücreye yalnızca 5 gelebilir” diyerek: <b>en kısıtlı yerden</b> başlıyor.</p></div></div>
+</div>
+</section>
+
+<section data-sec="kısıt">
+  <h2>Fikir: en az seçeneği olan hücre önce</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Her boş hücre için <b>aday</b> rakamları say (satırında, sütununda ve kutusunda olmayanlar).</li><li>Sıradaki hücre olarak <b>en az adayı</b> olanı seç.</li><li><b>Tek adaylı</b> hücrede seçim yoktur: tahmin değil, zorunluluk. Yanlış dal hiç açılmaz.</li><li><b>Sıfır adaylı</b> hücre varsa: hemen geri dön. Çıkmaz, en erken anda görülmüş olur.</li><li>Çantadaki “en zoru önce” kuralının aynısı: <b>başarısız olacaksan erken ol</b>. Yapay zekâ kitaplarındaki adı: en kısıtlı değişken (MRV).</li></ul><p class="mini">Bir adım ötesi: bir rakam koyunca komşu hücrelerin adaylarını hemen güncelle; biri sıfıra düşerse o rakamı hiç deneme (ileri denetim). Y15’teki dalga fonksiyonu çöküşü tam olarak budur: en az seçenekli hücreyi çökert, komşulara yay, çelişki çıkarsa geri al.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle hesap: klasik gazete bulmacasının ilk hamlesi</span><p>İlk satır: <code>5 3 _ _ 7 _ _ _ _</code>. İlk boş hücre: satır 1, sütun 3.</p><ul style="font-size:.9em"><li>Satırında: 5, 3, 7. Sütununda: 8. Kutusunda: 5, 3, 6, 9, 8.</li><li>Kullanılanlar {3, 5, 6, 7, 8, 9} → adaylar <b>{1, 2, 4}</b>: üç seçenek, ikisi yanlış.</li></ul><p>Tahtanın ortası: satır 5, sütun 5.</p><ul style="font-size:.9em"><li>Satırında: 4, 8, 3, 1. Sütununda: 7, 9, 6, 2, 1, 8.</li><li>Kullanılanlar {1, 2, 3, 4, 6, 7, 8, 9} → aday <b>{5}</b>: tek seçenek, tahmin yok.</li></ul><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">hücre seçimi</th><th style="text-align:left;">gazete bulmacası</th><th style="text-align:left;">17 ipuçlu “zor” bulmaca</th></tr><tr><td style="text-align:left;">ilk boş hücre</td><td style="text-align:left;">4.208 yerleştirme</td><td style="text-align:left;">3.000.000+ (durdurdum)</td></tr><tr><td style="text-align:left;">en az adaylı hücre</td><td style="text-align:left;"><b>51</b></td><td style="text-align:left;"><b>45.267</b></td></tr></table><p class="mini">51 boş hücre, 51 yerleştirme: hiç geri alma yok. Bulmaca “mantıkla” çözülebiliyormuş; algoritma bunu kendiliğinden buldu.</p></div></div>
+</div>
+</section>
+
+<section data-sec="kısıt">
+  <h2>Canlı: aynı algoritma, iki sıra 🔢</h2>
+<div class="demo" data-demo="sudoku"></div>
+</section>
+
+<section data-sec="kısıt">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> kalın siyah rakamlar ipuçları; mavi rakamlar algoritmanın denemeleri. Yeşil yanan hücre: az önce rakam kondu; kırmızı: rakam geri alındı. Sağda sayaçlar: yerleştirme, geri alma, çıkmaz.</li><li><b>Gazete bulmacası, “ilk boş hücre”:</b> ▶. Mavi rakamlar üst satırlarda yazılıp silinir, yazılıp silinir… 4.208 yerleştirme. Hızı en sağa çekin.</li><li>Hücre seçimini <b>“en az seçenekli”</b> yapın: rakamlar tahtanın her yerine, bir kez ve doğru konur. 51 yerleştirme, 0 geri alma. Yavaş hızda izleyin: algoritma hep “tek adaylı” bir hücre buluyor.</li><li>Bulmacayı <b>“kaba kuvvete karşı tasarlanmış”</b> yapın, “ilk boş hücre” ile ▶ ve “⏩ sonuna git”: 400.000 denemede çözemez. Aynı bulmaca “en az seçenekli” ile 45.267 yerleştirmede çözülür.</li><li>Soru: iki yöntemin kodu arasındaki fark kaç satır? (Yalnızca <code>siradakiHucre</code> fonksiyonu.)</li></ol></div>
+</section>
+
+<section data-sec="kısıt">
+  <h2>Kod: sudoku çözücü ve “tek çözümlü mü?”</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// tahta: 81 sayılık dizi (0 = boş).  i. hücrenin satırı floor(i / 9), sütunu i % 9.
+function adaylar(tahta, i) {
+  const s = floor(i / 9), k = i % 9, kullanilan = new Set();
+  for (let j = 0; j < 9; j++) { kullanilan.add(tahta[s * 9 + j]); kullanilan.add(tahta[j * 9 + k]); }   // satır + sütun
+  const ks = s - s % 3, kk = k - k % 3;                                                                 // 3×3 kutunun köşesi
+  for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) kullanilan.add(tahta[(ks + y) * 9 + kk + x]);
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(r => !kullanilan.has(r));
+}
+
+// Sıradaki hücre: EN AZ adayı olan boş hücre (hiç boş yoksa -1)
+function siradakiHucre(tahta) {
+  let enIyi = -1, enAz = 10;
+  for (let i = 0; i < 81; i++) {
+    if (tahta[i] !== 0) continue;
+    const n = adaylar(tahta, i).length;
+    if (n < enAz) { enAz = n; enIyi = i; }
+  }
+  return enIyi;
+}
+
+function coz(tahta) {
+  const i = siradakiHucre(tahta);
+  if (i === -1) return true;                 // TABAN: boş hücre kalmadı
+  for (const rakam of adaylar(tahta, i)) {   // aday yoksa döngü hiç dönmez → false (çıkmaz)
+    tahta[i] = rakam;                        // SEÇ
+    if (coz(tahta)) return true;             // DENE
+    tahta[i] = 0;                            // GERİ AL
+  }
+  return false;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def candidates(grid, r, c):
+    """grid: 9×9 liste (0 = boş). (r, c) hücresine konabilecek rakamlar, küçükten büyüğe."""
+    kullanilan = set(grid[r]) | {grid[i][c] for i in range(9)}
+    kr, kc = r - r % 3, c - c % 3
+    kullanilan |= {grid[kr + y][kc + x] for y in range(3) for x in range(3)}
+    return [d for d in range(1, 10) if d not in kullanilan]
+
+def coz(grid, say=None):
+    """say verilirse çözümleri sayar (en çok 2'ye kadar): 'tek çözümlü mü?' sorusu için."""
+    bos = [(len(candidates(grid, r, c)), r, c) for r in range(9) for c in range(9) if grid[r][c] == 0]
+    if not bos:
+        if say is not None: say[0] += 1
+        return say is None
+    _, r, c = min(bos)                               # en az adaylı hücre
+    for d in candidates(grid, r, c):
+        grid[r][c] = d                               # SEÇ
+        if coz(grid, say): return True               # DENE
+        grid[r][c] = 0                               # GERİ AL
+        if say is not None and say[0] >= 2: return False   # ikinci çözüm bulundu: daha fazla arama
+    return False
+
+def tek_cozumlu_mu(grid):
+    say = [0]; coz([satir[:] for satir in grid], say)
+    return say[0] == 1
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// C#: aynı yapı. Bulmaca ÜRETİCİSİ çözücüyü araç olarak kullanır:
+//   1) Boş tahtayı rastgele aday sırasıyla çöz → dolu, geçerli bir tahta.
+//   2) Rastgele bir hücreyi sil. Çözüm hâlâ TEK mi? (çözücüyü "2 çözüm bulunca dur" kipinde çalıştır)
+//      Evetse silmeye devam; hayırsa hücreyi geri koy.
+//   3) İstenen zorluğa (kalan ipucu sayısı, gereken teknik) gelince dur.
+
+bool TekCozumluMu(int[] tahta) {
+    int sayac = 0;
+    Say(tahta.ToArray(), ref sayac);
+    return sayac == 1;
+}
+void Say(int[] t, ref int sayac) {
+    int i = SiradakiHucre(t);
+    if (i == -1) { sayac++; return; }
+    foreach (int rakam in Adaylar(t, i)) {
+        t[i] = rakam; Say(t, ref sayac); t[i] = 0;
+        if (sayac >= 2) return;                      // ikinciyi bulduk: yeter
+    }
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kısıt">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>adaylar(tahta, i)</code></td><td style="text-align:left;">bu hücreye konabilecek rakamlar</td><td style="text-align:left;">Budama burada: kurala uymayan rakam listeye hiç girmez. Vezirlerdeki <code>guvenliMi</code>’nin karşılığı.</td></tr><tr><td style="text-align:left;"><code>s - s % 3</code></td><td style="text-align:left;">3 × 3 kutunun sol üst köşesi</td><td style="text-align:left;">Satır 4 → 3; satır 8 → 6. Tam sayı bölmesiyle de yazılır: <code>floor(s / 3) * 3</code>.</td></tr><tr><td style="text-align:left;"><code>siradakiHucre</code></td><td style="text-align:left;">en az adaylı boş hücre</td><td style="text-align:left;">Tek farkı yaratan fonksiyon. <code>enAz = 10</code> ile başlar: 9’dan büyük herhangi bir sayı.</td></tr><tr><td style="text-align:left;">aday yoksa döngü dönmez</td><td style="text-align:left;">çıkmaz → <code>false</code></td><td style="text-align:left;">Ayrı bir “çıkmaz” denetimi yazmaya gerek yok: boş liste üzerindeki döngü kendiliğinden hiçbir şey yapmaz.</td></tr><tr><td style="text-align:left;">Python: <code>say</code> parametresi</td><td style="text-align:left;">çözümleri say; ikincide dur</td><td style="text-align:left;">İlk çözümde durmak yerine devam eder. İki çözüm bulunca aramanın gerisi gereksizdir.</td></tr><tr><td style="text-align:left;">C#: üretici</td><td style="text-align:left;">dolu tahta üret → hücre sil → tek çözümlü mü?</td><td style="text-align:left;">Bulmaca üretimi = çözücüyü yüzlerce kez çağırmak. Çözücü yavaşsa üretici kullanılamaz.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Seçim sırası <b>doğruluğu değiştirmez</b> (her sıra aynı çözüm kümesini bulur); yalnızca gezilen ağacın boyunu değiştirir. Sudokuda en kötü durum üsteldir (genelleştirilmiş n² × n² sudoku NP-tamdır); ama 9 × 9 tahtada “en az adaylı hücre” kuralıyla çoğu bulmaca birkaç yüz, en zorları birkaç on bin yerleştirmede çözülür.</div>
+</section>
+
+<section data-sec="kısıt">
+  <h2>Oyunlarda: Simon Tatham’ın bulmaca koleksiyonu</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.66;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+/* Simon Tatham's Portable Puzzle Collection — solo.c (sudoku; MIT lisansı). Yorumlar özgün koddan. */
+
+/*
+ *  - Recursion. If all else fails, we pick one of the currently
+ *    most constrained empty squares and take a random guess at its
+ *    contents, then continue solving on that basis and see if we
+ *    get any further.
+ */
+
+/* ... üretici hakkında: */
+/*
+ * It mostly just does the obvious
+ * recursive thing: pick an empty square, put one of the possible
+ * digits in it, recurse until all squares are filled, backtrack
+ * and change some choices if necessary.
+ *
+ * The clever bit is that every time it chooses which square to
+ * fill in next, it does so by counting the number of _possible_
+ * numbers that can go in each square, and it prioritises so that
+ * it picks a square with the _lowest_ number of possibilities.
+ */
+
+/* ... zorluk düzeylerinin sonuncusu: */
+   dlev.diff==DIFF_RECURSIVE ? "Unreasonable (guesswork and backtracking required)":
+</script></code></pre><p class="mini">Kaynak: Simon Tatham’s Portable Puzzle Collection, <code>solo.c</code>. 40’tan fazla bulmaca; her platformda, tarayıcıda ve telefonda ücretsiz. Her bulmaca her açılışta <b>yeniden üretilir</b>.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Yorumlar ne diyor?</span><ul style="font-size:.86em"><li>Çözücü önce insan gibi <b>mantık kurallarını</b> dener (tek aday, kesişim, kümeler…). “Hepsi başarısız olursa” geri izlemeye başvurur: <b>en kısıtlı</b> boş kareyi seç, tahmin et, devam et.</li><li>Üretici de aynı fikirle dolu tahta kurar: “boş bir kare seç, olası rakamlardan birini koy, özyinele, gerekirse <b>geri izle</b>”; ve “işin akıllıca kısmı”: her seferinde <b>en az olasılığı</b> olan kareyi seçmek. Az önce ölçtüğümüz kural.</li><li><b>Zorluk derecesi</b> çözücünün hangi tekniğe ihtiyaç duyduğuyla ölçülür. En üst düzeyin adı: “Unreasonable (tahmin ve geri izleme gerekir)”. Yani: insanın mantıkla çözemeyeceği, deneme-yanılma isteyen bulmaca.</li><li>İyi bulmaca oyunları üretirken geri izlemeyi <b>kullanır</b> ama oyuncudan <b>istemez</b>: üretilen bulmaca yalnızca mantık kurallarıyla çözülebiliyorsa kabul edilir.</li><li>Bilinen sınır: tek çözümlü bir sudoku en az <b>17</b> ipucu ister (2012’de bilgisayar aramasıyla kanıtlandı; o arama da devasa bir geri izlemeydi).</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: bu hücreye hangi rakamlar gelebilir?</h2>
+  <div class="ailab" data-lab="cands" data-lang="python">
+<textarea>
+# grid: 9×9 liste (0 = boş hücre).  r: satır, c: sütun (0'dan sayarak).
+# (r, c) hücresine kurallara göre konabilecek rakamları küçükten büyüğe liste olarak döndür.
+def candidates(grid, r, c):
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9]
+</textarea>
+    <div class="lab-tasks">Üç kümeyi birleştirin: satır <code>set(grid[r])</code>, sütun <code>{grid[i][c] for i in range(9)}</code>, kutu (köşesi <code>kr, kc = r - r % 3, c - c % 3</code>) <code>{grid[kr + y][kc + x] for y in range(3) for x in range(3)}</code>. Sonuç: <code>[d for d in range(1, 10) if d not in kullanilan]</code>. Slayttaki iki örnek: (0, 2) → [1, 2, 4]; (4, 4) → [5].</div>
+  </div>
+</section>
+
+<section data-sec="kısıt">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 3 · kısıt bulmacaları</div>
+    <div class="q">Günlük sudoku oyununuzun üreticisi, bulmacadan ipucu silerken her adımda “çözüm hâlâ tek mi?” diye bakıyor. Bunun için çözücüyü nasıl çalıştırmalı?</div>
+    <div class="opts"><button data-opt="A">İlk çözümü bulunca durdurmalı; bulduysa bulmaca geçerlidir</button><button data-opt="B">İkinci çözümü bulunca durdurmalı; tam bir çözüm bulunduysa bulmaca geçerlidir</button><button data-opt="C">Bütün çözümleri sayana kadar çalıştırmalı</button><button data-opt="D">Çözücüye gerek yok; ipucu sayısı 17’den fazlaysa çözüm tektir</button></div>
+    <div class="explain">İlk çözümde durmak yalnızca “en az bir çözüm var” der. Bütün çözümleri saymak gereksizdir (az ipuçlu bir tahtanın milyonlarca çözümü olabilir). Doğrusu: saymaya devam et, ikinciyi bulduğun an dur. İpucu sayısı tekliği garanti etmez: 17 alt sınırdır, yeter koşul değil.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Durum uzayında arama</div><div class="sub">Sokoban: geri al tuşu ve çözücü</div></div>
+</section>
+
+<section data-sec="durum">
+  <h2>Problem: bu seviye çözülebilir mi?</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Hamleli bulmacalar</span><ul style="font-size:.92em"><li><b>Sokoban</b> (Hiroyuki Imabayashi, 1982): depo görevlisi kutuları hedeflere iter. İtebilir, <b>çekemez</b>. Kutuyu köşeye iterseniz seviye biter: çözüm kalmaz, ama oyun bunu söylemez.</li><li>Soyundan gelenler: Baba Is You, Stephen’s Sausage Roll, A Monster’s Expedition, Zelda’daki blok odaları, Pokémon’daki kaya bulmacaları.</li><li>Fark: burada doldurulacak bir tablo yok; bir <b>durum</b> ve onu değiştiren <b>hamleler</b> var. Çözüm bir hamle <b>dizisi</b>.</li><li>Tasarımcının soruları: bu seviye çözülebilir mi? En kısa çözüm kaç hamle? Oyuncu <b>geri dönüşü olmayan</b> bir hata yapabilir mi? İpucu olarak ne göstereyim?</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Geri izleme burada neden yetmez?</span><ul style="font-size:.92em"><li>Vezirlerde derinlik belliydi: 8 satır, bitti. Burada hamle dizisi <b>istediği kadar uzayabilir</b>.</li><li>Aynı duruma <b>farklı yollardan</b> gelinir: sağa-sola yürümek durumu değiştirmez. Saf geri izleme sonsuz döngüye girer ya da aynı durumu milyonlarca kez yeniden araştırır.</li><li>İlaç: <b>gördüğün durumları hatırla</b> (bir kümede; Hash Tabloları). Aynı duruma ikinci kez geldiysen o dalı kes.</li></ul><p>Bu, graflardaki aramanın ta kendisi (Yönsüz Graflar): düğüm = durum, kenar = hamle. Fark: grafı kimse çizmedi; hamleleri uyguladıkça <b>ortaya çıkıyor</b>.</p><p class="mini">Derinlik öncelikli gidersek (DFS) bu, “ziyaret edilenler” kümesi eklenmiş geri izlemedir. Genişlik öncelikli gidersek (BFS) <b>en kısa</b> çözümü buluruz; bedeli bellek.</p></div></div>
+</div>
+</section>
+
+<section data-sec="durum">
+  <h2>Fikir: durum = bir fotoğraf; iki kullanım</h2>
+<div class="cols c46">
+<div><div class="box info" style="font-size:.78em"><span class="bt">① Oyuncu için: geri al tuşu</span><ul style="font-size:.9em"><li>Her hamleden <b>önce</b> durumun kopyasını bir <b>yığına</b> koy.</li><li><b>Z</b>: yığının tepesini al, durumu ona eşitle.</li><li>Oyuncu artık korkmadan dener: yanlış itiş bir tuşla geri alınır. Elle yapılan geri izleme.</li><li>Modern bulmaca oyunlarının neredeyse hepsinde sınırsız geri alma vardır; “kilitlenip seviyeyi baştan başlatma” cezası tasarımdan kalkmıştır.</li></ul><p class="mini">Durum küçükse (birkaç yüz bayt) kopyalamak en sağlam yoldur. 1.000 hamlelik geçmiş bile kilobaytlar tutar.</p></div></div>
+<div><div class="box game" style="font-size:.78em"><span class="bt">② Makine için: çözücü</span><ul style="font-size:.9em"><li>Başlangıç durumunu bir <b>kuyruğa</b> koy; “görülenler” kümesine ekle.</li><li>Kuyruktan bir durum al. Çözüm mü? Bitti.</li><li>Değilse dört hamleyi uygula; her yeni durum için: daha önce görülmediyse kümeye ve kuyruğa ekle (nereden, hangi hamleyle gelindiğini de yaz).</li><li><b>Çıkmaz budaması:</b> hedef olmayan bir <b>köşeye</b> itilen kutu oradan asla çıkamaz. O durumu kuyruğa hiç koyma.</li><li>Kuyruk boşaldıysa: çözüm <b>yok</b>.</li></ul><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">demodaki “orta” seviye</th><th style="text-align:left;"></th></tr><tr><td style="text-align:left;">boş kare / kutu</td><td style="text-align:left;">30 / 3</td></tr><tr><td style="text-align:left;">olası yerleşim (üst sınır)</td><td style="text-align:left;">30 × C(29, 3) = 109.620</td></tr><tr><td style="text-align:left;">başlangıçtan ulaşılabilen (budamasız / budamalı)</td><td style="text-align:left;">24.813 / <b>11.226</b></td></tr><tr><td style="text-align:left;">en kısa çözüm</td><td style="text-align:left;"><b>25 hamle</b></td></tr></table></div></div>
+</div>
+</section>
+
+<section data-sec="durum">
+  <h2>Canlı: Sokoban — oynayın, geri alın, çözdürün 📦</h2>
+<div class="demo" data-demo="sokoban"></div>
+</section>
+
+<section data-sec="durum">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> mavi daire sizsiniz; sarı kutular; yeşil halkalar hedefler (hedefteki kutu yeşile döner). Sağda hamle sayısı, geri alma yığınının boyu ve çözücünün raporu.</li><li><b>W / A / S / D</b> ile oynayın. Bir kutuyu bilerek <b>köşeye</b> itin: “⚠ bir kutu köşeye sıkıştı: çözüm yok” uyarısı çıkar. <b>Z</b> ile geri alın. (Uyarı olmasaydı ne kadar sonra fark ederdiniz?)</li><li>Birkaç hamle yapıp <b>“🤖 çöz”</b>e basın: “buradan en kısa çözüm N hamle”, “taranan durum: …”. <b>“💡 ipucu”</b> yalnızca ilk hamleyi kırmızı okla gösterir; <b>“▶ çözümü oynat”</b> hepsini.</li><li><b>“Köşe budaması”nı kapatıp</b> yeniden çözdürün: aynı çözüm, iki katından fazla durum (başlangıçta 11.226 yerine 24.813).</li><li>Kutuyu köşeye itip “çöz”e basın: “bu durumdan çözüm YOK”. Çözücü bunu, ulaşılabilen <b>bütün</b> durumları tüketerek söyler. Bir seviye editöründe bu denetim, kilitlenen seviyelerin yayımlanmasını önler.</li><li>“Zor” seviyeyi kendiniz çözmeyi deneyin (27 hamle). Kaç kez Z’ye bastınız?</li></ol></div>
+</section>
+
+<section data-sec="durum">
+  <h2>Kod: hamle, geri al, çözücü</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Durum: oyuncunun hücresi + kutuların hücreleri (sıralı dizi).  Hamle: 'w' 'a' 's' 'd'
+function hamleYap(seviye, durum, yon) {            // yeni durum ya da null (hamle geçersiz)
+  const adim = { w: -seviye.GEN, s: seviye.GEN, a: -1, d: 1 }[yon];
+  const yeni = durum.oyuncu + adim;
+  if (seviye.duvar[yeni]) return null;
+  const k = durum.kutular.indexOf(yeni);
+  if (k === -1) return { oyuncu: yeni, kutular: durum.kutular };            // boş kareye yürüdü
+  const kutuYeni = yeni + adim;                                             // kutuyu it
+  if (seviye.duvar[kutuYeni] || durum.kutular.includes(kutuYeni)) return null;
+  const kutular = durum.kutular.slice(); kutular[k] = kutuYeni; kutular.sort((a, b) => a - b);
+  return { oyuncu: yeni, kutular, itilen: kutuYeni };
+}
+
+// --- Oyuncu için GERİ AL: her hamleden önce durumu yığına koy ---
+let gecmis = [];
+function oyna(yon) { const y = hamleYap(seviye, durum, yon); if (y) { gecmis.push(durum); durum = y; } }
+function geriAl()  { if (gecmis.length) durum = gecmis.pop(); }
+
+// --- Çözücü: durum uzayında genişlik öncelikli arama (en kısa çözüm) ---
+function coz(seviye, baslangic) {
+  const anahtar = d => d.oyuncu + '|' + d.kutular.join(',');
+  const gorulen = new Map([[anahtar(baslangic), null]]);      // durum → (önceki durum, hamle)
+  const kuyruk = [baslangic];
+  for (let bas = 0; bas < kuyruk.length; bas++) {
+    const d = kuyruk[bas];
+    if (d.kutular.every(k => seviye.hedef.includes(k))) return yoluCikar(gorulen, d);
+    for (const yon of 'wasd') {
+      const y = hamleYap(seviye, d, yon);
+      if (!y) continue;
+      if (y.itilen !== undefined && koseMi(seviye, y.itilen)) continue;     // BUDA: kutu köşeye girdi → çıkmaz
+      const a = anahtar(y);
+      if (gorulen.has(a)) continue;                                         // bu duruma daha önce geldik
+      gorulen.set(a, [anahtar(d), yon]); kuyruk.push(y);
+    }
+  }
+  return null;                                                              // çözüm yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from collections import deque
+
+def coz(seviye, baslangic):
+    """baslangic: (oyuncu, kutular) — kutular sıralı tuple. Dönen: en kısa hamle dizisi ya da None."""
+    gorulen = {baslangic: None}
+    kuyruk = deque([baslangic])
+    while kuyruk:
+        durum = kuyruk.popleft()
+        oyuncu, kutular = durum
+        if all(k in seviye.hedef for k in kutular):
+            yol = []
+            while gorulen[durum]:
+                durum, hamle = gorulen[durum]; yol.append(hamle)
+            return ''.join(reversed(yol))
+        for hamle, adim in (('w', -seviye.gen), ('s', seviye.gen), ('a', -1), ('d', 1)):
+            yeni = hamle_yap(seviye, durum, adim)          # None ya da (oyuncu, kutular)
+            if yeni is None or yeni in gorulen:
+                continue
+            gorulen[yeni] = (durum, hamle)
+            kuyruk.append(yeni)
+    return None
+
+# Geri izleme ile farkı: burada "geri al" yok; görülen her durum bellekte durur (BFS).
+# Derinlik öncelikli + geri al (DFS) çok daha az bellek ister ama en kısa çözümü garanti etmez.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity'de bulmaca oyunu için "geri al": durumları (ya da komutları) bir yığında tutun.
+Stack<Durum> gecmis = new Stack<Durum>();
+
+void Update() {
+    Vector2Int yon = YonTusu();
+    if (yon != Vector2Int.zero && HamleGecerli(yon)) {
+        gecmis.Push(durum.Kopya());          // ÖNCE sakla
+        HamleyiUygula(yon);                  // SONRA değiştir
+    }
+    if (Input.GetKeyDown(KeyCode.Z) && gecmis.Count > 0) durum = gecmis.Pop();     // geri al
+    if (Input.GetKeyDown(KeyCode.R)) { gecmis.Push(durum.Kopya()); durum = baslangic.Kopya(); }   // baştan (o da geri alınabilir!)
+}
+// Durum küçükse (ızgara + birkaç konum) kopyalamak en basit ve en sağlam yoldur.
+// Büyükse "komut" kalıbı: her hamle kendi tersini bilir (Yap / GeriAl).
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="durum">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>{ oyuncu, kutular }</code></td><td style="text-align:left;">durumun <b>tamamı</b></td><td style="text-align:left;">Duvarlar ve hedefler değişmez: duruma girmez. Durum ne kadar küçükse arama o kadar hızlı.</td></tr><tr><td style="text-align:left;"><code>kutular.sort(…)</code></td><td style="text-align:left;">kutuları sıralı tut</td><td style="text-align:left;">Kutular birbirinin aynısı: [5, 9] ile [9, 5] <b>aynı durum</b>. Sıralamazsanız küme ikisini farklı sanar ve arama katlanır.</td></tr><tr><td style="text-align:left;"><code>hamleYap</code> yeni nesne döndürür</td><td style="text-align:left;">eski durum <b>değişmez</b></td><td style="text-align:left;">Geri al yığını ve çözücü eski durumlara güvenir. Durumu yerinde değiştirirseniz geçmiş de bozulur.</td></tr><tr><td style="text-align:left;"><code>gecmis.push(durum)</code></td><td style="text-align:left;">hamleden önce sakla</td><td style="text-align:left;">Geri al = <code>pop</code>. Yığın (Yığınlar ve Kuyruklar).</td></tr><tr><td style="text-align:left;"><code>anahtar(d)</code></td><td style="text-align:left;">durumu metne çevir</td><td style="text-align:left;">Kümeye koymak için (Hash Tabloları). <code>"12|9,17,24"</code> gibi.</td></tr><tr><td style="text-align:left;"><code>gorulen.has(a) → continue</code></td><td style="text-align:left;">bu duruma daha önce geldik</td><td style="text-align:left;">Döngüleri ve tekrarları kesen satır. Onsuz arama bitmez.</td></tr><tr><td style="text-align:left;"><code>koseMi(…) → continue</code></td><td style="text-align:left;">çıkmaz budaması</td><td style="text-align:left;">İki komşu duvar (biri yatay, biri dikey) ve hedef değil: kutu oradan çıkamaz.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Genişlik öncelikli arama, çözüm varsa <b>en az hamleli</b> olanı bulur; süre ve bellek, ulaşılabilen durum sayısıyla orantılıdır. Bu sayı kutu sayısıyla üstel büyür: Sokoban’ın genel hâli PSPACE-tamdır. Küçük seviyeler (3–5 kutu) anında çözülür; gerçek seviyeler (10+ kutu) özel çıkmaz kalıpları ve sezgisel arama ister (A*: Y8).</div>
+</section>
+
+<section data-sec="durum">
+  <h2>Oyunlarda: PuzzleScript’in geri al tuşu</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.68;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// PuzzleScript — src/js/engine.js (Stephen Lavelle; MIT lisansı; kısaltılmış)
+
+function addUndoState(state) {
+    backups.push(state);                 // her hamleden önce seviyenin kopyası yığına
+    // ...
+}
+
+function DoUndo(force, ignoreDuplicates) {
+    if ((!levelEditorOpened) && ('noundo' in state.metadata && force !== true)) {
+        return;                          // oyunun yazarı geri almayı kapatabilir
+    }
+    // ...
+    if (backups.length > 0) {
+        let torestore = backups[backups.length - 1];
+        restoreLevel(torestore);         // yığının tepesindeki durumu geri yükle
+        backups = backups.splice(0, backups.length - 1);     // ve yığından çıkar
+        if (!force) {
+            tryPlayUndoSound();
+        }
+    }
+}
+</script></code></pre><p class="mini">Kaynak: PuzzleScript, <code>engine.js</code>. Tarayıcıda çalışan açık kaynak bulmaca oyunu motoru; binlerce oyun yapıldı. Stephen’s Sausage Roll ve Baba Is You gibi oyunların ilk prototipleri bu tür araçlarda doğdu.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Satır satır</span><ul style="font-size:.9em"><li><code>backups.push(state)</code>: az önce yazdığımız <code>gecmis.push(durum)</code>.</li><li><code>DoUndo</code>: yığının tepesini geri yükle, yığından çıkar. Slayttaki <code>geriAl</code>.</li><li><code>noundo</code>: oyun yazarı isterse geri almayı <b>kapatabilir</b>. Bu bir tasarım kararıdır; motor varsayılan olarak açık tutar.</li><li>Motorda Z geri al, R baştan başlat: bugün bulmaca oyunlarının standart tuşları.</li></ul><p><b>Geri almanın tasarıma etkisi</b></p><ul style="font-size:.88em"><li><b>Braid (2008):</b> zamanı geri sarmak oyunun ana mekaniği; ölmek diye bir şey yok.</li><li><b>Baba Is You, Stephen’s Sausage Roll:</b> sınırsız geri alma sayesinde seviyeler acımasızca zor olabilir.</li><li><b>Çözücü kullanan araçlar:</b> seviye editörleri “çözülebilir mi / en kısa çözüm” gösterir; rastgele eşya dağıtan “randomizer”lar (Zelda, Metroid) her tohumu “oyun bitirilebilir mi?” diye sınar; günlük bulmaca oyunları çözücünün bulduğu en kısa çözümü “hedef hamle sayısı” yapar.</li></ul></div></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">En değerli yük</div><div class="sub">taşıma kapasitesi ve dal-sınır</div></div>
+</section>
+
+<section data-sec="yük">
+  <h2>Problem ve fikir: al ya da alma</h2>
+<div class="cols c46">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 “Çok fazla taşıyorsunuz”</span><ul style="font-size:.92em"><li>Skyrim, Fallout, The Witcher, Baldur’s Gate: çantanın <b>ağırlık</b> sınırı var; her eşyanın ağırlığı ve değeri.</li><li>Zindanın sonunda yerde 15 eşya; hepsini taşıyamazsınız. Hangilerini almalı ki satınca en çok altın etsin?</li><li>YZ tarafı: bir NPC tüccar kervanını yüklüyor; bir strateji YZ’si sınırlı bütçeyle hangi birimleri üreteceğini seçiyor; bir “yapı” (build) puan bütçesiyle hangi yetenekleri alacağını.</li><li>Adı: <b>sırt çantası problemi</b> (0/1 knapsack).</li></ul><p><b>Açgözlü çözüm:</b> “kilo başına en değerli”den başla. Hızlı ve çoğu zaman iyi; ama en iyiyi <b>garanti etmez</b>.</p></div></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle hesap: kapasite 10 kg</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">eşya</th><th style="text-align:left;">ağırlık</th><th style="text-align:left;">değer</th><th style="text-align:left;">değer / kg</th></tr><tr><td style="text-align:left;">altın heykel</td><td style="text-align:left;">6</td><td style="text-align:left;">30</td><td style="text-align:left;">5</td></tr><tr><td style="text-align:left;">gümüş kupa</td><td style="text-align:left;">5</td><td style="text-align:left;">20</td><td style="text-align:left;">4</td></tr><tr><td style="text-align:left;">gümüş tabak</td><td style="text-align:left;">5</td><td style="text-align:left;">20</td><td style="text-align:left;">4</td></tr></table><ul style="font-size:.9em"><li><b>Açgözlü:</b> heykel (6 kg, 30). Kalan 4 kg: başka hiçbir şey sığmaz. Toplam <b>30</b>.</li><li><b>En iyisi:</b> kupa + tabak (10 kg). Toplam <b>40</b>.</li></ul><p><b>Geri izleme:</b> her eşya için iki dal: <b>al</b> (sığıyorsa) / <b>alma</b>. n eşya → 2ⁿ yaprak.</p><ul style="font-size:.9em"><li>3 eşya: 8 seçim. 20 eşya: 1.048.576. 40 eşya: bir trilyon.</li><li><b>Budama 1:</b> kapasiteyi aşan dalı kes.</li><li><b>Budama 2 (sınır):</b> “şu ana kadarki değer + geri kalan <b>her şeyin</b> değeri” bile eldeki en iyi çözümü geçemiyorsa bu dalı kes. İyimser tahmin bile yetmiyorsa uğraşma.</li></ul><p class="mini">İkinci budamaya <b>dal-sınır</b> (branch and bound) denir: en iyi çözümü arayan her geri izlemede kullanılır.</p></div></div>
+</div>
+</section>
+
+<section data-sec="yük">
+  <h2>Kod: en değerli yük</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.74;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+def best_loot(esyalar, kapasite):
+    """esyalar: [(ağırlık, değer), ...].  Kapasiteyi aşmadan taşınabilecek en büyük toplam değer."""
+    en_iyi = 0
+
+    def dene(i, agirlik, deger, kalan_deger):
+        nonlocal en_iyi
+        if agirlik > kapasite:
+            return                                   # BUDA 1: geçersiz (çok ağır)
+        en_iyi = max(en_iyi, deger)
+        if i == len(esyalar):
+            return
+        if deger + kalan_deger <= en_iyi:
+            return                                   # BUDA 2 (sınır): kalan her şeyi alsam bile geçemem
+        a, d = esyalar[i]
+        dene(i + 1, agirlik + a, deger + d, kalan_deger - d)    # AL
+        dene(i + 1, agirlik, deger, kalan_deger - d)            # ALMA
+
+    dene(0, 0, 0, sum(d for _, d in esyalar))
+    return en_iyi
+
+print(best_loot([(6, 30), (5, 20), (5, 20)], 10))    # 40  (açgözlü seçim 30'da kalır)
+</script></code></pre><p class="mini">JavaScript ve C# sürümleri aynı yapıdadır. Ağırlıklar küçük tam sayılarsa aynı problem bir tabloyla (dinamik programlama) n × kapasite adımda çözülür; Kaynaklar’daki videoya bakın.</p></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">🎒 Kodu okuyalım</span><ul style="font-size:.88em"><li><code>dene(i, agirlik, deger, kalan_deger)</code>: i. eşyadayız; çantada şu kadar ağırlık ve değer var; henüz karar verilmemiş eşyaların toplam değeri <code>kalan_deger</code>.</li><li><code>en_iyi = max(…)</code>: burada “çözüm bulunca dur” yok; her geçerli seçim bir adaydır ve en iyisi saklanır. <b>Karar</b> probleminden <b>en iyileme</b> problemine geçtik.</li><li><code>deger + kalan_deger &lt;= en_iyi → return</code>: sınır. Ne kadar erken iyi bir çözüm bulunursa o kadar çok dal kesilir; bu yüzden <b>önce “al” dalı</b> denenir ve eşyalar değer/ağırlık oranına göre sıralanırsa daha da hızlanır.</li><li>Geri alma nerede? Parametreler <b>kopyalanarak</b> geçiyor: üst çağrının <code>agirlik</code> ve <code>deger</code> değişkenleri hiç değişmedi. Durum küçük sayılarsa en temiz yol budur.</li><li><b>Oyunda:</b> “en iyi ganimeti al” tuşu; tüccarın stok seçimi; YZ’nin bütçeyle ordu kurması; hız koşularında (speedrun) eşya rotası.</li></ul><p class="mini"><b>Önerme:</b> dal-sınır en iyi çözümü <b>kesin</b> bulur (yalnızca en iyiyi içeremeyecek dalları keser); en kötü durumda yine 2ⁿ’dir.</p></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: en değerli ganimet</h2>
+  <div class="ailab" data-lab="knap" data-lang="python">
+<textarea>
+# esyalar: [[ağırlık, değer], ...]   kapasite: taşınabilecek toplam ağırlık.
+# Kapasiteyi aşmadan seçilebilecek eşyaların EN BÜYÜK toplam değerini döndür.
+def best_loot(esyalar, kapasite):
+    return 0
+</textarea>
+    <div class="lab-tasks">En kısa doğru çözüm: <code>def dene(i, kalan):</code> · <code>if i == len(esyalar): return 0</code> · <code>almadan = dene(i + 1, kalan)</code> · <code>a, d = esyalar[i]</code> · <code>if a &gt; kalan: return almadan</code> · <code>return max(almadan, d + dene(i + 1, kalan - a))</code>; sonra <code>return dene(0, kapasite)</code>. Slayttaki örnek: [[6, 30], [5, 20], [5, 20]], kapasite 10 → <b>40</b>; kapasite 9 → 30.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Hepsi bir arada</div><div class="sub">tam kod, araçlar, kapanış</div></div>
+</section>
+
+<section data-sec="özet">
+  <h2>Geri izleme ailesi: hangi soru, hangi sürüm?</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">soru</th><th style="text-align:left;">sürüm</th><th style="text-align:left;">durduğu yer</th><th style="text-align:left;">bu sunumdaki örnek</th><th style="text-align:left;">hız için</th></tr><tr><td style="text-align:left;"><b>Bir çözüm var mı?</b></td><td style="text-align:left;">geri izleme (DFS)</td><td style="text-align:left;">ilk çözüm</td><td style="text-align:left;">vezirler, çanta, sudoku</td><td style="text-align:left;">budama + zor seçimi önce yap</td></tr><tr><td style="text-align:left;"><b>Kaç çözüm var? Tek mi?</b></td><td style="text-align:left;">geri izleme, durmadan</td><td style="text-align:left;">hepsi (ya da ikincisi)</td><td style="text-align:left;">vezir sayma, sudoku tekliği</td><td style="text-align:left;">“yeterince bulunca dur”</td></tr><tr><td style="text-align:left;"><b>En iyi çözüm hangisi?</b></td><td style="text-align:left;">dal-sınır</td><td style="text-align:left;">ağaç tükenince</td><td style="text-align:left;">en değerli yük</td><td style="text-align:left;">iyimser sınır + iyi çözümü erken bul</td></tr><tr><td style="text-align:left;"><b>En kısa hamle dizisi?</b></td><td style="text-align:left;">durum uzayında BFS (+ görülenler kümesi)</td><td style="text-align:left;">ilk çözüm = en kısa</td><td style="text-align:left;">Sokoban</td><td style="text-align:left;">çıkmaz budaması; A* (Y8)</td></tr><tr><td style="text-align:left;"><b>Oyuncu hata yaparsa?</b></td><td style="text-align:left;">durum yığını</td><td style="text-align:left;">—</td><td style="text-align:left;">geri al tuşu (Z)</td><td style="text-align:left;">durumu küçük tut</td></tr></table><p class="mini">Hepsinin altında aynı üç soru var: <b>durum</b> nedir? Bir adımda hangi <b>seçenekler</b> var? Bir seçeneğin işe yaramayacağını <b>en erken ne zaman</b> anlayabilirim?</p><div class="cols c46">
+<div><div class="box warn" style="font-size:.76em"><span class="bt">Ne zaman geri izleme <b>kullanmamalı</b>?</span><p>Her karede çalışacak işlerde (yol bulma, çarpışma) ve durum uzayı sınırsız büyüyen yerlerde. Geri izleme “oyuncu bir tuşa bastı, yarım saniyem var” ya da “seviyeyi yüklerken / üretirken” işleri içindir. Her zaman bir <b>deneme sınırı</b> koyun.</p></div></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">Akrabaları</span><p>Oyun ağaçları (Y12: minimax, rakip de seçim yapar) · GOAP (Y6: eylem planı arama) · dalga fonksiyonu çöküşü (Y15: kısıt yayma + geri izleme) · A* (Y8: sezgiyle yönlendirilen durum araması).</p></div></div>
+</div>
+</section>
+
+<section data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile çanta düzenleyici</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.68;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function yerlestir(sira, i, g) {
+  if (i === sira.length) return true;                 // hepsi yerleşti
+  const e = sira[i];
+  const yonler = e.w === e.h ? [[e.w, e.h]] : [[e.w, e.h], [e.h, e.w]];
+  for (const [w, h] of yonler)
+    for (let y = 0; y < YUK; y++) for (let x = 0; x < GEN; x++) {
+      if (!sigarMi(g, w, h, x, y)) continue;          // BUDA
+      doldur(g, w, h, x, y, i);                       // SEÇ
+      if (yerlestir(sira, i + 1, g)) {                // DENE
+        e.w = w; e.h = h; e.x = x; e.y = y; return true;
+      }
+      doldur(g, w, h, x, y, -1);                      // GERİ AL
+      if (++deneme > 200000) return false;            // sigorta
+    }
+  return false;
+}
+
+function keyPressed() {
+  if (key === 'o') otomatikYerlestir();               // alan denetimi + büyükten küçüğe + yerlestir
+  if (key === 'r' && eldeki) [eldeki.w, eldeki.h] = [eldeki.h, eldeki.w];   // döndür
+  if (key === 'n') yeniGanimet();
+}
+</script></code></pre><p class="mini">Çekirdek. Eksiksiz dosyada fareyle al / bırak, gölge önizleme ve çizim de var.</p></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 90 satır: eşyaya tıklayıp alın, çantaya bırakın; <b>R</b> döndür, <b>O</b> otomatik yerleştir, <b>N</b> yeni ganimet.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li>Sıralamayı küçükten büyüğe çevirin; deneme sayısını karşılaştırın.</li><li>L ve T biçimli eşyalar ekleyin (kare listesiyle).</li><li>Yerleştirmeyi <b>animasyonlu</b> yapın: her karede bir adım (özyineleme yerine kendi yığınınızla).</li><li>Eşyalara değer verin; sığmıyorsa “en değerli sığan alt küme”yi bulun (iki problemin birleşimi).</li><li><b>Z</b> ile geri al ekleyin: her al / bırak işleminden önce durumu yığına koyun.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Araçlar ve kütüphaneler</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>Bulmaca motorları</b></td><td>PuzzleScript · Puzzlescript Next · Bitsy</td><td>Tarayıcıda, kural yazarak ızgara bulmacası; geri al / baştan başlat hazır. Prototip için ideal.</td></tr>
+<tr><td><b>Hazır çözücüler</b></td><td>Simon Tatham’s Puzzles (C, kaynak açık) · sokoban solver’lar (YASS, Sokolution)</td><td>Üretici + çözücü + zorluk derecelendirme örnekleri; okunacak en iyi kod.</td></tr>
+<tr><td><b>Kısıt çözücüler</b></td><td>Google OR-Tools (CP-SAT) · python-constraint · MiniZinc · Z3</td><td>Kuralları yazarsınız, aramayı o yapar. Seviye üretimi ve denetimi için çevrimdışı araç olarak.</td></tr>
+<tr><td><b>Tam örtme</b></td><td>Knuth’un Algorithm X / Dancing Links’i (her dilde kütüphanesi var)</td><td>Pentomino, sudoku, çanta doldurma gibi “her kareyi bir kez ört” problemleri.</td></tr>
+<tr><td><b>Unity / Godot</b></td><td>ızgara envanter paketleri · <code>Stack&lt;T&gt;</code> ile geri al · Coroutine / thread ile uzun arama</td><td>Aramayı ana iş parçacığında sınırsız çalıştırmayın: ya sınır koyun ya kareler arasına yayın.</td></tr>
+<tr><td><b>Seviye tasarımı</b></td><td>çözücüyü editöre bağlayın</td><td>“çözülebilir ✔ · en kısa 25 hamle · 3 çıkmaz noktası” satırı tasarımcıya saatler kazandırır.</td></tr>
+</table>
+<p class="mini">Pratik kural: oyunun içinde (çalışma anında) küçük ve sınırlı aramalar; büyük aramalar <b>üretim / tasarım zamanında</b>, sonuçları seviyeyle birlikte saklanarak.</p>
+</section>
+
+<section data-sec="yz">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.88em"><li>Geri almanın unutulması (ya da seçimin tam tersi olmaması)</li><li>Taban durumun eksik / yanlış yerde olması</li><li>Durumu kopyalamadan paylaşmak: yığındaki “eski” durumlar da değişir</li><li>Görülen durumlar kümesi olmadan hamle araması: sonsuz döngü</li><li>Özdeş nesneleri (kutular) sıralamadan anahtar üretmek: aynı durum defalarca</li><li>Deneme sınırı / zaman sınırı olmayan arama: oyunun donması</li><li>“Sığmıyor” demek için alan denetimini yeterli sanmak</li><li>En iyileme probleminde ilk çözümde durmak</li></ul></div></div>
+<div><div class="box info" style="font-size:.74em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js, kütüphane yok. 8 × 5 ızgara envanter: (1) <code>sigarMi(izgara, w, h, x, y)</code>. (2) <code>otomatikYerlestir(esyalar)</code>: önce toplam alan denetimi; eşyaları alana göre büyükten küçüğe sırala; özyinelemeli geri izleme (seç / dene / geri al), 90° döndürme serbest; 200.000 denemede vazgeç ve bunu bildir. (3) Sayaçlar: yerleştirme denemesi ve geri alma sayısı ekrana yazılsın. (4) Hata ayıklama: bir tuşla aramayı adım adım oynat. (5) Test: verdiğim on eşya büyükten küçüğe 10 denemede, küçükten büyüğe 2.248 denemede sığmalı; döndürme kapalıyken ‘sığmaz’ demeli.”</p><ul style="font-size:.9em"><li>Yöntemin adını ve <b>seçim sırasını</b> söyleyin; asistan çoğu zaman en saf sırayı yazar.</li><li>Sayaç isteyin: budamanın çalışıp çalışmadığını ancak sayarak görürsünüz.</li><li>Bilinen cevaplı test verin (8 vezir → 92).</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Çanta düzenlemek bazı oyunlarda zevk (Resident Evil 4, Backpack Hero), bazılarında angarya (ağırlık sınırı yüzünden sürekli eşya atmak). Farkı ne yaratıyor? “Otomatik düzenle” tuşu hangisinde olmalı?</li><li class="fragment">Sınırsız geri alma bulmaca oyunlarını nasıl değiştirdi? Geri alması <b>olmayan</b> bir bulmaca oyunu (eski Sokoban, satranç problemleri) size ne hissettirir? Hangi durumda geri almayı bilerek kapatırdınız?</li><li class="fragment">İyi bir bulmaca “mantıkla çözülebilir” olmalı, “deneme-yanılmayla” değil; deniyor. Katılıyor musunuz? Geri izleme gerektiren bir bulmaca kötü tasarım mıdır?</li><li class="fragment">Bilgisayar bir Sokoban seviyesini saniyede çözüyor; insan yarım saatte. Çözücünün “taranan durum sayısı” seviyenin <b>insan için</b> zorluğunu ölçer mi? Başka ne ölçülebilir?</li><li class="fragment">Rastgele eşya dağıtan bir Zelda “randomizer”ında anahtar, ancak o anahtarla açılan kapının arkasına düşerse oyun bitirilemez. Üretici bunu nasıl önler? (İpucu: Y15’teki “üret ve sına”.)</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Vezir bulmacası</b> — N vezir oyununu oynanır yapın: tıklayarak vezir koy / kaldır, tehdit edilen kareleri boya, “ipucu” tuşu çözücüden bir sonraki güvenli kareyi göstersin.</li><li><b class="c-green">[kolay]</b> <b>Geri alınabilir Sokoban</b> — Örnek seviyelerle p5.js Sokoban: Z geri al, R baştan (o da geri alınabilir), hamle sayacı. Kendi seviyenizi metinle tanımlayın.</li><li><b class="c-amber">[orta]</b> <b>Sudoku üreticisi</b> — Dolu tahta üret, tek çözümlülüğü koruyarak ipucu sil. Zorluk: çözücünün geri alma sayısı. Kolay / orta / zor düğmeleri.</li><li><b class="c-amber">[orta]</b> <b>Çanta oyunu</b> — Backpack Hero benzeri: her savaştan sonra üç eşyadan biri; L / T biçimli eşyalar; yan yana gelen eşyalar birbirini güçlendirsin. “Otomatik düzenle” en yüksek güç puanını arasın (dal-sınır).</li><li><b class="c-red">[zor]</b> <b>Seviye denetçisi</b> — Sokoban seviye editörü: çizdikçe çözücü çalışsın; “çözülebilir, en kısa N hamle, şu kareler çıkmaz” göstersin. 4 × 4’lük rastgele seviyeler üretip en uzun çözümlü olanı bulun.</li><li><b class="c-purple">[araştırma]</b> <b>Kilit–anahtar zindanı</b> — Rastgele zindan üreticisine anahtar ve kilitli kapılar ekleyin (Y15). Her üretimi “erişilebilirlik” aramasıyla sınayın: anahtarlar toplandıkça açılan bölgeler. Kilitlenme olasılığını ölçün; üreticiyi kilitlenmeyecek biçimde düzeltin.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Geri izleme:</b> seç → dene → geri al; taban durum; budama. Dört satırlık iskelet her bulmacaya uyar.</li><li><b>Budama ve sıra:</b> algoritma aynı kalır, iş binlerce kat değişir. “Başarısız olacaksan erken ol”: en zor eşya önce (çanta: 2.248 → 10), en az adaylı hücre önce (sudoku: 4.208 → 51).</li><li><b>Çanta:</b> “buraya sığar mı” + geri izleme = otomatik düzenleme. Alan denetimi bedava budama; deneme sınırı şart.</li><li><b>Kısıt bulmacaları:</b> çözücü aynı zamanda denetçi (“tek çözümlü mü?”) ve üreticinin motorudur. (Simon Tatham.)</li><li><b>Durum uzayı:</b> hamleli bulmacalarda görülen durumları hatırla; BFS en kısa çözümü verir; çıkmazları erken kes. Oyuncunun geri al tuşu aynı durum yığınıdır. (PuzzleScript.)</li><li><b>En iyileme:</b> al / alma ağacı + iyimser sınır (dal-sınır). Açgözlü seçim hızlıdır ama en iyiyi garanti etmez.</li><li><b>Sonraki:</b> Bölüm 7: oyunlarda yapay zekâ. İlk sunum Hazırlık: vektörler, oyun döngüsü ve karar veren karakterler.</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=G_UYXzGuqvM" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/G_UYXzGuqvM/hqdefault.jpg" alt=""><span><b>Python Sudoku Solver</b><br>Computerphile</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=eAFcj_2quWI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/eAFcj_2quWI/hqdefault.jpg" alt=""><span><b>Let's make a sudoku solver in 5 minutes (Backtracking)</b><br>Inside code</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=KTygpUDUJ6Q" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/KTygpUDUJ6Q/hqdefault.jpg" alt=""><span><b>N-queens problem (Backtracking)</b><br>Inside code</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=2zK8ItePe3Y" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/2zK8ItePe3Y/hqdefault.jpg" alt=""><span><b>How Jonathan Blow Designs a Puzzle</b><br>Game Maker's Toolkit</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=cJ21moQpofY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/cJ21moQpofY/hqdefault.jpg" alt=""><span><b>0/1 Knapsack problem | Dynamic Programming</b><br>WilliamFiset</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=Q2vDTam9qMQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Q2vDTam9qMQ/hqdefault.jpg" alt=""><span><b>0-1 Knapsack problem</b><br>Inside code</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: kaynak kodu, yazılar ve oynanabilir sayfalar 📚</h2>
+<ul style="font-size:.78em"><li>Simon Tatham: <a href="https://www.chiark.greenend.org.uk/~sgtatham/puzzles/" target="_blank" rel="noopener">Portable Puzzle Collection</a> — 40’tan fazla bulmaca, tarayıcıda oynanır; üretici ve çözücülerin kaynak kodu (<code>solo.c</code> sudoku)</li><li>Stephen Lavelle: <a href="https://www.puzzlescript.net/" target="_blank" rel="noopener">PuzzleScript</a> · <a href="https://github.com/increpare/PuzzleScript/blob/master/src/js/engine.js" target="_blank" rel="noopener">engine.js</a> (geri al yığını)</li><li>Peter Norvig: <a href="https://norvig.com/sudoku.html" target="_blank" rel="noopener">Solving Every Sudoku Puzzle</a> — kısıt yayma + en az adaylı hücre; kısa ve çok öğretici</li><li>Donald Knuth: <a href="https://arxiv.org/abs/cs/0011047" target="_blank" rel="noopener">Dancing Links</a> (2000) — tam örtme, pentomino ve vezirler için geri izleme</li><li>Sokoban Wiki: <a href="http://sokobano.de/wiki/index.php?title=Deadlocks" target="_blank" rel="noopener">Deadlocks</a> ve <a href="http://sokobano.de/wiki/index.php?title=Solver" target="_blank" rel="noopener">Solver</a> — çıkmaz kalıpları ve çözücü teknikleri</li><li>Red Blob Games: <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">Introduction to A*</a> — durum uzayı aramasını sezgiyle hızlandırmak (Y8)</li><li>McGuire, Tugemann &amp; Civario (2012), “There is no 16-Clue Sudoku” · Culberson (1997), “Sokoban is PSPACE-complete”</li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Oyunlarda Yapay Zekâ: Hazırlık</div>
+    <div class="sub">Bölüm 7 başlıyor: vektörler, oyun döngüsü ve karar veren karakterler</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../yz-hazirlik/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
