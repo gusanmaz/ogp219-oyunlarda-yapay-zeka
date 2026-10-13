@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fizik Simülasyonunun Temeli</title>
+<meta name="description" content="Oyun fiziğinin temeli: açık ve yarı-örtük Euler, sabit zaman adımı ve biriktirici döngü, tasarımcı dostu zıplama (çakal süresi, zıplama tamponu), Verlet integrali ve uzaklık kısıtları (ip, kumaş, bez bebek), itme ile çarpışma tepkisi; Box2D, Quake III, Celeste ve Hitman kaynaklarından örnekler; p5.js kodları ve oynanabilir demolar.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 75% 10%, #3a1f0d 0%, #1a1824 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G5</div>
+  <div class="ttl" style="font-size:64px">Fizik Simülasyonunun Temeli</div>
+  <div class="sub"><i>Euler, sabit zaman adımı, zıplama hissi, Verlet ve kısıtlar, itme</i> — “bir sonraki karede bu nesne nerede olacak?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo5"></div>
+  <aside class="notes">Sağ üstte sallanan ip bu sunumdaki Verlet koduyla canlı simüle ediliyor: 22 nokta, 21 uzaklık kısıtı.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Hareketi adımlamak</b> — konum, hız, ivme; iki satırın sırası neden her şeyi değiştirir (Euler)</li><li><b>Sabit zaman adımı</b> — aynı oyun her makinede aynı oynansın: biriktirici döngü</li><li><b>Zıplama hissi</b> — yerçekimini tasarımcı seçer; değişken yükseklik, çakal süresi, tampon</li><li><b>Verlet ve kısıtlar</b> — ip, kumaş, bez bebek (ragdoll): hız saklamadan simülasyon</li><li><b>İtme</b> — çarpışmadan sonra kim, ne hızla, nereye gider?</li><li><b>Her adımda</b> — elle izleme → canlı demo → kod (JavaScript / Python / C#) → gerçek oyun kaynak kodu</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>kendi hareket ve zıplama kodunuzu kare hızından bağımsız çalışacak şekilde yazabilecek; ip ve kumaş gibi kısıtlı sistemleri simüle edebilecek; Box2D, Quake III, Celeste ve Hitman’ın bu işleri nasıl yaptığını kod düzeyinde açıklayabileceksiniz.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: AYNI OYUN, FARKLI BİLGİSAYAR, FARKLI ZIPLAMA</span>
+<p>Quake III Arena’da (1999) usta oyuncular oyunu saniyede tam 125 kareye kilitlerdi. Çünkü 125 karede karakter, başka kare hızlarında çıkamadığı yerlere zıplayabiliyordu. Bir oyunda zıplama yüksekliği neden kare hızına bağlı olsun?</p>
+<ul style="font-size:.9em"><li><span class="fragment">Bilgisayar zamanı <b>sürekli</b> akıtamaz; dünyayı <b>adım adım</b> ilerletir. Her adım küçük bir tahmindir: “hız bu kadar olduğuna göre şu kadar ilerlemişimdir.”</span></li><li><span class="fragment">Adımın büyüklüğü tahminin hatasını belirler. Adım, karenin süresine eşitse hata da <b>makineden makineye</b> değişir.</span></li><li><span class="fragment">Quake III’te adım tam milisaniyeye, hız tam sayıya yuvarlanıyordu; yuvarlama hatası bazı kare hızlarında oyuncunun lehine birikiyordu.</span></li><li><span class="fragment">Bu sunum o tahminin nasıl yapıldığını, nerede yanıldığını ve iyi oyunların bunu nasıl dizginlediğini anlatıyor. Sonunda zıplamanın neden bazı oyunlarda “tam oturduğunu” da göreceğiz.</span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektörler, oyun döngüsü, dt)</a><a class="" href="../geo-carpisma/">G3 · Çarpışma Tespiti (normal, iç içe geçme)</a><a class="" href="../geo-temeller/">G1 · Geometri Temelleri (nokta çarpım)</a></div>
+  <div class="prereq"><a class="opt" href="../yz-steering/">Y2 · Yönlendirme (hız ve kuvvetle hareket)</a><a class="opt" href="../algoritma-analizi/">Algoritma Analizi (hata ve maliyet büyümesi)</a><a class="opt" href="../geo-uzaysal/">G2 · Uzaysal Bölümleme (çok nesnede çarpışma)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>G3’te “çarpıştılar mı?” sorusunu cevapladık ve karakteri duvardan dışarı ittik. Burada bir adım geri gidiyoruz: nesneler <b>iki çarpışma arasında</b> nasıl hareket ediyor, çarpışınca hızları ne oluyor?</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu sunumda türev ve integral <b>işareti yok</b>. Gereken tek fikir: “hız, konumun saniyedeki değişimidir; ivme, hızın saniyedeki değişimidir.” Bütün formüller toplama ve çarpma; hepsini sayılarla elle izleyeceğiz.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:16px"><tr><td>integration · integrator</td><td>integral alma · integratör</td><td>Hız ve ivmeden bir sonraki konumu hesaplama işi · bunu yapan yöntem</td></tr><tr><td>explicit / semi-implicit Euler</td><td>açık / yarı-örtük Euler</td><td>Konumu eski hızla / yeni hızla güncelleyen iki adımlama yöntemi</td></tr><tr><td>timestep (dt) · fixed timestep</td><td>zaman adımı · sabit zaman adımı</td><td>Simülasyonun bir adımda ilerlettiği süre · bu sürenin kare hızından bağımsız, sabit tutulması</td></tr><tr><td>accumulator</td><td>biriktirici</td><td>Henüz simüle edilmemiş gerçek zamanı tutan değişken</td></tr><tr><td>coyote time · jump buffering</td><td>çakal süresi · zıplama tamponu</td><td>Kenardan çıktıktan kısa süre sonra zıplayabilme · yere değmeden az önce basılan tuşun hatırlanması</td></tr><tr><td>Verlet integration</td><td>Verlet integrali</td><td>Hızı saklamadan, şimdiki ve önceki konumdan adımlama</td></tr><tr><td>constraint · relaxation</td><td>kısıt · gevşetme</td><td>“Bu iki nokta arası 20 piksel kalsın” gibi bir kural · kısıtları sırayla, tekrar tekrar düzeltme</td></tr><tr><td>ragdoll</td><td>bez bebek</td><td>Bayılan/ölen karakterin eklemli parçacık sistemi olarak yere yığılması</td></tr><tr><td>impulse · restitution</td><td>itme (impuls) · sekme katsayısı</td><td>Çarpışmada hıza bir anda uygulanan değişiklik · çarpışmadan sonra ayrılma hızının yaklaşma hızına oranı</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Hareketi adımlamak</div><div class="sub">konum, hız, ivme ve iki satırın sırası</div></div>
+</section>
+
+<section data-sec="euler">
+  <h2>Problem: bir sonraki karede top nerede?</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Her oyun, her karede</span><ul style="font-size:.92em"><li>Mario yürüyor, mermi uçuyor, araba kayıyor, top sekiyor. Hepsinin bir <b>konumu</b> ve bir <b>hızı</b> var.</li><li><b>Hız</b>: konum saniyede ne kadar değişiyor? (piksel/sn)</li><li><b>İvme</b>: hız saniyede ne kadar değişiyor? (piksel/sn²) Yerçekimi, motor, sürtünme, yay: hepsi ivme üretir.</li><li>Oyun döngüsü her karede aynı soruyu sorar: “son kareden beri <b>dt</b> saniye geçti; şimdi neredeyim?”</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Neden formülü yazıp geçmiyoruz?</span><p>Okul fiziğinde serbest düşme için hazır formül var: y = v₀·t − ½·g·t². Oyunda işe yaramaz, çünkü:</p><ul style="font-size:.92em"><li>Oyuncu <b>her an</b> tuşa basabilir; kuvvetler önceden bilinmez.</li><li>Çarpışmalar hareketi <b>ortasından keser</b>.</li><li>Yay, ip, rüzgâr, sürtünme: kuvvet konuma ve hıza bağlıysa hazır formül çoğu zaman <b>yoktur</b>.</li></ul><p>Çare: zamanı küçük dilimlere böl; her dilimde “hız ve ivme bu dilim boyunca sabit” <b>varsay</b>. Bu varsayıma dayalı adımlamaya <b>Euler yöntemi</b> denir (Leonhard Euler, 1768).</p></div></div>
+</div>
+</section>
+
+<section data-sec="euler">
+  <h2>Fikir: iki satır, iki farklı sıra</h2>
+<div class="cols c46">
+<div><p style="font-size:.84em">Bir adımda iki güncelleme var. Hangisi önce?</p><table class="sum-t" style="font-size:23px"><tr><th style="text-align:left;"></th><th style="text-align:left;">açık (explicit) Euler</th><th style="text-align:left;">yarı-örtük (semi-implicit) Euler</th></tr><tr><td style="text-align:left;">1. satır</td><td style="text-align:left;">x ← x + <b>v</b>·dt</td><td style="text-align:left;">v ← v + a·dt</td></tr><tr><td style="text-align:left;">2. satır</td><td style="text-align:left;">v ← v + a·dt</td><td style="text-align:left;">x ← x + <b>v</b>·dt</td></tr><tr><td style="text-align:left;">konum hangi hızla?</td><td style="text-align:left;"><b class="c-red">eski</b> hızla</td><td style="text-align:left;"><b class="c-green">yeni</b> hızla</td></tr><tr><td style="text-align:left;">enerji</td><td style="text-align:left;">adım adım <b>artar</b></td><td style="text-align:left;"><b>salınır</b>, büyümez</td></tr></table><ul style="font-size:.8em;margin-top:10px"><li>Fark tek bir şey: konum güncellenirken hız değişkeninde <b>adımın başındaki</b> değer mi var, <b>sonundaki</b> mi?</li><li>Maliyet aynı: ikisi de iki çarpma, iki toplama.</li><li>Sonuç çok farklı: sağdaki sürüm yay, yörünge, sarkaç gibi “geri dönen” hareketlerde kararlı kalır.</li></ul></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">Elle izleme: yay (ivme = −x), dt = 0,5</span><p>Başlangıç: x = 1, v = 0. Enerji = (x² + v²) / 2 = <b>0,500</b>. Gerçekte enerji hiç değişmez.</p><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">adım</th><th style="text-align:left;">açık: x, v</th><th style="text-align:left;">enerji</th><th style="text-align:left;">yarı-örtük: x, v</th><th style="text-align:left;">enerji</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">1,00 · −0,50</td><td style="text-align:left;"><b class="c-red">0,625</b></td><td style="text-align:left;">0,75 · −0,50</td><td style="text-align:left;">0,406</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">0,75 · −1,00</td><td style="text-align:left;"><b class="c-red">0,781</b></td><td style="text-align:left;">0,31 · −0,88</td><td style="text-align:left;">0,432</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">0,25 · −1,38</td><td style="text-align:left;"><b class="c-red">0,977</b></td><td style="text-align:left;">−0,20 · −1,03</td><td style="text-align:left;">0,552</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">−0,44 · −1,50</td><td style="text-align:left;"><b class="c-red">1,221</b></td><td style="text-align:left;">−0,67 · −0,93</td><td style="text-align:left;">0,655</td></tr></table><p class="mini">Açık Euler’de enerji her adımda tam <b>1 + dt²</b> = 1,25 katına çıkar: 20 adımda 87 kat. Yarı-örtük sürümde 200 adım boyunca 0,400 ile 0,667 arasında gidip gelir; hiç büyümez.</p></div></div>
+</div>
+</section>
+
+<section data-sec="euler">
+  <h2>Canlı: üç yöntem, bir gezegen 🪐</h2>
+<div class="demo" data-demo="integr"></div>
+</section>
+
+<section data-sec="euler">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> ortada sarı güneş; kesikli çember gerçek yörünge. Üç gezegen aynı yerden aynı hızla başlar: <b class="c-red">kırmızı</b> açık Euler, <b class="c-green">yeşil</b> yarı-örtük Euler, <b class="c-blue">mavi</b> Verlet (4. bölümde). Sağda her birinin toplam enerjisi ve başlangıca göre yüzde farkı.</li><li><b>dt = 0,05</b> (başlangıç): kırmızı her turda biraz daha dışarı açılıyor. Enerjisi sürekli artı yönde büyüyor.</li><li><b>dt = 0,005</b>: üçü de çembere yapışık görünür; ama kırmızının yüzdesi yine yavaş yavaş artar. Hata küçüldü, <b>yönü</b> değişmedi.</li><li><b>dt = 0,2</b>: kırmızı birkaç turda “uçtu gitti”. Yeşil ve mavi köşeli ama kapalı bir yörüngede kalır; yüzdeleri artı-eksi salınır.</li><li>Soru: yeşil ile kırmızının kodları arasında kaç satır fark var? (Sıfır. Aynı iki satır, ters sırada.)</li></ol></div>
+</section>
+
+<section data-sec="euler">
+  <h2>Kod: bir hareket adımı</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Bir top: konum (x, y) ve hız (vx, vy). Birimler: piksel ve saniye.
+let top = { x: 100, y: 50, vx: 120, vy: 0 };
+const YERCEKIMI = 900;                 // piksel/sn²  (aşağı doğru: p5'te y aşağı artar)
+
+function adim(p, dt) {
+  // 1) Kuvvetlerden ivme (burada yalnızca yerçekimi)
+  const ax = 0, ay = YERCEKIMI;
+
+  // 2) ÖNCE hız: ivme, hızı değiştirir
+  p.vx += ax * dt;
+  p.vy += ay * dt;
+
+  // 3) SONRA konum: YENİ hız, konumu değiştirir      → yarı-örtük Euler
+  p.x += p.vx * dt;
+  p.y += p.vy * dt;
+}
+
+// Açık Euler aynı dört satırın TERS sırasıdır (önce konum, eski hızla):
+//   p.x += p.vx * dt;   p.y += p.vy * dt;   p.vx += ax * dt;   p.vy += ay * dt;
+
+function draw() {
+  background(245);
+  adim(top, deltaTime / 1000);         // deltaTime milisaniye; şimdilik "kare ne kadar sürdüyse"
+  circle(top.x, top.y, 20);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def acik_euler(x, v, a, dt):
+    """Önce konum (ESKİ hızla), sonra hız. Enerji her adımda biraz artar."""
+    x_yeni = x + v * dt
+    v_yeni = v + a * dt
+    return x_yeni, v_yeni
+
+def yari_ortuk_euler(x, v, a, dt):
+    """Önce hız, sonra konum (YENİ hızla). Oyun motorlarının varsayılanı."""
+    v_yeni = v + a * dt
+    x_yeni = x + v_yeni * dt
+    return x_yeni, v_yeni
+
+# Yay: ivme = -x (dengeden uzaklaştıkça geri çeken kuvvet).  Enerji = (x*x + v*v) / 2
+x, v = 1.0, 0.0
+for i in range(3):
+    x, v = acik_euler(x, v, -x, 0.5)
+    print(i + 1, x, v, (x * x + v * v) / 2)      # 0.625, 0.781, 0.977: her adımda x1.25
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity'de İKİ yol var.
+// (a) Fiziği motora bırak: Rigidbody2D ekle; kuvvet ya da hız ver. İntegrali motor (Box2D) yapar.
+void FixedUpdate() {
+    govde.AddForce(Vector2.right * itme);          // kuvvet → ivme → hız → konum: hepsi motorda
+}
+
+// (b) Kendin yaz (kinematik karakter; platform oyunlarının çoğu böyle):
+Vector2 hiz;
+void FixedUpdate() {
+    float dt = Time.fixedDeltaTime;
+    hiz += Vector2.down * yercekimi * dt;          // ÖNCE hız
+    transform.position += (Vector3)(hiz * dt);     // SONRA konum (yeni hızla)
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="euler">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>p.vy += ay * dt</code></td><td style="text-align:left;">hız, ivme × süre kadar değişir</td><td style="text-align:left;">İvme 900 piksel/sn² ve dt = 1/60 sn ise hız bu adımda 15 piksel/sn artar.</td></tr><tr><td style="text-align:left;"><code>p.y += p.vy * dt</code></td><td style="text-align:left;">konum, hız × süre kadar değişir</td><td style="text-align:left;">Bu satır hız satırından <b>sonra</b> geldiği için yeni hızı kullanır: yarı-örtük Euler.</td></tr><tr><td style="text-align:left;"><code>deltaTime / 1000</code></td><td style="text-align:left;">son karenin süresi (saniye)</td><td style="text-align:left;">p5.js milisaniye verir. Birimi saniyeye çevirmezseniz her şey 1000 kat hızlı olur.</td></tr><tr><td style="text-align:left;"><code>* dt</code> (her yerde)</td><td style="text-align:left;">hız ve ivme <b>saniye</b> başınadır, kare başına değil</td><td style="text-align:left;"><code>p.x += 2</code> yazarsanız top 144 Hz ekranda 60 Hz ekrandakinin 2,4 katı hızla gider.</td></tr><tr><td style="text-align:left;">Python: <code>acik_euler</code></td><td style="text-align:left;">aynı iki satır, ters sıra</td><td style="text-align:left;">Konum eski hızla ilerler. Yay örneğinde çıktı slayttaki tablonun kırmızı sütunu.</td></tr></table><div class="box info" style="font-size:.82em;margin-top:10px"><span class="bt">Önerme</span>Bir Euler adımının hatası <b>dt²</b> ile, belli bir süre boyunca biriken toplam hata <b>dt</b> ile orantılıdır: adımı yarıya indirmek hatayı yarıya indirir ama işi iki katına çıkarır. Açık Euler’de bu hata yay benzeri sistemlerde hep <b>enerji ekleme</b> yönündedir; yarı-örtük Euler’de enerji gerçek değerin çevresinde sınırlı kalır (dt, salınım periyoduna göre küçük oldukça).</div>
+</section>
+
+<section data-sec="euler">
+  <h2>Oyunlarda: Box2D’nin iki satırı</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.66;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Box2D v2.4.1 — src/dynamics/b2_island.cpp, b2Island::Solve (kısaltılmış; h = zaman adımı)
+
+// Integrate velocities and apply damping.
+v += h * b->m_invMass * (b->m_gravityScale * b->m_mass * gravity + b->m_force);   // ÖNCE hız
+w += h * b->m_invI * b->m_torque;                                                 // (dönme hızı)
+v *= 1.0f / (1.0f + h * b->m_linearDamping);                                      // sönüm
+
+//   ... temas ve eklem kısıtları burada HIZLAR üzerinden çözülür ...
+
+// Integrate positions
+c += h * v;                                                                       // SONRA konum
+a += h * w;                                                                       // (açı)
+</script></code></pre><p class="mini">Kaynak: Erin Catto, Box2D v2.4.1, <code>b2_island.cpp</code>. Unity’nin 2B fiziği ve binlerce bağımsız oyun (Angry Birds, Limbo, Hollow Knight’ın motoru…) bu kütüphaneyi kullanır.</p></div>
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 Satır satır</span><ul style="font-size:.9em"><li><code>v += h * … * (… gravity + b->m_force)</code>: önce hız. Parantezin içi “kuvvet”, <code>m_invMass</code> = 1/kütle; çarpımları ivme.</li><li><code>c += h * v</code>: sonra konum, <b>yeni</b> hızla. Yani slayttaki yeşil sütun: yarı-örtük Euler.</li><li>İki satırın <b>arasında</b> çarpışmalar ve eklemler çözülür: motor önce hızları “yasal” hâle getirir, konumu ondan sonra ilerletir. Bu yüzden sıra başka türlü olamaz.</li><li><code>v *= 1 / (1 + h * damping)</code>: sönüm. Hızı her adım biraz kısar; çarpan asla eksiye düşmediği için büyük dt’de bile patlamaz.</li><li>Box2D belgeleri: adım olarak <b>1/60 sn</b> önerilir ve “zaman adımını kare hızınıza bağlamayın” denir. Neden? Sıradaki bölüm.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: bir hareket adımı</h2>
+  <div class="ailab" data-lab="eulerstep" data-lang="js">
+<textarea>
+// Yarı-örtük Euler: ÖNCE hızı güncelle, SONRA konumu (yeni hızla).
+// [yeniKonum, yeniHiz] döndür.
+function eulerStep(x, v, a, dt) {
+  return [x, v];
+}
+</textarea>
+    <div class="lab-tasks">İki satır: <code>v = v + a * dt;</code> ve <code>x = x + v * dt;</code>, sonra <code>return [x, v];</code>. Sırayı ters yazarsanız (önce konum) ilk test “beklenen 0,1; sizinki 0” diye uyarır: o, açık Euler’dir. Örnek: x = 0, v = 0, a = 10, dt = 0,1 → hız 1, konum 0,1.</div>
+  </div>
+</section>
+
+<section data-sec="euler">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 1 · hareket</div>
+    <div class="q">Bir uzay oyununda gezegenlerin yörüngeleri dakikalar içinde yavaş yavaş genişliyor ve gezegenler sonunda sistemden kopuyor. Kodda <code>konum += hiz * dt; hiz += ivme * dt;</code> yazıyor. En ucuz düzeltme?</div>
+    <div class="opts"><button data-opt="A">dt’yi yarıya indirmek</button><button data-opt="B">İki satırın yerini değiştirmek</button><button data-opt="C">Hızı her karede 0,99 ile çarpmak</button><button data-opt="D">Yerçekimi sabitini küçültmek</button></div>
+    <div class="explain">Bu açık Euler: her adımda sisteme biraz enerji ekler, yörünge sarmal çizer. Satırların yerini değiştirince (önce hız, sonra konum) yarı-örtük Euler olur ve enerji sınırlı kalır; maliyet aynı. dt’yi küçültmek kopmayı yalnızca geciktirir. Sönüm (0,99) kopmayı önleyebilir ama bu kez yörüngeler içeri doğru çöker.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Sabit zaman adımı</div><div class="sub">aynı oyun her makinede aynı oynansın</div></div>
+</section>
+
+<section data-sec="adım">
+  <h2>Problem: zıplama yüksekliği kare hızına bağlı</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 dt = “kare ne kadar sürdüyse”</span><p>En yaygın ilk çözüm: her karede, o karenin süresi kadar <b>tek bir adım</b> at. Hızlı makinede küçük adımlar, yavaş makinede büyük adımlar.</p><p>Zıplama: ilk hız 10 m/sn, yerçekimi 20 m/sn². Gerçek tepe yüksekliği v₀² / 2g = <b>2,50 m</b>.</p><table class="sum-t" style="font-size:22px"><tr><th style="text-align:left;">kare hızı</th><th style="text-align:left;">dt</th><th style="text-align:left;">yarı-örtük Euler</th><th style="text-align:left;">açık Euler</th></tr><tr><td style="text-align:left;">10 FPS</td><td style="text-align:left;">100 ms</td><td style="text-align:left;"><b class="c-red">2,00 m</b></td><td style="text-align:left;"><b class="c-red">3,00 m</b></td></tr><tr><td style="text-align:left;">30 FPS</td><td style="text-align:left;">33 ms</td><td style="text-align:left;">2,33 m</td><td style="text-align:left;">2,67 m</td></tr><tr><td style="text-align:left;">60 FPS</td><td style="text-align:left;">17 ms</td><td style="text-align:left;">2,42 m</td><td style="text-align:left;">2,58 m</td></tr><tr><td style="text-align:left;">144 FPS</td><td style="text-align:left;">7 ms</td><td style="text-align:left;">2,47 m</td><td style="text-align:left;">2,53 m</td></tr></table><p class="mini">Hata tam olarak v₀·dt / 2: adım büyüdükçe tepe yarı-örtük sürümde alçalır, açık sürümde yükselir.</p></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sonuç: oyun herkeste farklı</span><ul style="font-size:.92em"><li>Seviye tasarımcısı platformu 2,4 metreye koydu. 60 karede çıkılıyor, 30 karede <b>çıkılamıyor</b>.</li><li>Kare hızı oyun <b>içinde</b> de oynar: patlama anında kare 50 ms sürer, karakter o an farklı zıplar.</li><li>Çarpışma: büyük adımda hızlı nesne ince duvarı atlar (G3: tünelleme). Duvarın tutup tutmayacağı kare hızına bağlı olur.</li><li>Yaylar ve eklemler büyük adımda <b>patlar</b>: bir takılma, bütün yığını havaya uçurur.</li><li>Ağ oyunu ve tekrar kaydı (Y18): aynı girdiler iki makinede aynı sonucu <b>vermez</b>.</li></ul><p class="mini">Sabit ivmede ½·a·dt² terimini ekleyerek tepeyi düzeltebilirsiniz; ama sürtünme, yay ve çarpışma girince o da yetmez. Kalıcı çözüm adımı sabitlemek.</p></div></div>
+</div>
+</section>
+
+<section data-sec="adım">
+  <h2>Fikir: zamanı biriktir, eşit dilimlerle harca</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>Fizik <b>her zaman</b> aynı adımla ilerler: örneğin DT = 1/60 sn. Kare ne kadar sürerse sürsün.</li><li>Bir <b>biriktirici</b> tutulur: “gerçekte geçmiş ama henüz simüle edilmemiş” süre.</li><li>Her karede: karenin süresini biriktiriciye ekle; içinde kaç tam DT varsa o kadar fizik adımı at; kalanı <b>sonraki kareye devret</b>.</li><li>Yavaş makine karede 2–3 adım atar; hızlı makine bazı karelerde hiç atmaz. İkisi de aynı sürede <b>aynı sayıda, aynı büyüklükte</b> adım atmış olur.</li><li>Benzetme: saatlik ücretle çalışan biri. Dakikalar birikir; her tam saat dolduğunda bir ödeme yapılır, artan dakikalar ertesi güne kalır.</li></ul></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: DT = 16,7 ms (1/60 sn)</span><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">kare süresi</th><th style="text-align:left;">biriken (önce)</th><th style="text-align:left;">atılan adım</th><th style="text-align:left;">kalan</th></tr><tr><td style="text-align:left;">20 ms</td><td style="text-align:left;">0 + 20 = 20,0</td><td style="text-align:left;">1</td><td style="text-align:left;">3,3</td></tr><tr><td style="text-align:left;">20 ms</td><td style="text-align:left;">3,3 + 20 = 23,3</td><td style="text-align:left;">1</td><td style="text-align:left;">6,7</td></tr><tr><td style="text-align:left;"><b>40 ms</b> (takılma)</td><td style="text-align:left;">6,7 + 40 = 46,7</td><td style="text-align:left;"><b>2</b></td><td style="text-align:left;">13,3</td></tr><tr><td style="text-align:left;">10 ms</td><td style="text-align:left;">13,3 + 10 = 23,3</td><td style="text-align:left;">1</td><td style="text-align:left;">6,7</td></tr><tr><td style="text-align:left;">5 ms</td><td style="text-align:left;">6,7 + 5 = 11,7</td><td style="text-align:left;"><b>0</b></td><td style="text-align:left;">11,7</td></tr></table><p class="mini">95 ms’de 5 adım (83,3 ms) atıldı; 11,7 ms kasada bekliyor. Takılan karede fizik <b>iki</b> adım attı: adım büyümedi, sayısı arttı.</p><p class="mini"><b>Kalan ne işe yarar?</b> alfa = kalan / DT (burada 11,7 / 16,7 = 0,70): çizimi son iki fizik durumunun %70’inden yaparsanız hareket, fizik 60 Hz’te kalsa bile 144 Hz ekranda pürüzsüz görünür.</p></div></div>
+</div>
+</section>
+
+<section data-sec="adım">
+  <h2>Canlı: değişken adım mı, sabit adım mı? ⏱️</h2>
+<div class="demo" data-demo="timestep"></div>
+</section>
+
+<section data-sec="adım">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> iki top aynı ilk hızla zıplıyor. Soldaki (kırmızı) her karede kare süresi kadar tek adım atıyor; sağdaki (yeşil) biriktiriciyle hep 1/120 sn’lik adımlar atıyor. Sarı kesikli çizgi 2,4 m’deki platform; gri çizgi gerçek tepe (2,50 m). Altlarında son zıplamanın tepe yüksekliği.</li><li><b>60 FPS</b> (başlangıç): ikisi de platforma çıkıyor (sol 2,42; sağ 2,46).</li><li>Kare hızını <b>30</b> yapın: sol 2,33’e düşer, “platforma ÇIKAMAZ”. Sağ aynı: 2,46. <b>10</b> yapın: sol 2,00; sağ yine 2,46 (yalnızca görüntüsü kesik kesik).</li><li>Yöntemi <b>açık Euler</b> yapın: hata bu kez ters yönde; yavaş makinede sol top 3 metreye çıkar. Oyuncular bunu hemen bulur ve kare hızını bilerek düşürür.</li><li><b>⚡ takılma</b> düğmesi tek bir 300 ms’lik kare gönderir: sol top bir anda ışınlanır (ve yere gömülüp zıplamayı kaçırabilir); sağ top 36 küçük adım atıp yoluna devam eder.</li></ol></div>
+</section>
+
+<section data-sec="adım">
+  <h2>Kod: sabit adımlı oyun döngüsü</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const DT = 1 / 60;            // fizik adımı (saniye): HER makinede, HER karede aynı
+let biriken = 0;              // henüz simüle edilmemiş gerçek zaman
+let onceki, simdiki;          // çizimde ara değer almak için son iki fizik durumu
+
+function draw() {
+  // 1) Bu kare gerçekte ne kadar sürdü?  (p5: deltaTime milisaniye)
+  let kare = deltaTime / 1000;
+  if (kare > 0.25) kare = 0.25;          // dev kareleri kırp: "ölüm sarmalı"na karşı sigorta
+
+  // 2) Süreyi biriktir; içinde kaç tam fizik adımı varsa o kadar adım at
+  biriken += kare;
+  while (biriken >= DT) {
+    onceki = kopyala(simdiki);
+    fizikAdimi(simdiki, DT);             // fizik YALNIZCA DT ile çağrılır
+    biriken -= DT;
+  }
+
+  // 3) Kalan süre bir sonraki kareye devreder. Çizimi iki durumun arasından yap:
+  const alfa = biriken / DT;             // 0 ile 1 arası: bir sonraki adıma ne kadar yaklaştık?
+  const cx = onceki.x + (simdiki.x - onceki.x) * alfa;
+  const cy = onceki.y + (simdiki.y - onceki.y) * alfa;
+  background(245); circle(cx, cy, 20);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import time
+DT = 1 / 60
+
+def fixed_steps(biriken, kare, dt):
+    """Kare süresini birikene ekle; (atılacak adım sayısı, yeni biriken) döndür."""
+    biriken += kare
+    adim = int(biriken // dt)
+    return adim, biriken - adim * dt
+
+biriken, son = 0.0, time.perf_counter()
+while oyun_suruyor:
+    simdi = time.perf_counter()
+    kare, son = min(simdi - son, 0.25), simdi          # dev kareleri kırp
+    adim, biriken = fixed_steps(biriken, kare, DT)
+    for _ in range(adim):
+        fizik_adimi(dunya, DT)                         # fizik yalnızca DT ile
+    ciz(dunya, alfa=biriken / DT)                      # ara değerle çiz
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity bu döngüyü sizin yerinize çalıştırır:
+//   Update()      → her KAREDE bir kez            (süre: Time.deltaTime, değişken)
+//   FixedUpdate() → her FİZİK ADIMINDA bir kez    (süre: Time.fixedDeltaTime, varsayılan 0,02 sn = 50 Hz)
+
+bool ziplaIstegi;
+void Update() {
+    if (Input.GetButtonDown("Jump")) ziplaIstegi = true;      // GİRDİYİ burada oku: hiçbir basış kaçmaz
+}
+void FixedUpdate() {
+    if (ziplaIstegi) { hiz.y = ziplamaHizi; ziplaIstegi = false; }
+    hiz.y -= yercekimi * Time.fixedDeltaTime;                 // FİZİĞİ burada yap: adım hep aynı
+    govde.MovePosition(govde.position + hiz * Time.fixedDeltaTime);
+}
+// Çizimde ara değer: Rigidbody2D → Interpolate = "Interpolate"
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="adım">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>biriken += kare</code></td><td style="text-align:left;">gerçek zamanı kasaya koy</td><td style="text-align:left;">Fizik gerçek zamanı doğrudan görmez; yalnızca kasadan DT’lik dilimler çeker.</td></tr><tr><td style="text-align:left;"><code>while (biriken &gt;= DT)</code></td><td style="text-align:left;">kasada tam bir adımlık süre varsa</td><td style="text-align:left;"><code>if</code> değil <code>while</code>: uzun karede birden çok adım atılmalı.</td></tr><tr><td style="text-align:left;"><code>fizikAdimi(simdiki, DT)</code></td><td style="text-align:left;">fizik hep <b>aynı</b> sayıyla çağrılır</td><td style="text-align:left;">Sabit DT = her makinede aynı hata = aynı zıplama. Aynı girdiler aynı sonucu verir (tekrar kaydı, ağ oyunu).</td></tr><tr><td style="text-align:left;"><code>if (kare &gt; 0.25) kare = 0.25</code></td><td style="text-align:left;">tek karede en çok 0,25 sn simüle et</td><td style="text-align:left;"><b>Ölüm sarmalı:</b> fizik adımı DT’den uzun sürerse her kare daha çok adım ister, kare daha da uzar… Kırpınca oyun yavaşlar ama kilitlenmez.</td></tr><tr><td style="text-align:left;"><code>alfa = biriken / DT</code></td><td style="text-align:left;">iki fizik adımı arasında neredeyiz? (0–1)</td><td style="text-align:left;">Çizim, son iki durumun karışımı: <code>onceki + (simdiki − onceki) · alfa</code>. Bedeli: görüntü en çok bir fizik adımı kadar geriden gelir.</td></tr><tr><td style="text-align:left;">Unity: <code>Update</code> / <code>FixedUpdate</code></td><td style="text-align:left;">kare başına / fizik adımı başına</td><td style="text-align:left;">Tuş <b>basışını</b> <code>Update</code>’te yakalayın: 144 FPS’te bazı karelerde <code>FixedUpdate</code> hiç çalışmaz, basış kaçar.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Sabit adımda t saniyelik oyun, kare hızından bağımsız olarak tam <b>⌊t / DT⌋</b> fizik adımı içerir. Fiziğin maliyeti kare hızıyla değil, yalnızca DT ile belirlenir; çizim hızı ile simülasyon hızı birbirinden ayrılır.</div>
+</section>
+
+<section data-sec="adım">
+  <h2>Oyunlarda: Quake III ve “125 FPS” zıplaması</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.66;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Quake III Arena — code/game/bg_pmove.c, Pmove()  (id Software, 1999; kısaltılmış)
+
+// chop the move up if it is too long, to prevent framerate
+// dependent behavior
+while ( pmove->ps->commandTime != finalTime ) {
+    int msec = finalTime - pmove->ps->commandTime;
+
+    if ( pmove->pmove_fixed ) {                 // sonradan eklenen seçenek: adımı sabitle
+        if ( msec > pmove->pmove_msec ) msec = pmove->pmove_msec;
+    } else {
+        if ( msec > 66 ) msec = 66;             // bir adım en çok 66 ms
+    }
+    pmove->cmd.serverTime = pmove->ps->commandTime + msec;
+    PmoveSingle( pmove );                       // bu kadarlık bir hareket adımı
+}
+
+// PmoveSingle'ın içinde:
+//   pml.frametime = pml.msec * 0.001;          // adım süresi TAM milisaniye
+//   ...
+//   // snap some parts of playerstate to save network bandwidth
+//   trap_SnapVector( pm->ps->velocity );       // hız her adımda tam sayıya yuvarlanır
+</script></code></pre><p class="mini">Kaynak: id Software, Quake III Arena, <code>bg_pmove.c</code> (GPL). Yorum satırları özgün koddan.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Ne oluyor?</span><ul style="font-size:.88em"><li>Yorumdaki niyet açık: “kare hızına bağlı davranışı önlemek için” uzun hareketi parçalara böl. Ama parça <b>sabit değil</b>: en çok 66 ms, yoksa kare ne kadarsa o.</li><li>Adım süresi <b>tam milisaniye</b>: 125 karede 8 ms, 90 karede 11 ms. Her adımın sonunda hız, ağ trafiğinden tasarruf için <b>tam sayıya yuvarlanıyor</b>.</li><li>Yerçekimi 800 birim/sn²: 8 ms’lik adımda hızdan 6,4 birim düşer; yuvarlama her adımda bu sayının kesrini değiştirir. Hangi yöne ve ne kadar yuvarlandığı adım süresine bağlı: bazı kare hızlarında oyuncu birkaç birim <b>daha yükseğe</b> çıkar.</li><li>Oyuncular 125’i (ve 333’ü) buldu; bazı zıplamalar yalnızca bu hızlarda yapılabiliyordu. Sonraki yamalarda <code>pmove_fixed</code> geldi: herkes için aynı adım (varsayılan 8 ms).</li><li><b>Ders:</b> “dt ile çarptım, kare hızından bağımsız oldu” demek yetmez. Adım değişkense sonuç da değişkendir.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="adım">
+  <h2>Motorlar hangi adımı kullanıyor?</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">motor / oyun</th><th style="text-align:left;">fizik adımı</th><th style="text-align:left;">not</th></tr><tr><td style="text-align:left;"><b>Unity</b></td><td style="text-align:left;">0,02 sn (50 Hz) — <code>Time.fixedDeltaTime</code></td><td style="text-align:left;"><code>FixedUpdate</code> bu adımla çağrılır; “Maximum Allowed Timestep” ölüm sarmalına karşı kırpma.</td></tr><tr><td style="text-align:left;"><b>Godot</b></td><td style="text-align:left;">60 Hz — <code>_physics_process</code></td><td style="text-align:left;">Proje ayarı: “physics ticks per second”. 4.3’ten beri yerleşik ara değerli çizim seçeneği.</td></tr><tr><td style="text-align:left;"><b>Unreal</b></td><td style="text-align:left;">varsayılan: kare süresi (değişken)</td><td style="text-align:left;">İstenirse “substepping” ve sabit adımlı “async physics” açılır.</td></tr><tr><td style="text-align:left;"><b>Box2D</b></td><td style="text-align:left;">1/60 sn önerilir</td><td style="text-align:left;">Belgelerdeki öneri: hız için 8, konum için 3 çözücü tekrarı.</td></tr><tr><td style="text-align:left;"><b>Celeste</b></td><td style="text-align:left;">60 Hz, sabit</td><td style="text-align:left;">Oyunun bütün mantığı kare sayısıyla tutarlı; hız koşucuları (speedrun) kare kare çalışabiliyor.</td></tr><tr><td style="text-align:left;"><b>Quake III</b></td><td style="text-align:left;">değişken (en çok 66 ms) → <code>pmove_fixed</code> ile 8 ms</td><td style="text-align:left;">Önceki slayt.</td></tr><tr><td style="text-align:left;"><b>Dövüş oyunları</b></td><td style="text-align:left;">60 Hz, kare kilitli</td><td style="text-align:left;">Hamleler “kare” ile ölçülür (“bu yumruk 3 karede çıkar”); ağ kodu (rollback) aynı girdinin aynı sonucu vermesine dayanır.</td></tr></table><p class="mini">Ortak nokta: ciddi her fizik döngüsü ya adımı sabitler ya da üst sınır koyar. Bazı oyunlarda fizik karelere kilitlidir ve 60 karenin üstüne çıkınca nesneler tuhaf davranır; “kare sınırını açınca oyun bozuluyor” şikâyetlerinin kaynağı çoğu zaman budur.</p>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: biriktirici</h2>
+  <div class="simlab" data-sim="accum" data-fns="fixedSteps" data-lang="js">
+<textarea>
+// biriken: önceki karelerden kalan süre (ms).  kare: bu karenin süresi (ms).  DT: fizik adımı (ms)
+// Döndür: [bu karede atılacak fizik adımı sayısı, yeni biriken]
+function fixedSteps(biriken, kare, DT) {
+  return [1, 0];   // TODO: şimdilik kare ne kadar sürerse sürsün tek adım; kalanı çöpe atıyor
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu her karede bir adım atar: kareler 7 ms ile 100 ms arasında değiştiği için mavi top yeşil halkanın gerisinde kalır ve tepe yüksekliği tutmaz. Üç satır: <code>biriken += kare;</code> · <code>const n = Math.floor(biriken / DT);</code> · <code>return [n, biriken - n * DT];</code>. Örnek: biriken 12, kare 16, DT 20 → toplam 28 → <b>[1, 8]</b>.</div>
+  </div>
+</section>
+
+<section data-sec="adım">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 2 · zaman adımı</div>
+    <div class="q">Fizik bulmaca oyununuz sizin 144 Hz ekranlı bilgisayarınızda sorunsuz. Bir oyuncunun eski dizüstünde (25–30 FPS) üst üste dizili kutular titreyip dağılıyor. En olası sebep ve çözüm?</div>
+    <div class="opts"><button data-opt="A">Dizüstünün işlemcisi kayan noktalı sayıları farklı hesaplıyor; tam sayıya geçmek</button><button data-opt="B">Fizik her karede kare süresi kadar tek adım atıyor; biriktiriciyle sabit adıma geçmek</button><button data-opt="C">Kutuların kütlesi fazla; azaltmak</button><button data-opt="D">Çizim yavaş; grafik kalitesini düşürmek</button></div>
+    <div class="explain">Yavaş makinede adım 35–40 ms’ye çıkıyor; yığınlar ve eklemler büyük adımda kararsızlaşır. Sabit adımla o makine karede iki-üç küçük adım atar ve simülasyon sizdekiyle aynı davranır. Grafik kalitesini düşürmek belirtiyi hafifletebilir ama oyun yine makineye bağlı kalır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Zıplama hissi</div><div class="sub">yerçekimini fizik kitabı değil, tasarımcı seçer</div></div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>Problem: “gerçekçi” zıplama kötü hissettirir</h2>
+<div class="cols c64">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: g = 9,8 ve bir “zıplama kuvveti”</span><ul style="font-size:.92em"><li>İki sayı deneme yanılmayla ayarlanır: <code>yercekimi = 9.8</code>, <code>ziplamaGucu = 5</code>… Birini değiştirince hem yükseklik hem süre değişir; hiçbiri doğrudan “hissi” anlatmaz.</li><li>Gerçek dünyada 1 metrelik bir zıplama yaklaşık 0,9 saniye sürer. Oyunda bu <b>ağır çekim</b> gibidir: karakter havada asılı kalır, kontrol gecikir.</li><li>Seviye tasarımcısının sorusu başka: “karakter <b>kaç karo</b> yükseğe ve <b>kaç karo</b> uzağa zıplıyor?” Boşlukları ve platformları buna göre dizer.</li></ul></div></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Oyunlardaki zıplamalar</span><ul style="font-size:.92em"><li>Mario kendi boyunun 4–5 katı yükseğe zıplar ve bunu yarım saniyeden kısa sürede yapar: yerçekimi dünyanınkinin <b>katlarca</b> fazlasıdır.</li><li>Tuşa kısa basınca alçak, uzun basınca yüksek zıplar: gerçek dünyada karşılığı yok.</li><li>Yükselişten daha hızlı düşer: yay simetrik değildir.</li><li>Platformdan çıktıktan sonra bile kısa bir an zıplayabilir.</li></ul><p>Hiçbiri fizik değil; hepsi <b>tasarım</b>. Ama hepsi az önceki iki satırlık Euler adımının üstüne kurulur.</p></div></div>
+</div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>Fikir: yüksekliği ve süreyi seç; gerisini hesapla</h2>
+<div class="cols c46">
+<div><p style="font-size:.82em">Tasarımcı iki şey söyler: tepe yüksekliği <b>h</b> ve tepeye varış süresi <b>t</b>. Bize yerçekimi <b>g</b> ve ilk hız <b>v₀</b> lazım.</p><ul style="font-size:.82em"><li>Tepede hız sıfırdır. Hız her saniye g kadar azaldığına göre: v₀ = g · t.</li><li>Hız v₀’dan 0’a <b>düzgün</b> azalır; ortalaması v₀ / 2. Gidilen yol: h = (v₀ / 2) · t.</li><li>İkinciden: <b>v₀ = 2h / t</b>. Birincide yerine koy: <b>g = 2h / t²</b>.</li></ul><p style="text-align:center;font-size:1.05em;margin:.5em 0">$$g = \frac{2h}{t^2} \qquad v_0 = \frac{2h}{t}$$</p><p class="mini">Yatay hız v ise tepe, kalkıştan v · t uzaktadır: tasarımcı “tepe 3 karo ileride olsun” da diyebilir (t = 3 / v). Bu yöntemi Kyle Pittman GDC 2016’daki “Building a Better Jump” konuşmasında anlattı (Videolar).</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle hesap</span><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">istek</th><th style="text-align:left;">g = 2h / t²</th><th style="text-align:left;">v₀ = 2h / t</th></tr><tr><td style="text-align:left;">h = 4 karo, t = 0,4 sn</td><td style="text-align:left;">8 / 0,16 = <b>50</b></td><td style="text-align:left;">8 / 0,4 = <b>20</b></td></tr><tr><td style="text-align:left;">h = 4 karo, t = 0,8 sn (“ay”)</td><td style="text-align:left;">8 / 0,64 = 12,5</td><td style="text-align:left;">8 / 0,8 = 10</td></tr><tr><td style="text-align:left;">h = 2 karo, t = 0,2 sn (“çevik”)</td><td style="text-align:left;">4 / 0,04 = 100</td><td style="text-align:left;">4 / 0,2 = 20</td></tr><tr><td style="text-align:left;">h = 1 m, t = 0,45 sn (dünya)</td><td style="text-align:left;">2 / 0,2 = 9,9</td><td style="text-align:left;">2 / 0,45 = 4,4</td></tr></table><p class="mini">Aynı yükseklik, yarı süre → yerçekimi <b>dört</b> katı. “Ağır” ya da “uçucu” his, yükseklikten çok süreyle ayarlanır.</p><p class="mini">Kontrol: v₀ = 20, g = 50 → tepe = v₀² / 2g = 400 / 100 = 4 ✓</p></div></div>
+</div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>Dört küçük numara: oyuncuya hak verdirmek</h2>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">numara</th><th style="text-align:left;">kural</th><th style="text-align:left;">neden iyi hissettirir</th></tr><tr><td style="text-align:left;"><b>Değişken yükseklik</b></td><td style="text-align:left;">Yükselirken tuş bırakılırsa yukarı hızı kes (örneğin yarıya indir).</td><td style="text-align:left;">Kısa basış = küçük zıplama. Oyuncu yüksekliği parmağıyla ayarlar. (Super Mario Bros., 1985)</td></tr><tr><td style="text-align:left;"><b>Hızlı düşüş</b></td><td style="text-align:left;">Hız aşağı döndüğünde yerçekimini 1,5–3 katına çıkar.</td><td style="text-align:left;">Yükseliş “süzülür”, iniş “oturur”. Havada asılı kalma hissi kaybolur.</td></tr><tr><td style="text-align:left;"><b>Çakal süresi</b> (coyote time)</td><td style="text-align:left;">Yerden ayrıldıktan sonra kısa bir süre (≈ 0,1 sn) zıplamaya izin ver.</td><td style="text-align:left;">Oyuncu kenarın <b>en ucunda</b> basmaya çalışır ve çoğu zaman 2–3 kare geç kalır. Bunu affetmezseniz oyun “tuşu yuttu” diye suçlanır.</td></tr><tr><td style="text-align:left;"><b>Zıplama tamponu</b> (jump buffering)</td><td style="text-align:left;">Tuş havadayken basıldıysa bunu kısa bir süre (≈ 0,1 sn) hatırla; yere değince zıpla.</td><td style="text-align:left;">Oyuncu yere değmeden 2–3 kare <b>erken</b> basar. Tamponla art arda zıplamalar akıcı olur.</td></tr></table><div class="cols c46">
+<div><p class="mini">“Çakal süresi” adı çizgi filmlerden: uçurumdan çıkan çakal, aşağı bakana kadar düşmez. İkisi de aynı kalıp: bir <b>geri sayım</b>. Biri “hâlâ zıplayabilir”i, öbürü “zıplamak istiyor”u birkaç kare uzatır; ikisi de açıkken zıplama gerçekleşir.</p></div>
+<div><div class="box story" style="font-size:.74em"><span class="bt">60 karede 0,1 saniye = 6 kare</span><p>İnsan tepki süresi ≈ 200 ms; iyi bir oyuncunun zamanlama hatası bile ±2–3 kare. Bu numaralar oyunu kolaylaştırmaz; oyuncunun <b>niyetiyle</b> oyunun gördüğü arasındaki farkı kapatır.</p></div></div>
+</div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>Canlı: zıplama laboratuvarı 🕹️</h2>
+<div class="demo" data-demo="jump"></div>
+</section>
+
+<section data-sec="zıplama">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> <b>A / D</b> yürü, <b>W</b> ya da boşluk zıpla. Mor noktalar son zıplamanın yayı. Üst satırda sürgülerden hesaplanan yerçekimi ve ilk hız; ikinci satırda sayaçlar. Karakter <b>sarı</b> olduğunda yerde değilsiniz ama çakal süresi açık.</li><li><b>W’ye kısa ve uzun basın:</b> iki farklı yay. “Değişken yükseklik” kutusunu kapatın: her basış aynı yükseklik.</li><li><b>Tepeye süre</b> sürgüsünü 0,15’ten 0,8’e çekin (yükseklik aynı): çevik bir böcekten ay yürüyüşüne. Üstteki g değerinin nasıl değiştiğine bakın.</li><li><b>Düşüş çarpanı</b> 1 → 3: yayın sağ yarısı dikleşir. 1’de yay simetrik bir parabol.</li><li><b>Çakal süresi:</b> ilk platformun sağ ucundan koşarak çıkın ve biraz geç zıplayın; “çakal süresi kurtardı” sayacı artar. Kutuyu kapatıp aynı boşluğu 5 kez deneyin: kaç kez düştünüz?</li><li><b>Tampon:</b> zıplayın ve yere inmeden hemen önce yeniden basın: karakter değdiği an tekrar zıplar. Kutuyu kapatın: aynı basış boşa gider.</li></ol></div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>Kod: tasarımcı dostu zıplama</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Tasarımcının iki sayısı: ne kadar yükseğe, tepeye kaç saniyede?
+const H = 4 * KARO, T = 0.4;
+const G  = 2 * H / (T * T);                // yerçekimi    (piksel/sn²)
+const V0 = 2 * H / T;                      // zıplama hızı (piksel/sn)
+const DUSUS = 1.8, CAKAL = 0.1, TAMPON = 0.12;
+
+let cakal = 0, tampon = 0;                 // iki geri sayım (saniye)
+
+function keyPressed() {
+  if (key === 'w') tampon = TAMPON;        // basışı işleme: HATIRLA ("0,12 sn içinde zıplamak istiyor")
+}
+
+function ziplamaAdimi(o, dt) {             // her fizik adımında
+  cakal  = o.yerde ? CAKAL : cakal - dt;   // yerdeyken dolu; ayrılınca azalır
+  tampon -= dt;
+
+  if (tampon > 0 && cakal > 0) {           // "zıplamak istiyor" VE "zıplayabilir" → ZIPLA
+    o.vy = -V0;                            // (p5'te yukarı = eksi y)
+    tampon = 0; cakal = 0; o.zipliyor = true;
+  }
+
+  if (o.zipliyor && o.vy < 0 && !keyIsDown(87)) {    // yükselirken tuş bırakıldı (87 = W)
+    o.vy *= 0.5;                           // yükselişi kes: alçak zıplama
+    o.zipliyor = false;
+  }
+
+  const g = o.vy > 0 ? G * DUSUS : G;      // düşerken yerçekimi daha güçlü
+  o.vy += g * dt;                          // yarı-örtük Euler
+  o.y  += o.vy * dt;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def jump_params(h, t):
+    """İstenen tepe yüksekliği h ve tepeye varış süresi t → (yerçekimi, ilk hız)."""
+    g  = 2 * h / (t * t)
+    v0 = 2 * h / t
+    return g, v0
+
+def jump_params_yatay(h, tepe_uzakligi, yurume_hizi):
+    """Seviye tasarımcısı için: 'tepe noktası kalkıştan kaç karo ileride olsun?'
+    t = uzaklık / hız olduğundan aynı formüller mesafeyle yazılır."""
+    t = tepe_uzakligi / yurume_hizi
+    return jump_params(h, t)
+
+print(jump_params(4, 0.4))              # (50.0, 20.0)
+print(jump_params_yatay(4, 3, 7.5))     # tepe 3 karo ileride, hız 7,5 karo/sn → t = 0,4 → aynı sonuç
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: aynı mantık. Girdi Update'te, fizik FixedUpdate'te.
+[SerializeField] float yukseklik = 4f, tepeSuresi = 0.4f, dususCarpani = 1.8f;
+[SerializeField] float cakalSuresi = 0.1f, tamponSuresi = 0.12f;
+float g, v0, cakal, tampon;  bool zipliyor;
+
+void Awake()  { g = 2 * yukseklik / (tepeSuresi * tepeSuresi);  v0 = 2 * yukseklik / tepeSuresi; }
+void Update() { if (Input.GetButtonDown("Jump")) tampon = tamponSuresi; }
+
+void FixedUpdate() {
+    float dt = Time.fixedDeltaTime;
+    cakal  = yerde ? cakalSuresi : cakal - dt;
+    tampon -= dt;
+    if (tampon > 0 && cakal > 0) { hiz.y = v0; tampon = 0; cakal = 0; zipliyor = true; }
+    if (zipliyor && hiz.y > 0 && !Input.GetButton("Jump")) { hiz.y *= 0.5f; zipliyor = false; }
+    hiz.y -= g * (hiz.y < 0 ? dususCarpani : 1f) * dt;
+    govde.MovePosition(govde.position + hiz * dt);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>G = 2 * H / (T * T)</code></td><td style="text-align:left;">yerçekimi iki tasarım sayısından <b>türetilir</b></td><td style="text-align:left;">Kodda “sihirli” 9,8 yok. Tasarımcı H’yi değiştirince zıplama süresi aynı kalır.</td></tr><tr><td style="text-align:left;"><code>tampon = TAMPON</code> (tuşa basınca)</td><td style="text-align:left;">zıplamayı hemen yapma; isteği 0,12 sn hatırla</td><td style="text-align:left;">Basış anında karakter havada olabilir. İstek, yere değene kadar bekler.</td></tr><tr><td style="text-align:left;"><code>cakal = o.yerde ? CAKAL : cakal - dt</code></td><td style="text-align:left;">yerdeyken sayaç dolu; havada azalır</td><td style="text-align:left;">Yerden ayrıldıktan 0,1 sn sonrasına kadar <code>cakal &gt; 0</code>: “hâlâ zıplayabilir”.</td></tr><tr><td style="text-align:left;"><code>tampon &gt; 0 &amp;&amp; cakal &gt; 0</code></td><td style="text-align:left;">“istiyor” ve “yapabilir”</td><td style="text-align:left;">İki sayaç da açıksa zıpla ve ikisini de sıfırla; yoksa tek basışla iki kez zıplanır.</td></tr><tr><td style="text-align:left;"><code>o.vy *= 0.5</code> (tuş bırakılınca)</td><td style="text-align:left;">yukarı hızı yarıya indir</td><td style="text-align:left;">Hızı sıfırlamak yayı köşeli yapar; yarıya indirmek yumuşak bir alçak zıplama verir. <code>o.zipliyor</code> bayrağı bunun bir kez olmasını sağlar.</td></tr><tr><td style="text-align:left;"><code>o.vy &gt; 0 ? G * DUSUS : G</code></td><td style="text-align:left;">aşağı giderken daha güçlü yerçekimi</td><td style="text-align:left;">p5.js’te y aşağı artar: <code>vy &gt; 0</code> düşüş demek. Unity’de işaretler ters.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Bu zıplamanın tepe yüksekliği, tuş basılı tutulursa tam <b>h</b>, tepeye varış süresi tam <b>t</b>’dir (sabit adımda adım hatası kadar sapmayla: h − v₀·DT/2). İniş süresi t / √(düşüş çarpanı): çarpan 1,8 ise iniş, çıkışın %75’i kadar sürer.</div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>Oyunlarda: Celeste’in zıplama sabitleri</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.64;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Celeste — Player.cs (geliştiricilerin yayımladığı kaynaktan kısa alıntı)
+// Birim: piksel ve saniye
+public const  float MaxFall = 160f;             // en büyük düşme hızı
+private const float Gravity = 900f;
+private const float HalfGravThreshold = 40f;
+private const float JumpGraceTime = 0.1f;       // "çakal süresi"
+private const float JumpSpeed = -105f;
+private const float VarJumpTime = .2f;          // tuş tutulursa zıplama hızının korunduğu süre
+
+//Jump Grace
+if (onGround) jumpGraceTimer = JumpGraceTime;
+else if (jumpGraceTimer > 0) jumpGraceTimer -= Engine.DeltaTime;
+
+// tepe noktasında (hız küçükken) ve tuş basılıyken YARIM yerçekimi
+float mult = (Math.Abs(Speed.Y) < HalfGravThreshold && (Input.Jump.Check || AutoJump)) ? .5f : 1f;
+Speed.Y = Calc.Approach(Speed.Y, max, Gravity * mult * Engine.DeltaTime);
+
+//Jumping
+if (Input.Jump.Pressed) { if (jumpGraceTimer > 0) Jump(); /* ... duvar zıplamaları ... */ }
+</script></code></pre><p class="mini">Kaynak: Celeste’in geliştiricilerinin yayımladığı <code>Player.cs</code> (Kaynaklar). Karo 8 piksel; oyun 60 Hz sabit adımla çalışır.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Satır satır</span><ul style="font-size:.88em"><li><code>JumpGraceTime = 0.1f</code>: az önce yazdığımız <b>çakal süresi</b>; aynı sayı, aynı geri sayım (yerdeyken doldur, havada azalt).</li><li><code>if (jumpGraceTimer &gt; 0) Jump();</code>: zıplama “yerde mi?” diye değil, “sayaç açık mı?” diye sorar.</li><li><code>VarJumpTime = .2f</code>: tuş basılıyken hız 0,2 sn boyunca −105’te <b>tutulur</b>; bırakınca yerçekimi devralır. Değişken yüksekliğin başka bir yazımı.</li><li><b>Tepe noktasında yarım yerçekimi:</b> hız 40’ın altındayken ve tuş basılıyken <code>mult = .5f</code>. Karakter tepede bir an “asılı kalır”; oyuncuya havada yön verecek zaman kazandırır.</li><li><code>MaxFall = 160f</code>: düşme hızının tavanı. Hız sınırsız artmaz; uzun düşüşlerde kontrol kaybolmaz ve tünelleme (G3) riski azalır.</li><li>Hesap: yerçekimi 900 piksel/sn² = <b>112 karo/sn²</b>; zıplama hızı 13 karo/sn. Dünya ile karşılaştırın: 9,8 m/sn².</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: zıplama parametreleri</h2>
+  <div class="ailab" data-lab="jumpparams" data-lang="js">
+<textarea>
+// h: istenen tepe yüksekliği,  t: tepeye varış süresi (saniye)
+// [yerçekimi, ilkHız] döndür.
+function jumpParams(h, t) {
+  return [9.8, 5];
+}
+</textarea>
+    <div class="lab-tasks">Slayttaki iki formül: <code>return [2 * h / (t * t), 2 * h / t];</code>. Örnek: h = 4, t = 0,4 → <b>[50, 20]</b>. Sonra kendinize sorun: oyununuzda karakter kaç karo zıplamalı ve bu kaç saniye sürmeli? Demodaki sürgülerle bulun, sayıları buraya yazın.</div>
+  </div>
+</section>
+
+<section data-sec="zıplama">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 3 · zıplama hissi</div>
+    <div class="q">Platform oyununuzu deneyen oyuncular “kenardan zıplarken tuş bazen çalışmıyor” diyor. Kayıtlara bakıyorsunuz: tuşa, karakter platformdan çıktıktan 2–4 kare sonra basılmış. Doğru düzeltme?</div>
+    <div class="opts"><button data-opt="A">Platformların çarpışma kutusunu görünenden geniş yapmak</button><button data-opt="B">Yerden ayrıldıktan sonra kısa bir süre zıplamaya izin vermek (çakal süresi)</button><button data-opt="C">Zıplama hızını artırmak</button><button data-opt="D">Oyuncuya daha erken basmasını söyleyen bir ipucu göstermek</button></div>
+    <div class="explain">Tuş çalışıyor; oyuncu 30–60 ms geç kalmış ve oyun “artık yerde değilsin” demiş. 0,1 saniyelik çakal süresi bu gecikmeyi affeder ve oyuncu farkına bile varmaz. Çarpışma kutusunu genişletmek benzer bir etki verir ama karakter havada duruyor gibi görünür ve duvarlarda tuhaflık çıkarır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Verlet ve kısıtlar</div><div class="sub">ip, kumaş, bez bebek</div></div>
+</section>
+
+<section data-sec="verlet">
+  <h2>Problem: birbirine bağlı parçalar</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Tek tek nesneler yetmez</span><ul style="font-size:.92em"><li><b>İp, zincir, kanca:</b> her halka bir öncekine bağlı.</li><li><b>Pelerin, bayrak, saç:</b> yüzlerce nokta, komşularına bağlı.</li><li><b>Bez bebek (ragdoll):</b> vurulan düşman merdivenden yuvarlanıyor; kol omuza, ön kol dirseğe bağlı.</li><li><b>Köprü, kule, yumuşak cisim:</b> World of Goo, Cut the Rope, Poly Bridge.</li><li>Ortak kural: “bu iki nokta arasındaki uzaklık <b>sabit kalsın</b>.”</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: aralarına yay koy</span><p>İki noktayı bir yayla bağla: uzarsa geri çeken, kısalırsa iten kuvvet (Hooke yasası). Kuvvet → ivme → Euler.</p><ul style="font-size:.92em"><li>Yay <b>yumuşaksa</b> ip lastik gibi esner.</li><li>Yay <b>sertse</b> kuvvet çok büyür; bir adımda nokta dengenin öbür tarafına daha uzağa fırlar, sonraki adımda daha da uzağa… Simülasyon <b>patlar</b>.</li><li>Sert yay için dt’yi çok küçültmek gerekir: kare başına onlarca adım.</li></ul><p>1. bölümdeki enerji tablosunun aynısı: sert yay + büyük adım = büyüyen hata.</p><p><b>Başka bir yol:</b> kuvvetle uğraşma. Noktaları serbestçe yürüt, sonra kuralı çiğneyenleri <b>doğrudan yerine koy</b>.</p></div></div>
+</div>
+</section>
+
+<section data-sec="verlet">
+  <h2>Fikir 1: Verlet — hızı saklama, önceki konumu sakla</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Her nokta iki şey tutar: <b>şimdiki</b> konum x ve <b>önceki</b> konum x<sub>ö</sub>.</li><li>Hız ayrıca saklanmaz: bir adımda gidilen yol (x − x<sub>ö</sub>) hızın kendisidir.</li><li>Yeni konum = şimdiki + (aynı yol bir daha) + ivmenin katkısı:</li></ul><p style="text-align:center;font-size:1em;margin:.4em 0">$$x_{yeni} = x + (x - x_{ö}) + a \cdot dt^2$$</p><ul style="font-size:.82em"><li><b>Büyük kazanç:</b> bir noktayı elle bir yere taşırsanız (duvardan çıkarmak, ipi kısaltmak) hızı <b>kendiliğinden</b> düzelir, çünkü hız zaten konumlardan okunuyor.</li><li>Euler’de konumu elle değiştirip hızı unutursanız nokta eski hızıyla duvara yeniden dalar.</li><li>Yöntem 1791’de Delambre’nin, 1960’larda Loup Verlet’nin molekül simülasyonlarında kullandığı yöntemdir; oyunlara 2001’de girdi (birazdan).</li></ul></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: a = −10, dt = 0,1 (a·dt² = −0,1)</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">adım</th><th style="text-align:left;">önceki</th><th style="text-align:left;">şimdiki</th><th style="text-align:left;">yeni = 2·şimdiki − önceki − 0,1</th><th style="text-align:left;">gidilen yol</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">0</td><td style="text-align:left;">1</td><td style="text-align:left;">2 − 0 − 0,1 = <b>1,9</b></td><td style="text-align:left;">0,9</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">1</td><td style="text-align:left;">1,9</td><td style="text-align:left;">3,8 − 1 − 0,1 = <b>2,7</b></td><td style="text-align:left;">0,8</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">1,9</td><td style="text-align:left;">2,7</td><td style="text-align:left;">5,4 − 1,9 − 0,1 = <b>3,4</b></td><td style="text-align:left;">0,7</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">2,7</td><td style="text-align:left;">3,4</td><td style="text-align:left;">6,8 − 2,7 − 0,1 = <b>4,0</b></td><td style="text-align:left;">0,6</td></tr></table><p class="mini">Gidilen yol her adımda 0,1 azalıyor: yukarı atılmış bir top. Hızı hiç yazmadık; yine de “hız 9, 8, 7, 6” (yol / dt) davranışı çıktı.</p></div></div>
+</div>
+</section>
+
+<section data-sec="verlet">
+  <h2>Fikir 2: kısıt — kuralı çiğneyeni yerine koy</h2>
+<div class="cols c46">
+<div><p style="font-size:.82em"><b>Uzaklık kısıtı:</b> p₁ ile p₂ arası <b>boy</b> kadar olmalı. Şimdiki uzaklık d ise hata = d − boy. İki ucu, aralarındaki doğru boyunca, hatanın <b>yarısı</b> kadar birbirine yaklaştır (hata eksiyse uzaklaştır).</p><div class="box info" style="font-size:.78em"><span class="bt">Elle hesap: p₁ = (0, 0), p₂ = (3, 4), boy = 3</span><ul style="font-size:.9em"><li>Fark = (3, 4); d = 5; hata = 2 (bağ 2 birim uzun).</li><li>Oran = hata / d = 0,4; her ucun payı yarısı: 0,2.</li><li>p₁ ← p₁ + (3, 4) · 0,2 = <b>(0,6, 0,8)</b></li><li>p₂ ← p₂ − (3, 4) · 0,2 = <b>(2,4, 3,2)</b></li><li>Kontrol: fark (1,8, 2,4) → uzaklık 3 ✓</li></ul></div><p class="mini">Uçlardan biri çiviliyse hatanın tamamını öbürü üstlenir.</p></div>
+<div><div class="box warn" style="font-size:.76em"><span class="bt">Bir kısıtı düzeltmek komşusunu bozar → tekrarla</span><p>Bir doğru üzerinde üç nokta: A = 0 (çivili), B = 1, C = 3. Her bağın boyu 1. Önce A–B, sonra B–C düzeltiliyor:</p><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">tekrar</th><th style="text-align:left;">A–B’den sonra B</th><th style="text-align:left;">B–C’den sonra B, C</th><th style="text-align:left;">A–B’nin boyu</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">1</td><td style="text-align:left;">1,5 · 2,5</td><td style="text-align:left;">1,5 (bozuldu)</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">1</td><td style="text-align:left;">1,25 · 2,25</td><td style="text-align:left;">1,25</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">1</td><td style="text-align:left;">1,125 · 2,125</td><td style="text-align:left;">1,125</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">1</td><td style="text-align:left;">1,063 · 2,063</td><td style="text-align:left;">1,063</td></tr><tr><td style="text-align:left;">…</td><td style="text-align:left;"></td><td style="text-align:left;">→ 1 · 2</td><td style="text-align:left;">→ 1</td></tr></table><p class="mini">Hata her tekrarda <b>yarıya</b> iniyor. Bu “sırayla düzelt, birkaç kez tekrarla” yöntemine <b>gevşetme</b> (relaxation) denir. Az tekrar = esnek ip; çok tekrar = sert ip. Sertlik bir <b>döngü sayısı</b> oldu ve hiçbir değerde patlamıyor.</p></div></div>
+</div>
+</section>
+
+<section data-sec="verlet">
+  <h2>Canlı: ip ve kumaş 🧵</h2>
+<div class="demo" data-demo="rope"></div>
+</section>
+
+<section data-sec="verlet">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> kırmızı noktalar çivili. Bağlar gri; boyundan uzamış bağ kırmızıya döner. Altta nokta ve bağ sayısı ile en çok gerilen bağın yüzdesi (%100 = tam boyunda).</li><li><b>Fareyle bir noktayı tutup sürükleyin</b> ve bırakın: ip savrulur. Kodda “fırlatma hızı” diye bir şey yok; hız, son iki konumun farkından kendiliğinden çıkıyor.</li><li><b>Kısıt tekrarı = 1:</b> ip kendi ağırlığıyla uzar (alttaki yüzde %130’ları bulur, bağlar kızarır). <b>30:</b> çelik halat gibi; yüzde %100’e yapışır.</li><li>Nesneyi <b>kumaş</b> yapın (153 nokta, 280 bağ) ve <b>💨 rüzgâr</b>a basın. Tekrarı 2’ye indirin: kumaş lastikleşir ama <b>patlamaz</b>.</li><li>Kumaşı bir köşesinden tutup hızla çekin: en kötü durumda bile birkaç karede toparlanır. Aynı deneyi sert yaylarla yapsaydık simülasyon sonsuza giderdi.</li></ol></div>
+</section>
+
+<section data-sec="verlet">
+  <h2>Kod: Verlet adımı ve uzaklık kısıtı</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Her nokta: şimdiki konum (x, y), ÖNCEKİ konum (ox, oy), çivili mi?
+// Her bağ:   iki noktanın indisleri (a, b) ve olması gereken boy.
+const YERCEKIMI = 900, TEKRAR = 8;
+
+function verletAdimi(noktalar, baglar, dt) {
+  // 1) Hareket: hız saklanmaz; "şimdiki − önceki" hızın kendisidir
+  for (const p of noktalar) {
+    if (p.civili) continue;
+    const vx = p.x - p.ox, vy = p.y - p.oy;        // bir adımda gidilen yol
+    p.ox = p.x;  p.oy = p.y;                       // şimdiki, "önceki" olur
+    p.x += vx;                                     // aynı yolu bir daha git
+    p.y += vy + YERCEKIMI * dt * dt;               // + ivmenin katkısı (a · dt²)
+  }
+
+  // 2) Kısıtlar: her bağı sırayla düzelt; birkaç kez tekrarla (gevşetme)
+  for (let k = 0; k < TEKRAR; k++) {
+    for (const bag of baglar) {
+      const p = noktalar[bag.a], q = noktalar[bag.b];
+      const dx = q.x - p.x, dy = q.y - p.y;
+      const d = Math.hypot(dx, dy);
+      const oran = (d - bag.boy) / d;              // boyun yüzde kaçı fazla (ya da eksik)?
+      const pPay = p.civili ? 0 : q.civili ? 1 : 0.5;     // çivili nokta kıpırdamaz
+      const qPay = q.civili ? 0 : p.civili ? 1 : 0.5;
+      p.x += dx * oran * pPay;  p.y += dy * oran * pPay;  // p, q'ya doğru
+      q.x -= dx * oran * qPay;  q.y -= dy * oran * qPay;  // q, p'ye doğru
+    }
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+
+def verlet_step(x, x_onceki, a, dt):
+    """Tek eksende bir Verlet adımı → (yeni konum, yeni 'önceki')."""
+    x_yeni = 2 * x - x_onceki + a * dt * dt
+    return x_yeni, x
+
+def satisfy(p1, p2, boy):
+    """Uzaklık kısıtı: iki noktayı, aralarındaki uzaklık 'boy' olacak şekilde eşit miktarda kaydır."""
+    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+    d = math.hypot(dx, dy)
+    k = (d - boy) / d / 2                  # her ucun payı: hatanın yarısı (uzaklığa oranla)
+    return [p1[0] + dx * k, p1[1] + dy * k], [p2[0] - dx * k, p2[1] - dy * k]
+
+print(verlet_step(1, 0, -10, 0.1))         # (1.9, 1)
+print(satisfy([0, 0], [3, 4], 3))          # ([0.6, 0.8], [2.4, 3.2])
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: hazır bileşenler aynı fikrin motor sürümleridir.
+//   DistanceJoint2D   → "iki gövde arasındaki uzaklık sabit kalsın"   (uzaklık kısıtı)
+//   HingeJoint2D      → "bu iki gövde şu noktada birleşik kalsın"     (menteşe; ragdoll eklemi)
+//   Cloth (3B)        → kumaş: köşeler parçacık, kenarlar kısıt
+// Kısıtların kaç kez tekrarlanacağı:  Physics2D.velocityIterations / positionIterations
+
+// Kendi ipinizi çizmek için: noktaları Verlet ile yürütün, LineRenderer ile birleştirin.
+void LateUpdate() {
+    for (int i = 0; i < noktalar.Length; i++) cizgi.SetPosition(i, noktalar[i].konum);
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="verlet">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>vx = p.x - p.ox</code></td><td style="text-align:left;">son adımda gidilen yol</td><td style="text-align:left;">Bu, hız × dt’dir. Ayrı bir hız değişkeni yok; tutarsız kalması da mümkün değil.</td></tr><tr><td style="text-align:left;"><code>p.y += vy + YERCEKIMI * dt * dt</code></td><td style="text-align:left;">aynı yolu bir daha git + ivmenin katkısı</td><td style="text-align:left;">İvme <b>dt²</b> ile çarpılır (hızda dt, konumda bir dt daha). Sürtünme isterseniz <code>vx</code>, <code>vy</code>’yi 0,99 ile çarpın.</td></tr><tr><td style="text-align:left;"><code>oran = (d - bag.boy) / d</code></td><td style="text-align:left;">bağ, boyunun yüzde kaçı kadar hatalı?</td><td style="text-align:left;">d’ye bölmek fark vektörünü birim boya indirir; ayrıca normalleştirme gerekmez. d = 0 ise bölme hatası: iki nokta üst üsteyse atlayın.</td></tr><tr><td style="text-align:left;"><code>pPay</code>, <code>qPay</code></td><td style="text-align:left;">hatanın kime ne kadarı düşüyor</td><td style="text-align:left;">İki uç serbestse yarı yarıya; biri çiviliyse hepsi öbürüne. Farklı kütlelerde pay ters kütleyle orantılı.</td></tr><tr><td style="text-align:left;"><code>for (k &lt; TEKRAR)</code></td><td style="text-align:left;">gevşetme döngüsü</td><td style="text-align:left;">Sertlik ayarı. Maliyet doğrudan bununla çarpılır.</td></tr><tr><td style="text-align:left;">çivili noktalar</td><td style="text-align:left;">1. aşamada atlanır, kısıtta payı 0</td><td style="text-align:left;">Fareyle tutulan nokta da “o an çivili” sayılır: konumu fareye yazılır, gerisini kısıtlar halleder.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Bir karenin maliyeti <b>nokta sayısı + tekrar × bağ sayısı</b>’dır. 17 × 9 kumaş (153 nokta, 280 bağ), 8 tekrar: 153 + 2.240 ≈ 2.400 küçük işlem. Zincirde hata her tekrarda sabit bir oranla küçülür; ama uzun zincirde düzeltmenin bir uçtan öbürüne taşınması daha çok tekrar ister.</div>
+</section>
+
+<section data-sec="verlet">
+  <h2>Oyunlarda: Hitman’ın bez bebekleri</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.7;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Thomas Jakobsen, "Advanced Character Physics" (GDC 2001)
+// Hitman: Codename 47'nin fiziği
+
+// Verlet integration step
+x += x-oldx+a*fTimeStep*fTimeStep;      // yeni konum = 2x − eski + a·dt²
+oldx = temp;                            // (temp: x'in adımdan önceki değeri)
+
+// Uzaklık kısıtı ("çubuk"): iki parçacık arası restlength kalsın
+Vector3 delta = x2-x1;
+float deltalength = sqrt(delta*delta);
+float diff = (deltalength-restlength)/deltalength;
+x1 -= delta*0.5*diff;                   // (yazıdaki işaretlerle birebir)
+x2 += delta*0.5*diff;
+</script></code></pre><p class="mini">Kaynak: Thomas Jakobsen (IO Interactive), “Advanced Character Physics”, Game Developers Conference 2001. Oyun fiziğinin en çok okunan yazılarından.</p></div>
+<div><div class="box game" style="font-size:.74em"><span class="bt">🎮 2000 yılında, tek işlemci çekirdeğinde</span><ul style="font-size:.84em"><li>Hitman: Codename 47, vurulan karakterlerin hazır animasyon oynatmak yerine <b>fizikle</b> yere yığıldığı ilk oyunlardandı.</li><li>Yazıya göre cesetler katı cisimlerden değil, <b>çubuk kısıtlarıyla bağlı parçacıklardan</b> oluşan “çöp adamlar”dı. Kol ve bacakların yönü, çizim için parçacık konumlarından sonradan hesaplanıyordu.</li><li>Kod, az önce yazdıklarımızın aynısı: tek satırlık Verlet adımı ve “hatanın yarısı sana, yarısı bana” kısıtı.</li><li>Kumaş ve bitkilerde gevşetme döngüsünden kare başına <b>tek geçiş</b> yetmişti: kalan hata sonraki karelerde eriyor; az tekrar bitkilere “tam kıvamında” bir esneklik veriyordu.</li><li>Karekök pahalıydı: yazı, kökü bağın boyu çevresinde yaklaşık hesaplayan bir numara da verir.</li><li><b>Bugün:</b> aynı fikir “position based dynamics” adıyla Unreal’ın kumaşında, NVIDIA’nın fizik kütüphanelerinde ve çoğu oyunun ip/saç/pelerin kodunda.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: bir Verlet adımı</h2>
+  <div class="ailab" data-lab="verlet" data-lang="python">
+<textarea>
+# x: şimdiki konum,  x_onceki: bir adım önceki konum,  a: ivme,  dt: zaman adımı
+# [yeni_konum, yeni_onceki] döndür.  (Şimdiki konum, bir sonraki adımın "önceki"si olur.)
+def verlet_step(x, x_onceki, a, dt):
+    return [x, x_onceki]
+</textarea>
+    <div class="lab-tasks">Tek formül: <code>yeni = 2 * x - x_onceki + a * dt * dt</code>; sonra <code>return [yeni, x]</code>. Örnek: x = 1, önceki = 0, a = −10, dt = 0,1 → <b>[1,9, 1]</b>. İvmenin <code>dt</code> ile değil <code>dt * dt</code> ile çarpıldığına dikkat.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: uzaklık kısıtı</h2>
+  <div class="ailab" data-lab="satisfy" data-lang="python">
+<textarea>
+import math
+# p1, p2: [x, y] noktalar.  boy: aralarında olması gereken uzaklık.
+# İki noktayı, aralarındaki doğru boyunca EŞİT miktarda kaydırıp uzaklığı 'boy' yap.
+# [[x1, y1], [x2, y2]] döndür.
+def satisfy(p1, p2, boy):
+    return [p1, p2]
+</textarea>
+    <div class="lab-tasks">Fark: <code>dx, dy = p2[0] - p1[0], p2[1] - p1[1]</code>; uzaklık <code>d = math.hypot(dx, dy)</code>; her ucun payı <code>k = (d - boy) / d / 2</code>. Sonuç: <code>[[p1[0] + dx * k, p1[1] + dy * k], [p2[0] - dx * k, p2[1] - dy * k]]</code>. Örnek: (0, 0), (3, 4), boy 3 → <b>[[0,6, 0,8], [2,4, 3,2]]</b>. Bağ kısaysa (boy 7) k eksi çıkar ve noktalar kendiliğinden uzaklaşır.</div>
+  </div>
+</section>
+
+<section data-sec="verlet">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 4 · kısıtlar</div>
+    <div class="q">Oyununuzdaki kanca ipi 30 parçalı bir Verlet zinciri. Karakter ipin ucunda sallanırken ip lastik gibi uzuyor. Kısıt tekrarı 2. Ne yaparsınız?</div>
+    <div class="opts"><button data-opt="A">Yerçekimini azaltırım</button><button data-opt="B">Kısıt tekrarını artırırım (örneğin 10–15)</button><button data-opt="C">dt’yi büyütürüm</button><button data-opt="D">Bağları yaylarla değiştiririm</button></div>
+    <div class="explain">Uzama, gevşetme döngüsünün hatayı bir karede zincirin sonuna kadar taşıyamamasından geliyor. Tekrarı artırmak ipi sertleştirir; bedeli doğrusal ek maliyettir (30 bağ × 15 tekrar = 450 işlem: önemsiz). dt’yi büyütmek uzamayı artırır; sert yaylar ise patlama riskini geri getirir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">İtme</div><div class="sub">çarpışmadan sonra kim, ne hızla, nereye?</div></div>
+</section>
+
+<section data-sec="itme">
+  <h2>Problem ve fikir: hıza bir anda dokun</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>G3’te çarpışmayı <b>bulduk</b> (normal n, iç içe geçme derinliği) ve duvara çarpan topun hızını yansıttık.</li><li>İki <b>hareketli</b> cisim çarpışınca? Bilardo topu ile bowling topu aynı tepkiyi vermez: <b>kütle</b> işin içine girer.</li><li>Çarpışma çok kısa sürer; kuvveti zamana yaymak yerine hızlara <b>bir anda</b> bir değişiklik uygularız: <b>itme</b> (impuls), j.</li><li>Kural (Newton’un 3. yasası): iki cisme <b>aynı büyüklükte, zıt yönlü</b> itme. Hız değişimi = itme / kütle: hafif olan daha çok savrulur.</li><li><b>Sekme katsayısı e</b>: ayrılma hızı = e × yaklaşma hızı. e = 1 bilardo (enerji korunur), e = 0 çamur (yapışır), 0,8 basketbol topu.</li></ul></div>
+<div><p style="text-align:center;font-size:.8em;margin:0 0 .3em">$$j = \frac{-(1+e)\, v_n}{\frac{1}{m_a} + \frac{1}{m_b}}$$</p><p class="mini" style="margin-bottom:.6em">İtmenin büyüklüğü. v<sub>n</sub>: b’nin a’ya göre hızının normal üzerindeki bileşeni (nokta çarpım, G1); eksiyse yaklaşıyorlar.</p><div class="box info" style="font-size:.76em"><span class="bt">Elle hesap: 1 kg’lık top 3 kg’lık duran topa çarpıyor</span><ul style="font-size:.9em"><li>a: kütle 1, hız +4. b: kütle 3, hız 0. Normal: +x. e = 1.</li><li>v<sub>n</sub> = 0 − 4 = <b>−4</b> (yaklaşıyorlar).</li><li>j = −(1 + 1)·(−4) / (1/1 + 1/3) = 8 / 1,333 = <b>6</b></li><li>a’nın yeni hızı: 4 − 6/1 = <b>−2</b> (geri sekti)</li><li>b’nin yeni hızı: 0 + 6/3 = <b>+2</b></li></ul><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;"></th><th style="text-align:left;">önce</th><th style="text-align:left;">sonra</th></tr><tr><td style="text-align:left;">momentum (m·v toplamı)</td><td style="text-align:left;">1·4 + 3·0 = 4</td><td style="text-align:left;">1·(−2) + 3·2 = <b>4</b> ✓</td></tr><tr><td style="text-align:left;">enerji (½·m·v² toplamı)</td><td style="text-align:left;">8 + 0 = 8</td><td style="text-align:left;">2 + 6 = <b>8</b> ✓</td></tr><tr><td style="text-align:left;">ayrılma hızı</td><td style="text-align:left;">yaklaşma: 4</td><td style="text-align:left;">2 − (−2) = <b>4</b> = e × 4 ✓</td></tr></table><p class="mini">e = 0 olsaydı: j = 3; iki top da +1 hızla birlikte gider. Momentum yine 4; enerji 8’den 2’ye düşer (gerisi ses ve ısı).</p></div></div>
+</div>
+</section>
+
+<section data-sec="itme">
+  <h2>Canlı: kütle ve sekme 🎱</h2>
+<div class="demo" data-demo="bounce"></div>
+</section>
+
+<section data-sec="itme">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> altı top; üstlerinde kütleleri (büyük top = ağır top). Yeşil çizgi hız vektörü. Çarpışan toplar bir an sarı yanar. Üst satırda çarpışma sayısı, toplam enerjinin başlangıca oranı ve toplam momentum.</li><li><b>e = 1:</b> enerji %100’de kalır; toplar sonsuza kadar sekmeye devam eder. Küçük bir topun büyüğe çarpıp geri fırladığını, büyüğün ise yolundan pek sapmadığını izleyin.</li><li><b>e = 0,5:</b> her çarpışmada enerji azalır; bir dakika içinde hepsi durulur.</li><li><b>e = 0:</b> toplar çarpışma doğrultusunda birbirine yapışır, yalnızca teğet yönde kayarlar.</li><li><b>💥 karıştır</b> ile yeni hızlar verin. Momentum satırı yalnızca bir top <b>duvara</b> çarptığında değişir; top–top çarpışmalarında sabit kalır: itmeler eşit ve zıt.</li></ol></div>
+</section>
+
+<section data-sec="itme">
+  <h2>Kod: iki cisim arasında itme</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.7;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// İki daire çarpıştı.  n: a'dan b'ye birim vektör (normal, G3)
+// e: sekme katsayısı (0..1)
+function carpismaCoz(a, b, n, e) {
+  // 1) Normal boyunca göreli hız: eksi ise yaklaşıyorlar
+  const vn = (b.vx - a.vx) * n.x + (b.vy - a.vy) * n.y;
+  if (vn >= 0) return;                               // zaten uzaklaşıyorlar: dokunma
+
+  // 2) İtmenin büyüklüğü
+  const tersA = 1 / a.kutle, tersB = 1 / b.kutle;    // kıpırdamaz cisim: ters kütle = 0
+  const j = -(1 + e) * vn / (tersA + tersB);
+
+  // 3) Aynı itme, zıt yönlerde; hız değişimi = itme / kütle
+  a.vx -= j * tersA * n.x;   a.vy -= j * tersA * n.y;
+  b.vx += j * tersB * n.x;   b.vy += j * tersB * n.y;
+}
+</script></code></pre><p class="mini">Python ve C# sürümleri satırı satırına aynı aritmetik. Unity’de bunu motor yapar; e = “Physics Material 2D → Bounciness”, kütle = “Rigidbody2D → Mass”.</p></div>
+<div><div class="box info" style="font-size:.72em"><span class="bt">🎒 Kodu okuyalım</span><ul style="font-size:.9em"><li><code>vn &gt;= 0 → return</code>: iç içe ama <b>uzaklaşan</b> iki cisme itme uygulamak onları yeniden birbirine yapıştırır. En sık unutulan satır.</li><li><code>tersA</code>, <code>tersB</code>: motorlar kütlenin tersini saklar. Duvar, zemin, hareketli platform: <b>ters kütle = 0</b>. Formül hiç değişmeden “duvar kıpırdamaz, top tam yansır” sonucunu verir.</li><li><code>j / kütle</code>: aynı itme, hafif cismin hızını daha çok değiştirir.</li><li><b>Sıra:</b> önce iç içe geçmeyi konumdan ayır (G3: en kısa çıkış vektörü; pay ters kütleyle orantılı), sonra hızlara itme uygula.</li><li><b>Eksik olan:</b> dönme ve sürtünme. İtme merkezden geçmiyorsa cisim döner; teğet yöndeki itme sürtünmedir. Tam katı cisim fiziği burada başlar (Kaynaklar).</li></ul><p class="mini"><b>Önerme:</b> bu itmeden sonra normal boyunca ayrılma hızı tam e × yaklaşma hızıdır ve toplam momentum değişmez; e = 1 ise toplam enerji de korunur.</p></div></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Hepsi bir arada</div><div class="sub">tam kod, araçlar, kapanış</div></div>
+</section>
+
+<section data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile zıplama laboratuvarı</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.7;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const DT = 1 / 120;                       // fizik adımı: her makinede aynı
+let biriken = 0, cakal = 0, tampon = 0;
+
+function draw() {
+  biriken += min(deltaTime / 1000, 0.25); // dev kareleri kırp
+  while (biriken >= DT) { fizikAdimi(DT); biriken -= DT; }
+  sahneyiCiz();
+}
+
+function fizikAdimi(dt) {
+  o.vx = ((keyIsDown(68) ? 1 : 0) - (keyIsDown(65) ? 1 : 0)) * YURUME;
+
+  cakal  = o.yerde ? CAKAL : cakal - dt;  // zıplama kararı
+  tampon -= dt;
+  if (tampon > 0 && (o.yerde || (cakal > 0 && !o.zipliyor))) {
+    o.vy = -V0; o.yerde = false; o.zipliyor = true; cakal = 0; tampon = 0;
+  }
+  if (o.zipliyor && o.vy < 0 && !ziplaTusu()) { o.vy *= 0.5; o.zipliyor = false; }
+
+  o.vy += G * (o.vy > 0 ? DUSUS_CARPANI : 1) * dt;   // önce hız
+  o.x += o.vx * dt;  yatayCarpismayiCoz();           // sonra konum, eksen eksen (G3)
+  o.y += o.vy * dt;  dikeyCarpismayiCoz();
+}
+</script></code></pre><p class="mini">Döngünün iskeleti. Eksiksiz dosyada harita, çarpışma, ses ve çizim de var.</p></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 90 satır: A / D yürü, W zıpla; <b>1 / 2 / 3</b> tuşlarıyla çakal süresi, tampon ve değişken yükseklik açılıp kapanır.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><code>DT</code>’yi 1/10 yapın: zıplama alçalır, karakter platformlara “gömülür”.</li><li><code>TEPE_SURESI</code>’ni 0,2 ve 0,7 yapın: aynı yükseklik, bambaşka oyun.</li><li>Düşme hızına tavan koyun (Celeste: <code>MaxFall</code>).</li><li>Tepe noktasında yarım yerçekimi ekleyin: <code>abs(o.vy) &lt; 40</code> iken G’yi yarıya indirin.</li><li>Çizime ara değer (alfa) ekleyin ve DT = 1/30 ile farkı görün.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Motorlarda ve kütüphanelerde</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>Unity (2B)</b></td><td><code>Rigidbody2D</code> · <code>FixedUpdate</code> · <code>Time.fixedDeltaTime</code></td><td>İçeride Box2D. Gövde türü: Dynamic (motor yürütür), Kinematic (siz yürütürsünüz). Interpolate ayarı = ara değerli çizim.</td></tr>
+<tr><td><b>Unity (eklemler)</b></td><td><code>DistanceJoint2D</code> · <code>HingeJoint2D</code> · <code>SpringJoint2D</code></td><td>Uzaklık kısıtı, menteşe, yay. Tekrar sayıları: Project Settings → Physics 2D → Velocity / Position Iterations.</td></tr>
+<tr><td><b>Godot</b></td><td><code>_physics_process(delta)</code> · <code>CharacterBody2D</code> · <code>RigidBody2D</code></td><td>Sabit 60 Hz. <code>move_and_slide()</code>: G3’teki “kaydır” çözümü + zeminde olma bilgisi (<code>is_on_floor()</code>).</td></tr>
+<tr><td><b>Unreal</b></td><td>Chaos Physics · Chaos Cloth</td><td>Katı cisim ve kumaş; kumaş tarafı konum tabanlı kısıtlarla (Verlet’nin torunu) çalışır.</td></tr>
+<tr><td><b>JavaScript</b></td><td>Matter.js · Planck.js (Box2D) · Rapier</td><td>Tarayıcıda hazır 2B fizik. p5.js ile birlikte kullanılabilir.</td></tr>
+<tr><td><b>Python</b></td><td>pymunk (Chipmunk) · pybox2d</td><td>pygame ile 2B fizik.</td></tr>
+</table>
+<p class="mini">Pratik kural: <b>karakter</b> hareketini (yürüme, zıplama) çoğu zaman kendiniz yazarsınız, çünkü “his” fizik yasalarına uymaz. <b>Çevredeki nesneler</b> (kutular, zincirler, enkaz) için motorun fiziğini kullanın.</p>
+</section>
+
+<section data-sec="yz">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.9em"><li>Hareketi <code>dt</code> ile çarpmamak (<code>x += 5</code>): oyun 144 Hz ekranda 2,4 kat hızlı</li><li>Konumu hızdan <b>önce</b> güncellemek (açık Euler)</li><li>Fiziği değişken kare süresiyle adımlamak; biriktirici yok</li><li>Biriktiricide <code>while</code> yerine <code>if</code>; dev kareleri kırpmamak</li><li>Unity’de tuş basışını <code>FixedUpdate</code>’te okumak (basış kaçar)</li><li>Zıplamada çakal süresi var ama zıpladıktan sonra sayaç sıfırlanmıyor: havada ikinci zıplama</li><li>Çarpışmada <code>vn &gt;= 0</code> kontrolünün unutulması: cisimler birbirine yapışır</li></ul></div></div>
+<div><div class="box info" style="font-size:.74em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js, fizik motoru yok. 2B platform karakteri: (1) sabit zaman adımı: DT = 1/120, biriktirici, kare süresi 0,25 sn’de kırpılsın. (2) Yarı-örtük Euler; yatay ve dikey eksen ayrı ayrı çözülsün. (3) Zıplama: <code>YUKSEKLIK</code> ve <code>TEPE_SURESI</code> sabitlerinden yerçekimi ve ilk hızı hesapla (g = 2h/t², v0 = 2h/t). (4) Değişken yükseklik, düşüş çarpanı 1,8, çakal süresi 0,1 sn, zıplama tamponu 0,12 sn; her biri bir tuşla açılıp kapansın. (5) Hata ayıklama: zıplama yayını noktalarla çiz; ekrana g, v0 ve ölçülen tepe yüksekliğini yaz. (6) Test: DT’yi 1/30 ve 1/240 yapınca tepe yüksekliği %5’ten az değişmeli.”</p><ul style="font-size:.9em"><li>Yöntemin adını verin (yarı-örtük Euler, sabit adım, biriktirici).</li><li>Ölçülebilir bir test isteyin: “tepe yüksekliği kare hızından bağımsız”.</li><li>Sihirli sayıları değil, tasarım sayılarını (h, t) parametre yaptırın.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Sevdiğiniz bir platform oyununda zıplama nasıl “hissettiriyor”? Ağır mı, uçucu mu? Bu sunumdaki hangi ayarlar (tepe süresi, düşüş çarpanı, değişken yükseklik) o hissi veriyor olabilir?</li><li class="fragment">Çakal süresi ve zıplama tamponu oyuncuya söylenmeden yapılan “yardımlar”. Bu bir hile mi? Oyuncu bilse oyundan aldığı zevk değişir mi? (Y14’teki dinamik zorlukla karşılaştırın.)</li><li class="fragment">Quake III’teki kare hızına bağlı zıplama bir hataydı ama oyuncular onu bir <b>beceriye</b> çevirdi. Geliştirici böyle bir hatayı düzeltmeli mi? Hız koşucuları (speedrun) açısından düşünün.</li><li class="fragment">Bez bebek fiziği (ragdoll) hazır ölüm animasyonlarının yerini aldı. Ne kazanıldı, ne kaybedildi? Hangi tür oyunlarda hâlâ el yapımı animasyon daha iyi?</li><li class="fragment">Gerçekçi fizik ne zaman oyunu daha <b>kötü</b> yapar? Bir yarış oyunu, bir futbol oyunu ve bir platform oyunu için ayrı ayrı düşünün.</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Zıplama ayar masası</b> — Örnek kodu genişletin: sürgülerle h, t, düşüş çarpanı; üç hazır ayar (“Mario”, “Celeste”, “ay”). Arkadaşlarınıza oynatıp hangisini sevdiklerini sorun.</li><li><b class="c-green">[kolay]</b> <b>İp köprüsü</b> — p5.js’te iki ucu çivili Verlet köprüsü; üstünden yuvarlanan bir top (top–nokta itmesi). Tekrar sayısı sürgüsü.</li><li><b class="c-amber">[orta]</b> <b>Kanca (grappling hook)</b> — Platform karakterine fareyle atılan bir ip: tek uzaklık kısıtı. Sallanma, ipi kısaltıp uzatma, bırakınca savrulma. Hız neden kendiliğinden korunuyor?</li><li><b class="c-amber">[orta]</b> <b>Bilardo</b> — Dairesel toplar, itme ile çarpışma, sürtünme, delikler. G2’deki ızgarayla geniş aşama; sabit adım. Aynı vuruş her seferinde aynı sonucu veriyor mu?</li><li><b class="c-red">[zor]</b> <b>Çöp adam bez bebek</b> — 11 nokta, 10 çubuk + açıları sınırlayan ek kısıtlar (Jakobsen’in yazısı). Fareyle tutup fırlatın; merdivenden yuvarlayın.</li><li><b class="c-purple">[araştırma]</b> <b>Integratör karşılaştırması</b> — Açık Euler, yarı-örtük Euler, Verlet ve RK4’ü aynı yay ve yörünge probleminde çalıştırın: enerji sapması ile kare başına işlem sayısını grafiğe dökün. Hangi oyun için hangisi?</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Hareket:</b> önce hız, sonra konum (yarı-örtük Euler). Aynı iki satırın ters sırası enerji üretir ve patlar. (Box2D’nin iki satırı.)</li><li><b>Sabit zaman adımı:</b> gerçek zamanı biriktir, eşit DT’lerle harca; kalanı devret, dev kareleri kırp, çizimde ara değer al. Aksi hâlde oyun makineden makineye değişir. (Quake III.)</li><li><b>Zıplama:</b> yüksekliği ve süreyi seç: g = 2h/t², v₀ = 2h/t. Değişken yükseklik, hızlı düşüş, çakal süresi ve tampon oyuncunun niyetini affeder. (Celeste.)</li><li><b>Verlet:</b> hız = şimdiki − önceki konum. Konumu elle düzeltince hız kendiliğinden uyar; bu da <b>kısıtları</b> mümkün kılar.</li><li><b>Kısıt + gevşetme:</b> kuralı çiğneyen noktaları yerine koy, birkaç kez tekrarla. İp, kumaş, bez bebek. (Hitman.)</li><li><b>İtme:</b> çarpışmada iki cisme eşit ve zıt itme; hız değişimi kütleyle ters orantılı; sekme katsayısı enerjinin ne kadarının kaldığını söyler.</li><li><b>Sonraki:</b> eğriler ve ara değerleme: kamera nasıl yumuşak takip eder, bir nesne A’dan B’ye nasıl “tatlı” gider, yarış pisti hangi eğriyle çizilir?</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=hG9SzQxaCm8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/hG9SzQxaCm8/hqdefault.jpg" alt=""><span><b>Math for Game Programmers: Building a Better Jump</b><br>GDC (Kyle Pittman)</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=yorTG9at90g" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/yorTG9at90g/hqdefault.jpg" alt=""><span><b>Why Does Celeste Feel So Good to Play?</b><br>Game Maker's Toolkit</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=noKsDZ-UPq8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/noKsDZ-UPq8/hqdefault.jpg" alt=""><span><b>Jump Physics</b><br>Masahiro Sakurai on Creating Games</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=yGhfUcPjXuE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/yGhfUcPjXuE/hqdefault.jpg" alt=""><span><b>Dear Game Developers, Stop Messing This Up!</b><br>Jonas Tyroller</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=lS_qeBy3aQI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/lS_qeBy3aQI/hqdefault.jpg" alt=""><span><b>Writing a Physics Engine from scratch</b><br>Pezzza's Work</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=nXrEX6j-Mws" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/nXrEX6j-Mws/hqdefault.jpg" alt=""><span><b>Coding a Physics Engine from scratch!</b><br>Zanzlanz</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=RFix_Kg2Di0" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/RFix_Kg2Di0/hqdefault.jpg" alt=""><span><b>Coyote Time &amp; Jump Buffering In Unity</b><br>bendux</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: kaynak kodu, yazılar ve dersler 📚</h2>
+<ul style="font-size:.78em"><li>Glenn Fiedler (Gaffer on Games): <a href="https://gafferongames.com/post/fix_your_timestep/" target="_blank" rel="noopener">Fix Your Timestep!</a> · <a href="https://gafferongames.com/post/integration_basics/" target="_blank" rel="noopener">Integration Basics</a> — biriktirici döngünün ve integratör karşılaştırmasının klasik anlatımı</li><li>Thomas Jakobsen: <a href="https://www.cs.cmu.edu/afs/cs/academic/class/15462-s13/www/lec_slides/Jakobsen.pdf" target="_blank" rel="noopener">Advanced Character Physics</a> (GDC 2001) — Hitman’ın Verlet ve kısıt sistemi</li><li>Celeste: <a href="https://github.com/NoelFB/Celeste/blob/master/Source/Player/Player.cs" target="_blank" rel="noopener">Player.cs</a> (geliştiricilerin yayımladığı oyuncu sınıfı) · <a href="https://maddymakesgames.com/articles/celeste_and_towerfall_physics/index.html" target="_blank" rel="noopener">Celeste and TowerFall Physics</a> (Maddy Thorson)</li><li>Quake III Arena kaynak kodu: <a href="https://github.com/id-Software/Quake-III-Arena/blob/master/code/game/bg_pmove.c" target="_blank" rel="noopener">bg_pmove.c</a> (<code>Pmove</code>, <code>PmoveSingle</code>)</li><li>Box2D (Erin Catto): <a href="https://github.com/erincatto/box2d/blob/v2.4.1/src/dynamics/b2_island.cpp" target="_blank" rel="noopener">b2_island.cpp</a> · <a href="https://box2d.org/documentation/" target="_blank" rel="noopener">belgeler</a> (zaman adımı ve tekrar sayısı önerileri)</li><li>Matthias Müller: <a href="https://matthias-research.github.io/pages/tenMinutePhysics/" target="_blank" rel="noopener">Ten Minute Physics</a> — konum tabanlı fizik üzerine kısa videolar ve tarayıcıda çalışan kodlar</li><li>Chris Hecker: <a href="https://www.chrishecker.com/Rigid_Body_Dynamics" target="_blank" rel="noopener">Rigid Body Dynamics</a> — itme, dönme ve sürtünmeyle katı cisim fiziğine giriş (Game Developer Magazine yazı dizisi)</li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Eğriler ve Ara Değerleme</div>
+    <div class="sub">lerp, yumuşatma (easing), Bézier, Catmull–Rom, yumuşak kamera takibi</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../geo-egriler/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
