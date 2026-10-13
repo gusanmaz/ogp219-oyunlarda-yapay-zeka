@@ -830,3 +830,12 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .ev-bar { height: 22px; background: var(--code-bg); border-radius: 11px; overflow: hidden; } .ev-bar i { display: block; height: 100%; background: var(--blue); transition: width .35s; } .ev-row.win .ev-bar i { background: var(--green); }
 .ev-sc { font: 700 20px "JetBrains Mono", monospace; text-align: right; } .ev-why { font: 16px "JetBrains Mono", monospace; color: var(--ink-2); }
 .ev-rule { font-size: 18px; padding: 6px 10px; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; margin: 4px 0; } .ev-sl { font-size: 16px; gap: 6px 22px; }
+
+.al-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 6px 0; }
+.al-card { background: var(--card); border: 2.5px solid var(--rule); border-radius: 10px; padding: 7px 10px; font-size: 15.5px; line-height: 1.35; opacity: .62; }
+.al-card.used { border-color: var(--green); opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent); }
+.al-nm { font-size: 18px; font-weight: 800; margin-bottom: 2px; } .al-nm span { display: block; font: 13px "JetBrains Mono", monospace; color: var(--muted); font-weight: 400; }
+.al-plan { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 6px; font-size: 20px; }
+.al-step { background: var(--green); color: #fff; font-weight: 800; padding: 6px 14px; border-radius: 10px; } .al-step small { margin-left: 8px; opacity: .85; font: 14px "JetBrains Mono", monospace; }
+.al-st { padding: 6px 12px; border-radius: 10px; border: 2px solid var(--rule); background: var(--card); } .al-st.ok { border-color: var(--green); } .al-arrow { color: var(--muted); font-weight: 900; } .al-tot { margin-left: 14px; font-size: 18px; color: var(--ink-2); }
+.btd-wrap.al { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }

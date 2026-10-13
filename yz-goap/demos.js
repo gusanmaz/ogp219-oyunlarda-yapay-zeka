@@ -56,6 +56,49 @@
   }
   SL.goapPlan = plan;
 
+  /* ================= hikâyeli giriş: Alma acıktı =================
+     Dünya düğmelerle değişir; aynı beş eylemden planlayıcı her seferinde başka bir zincir kurar. */
+  D.alma = function (root) {
+    const A = [
+      { name: '🏧 Para çek', pre: { atmBozuk: false }, eff: { para: true }, cost: 3, pt: 'bankamatik çalışıyor', et: 'para var' },
+      { name: '🍕 Pizza ısmarla', pre: { para: true }, eff: { tok: true }, cost: 2, pt: 'para var', et: 'TOK' },
+      { name: '📖 Tarif bul', pre: {}, eff: { tarif: true }, cost: 1, pt: '—', et: 'tarif var' },
+      { name: '🎂 Pasta yap', pre: { tarif: true, firinBozuk: false }, eff: { tok: true }, cost: 8, pt: 'tarif var, fırın çalışıyor', et: 'TOK' },
+      { name: '🚪 Komşudan iste', pre: {}, eff: { tok: true }, cost: 12, pt: '—', et: 'TOK' }];
+    const W = { para: 'cebinde para var', tarif: 'tarif elinde', atmBozuk: 'bankamatik bozuk', firinBozuk: 'fırın bozuk' };
+    const SC = [
+      ['🌙 Eli boş', {}, 'Alma acıktı. Cebinde para yok, tarif yok; her şey çalışıyor.', 'Kimse “önce para çek, sonra ısmarla” diye yazmadı. Planlayıcı, pizzanın <b>ön koşulunu</b> (para) sağlayan eylemi kendisi buldu ve zinciri kurdu.'],
+      ['💵 Cebinde para var', { para: true }, 'Bu sefer cebinde para var.', 'Ön koşul zaten tutuyor: plan tek eyleme indi. Aynı eylemler, farklı dünya, farklı plan.'],
+      ['🏧 Bankamatik bozuk', { atmBozuk: true }, 'Para çekmeye gitti: bankamatik bozuk.', '“Para çek” artık yapılamıyor; planlayıcı kendiliğinden öbür yola döndü. Buna <b>yeniden planlama</b> denir; F.E.A.R. askerleri kapı açılmayınca aynısını yapar.'],
+      ['📖 Tarif elinde', { tarif: true }, 'Tarif zaten elinde; para yok.', 'Pasta tek eylem (8) ama Para çek + Pizza iki eylem olduğu hâlde daha ucuz (5). Planlayıcı en kısa değil, <b>en ucuz</b> planı seçer.'],
+      ['😵 Her şey bozuk', { atmBozuk: true, firinBozuk: true }, 'Bankamatik de fırın da bozuk.', 'İki yol da kapandı; geriye pahalı ama her zaman mümkün olan eylem kaldı. Böyle bir “son çare” eylemi koymazsanız planlayıcı <b>plan bulamaz</b> ve karakter öylece durur.']];
+    const w = {}; let moralTxt = '';
+    const cards = el('div', { class: 'al-cards' }), planEl = el('div', { class: 'al-plan' }), story = el('div', { class: 'btd-story' }), why = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
+    const boxes = {};
+    const draw = () => {
+      const start = Object.assign({}, w), res = plan(start, { tok: true }, A, { noH: true }), used = new Set((res.plan || []).map(a => a.name));
+      cards.innerHTML = A.map(a => { const can = sat(start, a.pre); return `<div class="al-card${used.has(a.name) ? ' used' : ''}"><div class="al-nm">${a.name}<span>maliyet ${a.cost}</span></div><div><b>ister:</b> ${a.pt}${!can && !used.has(a.name) ? ' <span class="c-red">✗ şu an tutmuyor</span>' : ''}</div><div><b>sağlar:</b> ${a.et}</div></div>`; }).join('');
+      if (!res.plan) { planEl.innerHTML = '<b class="c-red">Plan yok!</b>'; why.innerHTML = ''; return; }
+      planEl.innerHTML = '<span class="al-st">😿 aç</span>' + res.plan.map(a => `<span class="al-arrow">→</span><span class="al-step">${a.name}<small>${a.cost}</small></span>`).join('') + `<span class="al-arrow">→</span><span class="al-st ok">😸 tok</span><span class="al-tot">toplam maliyet <b>${res.cost}</b></span>`;
+      // planı geriye doğru, düz cümleyle gerekçelendir
+      const L = [], P = res.plan;
+      for (let i = P.length - 1; i >= 0; i--) {
+        const a = P[i], needs = Object.keys(a.pre).filter(k => a.pre[k] === true && !start[k]);
+        if (i === P.length - 1) L.push(`Hedef: <b>tok</b> olmak. Bunu sağlayan en ucuz yol <b>${a.name}</b>.` + (needs.length ? ` Ama o “${a.pt.split(',')[0]}” ister ve şu an yok.` : ' Ön koşulu zaten tutuyor.'));
+        else L.push(`“${P[i + 1].pt.split(',')[0]}” durumunu <b>${a.name}</b> sağlar.` + (Object.keys(a.pre).length ? ' Onun ön koşulu tutuyor.' : ' Onun ön koşulu yok.'));
+      }
+      why.innerHTML = L.map(x => `<div class="l-ok"><span>←</span>${x}</div>`).join('') + '<div><span>⇒</span>Geriye doğru düşündü, ileriye doğru uygulayacak.</div>';
+      moral.innerHTML = moralTxt ? '💡 ' + moralTxt : '';
+    };
+    const set = i => { Object.keys(W).forEach(k => (w[k] = !!SC[i][1][k])); Object.keys(W).forEach(k => (boxes[k].checked = w[k])); story.innerHTML = '📖 ' + SC[i][2]; moralTxt = SC[i][3]; draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); set(i); }); return b; });
+    Object.keys(W).forEach(k => { boxes[k] = el('input', { type: 'checkbox', onchange: e => { w[k] = e.target.checked; bs.forEach(x => x.classList.remove('primary')); story.innerHTML = '📖 Kendi dünyanız: kutucukları değiştirin, plan hemen yeniden kurulur.'; moralTxt = ''; draw(); } }); });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, cards, planEl, el('div', { class: 'btd-wrap al' }, why, el('div', {}, moral, el('div', { class: 'btd-own', style: 'margin-top:8px' }, 'Dünyayı kendiniz değiştirin: ', ...Object.keys(W).map(k => el('label', { class: 'ctl' }, boxes[k], ' ' + W[k]))))));
+    bs[0].classList.add('primary'); set(0);
+    SL.onTheme(draw);
+  };
+
   /* ---------- arama ağacını çiz ---------- */
   function searchSVG(res, upto, o = {}) {
     const t = T(), W = o.W || 1160, H = o.H || 300;
