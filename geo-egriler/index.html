@@ -920,7 +920,7 @@ function draw() {
 
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
-<ul style="font-size:.82em"><li><b>Lerp:</b> a + (b − a)·t. “Yolun yüzde kaçı?” Ters lerp oranı bulur; ikisi birlikte aralık eşler. Sayı, vektör, renk: hepsinde aynı.</li><li><b>Yumuşatma:</b> lerp’e dokunma, t’yi eğ. Gelen şeyler “yavaş bitir”, taşınan şeyler smoothstep, vurgular “taşıp dön”. Süre ve varış değişmez; his değişir.</li><li><b>Hareketli hedef:</b> kare başına sabit oran kare hızına bağlıdır. Oranı süreden hesapla: 1 − 2^(−dt / yarı ömür). Daha yumuşak kalkış için SmoothDamp.</li><li><b>Bézier:</b> lerp’lerin lerp’i (De Casteljau). Uçlardan geçer, kontrol noktalarına doğru bükülür; tutamaçlar yönü verir.</li><li><b>Catmull–Rom:</b> verilen noktaların içinden köşesiz geçer; teğeti komşulardan alır.</li><li><b>Sabit hız:</b> eşit t eşit yol değildir. Yay uzunluğu tablosu + ikili arama + ters lerp (Godot’nun “baked” eğrisi).</li><li><b>Sonraki:</b> Bölüm 7: oyunlarda yapay zekâ. İlk sunum Hazırlık: bu bölümde kurduğumuz vektörler, döngü ve hareket üzerine karar veren karakterler.</li></ul>
+<ul style="font-size:.82em"><li><b>Lerp:</b> a + (b − a)·t. “Yolun yüzde kaçı?” Ters lerp oranı bulur; ikisi birlikte aralık eşler. Sayı, vektör, renk: hepsinde aynı.</li><li><b>Yumuşatma:</b> lerp’e dokunma, t’yi eğ. Gelen şeyler “yavaş bitir”, taşınan şeyler smoothstep, vurgular “taşıp dön”. Süre ve varış değişmez; his değişir.</li><li><b>Hareketli hedef:</b> kare başına sabit oran kare hızına bağlıdır. Oranı süreden hesapla: 1 − 2^(−dt / yarı ömür). Daha yumuşak kalkış için SmoothDamp.</li><li><b>Bézier:</b> lerp’lerin lerp’i (De Casteljau). Uçlardan geçer, kontrol noktalarına doğru bükülür; tutamaçlar yönü verir.</li><li><b>Catmull–Rom:</b> verilen noktaların içinden köşesiz geçer; teğeti komşulardan alır.</li><li><b>Sabit hız:</b> eşit t eşit yol değildir. Yay uzunluğu tablosu + ikili arama + ters lerp (Godot’nun “baked” eğrisi).</li><li><b>Sonraki:</b> ağ senkronizasyonu: çevrimiçi oyunlar gecikmeyi oyuncudan nasıl saklar? Lerp’in en ilginç kullanımı.</li></ul>
 </section>
 
 <section data-sec="kaynaklar">
@@ -945,9 +945,9 @@ function draw() {
 <section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
   <div class="vcenter center">
     <div class="lv">NEXT LEVEL ▶</div>
-    <div class="ttl" style="font-size:60px">Oyunlarda Yapay Zekâ: Hazırlık</div>
-    <div class="sub">Bölüm 7 başlıyor: vektörler, oyun döngüsü ve karar veren karakterler</div>
-    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../yz-hazirlik/">SONRAKİ SUNUM ▶</a>
+    <div class="ttl" style="font-size:60px">Ağ Senkronizasyonu</div>
+    <div class="sub">ara değerleme, istemci tahmini, gecikme telafisi, geri sarma: lerp’in çevrimiçi oyunlardaki hayatı</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../geo-ag/">SONRAKİ SUNUM ▶</a>
   </div>
 </section>
 </div></div>

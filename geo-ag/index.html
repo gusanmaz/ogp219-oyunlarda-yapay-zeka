@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ağ Senkronizasyonu</title>
+<meta name="description" content="Çevrimiçi oyunlarda senkronizasyon: gecikme ve yetkili sunucu, anlık görüntüler ve ara değerleme, istemci tahmini ve sunucu uzlaştırması, gecikme telafisi, eşzamanlı (lockstep) simülasyon ve geri sarma (rollback); Quake III kaynak kodu, Age of Empires ve GGPO örnekleri; p5.js ile tek sayfada sahte ağ ve oynanabilir demolar.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 20%, #0d3a2a 0%, #1a1824 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G7</div>
+  <div class="ttl" style="font-size:64px">Ağ Senkronizasyonu</div>
+  <div class="sub"><i>Yetkili sunucu, ara değerleme, istemci tahmini ve uzlaştırma, gecikme telafisi, eşzamanlı simülasyon, geri sarma</i> — “herkes aynı oyunu mu görüyor?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo7"></div>
+  <aside class="notes">Ortadaki sarı düğüm sunucu; yeşil kareler oyuncuların girdileri, sarılar sunucunun yayınladığı durum.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Sorun: gecikme</b> — ışık hızı bile yetmiyor; kime güveneceğiz? Yetkili sunucu</li><li><b>Ara değerleme</b> — saniyede 20 paketten akıcı rakipler: bilerek geçmişi göstermek</li><li><b>Tahmin ve uzlaştırma</b> — kendi karakteriniz neden anında kıpırdıyor; sunucu “hayır” deyince ne oluyor?</li><li><b>Gecikme telafisi</b> — ekranda vurduğunuz sayılsın diye sunucu zamanı geri sarar</li><li><b>Eşzamanlı simülasyon ve geri sarma</b> — strateji oyunlarında yalnızca girdileri yollamak; dövüş oyunlarında tahmin et, tutmazsa geri sar</li><li><b>Her adımda</b> — elle izleme → canlı demo → kod (JavaScript / Python / C#) → gerçek oyun kaynak kodu</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>çevrimiçi bir oyunun gecikmeyi oyuncudan saklamak için kullandığı beş tekniği açıklayabilecek, tek makinede sahte bir ağ kurup her birini yazabilecek ve “vurdum ama saymadı”, “köşeyi dönmüştüm ama öldüm”, “lastik gibi geri çekildim” şikâyetlerinin hangisinden kaynaklandığını söyleyebileceksiniz.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: “KÖŞEYİ DÖNMÜŞTÜM AMA VURULDUM!”</span>
+<p>Çevrimiçi nişancı oyunu oynayan herkes yaşamıştır: sipere girdiniz, güvendesiniz; yarım saniye sonra ölüyorsunuz. Öldüren oyuncunun kaydına bakıyorsunuz: sizi açık alanda, tam ortada vurmuş. İkiniz de doğru görüyorsunuz. Nasıl?</p>
+<ul style="font-size:.9em"><li><span class="fragment">Aynı anda iki farklı “şimdi” var. Sizin ekranınız ile onun ekranı arasında 100–200 milisaniye fark var; ikisi de sunucunun gerçeğinden farklı.</span></li><li><span class="fragment">Oyun bunu bilerek yapıyor: oyuncuların hiçbiri gecikmeyi <b>hissetmesin</b> diye herkese biraz farklı bir zaman gösteriyor.</span></li><li><span class="fragment">Bedeli, zamanlar çakıştığında ortaya çıkan bu tür “haksızlıklar”. Geliştirici hangisinin kime yaşatılacağını seçer.</span></li><li><span class="fragment">Bu sunum o seçimleri anlatıyor. Araçların hepsini biliyorsunuz: lerp (G6), sabit adımlı simülasyon (G5), ışın testi (G3), ikili arama, kuyruk.</span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../geo-egriler/">G6 · Eğriler (lerp, ters lerp)</a><a class="" href="../geo-fizik/">G5 · Fizik (sabit zaman adımı, deterministik adım)</a><a class="" href="../yiginlar-kuyruklar/">Yığınlar ve Kuyruklar (mesaj kuyruğu)</a></div>
+  <div class="prereq"><a class="opt" href="../geo-carpisma/">G3 · Çarpışma (ışın testi)</a><a class="opt" href="../hash-tablolari/">Hash Tabloları (sağlama / özet)</a><a class="opt" href="../arama-algoritmalari/">Arama (zaman kaydında ikili arama)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>G5’te “aynı girdiler aynı sonucu versin” diye sabit adımı kurduk; G6’da iki değerin arasını doldurmayı öğrendik. Ağ kodu bu ikisinin üstüne oturur: simülasyonu yeniden oynatmak ve paketlerin arasını doldurmak.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu sunumda soket, protokol, IP adresi <b>yok</b>. Bütün demolar tek sayfada çalışır: “ağ”, mesajları bir süre bekleten bir kuyruktur. Gerçek ağa geçmek, o kuyruğu bir kütüphaneyle değiştirmektir; zor olan kısım burada anlattıklarımız.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:15px"><tr><td>latency · ping · RTT</td><td>gecikme · — · gidiş-dönüş süresi</td><td>Mesajın karşıya varma süresi · gidiş-dönüşün ölçüsü</td></tr><tr><td>tick rate</td><td>sunucu adım hızı</td><td>Sunucunun saniyede kaç kez dünyayı ilerletip yayınladığı</td></tr><tr><td>authoritative server</td><td>yetkili sunucu</td><td>Oyunun tek gerçeğini tutan taraf; istemciler yalnızca girdi yollar</td></tr><tr><td>snapshot</td><td>anlık görüntü</td><td>Sunucunun bir andaki dünya durumunu taşıyan paket</td></tr><tr><td>entity interpolation</td><td>varlık ara değerlemesi</td><td>Başka oyuncuları iki anlık görüntü arasında, biraz geçmişte çizme</td></tr><tr><td>client-side prediction</td><td>istemci tahmini</td><td>Kendi girdini, sunucu onayını beklemeden yerelde uygulama</td></tr><tr><td>server reconciliation</td><td>sunucu uzlaştırması</td><td>Sunucu durumuna dönüp onaylanmamış girdileri yeniden uygulama</td></tr><tr><td>lag compensation</td><td>gecikme telafisi</td><td>Sunucunun atışı sınarken hedefleri nişancının gördüğü ana geri sarması</td></tr><tr><td>lockstep · rollback</td><td>eşzamanlı simülasyon · geri sarma</td><td>Yalnızca girdileri paylaşıp aynı simülasyonu koşturma · tahmin tutmazsa geçmişe dönüp yeniden simüle etme</td></tr><tr><td>desync</td><td>eşzamansızlık</td><td>İki makinenin simülasyonlarının birbirinden ayrışması</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Sorun: gecikme</div><div class="sub">ve kime güveneceğimiz</div></div>
+</section>
+
+<section data-sec="gecikme">
+  <h2>Problem: “şimdi” herkes için farklı</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Bir mesajın yolculuğu</span><ul style="font-size:.92em"><li>İstanbul’daki oyuncu tuşa bastı. Mesaj Frankfurt’taki sunucuya gidecek: yaklaşık 1.900 km.</li><li>Işık fiberde saniyede ≈ 200.000 km yol alır: yalnızca kablo için en az <b>10 ms</b>. Yönlendiriciler, kablosuz ağ, yoğunluk: gerçekte <b>25–40 ms</b>.</li><li>Sunucu mesajı bir sonraki adımında işler (saniyede 60 adım: 0–17 ms bekleme), sonucu yayınlar.</li><li>Sonuç geri döner: bir 25–40 ms daha. Ekran onu bir sonraki karede çizer.</li><li>Toplam: tuştan görüntüye <b>70–120 ms</b>. 60 FPS’te 4–7 kare.</li></ul><p class="mini">İnsan, kendi hareketine verilen tepkide 50–100 ms’yi “gecikme” olarak hisseder.</p></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İki naif çözüm, iki felaket</span><p><b>1) Herkes kendi konumunu söylesin.</b> Her istemci kendi karakterini yürütür ve “buradayım” diye yayınlar.</p><ul style="font-size:.92em"><li>Hile yapmak tek satır: “buradayım” yerine “düşmanın arkasındayım”, “canım 9999”.</li><li>İki oyuncu aynı altını aynı anda aldı: kim haklı?</li></ul><p><b>2) Her şeye sunucu karar versin, istemci yalnızca göstersin.</b></p><ul style="font-size:.92em"><li>Güvenli ve tutarlı. Ama tuşa basıyorsunuz, karakter 100 ms sonra kıpırdıyor; rakipler saniyede 20 kare zıplıyor.</li><li>1996’daki ilk Quake internet üzerinde tam böyle oynanıyordu; yalnızca yerel ağda keyifliydi.</li></ul><p>Çözüm ikincisinden vazgeçmek değil; <b>gecikmeyi oyuncudan saklamak</b>.</p></div></div>
+</div>
+</section>
+
+<section data-sec="gecikme">
+  <h2>Fikir: yetkili sunucu + üç “yalan”</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li><b>Yetkili sunucu:</b> oyunun tek gerçeği sunucudadır. İstemciler durum değil <b>girdi</b> yollar (“sağa bastım”, “ateş ettim”); sunucu girdiyi doğrular, simülasyonu yürütür, sonucu herkese yayınlar.</li><li>İstemcinin gösterdiği her şey bir <b>tahmindir</b>; sunucu ne derse o olur.</li><li>Gecikmeyi saklamak için istemci (ve sunucu) üç ayrı numara yapar:</li></ul><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">kim için</th><th style="text-align:left;">numara</th><th style="text-align:left;">ekranda gösterilen zaman</th></tr><tr><td style="text-align:left;"><b>başka oyuncular</b></td><td style="text-align:left;">ara değerleme</td><td style="text-align:left;">biraz <b>geçmiş</b> (≈ 100 ms önce)</td></tr><tr><td style="text-align:left;"><b>kendi karakteriniz</b></td><td style="text-align:left;">tahmin + uzlaştırma</td><td style="text-align:left;">biraz <b>gelecek</b> (sunucunun henüz bilmediği)</td></tr><tr><td style="text-align:left;"><b>atışlarınız</b></td><td style="text-align:left;">gecikme telafisi</td><td style="text-align:left;">sunucu, sizin gördüğünüz <b>geçmişe</b> döner</td></tr></table><p class="mini">Yani ekranınızda aynı anda iki farklı zaman var: siz gelecekte, herkes geçmişte. Isınmadaki “köşe” olayı bu ikisinin çarpışmasıdır.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Sayılarla bir nişancı oyunu</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ayar</th><th style="text-align:left;">tipik değer</th><th style="text-align:left;">anlamı</th></tr><tr><td style="text-align:left;">sunucu adım hızı</td><td style="text-align:left;">20–128 Hz</td><td style="text-align:left;">Quake III 20; CS:GO 64; Valorant 128; Apex Legends 20</td></tr><tr><td style="text-align:left;">anlık görüntü aralığı</td><td style="text-align:left;">8–50 ms</td><td style="text-align:left;">128 Hz’te 7,8 ms; 20 Hz’te 50 ms</td></tr><tr><td style="text-align:left;">ara değerleme tamponu</td><td style="text-align:left;">≈ 2 paket aralığı</td><td style="text-align:left;">Source motorunda varsayılan 100 ms</td></tr><tr><td style="text-align:left;">gidiş-dönüş (ping)</td><td style="text-align:left;">20–150 ms</td><td style="text-align:left;">aynı bölge 20–50; kıtalar arası 150+</td></tr><tr><td style="text-align:left;">paket kaybı</td><td style="text-align:left;">%0–5</td><td style="text-align:left;">kablosuz ağda ani sıçramalar</td></tr></table><p class="mini">Bant genişliği de sınırlı: 64 oyuncu × 64 Hz × oyuncu başına 50 bayt = saniyede 200 KB, <b>her istemciye</b>. Sunucular yalnızca değişeni (“delta”) ve yalnızca görülebileni (G4: görünürlük) yollar.</p></div></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Ara değerleme</div><div class="sub">saniyede 20 paketten akıcı rakipler</div></div>
+</section>
+
+<section data-sec="ara değerleme">
+  <h2>Problem: paketler seyrek, ekran sık</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 20 paket, 144 kare</span><ul style="font-size:.92em"><li>Sunucu rakibin konumunu saniyede 20 kez yolluyor: 50 ms’de bir.</li><li>Ekranınız saniyede 144 kare çiziyor: 7 ms’de bir.</li><li>İki paket arasında 7 kare var ve elinizde o kareler için <b>veri yok</b>.</li></ul><p><b>Ham gösterim:</b> yeni paket gelene kadar rakibi olduğu yerde tut. Rakip 20 FPS’lik bir film gibi zıplar; nişan almak imkânsız.</p></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: ileriye tahmin (dış değerleme)</span><p>Son iki paketten hızı bul; rakibi o hızla <b>ileri</b> yürüt.</p><ul style="font-size:.92em"><li>Rakip düz gidiyorsa mükemmel: hem akıcı hem güncel.</li><li>Rakip <b>dönünce ya da durunca</b> tahmin yanlış yöne devam eder; yeni paket gelince rakip geri “çekilir”.</li><li>Nişancı oyununda oyuncular saniyede birkaç kez yön değiştirir (tam da vurulmamak için). Rakip sürekli titrer.</li><li>Araçlar, gemiler, mermiler gibi <b>ataleti</b> olan şeylerde iyi çalışır; koşan insanda çalışmaz.</li></ul><p><b>Başka bir yol:</b> tahmin etme. Elindeki <b>iki gerçek paketin arasını</b> doldur. Bunun için ikinci paketin gelmiş olması, yani biraz <b>geride kalmak</b> gerekir.</p></div></div>
+</div>
+</section>
+
+<section data-sec="ara değerleme">
+  <h2>Fikir: bilerek geçmişi göster</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Gelen paketleri zaman damgalarıyla bir <b>tamponda</b> sakla.</li><li>Rakibi “şimdi”de değil, <b>şimdi − tampon süresi</b> anında çiz.</li><li>O an, tampondaki iki paketin arasına düşer: ters lerp ile oranı bul, lerp ile konumu (G6).</li><li>Tampon süresi ≈ <b>iki paket aralığı</b>: bir paket kaybolsa bile iki yanında paket olur.</li><li>Sonuç: rakip her zaman <b>gerçekten bulunduğu</b> noktalardan geçer; titreme ve geri çekilme yok. Bedeli: gördüğünüz rakip tampon + gecikme kadar <b>eski</b>.</li></ul><p class="mini">Paket hızı arttıkça tampon kısalır: 128 Hz’te iki paket 16 ms eder. Yüksek “tick rate”in asıl faydası budur.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: 20 Hz, tampon 100 ms</span><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">paket</th><th style="text-align:left;">sunucu zamanı</th><th style="text-align:left;">rakibin x’i</th></tr><tr><td style="text-align:left;">A</td><td style="text-align:left;">1.000 ms</td><td style="text-align:left;">100</td></tr><tr><td style="text-align:left;">B</td><td style="text-align:left;">1.050 ms</td><td style="text-align:left;">110</td></tr><tr><td style="text-align:left;">C</td><td style="text-align:left;">1.100 ms</td><td style="text-align:left;">130</td></tr></table><ul style="font-size:.9em"><li>İstemcinin sunucu saati tahmini: <b>1.175 ms</b>.</li><li>Çizilecek an: 1.175 − 100 = <b>1.075 ms</b>.</li><li>1.075, B (1.050) ile C (1.100) arasında.</li><li>Oran: (1.075 − 1.050) / (1.100 − 1.050) = <b>0,5</b>.</li><li>Konum: lerp(110, 130, 0,5) = <b>120</b>.</li></ul><p class="mini">Bir sonraki kare (7 ms sonra): an = 1.082 → oran 0,64 → x = 122,8. Paket gelmeden rakip 2,8 birim kaydı.</p><p class="mini">C paketi kaybolsaydı? 1.075 anı için B ile bir sonraki paket (D, 1.150) arasında lerp edilirdi: tampon bunun için iki paketlik.</p></div></div>
+</div>
+</section>
+
+<section data-sec="ara değerleme">
+  <h2>Canlı: ham, ara değerleme, dış değerleme 📡</h2>
+<div class="demo" data-demo="snap"></div>
+</section>
+
+<section data-sec="ara değerleme">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> en üstteki sarı top sunucudaki gerçek; altındaki üç top aynı paketleri üç farklı yöntemle gösteren istemciler. Uçan küçük kareler yoldaki paketler. Alttaki grafik son 4 saniye: sarı kesikli = gerçek.</li><li><b>Kırmızı (ham):</b> grafikte merdiven. Paket hızını 4’e indirin: basamaklar büyür (yeşil de takılır: 150 ms’lik tampon artık bir paket aralığından kısa). 60’a çıkarın: neredeyse pürüzsüz, ama bant genişliği 15 katı.</li><li><b>Yeşil (ara değerleme):</b> sarı eğrinin <b>sağa kaymış</b> kopyası: aynı biçim, biraz geç. Kayma = gecikme + tampon.</li><li><b>Mor (dış değerleme):</b> düz giderken sarının tam üstünde (güncel!); dönüş anlarında sivri <b>taşmalar</b>. Gecikmeyi 250 ms yapın: taşmalar büyür.</li><li>Kaybı <b>%20</b> yapın. Tampon 150 ms iken yeşil hâlâ pürüzsüz. Tamponu <b>40</b>’a indirin (bir paket aralığından az): “⚠ tampon boş” uyarısı ve takılmalar.</li><li>Alttaki ortalama hatalara bakın: en “hatalı” görünen yeşil, en rahat izlenendir. Doğruluk ile akıcılık aynı şey değil.</li></ol></div>
+</section>
+
+<section data-sec="ara değerleme">
+  <h2>Kod: anlık görüntü tamponu ve ara değerleme</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Sunucudan gelen anlık görüntüler: { t: sunucu zamanı (sn), x, y }.  Zamana göre sıralı tutulur.
+let paketler = [];
+const TAMPON = 0.1;                         // bilerek ne kadar geçmişi gösterelim? (saniye)
+
+function paketGeldi(p) {
+  paketler.push(p);
+  if (paketler.length > 60) paketler.shift();          // eskileri at
+}
+
+// Her çizim karesinde: rakibi "şimdi"de değil, "şimdi − TAMPON"da göster
+function rakipKonumu(sunucuSimdi) {
+  const an = sunucuSimdi - TAMPON;
+  for (let i = paketler.length - 1; i > 0; i--) {      // an'ı içine alan iki komşu paketi bul
+    const a = paketler[i - 1], b = paketler[i];
+    if (a.t <= an && an <= b.t) {
+      const f = (an - a.t) / (b.t - a.t);              // ters lerp: iki paketin arasında neredeyiz?
+      return { x: lerp(a.x, b.x, f), y: lerp(a.y, b.y, f) };
+    }
+  }
+  return paketler[paketler.length - 1];                // tampon boşaldı: eldeki son pakette bekle
+}
+
+// sunucuSimdi nereden gelir? İstemci, son paketin zaman damgasına o paketten beri geçen süreyi ekler:
+//   sunucuSimdi = sonPaket.t + (performance.now() / 1000 - sonPaketinGelisAni)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def interpolate(t0, x0, t1, x1, t):
+    """İki paket arasında, t anındaki konum."""
+    f = (t - t0) / (t1 - t0)
+    return x0 + (x1 - x0) * f
+
+def rakip_konumu(paketler, sunucu_simdi, tampon=0.1):
+    """paketler: [(t, x), ...] zamana göre sıralı."""
+    an = sunucu_simdi - tampon
+    for (t0, x0), (t1, x1) in zip(paketler, paketler[1:]):
+        if t0 <= an <= t1:
+            return interpolate(t0, x0, t1, x1, an)
+    return paketler[-1][1]                  # tampon boş: son pakette bekle
+
+paketler = [(1.000, 100), (1.050, 110), (1.100, 130)]
+print(rakip_konumu(paketler, 1.175))        # an = 1.075 → 120.0
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: ağ kütüphaneleri bunu bileşen olarak verir; ayarı siz seçersiniz.
+//   Netcode for GameObjects → NetworkTransform (Interpolate ✔)
+//   Mirror                  → NetworkTransform (snapshot interpolation; "buffer time multiplier")
+//   Photon Fusion           → NetworkTransform + "Interpolation Data Source"
+// Elle yazmak isterseniz çekirdek aynı iki satır:
+
+Vector3 RakipKonumu(double sunucuSimdi) {
+    double an = sunucuSimdi - tampon;
+    for (int i = paketler.Count - 1; i > 0; i--) {
+        var a = paketler[i - 1]; var b = paketler[i];
+        if (a.t <= an && an <= b.t)
+            return Vector3.Lerp(a.konum, b.konum, (float)((an - a.t) / (b.t - a.t)));
+    }
+    return paketler[^1].konum;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ara değerleme">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>paketler.push(p)</code> + <code>shift()</code></td><td style="text-align:left;">zaman damgalı tampon; eskiler atılır</td><td style="text-align:left;">Bir kuyruk (Yığınlar ve Kuyruklar). Paketler sırasız gelebilir: gerçek kodda zaman damgasına göre araya eklenir.</td></tr><tr><td style="text-align:left;"><code>an = sunucuSimdi - TAMPON</code></td><td style="text-align:left;">çizilecek an: bilerek geçmiş</td><td style="text-align:left;">Yöntemin tamamı bu çıkarma. TAMPON ≈ 2 paket aralığı.</td></tr><tr><td style="text-align:left;"><code>a.t &lt;= an &amp;&amp; an &lt;= b.t</code></td><td style="text-align:left;">an’ı içine alan iki komşu paket</td><td style="text-align:left;">Sondan başa aranır: aranan an neredeyse hep son iki-üç paketin arasındadır.</td></tr><tr><td style="text-align:left;"><code>(an - a.t) / (b.t - a.t)</code></td><td style="text-align:left;">ters lerp</td><td style="text-align:left;">Paket aralığı sabit olmak zorunda değil; kayıp varsa aralık 100 ms olur, formül aynen çalışır.</td></tr><tr><td style="text-align:left;"><code>return paketler[son]</code></td><td style="text-align:left;">tampon boşaldı</td><td style="text-align:left;">İki seçenek: bekle (donma) ya da kısa süre dış değerleme yap (Source: en çok 250 ms). İkisi de çirkin; tamponu büyütmek daha iyi.</td></tr><tr><td style="text-align:left;"><code>sunucuSimdi</code></td><td style="text-align:left;">istemcinin sunucu saati tahmini</td><td style="text-align:left;">İki makinenin saati aynı değildir. İstemci, paket zaman damgalarından sunucu saatini kestirir ve yumuşatır.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Ara değerlemeyle çizilen bir varlık, sunucudaki gerçek konumunun <b>gecikme + tampon</b> kadar gerisindedir ve (paket kaybı tamponu aşmadıkça) yalnızca gerçekten bulunduğu noktalar arasındaki doğrular üzerinde görünür. v hızıyla koşan bir rakip için konum farkı v × (gecikme + tampon)’dur: 250 birim/sn ve 150 ms için <b>37,5 birim</b>.</div>
+</section>
+
+<section data-sec="ara değerleme">
+  <h2>Oyunlarda: Quake III’ün ara değerlemesi</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.64;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Quake III Arena — code/cgame/cg_ents.c (id Software, 1999; kısaltılmış)
+static void CG_InterpolateEntityPosition( centity_t *cent ) {
+    vec3_t  current, next;
+    float   f;
+
+    // it would be an internal error to find an entity that interpolates without
+    // a snapshot ahead of the current one
+    if ( cg.nextSnap == NULL ) {
+        CG_Error( "CG_InterpoateEntityPosition: cg.nextSnap == NULL" );
+    }
+
+    f = cg.frameInterpolation;          // iki anlık görüntü arasında neredeyiz? (0..1)
+
+    // this will linearize a sine or parabolic curve, but it is important
+    // to not extrapolate player positions if more recent data is available
+    BG_EvaluateTrajectory( &cent->currentState.pos, cg.snap->serverTime, current );
+    BG_EvaluateTrajectory( &cent->nextState.pos, cg.nextSnap->serverTime, next );
+
+    cent->lerpOrigin[0] = current[0] + f * ( next[0] - current[0] );
+    cent->lerpOrigin[1] = current[1] + f * ( next[1] - current[1] );
+    cent->lerpOrigin[2] = current[2] + f * ( next[2] - current[2] );
+    // ... açılar için LerpAngle ...
+}
+</script></code></pre><p class="mini">Kaynak: id Software, Quake III Arena, <code>cg_ents.c</code> (GPL). İngilizce yorumlar özgün koddan (yazım hatasıyla birlikte).</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Satır satır</span><ul style="font-size:.86em"><li><code>cg.snap</code> ve <code>cg.nextSnap</code>: tampondaki iki komşu anlık görüntü. İkincisi yoksa bu fonksiyon çağrılmamalıdır: “iç hata”.</li><li><code>cg.frameInterpolation</code>: bizim ters lerp’imiz; iki görüntünün zaman damgaları arasındaki oran.</li><li><code>current + f * (next − current)</code>: üç eksen için üç lerp. Açılar için ayrı <code>LerpAngle</code> (350° → 10° sorunu, G6).</li><li>Yorumdaki cümle bu bölümün özeti: “daha yeni veri varken oyuncu konumlarını <b>dış değerlememek</b> önemlidir.”</li><li>Varsayılanlar (kaynak kodundan): sunucu <code>sv_fps 20</code>, istemcinin istediği görüntü hızı <code>snaps 20</code>, saniyede en çok <code>cl_maxpackets 30</code> girdi paketi. 1999’un modemleri için.</li><li>İstisna: <code>cg_smoothClients</code> açılırsa başka oyuncular için dış değerlemeye izin verilir; varsayılanı kapalıdır.</li></ul><p class="mini">Valve’ın Source motoru (Counter-Strike, Team Fortress 2) aynı tasarımı sürdürür: varsayılan ara değerleme süresi 100 ms.</p></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: iki paket arasında konum</h2>
+  <div class="ailab" data-lab="snaplerp" data-lang="js">
+<textarea>
+// Paket A: t0 anında konum x0.   Paket B: t1 anında konum x1.   (t0 &lt; t1)
+// t anındaki konumu döndür (t0 ≤ t ≤ t1).
+function interpolate(t0, x0, t1, x1, t) {
+  return x1;   // TODO: şimdilik hep son paketi gösteriyor (ham)
+}
+</textarea>
+    <div class="lab-tasks">İki adım (G6): ters lerp <code>const f = (t - t0) / (t1 - t0);</code>, sonra lerp <code>return x0 + (x1 - x0) * f;</code>. Slayttaki örnek: (1050, 110), (1100, 130), t = 1075 → <b>120</b>.</div>
+  </div>
+</section>
+
+<section data-sec="ara değerleme">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 1 · ara değerleme</div>
+    <div class="q">Bir oyunda rakipler düz koşarken sorunsuz, ama her yön değiştirdiklerinde bir an yanlış yöne kayıp geri “çekiliyorlar”. Oyun rakipleri hangi yöntemle çiziyor ve çözüm ne?</div>
+    <div class="opts"><button data-opt="A">Ham gösterim; paket hızını artırmak</button><button data-opt="B">Dış değerleme; ara değerlemeye geçmek (biraz geçmişi göstermek)</button><button data-opt="C">Ara değerleme; tamponu küçültmek</button><button data-opt="D">İstemci tahmini; uzlaştırma eklemek</button></div>
+    <div class="explain">Düzde doğru, dönüşte taşan davranış dış değerlemenin (son hızla ileri tahmin) imzasıdır. Ara değerleme yalnızca gerçek paketlerin arasını doldurur; taşma olmaz, karşılığında rakip tampon kadar geçmişte görünür. Ham gösterimde kayma değil zıplama, ara değerlemede ise ne kayma ne çekilme olurdu.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Tahmin ve uzlaştırma</div><div class="sub">kendi karakteriniz için</div></div>
+</section>
+
+<section data-sec="tahmin">
+  <h2>Problem: kendi tuşunuzu beklemek</h2>
+<div class="cols c64">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Ara değerleme burada işe yaramaz</span><ul style="font-size:.92em"><li>Rakibi 100 ms geçmişte görmek kabul edilebilir; fark etmezsiniz.</li><li>Ama <b>kendi</b> karakteriniz için aynı şey: tuşa bas → sunucuya git (50 ms) → sunucu işlesin → geri gel (50 ms) → tampon (100 ms). Karakter <b>200 ms</b> sonra kıpırdar.</li><li>Bu, buzda yürümek ya da uzaktan kumandalı bir araba sürmek gibidir. Hassas hiçbir hareket yapılamaz.</li></ul><p>Oysa istemci sonucun ne olacağını <b>neredeyse kesin</b> biliyor: “sağa bastım, sağa gideceğim.” Sunucu büyük olasılıkla aynısını söyleyecek.</p></div></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Fikir 1: tahmin — sorma, yap</span><ul style="font-size:.92em"><li>İstemci girdiyi sunucuya yollar <b>ve beklemeden kendinde de uygular</b>.</li><li>Bunun için hareket kodu istemcide de bulunmalı: sunucudaki fonksiyonun <b>aynısı</b> (aynı hız, aynı çarpışma, aynı sabit adım: G5).</li><li>Sunucu yine yetkili: kendi hesabını yapar ve sonucu yollar. Çoğu zaman istemcinin tahminiyle aynıdır.</li></ul><p><b>Yeni sorun:</b> sunucudan gelen haber <b>eski</b>. “x = 11” diyor, ama o cevap yoldayken siz iki adım daha attınız ve ekranda 13’tesiniz. Habere uyarsanız geri sıçrarsınız; uymazsanız sunucu yetkili olmaz.</p></div></div>
+</div>
+</section>
+
+<section data-sec="tahmin">
+  <h2>Fikir 2: uzlaştırma — geri dön, kalanları yeniden oyna</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>Her girdiye artan bir <b>sıra numarası</b> ver. Yolladığın girdileri bir listede <b>sakla</b>.</li><li>Sunucu, durumla birlikte şunu da söyler: “en son <b>şu numaralı</b> girdini işledim.”</li><li>Haber gelince üç adım:</li><li>① Sunucunun durumuna dön (o yetkili).</li><li>② O numaraya kadar olan girdileri listeden at (onaylandılar).</li><li>③ Listede <b>kalanları</b> (yoldakiler) o durumun üstüne <b>yeniden uygula</b>.</li><li>Tahmin doğruysa ③’ün sonucu ekrandakiyle aynıdır: hiçbir şey kıpırdamaz. Yanlışsa (duvara çarptınız, biri itti) ekran tek adımda doğruya gelir.</li></ul></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">Elle izleme: her girdi +1; başlangıç x = 10</span><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">an</th><th style="text-align:left;">olay</th><th style="text-align:left;">sunucu</th><th style="text-align:left;">bekleyen</th><th style="text-align:left;">ekran</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">istemci #1 yolladı, uyguladı</td><td style="text-align:left;">10</td><td style="text-align:left;">#1</td><td style="text-align:left;"><b>11</b></td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">istemci #2 yolladı, uyguladı</td><td style="text-align:left;">10</td><td style="text-align:left;">#1 #2</td><td style="text-align:left;"><b>12</b></td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">sunucu #1’i işledi; “x = 11, son #1” yolladı</td><td style="text-align:left;">11</td><td style="text-align:left;">#1 #2</td><td style="text-align:left;">12</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">haber geldi: 11’e dön, #1’i at, #2’yi uygula</td><td style="text-align:left;">11</td><td style="text-align:left;">#2</td><td style="text-align:left;"><b>12</b> ✓</td></tr><tr><td style="text-align:left;">5</td><td style="text-align:left;">sunucu #2’yi işledi; “x = 12, son #2”</td><td style="text-align:left;">12</td><td style="text-align:left;">#2</td><td style="text-align:left;">12</td></tr><tr><td style="text-align:left;">6</td><td style="text-align:left;">haber geldi: 12’ye dön, #2’yi at</td><td style="text-align:left;">12</td><td style="text-align:left;">—</td><td style="text-align:left;"><b>12</b> ✓</td></tr></table><p class="mini"><b>Uzlaştırma olmasaydı</b> (4. satır): ekran 11’e geri atlar, 6. satırda yeniden 12’ye çıkardı. Yürürken sürekli bir adım geri çekilmek: “lastik bant” (rubber banding).</p><p class="mini"><b>Sunucu itiraz ederse</b> (3. satırda “x = 10, son #1”: önünüzde duvar vardı): 10’a dön, #2’yi uygula → 11. Tek bir düzeltme.</p></div></div>
+</div>
+</section>
+
+<section data-sec="tahmin">
+  <h2>Canlı: tuşa basın, gecikmeyi hissedin 🎮</h2>
+<div class="demo" data-demo="predict"></div>
+</section>
+
+<section data-sec="tahmin">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> üstte sunucunun bildiği gerçek (sarı kutu), ortada sizin ekranınız (yeşil kutu; kesikli sarı çerçeve sunucudan gelen son haber). Aradaki noktalar yoldaki mesajlar: yeşiller girdileriniz, sarılar sunucu durumu. Altta ikisinin konum–zaman grafiği.</li><li><b>A / D</b> ile yürüyün. Varsayılan ayarda (tahmin + uzlaştırma) yeşil kutu <b>anında</b> tepki verir; sarı kutu onu 150 ms geriden izler. “Geri sıçrama” sayacı 0’da kalır.</li><li><b>“İstemci tahmini”ni kapatın:</b> kutu 300 ms sonra ve saniyede 10 kare kıpırdar. Gecikmeyi 400’e çıkarıp bir yere tam durmayı deneyin.</li><li>Tahmini açın, <b>“uzlaştırma”yı kapatın</b> ve D’ye basılı tutun: kutu ilerlerken saniyede 10 kez geri çekilir (kırmızı yanıp sönme); grafik testere dişi olur. Sayaç hızla artar.</li><li>İkisini de açın. Yürürken <b>“👊 sunucu itmesi”</b>ne basın: sunucu, sizin bilmediğiniz bir nedenle (patlama, başka oyuncu) kutuyu itti. Haber gelince ekran tek seferde düzelir.</li><li>“Onay bekleyen girdi” sayısına bakın: gidiş-dönüş süresi × 60. Gecikme 400 ms iken 48 girdi her haber gelişinde yeniden oynatılıyor.</li></ol></div>
+</section>
+
+<section data-sec="tahmin">
+  <h2>Kod: tahmin ve uzlaştırma</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// İSTEMCİ ---------------------------------------------------------------
+let ben = { x: 100 };
+let sira = 0;                 // her girdiye artan bir numara
+let bekleyen = [];            // sunucunun henüz onaylamadığı girdiler
+
+function girdiUygula(durum, girdi) {          // AYNI fonksiyon sunucuda da çalışır
+  durum.x += girdi.yon * HIZ * girdi.dt;
+}
+
+function istemciKaresi(dt) {
+  const yon = (keyIsDown(68) ? 1 : 0) - (keyIsDown(65) ? 1 : 0);
+  if (yon === 0) return;
+  const girdi = { sira: ++sira, yon, dt };
+  sunucuyaGonder(girdi);                      // 1) yolla
+  girdiUygula(ben, girdi);                    // 2) TAHMİN: cevabı beklemeden kendinde uygula
+  bekleyen.push(girdi);                       // 3) sakla: sunucu onaylayana kadar
+}
+
+function sunucudanDurumGeldi(mesaj) {         // mesaj: { x, sonIslenen }
+  ben.x = mesaj.x;                                           // 1) sunucu haklı: onun durumuna dön
+  bekleyen = bekleyen.filter(g => g.sira > mesaj.sonIslenen); // 2) onayladıklarını at
+  for (const g of bekleyen) girdiUygula(ben, g);             // 3) UZLAŞTIRMA: kalanları yeniden uygula
+}
+
+// SUNUCU ----------------------------------------------------------------
+function sunucuGirdiAldi(oyuncu, girdi) {
+  if (Math.abs(girdi.yon) > 1 || girdi.dt > 0.1) return;     // istemciye GÜVENME: girdiyi doğrula
+  girdiUygula(oyuncu.durum, girdi);
+  oyuncu.sonIslenen = girdi.sira;
+}
+// saniyede N kez:  herkeseGonder({ x: oyuncu.durum.x, sonIslenen: oyuncu.sonIslenen })
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def reconcile(sunucu_x, son_islenen, bekleyen):
+    """bekleyen: [(sira, dx), ...].  Dönen: (ekranda gösterilecek x, hâlâ bekleyen girdiler)."""
+    kalan = [(s, dx) for (s, dx) in bekleyen if s > son_islenen]
+    x = sunucu_x
+    for _, dx in kalan:
+        x += dx
+    return x, kalan
+
+# İstemci 10'dan başladı; #1 ve #2 girdilerini (+1, +1) yolladı ve ikisini de kendinde uyguladı: ekranda 12.
+# Sunucudan haber geldi: "x = 11, son işlediğim #1".
+print(reconcile(11, 1, [(1, 1), (2, 1)]))      # (12, [(2, 1)])  → ekranda yine 12: sıçrama yok
+# Uzlaştırma olmasaydı ekran 11'e geri atlar, #2'nin onayı gelince yeniden 12'ye çıkardı.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: hazır "tahmin + uzlaştırma" sunan kütüphaneler
+//   Photon Fusion        → NetworkBehaviour.FixedUpdateNetwork() içinde GetInput(); yeniden simülasyonu Fusion yapar
+//   Fish-Networking      → [Replicate] / [Reconcile] öznitelikli iki metot
+//   Netcode for GameObjects → "client anticipation" (AnticipatedNetworkVariable / AnticipatedNetworkTransform)
+
+// Fish-Networking kalıbı (yapısı slayttaki üç adımın aynısı):
+[Replicate] void Hareket(GirdiVerisi girdi, ReplicateState durum = ReplicateState.Invalid, Channel k = Channel.Unreliable) {
+    transform.position += new Vector3(girdi.yon, 0, 0) * hiz * (float)TimeManager.TickDelta;   // girdiUygula
+}
+[Reconcile] void Uzlastir(DurumVerisi sunucuDurumu, Channel k = Channel.Unreliable) {
+    transform.position = sunucuDurumu.konum;      // sunucunun durumuna dön; kütüphane bekleyen girdileri yeniden oynatır
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tahmin">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>girdiUygula(durum, girdi)</code></td><td style="text-align:left;">tek hareket fonksiyonu</td><td style="text-align:left;">İstemci ve sunucu <b>aynı</b> kodu çalıştırmalı. İkisi ayrı yazılırsa küçük farklar sürekli düzeltmeye yol açar. Quake III’te bu dosyanın adı <code>bg_pmove.c</code>: “bg” = both games.</td></tr><tr><td style="text-align:left;"><code>{ sira, yon, dt }</code></td><td style="text-align:left;">girdi: niyet, sonuç değil</td><td style="text-align:left;">“x = 105 oldum” değil, “sağa bastım”. Sunucu sonucu kendi hesaplar.</td></tr><tr><td style="text-align:left;"><code>bekleyen.push(girdi)</code></td><td style="text-align:left;">onaylanmamış girdiler listesi</td><td style="text-align:left;">Bir kuyruk: önden onaylananlar çıkar, arkadan yeniler girer. Boyu ≈ gidiş-dönüş süresi × girdi hızı.</td></tr><tr><td style="text-align:left;"><code>ben.x = mesaj.x</code></td><td style="text-align:left;">koşulsuz sunucuya dön</td><td style="text-align:left;">“Farklıysa dön” diye karşılaştırmak gerekmez: doğruysa yeniden oynatma aynı yere getirir.</td></tr><tr><td style="text-align:left;"><code>g.sira &gt; mesaj.sonIslenen</code></td><td style="text-align:left;">sunucunun henüz görmedikleri</td><td style="text-align:left;">Sıra numarası olmadan hangi girdilerin “yolda” olduğunu bilemezsiniz.</td></tr><tr><td style="text-align:left;"><code>girdi.dt &gt; 0.1 → return</code></td><td style="text-align:left;">sunucu girdiyi doğrular</td><td style="text-align:left;">dt’yi istemci söylüyor: büyük dt yollayan hızlanır (speed hack). Gerçek sunucular istemcinin toplam süresini de denetler.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Hareket fonksiyonu deterministikse ve sunucu girdileri istemcinin uyguladığı sırayla işliyorsa, uzlaştırma sonrası konum ekrandaki konuma <b>eşittir</b> (görünür düzeltme sıfır). Düzeltme yalnızca istemcinin bilemeyeceği bir şey olduğunda görünür. Maliyet: her sunucu haberinde bekleyen girdi sayısı kadar hareket adımı.</div>
+</section>
+
+<section data-sec="tahmin">
+  <h2>Oyunlarda: Quake III’ün tahmin döngüsü</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.62;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Quake III Arena — code/cgame/cg_predict.c, CG_PredictPlayerState (kısaltılmış; yorumlar özgün)
+
+/*
+For normal gameplay, it will be the result of predicted usercmd_t on
+top of the most recent playerState_t received from the server.
+
+Each new snapshot will usually have one or more new usercmd over the last,
+but we simulate all unacknowledged commands each time, not just the new ones.
+...
+We detect prediction errors and allow them to be decayed off over several frames
+to ease the jerk.
+*/
+    cg.predictedPlayerState = cg.snap->ps;          // 1) sunucudan gelen son duruma dön
+
+    // run cmds
+    for ( cmdNum = current - CMD_BACKUP + 1 ; cmdNum <= current ; cmdNum++ ) {
+        trap_GetUserCmd( cmdNum, &cg_pmove.cmd );
+        // don't do anything if the time is before the snapshot player time
+        if ( cg_pmove.cmd.serverTime <= cg.predictedPlayerState.commandTime ) {
+            continue;                               // 2) sunucunun zaten işlediği komutları atla
+        }
+        ...
+        Pmove (&cg_pmove);                          // 3) kalanları yeniden uygula (sunucudaki AYNI hareket kodu)
+    }
+</script></code></pre><p class="mini">Kaynak: id Software, Quake III Arena, <code>cg_predict.c</code> (GPL). İstemci tahminini yaygınlaştıran oyun QuakeWorld’dür (John Carmack, 1996).</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Satır satır</span><ul style="font-size:.84em"><li>Baştaki yorum yöntemi anlatıyor: tahmin, “sunucudan gelen en son oyuncu durumunun <b>üstüne</b> tahmini komutların uygulanmasıdır”; ve “her seferinde <b>onaylanmamış bütün komutlar</b> yeniden simüle edilir”.</li><li><code>cg.predictedPlayerState = cg.snap->ps</code>: bizim ① adımımız.</li><li>Döngü, saklanan son <code>CMD_BACKUP</code> komutu gezer; zamanı sunucunun işlediğinden eski olanları <code>continue</code> ile atlar (②), kalanlar için <code>Pmove</code>’u çağırır (③).</li><li><code>Pmove</code>: G5’te zıplamasını incelediğimiz hareket kodu. Sunucu ve istemci aynı dosyayı derler.</li><li>Son cümle: “tahmin hatalarını saptar ve sarsıntıyı azaltmak için birkaç karede <b>eriterek</b> gideririz.” Düzeltme bir anda değil, <code>cg_errordecay</code> = 100 ms içinde yumuşatılarak gösterilir (G6: yaklaşma).</li><li>Yorumdaki “OPTIMIZE” notu: tahmin tutmuşsa yeniden simülasyona gerek yok; ama bunun için ara durumları saklamak gerekir. Bugünkü motorlar bunu yapar.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: uzlaştırma</h2>
+  <div class="simlab" data-sim="reconcile" data-fns="reconcile" data-lang="js">
+<textarea>
+// sunucuX: sunucudan gelen konum.  sonIslenen: sunucunun işlediği son girdinin sıra numarası.
+// bekleyen: istemcinin yollayıp henüz onay almadığı girdiler: [{ seq, dx }, ...]  (seq artan sırada)
+// Döndür: [ekranda gösterilecek x, hâlâ bekleyen girdiler]
+function reconcile(sunucuX, sonIslenen, bekleyen) {
+  return [sunucuX, bekleyen];   // TODO: sunucuya dönüyor ama yoldaki girdileri unutuyor → lastik bant
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodunda mavi kutu yürürken sürekli geri çekilir; “geri sıçrama” sayacı artar. Üç satır: <code>const kalan = bekleyen.filter(g =&gt; g.seq &gt; sonIslenen);</code> · <code>let x = sunucuX; for (const g of kalan) x += g.dx;</code> · <code>return [x, kalan];</code>. Slayttaki örnek: (11, 1, [#1: +1, #2: +1]) → <b>[12, [#2]]</b>.</div>
+  </div>
+</section>
+
+<section data-sec="tahmin">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 2 · tahmin</div>
+    <div class="q">Çevrimiçi oyununuzda karakter koşarken yarım saniyede bir küçük bir adım geri çekiliyor. Gecikme düşük (40 ms), paket kaybı yok. En olası sebep?</div>
+    <div class="opts"><button data-opt="A">Sunucunun adım hızı çok yüksek</button><button data-opt="B">İstemci, sunucudan gelen duruma dönüyor ama onaylanmamış girdilerini yeniden uygulamıyor; ya da istemci ile sunucunun hareket kodu aynı sonucu vermiyor</button><button data-opt="C">Ara değerleme tamponu çok büyük</button><button data-opt="D">Oyuncunun kare hızı düşük</button></div>
+    <div class="explain">Düzenli geri çekilme, tahmin ile sunucu sonucunun düzenli olarak ayrışması demektir. İki klasik neden: uzlaştırmanın eksik olması (eski duruma dönüp yoldaki girdileri unutmak) ya da hareket fonksiyonunun iki tarafta farklı çalışması (farklı zaman adımı, farklı çarpışma verisi, kayan nokta farkları). Ara değerleme tamponu yalnızca başka oyuncuların görüntüsünü etkiler.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Gecikme telafisi</div><div class="sub">sunucu zamanı geri sarar</div></div>
+</section>
+
+<section data-sec="telafi">
+  <h2>Problem: gördüğünüze ateş ettiniz, orada değildi</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 İki numaranın faturası</span><ul style="font-size:.92em"><li>Rakibi <b>geçmişte</b> görüyorsunuz: gecikme + ara değerleme tamponu.</li><li>Tetiğe bastınız; atış sunucuya bir gecikme süresi <b>daha</b> sonra varıyor.</li><li>Sunucu atışı aldığında rakip, sizin gördüğünüz yerden çoktan uzaklaşmış.</li></ul><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">kalem</th><th style="text-align:left;">süre</th></tr><tr><td style="text-align:left;">sunucu → siz (rakibin görüntüsü)</td><td style="text-align:left;">50 ms</td></tr><tr><td style="text-align:left;">ara değerleme tamponu</td><td style="text-align:left;">100 ms</td></tr><tr><td style="text-align:left;">siz → sunucu (atış)</td><td style="text-align:left;">50 ms</td></tr><tr><td style="text-align:left;"><b>toplam</b></td><td style="text-align:left;"><b>200 ms</b></td></tr></table><p>Rakip saniyede 250 birim koşuyorsa (Counter-Strike’ta bıçakla koşma hızı) 200 ms’de <b>50 birim</b> yol alır. Bir oyuncunun genişliği 32 birim.</p><p class="mini">Tam üstüne nişan alan, bir buçuk gövde arkasını vurur.</p></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: “önüne nişan alın”</span><ul style="font-size:.92em"><li>Eski oyunlarda gerçekten böyleydi: oyuncular kendi ping’lerine göre hedefin <b>önüne</b> nişan almayı öğrenirdi.</li><li>Ne kadar öne? Ping’e bağlı; ping oynar. Her sunucuda yeniden öğrenmek gerekir.</li><li>Düşük ping’li oyuncu ezici üstünlük kazanır; yüksek ping’li oyuncu için oyun oynanmaz.</li><li><b>“Atışa istemci karar versin”</b> (vurdum diyorsa vurmuştur): hile için açık davetiye.</li></ul><p><b>Fikir:</b> sunucu atışı yine kendisi sınasın; ama dünyayı <b>nişancının tetiğe bastığında gördüğü</b> hâle getirip öyle sınasın. Sunucu herkesin geçmişini bildiğine göre bunu yapabilir.</p></div></div>
+</div>
+</section>
+
+<section data-sec="telafi">
+  <h2>Fikir: konum kaydı tut, atışta geri sar</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Sunucu her adımda her oyuncunun konumunu zaman damgasıyla bir <b>kayda</b> yazar; son ≈ 1 saniyeyi saklar.</li><li>Atış mesajı gelince nişancının <b>o an gördüğü zamanı</b> hesaplar:</li></ul><p style="text-align:center;font-size:.8em;margin:.3em 0"><b>görülen an = şimdi − nişancının gecikmesi − ara değerleme tamponu</b></p><ul style="font-size:.82em"><li>Bütün <b>öbür</b> oyuncuları kayıttan o ana geri sarar (iki satır arasında lerp; satırı bulmak için ikili arama).</li><li>Işın testini (G3) o geçmiş konumlara karşı yapar. Vurduysa hasar <b>şimdi</b> verilir.</li><li>Herkesi yerine geri koyar.</li><li>Sonuç: <b>ekranında vurduysan vurmuşsundur</b>; ping’in ne olursa olsun tam üstüne nişan alırsın.</li></ul><p class="mini">Formül Valve’ın belgelerindeki hâliyle: “komut yürütme zamanı = sunucu zamanı − paket gecikmesi − istemci görüntü ara değerlemesi”.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: sunucu saati 1.200 ms</span><p>Rakibin kaydı (20 Hz):</p><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">zaman</th><th style="text-align:left;">1.000</th><th style="text-align:left;">1.050</th><th style="text-align:left;">1.100</th><th style="text-align:left;">1.150</th><th style="text-align:left;">1.200</th></tr><tr><td style="text-align:left;">x</td><td style="text-align:left;">100</td><td style="text-align:left;">110</td><td style="text-align:left;">130</td><td style="text-align:left;">130</td><td style="text-align:left;"><b>90</b></td></tr></table><ul style="font-size:.9em"><li>Atış geldi. Nişancının gecikmesi 50 ms, tampon 100 ms.</li><li>Görülen an = 1.200 − 50 − 100 = <b>1.050</b>.</li><li>Kayıtta 1.050 → x = <b>110</b>. Nişancı 110’a nişan almıştı: <b>isabet</b>.</li><li>Rakip şu an 90’da. Telafi olmasaydı: 20 birim fark, <b>ıska</b>.</li><li>Görülen an 1.075 olsaydı: 1.050 ile 1.100 arası, oran 0,5 → lerp(110, 130, 0,5) = 120.</li></ul><p class="mini"><b>Bedeli:</b> rakip 1.150’den sonra geri dönüp 90’a, belki bir duvarın arkasına geçti. Kendi ekranında siperde; yine de vuruldu. Isınmadaki olay.</p></div></div>
+</div>
+</section>
+
+<section data-sec="telafi">
+  <h2>Canlı: nişan alın, ateş edin 🎯</h2>
+<div class="demo" data-demo="lagcomp"></div>
+</section>
+
+<section data-sec="telafi">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> üst şerit sizin ekranınız (rakibin geçmişteki hâli ve kırmızı nişangâhınız); alt şerit sunucu: koyu mavi rakibin şu anki gerçek yeri, soluk mavi sizin o an gördüğünüz yer. Sağdaki koyu bölge siper. Kırmızı nokta sunucuya giden atışınız.</li><li>Fareyle rakibin <b>tam üstüne</b> gelip tıklayın (ya da boşluk). Telafi açıkken: alt şeritte atış soluk mavinin üstüne düşer ve “İSABET” yazar; koyu mavi o sırada başka yerdedir.</li><li><b>Telafiyi kapatın</b> ve yine tam üstüne nişan alın: “ISKA (ekranda vurmuştu)”. Şimdi rakibin <b>gidiş yönünde önüne</b> nişan alarak vurmayı deneyin. Gecikmeyi 250 ms yapın: ne kadar öne?</li><li>Telafiyi açın, gecikmeyi <b>250 ms</b> yapın. Rakip sipere girmek üzereyken (sağ kenara yaklaşırken) üstüne ateş edin: “İSABET (rakip siperdeydi!)”. “Siperdeyken vurulan” sayacı artar.</li><li>Soru: bu haksızlığı kim yaşıyor? (Vurulan.) Kimin gecikmesi yüzünden? (Vuranın.) Oyunların çoğu telafiyi bu yüzden bir üst sınırla keser.</li></ol></div>
+</section>
+
+<section data-sec="telafi">
+  <h2>Kod: konum kaydı ve geri sarma</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// SUNUCU: her oyuncunun son 1 saniyelik konum kaydı (her sunucu adımında bir satır)
+const KAYIT_SURESI = 1.0;
+function kayitEkle(oyuncu, simdi) {
+  oyuncu.kayit.push({ t: simdi, x: oyuncu.x, y: oyuncu.y });
+  while (oyuncu.kayit[0].t < simdi - KAYIT_SURESI) oyuncu.kayit.shift();
+}
+
+// Kayıttan geçmişteki bir anın konumu (iki satır arasında lerp)
+function geriSar(kayit, an) {
+  if (an <= kayit[0].t) return kayit[0];
+  for (let i = 1; i < kayit.length; i++) {
+    const a = kayit[i - 1], b = kayit[i];
+    if (an <= b.t) { const f = (an - a.t) / (b.t - a.t); return { x: lerp(a.x, b.x, f), y: lerp(a.y, b.y, f) }; }
+  }
+  return kayit[kayit.length - 1];
+}
+
+// Atış mesajı sunucuya vardı: nişancı tetiğe bastığında ekranında NE görüyordu?
+function atisGeldi(nisanci, atis, simdi) {
+  const gorulenAn = simdi - nisanci.gecikme - ARA_DEGERLEME_TAMPONU;   // gidiş gecikmesi + görüntünün geçmişte olması
+  for (const hedef of oyuncular) {
+    if (hedef === nisanci) continue;
+    const eski = geriSar(hedef.kayit, gorulenAn);                       // hedefi o ana geri sar
+    if (isinDaireyiKesiyorMu(atis.nereden, atis.yon, eski, hedef.yaricap))   // G3'teki ışın testi
+      hasarVer(hedef, atis.hasar);
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import bisect
+
+def rewind(kayit, an):
+    """kayit: [(t, x), ...] zamana göre sıralı.  'an' anındaki konum (uçlarda en yakın kayıt)."""
+    if an <= kayit[0][0]:  return kayit[0][1]
+    if an >= kayit[-1][0]: return kayit[-1][1]
+    i = bisect.bisect_left([t for t, _ in kayit], an)       # ikili arama: an'dan büyük-eşit ilk satır
+    (t0, x0), (t1, x1) = kayit[i - 1], kayit[i]
+    return x0 + (x1 - x0) * (an - t0) / (t1 - t0)
+
+kayit = [(1.00, 100), (1.05, 110), (1.10, 130), (1.15, 130), (1.20, 90)]
+simdi, gecikme, tampon = 1.20, 0.05, 0.10
+print(rewind(kayit, simdi - gecikme - tampon))    # 1.05 anı → 110  (rakip şu an 90'da!)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: sunucu yetkili nişancı oyunları için hazır "lag compensation"
+//   Photon Fusion:  Runner.LagCompensation.Raycast(nereden, yon, menzil, Object.InputAuthority, out var isabet);
+//                   (Hitbox bileşenleri geçmiş konumlarıyla saklanır; çağrı, o oyuncunun gördüğü ana göre sınar)
+//   Unreal:         varsayılan karakter hareketi istemci tahminlidir; atışlar için "rewind" oyun koduna bırakılır
+//                   (Lyra ve Valorant kendi geri sarma sistemini yazmıştır)
+
+// Elle: her FixedUpdate'te sunucuda
+kayit.Enqueue((Time.fixedTimeAsDouble, transform.position));
+while (kayit.Peek().t < Time.fixedTimeAsDouble - 1.0) kayit.Dequeue();
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="telafi">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>kayit.push({ t, x, y })</code></td><td style="text-align:left;">her sunucu adımında bir satır</td><td style="text-align:left;">64 Hz × 1 sn = oyuncu başına 64 satır. Kayıt bir kuyruk: eskiler önden atılır.</td></tr><tr><td style="text-align:left;"><code>KAYIT_SURESI = 1.0</code></td><td style="text-align:left;">en çok 1 sn geriye gidilir</td><td style="text-align:left;">Aynı zamanda telafinin <b>üst sınırı</b>: 1 sn’den eski bir an istenirse en eski satır döner. Çoğu oyun sınırı çok daha düşük tutar.</td></tr><tr><td style="text-align:left;"><code>geriSar(kayit, an)</code></td><td style="text-align:left;">geçmiş bir andaki konum</td><td style="text-align:left;">Ara değerlemenin aynısı, bu kez sunucuda. Python sürümü satırı ikili aramayla bulur (kayıt zamana göre sıralı).</td></tr><tr><td style="text-align:left;"><code>simdi - gecikme - TAMPON</code></td><td style="text-align:left;">nişancının gördüğü an</td><td style="text-align:left;">Gecikmeyi sunucu <b>kendisi ölçer</b> (ping). İstemcinin “ben şu anı görüyordum” demesine güvenilmez; güvenilirse sahte zaman yollayan geçmişi vurur.</td></tr><tr><td style="text-align:left;"><code>hedef === nisanci → continue</code></td><td style="text-align:left;">nişancıyı geri sarma</td><td style="text-align:left;">Nişancı kendi tahmin edilen (güncel) konumundan ateş etti.</td></tr><tr><td style="text-align:left;"><code>hasarVer</code></td><td style="text-align:left;">sonuç şimdiki zamanda uygulanır</td><td style="text-align:left;">Geçmiş değiştirilmez; yalnızca <b>sınama</b> geçmişte yapılır.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Gecikme telafisiyle, nişancının ekranında isabet eden anlık (hitscan) bir atış sunucuda da isabet eder (saat tahmini hatası kadar sapmayla). Karşılığında, hedef kendi ekranındaki konumundan en çok <b>nişancının gecikmesi + tampon</b> kadar önceki yerinde vurulabilir. Maliyet: atış başına oyuncu sayısı × log(kayıt boyu).</div>
+</section>
+
+<section data-sec="telafi">
+  <h2>Oyunlarda: kim haksızlığa uğrayacak?</h2>
+<div class="cols c46">
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Counter-Strike’tan Valorant’a</span><ul style="font-size:.86em"><li><b>Half-Life / Counter-Strike (2001):</b> Yahn Bernier’in yazısı yöntemi adıyla tanıttı (Kaynaklar). O günden beri sunucu yetkili nişancıların standardı.</li><li><b>Source motoru:</b> geri sarma en çok <b>1 saniye</b> (<code>sv_maxunlag</code>). Daha eski bir an istenirse 1 saniyede kesilir.</li><li><b>Overwatch:</b> “atanın lehine” (favor the shooter) kuralı; ama nişancının ping’i belli bir eşiği aşarsa telafi kısılır ve kaçış yetenekleri (ışınlanma, kalkan) atışa karşı öncelik alır. Geliştiriciler bunu “Let’s Talk Netcode” videosunda anlatır (Videolar).</li><li><b>Valorant:</b> 128 Hz sunucular ve oyuncuları en yakın veri merkezine bağlayan özel ağ: telafi edilecek süreyi <b>küçültmek</b>. “Köşeden çıkanın avantajı”nı (peeker’s advantage) azaltmanın tek gerçek yolu.</li><li><b>Mermisi yol alan silahlar</b> (roket, ok): çoğu oyun telafi etmez; mermi sunucuda doğar ve oyuncu önüne nişan alır.</li></ul></div></div>
+<div><div class="box story" style="font-size:.78em"><span class="bt">Köşeden çıkanın avantajı</span><p>Siz köşede bekliyorsunuz; rakip koşarak köşeden çıkıyor.</p><ul style="font-size:.9em"><li>Rakip <b>kendi</b> ekranında anında hareket eder (tahmin) ve sizi hemen görür: siz duruyorsunuz, konumunuz güncel.</li><li>Siz onu <b>geçmişte</b> görürsünüz (ara değerleme): o sizi gördükten 100–150 ms sonra ekranınıza girer.</li><li>O, sizi görüp ateş etmek için sizden 100–150 ms önde başlar. İnsan tepki süresi ≈ 200 ms: avantaj ezici.</li></ul><p>Bu yüzden rekabetçi oyunlarda <b>beklemek</b> yerine <b>çıkmak</b> ödüllendirilir; oyunun “meta”sını ağ kodu belirler.</p><p class="mini">Tasarım dersi: gecikme yok edilemez, yalnızca <b>bir oyuncudan ötekine aktarılır</b>. Kimin lehine aktaracağınız bir oyun tasarımı kararıdır, mühendislik kararı değil.</p></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: zamanı geri sar</h2>
+  <div class="ailab" data-lab="rewind" data-lang="python">
+<textarea>
+# kayit: [[zaman, x], ...] zamana göre sıralı konum kaydı.   an: istenen geçmiş zaman.
+# 'an' anındaki x'i döndür: iki komşu satır arasında lerp.
+# an kayıttan eskiyse ilk satırın, yeniyse son satırın x'ini döndür.
+def rewind(kayit, an):
+    return kayit[-1][1]      # TODO: şimdilik hep şu anki konum (telafisiz sunucu)
+</textarea>
+    <div class="lab-tasks">Önce uçlar: <code>if an &lt;= kayit[0][0]: return kayit[0][1]</code> ve <code>if an &gt;= kayit[-1][0]: return kayit[-1][1]</code>. Sonra <code>for i in range(1, len(kayit))</code>: <code>kayit[i][0] &gt;= an</code> olan ilk satırda dur; <code>(t0, x0), (t1, x1) = kayit[i-1], kayit[i]</code>; <code>return x0 + (x1 - x0) * (an - t0) / (t1 - t0)</code>. Slayttaki kayıtta an = 1075 → <b>120</b>; an = 1190 → 98.</div>
+  </div>
+</section>
+
+<section data-sec="telafi">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 3 · gecikme telafisi</div>
+    <div class="q">Gecikme telafisi kullanan bir oyunda 30 ms ping’li A oyuncusu sipere giriyor ve kendi ekranında güvende. 200 ms ping’li B oyuncusu, kendi ekranında A’yı hâlâ açıkta görüp vuruyor. Sunucu ne yapar ve neden?</div>
+    <div class="opts"><button data-opt="A">Atışı reddeder; çünkü A şu an siperde</button><button data-opt="B">İsabet sayar; çünkü A’yı B’nin gördüğü ana geri sarıp öyle sınar</button><button data-opt="C">İki oyuncuya da sorar, çoğunluğa uyar</button><button data-opt="D">B’nin ping’i yüksek olduğu için atışı her zaman reddeder</button></div>
+    <div class="explain">Telafi, nişancının ekranında gördüğünü esas alır: sunucu A’yı B’nin tetiğe bastığı anda gördüğü konuma geri sarar; A o anda açıktaydı. Haksızlığı düşük ping’li A yaşar. Oyunlar bu yüzden telafiye üst sınır koyar (ör. en çok 200–250 ms): sınırın ötesinde B “önüne nişan almak” zorunda kalır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">Eşzamanlı simülasyon ve geri sarma</div><div class="sub">yalnızca girdileri yollamak</div></div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <h2>Problem: 1.500 okçu, saniyede 3 kilobayt</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Durum yollamak her oyuna uymaz</span><ul style="font-size:.92em"><li>Bir strateji oyununda 8 oyuncu, binlerce birim. Her birimin konumunu saniyede 20 kez yollamak: 1997’nin 28,8 kbit/sn’lik modemi için imkânsız, bugün bile pahalı.</li><li>Bir dövüş oyununda tek kare (16,7 ms) fark, bir vuruşun bloklanıp bloklanmaması demek. “100 ms geçmişteki rakip” kabul edilemez; “atanın lehine” kuralı işlemez (iki taraf da atan).</li></ul><p><b>Başka bir fikir:</b> durumu hiç yollama. Herkes oyunun <b>tamamını</b> kendi makinesinde simüle etsin; ağdan yalnızca <b>girdiler</b> geçsin (“şu birimleri seçtim, şuraya tıkladım”).</p><p class="mini">Aynı başlangıç + aynı girdiler + aynı sırada = aynı oyun. Paket boyu birim sayısından <b>bağımsız</b>.</p></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Koşul: simülasyon deterministik olmalı</span><ul style="font-size:.92em"><li>Bütün makineler <b>bit bit</b> aynı sonucu üretmeli. En küçük fark kelebek etkisiyle büyür: bir köylü bir adım farklı yürür, beş dakika sonra iki oyuncu farklı savaşlar izler (<b>desync</b>).</li><li>Sabit zaman adımı (G5) şart: kare süresi simülasyona <b>giremez</b>.</li><li>Rastgelelik: herkes aynı tohumla aynı üreteci, aynı sırada çağırmalı (Y15).</li><li>Kayan noktalı sayılar: farklı işlemci/derleyici son basamakta farklı yuvarlayabilir. Çoğu oyun tam sayı ya da sabit noktalı sayı kullanır.</li><li>Gezme sırası belirsiz veri yapıları (hash tablosu), başlatılmamış bellek, yerel saate bakmak: hepsi yasak.</li></ul><p>Saptamak için: her N karede durumun <b>sağlaması</b> (özeti: Hash Tabloları sunumu) karşılaştırılır.</p></div></div>
+</div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <h2>İki yöntem: bekle ya da tahmin et</h2>
+<div class="cols c46">
+<div><div class="box info" style="font-size:.78em"><span class="bt">① Girdi gecikmesi (delay / lockstep)</span><ul style="font-size:.9em"><li>Bir kare, <b>herkesin</b> o kareye ait girdisi gelmeden simüle edilmez.</li><li>Girdiler beklenirken oyun donmasın diye her girdi <b>ileriki</b> bir kareye planlanır: “şimdi bastım, 6 kare sonra uygulansın.” O zamana kadar karşıya da varmış olur.</li><li>Tutarlılık kusursuz. Bedeli: <b>kendi tuşunuz</b> de gecikir.</li><li>Strateji oyununda 200–500 ms’lik komut gecikmesi fark edilmez (birim “Emredersiniz!” der, sonra yürür). Dövüş oyununda 6 kare felakettir.</li></ul><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">kare</th><th style="text-align:left;">100</th><th style="text-align:left;">101</th><th style="text-align:left;">102</th><th style="text-align:left;">…</th><th style="text-align:left;">106</th></tr><tr><td style="text-align:left;">yerel tuş</td><td style="text-align:left;">yumruk</td><td style="text-align:left;"></td><td style="text-align:left;"></td><td style="text-align:left;"></td><td style="text-align:left;"></td></tr><tr><td style="text-align:left;">uygulanan</td><td style="text-align:left;">—</td><td style="text-align:left;">—</td><td style="text-align:left;">—</td><td style="text-align:left;"></td><td style="text-align:left;"><b>yumruk</b></td></tr></table></div></div>
+<div><div class="box game" style="font-size:.78em"><span class="bt">② Geri sarma (rollback)</span><ul style="font-size:.9em"><li>Yerel girdi <b>hemen</b> uygulanır.</li><li>Rakibin henüz gelmemiş girdisi <b>tahmin edilir</b>: “bir önceki karede ne yapıyorsa onu yapıyor.” (İnsanlar saniyede birkaç kez tuş değiştirir; 60 karenin çoğunda tahmin tutar.)</li><li>Gerçek girdi gelince tahminle karşılaştırılır. Tutmuşsa: hiçbir şey olmaz.</li><li>Tutmamışsa: oyun o kareye <b>geri sarılır</b> (saklanan durum yüklenir), doğru girdiyle bugüne kadar olan kareler <b>tek bir çizim karesi içinde</b> yeniden simüle edilir.</li><li>Görünen: rakip birkaç piksel “düzelir”. Hissedilen: gecikmesiz kontrol.</li></ul><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">kare</th><th style="text-align:left;">100</th><th style="text-align:left;">101</th><th style="text-align:left;">102</th><th style="text-align:left;">103</th></tr><tr><td style="text-align:left;">rakip (tahmin)</td><td style="text-align:left;">ileri</td><td style="text-align:left;">ileri</td><td style="text-align:left;">ileri</td><td style="text-align:left;">ileri</td></tr><tr><td style="text-align:left;">rakip (gerçek)</td><td style="text-align:left;">ileri</td><td style="text-align:left;"><b>zıpla</b></td><td style="text-align:left;">?</td><td style="text-align:left;">?</td></tr></table><p class="mini">103’te, 101’in gerçeği geldi: 101’e dön, “zıpla” ile 101, 102, 103’ü yeniden oyna.</p></div></div>
+</div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <h2>Canlı: aynı gecikme, iki yöntem 🥊</h2>
+<div class="demo" data-demo="rollback"></div>
+</section>
+
+<section data-sec="eşzamanlı">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> yeşil siz (<b>A / D</b>), kırmızı uzaktaki rakip. Soluk gölgeler gecikmesiz bir dünyada görecekleriniz. Altta son 60 karenin şeridi ve sayaçlar.</li><li><b>Geri sarma</b> (başlangıç), gecikme 6 kare: A / D’ye basın; yeşil anında kıpırdar ve gölgesiyle üst üstedir. Kırmızı rakip çoğu zaman gölgesinin biraz gerisindedir; yön değiştirdiğinde sarı yanıp sönerek <b>düzelir</b> (şeritte kırmızı kare).</li><li>Sayaçlar: “geri sarma” yalnızca rakip tuş değiştirdiğinde artar; saniyede 60 değil, birkaç kez.</li><li>Yöntemi <b>girdi gecikmesi</b> yapın: şerit gri. A / D’ye basıp bırakın: karakteriniz 100 ms sonra başlar, 100 ms sonra durur. Gölgenizle aranız açılır.</li><li>Gecikmeyi <b>12 kareye</b> (200 ms) çıkarın. Girdi gecikmesinde oyun çamurda yürümek gibi; geri sarmada kendi hareketiniz hâlâ anında, ama rakibin düzeltmeleri büyür (“en büyük düzeltme” sayacı).</li><li>Gecikmeyi <b>0</b> yapın: iki yöntem aynı. Fark, gecikmenin faturasını <b>kimin</b> ödediğinde: girdi gecikmesinde eliniz, geri sarmada gözünüz.</li></ol></div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <h2>Kod: geri sarma döngüsü ve eşzamansızlık denetimi</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Oyun durumu küçük ve kopyalanabilir olmalı; simülasyon DETERMİNİSTİK olmalı:
+// aynı durum + aynı girdiler → her makinede bit bit aynı sonuç (tam sayılar, sabit adım, tohumlu rastgelelik).
+function adim(durum, girdi1, girdi2) { /* ... bir karelik oyun mantığı ... */ return yeniDurum; }
+
+let kare = 0;
+let yerel = [], uzak = [];           // kare → girdi   (uzak[k] ağdan geç gelir)
+let tahmin = [];                     // kare → o kare için kullandığımız uzak girdi tahmini
+let kesin = baslangicDurumu, kesinKare = 0;   // iki tarafın girdisi de bilinen son kare
+
+function oyunKaresi() {
+  yerel[kare] = tuslariOku();
+  agaGonder({ kare, girdi: yerel[kare] });
+
+  // 1) Yeni gelen gerçek girdilerle "kesin" durumu ilerlet
+  while (uzak[kesinKare] !== undefined) {
+    kesin = adim(kesin, yerel[kesinKare], uzak[kesinKare]);
+    kesinKare++;
+  }
+  // 2) Kesin durumdan bugüne kadar olan kareleri TAHMİNLE yeniden simüle et
+  const varsayim = kesinKare > 0 ? uzak[kesinKare - 1] : BOS;      // "son yaptığını sürdürüyor"
+  let d = kopyala(kesin);
+  for (let k = kesinKare; k <= kare; k++) { d = adim(d, yerel[k], varsayim); tahmin[k] = varsayim; }
+
+  ciz(d);                            // ekrana gelen: yerel girdi anında, uzak girdi tahminle
+  kare++;
+}
+// Tahmin tuttuysa 2. adım aynı sonucu verir (görünür değişiklik yok).
+// Tutmadıysa rakip bir anda doğru yere "düzelir": geri sarma budur.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def first_desync(a, b):
+    """İki makinenin kare kare sağlama (checksum) listeleri. İlk ayrıştıkları kare; yoksa -1."""
+    for i, (x, y) in enumerate(zip(a, b)):
+        if x != y:
+            return i
+    return -1
+
+def saglama(durum):
+    """Oyun durumunun özeti: iki makinede aynı durum → aynı sayı (Hash Tabloları sunumu)."""
+    h = 17
+    for deger in durum:
+        h = (h * 31 + deger) % 1_000_000_007
+    return h
+
+print(first_desync([5, 9, 2, 7], [5, 9, 3, 7]))      # 2
+print(saglama([180, 540, 100, 100]))                 # iki makine bu sayıyı her N karede karşılaştırır
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Hazır geri sarma kütüphaneleri
+//   GGPO (C/C++; Tony Cannon, 2006 — 2019'da MIT lisansıyla açıldı): oyun üç şey verir
+//       save_game_state   → durumu bir bellek bloğuna kopyala
+//       load_game_state   → o bloktan geri yükle
+//       advance_frame     → verilen girdilerle bir kare ilerle (çizim yapmadan)
+//     gerisini (tahmin, geri sarma, yeniden simülasyon, zaman eşleme) kütüphane yapar.
+//   Unity:  Photon Quantum (deterministik ECS + geri sarma)
+//   Godot:  "Godot Rollback Netcode" eklentisi (_save_state / _load_state / _network_process)
+
+// Deterministik olmak için: float yerine sabit noktalı sayı (Quantum: FP), Time.deltaTime yerine sabit kare,
+// UnityEngine.Random yerine tohumu paylaşılan kendi üreteciniz, Dictionary gezme sırasına güvenmemek.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>adim(durum, girdi1, girdi2)</code></td><td style="text-align:left;">saf fonksiyon: çizim yok, saat yok, rastgelelik tohumlu</td><td style="text-align:left;">Geri sarmada aynı kare birçok kez simüle edilir; yan etkisi (ses, parçacık) olan kod her seferinde yeniden tetiklenir. Simülasyon ile sunum ayrılmalı.</td></tr><tr><td style="text-align:left;"><code>kesin</code>, <code>kesinKare</code></td><td style="text-align:left;">iki tarafın girdisi de bilinen son durum</td><td style="text-align:left;">Geri sarılacak yer. Bundan eskisini saklamaya gerek yok.</td></tr><tr><td style="text-align:left;"><code>while (uzak[kesinKare] !== undefined)</code></td><td style="text-align:left;">yeni gelen gerçek girdileri işle</td><td style="text-align:left;">Kesin durum yalnızca gerçek girdilerle ilerler; asla tahminle değil.</td></tr><tr><td style="text-align:left;"><code>varsayim = uzak[kesinKare - 1]</code></td><td style="text-align:left;">tahmin: son bilinen girdiyi tekrarla</td><td style="text-align:left;">Basit ama etkili: tutulan bir tuş birçok kare sürer.</td></tr><tr><td style="text-align:left;"><code>for (k = kesinKare .. kare)</code></td><td style="text-align:left;">her kare, kesin durumdan bugüne yeniden simüle</td><td style="text-align:left;">En basit yazım: gecikme L kare ise karede L + 1 adım. Dövüş oyununda durum küçük olduğu için ucuz. GGPO yalnızca tahmin tutmayınca yeniden simüle eder.</td></tr><tr><td style="text-align:left;">Python: <code>first_desync</code></td><td style="text-align:left;">sağlama listelerinde ilk fark</td><td style="text-align:left;">Hata ayıklamanın başlangıcı: ayrışmanın <b>hangi karede</b> başladığını bulmak. Sonra o karenin durum dökümleri karşılaştırılır.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Geri sarmada yerel girdi gecikmesi <b>sıfırdır</b>; ağ gecikmesi L kare ise bir yanlış tahmin en çok L kare geriye sarmayı ve L karenin yeniden simülasyonunu gerektirir. Girdi gecikmesinde yeniden simülasyon yoktur; yerel gecikme L karedir. İkisi de simülasyon deterministik olduğu sürece doğrudur.</div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <h2>Oyunlarda: Age of Empires ve dövüş oyunları</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 “28,8’lik modemde 1.500 okçu” (1997)</span><ul style="font-size:.86em"><li>Age of Empires’ın programcıları Paul Bettner ve Mark Terrano’nun yazısı (Kaynaklar) eşzamanlı simülasyonun klasik anlatımıdır.</li><li>Hedef: 8 oyuncu, 16 MB bellekli Pentium 90, 28,8 kbit/sn modem.</li><li>Çözüm: her makine <b>aynı simülasyonu</b> koşturur; ağdan yalnızca komutlar geçer. Komutlar <b>iki tur sonrası</b> için planlanır; bir tur tipik olarak <b>200 ms</b>.</li><li>Yazıdaki ölçüm: strateji oyununda 250 ms’lik komut gecikmesi <b>fark edilmiyor</b>; 250–500 ms rahat oynanıyor.</li><li>En zor kısım: eşzamansızlık avı. Yazıdaki örnek: haritadaki bir geyik iki makinede biraz farklı otluyor; dakikalar sonra bir köylü mızrağını ıskalıyor ve yiyecek sayıları ayrışıyor.</li><li>Yan fayda: herkes aynı simülasyonu koştuğu için kaynak hilesi yapan makine “eşzamansız” diye işaretlenir. (Harita hilesi ise mümkün: bütün dünya her makinede var.)</li></ul></div></div>
+<div><div class="box story" style="font-size:.76em"><span class="bt">GGPO ve dövüş oyunlarının dönüşümü</span><ul style="font-size:.86em"><li><b>2006:</b> Tony Cannon (EVO turnuvasının kurucularından) Street Fighter II’nin çevrimiçi sürümündeki girdi gecikmesinden bıkıp <b>GGPO</b>’yu (“Good Game, Peace Out”) yazdı: genel amaçlı geri sarma kütüphanesi.</li><li>Oyundan üç şey ister: durumu <b>kaydet</b>, durumu <b>yükle</b>, verilen girdilerle <b>bir kare ilerle</b>.</li><li><b>2019:</b> kaynak kodu MIT lisansıyla açıldı.</li><li><b>2020:</b> pandemide turnuvalar çevrimiçine taşınınca “geri sarma” oyuncuların talep ettiği bir özellik oldu. Street Fighter 6, Guilty Gear Strive, Tekken 8, Mortal Kombat hep geri sarma kullanır.</li><li>Mortal Kombat ekibinin GDC konuşmasının adı durumu özetler: “16 milisaniyede 8 kare” (Videolar). Bir çizim karesi içinde 8 kareyi yeniden simüle edebilmek için motoru baştan düzenlediler.</li><li>Rocket League (araç fiziği) ve bazı nişancılar da aynı fikri kullanır: tahmin et, tutmazsa geri sar ve yeniden simüle et.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: kaç kare geride?</h2>
+  <div class="ailab" data-lab="framesbehind" data-lang="js">
+<textarea>
+// Tek yön gecikme (milisaniye) ve oyunun kare hızı verilmiş.
+// Rakibin girdisi kaç kare geç gelir? (Tam kare: yukarı yuvarla.)
+function framesBehind(gecikmeMs, fps) {
+  return 0;
+}
+</textarea>
+    <div class="lab-tasks">Bir kare 1000 / fps milisaniye sürer. <code>return Math.ceil(gecikmeMs * fps / 1000);</code>. Örnek: 100 ms, 60 FPS → 6 kare; 17 ms → 2 kare (16,7’yi az da olsa aştı); 0 ms → 0.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: eşzamansızlık nerede başladı?</h2>
+  <div class="ailab" data-lab="desync" data-lang="python">
+<textarea>
+# a, b: iki makinenin her kare için hesapladığı sağlama (checksum) listeleri.
+# İlk farklı oldukları karenin indisini döndür. Ortak kısımda fark yoksa -1.
+def first_desync(a, b):
+    return -1
+</textarea>
+    <div class="lab-tasks"><code>for i in range(min(len(a), len(b))):</code> içinde <code>if a[i] != b[i]: return i</code>; döngü biterse <code>return -1</code>. Listelerden biri daha kısa olabilir (bir makine geride): yalnızca ortak kısım karşılaştırılır.</div>
+  </div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <div class="quiz" data-karildi="1" data-answer="C">
+    <div class="qhead">Quiz 4 · geri sarma</div>
+    <div class="q">İki oyunculu bir dövüş oyununda ağ gecikmesi 5 kare. Geri sarma yöntemiyle, rakip 3 saniye boyunca hiç tuş değiştirmeden ileri yürüyor. Bu sürede kaç kez geri sarma (görünür düzeltme) olur?</div>
+    <div class="opts"><button data-opt="A">180 kez: her karede bir</button><button data-opt="B">36 kez: her 5 karede bir</button><button data-opt="C">Hiç: tahmin (“son yaptığını sürdürüyor”) her karede tutar</button><button data-opt="D">Bir kez: 3 saniyenin sonunda</button></div>
+    <div class="explain">Tahmin, rakibin son bilinen girdisini tekrarlamaktır. Rakip girdisini değiştirmedikçe tahmin doğrudur ve gelen gerçek girdi yalnızca onaylar. Geri sarma, girdi <b>değiştiği</b> karelerde olur (yürümeyi bıraktığında bir kez). Bu yüzden yöntem pratikte ucuzdur: oyuncular saniyede 60 değil, birkaç kez tuş değiştirir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Hepsi bir arada</div><div class="sub">tam kod, araçlar, kapanış</div></div>
+</section>
+
+<section data-sec="özet">
+  <h2>Hangi oyun hangi yöntemi kullanır?</h2>
+<table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">tür</th><th style="text-align:left;">yöntem</th><th style="text-align:left;">ağdan geçen</th><th style="text-align:left;">gecikmenin faturası</th><th style="text-align:left;">örnek</th></tr><tr><td style="text-align:left;"><b>Nişancı</b> (FPS, battle royale)</td><td style="text-align:left;">yetkili sunucu + ara değerleme + tahmin + gecikme telafisi</td><td style="text-align:left;">girdiler ↑, anlık görüntüler ↓</td><td style="text-align:left;">vurulan oyuncu (“siperdeydim”)</td><td style="text-align:left;">Quake III, Counter-Strike, Valorant, Fortnite</td></tr><tr><td style="text-align:left;"><b>Strateji</b> (RTS)</td><td style="text-align:left;">eşzamanlı simülasyon + komut gecikmesi</td><td style="text-align:left;">yalnızca komutlar</td><td style="text-align:left;">herkesin komutu 200+ ms geç</td><td style="text-align:left;">Age of Empires, StarCraft, Factorio</td></tr><tr><td style="text-align:left;"><b>Dövüş</b></td><td style="text-align:left;">eşzamanlı simülasyon + geri sarma</td><td style="text-align:left;">yalnızca girdiler</td><td style="text-align:left;">rakibin görüntüsünde küçük düzeltmeler</td><td style="text-align:left;">Street Fighter 6, Guilty Gear Strive</td></tr><tr><td style="text-align:left;"><b>Fizik ağırlıklı</b></td><td style="text-align:left;">yetkili sunucu + istemcide tahmin ve geri sarmalı yeniden simülasyon</td><td style="text-align:left;">girdiler ↑, durum ↓</td><td style="text-align:left;">top / araç ara sıra “düzelir”</td><td style="text-align:left;">Rocket League</td></tr><tr><td style="text-align:left;"><b>MMO, sıra tabanlı, kart</b></td><td style="text-align:left;">yetkili sunucu; tahmin az ya da yok</td><td style="text-align:left;">istek ↑, sonuç ↓</td><td style="text-align:left;">tıklamadan sonra kısa bekleme</td><td style="text-align:left;">World of Warcraft, Hearthstone</td></tr><tr><td style="text-align:left;"><b>Eşli macera</b> (co-op)</td><td style="text-align:left;">çoğu zaman bir oyuncu “ev sahibi” sunucu</td><td style="text-align:left;">girdiler ↑, durum ↓</td><td style="text-align:left;">ev sahibi olmayanlar</td><td style="text-align:left;">Stardew Valley, Minecraft (yerel ağ)</td></tr></table><p class="mini">Ortak kural: <b>istemciye asla güvenme</b>. İstemci niyetini söyler; sonucu sunucu (ya da deterministik simülasyon) belirler. Ağ koduna başlamadan önce sorulacak soru: bu oyunda hangi gecikme, kimin tarafından, ne kadar hoş görülebilir?</p>
+</section>
+
+<section data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile tek sayfada sahte ağ</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.64;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+let GECIKME = 0.15;                                  // tek yön (saniye)
+const gonder = (kuyruk, mesaj) => kuyruk.push({ varis: zaman + GECIKME, mesaj });
+
+function draw() {
+  zaman += dt;
+  // İSTEMCİ: girdiyi numarala, yolla, beklemeden uygula
+  if (yon !== 0) {
+    const girdi = { sira: ++sira, dx: yon * HIZ * dt };
+    gonder(sunucuyaGiden, girdi);
+    if (tahmin) { ben += girdi.dx; bekleyen.push(girdi); }
+  }
+  // SUNUCU: girdileri uygula; saniyede 10 kez durumu yayınla
+  for (const g of teslimAl(sunucuyaGiden)) { sunucu.ben += g.dx; sunucu.sonIslenen = g.sira; }
+  if (zaman >= sonrakiYayin) gonder(istemciyeGelen, { t: zaman, ben: sunucu.ben, sonIslenen: sunucu.sonIslenen, rakip: sunucu.rakip });
+
+  // İSTEMCİ: uzlaştır; rakibi ara değerle
+  for (const d of teslimAl(istemciyeGelen)) {
+    rakipPaketleri.push({ t: d.t, x: d.rakip });
+    bekleyen = bekleyen.filter(g => g.sira > d.sonIslenen);
+    ben = d.ben; for (const g of bekleyen) ben += g.dx;
+  }
+  const rakipX = araDegerle(rakipPaketleri, zaman - GECIKME - TAMPON);
+}
+</script></code></pre><p class="mini">İskelet. “Ağ”, mesajları <code>GECIKME</code> kadar bekleten iki diziden ibaret.</p></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 80 satır: A / D yürü; <b>+ / −</b> gecikme; <b>1 / 2 / 3</b> tahmin, uzlaştırma, ara değerleme.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><code>gonder</code>’e %10 paket kaybı ve rastgele gecikme (jitter) ekleyin.</li><li>Sunucuya bir duvar koyun (istemci bilmesin): tahmin hatası ve düzeltmeyi izleyin.</li><li>Düzeltmeyi bir anda değil, G6’daki <code>yaklas</code> ile 100 ms’de eriterek gösterin (Quake III).</li><li>Boşlukla ateş: önce telafisiz, sonra konum kaydı ve geri sarmayla.</li><li>İki tarayıcı sekmesi arasında gerçek mesajlaşma: <code>BroadcastChannel</code>; sonra WebSocket.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Motorlarda ve kütüphanelerde</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>Unity</b></td><td>Netcode for GameObjects · Mirror · Fish-Networking · Photon Fusion / Quantum</td><td>NGO ve Mirror: yetkili sunucu, ara değerleme hazır. Fish-Networking ve Fusion: tahmin + uzlaştırma hazır. Fusion: gecikme telafisi hazır. Quantum: deterministik geri sarma.</td></tr>
+<tr><td><b>Unreal</b></td><td>Replication · Character Movement Component · Network Prediction</td><td>Karakter hareketinde tahmin ve uzlaştırma motorun içinde gelir; Fortnite ve Valorant bunun üstüne kurulu.</td></tr>
+<tr><td><b>Godot</b></td><td>MultiplayerSpawner / MultiplayerSynchronizer · netfox · Rollback Netcode eklentisi</td><td>Çekirdek: durum eşleme. Tahmin, ara değerleme ve geri sarma için eklentiler.</td></tr>
+<tr><td><b>Tarayıcı</b></td><td>WebSocket · WebRTC (veri kanalı) · Colyseus · geckos.io</td><td>WebSocket TCP üzerindedir (kayıp paket herkesi bekletir); gerçek zamanlı oyunda WebRTC’nin güvenilmez veri kanalı tercih edilir.</td></tr>
+<tr><td><b>Kütüphaneler</b></td><td>GGPO · yojimbo / netcode (Glenn Fiedler) · ENet · Steam Networking</td><td>GGPO: geri sarma. Diğerleri: UDP üzerinde bağlantı, güvenilirlik, şifreleme.</td></tr>
+<tr><td><b>Sınama</b></td><td>Clumsy (Windows) · Network Link Conditioner (macOS) · <code>tc netem</code> (Linux)</td><td>Yapay gecikme, kayıp ve dalgalanma. Ağ kodu yalnızca yerel ağda denenirse hiçbir sorunu göstermez.</td></tr>
+</table>
+<p class="mini">Pratik kural: ilk çevrimiçi oyununuzda motorun ya da kütüphanenin hazır bileşenlerini kullanın; ama ne yaptıklarını bilmeden ayarlarını (tampon, adım hızı, telafi sınırı) seçemezsiniz. Ve ilk günden 150 ms yapay gecikmeyle deneyin.</p>
+</section>
+
+<section data-sec="yz">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.88em"><li>İstemcinin <b>konum</b> yollaması (girdi yerine): hileye açık</li><li>Sunucunun girdiyi doğrulamaması (dt, hız, bekleme süresi)</li><li>Tahmin var, uzlaştırma yok: lastik bant</li><li>İstemci ve sunucuda farklı hareket kodu ya da farklı zaman adımı</li><li>Rakipleri dış değerlemeyle çizmek</li><li>Tampon &lt; bir paket aralığı: sürekli boşalan tampon</li><li>Gecikme telafisinde istemcinin bildirdiği zamana güvenmek; üst sınır koymamak</li><li>Geri sarmalı oyunda simülasyonun içinde <code>Math.random()</code>, <code>deltaTime</code>, ses/parçacık tetiklemek</li></ul></div></div>
+<div><div class="box info" style="font-size:.74em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js, gerçek ağ yok: sunucu ve istemci aynı sayfada; aralarındaki mesajlar <code>GECIKME</code> saniye bekleten iki kuyrukla taşınsın (ayarlanabilir kayıp ve dalgalanma). (1) Yetkili sunucu: yalnızca numaralı girdiler kabul edilsin, 20 Hz sabit adım, her adımda durum + son işlenen girdi numarası yayınlansın. (2) İstemci tahmini ve uzlaştırma: hareket fonksiyonu iki tarafta ortak. (3) Öbür varlıklar için 100 ms tamponlu ara değerleme. (4) Hata ayıklama görünümü: sunucudaki gerçek konumları yarı saydam çiz; ekrana bekleyen girdi sayısını ve düzeltme büyüklüğünü yaz. (5) Test: gecikme 0, 100 ve 300 ms’de, kayıp %0 ve %10’da düz yürürken düzeltme sıfır olmalı.”</p><ul style="font-size:.9em"><li>“Çok oyunculu yap” demeyin; <b>hangi modeli</b> istediğinizi söyleyin.</li><li>Sahte ağla başlatın: gerçek soketler hatayı ayıklamayı on kat zorlaştırır.</li><li>Gecikmeli test isteyin; asistanın yazdığı kod yerel ağda hep çalışır.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Oynadığınız çevrimiçi oyunlarda yaşadığınız “haksızlıkları” sayın (vurdum saymadı, siperde öldüm, geri çekildim, rakip ışınlandı). Her biri bu sunumdaki hangi tekniğin yan etkisi?</li><li class="fragment">Gecikme telafisinde haksızlığı vurulan yaşar; telafi olmazsa vuran yaşar. Siz tasarımcı olsanız kimin lehine karar verirdiniz? Rekabetçi bir oyun ile eğlencelik bir oyun için cevabınız değişir mi?</li><li class="fragment">Bir strateji oyununda harita hilesi (savaş sisini kaldırmak, G4) eşzamanlı simülasyonda neden önlenemez? Yetkili sunucuda nasıl önlenir? Bedeli ne?</li><li class="fragment">Dövüş oyunu toplulukları geri sarmayı bir “özellik” olarak talep etti ve yapımcıları buna zorladı. Oyuncuların bir ağ algoritmasını adıyla bilip istemesi sizce neden bu türde oldu?</li><li class="fragment">Yüksek sunucu adım hızı (128 Hz) pahalıdır. Hangi oyun türlerinde bu paraya değer, hangilerinde 20 Hz yeter?</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Gecikme hissi deneyi</b> — Örnek kodu arkadaşlarınıza oynatın: tahmin kapalıyken hangi gecikmeden sonra “oynanmaz” diyorlar? Açıkken? Sonuçları tabloya dökün.</li><li><b class="c-green">[kolay]</b> <b>Seyirci modu</b> — Bir sekmede oynanan basit bir oyunu <code>BroadcastChannel</code> ile ikinci sekmeye yayınlayın; ikinci sekme 10 Hz paketlerle ara değerleme yaparak göstersin.</li><li><b class="c-amber">[orta]</b> <b>İki sekmeli hava hokeyi</b> — Yetkili “sunucu” sekmesi + iki oyuncu sekmesi; raketler için tahmin + uzlaştırma, top için ara değerleme. Yapay gecikme sürgüsü.</li><li><b class="c-amber">[orta]</b> <b>Geri sarmalı Pong</b> — Tam sayılı, sabit adımlı deterministik Pong; iki sekme yalnızca girdileri paylaşsın; durum kaydet / yükle / ilerle ile geri sarma. Her 60 karede sağlama karşılaştırın.</li><li><b class="c-red">[zor]</b> <b>Nişancı prototipi</b> — Yukarıdan bakışlı iki oyunculu nişancı: gecikme telafili anlık atış, telafi sınırı ayarı, “siperdeyken vurulma” sayacı. Hangi sınır adil hissettiriyor?</li><li><b class="c-purple">[araştırma]</b> <b>Oyun ağ kodu incelemesi</b> — Açık kaynak bir oyunun (Quake III, OpenArena, Xonotic, Teeworlds, Veloren) ağ kodunda anlık görüntü, tahmin ve telafi fonksiyonlarını bulun; hangi ayarları kullanıyor?</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Gecikme yok edilemez</b>; saklanır ve bir oyuncudan ötekine aktarılır. Kimin ödeyeceği tasarım kararıdır.</li><li><b>Yetkili sunucu:</b> istemci girdi yollar, sunucu karar verir. İstemciye güvenme.</li><li><b>Ara değerleme:</b> başka oyuncuları ≈ iki paket aralığı kadar geçmişte, gerçek paketlerin arasını lerp ederek çiz. Dış değerleme dönüşlerde taşar.</li><li><b>Tahmin + uzlaştırma:</b> kendi girdini hemen uygula; sunucu haberi gelince ona dön ve onaylanmamış girdileri yeniden oynat. (Quake III.)</li><li><b>Gecikme telafisi:</b> sunucu, atışı sınarken hedefleri nişancının gördüğü ana geri sarar. Bedeli: siperdeyken vurulmak; çare: üst sınır.</li><li><b>Eşzamanlı simülasyon:</b> yalnızca girdiler paylaşılır; determinizm şart. Girdi gecikmesi (strateji) ya da geri sarma (dövüş).</li><li><b>Sonraki:</b> Bölüm 7: oyunlarda yapay zekâ. İlk sunum Hazırlık: vektörler, oyun döngüsü ve karar veren karakterler.</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=vTH2ZPgYujQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/vTH2ZPgYujQ/hqdefault.jpg" alt=""><span><b>Developer Update | Let's Talk Netcode | Overwatch</b><br>PlayOverwatch</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=hiHP0N-jMx8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/hiHP0N-jMx8/hqdefault.jpg" alt=""><span><b>Netcode 101 - What You Need To Know</b><br>Battle(non)sense</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=0NLe4IpdS1w" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/0NLe4IpdS1w/hqdefault.jpg" alt=""><span><b>Analysis: Why Rollback Netcode Is Better</b><br>Core-A Gaming</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=7jb0FOcImdg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7jb0FOcImdg/hqdefault.jpg" alt=""><span><b>8 Frames in 16ms: Rollback Networking in Mortal Kombat and Injustice 2</b><br>GDC</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=ueEmiDM94IE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/ueEmiDM94IE/hqdefault.jpg" alt=""><span><b>It IS Rocket Science! The Physics of Rocket League Detailed</b><br>GDC</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=h47zZrqjgLc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/h47zZrqjgLc/hqdefault.jpg" alt=""><span><b>I Shot You First: Networking the Gameplay of Halo: Reach</b><br>GDC</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=1JHetORRpfQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/1JHetORRpfQ/hqdefault.jpg" alt=""><span><b>Code Mystics Explains Netcode: Input Delay vs. Rollback</b><br>Code Mystics</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: kaynak kodu, yazılar ve etkileşimli sayfalar 📚</h2>
+<ul style="font-size:.78em"><li>Gabriel Gambetta: <a href="https://www.gabrielgambetta.com/client-server-game-architecture.html" target="_blank" rel="noopener">Fast-Paced Multiplayer</a> — dört bölümlük yazı dizisi ve tarayıcıda canlı demo (tahmin, uzlaştırma, ara değerleme, telafi)</li><li>Glenn Fiedler (Gaffer on Games): <a href="https://gafferongames.com/post/what_every_programmer_needs_to_know_about_game_networking/" target="_blank" rel="noopener">What Every Programmer Needs To Know About Game Networking</a> ve “Networked Physics” dizisi</li><li>Valve: <a href="https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking" target="_blank" rel="noopener">Source Multiplayer Networking</a> · Yahn Bernier: <a href="https://developer.valvesoftware.com/wiki/Latency_Compensating_Methods_in_Client/Server_In-game_Protocol_Design_and_Optimization" target="_blank" rel="noopener">Latency Compensating Methods in Client/Server In-game Protocol Design and Optimization</a> (2001)</li><li>Quake III Arena kaynak kodu: <a href="https://github.com/id-Software/Quake-III-Arena/blob/master/code/cgame/cg_predict.c" target="_blank" rel="noopener">cg_predict.c</a> (tahmin) · <a href="https://github.com/id-Software/Quake-III-Arena/blob/master/code/cgame/cg_ents.c" target="_blank" rel="noopener">cg_ents.c</a> (ara değerleme)</li><li>Paul Bettner ve Mark Terrano: <a href="https://www.gamedeveloper.com/programming/1500-archers-on-a-28-8-network-programming-in-age-of-empires-and-beyond" target="_blank" rel="noopener">1500 Archers on a 28.8: Network Programming in Age of Empires and Beyond</a> (2001)</li><li>Tony Cannon: <a href="https://github.com/pond3r/ggpo" target="_blank" rel="noopener">GGPO</a> — geri sarma kütüphanesi (MIT) · <a href="https://www.ggpo.net/" target="_blank" rel="noopener">ggpo.net</a></li><li>Infil: <a href="https://words.infil.net/w02-netcode.html" target="_blank" rel="noopener">Fightin’ Words: Netcode</a> — girdi gecikmesi ve geri sarmanın resimli, uzun anlatımı</li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Oyunlarda Yapay Zekâ: Hazırlık</div>
+    <div class="sub">Bölüm 7 başlıyor: vektörler, oyun döngüsü ve karar veren karakterler</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../yz-hazirlik/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
