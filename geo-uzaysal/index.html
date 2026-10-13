@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uzaysal Bölümleme</title>
+<meta name="description" content="Oyunlarda uzaysal bölümleme: geniş ve dar aşama, düzgün ızgara ve uzaysal hash, dörtlü ağaç (quadtree), BVH; Minecraft parçaları, ışın izleme; p5.js kodları ve canlı demolar.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #0d2f3a 0%, #101a24 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G2</div>
+  <div class="ttl" style="font-size:64px">Uzaysal Bölümleme</div>
+  <div class="sub"><i>Izgara, uzaysal hash, dörtlü ağaç, BVH</i> — “yakınımda kim var?” sorusunu herkese sormadan cevaplamak</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo2"></div>
+  <aside class="notes">Arka planda toplar hareket ediyor; her topun düştüğü ızgara hücresi doluluğuna göre parlıyor.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Sorun</b> — herkesi herkesle karşılaştırmak: N² neden öldürür?</li><li><b>Düzgün ızgara ve uzaysal hash</b> — en basit, çoğu zaman en iyi çözüm; Minecraft’ın parçaları</li><li><b>Dörtlü ağaç</b> — veriye uyum sağlayan bölme; budama</li><li><b>BVH</b> — kutuların kutusu; ışın izleme ve fizik motorları</li><li><b>Hangisini seçmeli?</b> — karşılaştırma tablosu; kd-ağacı ve sweep-and-prune ile ilişki</li><li><b>Kod</b> — p5.js ile ızgara, dörtlü ağaç, BVH + beş laboratuvar</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>2.000 mermiyi 500 düşmanla saniyede 60 kez çarpıştırmanın neden mümkün olduğunu açıklayabilecek; bir sahne için ızgara, dörtlü ağaç ve BVH arasında gerekçeli seçim yapabilecek; uzaysal hash ızgarasını 30 satırda yazabileceksiniz.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: 1.000 TOP, SANİYEDE 60 KARE</span>
+<p>1.000 top birbirine çarpıyor mu? En basit kod: her topu her topla karşılaştır.</p>
+<ul style="font-size:.9em"><li><span class="fragment">1.000 × 999 / 2 ≈ <b>500.000</b> çift, kare başına. Saniyede <b>30 milyon</b> uzaklık testi.</span></li><li><span class="fragment">10.000 top olursa? 100 kat fazla: saniyede 3 milyar. Oyun durur.</span></li><li><span class="fragment">Ama bir top, ekranın öbür ucundaki topa <b>çarpamaz</b>. Testlerin %99’undan fazlası baştan belli.</span></li><li><span class="fragment">Bu dersin tek fikri: <b>uzayı böl; yalnızca aynı bölgedekileri karşılaştır.</b></span></li><li><span class="fragment">Aynı soru her yerde: yakınımdaki düşmanlar (Y11), sürü komşuları (Y7), patlamadan etkilenenler, mermi neye çarptı, kamera neyi görüyor.</span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../geo-temeller/">G1 · Geometri Temelleri</a><a class="" href="../hash-tablolari/">Hash Tabloları (anahtar → liste)</a><a class="" href="../agaclar-bst/">Ağaçlar (özyineleme, yaprak)</a></div>
+  <div class="prereq"><a class="opt" href="../bst-geometrik/">BST’nin Geometrik Uygulamaları (kd-ağacı, sweep and prune)</a><a class="opt" href="../algoritma-analizi/">Algoritma Analizi (N² ve N log N)</a><a class="opt" href="../yz-steering/">Y7 · Steering (boids komşu arama)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Hash Tabloları sunumunda “uzaysal hash ızgarası”, Ağaçlar sunumunda dörtlü ağaç, Geometrik BST sunumunda kd-ağacı ve sweep-and-prune birer örnek olarak geçmişti. Bu sunum hepsini <b>aynı probleme</b> karşı yan yana koyuyor ve eksik olanı (BVH) ekliyor.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Uzaysal hash ızgarası bir sözlük (Map) ve iki bölme işleminden ibaret. Projeniz için çoğu zaman yalnızca o yeter.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:17px"><tr><td>spatial partitioning</td><td>uzaysal bölümleme</td><td>Uzayı bölgelere ayırıp nesneleri bulundukları bölgeye göre saklamak</td></tr><tr><td>broad phase · narrow phase</td><td>geniş aşama · dar aşama</td><td>“Kimler çarpışıyor <i>olabilir</i>?” (ucuz eleme) · “Gerçekten çarpışıyorlar mı?” (kesin test, G3)</td></tr><tr><td>uniform grid · spatial hash</td><td>düzgün ızgara · uzaysal hash</td><td>Eşit kareler · hücreleri dizide değil sözlükte tutan, sınırsız ızgara</td></tr><tr><td>quadtree · octree</td><td>dörtlü ağaç · sekizli ağaç</td><td>Dolunca dörde bölünen kare · 3B’de sekize bölünen küp</td></tr><tr><td>BVH (bounding volume hierarchy)</td><td>sınırlayıcı hacim hiyerarşisi</td><td>Nesnelerin kutularını daha büyük kutularda toplayan ağaç</td></tr><tr><td>AABB</td><td>eksen hizalı sınırlayıcı kutu</td><td>Kenarları eksenlere paralel, nesneyi saran en küçük dikdörtgen</td></tr><tr><td>pruning</td><td>budama</td><td>Bir dalın sonuca katkısı olamayacağını görüp hiç açmamak</td></tr><tr><td>candidate</td><td>aday</td><td>Bölümlemenin döndürdüğü “belki yakın” nesne; kesin test hâlâ gerekir</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Sorun: N²</div><div class="sub">herkes herkesle</div></div>
+</section>
+
+<section data-sec="sorun">
+  <h2>Geniş aşama ve dar aşama</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li><b>Dar aşama:</b> “bu iki şekil gerçekten çakışıyor mu?” Kesin ama pahalı olabilir (çokgenler, G3).</li><li><b>Geniş aşama:</b> “hangi çiftler çakışıyor <i>olabilir</i>?” Ucuz ve kaba; yanlış alarm verebilir, <b>gözden kaçıramaz</b>.</li><li>Bölümleme yapıları geniş aşamadır: aday listesi üretir. Kesin test her zaman en sonda, yalnızca adaylara.</li><li>Her fizik motoru bu iki katmanla çalışır (Box2D, PhysX, Unity, Unreal).</li></ul></div>
+<div><table class="gloss" style="font-size:17px"><tr><td><b>nesne</b></td><td><b>kaba kuvvet çift</b></td><td><b>ızgarayla (yaklaşık)</b></td></tr><tr><td>100</td><td>4.950</td><td>~300</td></tr><tr><td>1.000</td><td>499.500</td><td>~3.000</td></tr><tr><td>10.000</td><td>49.995.000</td><td>~30.000</td></tr></table><p class="mini">Nesneler aşağı yukarı eşit dağılmış ve hücre başına birkaç nesne düşüyorsa iş N ile <b>doğrusal</b> büyür. Hepsi tek hücreye yığılırsa yine N²: yapı sihir değil, dağılıma bağlı.</p></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Düzgün ızgara ve uzaysal hash</div><div class="sub">en basit, çoğu zaman en iyi</div></div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Fikir: hücre numarası = aşağı yuvarla(konum / hücre boyu)</h2>
+<div class="cols c64">
+<div><ul style="font-size:.78em"><li>Dünyayı eşit karelere böl. Bir nesnenin hücresi: <code>cx = floor(x / boy)</code>, <code>cy = floor(y / boy)</code>.</li><li>Her hücre, içindeki nesnelerin bir <b>listesini</b> tutar.</li><li><b>Sorgu:</b> “(x, y) çevresinde r yarıçapında kim var?” → yalnızca o dairenin değdiği hücrelere bak.</li><li><b>Çarpışma:</b> her nesne kendi hücresi + 8 komşu hücreyle test edilir.</li><li><b>Düzgün ızgara:</b> hücreler 2B dizide; dünya sınırlı. <b>Uzaysal hash:</b> hücreler sözlükte (<code>"cx,cy" → liste</code>); dünya sınırsız, boş hücre yer tutmaz.</li><li>Hareketli nesneler için en kolayı: her kare <b>sil, baştan kur</b>. N nesne için N ekleme; şaşırtıcı derecede ucuz.</li></ul></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">⚠️ Hücre boyu nasıl seçilir?</span><p><b>Çok küçük:</b> bir nesne birçok hücreye taşar; sorgu çok hücre gezer.</p><p><b>Çok büyük:</b> hücreler kalabalıklaşır; N²’ye geri dönersiniz.</p><p><b>Pratik kural:</b> hücre boyu ≈ en büyük nesnenin çapı (ya da en sık sorgu yarıçapı). Böylece 3×3 komşuluk her zaman yeter.</p></div><div class="box game" style="font-size:.8em;margin-top:10px"><span class="bt">🎮 Nerede?</span>Mermi cehennemi ve “survivor” türü oyunlar · sürü komşuları (Y7) · parçacık sistemleri · büyük dünyalarda “oyuncunun çevresindeki nesneler”</div></div>
+</div>
+</section>
+
+<section data-sec="demo">
+<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Toplar</b> hareket ediyor; <b>kırmızı</b> olanlar o an bir başkasıyla çakışanlar.</li><li><b>Mavi kareler</b> ızgara hücreleri; ne kadar koyuysa içinde o kadar çok top var.</li><li><b>Sol üst:</b> bu karede yapılan çift testi sayısı; altında “kaba kuvvet olsaydı” sayısı ve kaç kat fark ettiği.</li><li><b>Fare:</b> sarı çerçeve, farenin bulunduğu hücrenin 3×3 komşuluğu; sarı toplar “yakınımda kim var?” sorgusunun adayları.</li><li><b>Alt satır:</b> dolu hücre sayısı ve en kalabalık hücredeki top sayısı (hücre boyunu ayarlarken bakacağınız sayı).</li></ol></div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Canlı: kaba kuvvet mi, ızgara mı? 🧮</h2>
+<div class="demo" data-demo="gridhash"></div>
+</section>
+
+<section data-sec="ızgara">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>“kaba kuvvet”i seçip top sayısını 300 → 600 → 1200 yapın: test sayısı her seferinde <b>dört</b> katına çıkıyor.</li><li>“düzgün ızgara”ya geçin: aynı 1200 top için test sayısı kaç? “kat fazla” yazısını okuyun.</li><li>Hücre boyunu 160 yapın: hücreler kalabalıklaşır, test sayısı yükselir. 10 yapın: hücre topun çapından (10) küçük; 3×3 komşuluk artık yetmeyebilir (gerçek kodda daha çok hücre gezmek gerekir).</li><li>Fareyi kalabalık bir bölgeye götürün: 1200 toptan yalnızca birkaç düzinesi “aday”.</li><li>Düşünün: bütün toplar ekranın bir köşesine toplansaydı ne olurdu?</li></ol></div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Hikâye: Minecraft’ın parçaları ve “survivor” oyunları</h2>
+<div class="cols c46">
+<div><div class="box story" style="font-size:.78em"><span class="bt">🧱 Minecraft: dünya bir ızgaradır</span><ul style="font-size:.92em"><li>Dünya 16 × 16 blokluk sütunlara, <b>parçalara</b> (chunk) bölünür. Parça = ızgara hücresi.</li><li>Yalnızca oyuncunun çevresindeki parçalar yüklenir, çizilir ve simüle edilir; uzaktakiler diske yazılır.</li><li>Yaratıklar bulundukları parçaya kayıtlıdır: “yakınımdaki zombiler” sorgusu birkaç parçaya bakar.</li><li>Çiftliklerin “parça sınırı” hesapları ve “parça yükleyici” makineler, oyuncuların bu ızgarayı keşfetmesinin sonucudur.</li></ul></div></div>
+<div><div class="box game" style="font-size:.78em"><span class="bt">🧛 Ekranda binlerce düşman</span><ul style="font-size:.92em"><li>Vampire Survivors tarzı oyunlarda aynı anda binlerce düşman ve mermi olur. Her mermiyi her düşmanla sınamak imkânsızdır.</li><li>Tipik çözüm tam olarak bu slayttaki: düşmanları her kare ızgaraya koy, her mermi yalnızca kendi hücresine baksın.</li><li>SimonDev’in “Spatial Hash Grids &amp; Tales from Game Development” videosu aynı yapıyı gerçek bir projede adım adım hızlandırır (Kaynaklar).</li></ul><p class="mini">Ders: büyük, açık dünyalı oyunların çoğu en basit yapıyla, ızgarayla başlar.</p></div></div>
+</div>
+</section>
+
+<section data-sec="ızgara">
+  <div class="quiz" data-karildi="1" data-answer="D">
+    <div class="qhead">Quiz 1 · ızgara</div>
+    <div class="q">Bir uzay oyununda 2.000 küçük mermi ve tek bir dev boss gemisi (ekranın üçte biri kadar) var. Hücre boyunu mermi çapına göre seçtiniz. Sorun ne olur?</div>
+    <div class="opts"><button data-opt="A">Hiçbir sorun olmaz</button><button data-opt="B">Mermiler birbirini göremez</button><button data-opt="C">Izgara boss’u hiç bulamaz</button><button data-opt="D">Boss yüzlerce hücreye birden kaydedilmek zorunda kalır; ekleme ve sorgu pahalanır</button></div>
+    <div class="explain">Düzgün ızgara, <b>benzer boyutlu</b> nesnelerde parlar. Boyutlar çok farklıysa seçenekler: büyük nesneyi ayrı bir listede tutup herkesle doğrudan test etmek, iki ayrı ızgara (kaba ve ince) kullanmak ya da boyuta uyum sağlayan bir ağaca (dörtlü ağaç, BVH) geçmek.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Dörtlü ağaç</div><div class="sub">veriye uyum sağlayan bölme</div></div>
+</section>
+
+<section data-sec="dörtlü">
+  <h2>Dolunca dörde böl</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Bütün dünya tek bir kare. Her kare en çok <b>k</b> nesne tutar (kapasite).</li><li>Kapasite aşılınca kare <b>dört eşit çocuğa</b> bölünür; nesneler çocuklara dağıtılır.</li><li>Sonuç: kalabalık yerde küçük, boş yerde büyük kareler. Yapı <b>veriye uyum sağlar</b>.</li><li><b>Sorgu:</b> kökten başla; sorgu bölgesine <b>değmeyen</b> kareyi hiç açma (budama); değenlerin nesnelerine bak, çocuklarına in.</li><li>Derinlik sınırı koyun: aynı noktada 100 nesne varsa sonsuza kadar bölünmesin.</li><li>3B’de aynı fikir: sekizli ağaç (octree).</li></ul></div>
+<div><div class="box info" style="font-size:.8em"><span class="bt">Izgarayla farkı</span><p><b>Izgara:</b> her yer aynı çözünürlükte. Dünya büyük ve nesneler birkaç noktada toplanmışsa boş hücreler israf, dolu hücreler kalabalık.</p><p><b>Dörtlü ağaç:</b> çözünürlük ihtiyaca göre. Bedeli: işaretçilerle dolu bir ağaç (önbellek dostu değil, Y18) ve hareketli nesnelerde güncelleme zahmeti.</p></div><div class="box game" style="font-size:.8em;margin-top:10px"><span class="bt">🎮 Nerede?</span>Seyrek, kümeli dünyalar (uzay oyunları, şehirler) · arazi ayrıntı düzeyi (yakın kareler ince) · görüntü sıkıştırma · harita karoları (her yakınlaştırma düzeyi bir kat)</div></div>
+</div>
+</section>
+
+<section data-sec="dörtlü">
+  <h2>Canlı: dörtlü ağaç 🌳</h2>
+<div class="demo" data-demo="quadtree"></div>
+</section>
+
+<section data-sec="dörtlü">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri noktalar nesneler; ince çizgiler ağacın kareleri. Yeşil daire fareyi izleyen sorgu. Sarı kareler sorgunun açtığı yapraklar; sarı noktalar bakılanlar; yeşil noktalar daire içindekiler.</li><li>Boş bir yere birkaç kez üst üste tıklayın: beşinci noktada kare dörde bölünür. Aynı yere tıklamaya devam edin: bölünme derinleşir.</li><li>Alt satırı okuyun: “… noktaya bakıldı (kaba kuvvet: …)”. Daireyi boş bölgeye götürün: bakılan nokta 0’a yakın.</li><li>“kare kapasitesi”ni 1 yapın: çok derin, çok düğümlü ağaç. 10 yapın: sığ ağaç, yaprak başına daha çok test. Tatlı nokta ortada.</li><li>“🎯 +100 kümeli”ye birkaç kez basın: sağ üstteki küme incecik bölünürken sol alt hâlâ dört büyük kare.</li></ol></div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">BVH</div><div class="sub">kutuların kutusu</div></div>
+</section>
+
+<section data-sec="bvh">
+  <h2>Uzayı değil, nesneleri grupla</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Izgara ve dörtlü ağaç <b>uzayı</b> böler; nesne iki bölgenin sınırına düşerse ikisine de kaydolur.</li><li>BVH <b>nesneleri</b> gruplar: her nesnenin bir sınırlayıcı kutusu (AABB) var; yakın nesnelerin kutuları daha büyük bir kutuya, onlar daha büyüğüne…</li><li>Kök kutu bütün sahneyi sarar. Her nesne ağaçta <b>tam bir kez</b> bulunur.</li><li><b>Sorgu</b> (ışın, kutu, nokta): büyük kutuya değmiyorsa içindeki <b>her şeyi</b> atla.</li><li>Kurma: nesneleri uzun eksen boyunca sırala, ortadan ikiye böl, tekrar et.</li><li>Hareket eden nesne için kutu büyütülür (“yeniden sığdırma”) ya da ağaç yerel olarak yeniden dengelenir.</li></ul></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Nerede?</span><ul style="font-size:.92em"><li><b>Işın izleme:</b> grafik kartlarındaki ışın izleme donanımı (RTX, DXR) sahneyi BVH olarak tutar; ışın başına milyonlarca üçgenden birkaç onuna bakılır.</li><li><b>Fizik motorları:</b> Box2D ve Bullet’in geniş aşaması “dinamik AABB ağacı”dır.</li><li><b>Raycast:</b> “mermi neye çarptı?”, “fare hangi nesnenin üstünde?”</li><li><b>Kamera ayıklama:</b> görüş alanına girmeyen kutunun içindekiler çizilmez.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="bvh">
+  <h2>Canlı: ışın ve kutu ağacı 🎯</h2>
+<div class="demo" data-demo="bvh"></div>
+</section>
+
+<section data-sec="bvh">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri kutular nesneler; renkli çerçeveler BVH düğümleri (her renk bir derinlik). Mavi nokta nişancı, siyah çizgi ışın, kırmızı nokta ilk vuruş.</li><li><b>Kalın</b> çerçeveler ışının girdiği düğümler; <b>soluk kesikli</b> çerçeveler ıskalanan ve içi hiç açılmayan düğümler. Sarı: gerçekten test edilen nesneler.</li><li>“gösterilen derinlik”i 0’dan 5’e tek tek artırın: ağacın katlarını görün (0 = bütün sahne, sonra ikiye, dörde…).</li><li>Işını boşluğa doğrultun: birkaç düğüm testiyle “hiçbir şeye çarpmıyor” cevabı gelir.</li><li>Sol üstteki iki satırı karşılaştırın. Nesne sayısını 60 yapın: kaba kuvvet 60 test; BVH’nin sayısı pek artmıyor (ağaç bir kat derinleşir: logaritma).</li></ol></div>
+</section>
+
+<section data-sec="bvh">
+  <h2>Hikâye: ışın izleme neden bu kadar geç geldi?</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li>Bir karede milyonlarca ışın, sahnede milyonlarca üçgen. Her ışını her üçgenle sınamak: 10¹² test. İmkânsız.</li><li>BVH ile ışın başına birkaç düzine kutu testi ve birkaç üçgen testi yeter: milyonlarca kat hızlanma.</li><li>Gerçek zamanlı ışın izlemeyi mümkün kılan şey daha hızlı üçgen testi değil, <b>test edilmeyen</b> üçgenlerdir.</li><li>Sebastian Lague’ün “Coding Adventure: More Ray Tracing!” videosu bir BVH’yi sıfırdan yazıp her adımda kazancı ölçer (Kaynaklar).</li></ul></div>
+<div><div class="box story" style="font-size:.82em"><span class="bt">📜 Titanfall’ın çarpışmaları</span><p>Respawn’ın GDC konuşması “Extreme SIMD: Optimized Collision Detection in Titanfall”, hızlı hareket eden pilotlar ve dev robotlar için çarpışma sorgularını kutu ağaçları ve işlemcinin toplu (SIMD) komutlarıyla nasıl hızlandırdıklarını anlatır.</p><p class="mini">Ortak ders (Y18): en büyük kazanç, işi hızlandırmaktan değil <b>yapmamaktan</b> gelir.</p></div></div>
+</div>
+</section>
+
+<section data-sec="bvh">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 2 · BVH</div>
+    <div class="q">Bir BVH’de ışın, kök kutunun sol çocuğunu ıskalıyor. Sol çocuğun altında 5.000 üçgen var. Kaç üçgen testi yapılır?</div>
+    <div class="opts"><button data-opt="A">5.000</button><button data-opt="B">0: kutuyu ıskalayan ışın içindekilerin hiçbirine çarpamaz</button><button data-opt="C">2.500</button><button data-opt="D">Ağacın derinliği kadar</button></div>
+    <div class="explain">Sınırlayıcı kutu, içindeki her şeyi tamamen sarar. Işın kutuya girmiyorsa içindeki hiçbir nesneye değemez; o dalın tamamı tek bir kutu testiyle elenir. Demodaki soluk kesikli çerçeveler tam olarak bu elenen dallardır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">Hangisini seçmeli?</div><div class="sub">tek doğru yok; dağılıma bak</div></div>
+</section>
+
+<section data-sec="seçim">
+  <h2>Karşılaştırma</h2>
+<table class="gloss" style="font-size:15.5px">
+<tr><td><b>yapı</b></td><td><b>en iyi olduğu durum</b></td><td><b>zayıf yanı</b></td><td><b>örnek</b></td></tr>
+<tr><td><b>Düzgün ızgara / uzaysal hash</b></td><td>Benzer boyutlu, çok sayıda, hareketli nesne; her kare baştan kurulur</td><td>Çok farklı boyutlar; nesnelerin tek yere yığılması</td><td>mermiler, sürüler, parçacıklar, Minecraft parçaları</td></tr>
+<tr><td><b>Dörtlü / sekizli ağaç</b></td><td>Kümeli, seyrek dağılım; çoğunlukla durağan nesneler; ayrıntı düzeyi</td><td>Hareketli nesnede güncelleme; işaretçi ağacı yavaş</td><td>arazi LOD’u, uzay haritası, harita karoları</td></tr>
+<tr><td><b>kd-ağacı</b> (Geometrik BST sunumu)</td><td>Durağan nokta kümesinde en yakın komşu</td><td>Ekleme/silme dengesizleştirir</td><td>en yakın siper/kaynak, foton haritası</td></tr>
+<tr><td><b>BVH</b></td><td>Farklı boyutlu şekiller; ışın ve kutu sorguları; kısmen hareketli</td><td>Kurması pahalı; iyi bölme kuralı ister</td><td>ışın izleme, fizik motorlarının geniş aşaması</td></tr>
+<tr><td><b>Sweep and prune</b> (Geometrik BST sunumu)</td><td>Kareden kareye az değişen sahne; tek eksende sıralı liste</td><td>Bir eksende yığılma</td><td>klasik fizik motorları</td></tr>
+</table>
+<p class="mini"><b>Karar sırası:</b> önce ölç (Y18) → sorun gerçekten çift sayısıysa <b>ızgarayla başla</b> → dağılım ya da boyutlar ızgarayı bozuyorsa ağaca geç. Motor kullanıyorsanız geniş aşama zaten hazırdır; kendi oyun mantığınız (“yakınımdaki düşmanlar”) için ızgara çoğu zaman yeter.</p>
+</section>
+
+<section data-sec="seçim">
+  <div class="quiz" data-karildi="1" data-answer="A">
+    <div class="qhead">Quiz 3 · seçim</div>
+    <div class="q">300 × 300 km’lik bir uzay haritasında 5.000 gemi var ve neredeyse hepsi dört yıldız sisteminin çevresinde toplanmış; aradaki boşluk bomboş. Tek tip hücreli düzgün ızgara neden kötü bir seçim?</div>
+    <div class="opts"><button data-opt="A">Hücre küçükse milyonlarca boş hücre, büyükse dört hücrede binlerce gemi: iki uçta da kötü</button><button data-opt="B">Izgara 2B’de çalışmaz</button><button data-opt="C">Gemiler hareket ettiği için ızgara kullanılamaz</button><button data-opt="D">Izgara yalnızca kare haritalarda çalışır</button></div>
+    <div class="explain">Düzgün ızgaranın çözünürlüğü her yerde aynıdır. Kümeli dağılımda ya boşluk için çok fazla hücre ya da kümeler için çok kalabalık hücre elde edersiniz. Uzaysal hash boş hücre sorununu çözer ama kalabalık hücre sorununu çözmez; dörtlü ağaç ya da iki katlı ızgara (kaba + ince) veriye uyum sağlar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Kod ve laboratuvarlar</div><div class="sub">otuz satırda uzaysal hash</div></div>
+</section>
+
+<section data-sec="kod">
+  <h2>Uzaysal hash ızgarası</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Uzaysal hash ızgarası: "yakınımda kim var?" sorusunun en basit hızlı cevabı
+class Izgara {
+  constructor(hucreBoyu) { this.s = hucreBoyu; this.hucreler = new Map(); }
+
+  anahtar(x, y) { return floor(x / this.s) + ',' + floor(y / this.s); }   // (x, y) hangi hücrede?
+
+  temizle() { this.hucreler.clear(); }                 // her kare baştan kurmak çoğu zaman en kolayı
+
+  ekle(nesne) {                                        // nesne: {x, y, ...}
+    const k = this.anahtar(nesne.x, nesne.y);
+    if (!this.hucreler.has(k)) this.hucreler.set(k, []);
+    this.hucreler.get(k).push(nesne);
+  }
+
+  yakindakiler(x, y, r) {                              // (x, y) çevresinde r yarıçapındaki ADAYLAR
+    const sonuc = [];
+    for (let cx = floor((x - r) / this.s); cx <= floor((x + r) / this.s); cx++)
+      for (let cy = floor((y - r) / this.s); cy <= floor((y + r) / this.s); cy++) {
+        const liste = this.hucreler.get(cx + ',' + cy);
+        if (liste) for (const n of liste) sonuc.push(n);
+      }
+    return sonuc;                                      // aday = "belki yakın"; kesin test çağıranın işi
+  }
+}
+
+// Kullanım (her kare):
+//   izgara.temizle();  for (const t of toplar) izgara.ekle(t);
+//   for (const t of toplar)
+//     for (const u of izgara.yakindakiler(t.x, t.y, 2 * R))
+//       if (u !== t && dist(t.x, t.y, u.x, u.y) < 2 * R) carpistir(t, u);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+from collections import defaultdict
+from math import floor
+
+class Izgara:
+    def __init__(self, hucre_boyu):
+        self.s = hucre_boyu
+        self.hucreler = defaultdict(list)
+
+    def ekle(self, nesne):                       # nesne: (x, y, ...) demeti ya da .x .y alanlı nesne
+        x, y = nesne[0], nesne[1]
+        self.hucreler[(floor(x / self.s), floor(y / self.s))].append(nesne)
+
+    def yakindakiler(self, x, y, r):
+        for cx in range(floor((x - r) / self.s), floor((x + r) / self.s) + 1):
+            for cy in range(floor((y - r) / self.s), floor((y + r) / self.s) + 1):
+                yield from self.hucreler.get((cx, cy), ())
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: Dictionary tabanlı uzaysal hash (Vector2Int anahtar)
+public class SpatialGrid<T> {
+    readonly float size; readonly Dictionary<Vector2Int, List<T>> cells = new();
+    public SpatialGrid(float cellSize) { size = cellSize; }
+    Vector2Int Key(Vector2 p) => new(Mathf.FloorToInt(p.x / size), Mathf.FloorToInt(p.y / size));
+    public void Clear() { foreach (var l in cells.Values) l.Clear(); }      // listeleri yeniden kullan: çöp üretme
+    public void Add(Vector2 p, T item) {
+        var k = Key(p); if (!cells.TryGetValue(k, out var l)) cells[k] = l = new List<T>(); l.Add(item);
+    }
+    public void Query(Vector2 p, float r, List<T> results) {
+        Vector2Int a = Key(p - Vector2.one * r), b = Key(p + Vector2.one * r);
+        for (int x = a.x; x <= b.x; x++) for (int y = a.y; y <= b.y; y++)
+            if (cells.TryGetValue(new Vector2Int(x, y), out var l)) results.AddRange(l);
+    }
+}
+// Hazırı: Physics2D.OverlapCircleNonAlloc(...) motorun kendi yapısını (dinamik ağaç) kullanır.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Dörtlü ağaç</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Dörtlü ağaç (quadtree): kalabalık yerde ince, boş yerde kaba
+class DortluAgac {
+  constructor(x, y, w, h, kapasite = 4, derinlik = 0) {
+    Object.assign(this, { x, y, w, h, kapasite, derinlik });
+    this.noktalar = []; this.cocuklar = null;
+  }
+  icinde(p) { return p.x >= this.x && p.x < this.x + this.w && p.y >= this.y && p.y < this.y + this.h; }
+
+  ekle(p) {
+    if (!this.icinde(p)) return false;
+    if (!this.cocuklar) {
+      if (this.noktalar.length < this.kapasite || this.derinlik >= 8) { this.noktalar.push(p); return true; }
+      this.bol();                                           // doldu: dörde böl, noktaları çocuklara dağıt
+    }
+    return this.cocuklar.some(c => c.ekle(p));
+  }
+  bol() {
+    const hw = this.w / 2, hh = this.h / 2, k = this.kapasite, d = this.derinlik + 1;
+    this.cocuklar = [new DortluAgac(this.x, this.y, hw, hh, k, d), new DortluAgac(this.x + hw, this.y, hw, hh, k, d),
+                     new DortluAgac(this.x, this.y + hh, hw, hh, k, d), new DortluAgac(this.x + hw, this.y + hh, hw, hh, k, d)];
+    for (const p of this.noktalar) this.cocuklar.some(c => c.ekle(p));
+    this.noktalar = [];
+  }
+  // (cx, cy) merkezli r yarıçaplı dairedeki noktalar
+  sorgula(cx, cy, r, sonuc = []) {
+    const nx = constrain(cx, this.x, this.x + this.w), ny = constrain(cy, this.y, this.y + this.h);
+    if ((nx - cx) ** 2 + (ny - cy) ** 2 > r * r) return sonuc;      // daire bu kareye değmiyor: BUDA
+    for (const p of this.noktalar) if ((p.x - cx) ** 2 + (p.y - cy) ** 2 <= r * r) sonuc.push(p);
+    if (this.cocuklar) for (const c of this.cocuklar) c.sorgula(cx, cy, r, sonuc);
+    return sonuc;
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>BVH ve ışın</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// BVH: kutuların kutusu.  nesne: {x, y, w, h}
+function bvhKur(nesneler) {
+  const kutu = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  for (const n of nesneler) { kutu.x0 = min(kutu.x0, n.x); kutu.y0 = min(kutu.y0, n.y);
+                              kutu.x1 = max(kutu.x1, n.x + n.w); kutu.y1 = max(kutu.y1, n.y + n.h); }
+  if (nesneler.length <= 2) return { kutu, nesneler };            // yaprak
+  const yatay = kutu.x1 - kutu.x0 >= kutu.y1 - kutu.y0;            // uzun eksen boyunca sırala, ortadan böl
+  const s = nesneler.slice().sort((a, b) => yatay ? (a.x + a.w / 2) - (b.x + b.w / 2) : (a.y + a.h / 2) - (b.y + b.h / 2));
+  const m = s.length >> 1;
+  return { kutu, cocuklar: [bvhKur(s.slice(0, m)), bvhKur(s.slice(m))] };
+}
+
+// Işın (o + t·d, 0 ≤ t ≤ 1) kutuya giriyor mu? Giriyorsa giriş t'si, yoksa null  ("dilim" testi)
+function isinKutu(o, d, x0, y0, x1, y1) {
+  let t0 = 0, t1 = 1;
+  for (const [oo, dd, a, b] of [[o.x, d.x, x0, x1], [o.y, d.y, y0, y1]]) {
+    if (abs(dd) < 1e-9) { if (oo < a || oo > b) return null; continue; }
+    let ta = (a - oo) / dd, tb = (b - oo) / dd; if (ta > tb) [ta, tb] = [tb, ta];
+    t0 = max(t0, ta); t1 = min(t1, tb); if (t0 > t1) return null;
+  }
+  return t0;
+}
+
+function isinAt(dugum, o, d, enIyi = { t: Infinity, nesne: null }) {
+  const t = isinKutu(o, d, dugum.kutu.x0, dugum.kutu.y0, dugum.kutu.x1, dugum.kutu.y1);
+  if (t === null || t > enIyi.t) return enIyi;                    // büyük kutuyu ıskaladı: içindekilerin HEPSİNİ atla
+  if (dugum.nesneler) { for (const n of dugum.nesneler) { const tn = isinKutu(o, d, n.x, n.y, n.x + n.w, n.y + n.h);
+                                                           if (tn !== null && tn < enIyi.t) { enIyi.t = tn; enIyi.nesne = n; } } }
+  else for (const c of dugum.cocuklar) isinAt(c, o, d, enIyi);
+  return enIyi;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile 1.500 topu çarpıştırmak</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.7;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const R = 4, HUCRE = 16;
+let toplar = [], izgara, testSayisi = 0, kullan = true;
+
+function setup() {
+  createCanvas(720, 420);
+  izgara = new Izgara(HUCRE);
+  for (let i = 0; i < 1500; i++)
+    toplar.push({ x: random(width), y: random(height), vx: random(-1.5, 1.5), vy: random(-1.5, 1.5) });
+}
+function keyPressed() { if (key === 'g' || key === 'G') kullan = !kullan; }   // G: ızgara aç/kapa
+
+function draw() {
+  background(250); testSayisi = 0;
+  for (const t of toplar) {
+    t.x += t.vx; t.y += t.vy; t.carpti = false;
+    if (t.x < R || t.x > width - R) t.vx *= -1;
+    if (t.y < R || t.y > height - R) t.vy *= -1;
+  }
+  izgara.temizle(); for (const t of toplar) izgara.ekle(t);
+  for (const t of toplar) {
+    const adaylar = kullan ? izgara.yakindakiler(t.x, t.y, 2 * R) : toplar;
+    for (const u of adaylar) {
+      if (u === t) continue; testSayisi++;
+      if ((t.x - u.x) ** 2 + (t.y - u.y) ** 2 < 4 * R * R) t.carpti = true;
+    }
+  }
+  noStroke();
+  for (const t of toplar) { fill(t.carpti ? 'crimson' : 90); circle(t.x, t.y, 2 * R); }
+  fill(0); text((kullan ? 'IZGARA' : 'KABA KUVVET') + ' · test ' + testSayisi + ' · FPS ' + round(frameRate()), 10, 20);
+}
+</script></code></pre><p class="mini">Bu döngü + “Uzaysal hash ızgarası” slaytındaki <code>Izgara</code> sınıfı.</p></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 60 satır: 1.500 top; <b>G</b> tuşu ızgarayı açıp kapatır. FPS sayacını izleyin.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><b>G</b>’ye basın: test sayısı 2.250.000’e fırlar; FPS düşer.</li><li><code>HUCRE</code>’yi 4 ve 200 yapıp test sayısını karşılaştırın.</li><li>Top sayısını 5.000 yapın: ızgarayla hâlâ akıcı mı?</li><li>Fareyle tıklanan noktadaki topları patlatın: <code>yakindakiler(mouseX, mouseY, 40)</code>.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: hangi hücredeyim?</h2>
+  <div class="ailab" data-lab="cellof" data-lang="js">
+<textarea>
+// (x, y) konumundaki nesne, kenarı "size" olan ızgarada hangi hücrede?
+// [cx, cy] döndür.  Hücre 0: 0 ≤ x &lt; size,  hücre 1: size ≤ x &lt; 2·size,  hücre −1: −size ≤ x &lt; 0
+function cellOf(x, y, size) {
+  return [Math.round(x / size), Math.round(y / size)];   // TODO: yuvarlama yanlış
+}
+</textarea>
+    <div class="lab-tasks">Bütün uzaysal hash bu satıra dayanır. <code>Math.round</code> en yakın tam sayıya gider: x = 26, boy = 50 için 0,52 → 1 (yanlış; 26 hâlâ 0. hücrede). Gereken her zaman <b>aşağı</b> yuvarlamak: <code>Math.floor</code>. Eksi koordinatlara dikkat: <code>−10 / 50 = −0,2</code> → hücre <b>−1</b>.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: iki kutu çakışıyor mu?</h2>
+  <div class="ailab" data-lab="aabb" data-lang="js">
+<textarea>
+// a, b: [x, y, genişlik, yükseklik]  (x, y sol üst köşe)
+// İki kutu çakışıyorsa true. Yalnızca kenarı değenler çakışmış SAYILMAZ.
+function boxesOverlap(a, b) {
+  const xOrtusuyor = a[0] &lt; b[0] + b[2] &amp;&amp; b[0] &lt; a[0] + a[2];
+  return xOrtusuyor;   // TODO: y ekseni de örtüşmeli
+}
+</textarea>
+    <div class="lab-tasks">Sınırlayıcı kutu (AABB) testi: geniş aşamanın en çok çağrılan fonksiyonu. İki kutu ancak <b>her iki eksende de</b> örtüşüyorsa çakışır; tek eksende ayrılarsa ayrıdırlar. Başlangıç kodu yalnızca x’e bakıyor: alt alta duran iki kutuyu çakışıyor sanıyor. (G3’teki “ayıran eksen” fikrinin en basit hâli.)</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: ızgarayı sen kur</h2>
+  <div class="simlab" data-sim="grid" data-fns="buildGrid" data-lang="js">
+<textarea>
+// points: [[x, y], ...]   size: hücre boyu
+// Döndür: { "cx,cy": [nokta indisleri], ... }   (boş hücreler hiç olmasın)
+// Örnek: size = 50 iken [130, 75] noktası "2,1" hücresindedir.
+function buildGrid(points, size) {
+  const grid = {};
+  for (let i = 0; i &lt; points.length; i++) {
+    const [x, y] = points[i];
+    // TODO: anahtarı hesapla; liste yoksa oluştur; i'yi ekle
+  }
+  return grid;
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu boş bir nesne döndürür: sağda hiçbir hücre boyanmaz. Üç satır: <code>const k = Math.floor(x / size) + "," + Math.floor(y / size);</code>, <code>if (!grid[k]) grid[k] = [];</code>, <code>grid[k].push(i);</code>. Doğruysa her hücre, içindeki nokta sayısıyla boyanır ve noktalar hareket ettikçe güncellenir.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: yakınımdaki adaylar</h2>
+  <div class="ailab" data-lab="cands" data-lang="python">
+<textarea>
+import math
+# grid: {"cx,cy": [indisler]}   size: hücre boyu   (x, y): sorgu merkezi   r: yarıçap
+# Sorgu karesinin (x−r … x+r, y−r … y+r) değdiği BÜTÜN hücrelerdeki indisleri
+# küçükten büyüğe sıralı liste olarak döndür.
+def candidates(grid, size, x, y, r):
+    return []
+</textarea>
+    <div class="lab-tasks"><code>cx</code> için <code>math.floor((x - r) / size)</code> ile <code>math.floor((x + r) / size)</code> arasını (ikisi de dahil) dolaşın; <code>cy</code> için aynısı. Olmayan hücre için <code>grid.get(key, [])</code>. Bunlar <b>aday</b>: bazıları dairenin dışında olabilir; kesin uzaklık testi çağıranın işi.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: hangi çeyrek?</h2>
+  <div class="ailab" data-lab="quad" data-lang="python">
+<textarea>
+# (px, py): nokta   (cx, cy): karenin merkezi   (ekranda y aşağı doğru artar)
+# 0 = sol üst, 1 = sağ üst, 2 = sol alt, 3 = sağ alt
+# Tam merkez çizgisindeki nokta sağa / alta sayılır.
+def quadrant(px, py, cx, cy):
+    return 0
+</textarea>
+    <div class="lab-tasks">Dörtlü ağaçta bir noktanın hangi çocuğa gideceğini söyleyen fonksiyon. İki karşılaştırma: sağdaysa (<code>px &gt;= cx</code>) +1, alttaysa (<code>py &gt;= cy</code>) +2. Bölme, çarpma, <code>if</code> zinciri gerekmez.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 6</div><div class="ttl">Araçlar ve kapanış</div><div class="sub">motorunuz bunu zaten yapıyor</div></div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Motorlarda ve kütüphanelerde</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>Unity</b></td><td><code>Physics2D.OverlapCircle</code> · <code>Physics.OverlapSphere</code> · <code>Raycast</code></td><td>Motorun geniş aşamasını (Box2D: dinamik AABB ağacı; PhysX: BVH/SAP) kullanır. <code>NonAlloc</code> sürümleri çöp üretmez.</td></tr>
+<tr><td><b>Unity DOTS</b></td><td><code>NativeParallelMultiHashMap</code></td><td>Kendi uzaysal hash’inizi iş parçacıklarında kurmak için (binlerce ajan).</td></tr>
+<tr><td><b>Unreal</b></td><td><code>OverlapMultiByChannel</code> · <code>TOctree2</code> · <code>THierarchicalHashGrid2D</code></td><td>Hazır sorgular ve kendi verileriniz için sekizli ağaç / hash ızgarası.</td></tr>
+<tr><td><b>Godot</b></td><td><code>PhysicsDirectSpaceState2D.intersect_shape</code> · <code>Area2D</code></td><td>Motorun BVH’si üzerinden sorgu.</td></tr>
+<tr><td><b>JavaScript</b></td><td>d3-quadtree · rbush</td><td>Hazır dörtlü ağaç ve R-ağacı (harita uygulamalarının standardı).</td></tr>
+<tr><td><b>Python</b></td><td><code>scipy.spatial.cKDTree</code></td><td>Analiz ve araçlar için en yakın komşu sorguları.</td></tr>
+</table>
+<p class="mini">Kural: çarpışma için motorun fiziğini kullanın. <b>Oyun mantığı</b> sorguları (“en yakın 5 düşman”, “patlama yarıçapındakiler”, sürü komşuları) için fizik motorunu her kare sorgulamak pahalı olabilir; orada kendi küçük ızgaranız çoğu zaman daha hızlıdır.</p>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.9em"><li><code>Math.round</code> ya da <code>| 0</code> ile hücre hesabı (eksi koordinatta yanlış)</li><li>Nesne hareket ettiği hâlde ızgaradaki eski kaydını silmemek</li><li>Hücre boyundan büyük nesneyi tek hücreye koymak</li><li>Aynı çifti iki kez test etmek (i &lt; j kuralı)</li><li>Her kare yeni liste/nesne üretmek (çöp toplayıcı takılması, Y18)</li><li>Dörtlü ağaçta derinlik sınırı koymamak</li></ul></div></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js. <code>{x, y, r}</code> dairelerle çalışan bir <code>SpatialHash</code> sınıfı yaz: <code>clear()</code>, <code>insert(obj)</code> (dairenin değdiği bütün hücrelere), <code>query(x, y, r)</code> (tekrarsız adaylar). Hücre hesabı <code>Math.floor</code> ile; eksi koordinatlar desteklensin. Listeleri kareler arasında yeniden kullan. Bir test sayfası: 2.000 daire, bir tuşla kaba kuvvet / ızgara arasında geçiş, ekranda test sayısı ve FPS, iki yöntemin bulduğu çarpışma kümelerinin aynı olduğunu doğrulayan bir <code>console.assert</code>.”</p><ul style="font-size:.9em"><li>Doğruluk testini isteyin: hızlı yapı, kaba kuvvetle <b>aynı sonucu</b> vermeli</li><li>Nesne boyutlarını ve dağılımını söyleyin; yapı seçimi buna bağlı</li><li>Ölçüm isteyin: test sayısı, kare süresi</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Minecraft’ta “parça sınırı”nı bilen oyuncular çiftliklerini ona göre kurar. Bir oyunun iç veri yapısının oyuncular tarafından keşfedilip kullanılması iyi bir şey mi, bir kusur mu?</li><li class="fragment">Bir “survivor” oyununda ekranda 5.000 düşman var ve hepsi oyuncunun üstüne yığılıyor. Izgara neden işe yaramamaya başlar? Tasarımla (kodla değil) nasıl çözerdiniz?</li><li class="fragment">Motor zaten geniş aşamayı yapıyorsa bu konuyu neden öğreniyoruz? Kendi ızgaranızı yazmanın mantıklı olduğu iki durum söyleyin.</li><li class="fragment">Gerçek hayatta “uzayı bölüp yalnızca yakındakilere bakmak” fikrini nerede kullanıyoruz? (posta kodları, kütüphane rafları, harita uygulamaları…)</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Mermi cehennemi</b> — p5.js’te 3.000 mermi ve 200 düşman; uzaysal hash ile çarpışma. Ekranda test sayısı ve FPS; G tuşuyla kaba kuvvete geçiş.</li><li><b class="c-green">[kolay]</b> <b>Patlama yarıçapı</b> — Tıklanan noktada patlama: yarıçap içindeki nesneleri ızgara sorgusuyla bulup itin. Sorgunun baktığı hücreleri boyayın.</li><li><b class="c-amber">[orta]</b> <b>Boids + ızgara</b> — Y7’deki sürüyü 2.000 kuşa çıkarın; komşu aramayı ızgarayla yapın. Hücre boyu–FPS grafiği çizin.</li><li><b class="c-amber">[orta]</b> <b>Dörtlü ağaçla uzay haritası</b> — Kümeli 10.000 yıldız; fareyle kutu seçimi dörtlü ağaç sorgusuyla. Açılan düğümleri görselleştirin.</li><li><b class="c-red">[zor]</b> <b>Işın izleyici</b> — Yüzlerce dikdörtgenli 2B sahnede fareden 360 ışın (G4’e hazırlık); BVH ile ve BVH’siz kare süresini ölçün.</li><li><b class="c-purple">[araştırma]</b> <b>Hangisi ne zaman?</b> — Aynı sahneyi (eşit dağılım, kümeli dağılım, karışık boyutlar) ızgara, dörtlü ağaç ve BVH ile çalıştırıp test sayısı ve süre tablosu çıkarın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Sorun:</b> herkes herkesle = N². Çözüm: uzayı böl, yalnızca yakındakilere bak.</li><li><b>Geniş aşama</b> aday üretir, <b>dar aşama</b> kesin test eder.</li><li><b>Izgara / uzaysal hash:</b> <code>floor(konum / boy)</code>; benzer boyutlu, hareketli, çok nesne. Hücre boyu ≈ nesne çapı.</li><li><b>Dörtlü ağaç:</b> dolunca böl; kümeli dağılımda uyum sağlar; sorgu değmeyen kareyi budar.</li><li><b>BVH:</b> kutuların kutusu; farklı boyutlar, ışın sorguları; ışın izleme ve fizik motorlarının temeli.</li><li>Bölümleme sihir değil: herkes aynı yere yığılırsa yine N². Önce ölç, ızgarayla başla.</li><li><b>Sonraki:</b> çarpışma tespiti: adayları bulduk; şimdi iki şeklin gerçekten çakışıp çakışmadığını kesin olarak söylemek.</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=sx4IIQL0x7c" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/sx4IIQL0x7c/hqdefault.jpg" alt=""><span><b>Spatial Hash Grids &amp; Tales from Game Development</b><br>SimonDev</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=D2M8jTtKi44" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/D2M8jTtKi44/hqdefault.jpg" alt=""><span><b>Finding collisions among thousands of objects blazing fast</b><br>Ten Minute Physics</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=OJxEcs0w_kE" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/OJxEcs0w_kE/hqdefault.jpg" alt=""><span><b>Coding Challenge #98.1: Quadtree - Part 1</b><br>The Coding Train</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=C1H4zIiCOaI" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/C1H4zIiCOaI/hqdefault.jpg" alt=""><span><b>Coding Adventure: More Ray Tracing! (BVH)</b><br>Sebastian Lague</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=6BIfqfC1i7U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/6BIfqfC1i7U/hqdefault.jpg" alt=""><span><b>Extreme SIMD: Optimized Collision Detection in Titanfall</b><br>GDC</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=OKiBmQ6ZNyU" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/OKiBmQ6ZNyU/hqdefault.jpg" alt=""><span><b>Quad &amp; Oct Trees - Data Structures For Performance</b><br>Kayle Gishen</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: yazılar ve etkileşimli sayfalar 📚</h2>
+<ul style="font-size:.78em"><li>Robert Nystrom, <i>Game Programming Patterns</i>: <a href="https://gameprogrammingpatterns.com/spatial-partition.html" target="_blank" rel="noopener">Spatial Partition</a> — ücretsiz bölüm; ızgarayı bir savaş alanı örneğiyle adım adım kurar</li><li><a href="https://growingswe.com/blog/quadtrees" target="_blank" rel="noopener">An interactive intro to quadtrees</a> · Jim Kang: <a href="https://jimkang.com/quadtreevis/" target="_blank" rel="noopener">An interactive explanation of quadtrees</a> — tarayıcıda oynayarak</li><li>Lean Rada: <a href="https://leanrada.com/notes/sweep-and-prune/" target="_blank" rel="noopener">Sort, sweep, and prune</a> — geniş aşamanın öbür klasik yöntemi, canlı örneklerle</li><li>Matthias Müller: <a href="https://matthias-research.github.io/pages/tenMinutePhysics/index.html" target="_blank" rel="noopener">Ten Minute Physics</a> — 11. bölüm (uzaysal hash) ve 24. bölüm (BVH), kaynak kodlarıyla</li><li>Christer Ericson, <i>Real-Time Collision Detection</i> (2005), 6. ve 7. bölümler: BVH ve uzaysal bölümleme</li><li>Bu dersin ilgili sunumları: <a href="../hash-tablolari/">Hash Tabloları</a> · <a href="../agaclar-bst/">Ağaçlar</a> · <a href="../bst-geometrik/">BST’nin Geometrik Uygulamaları</a> · <a href="../yz-performans/">Y18 Performans</a></li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Çarpışma Tespiti</div>
+    <div class="sub">Daire, AABB, OBB, ayıran eksen teoremi, ışın–şekil kesişimi</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../geo-carpisma/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
