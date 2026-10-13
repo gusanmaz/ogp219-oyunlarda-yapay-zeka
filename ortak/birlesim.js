@@ -27,24 +27,25 @@
   const SAMPLE = [[4, 3], [3, 8], [6, 5], [9, 4], [2, 1], [8, 9], [5, 0], [7, 2], [6, 1], [1, 0], [6, 7]];
   function depthOf(id, i) { let d = 0; while (id[i] !== i && d < 999) { i = id[i]; d++; } return d; }
   function forestSVG(f, o) {
-    const t = T(), n = f.id.length, W = o.W || 700, H = o.H || 260;
+    const t = T(), n = f.id.length, W = o.W || 1200, H = o.H || 250;
     const kids = Array.from({ length: n }, () => []);
     const roots = [];
     for (let i = 0; i < n; i++) { if (f.id[i] === i) roots.push(i); else kids[f.id[i]].push(i); }
     const pos = {}; let leaf = 0, maxD = 0;
     const lay = (x, d) => { maxD = Math.max(maxD, d); if (!kids[x].length) { pos[x] = { i: leaf++, d }; return; } kids[x].forEach(k => lay(k, d + 1)); const a = pos[kids[x][0]].i, b = pos[kids[x][kids[x].length - 1]].i; pos[x] = { i: (a + b) / 2, d }; };
     roots.forEach(r => { lay(r, 0); leaf += 0.6; });
-    const sx = (W - 60) / Math.max(1, leaf - 1), dy = Math.min(62, (H - 50) / Math.max(1, maxD));
-    const P = i => ({ x: 30 + pos[i].i * sx, y: 28 + pos[i].d * dy });
+    const span = Math.max(1, leaf - 1.6), sx = Math.min(104, (W - 90) / span), dy = Math.min(74, (H - 60) / Math.max(1, maxD));
+    const R = Math.max(12, Math.min(22, dy * 0.47)), x0 = (W - span * sx) / 2;
+    const P = i => ({ x: x0 + pos[i].i * sx, y: 30 + pos[i].d * dy });
     let s = '';
     for (let i = 0; i < n; i++) if (f.id[i] !== i) { const a = P(i), b = P(f.id[i]); const hot = f.hl && (f.hl[i] === 'link' || f.hl[i] === 'path'); s += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${hot ? t.amber : t['ink-2']}" stroke-width="${hot ? 3.5 : 2}"/>`; }
     for (let i = 0; i < n; i++) {
       const a = P(i), r = depthOf(f.id, i) >= 0 ? (() => { let x = i; while (f.id[x] !== x) x = f.id[x]; return x; })() : i;
       const st = f.hl && f.hl[i];
       const ring = st === 'p' ? t.blue : st === 'q' ? t.pink : st === 'root' ? t.green : st === 'path' ? t.amber : st === 'link' ? t.amber : null;
-      s += `<circle cx="${a.x}" cy="${a.y}" r="17" fill="${SL.ufColor(r, t.dark)}" stroke="${ring || t['ink-2']}" stroke-width="${ring ? 4 : 1.5}"/>`;
-      s += `<text x="${a.x}" y="${a.y + 6}" text-anchor="middle" font-size="16" font-weight="700" font-family="JetBrains Mono" fill="#111">${i}</text>`;
-      if (o.sz && f.sz && f.id[i] === i) s += `<text x="${a.x + 20}" y="${a.y - 12}" font-size="11" fill="${t.muted}" font-family="JetBrains Mono">sz=${f.sz[i]}</text>`;
+      s += `<circle cx="${a.x}" cy="${a.y}" r="${R}" fill="${SL.ufColor(r, t.dark)}" stroke="${ring || t['ink-2']}" stroke-width="${ring ? 4 : 1.5}"/>`;
+      s += `<text x="${a.x}" y="${a.y + R * 0.32}" text-anchor="middle" font-size="${Math.round(R * 0.9)}" font-weight="700" font-family="JetBrains Mono" fill="#111">${i}</text>`;
+      if (o.sz && f.sz && f.id[i] === i) s += `<text x="${a.x + R + 3}" y="${a.y - R + 6}" font-size="14" fill="${t.muted}" font-family="JetBrains Mono">sz=${f.sz[i]}</text>`;
     }
     return `<svg viewBox="0 0 ${W} ${H}" class="uf-forest">${s}</svg>`;
   }
@@ -62,7 +63,7 @@
       const t = T();
       arrRow.innerHTML = '<span class="uf-lab">i</span>' + f.id.map((_, i) => `<span class="uf-idx">${i}</span>`).join('') + '<br><span class="uf-lab">id[i]</span>' +
         f.id.map((v, i) => { const st = f.hl[i]; return `<span class="uf-cell${st ? ' ' + st : ''}">${v}</span>`; }).join('') +
-        (alg.startsWith('weighted') ? '<br><span class="uf-lab">sz[i]</span>' + f.sz.map((v, i) => `<span class="uf-cell sz">${f.id[i] === i ? v : ''}</span>`).join('') : '');
+        (alg.startsWith('weighted') ? '<br><span class="uf-lab">sz[i]</span>' + f.sz.map((v, i) => `<span class="uf-cell sz">${f.id[i] === i ? v : '&nbsp;'}</span>`).join('') : '');
       forest.innerHTML = forestSVG(f, { sz: alg.startsWith('weighted') });
       note.innerHTML = f.note;
       let h = 0; for (let i = 0; i < N; i++) h = Math.max(h, depthOf(f.id, i));
@@ -130,7 +131,7 @@
   D.connect = function (root) {
     const P = [[60, 60], [150, 60], [240, 60], [330, 60], [420, 60], [60, 160], [150, 160], [240, 160], [330, 160], [420, 160]];
     const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 0 480 220'); svg.setAttribute('class', 'cn-svg');
+    const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '20 10 440 200'); svg.setAttribute('class', 'cn-svg');
     const note = el('div', { class: 'sv-note' });
     let uf, edges, sel = null, mode = 'union';
     const reset = () => { uf = new UF(10); edges = []; sel = null; note.textContent = 'İki noktaya tıklayın → union. 10 nesne, 10 bileşen.'; draw(); };
@@ -159,7 +160,7 @@
 
   /* ---------------- Demo: Kruskal ile labirent ---------------- */
   D.maze = function (root) {
-    const C = +(root.dataset.c || 30), R = +(root.dataset.r || 15), S = 24, W = C * S, H = R * S;
+    const C = +(root.dataset.c || 30), R = +(root.dataset.r || 15), S = 28, W = C * S, H = R * S;
     const c = el('canvas'); const ctx = SL.setupCanvas(c, W + 2, H + 2);
     const stat = el('div', { class: 'sv-counters' });
     const note = el('div', { class: 'sv-note' });
@@ -205,7 +206,9 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, btn('🎲 Yeni labirent', () => { plan(); fp.play(); }, 'primary'),
       el('label', { class: 'ctl' }, el('input', { type: 'checkbox', checked: '', onchange: e => { showColor = e.target.checked; fp.render(); } }), ' bileşenleri renklendir')),
-    c, SL.transport(fp, { min: 2, max: 600, unit: 'duvar/sn' }), stat, note);
+    el('div', { class: 'perc-wrap' }, c, el('div', { class: 'perc-side' }, stat, note,
+      el('div', { class: 'lgd' }, el('div', {}, el('i', { style: 'background:var(--green)' }), ' duvar yıkıldı: iki yanı ayrı gruptaydı'), el('div', {}, el('i', { style: 'background:var(--red)' }), ' duvar kaldı: iki yanı zaten bağlıydı'), el('div', {}, el('i', { class: 'rb' }), ' aynı renk = aynı grup (bileşen)')))),
+    SL.transport(fp, { min: 2, max: 600, unit: 'duvar/sn' }));
     SL.onTheme(() => fp.render());
     plan();
     return { stop: () => fp.pause() };
@@ -213,13 +216,12 @@
 
   /* ---------------- Demo: perkolasyon ---------------- */
   D.percolation = function (root) {
-    let N = 20, open, order, k, perc;
-    const S = 18;
+    let N = 20, open, order, k, perc, S = 22;
     const c = el('canvas'); let ctx;
     const stat = el('div', { class: 'sv-counters' });
     const mc = el('div', { class: 'sv-note' });
     const setup = () => {
-      ctx = SL.setupCanvas(c, N * S, N * S);
+      S = Math.floor(440 / N); ctx = SL.setupCanvas(c, N * S, N * S);
       order = SL.shuffle(Array.from({ length: N * N }, (_, i) => i));
       open = new Uint8Array(N * N); k = 0; perc = -1;
       // ne zaman sızdığını önceden bul
@@ -264,7 +266,8 @@
     root.append(el('div', { class: 'sv-controls' }, el('label', { class: 'ctl' }, 'N ', select({ 10: '10×10', 20: '20×20', 30: '30×30' }, '20', v => { N = +v; setup(); })),
       btn('🎲 Yeni deney', () => { setup(); fp.play(); }, 'primary'), btn('📊 Monte Carlo (300 deney)', monte)),
     el('div', { class: 'perc-wrap' }, c, el('div', { class: 'perc-side' }, stat, mc,
-      el('p', { class: 'mini' }, 'Koyu = kapalı · beyaz = açık · mavi = üst sıraya bağlı (su ulaştı). Hücreler rastgele sırayla açılıyor; her açılışta komşu açık hücrelerle union. Sızma: üst ve alt sanal düğümler bağlı mı?'))),
+      el('div', { class: 'lgd' }, el('div', {}, el('i', { style: 'background:#3c3c48' }), ' kapalı hücre (taş)'), el('div', {}, el('i', { style: 'background:#fff;border:1px solid var(--rule)' }), ' açık hücre (boşluk), su henüz ulaşmadı'), el('div', {}, el('i', { style: 'background:#3a8ee6' }), ' açık ve üst sıraya bağlı: su ulaştı')),
+      el('p', { class: 'perc-how' }, 'Hücreler rastgele sırayla açılır. Her açılan hücre, açık komşularıyla ', el('b', {}, 'union'), ' edilir. Her adımda tek soru: ', el('code', {}, 'connected(üst, alt)'), '? Evet olduğu an su alta sızmıştır.'))),
     SL.transport(fp, { min: 2, max: 400, unit: 'hücre/sn' }));
     SL.onTheme(() => fp.render());
     setup();

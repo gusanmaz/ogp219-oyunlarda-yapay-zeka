@@ -41,7 +41,7 @@
 
   /* Go tahtası: taş grupları = bileşenler */
   D.go = function (root) {
-    const N = 9, S = 44, W = N * S, H = N * S;
+    const N = 9, S = 54, W = N * S, H = N * S;
     const c = el('canvas', { style: 'cursor:pointer' }); const ctx = SL.setupCanvas(c, W, H);
     const info = el('div', { class: 'go-side' });
     let board, turn, caps, last;
@@ -67,7 +67,7 @@
       }
       const list = [...roots.keys()].map(r => { let n = 0; for (let i = 0; i < N * N; i++) if (board[i] && uf.find(i) === r) n++; return { r, n, col: board[r], l: libs(uf, r) }; });
       info.innerHTML = `<div><b>Sıra:</b> ${turn === 1 ? '⚫ siyah' : '⚪ beyaz'} · esir: ⚫ ${caps[1]} · ⚪ ${caps[2]}</div><div class="mini">Gruplar (union–find bileşenleri) ve <b>özgürlükleri</b> (boş komşu sayısı):</div>` +
-        list.map(g => `<div class="go-grp" style="border-color:${SL.ufColor(g.r, false)}">${g.col === 1 ? '⚫' : '⚪'} ${g.n} taş · özgürlük ${g.l}${g.l === 1 ? ' ⚠️ atari!' : ''}</div>`).join('') + `<div class="sv-note">${last}</div>`;
+        list.map(g => `<div class="go-grp" style="border-color:${SL.ufColor(g.r, false)}">${g.col === 1 ? '⚫' : '⚪'} ${g.n} taş · özgürlük ${g.l}${g.l === 1 ? ' ⚠️ atari: son özgürlük!' : ''}</div>`).join('') + `<div class="sv-note">${last}</div>` + (list.length ? '' : '<div class="perc-how">Kural: yan yana (çapraz değil) duran aynı renkli taşlar bir <b>grup</b>tur. Grubun çevresindeki boş kesişimler onun <b>özgürlükleri</b>dir. Özgürlüğü 0’a düşen grup tahtadan kalkar.</div>');
     };
     c.addEventListener('click', e => {
       const b = c.getBoundingClientRect(); const x = Math.floor(((e.clientX - b.left) / b.width) * N), y = Math.floor(((e.clientY - b.top) / b.height) * N), i = y * N + x;

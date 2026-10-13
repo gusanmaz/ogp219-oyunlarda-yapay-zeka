@@ -531,21 +531,22 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .mini-code, .mini-code * { font-variant-ligatures: none !important; font-feature-settings: "liga" 0, "calt" 0 !important; }
 
 /* ---- union–find bileşenleri ---- */
-.uf-arr { font: 18px "JetBrains Mono", monospace; margin: 8px 0; line-height: 2.1; }
+.uf-arr { font: 21px "JetBrains Mono", monospace; margin: 8px 0; line-height: 2; white-space: nowrap; }
 .uf-lab { display: inline-block; width: 70px; color: var(--muted); font-size: 15px; }
-.uf-idx { display: inline-block; width: 44px; text-align: center; color: var(--muted); font-size: 14px; }
-.uf-cell { display: inline-block; width: 40px; margin-right: 4px; text-align: center; border: 2px solid var(--rule); border-radius: 6px; background: var(--card); font-weight: 700; }
+.uf-idx { display: inline-block; box-sizing: border-box; width: 52px; margin-right: 5px; text-align: center; color: var(--muted); font-size: 15px; }
+.uf-cell { display: inline-block; box-sizing: border-box; width: 52px; margin-right: 5px; text-align: center; border: 2px solid var(--rule); border-radius: 6px; background: var(--card); font-weight: 700; }
 .uf-cell.p { border-color: var(--blue); } .uf-cell.q { border-color: var(--pink); }
 .uf-cell.root { border-color: var(--green); background: color-mix(in srgb, var(--green) 20%, var(--card)); }
 .uf-cell.path { border-color: var(--amber); } .uf-cell.link { background: var(--amber); border-color: var(--amber); color: #111; }
 .uf-cell.sz { border-style: dashed; font-weight: 400; color: var(--ink-2); }
-.uf-forest { width: 100%; height: auto; max-height: 270px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
-.cn-svg { width: 100%; max-width: 760px; max-height: 330px; }
+.uf-forest { width: 100%; height: auto; max-height: 250px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
+.cn-svg { width: 100%; max-width: 1000px; max-height: 420px; display: block; margin: 0 auto; }
 .perc-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
 .perc-side { font-size: 17px; }
 .go-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
-.go-side { font-size: 17px; } .go-grp { border-left: 6px solid; padding: 2px 10px; margin: 3px 0; background: var(--card); border-radius: 6px; }
-.uf-forest { max-height: 240px; }
+.go-side { font-size: 19px; } .go-side .mini { font-size: 17px; margin: 8px 0 4px; } .go-grp { border-left: 6px solid; padding: 2px 10px; margin: 3px 0; background: var(--card); border-radius: 6px; }
+.lgd { font-size: 18px; margin: 10px 0; line-height: 1.7; } .lgd i { display: inline-block; width: 18px; height: 18px; border-radius: 4px; vertical-align: -3px; margin-right: 6px; } .lgd i.rb { background: linear-gradient(90deg, hsl(0,70%,62%), hsl(120,70%,62%), hsl(240,70%,62%)); }
+.perc-how { font-size: 18px; color: var(--ink-2); margin: 8px 0; } .perc-side .sv-note { font-size: 17px; min-height: 76px; } .perc-side .sv-note:empty { min-height: 0; }
 
 /* ---- analiz bileşenleri ---- */
 .sw-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 18px; align-items: start; }
