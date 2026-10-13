@@ -21,6 +21,20 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <link rel="stylesheet" href="../ortak/deck.css">
+<style>
+/* bu sunuma özel: demolar sayfayı doldursun */
+section > .demo .bs-row:not(.xp-row):not(.lab-row) { gap: 8px; margin: 26px 0 14px; }
+section > .demo .bs-row:not(.xp-row):not(.lab-row) .bs-cell { width: 70px; height: 118px; padding-top: 14px; border-radius: 12px; }
+section > .demo .bs-row:not(.xp-row):not(.lab-row) .bs-cell b { font-size: 30px; }
+section > .demo .bs-row:not(.xp-row):not(.lab-row) .bs-cell i { font-size: 14px; margin-top: 4px; }
+section > .demo .bs-row:not(.xp-row):not(.lab-row) .bs-cell u { font-size: 15px; }
+section > .demo .xp-row .bs-cell { width: 66px; height: 104px; } section > .demo .xp-row .bs-cell b { font-size: 20px; }
+.trace-t.bt3 { font-size: 32px; margin-top: 18px; } .trace-t.bt3 th { font-size: 17px; padding: 4px 14px; } .trace-t.bt3 td { padding: 6px 16px; }
+.trace-t.bt3 td:nth-child(-n+3) { font-size: 21px; }
+.trace-legend { font-size: 20px; margin-top: 18px; }
+.vs-out { font-size: 26px; } .vs-row { grid-template-columns: 300px 1fr 150px 110px; margin: 22px 0; } .vs-row > div { height: 42px; border-radius: 9px; } .vs-row i { font-size: 20px; }
+section > .demo .sv-note { font-size: 1.05em; }
+</style>
 </head>
 <body>
 <button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
