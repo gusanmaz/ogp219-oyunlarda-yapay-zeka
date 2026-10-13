@@ -280,7 +280,7 @@ private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
 
 <section data-sec="yukarıdan aşağı">
   <h2>Mergesort — animasyon</h2>
-  <div class="demo" data-demo="mergeviz" data-mode="td" data-n="16"></div>
+  <div class="demo" data-demo="mergeviz" data-mode="td" data-n="16" data-h="430"></div>
   <aside class="notes">Üstte asıl dizi a[], altta yardımcı dizi aux[]. Mavi çerçeve = şu an çalışılan parça (kesikli çizgi = ortası). aux’ta turuncu i sol yarıda, pembe j sağ yarıda; kırmızı k = a’da yazılan yer. Açık mavi = sıralanmış parçalar.</aside>
 </section>
 
@@ -414,7 +414,7 @@ function sortRange(a, aux, lo, hi) {
 
 <section data-sec="iyileştirmeler">
   <h2>“Zaten sıralı” kontrolünün etkisi</h2>
-  <div class="demo" data-demo="mergeviz" data-mode="td" data-n="32" data-input="nearly" data-speed="20"></div>
+  <div class="demo" data-demo="mergeviz" data-mode="td" data-n="32" data-input="nearly" data-speed="20" data-h="430"></div>
   <aside class="notes">Girdi “Neredeyse sıralı”: makas işaretli (✂) adımlarda birleştirme atlanıyor. Yöntemi “kontrol yok” yapıp karşılaştırma sayılarını kıyaslayın. Oyun verileri (skor tabloları, y-sıralama) çoğu zaman neredeyse sıralıdır!</aside>
 </section>
 
@@ -495,7 +495,7 @@ function mergeSortBU(a) {
 
 <section data-sec="aşağıdan yukarı">
   <h2>Aşağıdan yukarı — animasyon</h2>
-  <div class="demo" data-demo="mergeviz" data-mode="bu" data-n="16"></div>
+  <div class="demo" data-demo="mergeviz" data-mode="bu" data-n="16" data-h="430"></div>
 </section>
 
 <section data-sec="yarış">
@@ -514,13 +514,14 @@ function mergeSortBU(a) {
 <section data-sec="alt sınır">
   <h2>Karar ağacı: her karşılaştırma bir evet/hayır sorusu</h2>
   <div class="cols c64">
-    <svg viewBox="0 0 680 290" style="width:100%">
-      <g font-family="JetBrains Mono" font-size="14" text-anchor="middle"><line x1="320" y1="42" x2="160" y2="90" stroke="var(--ink-2)" stroke-width="2"/><line x1="320" y1="42" x2="480" y2="90" stroke="var(--ink-2)" stroke-width="2"/><line x1="160" y1="122" x2="70" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="160" y1="122" x2="250" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="480" y1="122" x2="390" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="480" y1="122" x2="570" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="250" y1="202" x2="190" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="250" y1="202" x2="310" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="570" y1="202" x2="520" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="570" y1="202" x2="620" y2="250" stroke="var(--ink-2)" stroke-width="2"/><text x="225" y="62" fill="var(--green)">evet</text><text x="415" y="62" fill="var(--red)">hayır</text><rect x="270" y="10" width="100" height="32" rx="8" fill="var(--blue)"/><text x="320" y="31" fill="#fff">a &lt; b ?</text><rect x="110" y="90" width="100" height="32" rx="8" fill="var(--blue)"/><text x="160" y="111" fill="#fff">b &lt; c ?</text><rect x="430" y="90" width="100" height="32" rx="8" fill="var(--blue)"/><text x="480" y="111" fill="#fff">a &lt; c ?</text><rect x="200" y="170" width="100" height="32" rx="8" fill="var(--blue)"/><text x="250" y="191" fill="#fff">a &lt; c ?</text><rect x="520" y="170" width="100" height="32" rx="8" fill="var(--blue)"/><text x="570" y="191" fill="#fff">b &lt; c ?</text><rect x="28" y="171" width="84" height="30" rx="8" fill="var(--green)"/><text x="70" y="191" fill="#fff">a b c</text><rect x="348" y="171" width="84" height="30" rx="8" fill="var(--green)"/><text x="390" y="191" fill="#fff">b a c</text><rect x="148" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="190" y="271" fill="#fff">a c b</text><rect x="268" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="310" y="271" fill="#fff">c a b</text><rect x="478" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="520" y="271" fill="#fff">b c a</text><rect x="578" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="620" y="271" fill="#fff">c b a</text><text x="40" y="285" fill="var(--muted)" font-size="12" text-anchor="start">sol dal = evet · sağ dal = hayır</text></g>
+    <svg viewBox="0 0 680 318" style="width:100%">
+      <g font-family="JetBrains Mono" font-size="14" text-anchor="middle"><line x1="320" y1="42" x2="160" y2="90" stroke="var(--ink-2)" stroke-width="2"/><line x1="320" y1="42" x2="480" y2="90" stroke="var(--ink-2)" stroke-width="2"/><line x1="160" y1="122" x2="70" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="160" y1="122" x2="250" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="480" y1="122" x2="390" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="480" y1="122" x2="570" y2="170" stroke="var(--ink-2)" stroke-width="2"/><line x1="250" y1="202" x2="190" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="250" y1="202" x2="310" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="570" y1="202" x2="520" y2="250" stroke="var(--ink-2)" stroke-width="2"/><line x1="570" y1="202" x2="620" y2="250" stroke="var(--ink-2)" stroke-width="2"/><text x="225" y="62" fill="var(--green)">evet</text><text x="415" y="62" fill="var(--red)">hayır</text><rect x="270" y="10" width="100" height="32" rx="8" fill="var(--blue)"/><text x="320" y="31" fill="#fff">a &lt; b ?</text><rect x="110" y="90" width="100" height="32" rx="8" fill="var(--blue)"/><text x="160" y="111" fill="#fff">b &lt; c ?</text><rect x="430" y="90" width="100" height="32" rx="8" fill="var(--blue)"/><text x="480" y="111" fill="#fff">a &lt; c ?</text><rect x="200" y="170" width="100" height="32" rx="8" fill="var(--blue)"/><text x="250" y="191" fill="#fff">a &lt; c ?</text><rect x="520" y="170" width="100" height="32" rx="8" fill="var(--blue)"/><text x="570" y="191" fill="#fff">b &lt; c ?</text><rect x="28" y="171" width="84" height="30" rx="8" fill="var(--green)"/><text x="70" y="191" fill="#fff">a b c</text><rect x="348" y="171" width="84" height="30" rx="8" fill="var(--green)"/><text x="390" y="191" fill="#fff">b a c</text><rect x="148" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="190" y="271" fill="#fff">a c b</text><rect x="268" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="310" y="271" fill="#fff">c a b</text><rect x="478" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="520" y="271" fill="#fff">b c a</text><rect x="578" y="251" width="84" height="30" rx="8" fill="var(--green)"/><text x="620" y="271" fill="#fff">c b a</text><text x="340" y="308" fill="var(--muted)" font-size="14">sol dal = evet · sağ dal = hayır · yeşil yaprak = bulunan sıra (küçükten büyüğe)</text></g>
     </svg>
     <div>
       <p>3 eleman: <b>3! = 6</b> olası sıralanış → ağacın en az 6 yaprağı olmalı.</p>
       <p>Yüksekliği h olan ikili ağacın en fazla <b>2ʰ</b> yaprağı olur → <b>2ʰ ≥ N!</b> → <b>h ≥ lg N!</b></p>
       <p class="fragment">Karar ağacının yüksekliği = <b>en kötü durumdaki</b> karşılaştırma sayısı.</p>
+      <p class="fragment" style="font-size:.8em;color:var(--ink-2)">Örnek: a = 7, b = 3, c = 5. “a &lt; b?” hayır → “a &lt; c?” hayır → “b &lt; c?” evet → yaprak <b>b c a</b> (3, 5, 7). Üç soru sorduk: ağacın yüksekliği de 3.</p>
     </div>
   </div>
   <aside class="notes">Arama sunumundaki “20 soru” oyununun tersi: N! olası cevap arasından doğruyu bulmak için en az lg N! evet/hayır sorusu gerekir. Hiçbir zekice soru sırası bunu azaltamaz.</aside>

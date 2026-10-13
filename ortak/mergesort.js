@@ -84,7 +84,7 @@
   D.mergeviz = function (root) {
     const d = root.dataset;
     let N = +(d.n || 16), mode = d.mode || 'td', input = d.input || 'random';
-    const W = 1180, H = 330;
+    const W = 1180, H = +(root.dataset.h || 330);
     const c = el('canvas'); const ctx = SL.setupCanvas(c, W, H);
     const note = el('div', { class: 'sv-note' });
     const stat = el('div', { class: 'sv-counters' });
@@ -109,14 +109,15 @@
         }
       };
       ctx.fillStyle = t.muted; ctx.font = '600 13px "JetBrains Mono"'; ctx.textAlign = 'left';
-      ctx.fillText('a[]', 4, 14); ctx.fillText('aux[]', 4, 214);
-      row(f.a, 18, 170, false);
-      row(f.aux, 222, 95, true);
-      if (f.lo != null) { ctx.strokeStyle = t.blue; ctx.lineWidth = 2; ctx.strokeRect(f.lo * bw + 1, 16, (f.hi - f.lo + 1) * bw - 2, 176); if (f.mid != null && f.mid < f.hi) { ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo((f.mid + 1) * bw, 16); ctx.lineTo((f.mid + 1) * bw, 192); ctx.stroke(); ctx.setLineDash([]); } }
+      const Ah = 170 + Math.round((H - 330) * 0.62), X0 = 18 + Ah + 34;
+      ctx.fillText('a[]', 4, 14); ctx.fillText('aux[]', 4, X0 - 8);
+      row(f.a, 18, Ah, false);
+      row(f.aux, X0, H - X0 - 13, true);
+      if (f.lo != null) { ctx.strokeStyle = t.blue; ctx.lineWidth = 2; ctx.strokeRect(f.lo * bw + 1, 16, (f.hi - f.lo + 1) * bw - 2, Ah + 6); if (f.mid != null && f.mid < f.hi) { ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo((f.mid + 1) * bw, 16); ctx.lineTo((f.mid + 1) * bw, 22 + Ah); ctx.stroke(); ctx.setLineDash([]); } }
       ctx.font = '700 12px "JetBrains Mono"'; ctx.textAlign = 'center';
       if (f.i != null && f.i <= f.mid) { ctx.fillStyle = t.amber; ctx.fillText('i', f.i * bw + bw / 2, H - 2); }
       if (f.j != null && f.j <= f.hi) { ctx.fillStyle = t.pink; ctx.fillText('j', f.j * bw + bw / 2, H - 2); }
-      if (f.k != null) { ctx.fillStyle = t.red; ctx.fillText('k', f.k * bw + bw / 2, 205); }
+      if (f.k != null) { ctx.fillStyle = t.red; ctx.fillText('k', f.k * bw + bw / 2, 18 + Ah + 17); }
       note.innerHTML = f.note;
       stat.innerHTML = `<span class="cnt cmp"><b>${f.c}</b> karşılaştırma</span><span class="cnt wr"><b>${f.w}</b> dizi yazması</span><span class="cnt">N = ${n} · ½N lg N = ${Math.round(n * Math.log2(n) / 2)} · N lg N = ${Math.round(n * Math.log2(n))}</span>`;
     };
