@@ -8,7 +8,7 @@ Oyun yapay zekâsı algoritmalarına geçmeden önce ihtiyaç duyulan temel algo
 
 ## Ders haritası
 
-Büyük konular, Princeton’daki gibi alt konulara (ayrı sunumlara) bölünmüştür.
+Büyük konular alt konulara (ayrı sunumlara) bölünmüştür.
 
 **Bölüm 1 · Temeller**
 
@@ -158,4 +158,4 @@ Her sunum kendi klasöründe bir `index.html` ve sunuma özel demoların bulundu
 
 ## Kaynak
 
-Konu akışı R. Sedgewick ve K. Wayne’in [Algorithms, 4th Edition](https://algs4.cs.princeton.edu/) kitabını ve Princeton [ders slaytlarını](https://algs4.cs.princeton.edu/lectures/) izler.
+Her sunumun son slaytlarında o konunun kaynakları (kaynak kodu, yazılar, videolar) listelenir.
