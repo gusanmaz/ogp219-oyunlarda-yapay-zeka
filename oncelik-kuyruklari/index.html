@@ -219,7 +219,7 @@
     <ul>
       <li><b>İşaretçi yok</b>: BST düğümünde anahtar + 2 bağlantı (64 bitte 16 bayt fazladan). Yığında sadece anahtar.</li>
       <li class="fragment"><b>Önbellek dostu</b>: üst seviyeler dizinin başında, birbirine yakın → sık kullanılan kısım önbellekte kalır.</li>
-      <li class="fragment"><b>GC dostu</b>: tek bir dizi; binlerce küçük düğüm nesnesi yok → çöp toplayıcıya iş yok, oyunda takılma yok.</li>
+      <li class="fragment"><b>Çöp toplayıcı dostu</b>: tek bir dizi; binlerce küçük düğüm nesnesi yok → çöp toplayıcıya iş yok, oyunda takılma yok. <span class="mini" style="display:block;margin-top:4px;border-left:3px solid var(--blue);padding-left:8px">📖 <b>Çöp toplayıcı</b> (garbage collector, kısaca <b>GC</b>): C#, Java, JavaScript ve Python’da artık kullanılmayan nesneleri bellekten kendiliğinden silen mekanizma. Silme işi arada bir topluca yapılır ve o an oyun birkaç milisaniye durabilir; bu yüzden oyun kodunda “her karede yeni nesne üretme” kuralı vardır.</span></li>
       <li class="fragment"><b>Çocuk bulma = çarpma</b>: <code>2k</code> işlemcide bir bit kaydırma kadar ucuz.</li>
     </ul>
   </div>
@@ -252,7 +252,7 @@
     <div style="font-size:.88em">
       <p>Bir düğüm ebeveyninden <b>büyük</b> oldu (yığın düzeni bozuldu):</p>
       <ol><li>Ebeveyniyle <b>yer değiştir</b></li><li>Hâlâ yeni ebeveyninden büyükse tekrarla</li><li>Kökte ya da ebeveyninden küçükse dur</li></ol>
-      <div class="box story"><span class="bt">😄 Peter ilkesi</span>“Herkes yetersiz kalacağı seviyeye kadar terfi eder.” Düğüm, patronundan daha iyi olduğu sürece terfi ediyor!</div>
+      <div class="box story"><span class="bt">😄 Akılda tutmak için: şirkette terfi</span>Yığını bir şirket şeması gibi düşünün: her düğümün üstünde bir “müdürü” (ebeveyni) var. Yeni gelen en alta girer; <b>müdüründen daha iyiyse onunla yer değiştirir</b> (terfi) ve bunu, kendisinden iyi bir müdüre rastlayana kadar sürdürür. Yönetim bilimindeki ünlü şaka da bunu söyler: “Herkes, yetersiz kalacağı seviyeye kadar terfi eder” (Laurence J. Peter, 1969: “Peter ilkesi”). Düğümümüz de tam o noktada durur.</div>
       <p class="mini"><b>insert</b> = sona ekle + swim. En fazla <b>1 + lg N</b> karşılaştırma.</p>
     </div>
   <div class="tabs ">
@@ -680,9 +680,40 @@ def sink(a, k, n):
 </section>
 
 <section data-sec="oyunda">
+  <h2>Problem: “3 saniye sonra patlat” diyen binlerce olay</h2>
+  <div class="cols c46">
+    <div style="font-size:.73em">
+      <div class="box game" style="font-size:.95em"><span class="bt">🎮 Zamanlanmış olaylar</span>
+        <ul>
+          <li>Bomba 3 saniye sonra patlayacak. Zehir her saniye can götürecek. Kalkan 8 saniye sonra bitecek. Düşman 20 saniye sonra yeniden doğacak.</li>
+          <li>Büyük bir oyunda aynı anda <b>binlerce</b> böyle bekleyen olay olur.</li>
+        </ul>
+      </div>
+      <ul>
+        <li><b>İlk akla gelen:</b> hepsini bir listede tut; her karede listenin <b>tamamını</b> gez: “zamanı geldi mi?” 5.000 olay × saniyede 60 kare = saniyede 300.000 boş kontrol.</li>
+        <li><b>Gözlem:</b> şu an tek bir olay önemli: <b>en erken</b> gerçekleşecek olan. Onun zamanı gelmediyse hiçbirininki gelmemiştir.</li>
+        <li><b>Çözüm:</b> olayları, anahtarı <b>gerçekleşme zamanı</b> olan bir MIN-yığında tut. En erken olay hep <b>kökte</b>: her karede tek bir karşılaştırma.</li>
+        <li>Zamanı gelince kökü çıkar (<code>delMin</code>, lg N adım), olayı gerçekleştir, yeni köke bak.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.72em"><span class="bt">Elle izleme: şimdi t = 0</span>
+      <table class="sum-t" style="font-size:18px"><tr><th>olay</th><th>zamanı</th></tr>
+        <tr><td>🔥 yanma hasarı</td><td>0,6</td></tr><tr><td>🛡️ kalkan biter</td><td>5,7</td></tr><tr><td>💣 bomba patlar</td><td>13,5</td></tr><tr><td>👾 düşman doğar</td><td>6,9</td></tr></table>
+      <ul style="font-size:.95em">
+        <li>Yığının kökü: <b>🔥 0,6</b> (en küçük zaman).</li>
+        <li>t = 0,3: kök 0,6 &gt; 0,3 → hiçbir şey yapma. Öbür üç olaya <b>bakılmadı</b>.</li>
+        <li>t = 0,6: kökün zamanı geldi → çıkar, yanma hasarını uygula. Yeni kök: <b>🛡️ 5,7</b>.</li>
+        <li>Yanma tekrarlanıyorsa: aynı olayı 1,6’ya yeniden ekle (<code>insert</code>).</li>
+      </ul>
+      <p class="mini">Ağacın biçimi “kim kimden sonra” demek <b>değildir</b>; tek garanti şudur: her düğümün zamanı, altındakilerden küçüktür. Bu yüzden en erken olay kökte durur; gerisi yarı sıralıdır.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
   <h2>🎮 Olay zamanlayıcısı <span class="en">timer / scheduler</span></h2>
   <div class="demo" data-demo="timers"></div>
-  <p class="mini">MIN-yığın, anahtar = olayın zamanı. Her karede: “kökteki olayın zamanı geldi mi?” Gelmediyse diğer binlerce olaya <b>bakmaya bile gerek yok</b>. ⏭ ile bir sonraki olaya atlayın.</p>
+  <p class="mini"><b>Üstte</b> zaman çizgisi: her simge bekleyen bir olay, kırmızı çizgi “şimdi”. <b>Altta</b> aynı olayların yığını: düğümün solundaki simge olay, içindeki sayı zamanı. <b>⏭ Sıradaki olay</b>: saat köke atlar, kök çıkarılır, yığın kendini onarır. <b>➕ Rastgele olay ekle</b>: yeni olay en alta girip yerine yüzer.</p>
 </section>
 
 <section data-sec="oyunda">
@@ -771,9 +802,9 @@ function update(now) {                               // her karede
 </section>
 
 <section data-sec="oyunda">
-  <h2>🏆 Akıştan en iyi k skor</h2>
+  <h2>🏆 Skorlar tek tek geliyor: en iyi 5’i nasıl tutarız?</h2>
   <div class="demo" data-demo="topk" data-k="5" data-n="22"></div>
-  <p class="mini">Skorlar tek tek geliyor. 5 elemanlı MIN-yığın: kök = “en iyi 5’in en kötüsü” = giriş barajı. Barajı geçemeyen skor hemen atılır.</p>
+  <p class="mini">Çevrimiçi bir oyunda skorlar bitmeyen bir sıra hâlinde gelir (buna <b>veri akışı</b> denir: hepsini saklayamazsınız, her birini bir kez görürsünüz). Liderlik tablosu için yalnızca <b>en iyi 5</b> lazım. Numara: 5 elemanlı bir <b>MIN</b>-yığın tutmak. Kökü “en iyi 5’in en kötüsü”dür, yani <b>giriş barajı</b>: yeni skor barajı geçemiyorsa hemen atılır; geçiyorsa kök çıkar, yeni skor girer.</p>
 </section>
 
 <section data-sec="oyunda">
@@ -822,7 +853,7 @@ function update(now) {                               // her karede
   <div class="cols c64">
     <div><ul style="font-size:.84em">
       <li>Linux çekirdeğinin genel amaçlı sıralama fonksiyonu (<code>lib/sort.c</code>) quicksort değil, <b>heapsort</b>tur. Kaynak kodundaki açıklama: “Linux çekirdeği için hızlı, küçük, <b>özyinelemesiz</b> bir O(n log n) sıralama.”</li>
-      <li>Sebep 1: Çekirdeğin yığını çok küçüktür (birkaç kilobayt); derin özyineleme sistemi çökertebilir. Heapsort sabit ek bellekle çalışır.</li>
+      <li>Sebep 1: Çekirdeğin <b>çağrı yığını</b> çok küçüktür (birkaç kilobayt); derin özyineleme sistemi çökertebilir. <span class="mini">(Çağrı yığını: her fonksiyon çağrısının yerel değişkenlerini tuttuğu bellek bölgesi; Yığınlar ve Kuyruklar sunumundaki “call stack”. Bu sunumdaki yığın veri yapısıyla (heap) yalnızca Türkçe adı aynı.)</span> Heapsort sabit ek bellekle çalışır.</li>
       <li>Sebep 2: Quicksort’un en kötü durumu O(n²); çekirdekte öngörülemeyen gecikme kabul edilemez. Heapsort’un en kötü durumu da O(n log n).</li>
       <li>2019’da yapılan iyileştirmeyle (“aşağıdan yukarı” heapsort) karşılaştırma sayısı daha da azaltıldı.</li>
     </ul></div>

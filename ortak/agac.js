@@ -133,6 +133,7 @@
           ctx.fillStyle = ink; ctx.font = `700 ${fs}px "JetBrains Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(String(v.key), p.x, p.y + 1);
         }
+        if (this.o.icon) { const ic = this.o.icon(id, v); if (ic) { ctx.font = `${Math.round(r * 1.05)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ic, p.x - r - Math.round(r * 0.55), p.y - 2); } }   // düğümün solunda simge (ör. olayın emojisi)
         if (this.o.sizes && r >= 10) {
           ctx.fillStyle = t.muted; ctx.font = '600 11px "JetBrains Mono"'; ctx.textAlign = 'left';
           ctx.fillText(v.n, p.x + r + 2, p.y - r + 4);

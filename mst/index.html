@@ -497,6 +497,49 @@ def prim(V, adj):
 </section>
 
 <section data-sec="oyunda">
+  <h2>Problem: rastgele odaları koridorlarla bağlamak</h2>
+  <div class="cols c46">
+    <div style="font-size:.75em">
+      <div class="box game" style="font-size:.95em"><span class="bt">🎮 Zindan üreticisinin derdi</span>
+        <p>Her oyunda farklı bir zindan istiyoruz (Y15). Odaları rastgele serpmek kolay; zor olan onları <b>koridorlarla bağlamak</b>:</p>
+        <ul>
+          <li>Her odaya ulaşılabilmeli (giriş odasından patron odasına yol olmalı).</li>
+          <li>Gereksiz koridor olmamalı: her koridor kazı, ışık, düşman demek.</li>
+          <li>Koridorlar kısa olmalı: haritanın bir ucundan öbür ucuna giden tüneller çirkin durur.</li>
+        </ul>
+      </div>
+      <ul>
+        <li><b>Graf olarak:</b> odalar düğüm, olası koridorlar kenar, kenarın ağırlığı koridorun <b>uzunluğu</b>.</li>
+        <li>İstenen: bütün odaları bağlayan, toplam uzunluğu <b>en küçük</b> koridor kümesi = <b>en küçük kapsayan ağaç</b> (MST).</li>
+        <li>Kruskal bunu şöyle bulur: adayları kısadan uzuna sırala; sıradaki koridor <b>henüz bağlı olmayan</b> iki odayı birleştiriyorsa kaz, yoksa atla.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: dört oda, beş aday koridor</span>
+      <table class="sum-t" style="font-size:20px"><tr><th>sıra</th><th>aday</th><th>uzunluk</th><th>gruplar (önce)</th><th>karar</th></tr>
+        <tr><td>1</td><td>A–B</td><td>3</td><td>{A} {B} {C} {D}</td><td><b>kaz</b></td></tr>
+        <tr><td>2</td><td>C–D</td><td>4</td><td>{A, B} {C} {D}</td><td><b>kaz</b></td></tr>
+        <tr><td>3</td><td>A–C</td><td>5</td><td>{A, B} {C, D}</td><td><b>kaz</b> (iki grubu birleştirir)</td></tr>
+        <tr><td>4</td><td>B–C</td><td>6</td><td>{A, B, C, D}</td><td>atla: ikisi zaten bağlı</td></tr>
+        <tr><td>5</td><td>B–D</td><td>9</td><td>{A, B, C, D}</td><td>atla</td></tr></table>
+      <p>Sonuç: 4 oda, <b>3 koridor</b> (her zaman oda sayısı − 1), toplam 3 + 4 + 5 = <b>12</b> birim. B–C’yi de kazsaydık A → B → C → A diye bir <b>döngü</b> oluşurdu: fazladan 6 birim kazı, yeni hiçbir odaya ulaşmadan.</p>
+      <p class="mini">Odalara <b>harf</b> veriyoruz ki uzunluklarla (sayılar) karışmasın. “Gruplar” sütununu tutan veri yapısı Union-Find sunumundaki birleşim-bulma: demoda her grup ayrı bir <b>renk</b>.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="oyunda">
+  <div class="box ask" style="font-size:.86em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span>
+    <ul>
+      <li>Dikdörtgenler odalar (A = giriş, son harf = patron odası). <b>İnce gri çizgiler</b> aday koridorlar; kazılmış koridorlar kalın kahverengi.</li>
+      <li><b>Odanın rengi, bağlı olduğu grubu gösterir.</b> Başta her oda ayrı renktedir. Bir koridor kazılınca iki grup aynı renge boyanır. Bütün odalar tek renk olduğunda zindan bağlanmıştır.</li>
+      <li><b>“İleri ▶|”</b> ile adım adım gidin. Sarı çizgi şu an bakılan aday; üstündeki sayı uzunluğu. İki ucu <b>farklı renkteyse</b> kazılır; <b>aynı renkteyse</b> kırmızı kesikli olur ve atlanır.</li>
+      <li>Sayaçlardan “ayrı grup”u izleyin: her kazıda bir azalır; 1 olunca ağaç tamamdır.</li>
+      <li>Son adım tasarım kararı: ağaçta her iki oda arasında <b>tek</b> yol vardır. Atlanan koridorların bir kısmı geri eklenir (mor): oyuncu dolanabilsin, düşmandan kaçabilsin.</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="oyunda">
   <h2>🎮 Prosedürel zindan: odaları MST ile bağla</h2>
   <div class="demo" data-demo="dungeon"></div>
 </section>

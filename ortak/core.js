@@ -453,7 +453,29 @@
       const sl = Reveal.getCurrentSlide(); if (!sl || sl.classList.contains('level')) return;
       sl.style.zoom = '';
       const h = sl.scrollHeight, room = 700;
-      if (h > room + 4) sl.style.zoom = Math.max(0.6, room / h).toFixed(3);
+      const used0 = bottom(sl);
+      if (h > room + 4 && used0 > room - 40) { sl.style.zoom = Math.max(0.6, room / h).toFixed(3); return; }
+      grow(sl);
+    };
+    // içeriğin gerçek alt kenarı (mutlak konumlu ve gizli öğeler hariç)
+    const bottom = sl => { let b = 0; for (const c of sl.children) { if (!c.offsetHeight || getComputedStyle(c).position === 'absolute') continue; b = Math.max(b, c.offsetTop + c.offsetHeight); } return b; };
+    // Tersi: slaytta tek bir demo var ve altı boş kalıyorsa demoyu büyüt (sıkışık görünmesin).
+    // zoom yerleşimi yeniden akıtır; yatayda ya da dikeyde taşarsa oran azaltılır.
+    const demoSel = ['.demo[data-demo]'].concat(registry.map(r => r[0])).join(',');
+    let grownFor = null, grownMax = 9;
+    const grow = sl => {
+      if (sl.classList.contains('no-grow') || !demoSel) return;
+      const cand = [...sl.children].filter(c => c.matches(demoSel));
+      if (cand.length !== 1) return;
+      const d = cand[0]; if (d.querySelector('.CodeMirror, iframe, textarea')) return;
+      if (grownFor !== sl) { grownFor = sl; grownMax = 9; }
+      d.style.zoom = '';
+      const dh = d.offsetHeight, other = bottom(sl) - dh; if (dh < 40) return;
+      let z = Math.min(1.42, grownMax, (640 - other) / dh);
+      if (z < 1.1) return;
+      const wide = () => { if (d.scrollWidth > d.clientWidth + 2) return true; const R = d.getBoundingClientRect().right + 1; for (const e of d.querySelectorAll('*')) { if (e.offsetWidth && e.getBoundingClientRect().right > R) return true; } return false; };
+      for (let k = 0; k < 10; k++) { d.style.zoom = z.toFixed(3); if (bottom(sl) <= 650 && !wide()) break; z *= 0.95; if (z < 1.08) { d.style.zoom = ''; return; } }
+      grownMax = z;
     };
     let fitT; const fitSoon = () => { clearTimeout(fitT); fitT = setTimeout(fit, 250); };
     Reveal.on('slidechanged', fitSoon); Reveal.on('ready', fitSoon); Reveal.on('resize', fitSoon); Reveal.on('fragmentshown', fitSoon);

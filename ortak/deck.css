@@ -595,8 +595,8 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 
 /* ---------- öncelik kuyrukları ---------- */
 .hp-arr { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; font-family: "JetBrains Mono", monospace; }
-.hp-cell { min-width: 40px; text-align: center; border: 2px solid var(--rule); border-radius: 7px; background: var(--card); padding: 1px 4px; }
-.hp-cell i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
+.hp-cell { min-width: 46px; text-align: center; border: 2px solid var(--rule); border-radius: 8px; background: var(--card); padding: 5px 6px 6px; line-height: 1.15; }
+.hp-cell i { display: block; font-style: normal; font-size: 10px; line-height: 1; margin-bottom: 4px; color: var(--muted); }
 .hp-cell b { font-size: 18px; }
 .hp-cell.zero { opacity: .4; }
 .hp-cell.sorted { background: var(--green); border-color: var(--green); color: #fff; }

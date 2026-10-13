@@ -28,15 +28,21 @@
     const out = el('div');
     const draw = () => {
       const better = dv + wt < dw, t = T();
-      out.innerHTML = `<svg viewBox="0 0 640 170" style="width:100%;max-width:640px" font-family="JetBrains Mono">
-        <defs><marker id="rx-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${better ? t.green : t['ink-2']}"/></marker></defs>
-        <circle cx="60" cy="85" r="24" fill="${t.card}" stroke="${t['ink-2']}" stroke-width="2"/><text x="60" y="91" text-anchor="middle" font-size="18" font-weight="700" fill="${t.ink}">s</text>
-        <path d="M86,80 C150,20 230,20 280,70" fill="none" stroke="${t.muted}" stroke-width="2" stroke-dasharray="6 5"/><text x="185" y="30" text-anchor="middle" font-size="14" fill="${t.muted}">distTo[v] = ${dv}</text>
-        <path d="M84,96 C220,175 440,175 556,100" fill="none" stroke="${better ? t.muted : t.amber}" stroke-width="${better ? 2 : 4}" stroke-dasharray="6 5"/><text x="330" y="166" text-anchor="middle" font-size="14" fill="${t.ink}">distTo[w] = ${dw} (şimdiki en iyi)</text>
-        <circle cx="300" cy="85" r="24" fill="${t.blue}"/><text x="300" y="91" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">v</text>
-        <line x1="326" y1="85" x2="548" y2="85" stroke="${better ? t.green : t['ink-2']}" stroke-width="${better ? 5 : 2.5}" marker-end="url(#rx-a)"/><rect x="415" y="70" width="44" height="26" rx="6" fill="${t.card}" stroke="${t.rule}"/><text x="437" y="89" text-anchor="middle" font-size="15" font-weight="700" fill="${t.ink}">${wt}</text>
-        <circle cx="580" cy="85" r="24" fill="${better ? t.green : t.card}" stroke="${better ? t.green : t['ink-2']}" stroke-width="2"/><text x="580" y="91" text-anchor="middle" font-size="18" font-weight="700" fill="${better ? '#fff' : t.ink}">w</text></svg>
-        <p class="lead">distTo[v] + ağırlık = ${dv} + ${wt} = <b>${dv + wt}</b> ${better ? '&lt;' : '≥'} distTo[w] = ${dw} → ${better ? `<b class="c-green">GEVŞET: distTo[w] = ${dv + wt}, edgeTo[w] = v</b>` : '<b>değişiklik yok</b> (v üzerinden gitmek daha iyi değil)'}</p>`;
+      const lab = (x, y, str, col, bold) => { const w = str.length * 9.2 + 18; return `<rect x="${x - w / 2}" y="${y - 15}" width="${w}" height="28" rx="7" fill="${t.card}" stroke="${col}" stroke-width="1.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="16" font-weight="${bold ? 700 : 600}" fill="${col}">${str}</text>`; };
+      const node = (x, y, ch, fill, ink, stroke) => `<circle cx="${x}" cy="${y}" r="30" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/><text x="${x}" y="${y + 8}" text-anchor="middle" font-size="24" font-weight="700" fill="${ink}">${ch}</text>`;
+      const viaC = better ? t.green : t['ink-2'], oldC = better ? t.muted : t.amber;
+      out.innerHTML = `<svg viewBox="0 0 900 310" style="width:100%;max-height:318px;display:block" font-family="JetBrains Mono">
+        <defs><marker id="rx-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${viaC}"/></marker>
+        <marker id="rx-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${oldC}"/></marker>
+        <marker id="rx-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${viaC}"/></marker></defs>
+        <path d="M118,128 C200,60 300,52 392,84" fill="none" stroke="${viaC}" stroke-width="${better ? 4 : 2.5}" stroke-dasharray="8 6" marker-end="url(#rx-c)"/>
+        <line x1="462" y1="100" x2="776" y2="150" stroke="${viaC}" stroke-width="${better ? 6 : 3}" marker-end="url(#rx-a)"/>
+        <path d="M112,180 C300,300 620,300 782,186" fill="none" stroke="${oldC}" stroke-width="${better ? 2.5 : 5}" stroke-dasharray="8 6" marker-end="url(#rx-b)"/>
+        ${node(90, 155, 's', t.card, t.ink, t['ink-2'])}${node(430, 92, 'v', t.blue, '#fff', t.blue)}${node(810, 160, 'w', better ? t.green : t.card, better ? '#fff' : t.ink, better ? t.green : t['ink-2'])}
+        ${lab(250, 46, `s’den v’ye bilinen en kısa: ${dv}`, viaC)}${lab(622, 100, `kenar v→w: ${wt}`, viaC, true)}${lab(450, 286, `s’den w’ye şimdiki en iyi: ${dw}`, oldC, !better)}
+        <text x="90" y="212" text-anchor="middle" font-size="13" fill="${t.muted}">kaynak</text></svg>
+        <div class="cols" style="margin-top:4px;font-size:1.25em"><div class="box ${better ? 'game' : 'info'}"><span class="bt">Yeni yol: v üzerinden</span>distTo[v] + ağırlık = ${dv} + ${wt} = <b>${dv + wt}</b></div><div class="box ${better ? 'info' : 'game'}"><span class="bt">Eski yol</span>distTo[w] = <b>${dw}</b></div></div>
+        <p class="lead" style="margin-top:8px">${dv + wt} ${better ? '&lt;' : '≥'} ${dw} → ${better ? `<b class="c-green">GEVŞET: distTo[w] = ${dv + wt}, edgeTo[w] = v</b> (w’ye artık v üzerinden gidilir)` : '<b>değişiklik yok</b> (v üzerinden gitmek daha kısa değil)'}</p>`;
     };
     root.append(el('div', { class: 'sv-controls' }, slider('distTo[v]', 0, 15, dv, 1, v => { dv = v; draw(); }), slider('v→w ağırlığı', 0, 15, wt, 1, v => { wt = v; draw(); }), slider('distTo[w]', 0, 25, dw, 1, v => { dw = v; draw(); })), out);
     draw(); SL.onTheme(draw);
@@ -190,8 +196,10 @@
   D.arbitrage = function (root) {
     const names = ['Altın', 'Gümüş', 'Mücevher', 'Kürk'];
     const rates = [[0, 1, 10], [1, 0, 0.09], [1, 2, 0.25], [2, 1, 3.9], [2, 0, 0.43], [0, 3, 2], [3, 0, 0.48], [3, 2, 0.2]];
-    const G = SL.Graph(4, rates, [[110, 180], [380, 60], [650, 180], [380, 300]], { directed: true, weighted: true, labels: names });
     const W = rates.map(r => -Math.log(r[2]));
+    // etiket: kur ve yanında algoritmanın kullandığı ağırlık (−ln kur); eksi ağırlıklar görünsün
+    const G = SL.Graph(4, rates.map((r, i) => [r[0], r[1], `${r[2]}  (${W[i] < 0 ? '−' : '+'}${Math.abs(W[i]).toFixed(2).replace('.', ',')})`]), [[110, 180], [380, 60], [650, 180], [380, 300]], { directed: true, weighted: true, labels: names });
+    G.edges.forEach((e, i) => { e.rate = rates[i][2]; });
     const left = el('div', { class: 'gv-wrap' }), right = el('div', { class: 'gv-side' });
     const gv = new SL.GraphView(left, { W: 760, H: 360, r: 20 }); gv.setGraph(G);
     const note = el('div', { class: 'sv-note tree-note' });
@@ -204,10 +212,10 @@
       if (cyc) cyc.forEach(id => (es[id] = 'path'));
       F.push({ ns, es, badge, note, pass, dist: dist.slice(), from: edgeTo.map(id => (id >= 0 ? G.edges[id].v : -1)) });
     };
-    P('Oklardaki sayılar kur (1 birim verince kaç birim alınır). Algoritma her kuru −ln(kur) ağırlığına çevirip toplar: kârlı tur = toplamı eksi döngü. Rozet ve tablo: Altın’dan o paraya en küçük toplam.', null, null, null, 0);
+    P('Oklarda iki sayı var: kur (1 birim verince kaç birim alınır) ve parantez içinde algoritmanın topladığı ağırlık = −ln(kur). Kur 1’den büyükse ağırlık EKSİ. Kârlı tur = ağırlıkları toplamı eksi olan döngü. Rozet ve tablo: Altın’dan o paraya en küçük toplam.', null, null, null, 0);
     for (let pass = 1; pass <= 3; pass++) {
       G.edges.forEach((e, i) => {
-        if (dist[e.v] + W[i] < dist[e.w] - 1e-12) { dist[e.w] = dist[e.v] + W[i]; edgeTo[e.w] = i; P(`Tur ${pass}: ${names[e.v]}→${names[e.w]} gevşedi (−ln ${e.wt} = ${f2(W[i])})`, i, 'relax', null, pass); }
+        if (dist[e.v] + W[i] < dist[e.w] - 1e-12) { dist[e.w] = dist[e.v] + W[i]; edgeTo[e.w] = i; P(`Tur ${pass}: ${names[e.v]}→${names[e.w]} gevşedi (kur ${e.rate}; ağırlık −ln ${e.rate} = ${f2(W[i])})`, i, 'relax', null, pass); }
       });
       P(`Tur ${pass} bitti (Bellman–Ford: V − 1 = 3 tur bütün kenarları gevşetir).`, null, null, null, pass);
     }
@@ -216,7 +224,7 @@
     if (found != null) {
       let x = G.edges[found].w; for (let k = 0; k < 4; k++) x = G.edges[edgeTo[x]].v;
       const cyc = []; let y = x; do { cyc.push(edgeTo[y]); y = G.edges[edgeTo[y]].v; } while (y !== x && cyc.length < 6);
-      const prod = cyc.reduce((p, id) => p * G.edges[id].wt, 1);
+      const prod = cyc.reduce((p, id) => p * G.edges[id].rate, 1);
       P(`4. turda hâlâ gevşeyen kenar var → NEGATİF DÖNGÜ! ${cyc.slice().reverse().map(id => names[G.edges[id].v]).join(' → ')} → ${names[x]}: kurların çarpımı ${prod.toFixed(3)} > 1. Her turda %${((prod - 1) * 100).toFixed(1)} bedava kâr: SONSUZ ALTIN 💰`, found, 'check', cyc, 4);
     }
     const fp = new SL.FramePlayer(f => { gv.render(f); right.innerHTML = `<div class="mini">Tur: <b>${f.pass}</b> · her turda bütün kenarlar sırayla gevşetilir (ek veri yapısı yok; yalnızca iki dizi):</div><table class="sum-t" style="font-size:16px;margin:6px 0"><tr><th>para</th><th>distTo[] (−ln toplamı)</th><th>edgeTo[] (nereden)</th></tr>` + names.map((n, v) => `<tr><td><b>${n}</b></td><td>${f.dist[v] === Infinity ? '∞' : f2(f.dist[v])}</td><td>${f.from[v] >= 0 ? names[f.from[v]] : '—'}</td></tr>`).join('') + `</table><div class="mini">Okların üstündeki sayı = 1 birim karşılığında alınan miktar.</div>`; note.textContent = f.note; }, { speed: 1 });

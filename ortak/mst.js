@@ -135,40 +135,60 @@
     return { rooms, cand };
   };
   D.dungeon = function (root) {
-    const W = 1180, H = 330;
+    const W = 1180, H = 350;
     const c = el('canvas'), ctx = SL.setupCanvas(c, W, H);
     const note = el('div', { class: 'sv-note tree-note' }), stat = el('div', { class: 'sv-counters' });
     let dg, loops = 0.15, showCand = true;
+    const L = i => String.fromCharCode(65 + i);                       // odalar harfle anılır (sayılar uzunluklara kalsın)
+    const KC = ['#4c78d9', '#d9534c', '#3aa76d', '#e0a030', '#9159c9', '#2aa3a3', '#c9598f', '#7a8296', '#5b8f3a', '#b0703a', '#3f6fa8', '#a84a8a', '#6a9c2f', '#c27a2c', '#5d5fbf', '#2f8f7a', '#b05050', '#808f3a', '#8a5fb0'];
     const build = () => {
-      dg = SL.makeDungeon(W, H, 14 + rint(5));
-      const uf = new UF(dg.rooms.length), F = [], tree = [], extra = [];
-      F.push({ tree: [], extra: [], cur: null, note: `${dg.rooms.length} oda rastgele yerleşti. İnce çizgiler = aday koridorlar (her odanın en yakın 4 komşusu). Ağırlık = uzunluk.` });
+      dg = SL.makeDungeon(W, H - 20, 12 + rint(4));
+      dg.cand.sort((a, b) => a.d - b.d);
+      const n = dg.rooms.length, uf = new UF(n), F = [], tree = [], rej = [], extra = [];
+      const comp = () => { const m = {}; let k = 0; return dg.rooms.map((_, v) => { const r = uf.find(v); if (!(r in m)) m[r] = k++; return m[r]; }); };
+      const P = (o) => F.push(Object.assign({ tree: tree.slice(), rej: rej.slice(), extra: [], cur: null, bad: false, comp: comp() }, o));
+      P({ note: `${n} oda rastgele yerleşti (A = giriş, ${L(n - 1)} = patron odası). İnce gri çizgiler aday koridorlar: her odadan en yakın dört komşusuna. Her odanın rengi ayrı: henüz hiçbiri birbirine bağlı değil.` });
       for (const e of dg.cand) {
-        if (uf.union(e.a, e.b)) { tree.push(e); F.push({ tree: tree.slice(), extra: [], cur: e, note: `Kruskal: en kısa aday koridor iki ayrı oda grubunu birleştiriyor → kaz (${tree.length}/${dg.rooms.length - 1})` }); }
+        if (tree.length === n - 1) break;
+        const d = Math.round(e.d);
+        if (uf.find(e.a) !== uf.find(e.b)) { P({ cur: e, note: `Sıradaki en kısa aday: ${L(e.a)}–${L(e.b)} (${d} birim). İki oda farklı renkte, yani henüz bağlı değiller → koridoru KAZ.` }); uf.union(e.a, e.b); tree.push(e); P({ note: `${L(e.a)} ile ${L(e.b)}’nin grupları birleşti (aynı renk oldular). Kazılan koridor: ${tree.length} / ${n - 1}.` }); }
+        else { P({ cur: e, bad: true, note: `Sıradaki en kısa aday: ${L(e.a)}–${L(e.b)} (${d} birim). İkisi zaten aynı renkte: aralarında bir yol var. Kazarsak boşuna koridor (döngü) olur → ATLA.` }); rej.push(e); }
       }
       const rest = dg.cand.filter(e => !tree.includes(e));
-      SL.shuffle(rest).slice(0, Math.round(rest.length * loops)).forEach(e => extra.push(e));
-      F.push({ tree: tree.slice(), extra: [], cur: null, note: 'MST hazır: her odaya ulaşılır, en az toplam koridor. Ama tek yollu (ağaç) zindan sıkıcı: çıkmazlar, geri dönüşler…' });
-      F.push({ tree: tree.slice(), extra: extra.slice(), cur: null, note: `Oyun tasarımı hilesi: MST dışındaki adaylardan %${Math.round(loops * 100)} kadarını geri ekle → döngüler, alternatif rotalar (mor). Tarif: TinyKeep oyununun zindan üreticisi.` });
+      SL.shuffle(rest.slice()).slice(0, Math.round(rest.length * loops)).forEach(e => extra.push(e));
+      const total = Math.round(tree.reduce((a, e) => a + e.d, 0));
+      P({ rej: [], note: `En küçük kapsayan ağaç hazır: ${n} oda, ${n - 1} koridor, toplam ${total} birim kazı. Her odaya ulaşılıyor ve daha az kazıyla bunu yapmanın yolu yok. Ama ağaçta tek yol vardır: çıkmazlar ve geri dönüşler.` });
+      P({ rej: [], extra: extra.slice(), note: `Tasarım dokunuşu: atlanan adaylardan %${Math.round(loops * 100)}’ini geri ekle (mor) → döngüler, alternatif rotalar, kovalamaca. TinyKeep’in zindan üreticisinin tarifi.` });
       fp.load(F); fp.play();
     };
-    const corridor = (a, b, col, w) => { const A = dg.rooms[a], B = dg.rooms[b]; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'square'; ctx.beginPath(); ctx.moveTo(A.cx, A.cy); ctx.lineTo(B.cx, A.cy); ctx.lineTo(B.cx, B.cy); ctx.stroke(); };
+    const seg = (a, b, col, w, dash) => { const A = dg.rooms[a], B = dg.rooms[b]; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(A.cx, A.cy); ctx.lineTo(B.cx, B.cy); ctx.stroke(); ctx.setLineDash([]); };
     const draw = f => {
       const t = T(); ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = t.dark ? '#14121c' : '#e9e4d8'; ctx.fillRect(0, 0, W, H);
-      if (showCand) dg.cand.forEach(e => { const A = dg.rooms[e.a], B = dg.rooms[e.b]; ctx.strokeStyle = t.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.13)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(A.cx, A.cy); ctx.lineTo(B.cx, B.cy); ctx.stroke(); });
-      f.extra.forEach(e => corridor(e.a, e.b, t.purple, 8));
-      f.tree.forEach(e => corridor(e.a, e.b, t.dark ? '#c9a46a' : '#9a7444', 8));
-      if (f.cur) corridor(f.cur.a, f.cur.b, t.amber, 10);
-      dg.rooms.forEach((r, i) => { ctx.fillStyle = t.dark ? '#3b3550' : '#bfb3a0'; ctx.fillRect(r.x, r.y, r.w, r.h); ctx.strokeStyle = t.dark ? '#7a6fa0' : '#6d5f4b'; ctx.lineWidth = 2; ctx.strokeRect(r.x, r.y, r.w, r.h); ctx.fillStyle = t.dark ? '#e8e2ff' : '#2a2318'; ctx.font = '700 13px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(i === 0 ? '🚪' : i === dg.rooms.length - 1 ? '🐉' : i, r.cx, r.cy); });
+      ctx.fillStyle = t.dark ? '#14121c' : '#efeadf'; ctx.fillRect(0, 0, W, H);
+      if (showCand) dg.cand.forEach(e => { if (!f.tree.includes(e)) seg(e.a, e.b, t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.16)', 1.2, f.rej.includes(e) ? [3, 5] : null); });
+      f.extra.forEach(e => seg(e.a, e.b, t.purple, 9));
+      f.tree.forEach(e => seg(e.a, e.b, t.dark ? '#c9a46a' : '#8a6a3c', 9));
+      if (f.cur) { seg(f.cur.a, f.cur.b, f.bad ? t.red : t.amber, 7, f.bad ? [10, 8] : null); const A = dg.rooms[f.cur.a], B = dg.rooms[f.cur.b], mx = (A.cx + B.cx) / 2, my = (A.cy + B.cy) / 2, lbl = String(Math.round(f.cur.d)); ctx.font = '700 14px "JetBrains Mono"'; const w = ctx.measureText(lbl).width + 12; ctx.fillStyle = t.card; ctx.fillRect(mx - w / 2, my - 11, w, 22); ctx.strokeStyle = f.bad ? t.red : t.amber; ctx.lineWidth = 2; ctx.strokeRect(mx - w / 2, my - 11, w, 22); ctx.fillStyle = t.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lbl, mx, my + 1); }
+      dg.rooms.forEach((r, i) => {
+        ctx.fillStyle = KC[f.comp[i] % KC.length]; ctx.globalAlpha = 0.88; ctx.fillRect(r.x, r.y, r.w, r.h); ctx.globalAlpha = 1;
+        ctx.strokeStyle = t.dark ? '#e8e2ff' : '#2a2318'; ctx.lineWidth = (f.cur && (f.cur.a === i || f.cur.b === i)) ? 4 : 1.5; ctx.strokeRect(r.x, r.y, r.w, r.h);
+        ctx.fillStyle = '#fff'; ctx.font = '800 18px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(L(i), r.cx, r.cy + 1);
+        const tag = i === 0 ? 'GİRİŞ' : i === dg.rooms.length - 1 ? 'PATRON' : ''; if (tag) { ctx.font = '700 10px "JetBrains Mono"'; ctx.fillStyle = t.ink; ctx.fillText(tag, r.cx, r.y - 8 < 8 ? r.y + r.h + 9 : r.y - 8); }
+      });
+      // gösterge
+      const lg = [[t.dark ? '#c9a46a' : '#8a6a3c', 'kazılan koridor (ağaç)'], [t.amber, 'şu an bakılan'], [t.red, 'atlanan (döngü olurdu)'], [t.purple, 'sonradan eklenen döngü']]; let lx = 10; ctx.font = '600 11px "Source Sans 3"'; ctx.textAlign = 'left';
+      ctx.fillStyle = t.dark ? 'rgba(20,18,28,.8)' : 'rgba(255,255,255,.8)'; ctx.fillRect(0, H - 20, W, 20);
+      lg.forEach(([col, name]) => { ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(lx, H - 10); ctx.lineTo(lx + 26, H - 10); ctx.stroke(); ctx.fillStyle = t.ink; ctx.fillText(name, lx + 32, H - 9); lx += 44 + ctx.measureText(name).width + 18; });
+      ctx.fillStyle = t.muted; ctx.fillText('oda rengi = bağlı olduğu grup · ince gri = aday koridor', lx, H - 9);
       note.textContent = f.note;
-      stat.innerHTML = `<span class="cnt">oda <b>${dg.rooms.length}</b></span><span class="cnt">aday koridor <b>${dg.cand.length}</b></span><span class="cnt">MST koridoru <b>${f.tree.length}</b></span><span class="cnt">ek (döngü) <b>${f.extra.length}</b></span>`;
+      const groups = new Set(f.comp).size;
+      stat.innerHTML = `<span class="cnt">oda <b>${dg.rooms.length}</b></span><span class="cnt">aday koridor <b>${dg.cand.length}</b></span><span class="cnt">kazılan <b>${f.tree.length}</b></span><span class="cnt">atlanan <b>${f.rej.length}</b></span><span class="cnt">ayrı grup <b>${groups}</b></span><span class="cnt">ek (döngü) <b>${f.extra.length}</b></span>`;
     };
-    const fp = new SL.FramePlayer(draw, { speed: 3 });
+    const fp = new SL.FramePlayer(draw, { speed: 1.2 });
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, btn('🎲 Yeni zindan', build, 'primary'), slider('Ek koridor %', 0, 60, loops * 100, 5, v => { loops = v / 100; }), el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { showCand = e.target.checked; fp.render(); } }); cb.checked = true; return cb; })(), ' adayları göster')), c, SL.transport(fp, { min: 0.5, max: 20 }), note, stat);
+    root.append(el('div', { class: 'sv-controls' }, btn('🎲 Yeni zindan', build, 'primary'), slider('Ek koridor %', 0, 60, loops * 100, 5, v => { loops = v / 100; }), el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { showCand = e.target.checked; fp.render(); } }); cb.checked = true; return cb; })(), ' adayları göster')), c, SL.transport(fp, { min: 0.3, max: 12 }), note, stat);
     SL.onTheme(() => fp.render());
-    build(); fp.pause(); fp.toEnd();
+    build(); fp.pause(); fp.idx = 0; fp.render();
     return { stop: () => fp.pause() };
   };
 

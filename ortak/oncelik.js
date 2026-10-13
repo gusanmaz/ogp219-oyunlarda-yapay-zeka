@@ -185,10 +185,11 @@
     const W = 1180, H = 96, SPAN = 20;
     const tl = el('canvas'), tctx = SL.setupCanvas(tl, W, H);
     const canvas = el('canvas');
-    const tv = new SL.TreeView(canvas, 640, 220, { maxSp: 62, maxR: 21 });
+    let info = {};
+    const tv = new SL.TreeView(canvas, 720, 250, { maxSp: 84, maxR: 21, mx: 60, icon: id => (info[id] ? info[id].icon : '') });
     const log = el('div', { class: 'tm-log' }), note = el('div', { class: 'sv-note tree-note' });
     const KINDS = [['👾', 'düşman doğar'], ['💣', 'bomba patlar'], ['🛡️', 'kalkan biter'], ['🔥', 'yanma hasarı'], ['🎵', 'müzik değişir'], ['🪙', 'altın düşer'], ['⚡', 'yetenek hazır']];
-    let m, clock = 0, info = {}, fired = [];
+    let m, clock = 0, fired = [];
     const fp = new SL.FramePlayer(f => draw(f), { speed: 2 });
     const draw = f => {
       const t = T(); tctx.clearRect(0, 0, W, H);
@@ -202,7 +203,7 @@
         tctx.globalAlpha = on ? 1 : 0.25; tctx.font = '22px sans-serif'; tctx.fillText(ev.icon, X(ev.time), H - 34 - (ev.id % 2) * 24); tctx.globalAlpha = 1;
       });
       tctx.strokeStyle = t.red; tctx.lineWidth = 2.5; tctx.beginPath(); tctx.moveTo(X(f.clock), 4); tctx.lineTo(X(f.clock), H - 18); tctx.stroke();
-      tctx.fillStyle = t.red; tctx.font = '700 12px "JetBrains Mono"'; tctx.fillText('şimdi ' + f.clock.toFixed(1), X(f.clock), 12);
+      tctx.fillStyle = t.red; tctx.font = '700 12px "JetBrains Mono"'; tctx.textAlign = X(f.clock) < 70 ? 'left' : X(f.clock) > W - 70 ? 'right' : 'center'; tctx.fillText('şimdi: ' + f.clock.toFixed(1).replace('.', ',') + ' sn', X(f.clock) + (X(f.clock) < 70 ? 6 : X(f.clock) > W - 70 ? -6 : 0), 12); tctx.textAlign = 'center';
       tv.show({ root: f.tree, hl: f.hl });
       log.innerHTML = '<div class="mini"><b>Gerçekleşen olaylar</b></div>' + (f.fired.length ? f.fired.slice(-7).reverse().map(e => `<div>${e}</div>`).join('') : '<div class="mini">(henüz yok)</div>');
       note.textContent = f.note;
@@ -211,7 +212,7 @@
       m = new HeapModel(true); clock = 0; info = {}; fired = [];
       m.F = []; m.extra = { clock: 0, fired: [] };
       for (let i = 0; i < 8; i++) add(true);
-      m.P('8 zamanlanmış olay MIN-yığında (anahtar = olayın zamanı). Kökte her zaman EN YAKIN olay var.');
+      m.P('Üstteki zaman çizgisindeki 8 olay, aşağıda bir MIN-yığında duruyor: her düğüm bir olay (simgesi solunda), içindeki sayı olayın gerçekleşeceği saniye. Kökte her zaman EN YAKIN olay var: oyun yalnızca ona bakar.');
       const F = m.F.slice(-1); m.F = null; fp.load(F);
     };
     const add = silent => {
