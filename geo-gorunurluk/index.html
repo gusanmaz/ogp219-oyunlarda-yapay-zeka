@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Görünürlük ve Işık</title>
+<meta name="description" content="Oyunlarda görünürlük: ızgarada görüş hattı (DDA, Bresenham), Wolfenstein usulü ışın dökümü, roguelike görüş alanı (gölge dökümü) ve savaş sisi, görüş çokgeni ve 2B ışık, BSP ağacı ile çizim sırası; DOOM kaynak kodundan örnek; p5.js kodları ve oynanabilir demolar.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 25% 15%, #3a300d 0%, #1a1824 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G4</div>
+  <div class="ttl" style="font-size:64px">Görünürlük ve Işık</div>
+  <div class="sub"><i>Görüş hattı, ışın dökümü, görüş alanı, savaş sisi, görüş çokgeni, BSP</i> — “buradan ne görünüyor?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo4"></div>
+  <aside class="notes">Arka planda dolaşan bir fener; duvarların arkasında kalan yerler karanlık (görüş çokgeni canlı hesaplanıyor).</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Izgarada görüş hattı</b> — örnekleme neden yanılır; DDA ile hücre hücre; Bresenham</li><li><b>Işın dökümü</b> — Wolfenstein 3D: 2B haritadan 3B görüntü; balık gözü</li><li><b>Görüş alanı ve savaş sisi</b> — roguelike’larda gölge dökümü; strateji oyunlarında üç durumlu sis</li><li><b>Görüş çokgeni</b> — sürekli dünyada “gördüğüm her yer”; yalnızca köşelere ışın; 2B ışık ve gölge</li><li><b>BSP ağacı</b> — DOOM duvarları sıralamadan nasıl önden arkaya çizdi?</li><li><b>Her adımda</b> — elle izleme → canlı demo → kod (JavaScript / Python / C#) → oyunlardaki karşılığı</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>“şu hücreden bu hücre görünüyor mu?”, “oyuncu şu an haritanın neresini görüyor?” ve “hangi duvar önde?” sorularını cevaplayan algoritmaları yazabilecek; Wolfenstein 3D’nin görüntüsünü ve DOOM’un çizim sırasını kod düzeyinde açıklayabileceksiniz.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: 1992: “3B” BİR OYUN, 2B BİR HARİTA</span>
+<p>Wolfenstein 3D, saniyede milyonlarca işlem bile yapamayan bilgisayarlarda akıcı bir “3B” koridor oyunuydu. Haritası ise kareli deftere çizilmiş gibi düz bir ızgaraydı. Nasıl?</p>
+<ul style="font-size:.9em"><li><span class="fragment">Oyun 3B hesap yapmıyordu. Ekranın her <b>sütunu</b> için tek bir soru soruyordu: “bu yönde ilk duvar <b>ne kadar uzakta</b>?”</span></li><li><span class="fragment">Uzaklık küçükse o sütuna uzun bir çubuk, büyükse kısa bir çubuk çiziyordu. 320 sütun, 320 soru.</span></li><li><span class="fragment">Aynı soru bugün her yerde: muhafız beni görüyor mu (Y11), fener nereyi aydınlatıyor, haritanın hangi kısmı sisli, mermi neye çarptı.</span></li><li><span class="fragment">Bu sunum “buradan ne görünüyor?” sorusunun dört cevabı: bir hücreye, bir sütuna, bütün çevreye ve bütün sahneye.</span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../geo-temeller/">G1 · Geometri Temelleri (yön testi, kesişim, t)</a><a class="" href="../geo-carpisma/">G3 · Çarpışma (ışınlar)</a><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (açı, atan2, cos)</a></div>
+  <div class="prereq"><a class="opt" href="../geo-uzaysal/">G2 · Uzaysal Bölümleme (ızgara, ağaç)</a><a class="opt" href="../yz-algilama/">Y11 · Algılama (NPC’nin görüşü)</a><a class="opt" href="../bst-geometrik/">Geometrik BST (BSP’nin akrabası kd-ağacı)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Y11’de NPC’nin oyuncuyu görüp görmediğine baktık: tek bir ışın. Burada soruyu büyütüyoruz: <b>her yöne</b> bakınca ne görünür? Araçlar aynı: G1’deki kesişim ve yön testi, G2’deki ızgara.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>En çok kullanacağınız iki şey kısa: ızgarada görüş hattı (20 satır) ve savaş sisinin üç durumu (10 satır). Gölge dökümü ve BSP’de kodu ezberlemeniz gerekmez; fikri ve ne zaman kullanılacağını bilmeniz yeter.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:16px"><tr><td>line of sight (LOS)</td><td>görüş hattı</td><td>İki nokta arasında engel olup olmadığı</td></tr><tr><td>DDA · Bresenham</td><td>— · —</td><td>Bir ışının geçtiği bütün ızgara hücrelerini sırayla gezme · ızgarada ince çizgi çizme</td></tr><tr><td>raycasting</td><td>ışın dökümü</td><td>Her ekran sütunu için bir ışın gönderip duvar uzaklığından görüntü kurma</td></tr><tr><td>field of view (FOV)</td><td>görüş alanı</td><td>Bir noktadan görülebilen bütün hücreler/bölge</td></tr><tr><td>shadowcasting</td><td>gölge dökümü</td><td>Engellerin arkasındaki açı aralıklarını “gölge” sayarak görüş alanı bulma</td></tr><tr><td>fog of war</td><td>savaş sisi</td><td>Haritanın görülmeyen / hatırlanan / görünen kısımlarının ayrımı</td></tr><tr><td>visibility polygon</td><td>görüş çokgeni</td><td>Sürekli dünyada bir noktadan görülen bölgenin sınırı</td></tr><tr><td>BSP tree</td><td>ikili uzay bölme ağacı</td><td>Uzayı duvar doğrularıyla ikiye bölerek kurulan ağaç; çizim sırası verir</td></tr><tr><td>PVS · occlusion culling</td><td>olası görünür küme · kapatma ayıklaması</td><td>Önceden hesaplanmış “buradan görünebilenler” · görünmeyeni çizmeme</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Izgarada görüş hattı</div><div class="sub">bu hücreden şu hücre görünüyor mu?</div></div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Problem: arada duvar var mı?</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Karo tabanlı her oyunda</span><ul style="font-size:.92em"><li><b>Gizlilik:</b> muhafız oyuncuyu görüyor mu? (Y11, Y19)</li><li><b>Taktik / sıra tabanlı:</b> bu asker şu düşmana ateş edebilir mi?</li><li><b>Roguelike:</b> canavar beni fark etti mi?</li><li><b>Kule savunma:</b> kule hedefi görüyor mu?</li><li>Hepsi: iki hücre arasındaki doğru üzerinde <b>duvar hücresi</b> var mı?</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: doğru boyunca örnekle</span><p>Gözden hedefe giden doğru üzerinde her yarım hücrede bir nokta al; noktanın düştüğü hücre duvar mı?</p><ul style="font-size:.92em"><li><b>Adım büyükse:</b> ışın bir duvarın köşesinden <b>atlar</b>; gözcü duvarın arkasını görür.</li><li><b>Adım küçükse:</b> aynı hücreye 5–10 kez bakılır; yüzlerce NPC × her kare.</li><li>“Doğru” adım boyu yok: ne kadar küçültürseniz küçültün, yeterince ince bir köşe kaçar.</li></ul><p class="mini">Bu dersin Y19’daki gizlilik oyununun ilk sürümü de böyle yazılmıştı (6 piksellik adımlar).</p></div></div>
+</div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Fikir: DDA — hücre sınırlarını sırayla geç</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Işın bir hücreden çıkarken ya bir <b>dikey</b> çizgiyi ya bir <b>yatay</b> çizgiyi keser. Hangisi daha yakınsa onu geçer ve komşu hücreye girer.</li><li>İki sayı tutulur: <b>tMaxX</b> = sıradaki dikey çizgiye kadar kalan yol; <b>tMaxY</b> = sıradaki yatay çizgiye kadar kalan yol.</li><li>Her adımda küçük olanı seç; o yönde bir hücre ilerle; o sayıya sabit bir miktar (<b>tDelta</b>: bir hücre genişliğini geçme süresi) ekle.</li><li>Işın, değdiği <b>her</b> hücreyi <b>tam bir kez</b> ve sırayla ziyaret eder. Atlama yok, tekrar yok.</li></ul><p class="mini">Adı “digital differential analyzer”; bu sürümü Amanatides ve Woo 1987’de ışın izleme için yayımladı.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: (0,5, 0,5) → (3,5, 2,5)</span><p>Yön (3, 2) → birim: (0,832, 0,555). tDeltaX = 1/0,832 = <b>1,20</b>; tDeltaY = 1/0,555 = <b>1,80</b>.</p><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">adım</th><th style="text-align:left;">tMaxX</th><th style="text-align:left;">tMaxY</th><th style="text-align:left;">küçük olan</th><th style="text-align:left;">girilen hücre</th></tr><tr><td style="text-align:left;">başlangıç</td><td style="text-align:left;">0,60</td><td style="text-align:left;">0,90</td><td style="text-align:left;">—</td><td style="text-align:left;">(0, 0)</td></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;"><b>0,60</b></td><td style="text-align:left;">0,90</td><td style="text-align:left;">X</td><td style="text-align:left;">(1, 0)</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">1,80</td><td style="text-align:left;"><b>0,90</b></td><td style="text-align:left;">Y</td><td style="text-align:left;">(1, 1)</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;"><b>1,80</b></td><td style="text-align:left;">2,70</td><td style="text-align:left;">X</td><td style="text-align:left;">(2, 1)</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">3,00</td><td style="text-align:left;"><b>2,70</b></td><td style="text-align:left;">Y</td><td style="text-align:left;">(2, 2)</td></tr><tr><td style="text-align:left;">5</td><td style="text-align:left;"><b>3,00</b></td><td style="text-align:left;">4,51</td><td style="text-align:left;">X</td><td style="text-align:left;">(3, 2) hedef</td></tr></table><p class="mini">Altı hücre, beş karşılaştırma ve beş toplama. Çarpma ve bölme yalnızca kurulumda.</p></div></div>
+</div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Canlı: örnekleme mi, DDA mı? 🔦</h2>
+<div class="demo" data-demo="dda"></div>
+</section>
+
+<section data-sec="ızgara">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> yeşil gözcü (tıklayarak taşınır), mavi hedef (fareyi izler). Sarı kareler ışının baktığı hücreler; kırmızı kare ışını kesen duvar. Sol üstte sonuç, sağ üstte kaç hücre/örnek sınandığı.</li><li><b>DDA:</b> sarı hücrelerdeki numaralar ziyaret sırası. Işını çapraza çevirin: merdiven gibi, hiç boşluk bırakmadan ilerliyor.</li><li><b>Örnekleme</b>, adım 0,5: mor noktalar örnekler. Aynı hücreye iki-üç nokta düşüyor: boşa iş.</li><li>Adımı <b>1,5</b> yapın ve hedefi duvarların köşelerinin hemen arkasında gezdirin: “HATA: görüyor dedi ama arada duvar var!” yazısını yakalayın.</li><li>Aynı konumda yönteme DDA deyin: duvarı kaçırmıyor ve sınadığı hücre sayısı daha az.</li></ol></div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Kod: ızgarada ışın ve görüş hattı</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Izgarada ışın: (ox, oy) noktasından (dx, dy) yönüne. Konumlar HÜCRE biriminde (1 = bir hücre).
+// duvarMi(cx, cy) → true/false.   Dönen: { hucre: [cx, cy], t, yan } ya da null (menzil bitti)
+function isinAt(ox, oy, dx, dy, menzil, duvarMi) {
+  let cx = floor(ox), cy = floor(oy);                  // içinde bulunduğumuz hücre
+  const adimX = Math.sign(dx), adimY = Math.sign(dy);  // hangi yöne ilerliyoruz? (−1, 0, +1)
+  const tDeltaX = abs(1 / dx), tDeltaY = abs(1 / dy);  // bir hücre genişliğini geçmek kaç t sürer?
+  // sıradaki dikey / yatay çizgiye kadar kalan t
+  let tMaxX = dx > 0 ? (cx + 1 - ox) / dx : dx < 0 ? (cx - ox) / dx : Infinity;
+  let tMaxY = dy > 0 ? (cy + 1 - oy) / dy : dy < 0 ? (cy - oy) / dy : Infinity;
+
+  while (true) {
+    let t, yan;
+    if (tMaxX < tMaxY) { cx += adimX; t = tMaxX; tMaxX += tDeltaX; yan = 0; }   // dikey çizgi daha yakın
+    else               { cy += adimY; t = tMaxY; tMaxY += tDeltaY; yan = 1; }   // yatay çizgi daha yakın
+    if (t > menzil) return null;
+    if (duvarMi(cx, cy)) return { hucre: [cx, cy], t, yan };   // (dx, dy) birim vektörse t = uzaklık
+  }
+}
+
+// Görüş hattı: gözcü hedefi görüyor mu?
+function goruyorMu(g, h, duvarMi) {
+  const dx = h.x - g.x, dy = h.y - g.y, u = Math.hypot(dx, dy);
+  return isinAt(g.x, g.y, dx / u, dy / u, u, duvarMi) === null;   // hedefe kadar duvar yoksa görüyor
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def line_cells(x0, y0, x1, y1):
+    """Bresenham: (x0, y0)'dan (x1, y1)'e ızgarada ince bir çizginin hücreleri (tam sayılar)."""
+    cells = []
+    dx, dy = abs(x1 - x0), -abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx + dy                       # "hata": gerçek doğrudan ne kadar saptık?
+    while True:
+        cells.append((x0, y0))
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 >= dy:                    # x yönünde bir adım
+            err += dy; x0 += sx
+        if e2 <= dx:                    # y yönünde bir adım (ikisi birden: çapraz adım)
+            err += dx; y0 += sy
+    return cells
+
+def can_see(grid, x0, y0, x1, y1):      # grid[y][x] == 1 duvar
+    return all(grid[y][x] == 0 for x, y in line_cells(x0, y0, x1, y1)[1:-1])
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: motorun kendi ışını (sürekli dünya; ızgara gerekmez)
+bool GoruyorMu(Vector2 goz, Vector2 hedef, LayerMask duvarlar) =>
+    !Physics2D.Linecast(goz, hedef, duvarlar);          // arada duvar katmanından bir şey YOKSA görüyor
+
+// Karo haritada (Tilemap) elle DDA yazmak isterseniz:
+//   Vector3Int hucre = tilemap.WorldToCell(nokta);   tilemap.HasTile(hucre) → duvar mı?
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>Math.sign(dx)</code></td><td style="text-align:left;">−1, 0 ya da +1</td><td style="text-align:left;">Hücre indisinin hangi yöne değişeceği.</td></tr><tr><td style="text-align:left;"><code>abs(1 / dx)</code></td><td style="text-align:left;">x’te 1 birim ilerlemek için gereken t</td><td style="text-align:left;">dx = 0 ise sonuç <code>Infinity</code>: dikey çizgi hiç kesilmez; karşılaştırmada kendiliğinden kaybeder.</td></tr><tr><td style="text-align:left;"><code>(cx + 1 - ox) / dx</code></td><td style="text-align:left;">sağdaki ilk dikey çizgiye kadar t</td><td style="text-align:left;">Sola gidiyorsak (dx &lt; 0) çizgi <code>cx</code>’tedir: <code>(cx - ox) / dx</code>; pay ve payda eksi, sonuç artı.</td></tr><tr><td style="text-align:left;"><code>tMaxX &lt; tMaxY</code></td><td style="text-align:left;">dikey çizgi daha yakın</td><td style="text-align:left;">Algoritmanın tek kararı.</td></tr><tr><td style="text-align:left;"><code>yan</code> (0 ya da 1)</td><td style="text-align:left;">duvarın dikey yüzüne mi, yatay yüzüne mi çarptık?</td><td style="text-align:left;">Wolfenstein’da iki yüzü farklı tonla boyamak; çarpışmada normali bulmak için.</td></tr><tr><td style="text-align:left;">Python: <code>line_cells</code> (Bresenham)</td><td style="text-align:left;">ince çizgi: yalnızca tam sayılar</td><td style="text-align:left;">Çapraz adım atabilir: (0,0)→(3,2) için 4 hücre (DDA 6). Köşeden sıyrılan ışını “geçti” sayar; hangisini istediğiniz bir <b>tasarım kararı</b>.</td></tr></table><div class="box info" style="font-size:.82em;margin-top:10px"><span class="bt">Önerme</span>DDA, ışının geçtiği hücre sayısı kadar adım atar: uzunluğu L hücre olan bir ışın için en çok <b>2L</b> adım; her adımda bir karşılaştırma ve bir toplama. Örnekleme, adım s için L/s hücre testi yapar ve yine de yanılabilir.</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: gözcü hedefi görüyor mu?</h2>
+  <div class="simlab" data-sim="los" data-fns="canSee" data-lang="js">
+<textarea>
+// grid[y][x]: 1 = duvar, 0 = boş.   (x0, y0): gözcü,  (x1, y1): hedef  (hücre koordinatı)
+// Hazır fonksiyon:  line(x0, y0, x1, y1)  → aradaki hücreler [[x, y], ...]  (iki uç DAHİL)
+// Aradaki hücrelerden (uçlar hariç) biri duvarsa false, değilse true döndür.
+function canSee(grid, x0, y0, x1, y1) {
+  const hucreler = line(x0, y0, x1, y1);
+  return true;   // TODO: şimdilik duvarların arkasını da görüyor
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu her zaman “görüyor” der: mavi hedef duvarın arkasına geçince alttaki satır kırmızı “YANLIŞ” olur. Döngü: <code>for (let i = 1; i &lt; hucreler.length - 1; i++)</code>; her hücre için <code>const [x, y] = hucreler[i];</code> ve <code>grid[y][x] === 1</code> ise <code>return false</code>. Dikkat: önce <b>y</b>, sonra <b>x</b> (satır, sütun).</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: ızgarada çizgi (Bresenham)</h2>
+  <div class="ailab" data-lab="bres" data-lang="python">
+<textarea>
+# (x0, y0)'dan (x1, y1)'e ızgarada ince bir çizginin hücrelerini [[x, y], ...] olarak döndür.
+# Yalnızca tam sayı toplama ve karşılaştırma kullan (bölme, float yok).
+def line_cells(x0, y0, x1, y1):
+    return [[x0, y0], [x1, y1]]
+</textarea>
+    <div class="lab-tasks">Slayttaki Python sekmesindeki algoritma: <code>dx = abs(x1 - x0)</code>, <code>dy = -abs(y1 - y0)</code>, <code>err = dx + dy</code>; döngüde hücreyi ekle, hedefe vardıysan çık, <code>e2 = 2 * err</code>; <code>e2 &gt;= dy</code> ise x’te adım, <code>e2 &lt;= dx</code> ise y’de adım. Bresenham bunu 1962’de bir çizici (plotter) için buldu; bugün hâlâ her roguelike’ın içinde.</div>
+  </div>
+</section>
+
+<section data-sec="ızgara">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 1 · görüş hattı</div>
+    <div class="q">Bir taktik oyununda görüş hattını doğru boyunca 1 hücrelik adımlarla örnekleyerek hesaplıyorsunuz. Oyuncular “bazen duvarın köşesinden vurulabiliyorum” diye şikâyet ediyor. En iyi düzeltme?</div>
+    <div class="opts"><button data-opt="A">Adımı 0,5 hücreye indirmek</button><button data-opt="B">Işının geçtiği bütün hücreleri sırayla gezen DDA’ya geçmek</button><button data-opt="C">Duvarları kalınlaştırmak</button><button data-opt="D">Görüş menzilini kısaltmak</button></div>
+    <div class="explain">Adımı küçültmek hatayı seyreltir ama yok etmez (yeterince ince bir köşe yine kaçar) ve işi artırır. DDA ışının değdiği her hücreye tam bir kez bakar: hem doğru hem daha ucuz. Köşeden sıyırma kabul edilsin mi edilmesin mi, ayrıca verilecek bir tasarım kararıdır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Işın dökümü</div><div class="sub">Wolfenstein 3D: her sütuna bir ışın</div></div>
+</section>
+
+<section data-sec="ışın">
+  <h2>Fikir: uzaklıktan yükseklik</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li>Harita 2B bir ızgara; oyuncunun bir konumu ve bir <b>bakış açısı</b> var.</li><li>Ekran W sütun genişliğinde. Görüş açısını (ör. 60°) W eşit parçaya böl: her sütuna bir <b>ışın açısı</b> düşer.</li><li>Her ışın için DDA ile ilk duvara <b>uzaklığı</b> bul (az önceki fonksiyon; t = uzaklık).</li><li>O sütuna, ekranın ortasına hizalı, yüksekliği <b>ekran yüksekliği / uzaklık</b> olan bir çubuk çiz.</li><li>Perspektifin tamamı bu bölme: iki kat uzaktaki duvar yarı boyda görünür.</li></ul><div class="box info" style="font-size:.8em"><span class="bt">Elle hesap (ekran yüksekliği 200)</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">uzaklık</th><th style="text-align:left;">çubuk yüksekliği</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">200 (ekranı doldurur)</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">100</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">50</td></tr><tr><td style="text-align:left;">8</td><td style="text-align:left;">25</td></tr></table></div></div>
+<div><div class="box warn" style="font-size:.78em"><span class="bt">⚠️ Balık gözü</span><p>Düz bir duvara dik bakıyorsunuz; duvar 2 birim ötede. Ortadaki ışın 2 birim yol alır. 30° yandaki ışın aynı duvara 2 / cos 30° = <b>2,31</b> birimde ulaşır: daha “uzak” → çubuk daha kısa (86,6). Düz duvar <b>bombeli</b> görünür.</p><p><b>Düzeltme:</b> uzaklığı bakış yönüne izdüşür: <code>dik = uzaklık × cos(ışın açısı − bakış açısı)</code>. 2,31 × cos 30° = 2 ✔ → çubuk 100.</p></div><div class="box game" style="font-size:.78em;margin-top:8px"><span class="bt">🎮 Bu yöntemin sınırları</span>Duvarlar hep aynı yükseklikte ve dik; zemin düz; yukarı-aşağı bakmak yok. Wolfenstein 3D’nin (1992) dünyası bu yüzden öyle. DOOM (1993) farklı yükseklikler ve eğik duvarlar için başka bir yola gitti (Level 4).</div></div>
+</div>
+</section>
+
+<section data-sec="ışın">
+  <h2>Canlı: iki boyuttan üç boyuta 🕹️</h2>
+<div class="demo" data-demo="wolf"></div>
+</section>
+
+<section data-sec="ışın">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> solda harita ve oyuncu (yeşil); sarı çizgiler ekran sütunlarının ışınları (her beş sütunda biri çizili), kırmızı çizgi tam ortadaki ışın. Sağda aynı ışınlardan kurulan “3B” görüntü: 100 sütun = 100 ışın.</li><li><b>W / S</b> ile yürüyün, <b>A / D</b> ile dönün. Bir duvara yaklaşın: çubuklar uzar. Uzaklaşın: kısalır.</li><li>Bir köşeye bakın: dikey ve yatay yüzler farklı tonda (koddaki <code>yan</code> değişkeni). Bu basit hile derinlik hissinin yarısı.</li><li>Düz bir duvara dik bakıp <b>“balık gözü”</b> kutusunu işaretleyin: duvarın üst ve alt kenarı kavislenir. Kutuyu kaldırın: düzelir.</li><li>Görüş açısını 2 radyana çıkarın: geniş açı; kenarlarda gerilme. 0,5: dürbün. Oyunlardaki “FOV” ayarı bu sayıdır.</li></ol></div>
+</section>
+
+<section data-sec="ışın">
+  <h2>Kod: ışın dökümü</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Wolfenstein usulü ışın dökümü: ekranın her sütunu için bir ışın
+function ciz3B(oyuncu, bakis, gorusAcisi) {
+  for (let sutun = 0; sutun < width; sutun++) {
+    const aci = bakis - gorusAcisi / 2 + gorusAcisi * (sutun + 0.5) / width;   // bu sütunun ışın açısı
+    const v = isinAt(oyuncu.x, oyuncu.y, cos(aci), sin(aci), 100, duvarMi);
+    if (!v) continue;
+
+    const dik = v.t * cos(aci - bakis);          // BALIK GÖZÜ DÜZELTMESİ: bakış yönüne izdüşür
+    const yukseklik = height / dik;              // yakın duvar uzun, uzak duvar kısa
+
+    stroke(v.yan === 0 ? 200 : 140);             // dikey ve yatay yüzleri farklı tonla: köşeler belli olsun
+    line(sutun, height / 2 - yukseklik / 2, sutun, height / 2 + yukseklik / 2);
+  }
+}
+</script></code></pre>
+    </div>
+  </div><p class="mini">15 satır. <code>isinAt</code> bir önceki bölümün fonksiyonu: Wolfenstein’ın bütün “3B”si, ızgarada görüş hattının ekran sütunu sayısı kadar tekrarı.</p>
+</section>
+
+<section data-sec="ışın">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>bakis - gorusAcisi / 2 + gorusAcisi * (sutun + 0.5) / width</code></td><td style="text-align:left;">en soldaki sütun: bakış − yarım açı; en sağdaki: bakış + yarım açı</td><td style="text-align:left;"><code>+ 0.5</code>: ışın sütunun ortasından geçsin.</td></tr><tr><td style="text-align:left;"><code>v.t * cos(aci - bakis)</code></td><td style="text-align:left;">uzaklığın bakış yönündeki bileşeni</td><td style="text-align:left;">Balık gözü düzeltmesi: nokta çarpımla izdüşümün trigonometrik hâli.</td></tr><tr><td style="text-align:left;"><code>height / dik</code></td><td style="text-align:left;">perspektif</td><td style="text-align:left;">Duvarı daha yüksek/alçak göstermek için bir sabitle çarpılır.</td></tr><tr><td style="text-align:left;"><code>v.yan === 0 ? 200 : 140</code></td><td style="text-align:left;">iki yüz, iki ton</td><td style="text-align:left;">Işıklandırma hesabı yok; sahte ama etkili.</td></tr></table><div class="box info" style="font-size:.82em;margin-top:10px"><span class="bt">Önerme</span>Işın dökümünün maliyeti <b>ekran genişliği × ışın başına hücre adımı</b>: 320 sütun × ortalama 10 adım ≈ 3.200 adım/kare. Haritanın büyüklüğünden ve duvar sayısından <b>bağımsız</b>; yalnızca ne kadar uzağı gördüğünüze bağlı.</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: sütun yüksekliği</h2>
+  <div class="ailab" data-lab="colh" data-lang="python">
+<textarea>
+import math
+# dist: ışının duvara kadar gittiği yol
+# ray_angle: bu sütunun ışın açısı,  player_angle: oyuncunun bakış açısı  (radyan)
+# screen_h: ekran yüksekliği
+# Balık gözünü düzelt, sonra yüksekliği döndür:  screen_h / (dist * cos(ray_angle - player_angle))
+def column_height(dist, ray_angle, player_angle, screen_h):
+    return screen_h / dist
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu düzeltmeyi yapmıyor: ortadaki sütun doğru, yanlardakiler kısa (balık gözü). Tek değişiklik: paydaya <code>math.cos(ray_angle - player_angle)</code> çarpanını eklemek. Slayttaki sayılarla sınayın: uzaklık 2,31, açı farkı 30° (0,5236 rad), ekran 200 → 100.</div>
+  </div>
+</section>
+
+<section data-sec="ışın">
+  <h2>Oyunlarda: Wolfenstein 3D (1992)</h2>
+<div class="cols c64">
+<div><ul style="font-size:.76em"><li>id Software’in oyunu, “birinci şahıs nişancı” türünü kitlelere tanıtan oyun. 1992’nin tipik bilgisayarı saniyede birkaç milyon basit işlem yapabiliyordu; gerçek 3B çokgen çizimi için çok yavaştı.</li><li>Haritalar <b>64 × 64 hücrelik</b> bir ızgara; her hücre ya boş ya da bir duvar bloğu. Bütün duvarlar aynı yükseklikte ve birbirine dik.</li><li>Ekran 320 sütun: kare başına <b>320 ışın</b>. Her ışın birkaç hücre adımında bir duvara çarpar: kare başına birkaç bin basit adım.</li><li>Duvar <b>dokusu</b> da aynı ışından gelir: ışının duvar bloğuna çarptığı noktanın blok içindeki yeri (0–1 arası) dokunun hangi sütununun çizileceğini söyler.</li><li>Düşmanlar ve eşyalar 3B değil: her zaman oyuncuya dönük düz resimler (sprite); uzaklıklarına göre ölçeklenir ve duvar uzaklıklarıyla karşılaştırılarak kırpılır.</li></ul></div>
+<div><div class="box story" style="font-size:.8em"><span class="bt">📜 Neden hâlâ öğretiliyor?</span><p>“Kendi ışın dökümcünü yaz” bugün de en sevilen ilk grafik projesi: 100 satırda, hiçbir 3B kütüphane olmadan “3B” bir dünya. Lode Vandevenne’in öğreticisi ve javidx9’un videoları bu yüzden klasik (Kaynaklar).</p><p>Ve asıl ders: 3B gibi <b>görünen</b> şey 3B olmak zorunda değil. Oyuncunun deneyimi için gereken en küçük hesabı bul.</p></div><div class="box game" style="font-size:.78em;margin-top:8px"><span class="bt">🎮 Aynı ışın, başka işler</span>Aynı DDA ışını bugün: voksel dünyalarda “hangi bloğa bakıyorum?” (Minecraft’ta blok kırma/koyma), karo haritada mermi, ızgara tabanlı ışık yayılımı.</div></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Görüş alanı ve savaş sisi</div><div class="sub">buradan hangi hücreler görünüyor?</div></div>
+</section>
+
+<section data-sec="alan">
+  <h2>Problem: tek hedef değil, bütün çevre</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Oyunlarda</span><ul style="font-size:.92em"><li><b>Roguelike:</b> oyuncunun bulunduğu yerden zindanın hangi hücreleri görünüyor? Her adımda yeniden.</li><li><b>Strateji:</b> birliklerimin gördüğü bölgelerin birleşimi; gerisi sis.</li><li><b>Taktik:</b> “bu karoya geçersem kimler beni görür?” (Y12)</li><li><b>Aydınlatma:</b> meşale hangi karoları aydınlatıyor?</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelenler</span><ul style="font-size:.92em"><li><b>Her hücreye bir ışın:</b> yarıçap R içindeki ~πR² hücrenin her birine görüş hattı. R = 10 → 314 ışın × ~10 adım. Doğru ama aynı yakın hücrelere yüzlerce kez bakılır.</li><li><b>Her yöne bir ışın:</b> 360 ışın gönder, değdiği hücreleri işaretle. Yakında aşırı tekrar; uzakta iki ışının <b>arasına düşen hücreler</b> hiç işaretlenmez: delikli görüş.</li></ul><p>İki yöntem de çalışır ve küçük haritalarda yeterlidir. Ama daha iyisi var: her hücreye <b>bir kez</b> bakan bir tarama.</p></div></div>
+</div>
+</section>
+
+<section data-sec="alan">
+  <h2>Fikir: gölge dökümü (shadowcasting)</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>Çevreyi <b>sekiz dilime</b> (45°’lik) böl; her dilimi ayrı tara. Bir dilimi anlamak yeter; diğerleri onun ayna görüntüsü.</li><li>Dilimi oyuncudan dışarı doğru <b>satır satır</b> tara (1 uzaklıktaki hücreler, sonra 2, sonra 3…).</li><li>Elinde bir <b>aydınlık açı aralığı</b> var (başta dilimin tamamı). Satırdaki hücrelerden bu aralığa düşenler <b>görünür</b>.</li><li>Bir <b>duvar</b> hücresine rastlarsan: onun kapattığı açı aralığı artık <b>gölge</b>. Aralığı ikiye böl: duvarın bir yanında kalan kısım (özyinelemeyle alt satırlarda sürdür) ve öbür yanında kalan kısım (bu satırda devam).</li><li>Aralık boşalınca dur. Gölgede kalan hücrelere <b>hiç bakılmaz</b>.</li></ul></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme (tek dilim, R = 4)</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">satır</th><th style="text-align:left;">aydınlık aralık</th><th style="text-align:left;">olan</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">tamamı</td><td style="text-align:left;">2 hücre görünür; duvar yok</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">tamamı</td><td style="text-align:left;">ortadaki hücre <b>duvar</b> → aralık ikiye bölünür</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">sol parça + sağ parça</td><td style="text-align:left;">duvarın tam arkasındaki hücreler atlanır</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">sol parça + sağ parça</td><td style="text-align:left;">gölge konisi genişler: daha çok hücre atlanır</td></tr></table><p class="mini">Açı yerine <b>eğim</b> (dx / dy) kullanılır: bölme var, trigonometri yok.</p></div><div class="box info" style="font-size:.76em;margin-top:8px"><span class="bt">Önerme</span>Gölge dökümü her hücreye <b>en çok bir kez</b> bakar; toplam iş görüş alanının büyüklüğüyle orantılıdır (≈ R²). Ölçüm, boş salonda R = 9: görünen 253 hücre (πR² ≈ 254); gölge dökümü <b>432</b> hücreye baktı, 360 ışınlık yelpaze <b>4.496</b> hücre ziyareti yaptı.</div></div>
+</div>
+</section>
+
+<section data-sec="demo">
+<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Yeşil nokta</b> sizsiniz: <b>W / A / S / D</b> ile hücre hücre yürüyün (ya da boş bir hücreye tıklayın).</li><li><b>Açık renkli</b> hücreler şu an görünenler; <b>koyu gri</b> olanlar daha önce görülüp şu an görünmeyenler (savaş sisi); <b>siyah</b>: hiç görülmedi.</li><li><b>Sarı çember</b> görüş yarıçapı.</li><li><b>Alt satır:</b> şu an görünen hücre sayısı, keşfedilen hücre sayısı ve algoritmanın <b>baktığı hücre sayısı</b> (karşılaştıracağınız sayı).</li><li>Menü: gölge dökümü / ışın yelpazesi / yok. “↺ unut” keşfi sıfırlar.</li></ol></div>
+</section>
+
+<section data-sec="alan">
+  <h2>Canlı: zindanda görüş alanı ve sis 🕯️</h2>
+<div class="demo" data-demo="fov"></div>
+</section>
+
+<section data-sec="alan">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>Zindanı dolaşın: kapılardan geçerken yeni odalar <b>bir anda</b> açılır; köşeleri dönerken görüş koniler hâlinde genişler.</li><li>Bir sütunun (tek duvar hücresi) yanında durun: arkasında incelen bir <b>gölge konisi</b>.</li><li>“ışın yelpazesi”ne geçin, ışın sayısını <b>40</b> yapın, büyük bir odada durun: uzaktaki hücrelerde delikler. Sayıyı artırın: delikler kapanır, “bakılan hücre” binlere çıkar.</li><li>Aynı yerde “gölge dökümü”: delik yok ve bakılan hücre sayısı, görünen hücre sayısına yakın.</li><li>“savaş sisi”ni kapatın: yalnızca şu an görünenler; arkanızda bıraktığınız her şey siyah. Hangisi “keşif” hissi veriyor?</li></ol></div>
+</section>
+
+<section data-sec="alan">
+  <h2>Kod: gölge dökümü</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Özyinelemeli gölge dökümü (Björn Bergström'ün yöntemi). Oyuncu (px, py), yarıçap R.
+// duvarMi(x, y), gorunur(x, y): çağıranın verdiği iki fonksiyon.
+const DILIM = [[1, 0, 0, -1, -1, 0, 0, 1], [0, 1, -1, 0, 0, -1, 1, 0],
+               [0, 1, 1, 0, 0, -1, -1, 0], [1, 0, 0, 1, -1, 0, 0, -1]];   // 8 dilim için koordinat çevirisi
+
+function gorusAlani(px, py, R, duvarMi, gorunur) {
+  gorunur(px, py);
+  for (let d = 0; d < 8; d++) tara(1, 1.0, 0.0, DILIM[0][d], DILIM[1][d], DILIM[2][d], DILIM[3][d]);
+
+  function tara(satir, bas, son, xx, xy, yx, yy) {       // [son, bas] eğim aralığı hâlâ aydınlık
+    if (bas < son) return;
+    let yeniBas = 0, kapali = false;
+    for (let uzak = satir; uzak <= R && !kapali; uzak++) {
+      const dy = -uzak;
+      for (let dx = -uzak; dx <= 0; dx++) {
+        const X = px + dx * xx + dy * xy, Y = py + dx * yx + dy * yy;       // dilimden haritaya
+        const solEgim = (dx - 0.5) / (dy + 0.5), sagEgim = (dx + 0.5) / (dy - 0.5);
+        if (bas < sagEgim) continue;                     // henüz aydınlık aralığa girmedik
+        if (son > solEgim) break;                        // aydınlık aralığı geçtik
+        if (dx * dx + dy * dy <= R * R) gorunur(X, Y);
+        if (kapali) {                                    // bir duvar dizisinin içindeyiz
+          if (duvarMi(X, Y)) { yeniBas = sagEgim; continue; }
+          kapali = false; bas = yeniBas;                 // duvar bitti: aralık daraldı
+        } else if (duvarMi(X, Y) && uzak < R) {          // duvar başladı
+          kapali = true;
+          tara(uzak + 1, bas, solEgim, xx, xy, yx, yy);  // duvarın SOLUNDA kalan aralığı alt satırlarda sürdür
+          yeniBas = sagEgim;
+        }
+      }
+    }
+  }
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="alan">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>DILIM</code> tablosu ve <code>xx, xy, yx, yy</code></td><td style="text-align:left;">dilimin (dx, dy) koordinatını haritanın (X, Y)’sine çevirir</td><td style="text-align:left;">Tek bir tarama kodu yazıp sekiz kez, yansıtarak ve döndürerek kullanmak için.</td></tr><tr><td style="text-align:left;"><code>bas</code>, <code>son</code></td><td style="text-align:left;">aydınlık aralığın iki ucu, <b>eğim</b> olarak (1 = köşegen, 0 = eksen)</td><td style="text-align:left;">Açı yerine dx/dy: trigonometri gerekmez.</td></tr><tr><td style="text-align:left;"><code>solEgim</code>, <code>sagEgim</code></td><td style="text-align:left;">bu hücrenin sol ve sağ kenarının eğimi</td><td style="text-align:left;">Hücre aralığa <b>kısmen</b> giriyorsa da görünür sayılır (± 0,5: hücrenin kenarları).</td></tr><tr><td style="text-align:left;"><code>kapali</code></td><td style="text-align:left;">şu an bir duvar dizisinin içindeyiz</td><td style="text-align:left;">Yan yana duvarlar tek bir gölge yapar; her biri için ayrı özyineleme açılmaz.</td></tr><tr><td style="text-align:left;"><code>tara(uzak + 1, bas, solEgim, …)</code></td><td style="text-align:left;">duvarın solunda kalan aydınlık parçayı alt satırlarda sürdür</td><td style="text-align:left;">Özyineleme = “aralık bölündü”. Sağ parça bu döngüde <code>yeniBas</code> ile devam eder.</td></tr><tr><td style="text-align:left;"><code>dx*dx + dy*dy &lt;= R*R</code></td><td style="text-align:left;">dairesel görüş</td><td style="text-align:left;">Bu satır olmazsa görüş alanı kare olur.</td></tr></table><p class="mini">Bu sunumun en çetrefilli kodu. Projenizde kopyalayıp kullanmanız yeterli; önemli olan demoda <b>ne yaptığını</b> görmüş olmanız. Albert Ford’un “Symmetric Shadowcasting” sayfası aynı fikri adım adım, canlı çizimlerle anlatır (Kaynaklar).</p>
+</section>
+
+<section data-sec="alan">
+  <h2>Savaş sisi: üç durum</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>Her hücre üç durumdan birinde: <b>bilinmiyor</b> (siyah), <b>hatırlanıyor</b> (koyu; arazi görünür, düşman görünmez), <b>görünüyor</b> (parlak; her şey görünür).</li><li>Her güncellemede: “görünüyor” olanları “hatırlanıyor”a indir; görüş alanını yeniden hesapla; içindekileri “görünüyor” yap.</li><li><b>Asıl kural:</b> düşman birimleri yalnızca “görünüyor” hücrelerde çizilir. Hatırlanan bölgede en son gördüğünüz <b>bina</b> gösterilebilir (çoğu strateji oyunu böyle yapar) ama o artık yıkılmış olabilir.</li><li><b>Çok birim:</b> hücre başına bir <b>sayaç</b>. Birim görüş alanına girince +1, çıkınca −1. Görünür ⇔ sayaç &gt; 0. Yüzlerce birim için her kare baştan hesaplamaya gerek kalmaz.</li></ul><div class="box warn" style="font-size:.78em;margin-top:8px"><span class="bt">Hile koruması</span>Çevrimiçi oyunda sunucu, oyuncuya <b>görmediği</b> düşmanların konumunu hiç göndermemeli. Sis yalnızca ekranda çizilirse “harita hilesi” yazmak kolaydır. Sis bir grafik efekti değil, <b>bilgi kuralıdır</b>.</div></div>
+<div>  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Savaş sisi: her hücre üç durumdan birinde
+const BILINMIYOR = 0, HATIRLANIYOR = 1, GORUNUYOR = 2;
+let sis;                                         // sis[y][x]
+
+function sisGuncelle(oyuncu, R) {
+  for (const satir of sis)                       // 1) şu an görünenleri "hatırlanıyor"a indir
+    for (let x = 0; x < satir.length; x++) if (satir[x] === GORUNUYOR) satir[x] = HATIRLANIYOR;
+  gorusAlani(oyuncu.x, oyuncu.y, R, duvarMi, (x, y) => { sis[y][x] = GORUNUYOR; });   // 2) yeniden hesapla
+}
+
+function hucreCiz(x, y) {
+  if (sis[y][x] === BILINMIYOR) return;                          // siyah kalsın
+  const parlak = sis[y][x] === GORUNUYOR;
+  fill(duvarMi(x, y) ? (parlak ? 150 : 70) : (parlak ? 235 : 95));
+  rect(x * KARO, y * KARO, KARO, KARO);
+  // düşmanlar YALNIZCA sis[y][x] === GORUNUYOR ise çizilir: hatırlanan yerde ne olduğunu bilemezsiniz
+}
+
+// Çok birimli strateji oyununda: her hücrede bir SAYAÇ tutulur.
+//   birim görüş alanına girince  sayac[y][x]++ ,  çıkınca  sayac[y][x]--
+//   görünür ⇔ sayac > 0.   Böylece iki birimin gördüğü hücre, biri gidince kararmaz.
+</script></code></pre>
+    </div>
+  </div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: sisin üç durumu</h2>
+  <div class="ailab" data-lab="fogstate" data-lang="js">
+<textarea>
+// visibleNow: hücre şu an bir birimimin görüş alanında mı?
+// seenBefore: hücre daha önce hiç görüldü mü?
+// Döndür: "görünüyor" | "hatırlanıyor" | "bilinmiyor"
+function fogState(visibleNow, seenBefore) {
+  if (seenBefore) return "hatırlanıyor";   // TODO: şu an görünen hücre de buraya düşüyor
+  return "bilinmiyor";
+}
+</textarea>
+    <div class="lab-tasks">Öncelik sırası önemli: önce <code>visibleNow</code>’a bakın. Başlangıç kodu şu an gördüğünüz ama daha önce de görmüş olduğunuz hücreyi “hatırlanıyor” sayıyor: düşmanlar hiç çizilmezdi. Ayrıca ilk kez görülen hücre (<code>visibleNow</code> doğru, <code>seenBefore</code> yanlış) “bilinmiyor” çıkıyor.</div>
+  </div>
+</section>
+
+<section data-sec="alan">
+  <h2>Oyunlarda: roguelike’lardan strateji oyunlarına</h2>
+<div class="cols c46">
+<div><div class="box game" style="font-size:.78em"><span class="bt">🗡️ Roguelike’lar</span><ul style="font-size:.92em"><li>Rogue (1980) odaya girince bütün odayı gösterirdi; görüş alanı fikri sonraki oyunlarla inceldi. Bugün türün neredeyse her oyunu bir gölge dökümü çeşidi kullanır.</li><li>Topluluk bu konuyu çok tartışmıştır: görüş <b>simetrik</b> mi (ben onu görüyorsam o da beni görüyor mu?), sütunların arkası ne kadar görünmeli, köşeden sıyırma var mı?</li><li>Simetri bir <b>adalet</b> meselesidir: beni göremediğim bir okçu vurabiliyorsa oyun haksız hissettirir.</li></ul></div></div>
+<div><div class="box story" style="font-size:.78em"><span class="bt">🏰 Strateji oyunları</span><ul style="font-size:.92em"><li>Klasik düzen: keşfedilmemiş yer siyah; keşfedilmiş ama görülmeyen yer soluk; görünen yer parlak (bu sunumdaki üç durum).</li><li>Görüş çoğu zaman <b>yükseklikle</b> de ilgilidir: tepedeki birim aşağıyı görür, aşağıdaki tepeyi göremez; çalılar ve duman görüşü keser.</li><li>Riot Games’in “A Story of Fog and War” yazısı, League of Legends’ta sisin ızgaradan ekrana nasıl yumuşak kenarlı bir görüntü olarak çizildiğini anlatır (Kaynaklar).</li></ul><p class="mini">Tasarım dersi: gizlenen bilgi, gösterilen bilgi kadar oyunun parçasıdır. Keşif, pusu, gözcülük: hepsi sis sayesinde var.</p></div></div>
+</div>
+</section>
+
+<section data-sec="alan">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 2 · görüş alanı</div>
+    <div class="q">Bir roguelike’ta görüş alanını oyuncudan 72 yöne (5°’de bir) ışın göndererek hesaplıyorsunuz. Büyük bir salonda uzak duvarın bazı hücreleri kararıp kararıp aydınlanıyor. Sebep?</div>
+    <div class="opts"><button data-opt="A">Işınlar duvardan sekiyor</button><button data-opt="B">Uzakta iki komşu ışının arası bir hücreden geniş; arada kalan hücrelere hiçbir ışın değmiyor</button><button data-opt="C">DDA uzak mesafede çalışmaz</button><button data-opt="D">Savaş sisi hatalı</button></div>
+    <div class="explain">Işınlar bir noktadan yelpaze gibi açılır; aralarındaki boşluk uzaklıkla büyür. 5° aralık, 12 hücre uzakta yaklaşık 1 hücre eder: ötesinde delikler başlar ve oyuncu kıpırdadıkça yer değiştirir. Daha çok ışın işi artırır; gölge dökümü her hücreye bir kez bakarak sorunu kökten çözer.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Görüş çokgeni</div><div class="sub">ızgara yoksa: gördüğüm bölgenin sınırı</div></div>
+</section>
+
+<section data-sec="çokgen">
+  <h2>Problem: sürekli dünyada “gördüğüm her yer”</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Oyunlarda</span><ul style="font-size:.92em"><li><b>Yukarıdan bakışlı gizlilik:</b> oyuncuya yalnızca karakterinin gördüğü alan gösterilir; duvarların arkası karanlık.</li><li><b>2B ışık ve gölge:</b> bir lambanın aydınlattığı bölge = lambanın “gördüğü” bölge. Gölge = görünmeyen yer.</li><li><b>YZ:</b> muhafızın görüş konisi ile bu çokgenin kesişimi (Y11’deki koninin duvarlarla kırpılmış hâli).</li><li>Duvarlar ızgaraya oturmuyor: eğik, serbest doğru parçaları.</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: her yöne ışın</span><p>360 yöne ışın gönder (G1’deki kesişim; her ışın bütün duvarlarla sınanır), uç noktaları birleştir.</p><ul style="font-size:.92em"><li>Işınlar duvar <b>köşelerine</b> tam denk gelmez: gölgenin kenarı tırtıklı çıkar.</li><li>Işık kıpırdadıkça hangi ışının köşeyi yakaladığı değişir: gölge kenarı <b>titrer</b>.</li><li>Düzeltmek için ışın sayısını artırırsınız: 720, 1440… her biri N duvarla test.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="çokgen">
+  <h2>Fikir: görüntü yalnızca köşelerde değişir</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Işığı döndürdüğünüzü düşünün. Işın bir duvarın ortasında kayarken ilginç bir şey olmaz: uç nokta düzgünce ilerler.</li><li>Değişim yalnızca ışın bir <b>köşeyi</b> geçerken olur: ya bir duvardan ötekine atlar ya da köşeyi sıyırıp arkadaki uzak duvara düşer.</li><li>O hâlde <b>yalnızca köşelere</b> ışın göndermek yeter. Her köşe için <b>üç</b> ışın: tam köşeye, çok az soluna, çok az sağına (± 0,0001 radyan). Yandakiler köşeyi sıyırıp arkaya ulaşır: gölgenin kenarı.</li><li>Bütün uç noktaları <b>açıya göre sırala</b>, sırayla birleştir: görüş çokgeni.</li><li>Dünyanın dış sınırını da dört duvar olarak ekleyin; yoksa bazı ışınlar sonsuza gider.</li></ul></div>
+<div><div class="box info" style="font-size:.82em"><span class="bt">Maliyet hesabı (demodaki sahne)</span><p>13 duvar + 4 sınır = <b>17</b> doğru parçası; <b>19</b> farklı köşe.</p><p>Işın: 19 × 3 = <b>57</b>. Test: 57 × 17 = <b>969</b>.</p><p>Eşit aralıklı 720 ışın: 720 × 17 = <b>12.240</b> test ve yine de köşeleri tam tutturamaz.</p></div><div class="box info" style="font-size:.78em;margin-top:8px"><span class="bt">Önerme</span>k köşeli, N duvarlı sahnede görüş çokgeni: <b>3k</b> ışın × <b>N</b> duvar testi + sıralama (k log k). Duvarları da açıya göre süpürerek gezen daha hızlı sürümü (N log N) Red Blob Games’in makalesinde (Kaynaklar).</div></div>
+</div>
+</section>
+
+<section data-sec="çokgen">
+  <h2>Canlı: fener ve gölgeler 🔦</h2>
+<div class="demo" data-demo="vispoly"></div>
+</section>
+
+<section data-sec="çokgen">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> sarı nokta fener (fareyi izler); açık alan fenerin gördüğü bölge; koyu alan gölge. İnce kırmızı çizgiler gönderilen ışınlar. Sol üstte ışın ve test sayıları.</li><li>“yalnızca köşelere”: ışınların hepsi bir duvar köşesinden geçiyor. Feneri bir duvarın ucuna yaklaştırın: köşeyi sıyıran ışın arkadaki duvara uzanıyor.</li><li>“eşit aralıklı”, 60 ışın: gölge kenarları tırtıklı. Feneri yavaşça oynatın: kenarlar <b>titriyor</b>.</li><li>Işın sayısını 720’ye çıkarın: düzeliyor; sol üstteki test sayısını “köşelere” modundakiyle karşılaştırın.</li><li>“ışınları göster”i kapatın: oyuncunun göreceği hâl. Bu, bir 2B oyunun dinamik ışığıdır.</li></ol></div>
+</section>
+
+<section data-sec="çokgen">
+  <h2>Kod: görüş çokgeni</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Görüş çokgeni: yalnızca duvar köşelerine ışın gönder. duvarlar: [[x1, y1, x2, y2], ...] (dünya sınırı dahil)
+function isin(o, aci, duvarlar) {                      // en yakın çarpma noktası
+  const d = { x: cos(aci), y: sin(aci) }; let enYakin = Infinity;
+  for (const [x1, y1, x2, y2] of duvarlar) {
+    const sx = x2 - x1, sy = y2 - y1, payda = d.x * sy - d.y * sx;
+    if (abs(payda) < 1e-9) continue;                   // paralel
+    const t = ((x1 - o.x) * sy - (y1 - o.y) * sx) / payda;     // ışın üzerindeki yer (G1'deki t)
+    const u = ((x1 - o.x) * d.y - (y1 - o.y) * d.x) / payda;   // duvar üzerindeki yer
+    if (t > 0 && u >= 0 && u <= 1 && t < enYakin) enYakin = t;
+  }
+  return { x: o.x + d.x * enYakin, y: o.y + d.y * enYakin, aci };
+}
+
+function gorusCokgeni(o, duvarlar) {
+  const acilar = [];
+  for (const [x1, y1, x2, y2] of duvarlar)
+    for (const [x, y] of [[x1, y1], [x2, y2]]) {
+      const a = atan2(y - o.y, x - o.x);
+      acilar.push(a - 0.0001, a, a + 0.0001);          // köşeye ve iki yanından sıyırarak
+    }
+  acilar.sort((a, b) => a - b);                        // açıya göre sırala: çokgenin köşe sırası
+  return acilar.map(a => isin(o, a, duvarlar));
+}
+
+// Çizim:  beginShape(); for (const p of gorusCokgeni(fener, duvarlar)) vertex(p.x, p.y); endShape(CLOSE);
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="çokgen">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>atan2(y - o.y, x - o.x)</code></td><td style="text-align:left;">fenerden köşeye giden yönün açısı (−π … π)</td><td style="text-align:left;">Sıralama anahtarı. Bölme yok; dx = 0 sorun olmaz.</td></tr><tr><td style="text-align:left;"><code>a - 0.0001, a, a + 0.0001</code></td><td style="text-align:left;">köşeye ve iki yanına</td><td style="text-align:left;">Tam köşeye giden ışın köşede durur; yanındaki köşeyi sıyırıp arkaya gider. İkisi birlikte gölgenin kenarını çizer.</td></tr><tr><td style="text-align:left;"><code>t &gt; 0 &amp;&amp; u &gt;= 0 &amp;&amp; u &lt;= 1</code></td><td style="text-align:left;">ışının önünde ve duvarın üzerinde</td><td style="text-align:left;">G1’deki t ve u; ışın sonsuz olduğu için t’nin üst sınırı yok.</td></tr><tr><td style="text-align:left;"><code>acilar.sort((a, b) =&gt; a - b)</code></td><td style="text-align:left;">saat yönünde sırala</td><td style="text-align:left;">Uç noktalar bu sırayla birleştirilince kendini kesmeyen çokgen çıkar.</td></tr><tr><td style="text-align:left;"><code>isin</code> içindeki döngü</td><td style="text-align:left;">bu ışın için en yakın duvar</td><td style="text-align:left;">G1’deki <code>ilkCarpan</code>: bütün duvarları dene, en küçük t’yi tut.</td></tr></table>
+</section>
+
+<section data-sec="çokgen">
+  <h2>Oyunlarda: ışık, gölge ve gizlilik</h2>
+<div class="cols c46">
+<div><div class="box game" style="font-size:.78em"><span class="bt">🕵️ Görüşün kendisi oyun olunca</span><ul style="font-size:.92em"><li><b>Monaco: What’s Yours Is Mine</b> (2013): yukarıdan bakışlı soygun oyunu. Bina planı hep ekrandadır ama odaların <b>içi</b> yalnızca karakterinizin gördüğü kadar renklenir: muhafızlar, eşyalar, diğer oyuncular görüş çokgeninizin içindeyse görünür.</li><li>Aynı fikir sayısız yukarıdan bakışlı korku ve gizlilik oyununda: köşenin arkası karanlık; kapıyı açınca görüş yelpaze gibi yayılır.</li><li>Çok oyunculu oyunlarda bu aynı zamanda <b>bilgi kuralıdır</b>: göremediğiniz oyuncu size gönderilmez (savaş sisindeki hile koruması).</li></ul></div></div>
+<div><div class="box story" style="font-size:.78em"><span class="bt">💡 2B dinamik ışık</span><ul style="font-size:.92em"><li>Bir 2B lambanın aydınlattığı bölge, lambanın görüş çokgenidir. Motorlar bu çokgeni bir ışık dokusuyla doldurur; dışı gölgede kalır.</li><li>Unity’nin 2B ışıklarında gölge düşüren nesnelere “Shadow Caster 2D” eklenir; Godot’da <code>LightOccluder2D</code>. İkisi de sizin yerinize bu sunumdaki hesabı (ya da ekran kartındaki eşdeğerini) yapar.</li><li>Nicky Case’in “Sight &amp; Light” ve Red Blob Games’in “2D Visibility” sayfaları konunun en bilinen iki etkileşimli anlatımı (Kaynaklar).</li></ul><p class="mini">YZ tarafı (Y11): muhafızın “görüş konisi” çoğu oyunda bu çokgenin bir dilimi olarak çizilir; böylece oyuncu, koninin duvarın arkasına <b>taşmadığını</b> görür.</p></div></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">BSP ağacı</div><div class="sub">DOOM: sıralamadan sıralı çizim</div></div>
+</section>
+
+<section data-sec="bsp">
+  <h2>Problem: hangi duvar önde?</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>Wolfenstein’ın ızgarası eğik duvarlara, farklı yüksekliklere izin vermiyordu. DOOM’un haritaları serbest <b>doğru parçalarından</b> oluşur (G1, G2).</li><li>Çizerken temel sorun: yakındaki duvar uzaktakini <b>kapatmalı</b>. Bunun için duvarları oyuncuya <b>uzaklık sırasıyla</b> ele almak gerekir.</li><li><b>İlk akla gelen:</b> her kare bütün duvarları uzaklığa göre sırala (N log N) ve arkadan öne boya (“ressam yöntemi”). 1993’te binlerce duvarlı haritada her kare sıralama çok pahalı; ayrıca uzun, iç içe duvarlarda “uzaklık” tek bir sayı değil.</li><li>Gözlem: <b>duvarlar yerinden oynamıyor</b>. Yalnızca oyuncu hareket ediyor. Sıralama işinin çoğu <b>önceden</b> yapılabilir mi?</li></ul></div>
+<div><div class="box info" style="font-size:.8em"><span class="bt">Fikir: uzayı duvarlarla böl</span><ol style="font-size:.92em"><li>Bir duvar seç. Onun (sonsuza uzatılmış) doğrusu düzlemi ikiye ayırır: <b>ön</b> ve <b>arka</b>.</li><li>Öbür duvarları ön ve arka diye iki gruba ayır. Doğruyu kesen duvar <b>ikiye bölünür</b>.</li><li>İki grup için aynısını yap: bir <b>ikili ağaç</b>.</li><li>Bu, harita <b>derlenirken</b> bir kez yapılır ve dosyaya yazılır.</li></ol><p><b>Çizerken:</b> kökte dur. Oyuncu bölme doğrusunun <b>hangi tarafında</b>? (G1’in yön testi.) Oyuncunun tarafındaki her şey, öbür taraftaki her şeyden <b>öndedir</b>. Önce o tarafa in, sonra bu düğümün duvarını çiz, sonra öbür tarafa in.</p></div><div class="box info" style="font-size:.78em;margin-top:8px"><span class="bt">Önerme</span>N duvarlı ağacı gezmek <b>N adımdır</b>: her düğüm bir kez, her düğümde bir yön testi. Sıralama yok. Oyuncu nerede olursa olsun doğru sıra çıkar.</div></div>
+</div>
+</section>
+
+<section data-sec="bsp">
+  <h2>Canlı: çizim sırası ağaçtan gelir 🌲</h2>
+<div class="demo" data-demo="bsp"></div>
+</section>
+
+<section data-sec="bsp">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> kalın renkli çizgiler duvarlar; üstlerindeki sayı çizim sırası (1 = göze en yakın, yeşil; sonuncu = en uzak, kırmızı). Mavi nokta göz (fareyi izler). Kesikli ince çizgiler bölme doğruları.</li><li>Gözü yavaşça gezdirin. Sıra ne zaman değişiyor? Yalnızca göz bir <b>kesikli çizgiyi</b> geçtiğinde: o düğümde “ön” ve “arka” yer değiştirir.</li><li>Gözü bir duvarın bir yanından öbür yanına taşıyın: o duvarın arkasındaki bütün grup ile önündeki grup sıra değiştirir.</li><li>Sol üstteki sayıya bakın: 8 duvar ağaçta daha fazla parça olmuş. Bir bölme doğrusunun kestiği duvarlar ikiye ayrıldı (aynı duvarın iki parçası farklı sıra numarası alabilir).</li><li>“bölme doğrularını göster”i kapatın: geriye yalnızca doğru sıra kalır. Oyun her kare bunu, tek bir sıralama yapmadan üretir.</li></ol></div>
+</section>
+
+<section data-sec="bsp">
+  <h2>Kod: ağacı önden arkaya gezmek</h2>
+<div class="cols c64">
+<div>  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// BSP ağacı: düğüm = { duvar: [x1, y1, x2, y2], on, arka }
+// Çizim sırası (önden arkaya): göz hangi taraftaysa ÖNCE o tarafın alt ağacı
+function ondenArkaya(dugum, goz, ciz) {
+  if (!dugum) return;
+  const [x1, y1, x2, y2] = dugum.duvar;
+  const taraf = (x2 - x1) * (goz.y - y1) - (y2 - y1) * (goz.x - x1);   // G1: yön testi
+  const yakin = taraf >= 0 ? dugum.on : dugum.arka;
+  const uzak  = taraf >= 0 ? dugum.arka : dugum.on;
+  ondenArkaya(yakin, goz, ciz);     // 1) gözün olduğu taraf
+  ciz(dugum.duvar);                 // 2) bölme çizgisindeki duvar
+  ondenArkaya(uzak, goz, ciz);      // 3) öbür taraf
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C · DOOM kaynak kodu">
+<pre><code class="language-c" data-trim data-line-numbers><script type="text/template">
+// DOOM (1993), r_bsp.c — her karede çalışan çizim döngüsünün tamamı
+void R_RenderBSPNode (int bspnum)
+{
+    node_t*     bsp;
+    int         side;
+
+    // Found a subsector?
+    if (bspnum & NF_SUBSECTOR)
+    {
+        if (bspnum == -1)
+            R_Subsector (0);
+        else
+            R_Subsector (bspnum&(~NF_SUBSECTOR));     // yaprak: bu küçük bölgenin duvarlarını çiz
+        return;
+    }
+
+    bsp = &nodes[bspnum];
+
+    // Decide which side the view point is on.
+    side = R_PointOnSide (viewx, viewy, bsp);          // G1'deki yön testi
+
+    // Recursively divide front space.
+    R_RenderBSPNode (bsp->children[side]);             // ÖNCE gözün olduğu taraf
+
+    // Possibly divide back space.
+    if (R_CheckBBox (bsp->bbox[side^1]))               // öbür tarafın kutusu ekranda görünebiliyorsa
+        R_RenderBSPNode (bsp->children[side^1]);       // SONRA öbür taraf
+}
+</script></code></pre>
+    </div>
+  </div></div>
+<div><ul style="font-size:.76em"><li>İlk sekme: bu sunumdaki demonun gezme fonksiyonu; 10 satır.</li><li>İkinci sekme: DOOM’un her karede çalışan <b>gerçek</b> çizim fonksiyonu. Aynı iskelet:</li><li><code>R_PointOnSide</code>: göz bölme doğrusunun hangi tarafında? (G1’deki DOOM kodunun kardeşi.)</li><li><code>children[side]</code>: <b>önce</b> gözün olduğu taraf.</li><li><code>children[side^1]</code>: <b>sonra</b> öbür taraf (<code>^1</code>: 0 ↔ 1 çevirir). Ama yalnızca o tarafın sınırlayıcı kutusu ekranda görünebiliyorsa (<code>R_CheckBBox</code>): bütün bir alt ağaç tek testle atlanır (G2’deki budama).</li><li>DOOM <b>önden arkaya</b> çizer ve ekranın hangi sütunlarının dolduğunu tutar; dolu sütuna bir daha boyamaz. Hiçbir piksel iki kez boyanmaz.</li></ul></div>
+</div><p class="mini">Kaynak: id Software, DOOM açık kaynak kodu, <code>linuxdoom-1.10/r_bsp.c</code>. Ağaç, harita editöründen çıkan dosya bir “düğüm kurucu” programdan geçirilerek üretilir.</p>
+</section>
+
+<section data-sec="bsp">
+  <h2>Oyunlarda: BSP’den “ne görünür?” tablosuna</h2>
+<div class="cols c64">
+<div><ul style="font-size:.76em"><li><b>BSP’nin kökeni:</b> Fuchs, Kedem ve Naylor’ın 1980 tarihli makalesi; uçuş simülatörleri için. John Carmack fikri okuyup önce Wolfenstein’ın Super Nintendo sürümünde, sonra DOOM’da kullandı.</li><li><b>DOOM (1993):</b> ağaç çizim <b>sırasını</b> verir; ama görünmeyen odalar da gezilir (kutu testi yardımcı olur).</li><li><b>Quake (1996):</b> bir adım ötesi. Harita derlenirken, her küçük bölge için “buradan <b>görülebilecek</b> bölgelerin listesi” hesaplanır ve dosyaya yazılır: olası görünür küme (PVS). Oyun sırasında oyuncunun bölgesinin listesine bakılır; listede olmayan hiçbir şey çizilmez.</li><li>Bedeli: derleme saatler sürebilir ve dünya <b>değişemez</b> (yıkılan duvar listeyi bozar). Önceden hesaplamanın her zamanki bedeli (G1: Paradox’un haritası; Y18).</li></ul></div>
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 Bugün</span><ul style="font-size:.92em"><li>Açık dünyalarda duvar azdır; BSP yerine kamera görüş alanı testi (G2’deki kutu ağaçları) ve <b>kapatma ayıklaması</b> kullanılır: büyük bir binanın arkasındaki nesneler çizilmez.</li><li>Kapalı mekânlarda <b>kapı (portal)</b> yöntemi: yalnızca açık kapılardan görünen odalar çizilir.</li><li>Fikir aynı kaldı: <b>en hızlı çizim, hiç yapılmayan çizimdir</b>.</li></ul></div><div class="box story" style="font-size:.76em;margin-top:8px"><span class="bt">📜 Aynı ağaç, başka iş</span>BSP yalnızca çizim için değil: DOOM “bu nokta hangi odada?” sorusunu aynı ağaçtan aşağı inerek cevaplar (her düğümde bir yön testi; kd-ağacındaki arama gibi). Quake çarpışmayı da BSP üzerinde yapar (G3’teki şişirilmiş gövdeler birer BSP ağacıdır).</div></div>
+</div>
+</section>
+
+<section data-sec="bsp">
+  <div class="quiz" data-karildi="1" data-answer="C">
+    <div class="qhead">Quiz 3 · BSP</div>
+    <div class="q">Bir BSP ağacında oyuncu, kökteki bölme doğrusunun “arka” tarafında duruyor. Önden arkaya çizimde sıra ne olur?</div>
+    <div class="opts"><button data-opt="A">Önce kökün “ön” alt ağacı, sonra kökün duvarı, sonra “arka” alt ağacı</button><button data-opt="B">Önce kökün duvarı, sonra iki alt ağaç</button><button data-opt="C">Önce “arka” alt ağacı (oyuncunun olduğu taraf), sonra kökün duvarı, sonra “ön” alt ağacı</button><button data-opt="D">Duvarlar uzaklığa göre sıralanır</button></div>
+    <div class="explain">“Ön” ve “arka” yalnızca ağaç kurulurken verilen adlardır. Çizimde önemli olan <b>oyuncunun hangi tarafta olduğu</b>: o taraftaki her şey öbür taraftakilerden yakındır. Kural: oyuncunun tarafı → düğümün duvarı → öbür taraf. Hiçbir sıralama yapılmaz.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Hepsi bir arada</div><div class="sub">tam kod, araçlar, kapanış</div></div>
+</section>
+
+<section data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile zindan, görüş alanı ve sis</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.72;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+const KARO = 24;
+const HARITA = ['####################', '#......#...........#', '#......#....###....#', '#...........#......#',
+                '#......#....#......#', '####.###....#..##..#', '#......#...........#', '#......######..##..#',
+                '#..................#', '####################'];
+let oyuncu = { x: 2, y: 2 }, sis, R = 7;
+
+function duvarMi(x, y) { return y < 0 || y >= HARITA.length || x < 0 || x >= HARITA[0].length || HARITA[y][x] === '#'; }
+
+function setup() {
+  createCanvas(HARITA[0].length * KARO, HARITA.length * KARO); noStroke();
+  sis = HARITA.map(satir => [...satir].map(() => BILINMIYOR));
+  sisGuncelle(oyuncu, R);
+}
+
+function keyPressed() {
+  const dx = (key === 'd') - (key === 'a'), dy = (key === 's') - (key === 'w');
+  if ((dx || dy) && !duvarMi(oyuncu.x + dx, oyuncu.y + dy)) {
+    oyuncu.x += dx; oyuncu.y += dy;
+    sisGuncelle(oyuncu, R);                  // yalnızca oyuncu kıpırdayınca yeniden hesapla
+  }
+}
+
+function draw() {
+  background(15);
+  for (let y = 0; y < HARITA.length; y++)
+    for (let x = 0; x < HARITA[0].length; x++) hucreCiz(x, y);
+  fill(60, 200, 100); circle(oyuncu.x * KARO + KARO / 2, oyuncu.y * KARO + KARO / 2, KARO * 0.6);
+}
+</script></code></pre><p class="mini">Bu 25 satır + “Kod: gölge dökümü” (<code>gorusAlani</code>) ve “Savaş sisi” (<code>sisGuncelle</code>, <code>hucreCiz</code>) slaytlarındaki fonksiyonlar.</p></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 100 satır: W / A / S / D ile dolaşın; gölge dökümü ve üç durumlu sis.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><code>R</code>’yi 3 ve 15 yapın: klostrofobi ile ferahlık arasındaki fark.</li><li>Birkaç “canavar” ekleyin: yalnızca <code>GORUNUYOR</code> hücredeyseler çizin.</li><li>Canavarlara aynı fonksiyonla görüş verin: oyuncuyu gören size doğru yürüsün (Y8).</li><li>Meşaleler ekleyin: her meşale kendi küçük görüş alanını “aydınlatsın”.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Motorlarda ve kütüphanelerde</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>Unity</b></td><td><code>Physics2D.Linecast</code> · <code>Physics.Raycast</code></td><td>Sürekli dünyada görüş hattı; katman maskesiyle yalnızca “görüşü kesen” nesnelere bakın.</td></tr>
+<tr><td><b>Unity (2B ışık)</b></td><td>Light 2D · Shadow Caster 2D</td><td>Dinamik 2B ışık ve gölge; görüş çokgeninin motor sürümü.</td></tr>
+<tr><td><b>Unity / Unreal (3B)</b></td><td>Occlusion Culling · Frustum Culling</td><td>Görünmeyeni çizmeme; önceden pişirilen ya da ekran kartında hesaplanan görünürlük.</td></tr>
+<tr><td><b>Godot</b></td><td><code>RayCast2D</code> · <code>PointLight2D</code> + <code>LightOccluder2D</code></td><td>Görüş hattı ve gölge düşüren 2B ışık.</td></tr>
+<tr><td><b>Roguelike kütüphaneleri</b></td><td>rot.js (JavaScript) · python-tcod</td><td>Hazır görüş alanı algoritmaları (gölge dökümü ve akrabaları), yol bulma, zindan üretimi.</td></tr>
+<tr><td><b>Tarayıcıda okuyun</b></td><td>Red Blob Games · Albert Ford · Nicky Case</td><td>Bu sunumdaki üç algoritmanın en iyi etkileşimli anlatımları (Kaynaklar).</td></tr>
+</table>
+<p class="mini">Karo tabanlı oyunda görüş hattını ve görüş alanını kendiniz yazmak çoğu zaman en temizi; sürekli dünyada motorun ışınını kullanın.</p>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.9em"><li>Görüş hattını sabit adımla örneklemek (köşeden kaçar)</li><li><code>grid[x][y]</code> ile <code>grid[y][x]</code>’i karıştırmak</li><li>Işın dökümünde balık gözü düzeltmesini unutmak</li><li>Görüş alanını her <b>karede</b> yeniden hesaplamak (oyuncu kıpırdayınca yeter)</li><li>Sisi yalnızca çizimde uygulamak; düşman mantığını ve ağ verisini açık bırakmak</li><li>Görüş çokgeninde dünya sınırını duvar olarak eklememek</li></ul></div></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js, motor yok. Karo tabanlı bir zindan için: (1) <code>isinAt</code>: Amanatides–Woo DDA, hücre biriminde, çarpılan hücreyi, uzaklığı ve yüzü döndürsün. (2) <code>gorusAlani(px, py, R, duvarMi, gorunur)</code>: özyinelemeli gölge dökümü, 8 dilim, dairesel yarıçap. (3) Üç durumlu savaş sisi: yalnızca oyuncu hareket edince güncellensin. (4) Hata ayıklama: bir tuşla sisi kapat; bir tuşla aynı görüş alanını 360 ışınla hesaplayıp iki sonucun farkını kırmızı boya. (5) Test: boş odada görünen hücre sayısı ≈ πR²; tek sütunun arkasında gölge konisi.”</p><ul style="font-size:.9em"><li>Algoritmanın adını söyleyin; “görüş hesapla” demeyin</li><li>İki yöntemi karşılaştıran bir hata ayıklama modu isteyin</li><li>Koordinat sırasını (satır/sütun) açıkça yazın</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Savaş sisi olan ve olmayan iki strateji oyunu düşünün (ya da satranç ile bir RTS’i karşılaştırın). Gizlenen bilgi oyunu nasıl değiştiriyor? Hangi beceriler öne çıkıyor?</li><li class="fragment">Bir roguelike’ta canavar sizi görüyor ama siz onu göremiyorsunuz (asimetrik görüş). Bu bir hata mı, zorluk unsuru mu? Tersi olursa?</li><li class="fragment">Wolfenstein 3D’nin dünyası tek katlı ve dik duvarlıydı, çünkü yöntemi bunu gerektiriyordu. Bir teknik sınırın oyunun <b>tasarımını</b> belirlediği başka örnekler sayın.</li><li class="fragment">Quake, haritanın “buradan ne görünür” tablosunu önceden hesaplıyor; bu yüzden duvarlar yıkılamıyor. Yıkılabilir çevresi olan bir oyun bu sorunu nasıl çözer?</li><li class="fragment">Yukarıdan bakışlı bir oyunda oyuncuya her şeyi göstermek ile yalnızca karakterinin gördüğünü göstermek arasında nasıl seçim yaparsınız?</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Zindan kâşifi</b> — Örnek kodu genişletin: Y15’teki hücresel otomatla üretilmiş mağara + görüş alanı + sis; çıkışı bulunca yeni seviye.</li><li><b class="c-green">[kolay]</b> <b>Fener</b> — p5.js’te görüş çokgeniyle aydınlanan karanlık bir oda; fare fener. Duvarları fareyle çizdirin.</li><li><b class="c-amber">[orta]</b> <b>Mini Wolfenstein</b> — Işın dökümcüyü oyuna çevirin: dokulu duvarlar (ışının blok içindeki yeri), mini harita, toplanacak anahtarlar.</li><li><b class="c-amber">[orta]</b> <b>Gören muhafızlar</b> — Y19’daki gizlilik oyununa muhafızların görüş konisini görüş çokgeniyle <b>kırpılmış</b> olarak çizin; koni duvarın arkasına taşmasın.</li><li><b class="c-red">[zor]</b> <b>Çok birimli sis</b> — Bir strateji prototipi: 20 birim, hücre başına sayaç; birim hareket edince yalnızca fark güncellensin. Her kare baştan hesaplamayla süre karşılaştırması.</li><li><b class="c-purple">[araştırma]</b> <b>Görüş algoritmaları karşılaştırması</b> — Işın yelpazesi, gölge dökümü ve simetrik gölge dökümünü aynı 50 haritada çalıştırın: bakılan hücre sayısı, delikler, simetri ihlalleri.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Görüş hattı (ızgara):</b> örnekleme köşeden kaçar; DDA ışının değdiği her hücreye bir kez bakar. Bresenham: ince çizgi.</li><li><b>Işın dökümü:</b> her ekran sütununa bir ışın; yükseklik = 1 / uzaklık; balık gözü için cos düzeltmesi. (Wolfenstein 3D.)</li><li><b>Görüş alanı:</b> gölge dökümü her görünen hücreye bir kez bakar; ışın yelpazesi uzakta delik bırakır. <b>Savaş sisi:</b> üç durum; bir bilgi kuralı.</li><li><b>Görüş çokgeni:</b> yalnızca köşelere (±ε) ışın, açıya göre sırala. 2B ışık ve gölgenin temeli.</li><li><b>BSP:</b> uzayı duvarlarla önceden böl; çizerken “oyuncu hangi tarafta?” → sıralamadan doğru sıra. (DOOM; Quake’te önceden hesaplı görünürlük.)</li><li>Ortak tema: görünmeyene harcanan her işlem boşa gider; ne kadarını <b>önceden</b> bilebiliyorsanız o kadar iyi.</li><li><b>Sonraki:</b> fizik simülasyonunun temeli: nesneler nasıl hareket eder, zıplama eğrisi nereden gelir, neden sabit zaman adımı?</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=fc3nnG2CG8U" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/fc3nnG2CG8U/hqdefault.jpg" alt=""><span><b>Line Of Sight or Shadow Casting in 2D</b><br>javidx9</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=NbSee-XM7WA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/NbSee-XM7WA/hqdefault.jpg" alt=""><span><b>Super Fast Ray Casting in Tiled Worlds using DDA</b><br>javidx9</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=BSb87DC-PtA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/BSb87DC-PtA/hqdefault.jpg" alt=""><span><b>RetroAhoy: Wolfenstein 3D</b><br>Ahoy</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=eOCQfxRQ2pY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/eOCQfxRQ2pY/hqdefault.jpg" alt=""><span><b>Wolfenstein 3D's map renderer</b><br>Matt Godbolt</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=hYMZsMMlubg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/hYMZsMMlubg/hqdefault.jpg" alt=""><span><b>Why Doom is Awesome: Binary Space Partitioning</b><br>ShreddedNerd</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=HQYsFshbkYw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/HQYsFshbkYw/hqdefault.jpg" alt=""><span><b>Creating a Doom-style 3D engine in C</b><br>Bisqwit</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=gYRrGTC7GtA" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/gYRrGTC7GtA/hqdefault.jpg" alt=""><span><b>Make Your Own Raycaster Part 1</b><br>3DSage</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: kaynak kodu, yazılar ve etkileşimli sayfalar 📚</h2>
+<ul style="font-size:.78em"><li>Red Blob Games (Amit Patel): <a href="https://www.redblobgames.com/articles/visibility/" target="_blank" rel="noopener">2D Visibility</a> · <a href="https://www.redblobgames.com/grids/line-drawing/" target="_blank" rel="noopener">Line drawing on a grid</a> — etkileşimli</li><li>Nicky Case: <a href="https://ncase.github.io/sight-and-light/" target="_blank" rel="noopener">Sight &amp; Light</a> — görüş çokgenini adım adım kuran etkileşimli anlatım</li><li>Albert Ford: <a href="https://www.albertford.com/shadowcasting/" target="_blank" rel="noopener">Symmetric Shadowcasting</a> · RogueBasin: <a href="https://www.roguebasin.com/index.php/FOV_using_recursive_shadowcasting" target="_blank" rel="noopener">FOV using recursive shadowcasting</a> (Björn Bergström)</li><li>Lode Vandevenne: <a href="https://lodev.org/cgtutor/raycasting.html" target="_blank" rel="noopener">Raycasting</a> — Wolfenstein usulü ışın dökümcüyü sıfırdan yazma</li><li>DOOM kaynak kodu: <a href="https://github.com/id-Software/DOOM/blob/master/linuxdoom-1.10/r_bsp.c" target="_blank" rel="noopener">r_bsp.c</a> (<code>R_RenderBSPNode</code>)</li><li>Riot Games: <a href="https://technology.riotgames.com/news/story-fog-and-war" target="_blank" rel="noopener">A Story of Fog and War</a> — League of Legends’ta savaş sisinin çizimi</li><li>Amanatides &amp; Woo (1987), “A Fast Voxel Traversal Algorithm for Ray Tracing” · Fuchs, Kedem &amp; Naylor (1980), “On Visible Surface Generation by A Priori Tree Structures”</li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Fizik Simülasyonunun Temeli</div>
+    <div class="sub">Euler, Verlet, sabit zaman adımı, kısıtlar, zıplama hissi</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../geo-fizik/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
