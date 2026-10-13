@@ -141,7 +141,7 @@
     const init = d.init ? d.init.split(' ') : 'T S R P N O A E I H G'.split(' ');
     m.a = [null, ...init.map(k => m.item(/^\d+$/.test(k) ? +k : k))]; m.n = init.length;
     if (d.empty != null) { m = new HeapModel(min); }
-    m.F = []; m.P(d.note ? d.note : d.empty != null ? 'Boş yığın' : 'Kitaptaki yığın: her düğüm çocuklarından ' + (min ? 'küçük' : 'büyük') + ' ya da eşit. Altta aynı yığının DİZİ hâli.'); const F0 = m.F; m.F = null; fp.load(F0);
+    m.F = []; m.P(d.note ? d.note : d.empty != null ? 'Boş yığın' : 'Örnek yığın: her düğüm çocuklarından ' + (min ? 'küçük' : 'büyük') + ' ya da eşit. Altta aynı yığının DİZİ hâli.'); const F0 = m.F; m.F = null; fp.load(F0);
     return { stop: () => fp.pause() };
   };
 

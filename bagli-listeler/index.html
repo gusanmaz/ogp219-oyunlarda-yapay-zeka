@@ -34,7 +34,7 @@
   <div class="sub"><i>Linked lists</i> — dizi mi, bağlı liste mi? Bellekte gerçekte neler oluyor?</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlelist"></div>
-  <aside class="notes">Bu sunum Sedgewick &amp; Wayne “Algorithms, 4th ed.” 1.3 (bağlı listeler, yeniden boyutlanan diziler) bölümünü temel alır; dizi ile bağlı listenin bellek, önbellek ve oyun açısından kapsamlı karşılaştırmasını ekler. Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları.</aside>
+  <aside class="notes">Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları.</aside>
 </section>
 
 <section>
@@ -332,7 +332,7 @@ console.log(head.next.next.key); // or
 </script></code></pre>
     </div>
   </div>
-  <p class="mini">Bu, kitaptaki klasik örneğin aynısı (Shakespeare: <i>“to be or not to be”</i>).</p>
+  <p class="mini">Klasik örnek (Shakespeare: <i>“to be or not to be”</i>).</p>
 </section>
 
 <section data-sec="bağlı liste">
@@ -417,7 +417,7 @@ function contains(head, key) {
 <section data-sec="işlemler">
   <h2>Başa ekleme: 3 adım, liste ne kadar uzun olursa olsun</h2>
   <div class="llviz" data-keys="be or not" data-ops="pushfront,popfront,reset" data-default="to" data-code="oldFirst = head|head = new Node(…)|head.next = oldFirst" data-h="270"></div>
-  <aside class="notes">Kitaptaki “insert at the beginning” şeması. Adımların sırası önemli: önce eskiyi tut (1), sonra yeni düğümü oluştur (2), sonra bağla (3). Baştan silme de tek satır: head = head.next. Silinen düğüm “çöp” olur; GC toplar.</aside>
+  <aside class="notes">Adımların sırası önemli: önce eskiyi tut (1), sonra yeni düğümü oluştur (2), sonra bağla (3). Baştan silme de tek satır: head = head.next. Silinen düğüm “çöp” olur; GC toplar.</aside>
 </section>
 
 <section data-sec="işlemler">
@@ -733,12 +733,12 @@ def push_back(head, key):
       <button data-opt="C">Bellek sızıntısı</button>
       <button data-opt="D">Diziler küçülemez</button>
     </div>
-    <div class="explain">Kapasite 8, eleman 8 → push: 16’ya büyü (kopya). Pop: eleman 8 = 16’nın yarısı → 8’e küçül (kopya). Push → büyü… Her işlem N kopya! Buna “çırpınma” <span class="en">thrashing</span> denir. Çözüm (kitaptaki): kapasitenin <b>dörtte birine</b> düşünce yarıya indir.</div>
+    <div class="explain">Kapasite 8, eleman 8 → push: 16’ya büyü (kopya). Pop: eleman 8 = 16’nın yarısı → 8’e küçül (kopya). Push → büyü… Her işlem N kopya! Buna “çırpınma” <span class="en">thrashing</span> denir. Çözüm: kapasitenin <b>dörtte birine</b> düşünce yarıya indir.</div>
   </div>
 </section>
 
 <section data-sec="dinamik dizi">
-  <h2>Kendi dinamik dizimiz (kitaptaki ResizingArray)</h2>
+  <h2>Kendi dinamik dizimiz</h2>
   <div class="tabs short" style="font-size:.85em">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
@@ -1296,7 +1296,7 @@ def pop_front(head):
   <h2>Derin hikâye: Linux’un “müdahaleci” listeleri (list_head)</h2>
   <div class="cols c64">
     <div><ul style="font-size:.84em">
-      <li>Ders kitabındaki bağlı listede düğüm, veriyi <b>tutar</b>: <code>Node { data; next; }</code>. Linux çekirdeği tersini yapar: veri, düğümü <b>içinde taşır</b>. Her yapının içine küçük bir <code>struct list_head { next, prev }</code> gömülür.</li>
+      <li>Klasik bağlı listede düğüm, veriyi <b>tutar</b>: <code>Node { data; next; }</code>. Linux çekirdeği tersini yapar: veri, düğümü <b>içinde taşır</b>. Her yapının içine küçük bir <code>struct list_head { next, prev }</code> gömülür.</li>
       <li>Listede dolaşırken eldeki <code>list_head</code> işaretçisinden, onu içeren asıl yapıya <code>container_of</code> makrosuyla (alanın yapı içindeki konumunu çıkararak) geri dönülür.</li>
       <li>Kazançlar: düğüm için <b>ayrı bellek ayırma yok</b>; bir nesne aynı anda <b>birden çok listede</b> olabilir (ör. bir süreç hem “çalışanlar” hem “bekleyenler” listesinde ayrı list_head’lerle); nesneyi bildiğinizde listeden O(1) çıkarabilirsiniz.</li>
     </ul></div>

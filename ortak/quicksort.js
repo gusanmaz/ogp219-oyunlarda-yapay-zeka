@@ -74,7 +74,7 @@
   };
   Object.assign(SL.ALG_NAMES, { quick: 'Quicksort', quicknosh: 'Quicksort (karıştırmasız)', quick3: 'Quicksort (3 yollu)' });
 
-  /* ---------- Princeton tarzı bölümleme izi ---------- */
+  /* ---------- bölümleme izi ---------- */
   D.parttrace = function (root) {
     const a = SL.parseValues(root.dataset.values || 'K R A T E L E P U I M Q C X O S');
     const n = a.length, lo = 0, hi = n - 1, rows = [];
@@ -93,7 +93,7 @@
     root.innerHTML = `<table class="trace-t pt"><thead><tr><th>i</th><th>j</th><th colspan="${n}" class="arr-h">a[ ] — pivot v = a[0] = ${a[j]}</th></tr><tr class="idx"><th></th><th></th>${a.map((_, k) => `<th>${k}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
   };
 
-  /* ---------- Princeton tarzı quicksort izi (lo j hi) ---------- */
+  /* ---------- quicksort izi (lo j hi) ---------- */
   D.qtrace = function (root) {
     const a = SL.parseValues(root.dataset.values || 'K R A T E L E P U I M Q C X O S');
     const n = a.length, rows = [], fin = new Set();

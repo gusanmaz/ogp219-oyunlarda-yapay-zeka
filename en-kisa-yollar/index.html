@@ -34,7 +34,7 @@
   <div class="sub"><i>Gevşetme, Dijkstra, DAG’ler, Bellman–Ford</i> — oyunlarda yol bulmanın kapısı</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlesp"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.4 Shortest Paths bölümünü temel alır. Bölüm 5’in ve algoritmalar kısmının son sunumu; buradan Oyun Yapay Zekâsı bölümüne (A*, navmesh…) geçilecek. Arka planda arazili bir haritada Dijkstra dalgası: koyu yeşil = pahalı arazi; sonunda en ucuz yol kırmızı.</aside>
+  <aside class="notes">Bölüm 5’in ve algoritmalar kısmının son sunumu; buradan Oyun Yapay Zekâsı bölümüne (A*, navmesh…) geçilecek. Arka planda arazili bir haritada Dijkstra dalgası: koyu yeşil = pahalı arazi; sonunda en ucuz yol kırmızı.</aside>
 </section>
 
 <section>
@@ -100,7 +100,7 @@
       <tr><td>negatif olabilir, negatif döngü yok</td><td>Bellman–Ford</td></tr>
     </table>
   </div>
-  <div class="box story" style="margin-top:10px"><span class="bt">Gösterim: en kısa yollar ağacı</span>Princeton’ın fikri: s’den herkese en kısa yolların birleşimi bir <b>ağaçtır</b>. Onu iki dizi ile tutarız: <code>distTo[v]</code> (s’den v’ye en kısa uzaklık) ve <code>edgeTo[v]</code> (o yoldaki son kenar). Yol = edgeTo zincirini geriye izlemek (DFS/BFS’teki gibi!).</div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Gösterim: en kısa yollar ağacı</span>Fikir: s’den herkese en kısa yolların birleşimi bir <b>ağaçtır</b>. Onu iki dizi ile tutarız: <code>distTo[v]</code> (s’den v’ye en kısa uzaklık) ve <code>edgeTo[v]</code> (o yoldaki son kenar). Yol = edgeTo zincirini geriye izlemek (DFS/BFS’teki gibi!).</div>
 </section>
 
 <section data-sec="temeller">
@@ -200,7 +200,7 @@ function relax(v, w, weight, distTo, edgeTo) {
 <section data-sec="Dijkstra">
   <h2>Dijkstra — iz tablosu</h2>
   <div class="demo" data-demo="dijkstra"></div>
-  <p class="mini">Kitaptaki “tinyEWD”. Mor kesikli = PQ’da, yeşil = kesinleşti, mavi kenar = az önce gevşedi. Sonuç (0’dan): 2: .26, 4: .38, 7: .60, 5: .73, 3: .99, 1: 1.05, 6: 1.51. Başka bir kaynak için düğüme tıklayın.</p>
+  <p class="mini">Mor kesikli = PQ’da, yeşil = kesinleşti, mavi kenar = az önce gevşedi. Sonuç (0’dan): 2: .26, 4: .38, 7: .60, 5: .73, 3: .99, 1: 1.05, 6: 1.51. Başka bir kaynak için düğüme tıklayın.</p>
 </section>
 
 <section data-sec="Dijkstra">
@@ -288,7 +288,7 @@ function dijkstra(adj, s) {                 // adj[v] = [[w, ağırlık], ...]
     <div style="font-size:.88em">
       <p>Bir düğümün uzaklığı iyileşince PQ’daki eski kaydını <b>güncellemek</b> gerekir. İki yol:</p>
       <ol>
-        <li><b>İndeksli öncelik kuyruğu</b> (Princeton, iz tablosundaki demo): PQ her düğümün nerede olduğunu bilir, önceliğini <b>düşürür</b> (decreaseKey). PQ’da en fazla V kayıt.</li>
+        <li><b>İndeksli öncelik kuyruğu</b> (iz tablosundaki demo): PQ her düğümün nerede olduğunu bilir, önceliğini <b>düşürür</b> (decreaseKey). PQ’da en fazla V kayıt.</li>
         <li class="fragment"><b>Tembel silme</b> (koddaki): yeni bir kayıt ekle, eskisini bırak. Eski kayıt çıkınca <code>d &gt; dist[v]</code> ile tanı ve atla. Python <code>heapq</code>, C# <code>PriorityQueue</code> decreaseKey desteklemediği için pratikte bu kullanılır.</li>
       </ol>
     </div>
@@ -443,7 +443,7 @@ function acyclicSP(adj, s, order) {         // order: topolojik sıra
 <section data-sec="DAG">
   <h2>🎮 Kritik yol: boss savaşına en hızlı hazırlık</h2>
   <div class="demo" data-demo="cpm"></div>
-  <p class="mini">Her iş bir süre alıyor, bazıları başkalarını bekliyor; işçi sınırsız (paralel). En erken bitiş = başlangıçtan bitişe <b>en uzun</b> yol. Princeton’ın “paralel iş zamanlama” örneği; oyun stüdyolarında proje planlarında (ve RTS yapı sıralarında) aynısı.</p>
+  <p class="mini">Her iş bir süre alıyor, bazıları başkalarını bekliyor; işçi sınırsız (paralel). En erken bitiş = başlangıçtan bitişe <b>en uzun</b> yol. “Paralel iş zamanlama” problemi; oyun stüdyolarında proje planlarında (ve RTS yapı sıralarında) aynısı.</p>
 </section>
 
 <section data-sec="DAG">
@@ -738,7 +738,7 @@ def dijkstra(V, adj, s):
     <tr><td>topolojik sıra</td><td>DAG</td><td>E + V</td><td>E + V</td><td>kritik yol, yapı sırası</td></tr>
     <tr><td>Bellman–Ford (kuyruklu)</td><td>negatif döngü yok</td><td>E + V</td><td>E · V</td><td>ekonomi arbitraj kontrolü</td></tr>
   </table>
-  <p class="mini">Hepsi aynı hamleyi (gevşetme) farklı sıralarda yapıyor. Kaynak: Sedgewick &amp; Wayne 4.4.</p>
+  <p class="mini">Hepsi aynı hamleyi (gevşetme) farklı sıralarda yapıyor.</p>
 </section>
 
 <section data-sec="özet">

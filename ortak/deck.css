@@ -625,6 +625,10 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .lp-cell { border: 2px solid var(--rule); border-radius: 6px; text-align: center; min-height: 46px; background: var(--card); overflow: hidden; }
 .lp-cell i { display: block; font-style: normal; font-size: 11px; color: var(--muted); }
 .lp-cell b { font-size: 12px; word-break: break-all; }
+.lp-view.lp-big { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.lp-big .lp-cell { min-height: 84px; border-radius: 10px; display: flex; flex-direction: column; justify-content: flex-start; padding: 4px 4px 8px; }
+.lp-big .lp-cell i { font-size: 14px; margin-bottom: 8px; }
+.lp-big .lp-cell b { font-size: 20px; word-break: normal; overflow-wrap: anywhere; line-height: 1.1; }
 .lp-cell.cl0 { background: color-mix(in srgb, var(--blue) 22%, var(--card)); }
 .lp-cell.cl1 { background: color-mix(in srgb, var(--purple) 22%, var(--card)); }
 .lp-cell.cl2 { background: color-mix(in srgb, var(--teal) 22%, var(--card)); }

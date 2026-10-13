@@ -132,7 +132,7 @@
     return { stop: () => fp.pause() };
   };
 
-  /* ---------- 2) Princeton tarzı iz tablosu ---------- */
+  /* ---------- 2) iz tablosu ---------- */
   D.mergetrace = function (root) {
     const a = SL.parseValues(root.dataset.values || 'M E R G E S O R T E X A M P L E');
     const n = a.length, rows = [];

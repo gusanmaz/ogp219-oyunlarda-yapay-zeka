@@ -34,7 +34,7 @@
   <div class="sub"><i>Böl ve fethet</i> — N² duvarını yıkan ilk algoritma: her zaman N lg N</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlemerge"></div>
-  <aside class="notes">Bu sunum Sedgewick &amp; Wayne “Algorithms, 4th ed.” 2.2 (Mergesort) bölümünü temel alır. Temel sıralama sunumunun (selection, insertion, shellsort) devamıdır. Arka planda aşağıdan yukarı mergesort çalışıyor.</aside>
+  <aside class="notes">Temel sıralama sunumunun (selection, insertion, shellsort) devamıdır. Arka planda aşağıdan yukarı mergesort çalışıyor.</aside>
 </section>
 
 <section>
@@ -275,7 +275,7 @@ private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
   <h2>İz tablosu — M E R G E S O R T E X A M P L E</h2>
   <div class="demo" data-demo="mergetrace"></div>
   <div class="trace-legend"><b class="r">kırmızı</b> = bu adımda birleştirilen parça (artık sıralı) · <b class="g">gri</b> = bu adımda dokunulmayanlar</div>
-  <aside class="notes">Kitaptaki iz tablosu. Önce ikililer (0-1, 2-3), sonra dörtlüler (0-3), sonra sekizli (0-7)… Sağ yarı sol yarı tamamen bittikten SONRA başlar: bu özyinelemenin derinlik öncelikli doğası (yığınlar dersindeki DFS!).</aside>
+  <aside class="notes">İz tablosu. Önce ikililer (0-1, 2-3), sonra dörtlüler (0-3), sonra sekizli (0-7)… Sağ yarı sol yarı tamamen bittikten SONRA başlar: bu özyinelemenin derinlik öncelikli doğası (yığınlar dersindeki DFS!).</aside>
 </section>
 
 <section data-sec="yukarıdan aşağı">
@@ -308,7 +308,7 @@ private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
 <section data-sec="analiz">
   <h2>📐 Özyineleme ağacı: her seviye N, lg N seviye</h2>
   <div class="demo" data-demo="rectree"></div>
-  <aside class="notes">Kitaptaki “mergesort subproblem tree” şeması. Her seviyede tüm parçaların toplam boyutu N; birleştirme doğrusal olduğundan seviye başına ~N iş. Seviye sayısı: N’i kaç kez ikiye bölebilirsek: lg N (arama dersindeki logaritma!).</aside>
+  <aside class="notes">Alt problem ağacı. Her seviyede tüm parçaların toplam boyutu N; birleştirme doğrusal olduğundan seviye başına ~N iş. Seviye sayısı: N’i kaç kez ikiye bölebilirsek: lg N (arama dersindeki logaritma!).</aside>
 </section>
 
 <section data-sec="analiz · matematik">

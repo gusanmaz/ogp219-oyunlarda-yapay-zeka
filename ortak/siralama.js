@@ -413,7 +413,7 @@
     return { stop: () => players.forEach(x => x.p.pause()) };
   };
 
-  /* ---------------- .trace (Princeton tarzı iz tablosu) ---------------- */
+  /* ---------------- .trace (iz tablosu) ---------------- */
   SL.Trace = function (root) {
     const d = root.dataset;
     const a = parseValues(d.values || 'S O R T E X A M P L E');

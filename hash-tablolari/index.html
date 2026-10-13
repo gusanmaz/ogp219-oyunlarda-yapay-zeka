@@ -34,7 +34,7 @@
   <div class="sub"><i>Anahtarı doğrudan dizi indeksine çevir</i> — ortalamada sabit zamanda arama</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlehash"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.4 Hash Tables bölümünü temel alır. Arka planda eşya adları hash değerlerine göre 16 kovaya düşüyor; aynı kovaya düşenler üst üste biniyor (zincir).</aside>
+  <aside class="notes">Arka planda eşya adları hash değerlerine göre 16 kovaya düşüyor; aynı kovaya düşenler üst üste biniyor (zincir).</aside>
 </section>
 
 <section>
@@ -549,7 +549,7 @@ function get(key) {
   <div class="box warn" style="font-size:1em"><span class="bt">⚠️ SİLME TUZAĞI</span>
     <p>Doğrusal yoklamada bir anahtarı sadece <code>keys[i] = None</code> yaparak silemezsiniz!</p>
     <p class="fragment">Neden? Arama “boş hücreye gelince dur” diyor. Ortaya açılan delik, kümenin sağındaki anahtarları <b>kayıp</b> gösterir.</p>
-    <p class="fragment"><b>Çözümler</b>: (1) Silinen hücreden sonra kümenin geri kalanını <b>yeniden ekle</b> (Princeton’ın yolu). (2) Hücreye “<b>mezar taşı</b>” <span class="en">tombstone</span> koy: “burada biri vardı, aramaya devam et”.</p>
+    <p class="fragment"><b>Çözümler</b>: (1) Silinen hücreden sonra kümenin geri kalanını <b>yeniden ekle</b>. (2) Hücreye “<b>mezar taşı</b>” <span class="en">tombstone</span> koy: “burada biri vardı, aramaya devam et”.</p>
   </div>
 </section>
 

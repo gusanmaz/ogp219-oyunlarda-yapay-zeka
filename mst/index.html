@@ -34,7 +34,7 @@
   <div class="sub"><i>Kruskal, Prim ve kesme özelliği</i> — her şeyi en ucuza bağlamak</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlemst"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.3 Minimum Spanning Trees bölümünü temel alır. Arka planda rastgele odalar ve Kruskal’ın tek tek kazdığı koridorlar: prosedürel zindan üretiminin klasik adımı.</aside>
+  <aside class="notes">Arka planda rastgele odalar ve Kruskal’ın tek tek kazdığı koridorlar: prosedürel zindan üretiminin klasik adımı.</aside>
 </section>
 
 <section>
@@ -86,7 +86,7 @@
 </section>
 
 <section data-sec="tanım">
-  <h2>Ağırlıklı graf: kitaptaki “tinyEWG”</h2>
+  <h2>Ağırlıklı graf: örnek grafımız</h2>
   <div class="demo" data-demo="gview" data-graph="tinyEWG" data-sel="0"></div>
   <p class="mini">8 düğüm, 16 kenar; her kenarın üstünde ağırlığı. Komşuluk listesinde artık her kayıt (komşu, ağırlık) çifti. Bir düğüme tıklayın.</p>
 </section>
@@ -122,7 +122,7 @@
     <tr><td>🎮 Prosedürel zindan / harita</td><td>oda / ada / şehir</td><td>koridor / yol uzunluğu</td></tr>
     <tr><td>🎮 Labirent üretimi</td><td>hücre</td><td>rastgele</td></tr>
     <tr><td>🎮 Birlikleri gruplara ayırma (kümeleme)</td><td>birim</td><td>mesafe</td></tr>
-    <tr><td>Görüntü bölütleme, kanser araştırması (Princeton listesi)</td><td>piksel / hücre</td><td>benzemezlik</td></tr>
+    <tr><td>Görüntü bölütleme, kanser araştırması</td><td>piksel / hücre</td><td>benzemezlik</td></tr>
     <tr><td>Gezgin satıcı için yaklaşık çözüm</td><td>şehir</td><td>mesafe</td></tr>
   </table>
 </section>
@@ -151,7 +151,7 @@
 <section data-sec="kesme özelliği">
   <h2>Kesme özelliği — kendiniz deneyin</h2>
   <div class="demo" data-demo="cut"></div>
-  <p class="mini">Hangi kesmeyi seçerseniz seçin, yeşil kenar (en hafif kesişen) her zaman tinyEWG’nin MST’sindeki 7 kenardan biri: 0–7, 1–7, 0–2, 2–3, 5–7, 4–5, 6–2.</p>
+  <p class="mini">Hangi kesmeyi seçerseniz seçin, yeşil kenar (en hafif kesişen) her zaman bu grafın MST’sindeki 7 kenardan biri: 0–7, 1–7, 0–2, 2–3, 5–7, 4–5, 6–2.</p>
 </section>
 
 <section data-sec="kesme özelliği">
@@ -316,7 +316,7 @@ edges.sort(byWeight);                         // ok fonksiyonsuz aynısı
       </ul>
     </div>
   </div>
-  <p class="mini">Princeton’ın sürümü sıralamak yerine bir öncelik kuyruğu (MinPQ) kullanır: aynı süre, ama erken bitince geri kalan kenarları hiç sıralamamış olur.</p>
+  <p class="mini">Bir başka sürüm sıralamak yerine bir öncelik kuyruğu (MinPQ) kullanır: aynı süre, ama erken bitince geri kalan kenarları hiç sıralamamış olur.</p>
 </section>
 
 <section data-sec="laboratuvar">
@@ -520,7 +520,7 @@ def prim(V, adj):
   <h2>Labirentler ve kümeleme</h2>
   <div class="cols">
     <div class="box game"><span class="bt">🌀 Labirent = rastgele ağırlıklı ızgaranın MST’si</span>Izgaradaki her duvara rastgele bir ağırlık ver; MST’yi (Kruskal) bul; MST kenarlarının duvarlarını yık. Sonuç: her hücreye tek yol olan “mükemmel labirent”. (Union–Find sunumundaki labirent tam buydu!) Prim ile üretilen labirentler daha kısa, dallı koridorlu olur — tadı farklı.</div>
-    <div class="box game"><span class="bt">⚔️ Birlikleri k gruba ayır</span>Birim konumlarının MST’sini bul, <b>en ağır k − 1</b> kenarı sil → k bağlı bileşen = k küme (tek bağlantılı kümeleme, Princeton’ın uygulaması). RTS’de seçili 40 birimi otomatik takımlara bölmek ya da ekranda “ordu” etiketlerini gruplamak için.</div>
+    <div class="box game"><span class="bt">⚔️ Birlikleri k gruba ayır</span>Birim konumlarının MST’sini bul, <b>en ağır k − 1</b> kenarı sil → k bağlı bileşen = k küme (tek bağlantılı kümeleme). RTS’de seçili 40 birimi otomatik takımlara bölmek ya da ekranda “ordu” etiketlerini gruplamak için.</div>
   </div>
 </section>
 

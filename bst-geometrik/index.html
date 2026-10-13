@@ -34,7 +34,7 @@
   <div class="sub"><i>Aralık arama, süpürme doğrusu, kd-ağaçları, aralık ağaçları</i> — oyun dünyasında “yakınımda ne var?”</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlekd"></div>
-  <aside class="notes">Sedgewick &amp; Wayne’in “Geometric Applications of BSTs” dersini (algs4 ders slaytları, 9.9 / kitapta 3.3 ve 6. bölümün geometri kısımları) temel alır. Arka planda bir 2d-ağacı kuruluyor: kırmızı çizgiler x’e göre (dikey), mavi çizgiler y’ye göre (yatay) bölmeler.</aside>
+  <aside class="notes">Arka planda bir 2d-ağacı kuruluyor: kırmızı çizgiler x’e göre (dikey), mavi çizgiler y’ye göre (yatay) bölmeler.</aside>
 </section>
 
 <section>
@@ -292,7 +292,7 @@ function rangeCount(a, lo, hi) {
 </section>
 
 <section data-sec="doğru parçası kesişimi">
-  <div class="box story" style="font-size:.95em"><span class="bt">📜 Sedgewick’in favori hikâyesi: çip tasarımı ve Moore yasası</span>
+  <div class="box story" style="font-size:.95em"><span class="bt">📜 Çip tasarımı ve Moore yasası</span>
     <p>1970’lerde çip tasarımcıları devre çizimlerindeki hataları (çakışan iletkenler) kaba kuvvetle, yani <b>N²</b> ile kontrol ediyordu.</p>
     <p class="fragment">Moore yasası: transistör sayısı her ~2 yılda bir <b>2 katına</b> çıkar. Bilgisayarlar da 2 kat hızlanır. Ama N² algoritma 2 kat büyük çipte <b>4 kat</b> iş yapar → kontrol süresi <b>her nesilde 2 katına</b> çıkar!</p>
     <p class="fragment">Süpürme doğrusu (N lg N) ile bu sorun çözüldü: hızlı bilgisayarlar daha büyük çipleri yetişerek kontrol edebildi. <b>İyi algoritma = daha iyi donanımın kapısı.</b></p>
@@ -985,7 +985,7 @@ function search(x, lo, hi) {
   <h2>Dikdörtgen kesişimi: süpürme + aralık ağacı</h2>
   <div class="cols c64">
     <div style="font-size:.9em">
-      <p>Princeton’ın çözümü: Level 1’deki süpürme doğrusunun aynısı!</p>
+      <p>Çözüm: Level 1’deki süpürme doğrusunun aynısı!</p>
       <ul>
         <li>Olaylar: dikdörtgenlerin sol ve sağ kenarlarının x’leri (sıralı)</li>
         <li class="fragment">Sol kenar → önce dikdörtgenin y aralığıyla kesişenleri <b>aralık arama ağacında</b> ara, sonra y aralığını ağaca <b>ekle</b></li>

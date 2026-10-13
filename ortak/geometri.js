@@ -334,14 +334,14 @@
     const ain = el('input', { type: 'text', class: 'key-in', size: 6, value: '11 13' });
     const parse = s => { const v = s.trim().split(/[\s,–-]+/).map(Number); return v.length === 2 && v.every(Number.isFinite) && v[0] <= v[1] && v[0] >= 0 && v[1] <= SPAN ? v : null; };
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, btn('▶ Kitaptaki örnek', () => load(BOOK)),
+    root.append(el('div', { class: 'sv-controls' }, btn('▶ Hazır örnek', () => load(BOOK)),
       el('label', { class: 'ctl' }, 'Sorgu ', qin), btn('🔍 Ara', () => { const v = parse(qin.value); if (v) search(v[0], v[1]); }, 'primary'),
       el('label', { class: 'ctl' }, 'Aralık ', ain), btn('➕ Ekle', () => { const v = parse(ain.value); if (v) { const F = []; m.insert(v[0], v[1], F); fp.load(F); fp.play(); } }),
       btn('🧹', () => { m = new IST(); fp.load([{ tree: null, hl: {}, note: 'Boş ağaç', n: 0 }]); })),
     tl, tc, SL.transport(fp, { min: 0.3, max: 8 }), note);
     SL.onTheme(() => fp.render());
     m = new IST(); BOOK.forEach(([a, b]) => m.insert(a, b));
-    fp.load([{ tree: m.snap(), hl: {}, note: 'Kitaptaki 7 aralık. Düğümde “sol–sağ uç”; sağ üstteki küçük sayı = alt ağaçtaki EN BÜYÜK bitiş (max).', n: m.all.length }]);
+    fp.load([{ tree: m.snap(), hl: {}, note: 'Yedi örnek aralık. Düğümde “sol–sağ uç”; sağ üstteki küçük sayı = alt ağaçtaki EN BÜYÜK bitiş (max).', n: m.all.length }]);
     return { stop: () => fp.pause() };
   };
 

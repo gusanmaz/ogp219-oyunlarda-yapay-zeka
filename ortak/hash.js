@@ -93,6 +93,7 @@
       // kümeleri bul (dairesel)
       const cl = new Array(f.K.length).fill(-1); let c = 0;
       for (let i = 0; i < f.K.length; i++) if (f.K[i] != null) { cl[i] = i > 0 && f.K[i - 1] != null ? cl[i - 1] : c++; }
+      view.className = 'lp-view' + (f.K.length <= 32 ? ' lp-big' : '');          // 16–32 hücre: iki-dört satır, büyük hücreler
       view.innerHTML = f.K.map((k, i) => `<div class="lp-cell ${k == null ? 'empty' : 'cl' + (cl[i] % 3)} ${f.hl[i] || ''}"><i>${i}</i><b>${k == null ? '' : k}</b></div>`).join('');
       note.textContent = f.note;
       const N = f.K.filter(x => x != null).length;

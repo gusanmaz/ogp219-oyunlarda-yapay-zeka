@@ -34,7 +34,7 @@
   <div class="sub"><i>2-3 ağaçları, kırmızı-siyah ağaçlar, B-ağaçları</i> — en kötü durumda bile lg N</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlerb"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.3 Balanced Search Trees bölümünü temel alır. Önceki sunum: Ağaçlar ve BST. Arka planda 1, 2, 3, …, 31 anahtarları SIRAYLA ekleniyor — sıradan bir BST’de bu bir çizgiye (bağlı listeye) dönüşürdü; burada ağaç dengede kalıyor. Kırmızı çizgiler “kırmızı bağlantılar”.</aside>
+  <aside class="notes">Önceki sunum: Ağaçlar ve BST. Arka planda 1, 2, 3, …, 31 anahtarları SIRAYLA ekleniyor — sıradan bir BST’de bu bir çizgiye (bağlı listeye) dönüşürdü; burada ağaç dengede kalıyor. Kırmızı çizgiler “kırmızı bağlantılar”.</aside>
 </section>
 
 <section>
@@ -138,7 +138,7 @@
       </ul>
     </div>
     <div><svg viewBox="0 0 354 170" style="width:100%;max-width:560px" font-family="JetBrains Mono"><line x1="170" y1="34" x2="112" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="76" y1="98" x2="46" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="112" y1="98" x2="119" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="148" y1="98" x2="177" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="212" y1="34" x2="272" y2="70" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="250" y1="98" x2="235" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><line x1="292" y1="98" x2="308" y2="134" style="stroke:var(--ink-2)" stroke-width="2"/><rect x="170" y="5" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="192" y="26" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">M</text><rect x="76" y="69" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="96" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">E</text><text x="126" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">J</text><line x1="112" y1="74" x2="112" y2="94" style="stroke:var(--muted)"/><rect x="10" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="31" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">A</text><text x="61" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">C</text><line x1="46" y1="138" x2="46" y2="158" style="stroke:var(--muted)"/><rect x="98" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="119" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">H</text><rect x="156" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="177" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">L</text><rect x="250" y="69" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="272" y="90" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">R</text><rect x="214" y="133" width="42" height="30" rx="7" style="fill:var(--card);stroke:var(--ink-2)" stroke-width="2"/><text x="235" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">P</text><rect x="272" y="133" width="72" height="30" rx="7" style="fill:var(--card-2);stroke:var(--ink-2)" stroke-width="2"/><text x="293" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">S</text><text x="323" y="154" text-anchor="middle" font-size="18" font-weight="700" style="fill:var(--ink)">X</text><line x1="308" y1="138" x2="308" y2="158" style="stroke:var(--muted)"/></svg>
-      <p class="mini center">Kitaptaki örnek. Gri zeminli kutular 3-düğüm.</p>
+      <p class="mini center">Gri zeminli kutular 3-düğüm.</p>
     </div>
   </div>
 </section>
@@ -237,7 +237,7 @@
       <li>Düğüm türünü sürekli kontrol eden <code>if</code>’ler, bir türden ötekine kopyalama…</li>
       <li>Bölmenin bir sürü özel durumu (sol/orta/sağ çocuk, kök…)</li>
     </ul>
-    <div class="box warn"><span class="bt">⚠️ Sedgewick’in tespiti</span>“Bunu kodlamak mümkün ama kod <b>karmaşık</b> ve bakımı zor; ek yükü de onu sıradan BST’den <b>yavaş</b> yapabilir.”
+    <div class="box warn"><span class="bt">⚠️ Sorun</span>“Bunu kodlamak mümkün ama kod <b>karmaşık</b> ve bakımı zor; ek yükü de onu sıradan BST’den <b>yavaş</b> yapabilir.”
       <p class="fragment"><b>Çözüm:</b> 2-3 ağacını <b>sıradan bir BST</b> ile temsil et. Sadece bağlantılara bir <b>renk</b> ekle! →</p>
     </div>
   </div>
@@ -897,7 +897,7 @@ def rotate_left(h):
     <tr><td>2-3 ağacı</td><td>c lg N</td><td>c lg N</td><td>c lg N</td><td>c lg N</td><td>evet</td></tr>
     <tr><td><b>kırmızı-siyah BST</b></td><td class="c-green"><b>2 lg N</b></td><td class="c-green"><b>2 lg N</b></td><td class="c-green">1,0 lg N</td><td class="c-green">1,0 lg N</td><td>evet</td></tr>
   </table>
-  <p class="mini">Kaynak: Sedgewick &amp; Wayne, 3.3. “c”: düğüm türü kontrolü yüzünden sabit çarpan büyük. Hash tabloları (Bölüm 13) ortalamada daha da hızlı, ama sıralı işlemleri desteklemez.</p>
+  <p class="mini">“c”: düğüm türü kontrolü yüzünden sabit çarpan büyük. Hash tabloları (Bölüm 13) ortalamada daha da hızlı, ama sıralı işlemleri desteklemez.</p>
 </section>
 
 <section data-sec="analiz">
@@ -918,7 +918,7 @@ def rotate_left(h):
   <h2>Tarihçe 📜</h2>
   <div class="cols">
     <div class="box story"><span class="bt">1962 · AVL ağacı</span>İlk kendini dengeleyen BST: Sovyet bilim insanları <b>Georgy Adelson-Velsky</b> ve <b>Evgenii Landis</b>. 🎮 Adelson-Velsky, 1974’te ilk <b>Dünya Bilgisayar Satranç Şampiyonası</b>’nı kazanan <b>Kaissa</b> programının geliştiricilerinden biriydi!</div>
-    <div class="box story"><span class="bt">1978 · Kırmızı-siyah ağaç</span><b>Leo Guibas</b> ve <b>Robert Sedgewick</b> (kitabımızın yazarı). Neden kırmızı? Sedgewick’in anlattığına göre Xerox PARC’taki renkli lazer yazıcının en iyi bastığı renk kırmızıydı. 2008’de Sedgewick “sola yatık” sürümle kodu birkaç satıra indirdi.</div>
+    <div class="box story"><span class="bt">1978 · Kırmızı-siyah ağaç</span><b>Leo Guibas</b> ve <b>Robert Sedgewick</b>. Neden kırmızı? Sedgewick’in anlattığına göre Xerox PARC’taki renkli lazer yazıcının en iyi bastığı renk kırmızıydı. 2008’de Sedgewick “sola yatık” sürümle kodu birkaç satıra indirdi.</div>
   </div>
   <div class="box low fragment" style="margin-top:10px"><span class="bt">⚙️ AVL mi, kırmızı-siyah mı?</span>AVL daha sıkı dengelidir (yükseklik ≤ 1,44 lg N) → arama biraz daha hızlı, ama ekleme/silmede daha çok döndürme yapar. Kırmızı-siyah ekleme-silmenin bol olduğu yerlerde (çekirdek, kütüphaneler) tercih edilir.</div>
 </section>
@@ -927,7 +927,7 @@ def rotate_left(h):
   <div class="box warn" style="font-size:1em"><span class="bt">⚠️ SİLME?</span>
     <p>Önceki sunumdaki Hibbard silmesi dengeyi bozar (ağaç zamanla √N yüksekliğe kayar).</p>
     <p>Kırmızı-siyah ağaçta silme de lg N’de yapılabilir: aşağı inerken “borç alarak” her adımda geçici 3- ya da 4-düğümler oluşturulur, en altta silinir, yukarı çıkarken yine aynı üç kuralla onarılır.</p>
-    <p class="mini">Kodu ekleme kodundan daha uzun ve inceliklidir; bu derste ayrıntısına girmiyoruz. Merak edenler: algs4 <code>RedBlackBST.java</code> (<code>deleteMin</code>, <code>delete</code>).</p>
+    <p class="mini">Kodu ekleme kodundan daha uzun ve inceliklidir; bu derste ayrıntısına girmiyoruz. Merak edenler: açık kaynak <code>RedBlackBST.java</code> (<code>deleteMin</code>, <code>delete</code>).</p>
   </div>
 </section>
 
@@ -1166,13 +1166,13 @@ function floor(x, key) {          // x: ağacın kökü
   <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
   <div class="cols">
     <div class="box warn"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.86em"><li>Rotasyonda ebeveyn/kök bağlantısını güncellememek</li><li>Renk kurallarını sadece eklemede düşünüp silmeyi unutmak</li><li>Üretimde kendi kırmızı-siyah ağacını yazmak</li><li>Küçük bellek içi veri için B-ağacı seçmek</li></ul></div>
-    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8). Sedgewick’in sola yatık kırmızı-siyah ağacını (LLRB) yaz: Put, Get, Contains, Min, Max, Floor, Ceiling, Rank. Ayrıca IsBalanced, Is23, IsBST kontrol fonksiyonları. NUnit testleri: 100.000 sıralı ve 100.000 rastgele anahtar ekle, her 1.000 eklemede kontrolleri çalıştır, yüksekliğin 2·log₂N’yi geçmediğini doğrula.”</p><ul class="mini"><li>Değişmez denetleyicisi (invariant checker) isteyin</li><li>Rotasyonları adım adım açıklatın</li><li>Önce hazır yapıyı (SortedSet) sorun</li><li>Rastgele ve sıralı ekleme testleri isteyin</li></ul></div>
+    <div class="box game"><span class="bt">İyi bir istek (prompt) örneği</span><p style="font-size:.84em;font-style:italic">“C# (.NET 8). Sola yatık kırmızı-siyah ağacı (LLRB) yaz: Put, Get, Contains, Min, Max, Floor, Ceiling, Rank. Ayrıca IsBalanced, Is23, IsBST kontrol fonksiyonları. NUnit testleri: 100.000 sıralı ve 100.000 rastgele anahtar ekle, her 1.000 eklemede kontrolleri çalıştır, yüksekliğin 2·log₂N’yi geçmediğini doğrula.”</p><ul class="mini"><li>Değişmez denetleyicisi (invariant checker) isteyin</li><li>Rotasyonları adım adım açıklatın</li><li>Önce hazır yapıyı (SortedSet) sorun</li><li>Rastgele ve sıralı ekleme testleri isteyin</li></ul></div>
   </div>
 </section>
 
 <section data-sec="projeler">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>LLRB + denetleyici</b> — Sedgewick’in LLRB’sini yazıp değişmez denetleyicisiyle test edin.</li><li><b class="c-amber">[orta]</b> <b>SQLite kayıt sistemi</b> — Unity’de SQLite ile envanter; indeksli ve indekssiz sorguları ölçün.</li><li><b class="c-amber">[orta]</b> <b>Zaman çizelgesi</b> — Sıralı sözlükle “t anından sonraki ilk olay” sorgusu yapan bir olay sistemi.</li><li><b class="c-purple">[araştırma]</b> <b>AVL, kırmızı-siyah, B-ağacı</b> — Üçünü (ya da hazır sürümlerini) ekleme/arama ağırlıklı iş yüklerinde karşılaştırın.</li></ol>
+  <ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>LLRB + denetleyici</b> — LLRB’yi yazıp değişmez denetleyicisiyle test edin.</li><li><b class="c-amber">[orta]</b> <b>SQLite kayıt sistemi</b> — Unity’de SQLite ile envanter; indeksli ve indekssiz sorguları ölçün.</li><li><b class="c-amber">[orta]</b> <b>Zaman çizelgesi</b> — Sıralı sözlükle “t anından sonraki ilk olay” sorgusu yapan bir olay sistemi.</li><li><b class="c-purple">[araştırma]</b> <b>AVL, kırmızı-siyah, B-ağacı</b> — Üçünü (ya da hazır sürümlerini) ekleme/arama ağırlıklı iş yüklerinde karşılaştırın.</li></ol>
 </section>
 
 <section data-sec="kaynaklar">

@@ -34,7 +34,7 @@
   <div class="sub"><i>Tek yönlü kapılar, teknoloji ağaçları, görev zincirleri</i> — oklar önemli!</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titledigraph"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.2 Directed Graphs bölümünü temel alır. Arka planda yönlü kenarlar boyunca akan ışıklar: her kenar tek yönlü.</aside>
+  <aside class="notes">Arka planda yönlü kenarlar boyunca akan ışıklar: her kenar tek yönlü.</aside>
 </section>
 
 <section>
@@ -199,7 +199,7 @@ class Digraph {
 <section data-sec="erişilebilirlik">
   <h2>Yönlü DFS — iz tablosu</h2>
   <div class="demo" data-demo="gsearch" data-graph="tinyDG" data-alg="dfs" data-algsel data-src="0" data-w="620" data-h="340" data-speed="2"></div>
-  <p class="mini">Kitaptaki “tinyDG”. Kod yönsüz DFS ile <b>birebir aynı</b>: sadece okların yönünde ilerler. 0’dan başlayınca 6, 7, 8, 9… hiç işaretlenmez: oralara 0’dan <b>ok yönünde</b> yol yok. Düğüme tıklayıp başka kaynaklar deneyin (ör. 6 ya da 7).</p>
+  <p class="mini">Kod yönsüz DFS ile <b>birebir aynı</b>: sadece okların yönünde ilerler. 0’dan başlayınca 6, 7, 8, 9… hiç işaretlenmez: oralara 0’dan <b>ok yönünde</b> yol yok. Düğüme tıklayıp başka kaynaklar deneyin (ör. 6 ya da 7).</p>
 </section>
 
 <section data-sec="erişilebilirlik">
@@ -226,10 +226,10 @@ class Digraph {
       <p>BFS de aynen çalışır: kaynaktan <b>ok yönünde</b> en az kenarlı yollar.</p>
       <ul>
         <li class="fragment"><b>Çok kaynaklı BFS</b>: başta kuyruğa birden fazla düğüm koy → “herhangi bir kaynaktan en yakın uzaklık”. 🎮 “En yakın can paketine kaç adım?” haritasını her kare için bir kez hesapla (bütün can paketleri kaynak).</li>
-        <li class="fragment"><b>Web tarayıcı</b> <span class="en">web crawler</span>: başlangıç sayfasından BFS; kuyruk = ziyaret edilecek adresler, küme = görülen adresler (Princeton örneği).</li>
+        <li class="fragment"><b>Web tarayıcı</b> <span class="en">web crawler</span>: başlangıç sayfasından BFS; kuyruk = ziyaret edilecek adresler, küme = görülen adresler.</li>
       </ul>
     </div>
-    <div class="box story fragment"><span class="bt">📜 Kitap yazarının uyarısı</span>Princeton slaytlarındaki web tarayıcısı 10 satır! Gerçek bir tarayıcı ise “aynı sayfanın farklı adresleri”, robots.txt, hız sınırı… ile milyonlarca satır. Algoritma iskelet, mühendislik et.</div>
+    <div class="box story fragment"><span class="bt">📜 Uyarı</span>Buradaki web tarayıcısı 10 satır! Gerçek bir tarayıcı ise “aynı sayfanın farklı adresleri”, robots.txt, hız sınırı… ile milyonlarca satır. Algoritma iskelet, mühendislik et.</div>
   </div>
 </section>
 
@@ -552,14 +552,14 @@ def has_cycle(adj):
 <section data-sec="güçlü bileşenler">
   <h2>Kosaraju–Sharir algoritması</h2>
   <div class="demo" data-demo="scc"></div>
-  <p class="mini">İki DFS ile: (1) <b>ters</b> grafta DFS yap ve ters sonsırayı hesapla, (2) asıl grafta düğümleri <b>bu sırayla</b> ele al: işaretsiz her düğümden yapılan DFS tam olarak bir güçlü bileşeni işaretler. Kitaptaki tinyDG’nin 5 güçlü bileşeni var.</p>
+  <p class="mini">İki DFS ile: (1) <b>ters</b> grafta DFS yap ve ters sonsırayı hesapla, (2) asıl grafta düğümleri <b>bu sırayla</b> ele al: işaretsiz her düğümden yapılan DFS tam olarak bir güçlü bileşeni işaretler. Örnek grafın 5 güçlü bileşeni var.</p>
 </section>
 
 <section data-sec="güçlü bileşenler">
   <h2>Kosaraju–Sharir: neden ve ne kadar?</h2>
   <div class="cols">
     <div class="box prop"><span class="bt">Önerme</span>Kosaraju–Sharir algoritması güçlü bileşenleri <b>E + V</b> ile orantılı sürede bulur.<p class="mini">İki DFS + bir ters çevirme. Kanıt fikri: ters sonsıra, bileşenleri “kaynak” bileşenden “havuz” bileşene doğru değil, havuzdan başlayarak verir; böylece ikinci DFS bir bileşenden <b>dışarı sızamaz</b>.</p></div>
-    <div class="box story"><span class="bt">📜 “Basit ama gizemli”</span>Robert Tarjan 1972’de ilk doğrusal zamanlı algoritmayı buldu. S. Rao Kosaraju 1978’de daha basit bu yöntemi derste anlattı ama yayımlamadı; Micha Sharir 1981’de bağımsız olarak yayımladı. Princeton slaytları onu “basit ama gizemli” diye tanıtır: kodu 10 satır, doğruluğunu anlamak bir saat!</div>
+    <div class="box story"><span class="bt">📜 “Basit ama gizemli”</span>Robert Tarjan 1972’de ilk doğrusal zamanlı algoritmayı buldu. S. Rao Kosaraju 1978’de daha basit bu yöntemi derste anlattı ama yayımlamadı; Micha Sharir 1981’de bağımsız olarak yayımladı. Algoritma “basit ama gizemli” diye anılır: kodu 10 satır, doğruluğunu anlamak bir saat!</div>
   </div>
 </section>
 

@@ -1,6 +1,6 @@
 /* =====================================================================
    graf.js — Graf görselleştirme çekirdeği (core.js gerekir)
-   - SL.Graph: graf modeli (komşuluk listeleri “torba” düzeninde: kitaptaki gibi
+   - SL.Graph: graf modeli (komşuluk listeleri “torba” düzeninde:
      yeni kenar listenin BAŞINA eklenir)
    - SL.GraphView: SVG çizim (düğüm/kenar stilleri, rozetler, tıklama)
    - SL.GridMap / SL.GridView: ızgara (karo) haritası ve canvas çizimi
@@ -32,7 +32,7 @@
   };
   SL.parseEdges = s => s.trim().split(/\s+/).map(p => p.split('-').map(Number));
 
-  /* Princeton örnek grafları (düğüm konumları elle) */
+  /* örnek graflar (düğüm konumları elle) */
   SL.GRAPHS = {
     tinyCG: () => SL.Graph(6, SL.parseEdges('0-5 2-4 2-3 1-2 0-1 3-4 3-5 0-2'), [[90, 70], [210, 160], [330, 70], [470, 120], [420, 250], [120, 270]]),
     tinyG: () => SL.Graph(13, SL.parseEdges('0-5 4-3 0-1 9-12 6-4 5-4 0-2 11-12 9-10 0-6 7-8 9-11 5-3'),

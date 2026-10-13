@@ -39,7 +39,6 @@
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlebars"></div>
   <aside class="notes">
-    Bu sunum Sedgewick &amp; Wayne'in "Algorithms, 4th ed." kitabının 2.1 bölümünü (Elementary Sorts) temel alır; matematik sadeleştirildi, örnekler oyunlardan seçildi.
     Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları. Arka plandaki çubuklar insertion sort ile sürekli sıralanıyor — öğrencilere "bu ne yapıyor?" diye sorabilirsiniz; ders sonunda cevabı bilecekler.
   </aside>
 </section>
@@ -367,7 +366,7 @@ enemies.sort((x, y) => y.hp - x.hp);   // canı çok olan önce
 
 <section data-sec="oyunun kuralları">
   <h2>Maliyet modeli: sadece iki işlem <span class="en">cost model</span></h2>
-  <p>Sedgewick’in kuralı: sıralama algoritmalarımız diziye sadece <b>iki yardımcı fonksiyonla</b> dokunur:</p>
+  <p>Kural: sıralama algoritmalarımız diziye sadece <b>iki yardımcı fonksiyonla</b> dokunur:</p>
   <div class="cols">
     <div class="box prop"><span class="bt"><code>less(v, w)</code></span>v, w’den küçük mü? → <b>karşılaştırma</b> <span class="en">compare</span></div>
     <div class="box warn"><span class="bt"><code>exch(a, i, j)</code></span>a[i] ile a[j]’yi takasla → <b>yer değiştirme</b> <span class="en">exchange</span></div>
@@ -422,7 +421,7 @@ function exch(a, i, j) {
 }
 </script></code></pre>
     </div>
-    <div class="tab" data-label="Java (kitaptaki)">
+    <div class="tab" data-label="Java">
 <pre><code class="language-java" data-trim><script type="text/template">
 private static boolean less(Comparable v, Comparable w)
 {  return v.compareTo(w) < 0;  }
@@ -494,7 +493,7 @@ private static void exch(Comparable[] a, int i, int j)
   <div class="trace-legend">
     <b class="r">kırmızı</b> = a[min] (bulunan en küçük) · <b>siyah</b> = en küçüğü bulmak için bakılanlar · <b class="g">gri</b> = son yerine yerleşmiş
   </div>
-  <aside class="notes">Kitaptaki klasik izin aynısı. Ok tuşuyla satır satır ilerleyin. Her satırda soru sorun: "Siyahlar arasında en küçük harf hangisi?" Öğrenciler kırmızıyı tahmin etsin, sonra satırı açın.</aside>
+  <aside class="notes">Ok tuşuyla satır satır ilerleyin. Her satırda soru sorun: "Siyahlar arasında en küçük harf hangisi?" Öğrenciler kırmızıyı tahmin etsin, sonra satırı açın.</aside>
 </section>
 
 <section data-sec="selection sort">
@@ -1532,7 +1531,7 @@ function sort(a) {
   <p>\( \dfrac{N(N-1)}{2} = \dfrac{N^2}{2} - \dfrac{N}{2} \) &nbsp; → &nbsp; büyük N için \( \sim \dfrac{N^2}{2} \) yazarız. “~” = “yaklaşık, baskın terim”.</p>
   <div class="demo" data-demo="tilde"></div>
   <div class="box prop fragment"><span class="bt">Büyük-O ile ilişkisi <span class="en">Big-O</span></span>
-    Sedgewick tilde (~) kullanır çünkü <b>sabiti</b> korur (N²/2 ile N²/4 farklıdır). Büyük-O sabiti de atar: ikisi de \( O(N^2) \). İş görüşmelerinde Büyük-O sorulur; ikisini de tanıyın.
+    Tilde (~) gösterimi kullanılır çünkü <b>sabiti</b> korur (N²/2 ile N²/4 farklıdır). Büyük-O sabiti de atar: ikisi de \( O(N^2) \). İş görüşmelerinde Büyük-O sorulur; ikisini de tanıyın.
   </div>
 </section>
 
@@ -1551,7 +1550,7 @@ function sort(a) {
     </div>
     <div class="demo" data-demo="doubling"></div>
   </div>
-  <aside class="notes">Bu ölçüm gerçekten bu bilgisayarda yapılıyor. Insertion için oran 4'e yaklaşmalı (küçük N'de gürültülü olabilir). Shellsort ~2.3–2.8, hazır sort ~2.1 civarı çıkar. Sedgewick'in kitabındaki "DoublingTest" fikri.</aside>
+  <aside class="notes">Bu ölçüm gerçekten bu bilgisayarda yapılıyor. Insertion için oran 4'e yaklaşmalı (küçük N'de gürültülü olabilir). Shellsort ~2.3–2.8, hazır sort ~2.1 civarı çıkar. “İkiye katlama deneyi” fikri.</aside>
 </section>
 
 <section data-sec="arena">
@@ -1947,7 +1946,7 @@ function push(open, node) {
     <li>Kağıt-kalem: <code>E A S Y Q U E S T I O N</code> dizisi için selection ve insertion sort’un <b>iz tablosunu</b> çıkarın. Kaç ters çift var?</li>
     <li>🤖 Bir YZ asistanından “C#’ta insertion sort” isteyin. Kodun <b>değişmezini</b> bulun ve doğru olduğunu kendi cümlelerinizle açıklayın.</li>
   </ol>
-  <aside class="notes">4. alıştırma kitaptaki Exercise 2.1.1 / 2.1.2'nin uyarlaması (Sedgewick EASYQUESTION örneği). 5. alıştırma, "kodu YZ yazar ama kavramı siz anlamalısınız" mesajını pekiştirir.</aside>
+  <aside class="notes">5. alıştırma, "kodu YZ yazar ama kavramı siz anlamalısınız" mesajını pekiştirir.</aside>
 </section>
 
 <section data-sec="serbest laboratuvar">

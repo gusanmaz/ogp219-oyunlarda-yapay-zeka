@@ -34,7 +34,7 @@
   <div class="sub"><i>Kümeler, sözlükler, dizinler, seyrek vektörler</i> — hash ve BST iş başında</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlest"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.5 Applications bölümünü temel alır. Arka planda bir yerelleştirme tablosu: anahtarlar aynı kalıyor, değerler dil dil değişiyor. Bu sunumda yeni bir veri yapısı yok; önceki iki sunumun yapılarıyla neler yapılabildiğini görüyoruz.</aside>
+  <aside class="notes">Arka planda bir yerelleştirme tablosu: anahtarlar aynı kalıyor, değerler dil dil değişiyor. Bu sunumda yeni bir veri yapısı yok; önceki iki sunumun yapılarıyla neler yapılabildiğini görüyoruz.</aside>
 </section>
 
 <section>
@@ -529,7 +529,7 @@ const both = index.get("ateş").filter(x => silah.has(x));
 <section data-sec="dizinleme">
   <h2>Dizinler her yerde</h2>
   <div class="cols">
-    <div class="box story"><span class="bt">Princeton örnekleri</span>
+    <div class="box story"><span class="bt">Klasik örnekler</span>
       <ul>
         <li><b>Dosya dizini</b>: kelime → içinde geçtiği dosyalar (Spotlight, Windows arama)</li>
         <li><b>Kitap dizini</b> / konkordans: kelime → geçtiği sayfalar/konumlar</li>
@@ -595,7 +595,7 @@ def build_index(items):
   <h2>Seyrek vektör — kod</h2>
   <div class="cols c46">
     <div style="font-size:.86em">
-      <p>Princeton’ın <code>SparseVector</code>’ü: indeks → değer sembol tablosu.</p>
+      <p><code>SparseVector</code>: indeks → değer sembol tablosu.</p>
       <ul>
         <li><b>get(i)</b>: tabloda yoksa <b>0</b></li>
         <li><b>put(i, 0)</b>: tablodan <b>sil</b> (sıfırları saklama!)</li>

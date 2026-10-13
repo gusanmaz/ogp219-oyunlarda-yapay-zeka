@@ -34,7 +34,7 @@
   <div class="sub"><i>Dynamic connectivity</i> — “bu ikisi bağlı mı?” sorusunu ışık hızında cevaplamak</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titleuf"></div>
-  <aside class="notes">Bu sunum Sedgewick &amp; Wayne “Algorithms, 4th ed.” 1.5 (Case Study: Union-Find) bölümünü ve Princeton’ın ilk dersini temel alır. Kitabın yaklaşımı: bir problem → basit bir çözüm → ölç → daha iyisini bul. Bu yaklaşım bütün dönem boyunca tekrar edecek.</aside>
+  <aside class="notes">Yaklaşım: bir problem → basit bir çözüm → ölç → daha iyisini bul. Bu yaklaşım bütün dönem boyunca tekrar edecek.</aside>
 </section>
 
 <section>
@@ -122,7 +122,7 @@
 <section data-sec="problem">
   <h2>Dene: bağla ve sor</h2>
   <div class="demo" data-demo="connect"></div>
-  <aside class="notes">Kitaptaki örnek sırayı tıklatın: 4-3, 3-8, 6-5, 9-4, 2-1, 8-9 (zaten bağlı!), 5-0, 7-2, 6-1. Aynı renk = aynı bileşen. 8-9 bağlantısının neden “zaten bağlı” dendiğini sorun: 8–3–4–9 yolu var.</aside>
+  <aside class="notes">Örnek sırayı tıklatın: 4-3, 3-8, 6-5, 9-4, 2-1, 8-9 (zaten bağlı!), 5-0, 7-2, 6-1. Aynı renk = aynı bileşen. 8-9 bağlantısının neden “zaten bağlı” dendiğini sorun: 8–3–4–9 yolu var.</aside>
 </section>
 
 <section data-sec="problem">
@@ -203,7 +203,7 @@ console.log(uf.count);              // 8
 <section data-sec="quick-find">
   <h2>Quick-find — animasyon</h2>
   <div class="ufviz" data-alg="quickfind" data-n="10"></div>
-  <aside class="notes">Kitaptaki sırayı “▶ Kitaptaki sıradaki” ile adım adım izleyin. Her union’da tüm dizinin tarandığına dikkat edin (dizi erişimi sayacı).</aside>
+  <aside class="notes">Hazır sırayı “▶ Hazır sıradaki” düğmesiyle adım adım izleyin. Her union’da tüm dizinin tarandığına dikkat edin (dizi erişimi sayacı).</aside>
 </section>
 
 <section data-sec="quick-find">
@@ -288,7 +288,7 @@ class QuickFind {
       <button data-opt="C">~1 milyar</button>
       <button data-opt="D">~1 trilyon (10¹²)</button>
     </div>
-    <div class="explain">Her union tüm diziyi (10⁶) tarar; 10⁶ union × 10⁶ = <b>10¹²</b>. Saniyede 10⁹ işlemle bile ~17 dakika — ve gerçek problemler (sosyal ağlar, büyük haritalar) bundan çok daha büyük. Kitabın uyarısı: <b>karesel algoritmalar büyümez</b> (bilgisayarlar hızlandıkça problemler de büyür).</div>
+    <div class="explain">Her union tüm diziyi (10⁶) tarar; 10⁶ union × 10⁶ = <b>10¹²</b>. Saniyede 10⁹ işlemle bile ~17 dakika — ve gerçek problemler (sosyal ağlar, büyük haritalar) bundan çok daha büyük. Uyarı: <b>karesel algoritmalar büyümez</b> (bilgisayarlar hızlandıkça problemler de büyür).</div>
   </div>
 </section>
 
@@ -341,7 +341,7 @@ class QuickFind {
 <section data-sec="quick-union">
   <h2>Quick-union — animasyon</h2>
   <div class="ufviz" data-alg="quickunion" data-n="10" data-worst="1"></div>
-  <aside class="notes">Önce kitaptaki sırayı, sonra “😈 Kötü sıra”yı deneyin: ağaç bir zincire dönüşüyor.</aside>
+  <aside class="notes">Önce hazır sırayı, sonra “😈 Kötü sıra”yı deneyin: ağaç bir zincire dönüşüyor.</aside>
 </section>
 
 <section data-sec="quick-union">
@@ -467,13 +467,13 @@ function find(parent, p) {
     </div>
     <div class="box game"><span class="bt">🎮 Benzetme</span>İki klan birleşiyor: 3 kişilik klan 300 kişilik klanın bayrağı altına girer, tersi değil. Değişmesi gereken “adres” sayısı az olur.</div>
   </div>
-  <aside class="notes">“😈 Kötü sıra” düğmesine tekrar basın: quick-union’da yükseklik 9 olan sıra, ağırlıklı sürümde yükseklik 1 veriyor. Kitaptaki örnek sırayla da deneyin.</aside>
+  <aside class="notes">“😈 Kötü sıra” düğmesine tekrar basın: quick-union’da yükseklik 9 olan sıra, ağırlıklı sürümde yükseklik 1 veriyor. Hazır örnek sırayla da deneyin.</aside>
 </section>
 
 <section data-sec="ağırlıklı">
   <h2>Ağırlıklı quick-union — animasyon</h2>
   <div class="ufviz" data-alg="weighted" data-n="10" data-worst="1"></div>
-  <aside class="notes">“😈 Kötü sıra” düğmesine tekrar basın: quick-union’da yükseklik 9 olan sıra, ağırlıklı sürümde yükseklik 1 veriyor. Kitaptaki örnek sırayla da deneyin.</aside>
+  <aside class="notes">“😈 Kötü sıra” düğmesine tekrar basın: quick-union’da yükseklik 9 olan sıra, ağırlıklı sürümde yükseklik 1 veriyor. Hazır örnek sırayla da deneyin.</aside>
 </section>
 
 <section data-sec="ağırlıklı">
@@ -600,7 +600,7 @@ function union(parent, size, p, q) {
 <section data-sec="yol sıkıştırma">
   <h2>Yol sıkıştırma — animasyon</h2>
   <div class="ufviz" data-alg="weighted-pc" data-n="10"></div>
-  <aside class="notes">Kitaptaki sırayı uygulayın, sonra connected(…) sorularıyla find çağırın: yoldaki düğümlerin dedelerine bağlandığını (turuncu) izleyin.</aside>
+  <aside class="notes">Hazır sırayı uygulayın, sonra connected(…) sorularıyla find çağırın: yoldaki düğümlerin dedelerine bağlandığını (turuncu) izleyin.</aside>
 </section>
 
 <section data-sec="yol sıkıştırma">
@@ -680,7 +680,7 @@ find(p) {
     <tr><td>ağırlıklı QU</td><td>N</td><td>lg N*</td><td>lg N</td><td>M · lg N</td></tr>
     <tr><td>ağırlıklı QU + yol sıkıştırma</td><td>N</td><td class="yes">≈ 1*</td><td class="yes">≈ 1</td><td class="yes">≈ M (M · α(N))</td></tr>
   </table>
-  <p class="mini">* kökleri bulma maliyeti dahil. 10⁹ union ve 10⁹ find: quick-find ile 30 yıl, ağırlıklı + yol sıkıştırma ile 6 saniye (kitaptaki tahmin). <b>İyi algoritma, süper bilgisayardan değerlidir.</b></p>
+  <p class="mini">* kökleri bulma maliyeti dahil. 10⁹ union ve 10⁹ find: quick-find ile 30 yıl, ağırlıklı + yol sıkıştırma ile 6 saniye. <b>İyi algoritma, süper bilgisayardan değerlidir.</b></p>
 </section>
 
 <section data-sec="🧪 laboratuvar">
@@ -797,7 +797,7 @@ function makeMaze(cols, rows) {
 <section data-sec="uygulamalar">
   <h2>💧 Perkolasyon deneyi</h2>
   <div class="demo" data-demo="percolation"></div>
-  <aside class="notes">“Yeni deney” ile tek bir rastgele deneyi izleyin: hücreler açıldıkça mavi su aşağı doğru ilerler. Sızdığı andaki açıklık oranı yaklaşık 0,59. Monte Carlo düğmesi 300 deneyi saniyeler içinde çalıştırır — Princeton’ın ilk ödevi tam olarak budur. Oyun bağlantısı: yıkılabilir yapılar (“bu parça hâlâ zemine bağlı mı?”), orman yangını yayılması, akan su/lav mekanikleri.</aside>
+  <aside class="notes">“Yeni deney” ile tek bir rastgele deneyi izleyin: hücreler açıldıkça mavi su aşağı doğru ilerler. Sızdığı andaki açıklık oranı yaklaşık 0,59. Monte Carlo düğmesi 300 deneyi saniyeler içinde çalıştırır — algoritma derslerinin klasik ödevlerinden biri. Oyun bağlantısı: yıkılabilir yapılar (“bu parça hâlâ zemine bağlı mı?”), orman yangını yayılması, akan su/lav mekanikleri.</aside>
 </section>
 
 <section data-sec="uygulamalar · oyunda">
@@ -843,7 +843,7 @@ function makeMaze(cols, rows) {
       </ul>
     </div>
   </div>
-  <p class="fragment center lead">Kitabın dersi: <b>hızlı algoritma &gt; hızlı bilgisayar</b>. Quick-find ile 30 yıl süren iş, doğru algoritmayla 6 saniye.</p>
+  <p class="fragment center lead">Ders: <b>hızlı algoritma &gt; hızlı bilgisayar</b>. Quick-find ile 30 yıl süren iş, doğru algoritmayla 6 saniye.</p>
 </section>
 
 <!-- RETRO START uf -->

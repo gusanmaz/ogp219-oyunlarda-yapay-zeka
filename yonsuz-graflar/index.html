@@ -34,7 +34,7 @@
   <div class="sub"><i>Düğümler, kenarlar, DFS, BFS</i> — oyun dünyasının iskeleti</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titlegraph"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 4.1 Undirected Graphs bölümünü temel alır. Bölüm 5’in (graflar) ilk sunumu. Arka planda rastgele bir graf ve rastgele bir kaynaktan yayılan BFS dalgası: renk = kaynağa uzaklık.</aside>
+  <aside class="notes">Bölüm 5’in (graflar) ilk sunumu. Arka planda rastgele bir graf ve rastgele bir kaynaktan yayılan BFS dalgası: renk = kaynağa uzaklık.</aside>
 </section>
 
 <section>
@@ -126,7 +126,7 @@
       <li><b>Bağlı bileşen</b>: bu grafın <b>3</b> bileşeni var: {0…6}, {7, 8}, {9…12}</li>
     </ul>
   </div>
-  <p class="mini">Kitaptaki “tinyG” grafı. Animasyon 0’dan DFS yapıyor: 9–12 grubuna hiç ulaşamayacak. (DFS’yi birazdan ayrıntılı göreceğiz.)</p>
+  <p class="mini">Animasyon 0’dan DFS yapıyor: 9–12 grubuna hiç ulaşamayacak. (DFS’yi birazdan ayrıntılı göreceğiz.)</p>
 </section>
 
 <section data-sec="terimler">
@@ -187,7 +187,7 @@
   <h2>Graf sınıfı — komşuluk listeleri</h2>
   <div class="cols c46">
     <div style="font-size:.86em">
-      <p>Princeton’ın <code>Graph</code> API’si:</p>
+      <p><code>Graph</code> API’si:</p>
       <table class="gloss" style="font-size:17px">
         <tr><td>Graph(V)</td><td>V düğümlü, kenarsız graf</td></tr>
         <tr><td>addEdge(v, w)</td><td>v–w kenarı ekle</td></tr>
@@ -358,7 +358,7 @@ function neighbors(map, r, c) {
 <section data-sec="DFS">
   <h2>DFS — iz tablosu</h2>
   <div class="demo" data-demo="gsearch" data-graph="tinyCG" data-alg="dfs" data-speed="1.2"></div>
-  <p class="mini">Kitaptaki “tinyCG”. Mavi = işaretli (çağrı yığınında), yeşil = bitti, sarı = şu anki. Kesikli = bakılan kenar. Tablodaki <code>edgeTo[w] = v</code>: “w’ye ilk kez v’den geldim”. Kaynağı değiştirmek için bir düğüme tıklayın.</p>
+  <p class="mini">Mavi = işaretli (çağrı yığınında), yeşil = bitti, sarı = şu anki. Kesikli = bakılan kenar. Tablodaki <code>edgeTo[w] = v</code>: “w’ye ilk kez v’den geldim”. Kaynağı değiştirmek için bir düğüme tıklayın.</p>
 </section>
 
 <section data-sec="DFS">
@@ -587,7 +587,7 @@ function bfs(G, s) {
 <section data-sec="BFS">
   <h2>Kaç adımda tanışıyoruz? (“Kevin Bacon sayısı”)</h2>
   <div class="demo" data-demo="gsearch" data-graph="friends" data-alg="bfs" data-src="0" data-w="860" data-h="330" data-notable data-speed="2"></div>
-  <p class="mini">Princeton’ın klasik örneği: aktörler ve filmler grafında herkesin Kevin Bacon’a uzaklığı (BFS). Burada bir oyun arkadaşlık ağı: “Pro Oyuncu” ile aranızda kaç kişi var? Rozet = uzaklık.</p>
+  <p class="mini">Klasik örnek: aktörler ve filmler grafında herkesin Kevin Bacon’a uzaklığı (BFS). Burada bir oyun arkadaşlık ağı: “Pro Oyuncu” ile aranızda kaç kişi var? Rozet = uzaklık.</p>
 </section>
 
 <section data-sec="BFS">
@@ -872,7 +872,7 @@ def count_islands(grid):
 <section data-sec="alıştırmalar">
   <h2>Alıştırmalar 🏋️</h2>
   <ol style="font-size:.86em">
-    <li>Kâğıt-kalem: tinyCG’de 3’ten başlayarak DFS ve BFS iz tablolarını çıkarın (komşuluk listesi sırası: kitaptaki gibi).</li>
+    <li>Kâğıt-kalem: tinyCG’de 3’ten başlayarak DFS ve BFS iz tablolarını çıkarın (komşuluk listesi sırası: slayttaki gibi).</li>
     <li>Graf yönsüzse, DFS ile döngü olup olmadığını nasıl anlarsınız? (İpucu: işaretli bir komşu, geldiğin düğüm değilse…)</li>
     <li>p5.js’te bir karo haritası çizin; tıklanan kareden BFS yapıp her karenin uzaklığını sayı olarak yazdırın. Fare hedefi gösterince yolu çizin.</li>
     <li>“İki takıma bölme” (bipartite) kontrolünü DFS ile yazın: her düğümü komşusunun tersi renge boyayın; çelişki çıkarsa bölünemez.</li>

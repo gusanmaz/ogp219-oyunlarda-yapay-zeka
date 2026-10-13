@@ -341,7 +341,7 @@
 
   /* ---------- 10) Quadtree: uzaysal arama ---------- */
   D.quadtree = function (root) {
-    const W = 1180, H = 430;
+    const W = 1180, H = 360;
     const c = el('canvas', { style: 'cursor:none' }); const ctx = SL.setupCanvas(c, W, H);
     let N = 400, R = 80, showGrid = true, pts = [], qt, running = false, raf, t0 = 0, mouse = null;
     const stat = el('div', { class: 'sv-counters' });

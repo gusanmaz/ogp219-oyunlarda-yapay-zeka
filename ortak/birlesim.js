@@ -116,7 +116,7 @@
       el('label', { class: 'ctl' }, 'p ', pIn), el('label', { class: 'ctl' }, 'q ', qIn),
       btn('🔗 union(p, q)', () => { const p = num(pIn), q = num(qIn); if (p != null && q != null) go(union(p, q)); }, 'primary'),
       btn('❓ connected?', () => { const p = num(pIn), q = num(qIn); if (p != null && q != null) go(connected(p, q)); }),
-      btn('▶ Kitaptaki sıradaki', () => { if (si >= SAMPLE.length) { note.textContent = 'Örnek dizi bitti (↺ ile baştan).'; return; } const [p, q] = SAMPLE[si++]; pIn.value = p; qIn.value = q; go(union(p, q)); }),
+      btn('▶ Hazır sıradaki', () => { if (si >= SAMPLE.length) { note.textContent = 'Örnek dizi bitti (↺ ile baştan).'; return; } const [p, q] = SAMPLE[si++]; pIn.value = p; qIn.value = q; go(union(p, q)); }),
       d.worst ? btn('😈 Kötü sıra', worst) : null,
       btn('↺', reset)),
     arrRow, forest, SL.transport(fp, { min: 0.3, max: 8 }), note, stat);

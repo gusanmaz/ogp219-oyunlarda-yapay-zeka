@@ -34,7 +34,7 @@
   <div class="sub"><i>İkili yığın, heapsort, zamanlayıcılar</i> — “en önemli olan önce”</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titleheap"></div>
-  <aside class="notes">Sedgewick &amp; Wayne “Algorithms, 4th ed.” 2.4 Priority Queues bölümünü temel alır (olay güdümlü simülasyon: 6.1). Arka planda bir max-yığın: yeni sayılar en alta eklenip yukarı yüzüyor, arada bir kök (en büyük) çıkarılıyor.</aside>
+  <aside class="notes">1). Arka planda bir max-yığın: yeni sayılar en alta eklenip yukarı yüzüyor, arada bir kök (en büyük) çıkarılıyor.</aside>
 </section>
 
 <section>
@@ -252,7 +252,7 @@
     <div style="font-size:.88em">
       <p>Bir düğüm ebeveyninden <b>büyük</b> oldu (yığın düzeni bozuldu):</p>
       <ol><li>Ebeveyniyle <b>yer değiştir</b></li><li>Hâlâ yeni ebeveyninden büyükse tekrarla</li><li>Kökte ya da ebeveyninden küçükse dur</li></ol>
-      <div class="box story"><span class="bt">😄 Peter ilkesi</span>Princeton’ın şakası: “Herkes yetersiz kalacağı seviyeye kadar terfi eder.” Düğüm, patronundan daha iyi olduğu sürece terfi ediyor!</div>
+      <div class="box story"><span class="bt">😄 Peter ilkesi</span>“Herkes yetersiz kalacağı seviyeye kadar terfi eder.” Düğüm, patronundan daha iyi olduğu sürece terfi ediyor!</div>
       <p class="mini"><b>insert</b> = sona ekle + swim. En fazla <b>1 + lg N</b> karşılaştırma.</p>
     </div>
   <div class="tabs ">
@@ -425,7 +425,7 @@ function delMax(a) {
 <section data-sec="sink">
   <h2>İkili yığın — oyun alanı</h2>
   <div class="demo" data-demo="heapviz" data-ops="insert,del,book,random" data-default="S" data-h="250"></div>
-  <p class="mini">Kitaptaki diziyi oynatın (* = delMax): ekleme yukarı yüzdürür, çıkarma aşağı batırır. Mor kesikli = karşılaştırılan çocuklar. ◀ Geri / İleri ▶ ile adım adım gidin.</p>
+  <p class="mini">Hazır diziyi oynatın (* = delMax): ekleme yukarı yüzdürür, çıkarma aşağı batırır. Mor kesikli = karşılaştırılan çocuklar. ◀ Geri / İleri ▶ ile adım adım gidin.</p>
 </section>
 
 <section data-sec="🎒 koddaki yeni ifadeler">
@@ -638,7 +638,7 @@ function heapsort(a) {
     <tr><td>3 yollu quick</td><td>✔</td><td></td><td>N²/2</td><td>1,39 N lg N</td><td>N</td><td>tekrar eden anahtarlar</td></tr>
     <tr><td><b>heap</b></td><td>✔</td><td></td><td><b>2 N lg N</b></td><td>2 N lg N</td><td>N lg N</td><td>garanti + yerinde</td></tr>
   </table>
-  <p class="mini">Kaynak: Sedgewick &amp; Wayne 2.4/2.5. Hepsini bu derste animasyonlarıyla gördünüz! 🏆</p>
+  <p class="mini">Hepsini bu derste animasyonlarıyla gördünüz! 🏆</p>
 </section>
 
 <section data-sec="heapsort">
@@ -788,7 +788,7 @@ function update(now) {                               // her karede
       </ul>
     </div>
     <div>
-      <div class="box story"><span class="bt">📜 Princeton 6.1</span>Kitabın “CollisionSystem” örneği: binlerce parçacık, MinPQ ile. Fizikte <b>Boltzmann dağılımını</b> bilgisayarda görmek için kullanılır.</div>
+      <div class="box story"><span class="bt">📜 Olay güdümlü simülasyon</span>Çarpışan parçacıklar: binlerce parçacık, MinPQ ile. Fizikte <b>Boltzmann dağılımını</b> bilgisayarda görmek için kullanılır.</div>
       <div class="box game fragment"><span class="bt">🎮 Oyunda</span>Bilardo/golf oyunlarının fiziği, sıra tabanlı stratejide “inisiyatif” sırası, RTS sunucusunda gelecekteki olaylar… Hepsinde “bir sonraki ne zaman?” sorusu → MinPQ.</div>
     </div>
   </div>

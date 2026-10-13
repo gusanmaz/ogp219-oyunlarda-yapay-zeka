@@ -34,7 +34,7 @@
   <div class="sub"><i>Trees &amp; Binary Search Trees</i> — hiyerarşi · gezinme · davranış ağaçları · ikili arama · BST</div>
   <div class="hp">PRESS ▶ TO START</div>
   <div class="demo title-bars" data-demo="titletree"></div>
-  <aside class="notes">Bu sunum Sedgewick &amp; Wayne “Algorithms, 4th ed.” 3.1 (Symbol Tables) ve 3.2 (Binary Search Trees) bölümlerini temel alır; başına genel ağaç kavramları, gezinme ve oyun YZ’sindeki davranış ağaçları eklendi. Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları. Arka planda rastgele anahtarlar bir BST’ye ekleniyor.</aside>
+  <aside class="notes">Kısayollar: T tema, Z kod büyüteci, S konuşmacı notları. Arka planda rastgele anahtarlar bir BST’ye ekleniyor.</aside>
 </section>
 
 <section>
@@ -1176,8 +1176,8 @@ private Node put(Node x, Key key, Value val) {
 
 <section data-sec="BST">
   <h2>Ekleme animasyonu: S E A R C H E X A M P L E</h2>
-  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-stack data-seq="S E A R C H E X A M P L E" data-h="330" data-hint="▶ Sırayla ekle: kitaptaki klasik örnek. Ya da kendi harfinizi yazıp Ekle’ye basın (Enter)."></div>
-  <aside class="notes">Kitaptaki “BST construction” izinin aynısı. İkinci E ve ikinci A geldiğinde yeni düğüm OLUŞMAZ (değer güncellenir). Kendi harfleri ile ekleme yapın; dönüş (return) adımlarında yığından çıkılırken bağlantıların yeniden kurulduğunu gösterin.</aside>
+  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-stack data-seq="S E A R C H E X A M P L E" data-h="330" data-hint="▶ Sırayla ekle. Ya da kendi harfinizi yazıp Ekle’ye basın (Enter)."></div>
+  <aside class="notes">İkinci E ve ikinci A geldiğinde yeni düğüm OLUŞMAZ (değer güncellenir). Kendi harfleri ile ekleme yapın; dönüş (return) adımlarında yığından çıkılırken bağlantıların yeniden kurulduğunu gösterin.</aside>
 </section>
 
 <section data-sec="BST">
@@ -1939,6 +1939,7 @@ function newNode(k) {
   <h2>🎮 Uzaysal ağaçlar: quadtree <span class="en">spatial partitioning</span></h2>
   <div class="demo" data-demo="quadtree"></div>
   <p class="mini">Fareyi haritada gezdirin. <b>Quadtree</b>: kalabalık bölgeleri 4 çeyreğe bölmeye devam eden bir ağaç (her düğümün 4 çocuğu). Menzil sorgusu, menzille kesişmeyen kutuların <b>tamamını</b> atlar — BST’deki aralık sorgusunun 2 boyutlu hali!</p>
+  <div class="box game" style="font-size:.74em;margin-top:8px"><span class="bt">Bu yalnızca bir tadımlık</span>Quadtree’nin nasıl kurulduğu, sorgunun elle izlemesi, kodu, düzgün ızgara ve BVH ile karşılaştırması ve oyun motorlarındaki ayarları ayrı bir sunumda: <a href="../geo-uzaysal/"><b>G2 · Uzaysal Bölümleme</b></a> (56 slayt, üç demo, beş laboratuvar).</div>
   <aside class="notes">N’i 3000’e çıkarın: kaba kuvvet 3000 kontrol, quadtree birkaç düzine. Sıralama dersindeki “en yakın düşman” demosunun büyük ölçekli çözümü budur. 3D’de 8 çocuklu hali: octree. The Coding Train’in p5.js ile quadtree videoları Kaynaklar’da.</aside>
 </section>
 
@@ -2059,7 +2060,7 @@ function newNode(k) {
     <li>Kod laboratuvarında <code>put</code>’u <b>özyinelemesiz</b> yazın ve 1..1200 ile test edin.</li>
     <li>🤖 Bir YZ asistanından “C#’ta BST floor fonksiyonu” isteyin. Kodu bu derste gördüğümüzle karşılaştırın; boş ağaç ve “anahtar yok” durumlarını test edin.</li>
   </ol>
-  <aside class="notes">1. alıştırma kitaptaki Exercise 3.2.1’in uyarlaması.</aside>
+  <aside class="notes">1. alıştırma klasik bir alıştırmanın uyarlaması.</aside>
 </section>
 
 <section data-sec="kaynaklar">
@@ -2082,7 +2083,7 @@ function newNode(k) {
     <ul class="reflist">
       <li><a href="https://algs4.cs.princeton.edu/31elementary/" target="_blank">algs4 · 3.1 Symbol Tables</a> ve <a href="https://algs4.cs.princeton.edu/32bst/" target="_blank">3.2 Binary Search Trees</a></li>
       <li>Princeton ders slaytları: <a href="https://algs4.cs.princeton.edu/lectures/keynote/31ElementarySymbolTables.pdf" target="_blank">Symbol Tables</a> · <a href="https://algs4.cs.princeton.edu/lectures/keynote/32BinarySearchTrees.pdf" target="_blank">BSTs</a></li>
-      <li><a href="https://www.coursera.org/learn/algorithms-part1" target="_blank">Coursera · Algorithms Part I</a> (Sedgewick)</li>
+      <li><a href="https://www.coursera.org/learn/algorithms-part1" target="_blank">Coursera · Algorithms Part I</a></li>
       <li><a href="https://research.google/blog/extra-extra-read-all-about-it-nearly-all-binary-searches-and-mergesorts-are-broken/" target="_blank">Joshua Bloch · Nearly All Binary Searches… Are Broken (2006)</a></li>
       <li><a href="https://www.gamedeveloper.com/programming/gdc-2005-proceeding-handling-complexity-in-the-halo-2-ai" target="_blank">Damian Isla · Handling Complexity in the Halo 2 AI (GDC 2005)</a></li>
     </ul>

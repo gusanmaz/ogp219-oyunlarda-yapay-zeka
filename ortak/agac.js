@@ -424,7 +424,7 @@
 
   /* ---------------- .bstviz — BST oyun alanı ---------------- */
   const OPS = {
-    put: ['➕ Ekle', 'put'], get: ['🔍 Ara', 'get'], del: ['🗑 Sil', 'delete'], delmin: ['deleteMin', ''],
+    put: ['➕ Ekle', 'put'], get: ['🔍 Ara', 'get'], del: ['✖ Sil', 'delete'], delmin: ['deleteMin', ''],
     min: ['min', ''], max: ['max', ''], floor: ['floor ≤', ''], ceil: ['ceiling ≥', ''], rank: ['rank', ''], select: ['select(k)', ''],
     range: ['aralık [lo hi]', 'keys'], seq: ['▶ Sırayla ekle', ''], rand: ['🎲 Rastgele ağaç', ''], sorted: ['📈 Sıralı ekle', ''], clear: ['🧹 Temizle', ''], reset: ['↺ Başlangıç', '']
   };

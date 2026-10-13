@@ -105,7 +105,7 @@
     return { stop: () => fp.pause() };
   };
 
-  /* ---------- 2) Princeton tarzı ikili arama izi ---------- */
+  /* ---------- 2) ikili arama izi ---------- */
   D.bintrace = function (root) {
     const a = SL.parseValues(root.dataset.values || 'A C E H L M P R S X');
     const key = root.dataset.key || 'P';
