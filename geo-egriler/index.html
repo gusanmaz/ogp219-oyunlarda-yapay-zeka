@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eğriler ve Ara Değerleme</title>
+<meta name="description" content="Oyunlarda ara değerleme ve eğriler: lerp, ters lerp ve aralık eşleme; yumuşatma (easing) fonksiyonları ve tween; kare hızından bağımsız üstel takip ve SmoothDamp; Bézier eğrileri ve De Casteljau; Catmull–Rom yolları ve yay uzunluğu tablosuyla sabit hız; Godot ve Unity kaynak kodundan örnekler; p5.js kodları ve oynanabilir demolar.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 20%, #0d2a3a 0%, #1a1824 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G6</div>
+  <div class="ttl" style="font-size:64px">Eğriler ve Ara Değerleme</div>
+  <div class="sub"><i>Lerp, yumuşatma, kare hızından bağımsız takip, Bézier, Catmull–Rom, sabit hızla yol izleme</i> — “buradan oraya nasıl gidilir?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo6"></div>
+  <aside class="notes">Sağdaki eğri canlı bir kübik Bézier: dört kontrol noktası, üzerinde smoothstep ile gidip gelen sarı nokta.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Lerp</b> — iki değerin arası: oyun programcılığının en çok kullanılan tek satırı; ters lerp ve aralık eşleme</li><li><b>Yumuşatma (easing)</b> — aynı yol, aynı süre, bambaşka his: t’yi eğmek</li><li><b>Hareketli hedefi izlemek</b> — kamera takibi; herkesin yazdığı satır neden kare hızına bağlı ve doğrusu ne?</li><li><b>Bézier eğrileri</b> — birkaç kontrol noktasından kavisli yol: lerp’lerin lerp’i</li><li><b>Catmull–Rom ve sabit hız</b> — verilen noktalardan geçen yol; üzerinde sabit hızla gitmek için yay uzunluğu tablosu</li><li><b>Her adımda</b> — elle izleme → canlı demo → kod (JavaScript / Python / C#) → motor kaynak kodu</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>bir değeri, bir nesneyi ya da kamerayı A’dan B’ye “iyi hissettirerek” götürmenin beş aracını yazabilecek; kare hızından bağımsız yumuşak takip kurabilecek; pist, devriye yolu ve kamera rayı gibi eğri yolları tanımlayıp üzerlerinde sabit hızla hareket ettirebileceksiniz.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: İKİ MENÜ, AYNI SÜRE</span>
+<p>İki oyunda da duraklat tuşuna basınca menü ekrana 0,3 saniyede kayarak geliyor. Birinde menü sabit hızla gelip aniden duruyor; öbüründe hızlı fırlayıp hedefi azıcık geçiyor ve yerine oturuyor. Oyuncular ikincisine “daha kaliteli” diyor. Kod farkı ne kadar?</p>
+<ul style="font-size:.9em"><li><span class="fragment">Tek bir fonksiyon çağrısı. İkisi de aynı satırı çalıştırıyor: konum = lerp(başlangıç, hedef, t). İkincisi t’yi önce küçük bir fonksiyondan geçiriyor.</span></li><li><span class="fragment">Oyun geliştiriciler buna “juice” (meyve suyu: oyunun sulu, canlı olması) diyor: aynı mekanik, daha çok tepki.</span></li><li><span class="fragment">Aynı araçlar daha ciddi işlerde de var: kameranın karakteri izlemesi, merminin yay çizmesi, düşmanın devriye yolu, yarış pisti, ağ üzerinden gelen rakibin ekranda akıcı görünmesi.</span></li><li><span class="fragment">Hepsinin altında tek bir işlem yatıyor: <b>iki değerin arasını bulmak</b>. Bu sunum o işlemi adım adım büyütüyor: sayıdan zamana, zamandan eğriye, eğriden yola.</span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../yz-hazirlik/">Y0 · Hazırlık (vektörler, dt, oyun döngüsü)</a><a class="" href="../geo-fizik/">G5 · Fizik (kare hızından bağımsızlık, dt)</a><a class="" href="../arama-algoritmalari/">Arama Algoritmaları (ikili arama)</a></div>
+  <div class="prereq"><a class="opt" href="../geo-temeller/">G1 · Geometri Temelleri (doğru üzerinde t parametresi)</a><a class="opt" href="../yz-steering/">Y2 · Yönlendirme (yol izleme)</a><a class="opt" href="../yz-pcg/">Y15 · Prosedürel Üretim (gürültüde smoothstep)</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>G1’de doğru parçası üzerindeki noktayı P + t·(Q − P) diye yazdık; G5’te çizimi iki fizik durumunun “alfa” kadar arasından yaptık. İkisi de aynı işlemdi: <b>lerp</b>. Şimdi ona bir ad verip üzerine inşa ediyoruz.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Bu sunumun tamamı tek bir formülün (a + (b − a)·t) tekrar tekrar kullanılmasıdır. Bézier ve Catmull–Rom formülleri kalabalık görünür; ama birincisi altı lerp’ten ibarettir, ikincisini ezberlemeniz gerekmez (her motorda hazır).</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:16px"><tr><td>lerp (linear interpolation)</td><td>doğrusal ara değerleme</td><td>İki değer arasında, yolun t kadarındaki değer: a + (b − a)·t</td></tr><tr><td>inverse lerp · remap</td><td>ters lerp · aralık eşleme</td><td>Bir değerin aralıktaki oranını bulma · bir aralıktaki değeri başka aralığa taşıma</td></tr><tr><td>easing · tween</td><td>yumuşatma · ara animasyon</td><td>t’yi bir eğriden geçirerek hareketin hızlanıp yavaşlamasını ayarlama · iki değer arasında süreli geçiş</td></tr><tr><td>smoothstep</td><td>—</td><td>3t² − 2t³: iki ucu da yumuşak standart yumuşatma eğrisi</td></tr><tr><td>exponential smoothing · half-life</td><td>üstel yaklaşma · yarı ömür</td><td>Her an kalan yolun sabit bir oranını kapatma · kalan yolun yarıya inme süresi</td></tr><tr><td>Bézier curve · control point</td><td>Bézier eğrisi · kontrol noktası</td><td>Kontrol noktalarının “çektiği” kavisli eğri; yalnızca ilk ve son noktadan geçer</td></tr><tr><td>De Casteljau</td><td>—</td><td>Bézier noktasını iç içe lerp’lerle bulan algoritma</td></tr><tr><td>spline · Catmull–Rom</td><td>parçalı eğri · —</td><td>Uç uca eklenmiş eğri parçaları · verilen noktaların içinden geçen bir türü</td></tr><tr><td>arc length · baking</td><td>yay uzunluğu · pişirme</td><td>Eğri boyunca ölçülen gerçek yol · eğriyi önceden örnekleyip tabloya yazma</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Lerp</div><div class="sub">iki değerin arası</div></div>
+</section>
+
+<section data-sec="lerp">
+  <h2>Problem: “arası” her yerde</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Bir oyunda “A’dan B’ye”</span><ul style="font-size:.92em"><li><b>Konum:</b> kapı açılıyor, asansör çıkıyor, kart ele uçuyor.</li><li><b>Renk:</b> hasar alan düşman kırmızıya dönüp eski rengine geliyor; gün batımı.</li><li><b>Sayı:</b> can çubuğu, ses düzeyi, kamera yakınlığı, puanın “sayarak” artması.</li><li><b>Açı:</b> taret hedefe dönüyor.</li><li><b>Zaman:</b> ağ üzerinden saniyede 20 kez gelen rakip konumlarının arası (ekranınız 144 kez çiziyor).</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: her karede biraz ekle</span><p><code>if (x &lt; hedef) x += 5;</code></p><ul style="font-size:.92em"><li><b>Ne kadar sürecek?</b> Belli değil: yol uzunsa uzun, kısaysa kısa. İki animasyonu eş zamanlı bitiremezsiniz.</li><li><b>Tam hedefte durmaz:</b> 5’er 5’er giderken 298’den 303’e atlar; ya taşar ya titrer.</li><li><b>Kare hızına bağlı</b> (G5): 144 Hz ekranda 2,4 kat hızlı.</li><li>Renk için? Üç kanalın üçü de farklı miktarda değişmeli. Her biri için ayrı <code>if</code>…</li></ul><p>Soruyu ters çevirin: “bu kare ne kadar ekleyeyim?” değil, “yolun <b>yüzde kaçındayım</b>?”</p></div></div>
+</div>
+</section>
+
+<section data-sec="lerp">
+  <h2>Fikir: yolun t kadarı</h2>
+<div class="cols c46">
+<div><p style="text-align:center;font-size:1.05em;margin:.2em 0 .5em">$$\text{lerp}(a, b, t) = a + (b - a) \cdot t$$</p><ul style="font-size:.8em"><li><b>a</b>: başlangıç, <b>b</b>: bitiş, <b>t</b>: yolun oranı. t = 0 → a; t = 1 → b; t = 0,5 → tam orta.</li><li>Okunuşu: “a’dan başla; aradaki farkın t kadarını ekle.”</li><li>t’yi zamandan üretin: <b>t = geçen süre / toplam süre</b>. Süre artık sizin elinizde; hedefte <b>tam</b> durur.</li><li><b>Ters lerp:</b> değeri verip oranı sormak: t = (v − a) / (b − a).</li><li><b>Aralık eşleme</b> (remap): önce ters lerp, sonra başka aralıkta lerp. “Can 0–100 arasında; çubuk 0–200 piksel.”</li><li>Sayı olan her şeye uygulanır: vektörde her bileşene, renkte her kanala ayrı ayrı.</li></ul></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle hesap</span><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">işlem</th><th style="text-align:left;">hesap</th><th style="text-align:left;">sonuç</th></tr><tr><td style="text-align:left;">lerp(100, 300, 0,25)</td><td style="text-align:left;">100 + 200 · 0,25</td><td style="text-align:left;"><b>150</b></td></tr><tr><td style="text-align:left;">lerp(100, 300, 1)</td><td style="text-align:left;">100 + 200 · 1</td><td style="text-align:left;"><b>300</b> (tam hedef)</td></tr><tr><td style="text-align:left;">lerp(50, 20, 0,5)</td><td style="text-align:left;">50 + (−30) · 0,5</td><td style="text-align:left;"><b>35</b> (geriye de çalışır)</td></tr><tr><td style="text-align:left;">lerp(0, 10, 1,5)</td><td style="text-align:left;">0 + 10 · 1,5</td><td style="text-align:left;"><b>15</b> (b’nin ötesi)</td></tr><tr><td style="text-align:left;">ters lerp(0, 100, 30)</td><td style="text-align:left;">(30 − 0) / 100</td><td style="text-align:left;"><b>0,3</b></td></tr><tr><td style="text-align:left;">eşle(30; 0–100 → 0–200)</td><td style="text-align:left;">lerp(0, 200, 0,3)</td><td style="text-align:left;"><b>60</b> piksel</td></tr><tr><td style="text-align:left;">renk: kırmızı → mavi, t = 0,5</td><td style="text-align:left;">(255, 0, 0) → (0, 0, 255)</td><td style="text-align:left;"><b>(128, 0, 128)</b> mor</td></tr></table><p class="mini">t 0–1 dışına çıkarsa lerp bozulmaz: doğruyu aynı eğimle <b>uzatır</b> (dış değerleme). Bunu birazdan bilerek kullanacağız.</p></div></div>
+</div>
+</section>
+
+<section data-sec="lerp">
+  <h2>Kod: lerp, ters lerp, aralık eşleme</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// a ile b arasında, yolun t kadarı (t = 0 → a,  t = 1 → b,  t = 0.5 → tam orta)
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+// Tersi: v, [a, b] aralığının yüzde kaçında?   (v = a → 0,  v = b → 1)
+function tersLerp(a, b, v) {
+  return (v - a) / (b - a);
+}
+
+// İkisi art arda: bir aralıktaki değeri başka bir aralığa taşı
+function esle(v, a, b, c, d) {
+  return lerp(c, d, tersLerp(a, b, v));
+}
+
+// p5.js'te üçü de hazır:  lerp(a, b, t) · norm(v, a, b) · map(v, a, b, c, d) · lerpColor(c1, c2, t)
+
+// "A'dan B'ye tam 0,5 saniyede git":
+let gecen = 0;
+function draw() {
+  gecen += deltaTime / 1000;
+  const t = constrain(gecen / 0.5, 0, 1);      // geçen sürenin oranı; 1'de dur
+  circle(lerp(100, 300, t), 200, 20);
+  const canBari = esle(can, 0, 100, 0, 200);   // can 0..100 → çubuk genişliği 0..200 piksel
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+def ters_lerp(a, b, v):
+    return (v - a) / (b - a)
+
+def esle(v, a, b, c, d):
+    """v'yi [a, b] aralığından [c, d] aralığına taşı."""
+    return lerp(c, d, ters_lerp(a, b, v))
+
+def lerp_renk(c1, c2, t):
+    """Renk de sayıdır: her kanalı ayrı ayrı lerp et."""
+    return tuple(round(lerp(x, y, t)) for x, y in zip(c1, c2))
+
+print(lerp(100, 300, 0.25))                           # 150.0
+print(esle(30, 0, 100, 0, 200))                       # 60.0  (can 30 → çubuk 60 piksel)
+print(lerp_renk((255, 0, 0), (0, 0, 255), 0.5))       # (128, 0, 128)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: hepsi hazır.
+float x   = Mathf.Lerp(100f, 300f, t);                 // DİKKAT: t'yi 0..1'e sıkıştırır
+float y   = Mathf.LerpUnclamped(100f, 300f, t);        // sıkıştırmaz (taşan yumuşatmalar için)
+float o   = Mathf.InverseLerp(0f, 100f, can);          // ters lerp
+Vector3 p = Vector3.Lerp(baslangic, hedef, t);         // vektörler
+Color c   = Color.Lerp(Color.red, Color.blue, t);      // renkler
+Quaternion q = Quaternion.Slerp(q1, q2, t);            // dönüşler (küre üzerinde lerp)
+
+// "0,5 saniyede git" (Coroutine ile):
+IEnumerator Git(Vector3 a, Vector3 b, float sure) {
+    for (float gecen = 0; gecen < sure; gecen += Time.deltaTime) {
+        transform.position = Vector3.Lerp(a, b, gecen / sure);
+        yield return null;                             // bir sonraki kareye kadar bekle
+    }
+    transform.position = b;                            // tam hedefte bitir
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="lerp">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>a + (b - a) * t</code></td><td style="text-align:left;">a’dan başla, farkın t kadarını ekle</td><td style="text-align:left;">Öbür yazım <code>a * (1 - t) + b * t</code> aynı sonucu verir: “a’nın ağırlığı 1 − t, b’nin ağırlığı t”. Ağırlıkların toplamı hep 1.</td></tr><tr><td style="text-align:left;"><code>constrain(gecen / 0.5, 0, 1)</code></td><td style="text-align:left;">geçen sürenin oranı; 1’i aşmasın</td><td style="text-align:left;">Sıkıştırmazsanız animasyon bittikten sonra nesne aynı hızla yoluna devam eder.</td></tr><tr><td style="text-align:left;"><code>tersLerp(a, b, v)</code></td><td style="text-align:left;">v, a–b aralığının neresinde?</td><td style="text-align:left;">a = b ise sıfıra bölme: aralık boşsa 0 döndürün.</td></tr><tr><td style="text-align:left;"><code>esle(can, 0, 100, 0, 200)</code></td><td style="text-align:left;">aralıktan aralığa</td><td style="text-align:left;">p5.js’te <code>map()</code>. Her “şu sayıyı şu ölçeğe çevir” işi: joystick → hız, uzaklık → ses, yükseklik → renk.</td></tr><tr><td style="text-align:left;">Unity: <code>Mathf.Lerp</code></td><td style="text-align:left;">t’yi kendisi 0–1’e sıkıştırır</td><td style="text-align:left;">Güvenli ama taşan yumuşatmaları keser. Onlar için <code>LerpUnclamped</code>.</td></tr><tr><td style="text-align:left;">Unity: <code>Quaternion.Slerp</code></td><td style="text-align:left;">dönüşler için “küresel” lerp</td><td style="text-align:left;">Açıları düz lerp etmek 350° → 10° geçişinde uzun yoldan döner. Açıda en kısa farkı alın; dönüşte <code>Slerp</code> kullanın.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>lerp, t’ye göre <b>doğrusaldır</b>: t’deki eşit artışlar sonuçta eşit artış verir (sabit hız). t = geçen / süre ile kullanıldığında hareket tam <b>süre</b> kadar sürer ve sonucu kare hızından bağımsızdır (sonuç yalnızca geçen toplam süreye bağlı; adım sayısına değil).</div>
+</section>
+
+<section data-sec="lerp">
+  <h2>Oyunlarda: lerp motorun içinde ve ağın üstünde</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.68;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Unity — UnityCsReference, Runtime/Export/Math/Mathf.cs (başvuru kaynağı; kısa alıntı)
+
+// Interpolates between /a/ and /b/ by /t/. /t/ is clamped between 0 and 1.
+public static float Lerp(float a, float b, float t) => a + (b - a) * Clamp01(t);
+
+// Interpolates between /a/ and /b/ by /t/ without clamping the interpolant.
+public static float LerpUnclamped(float a, float b, float t) => a + (b - a) * t;
+
+public static float SmoothStep(float from, float to, float t)
+{
+    t = Mathf.Clamp01(t);
+    t = -2.0F * t * t * t + 3.0F * t * t;      // 3t² − 2t³
+    return to * t + from * (1F - t);
+}
+</script></code></pre><p class="mini">Kaynak: Unity Technologies, UnityCsReference (yalnızca başvuru amaçlı yayımlanan kaynak), <code>Mathf.cs</code>. Yorum satırları özgün koddan.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Aynı satır, dört yer</span><ul style="font-size:.86em"><li><b>Motor:</b> Unity’nin <code>Lerp</code>’i slayttaki formülün aynısı + sıkıştırma. Godot’nunki sıkıştırmasız tek satır: <code>p_from + (p_to - p_from) * p_weight</code>.</li><li><b>Çizim (G5):</b> fizik 50–60 Hz, ekran 144 Hz. Çizilen konum = lerp(önceki fizik durumu, şimdiki, alfa).</li><li><b>Ağ:</b> sunucu rakibin konumunu saniyede 20–60 kez yollar. İstemci rakibi kasıtlı olarak biraz <b>geçmişte</b> gösterir ve eldeki iki paket arasında lerp eder. Valve’ın Source motorunda bu gecikme varsayılan olarak 100 milisaniyedir: Counter-Strike’ta gördüğünüz rakip, onda bir saniye önceki rakiptir.</li><li><b>Animasyon:</b> “yürüme” ile “koşma” arasındaki geçiş, her kemiğin iki pozu arasında lerp/slerp’tir (blend). Hız arttıkça t artar.</li><li><b>Doku ve ses:</b> bir dokuyu büyütünce ekran kartı komşu dört pikseli lerp eder (“bilinear”); ses örnekleri arasında da aynısı.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: lerp</h2>
+  <div class="ailab" data-lab="lerp" data-lang="js">
+<textarea>
+// a ile b arasında, yolun t kadarındaki değeri döndür.  t = 0 → a,  t = 1 → b.
+function lerp(a, b, t) {
+  return a;
+}
+</textarea>
+    <div class="lab-tasks">Tek satır: <code>return a + (b - a) * t;</code>. Testlerde t = 1,5 de var: sonucu sıkıştırmayın; b’nin ötesine geçmeli (lerp(0, 10, 1,5) = 15). a &gt; b iken de çalışmalı: lerp(50, 20, 0,5) = 35.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: aralık eşleme</h2>
+  <div class="ailab" data-lab="remap" data-lang="js">
+<textarea>
+// v değeri [a, b] aralığında. Aynı oranda [c, d] aralığındaki karşılığını döndür.
+// Örnek: can 30 (0–100 arası) → çubuk genişliği 60 piksel (0–200 arası)
+function remap(v, a, b, c, d) {
+  return v;
+}
+</textarea>
+    <div class="lab-tasks">İki adım: <code>const t = (v - a) / (b - a);</code> (ters lerp) ve <code>return c + (d - c) * t;</code> (lerp). Hedef aralık ters de olabilir: remap(300, 200, 600, 1, 0) = 0,75 (“uzaklık 200’de ses tam, 600’de sıfır”).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Yumuşatma</div><div class="sub">aynı yol, aynı süre, bambaşka his</div></div>
+</section>
+
+<section data-sec="yumuşatma">
+  <h2>Problem: doğrusal hareket cansız</h2>
+<div class="cols c64">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sabit hız = robot</span><ul style="font-size:.92em"><li>lerp ile giden nesne <b>anında</b> tam hıza çıkar, sabit hızla gider, <b>anında</b> durur.</li><li>Gerçek dünyada hiçbir şey böyle hareket etmez: kütlesi olan her şey hızlanır ve yavaşlar.</li><li>Göz bunu hemen fark eder: menüler “ucuz”, karakterler “mekanik” görünür.</li><li>Disney çizerleri bunu 1930’larda adlandırdı: canlandırmanın 12 ilkesinden biri “<b>yavaş başla, yavaş bitir</b>” (slow in, slow out).</li></ul></div></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Fikir: t’yi eğ</span><p>lerp’e dokunmuyoruz. Yalnızca t’yi önce bir fonksiyondan geçiriyoruz:</p><p style="text-align:center"><code>x = lerp(a, b, <b>f(t)</b>)</code></p><ul style="font-size:.92em"><li>f, 0’da 0 ve 1’de 1 vermeli: yolculuk yine a’da başlar, b’de biter, yine aynı sürer.</li><li>Arada ne yaptığı <b>hissi</b> belirler: f yavaş artıyorsa nesne yavaş, hızlı artıyorsa hızlıdır.</li><li>f’nin grafiği = hareketin “zaman çizelgesi”. Eğim = hız.</li><li>Bu fonksiyonlara <b>yumuşatma</b> (easing) fonksiyonu, süreli geçişe <b>tween</b> (in-between: ara) denir.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="yumuşatma">
+  <h2>Dört temel eğri ve elle hesap</h2>
+<div class="cols c64">
+<div><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ad</th><th style="text-align:left;">f(t)</th><th style="text-align:left;">his</th><th style="text-align:left;">nerede</th></tr><tr><td style="text-align:left;">doğrusal</td><td style="text-align:left;">t</td><td style="text-align:left;">mekanik, sabit</td><td style="text-align:left;">ilerleme çubuğu, taşıma bandı</td></tr><tr><td style="text-align:left;">yavaş başla (ease-in)</td><td style="text-align:left;">t²</td><td style="text-align:left;">ağırca kalkar, hızlanarak çıkar</td><td style="text-align:left;">ekrandan <b>çıkan</b> şeyler; düşen nesne</td></tr><tr><td style="text-align:left;">yavaş bitir (ease-out)</td><td style="text-align:left;">1 − (1 − t)²</td><td style="text-align:left;">fırlar, yumuşakça oturur</td><td style="text-align:left;">ekrana <b>gelen</b> şeyler: menü, bildirim. En çok kullanılan.</td></tr><tr><td style="text-align:left;">smoothstep</td><td style="text-align:left;">3t² − 2t³</td><td style="text-align:left;">iki ucu da yumuşak</td><td style="text-align:left;">kapı, asansör, kamera geçişi: A’dan B’ye taşınan şeyler</td></tr><tr><td style="text-align:left;">taşıp dön (back)</td><td style="text-align:left;">1’i %10 aşar, döner</td><td style="text-align:left;">canlı, “lastik” gibi</td><td style="text-align:left;">düğme, ödül, vurgu</td></tr></table><p class="mini">Kural: kullanıcının yaptığı işe <b>hemen</b> tepki verilmeli; bu yüzden ekrana gelen şeyler hızlı başlar (ease-out). Ağır ağır başlayan bir menü “donmuş” gibi hissettirir.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle hesap: A = 0, B = 100</span><table class="sum-t" style="font-size:22px"><tr><th style="text-align:left;">t</th><th style="text-align:left;">doğrusal</th><th style="text-align:left;">t²</th><th style="text-align:left;">1 − (1 − t)²</th><th style="text-align:left;">3t² − 2t³</th></tr><tr><td style="text-align:left;">0</td><td style="text-align:left;">0</td><td style="text-align:left;">0</td><td style="text-align:left;">0</td><td style="text-align:left;">0</td></tr><tr><td style="text-align:left;">0,25</td><td style="text-align:left;">25</td><td style="text-align:left;"><b>6</b></td><td style="text-align:left;"><b>44</b></td><td style="text-align:left;">16</td></tr><tr><td style="text-align:left;">0,5</td><td style="text-align:left;">50</td><td style="text-align:left;">25</td><td style="text-align:left;">75</td><td style="text-align:left;">50</td></tr><tr><td style="text-align:left;">0,75</td><td style="text-align:left;">75</td><td style="text-align:left;">56</td><td style="text-align:left;">94</td><td style="text-align:left;">84</td></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">100</td><td style="text-align:left;">100</td><td style="text-align:left;">100</td><td style="text-align:left;">100</td></tr></table><p class="mini">Sürenin dörtte biri geçtiğinde: “yavaş başla” yolun %6’sında, “yavaş bitir” %44’ünde. İkisi de aynı anda varacak.</p><p class="mini">smoothstep(0,25) = 3·0,0625 − 2·0,015625 = 0,1875 − 0,03125 = <b>0,15625</b>.</p></div></div>
+</div>
+</section>
+
+<section data-sec="yumuşatma">
+  <h2>Canlı: yumuşatma yarışı 🏁</h2>
+<div class="demo" data-demo="ease"></div>
+</section>
+
+<section data-sec="yumuşatma">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> sağda yedi şerit, yedi kutu; hepsi aynı anda çıkıp aynı anda varıyor. Solda seçili fonksiyonun grafiği: yatay eksen zamanın oranı, dikey eksen gidilen yolun oranı. Kırmızı nokta “şu an”.</li><li>Tek tek kutulara bakın: hangisi robot gibi? Hangisi “ağır”? Hangisi “neşeli”? Sınıfça her birine bir sıfat bulun.</li><li>Grafikte <b>“yavaş bitir”</b>i seçin: eğri başta dik (hızlı), sonda yatık (yavaş). <b>“yavaş başla”</b> bunun tersi.</li><li><b>“taşıp dön”</b> ve <b>“yay gibi”</b>: grafik 1 çizgisinin üstüne çıkıyor; kutu B’yi geçip geri geliyor. lerp’in t’yi sıkıştırmaması bu yüzden önemli.</li><li>Süreyi <b>0,2</b> sn yapın: farklar kaybolmuyor, “çıt” diye bir his kalıyor. <b>3</b> sn yapın: “sekerek” ve “yay gibi” abartılı, yorucu. Arayüz animasyonlarının çoğu 0,15–0,5 saniyedir.</li></ol></div>
+</section>
+
+<section data-sec="yumuşatma">
+  <h2>Kod: yumuşatma fonksiyonları ve tween</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Yumuşatma fonksiyonları: 0..1 arası t alır, 0..1 arası (bazen biraz taşan) ilerleme döndürür.
+const yavasBasla = t => t * t;                         // ease-in  (ivmelenerek)
+const yavasBitir = t => 1 - (1 - t) * (1 - t);         // ease-out (frenleyerek)
+const yumusak    = t => t * t * (3 - 2 * t);           // smoothstep: iki ucu da yumuşak
+const tasipDon   = t => {                              // "back": hedefi %10 geç, geri dön
+  const c = 1.70158;
+  return 1 + (c + 1) * pow(t - 1, 3) + c * pow(t - 1, 2);
+};
+
+// Kullanım: lerp'in t'sini fonksiyondan geçir. Başka hiçbir şey değişmez.
+let gecen = 0;
+function draw() {
+  background(245);
+  gecen += deltaTime / 1000;
+  const t = constrain(gecen / 0.4, 0, 1);              // 0,4 saniyelik animasyon
+
+  const x = lerp(-200, 40, yavasBitir(t));             // menü soldan kayarak gelir, yumuşak durur
+  rect(x, 60, 200, 280, 12);
+
+  const olcek = lerp(0, 1, tasipDon(t));               // düğme büyüyerek belirir, biraz taşar, oturur
+  push(); translate(400, 200); scale(olcek); circle(0, 0, 80); pop();
+}
+function mousePressed() { gecen = 0; }                 // tıklayınca yeniden oynat
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def yavas_basla(t):  return t * t
+def yavas_bitir(t):  return 1 - (1 - t) * (1 - t)
+def smoothstep(t):
+    t = max(0.0, min(1.0, t))          # önce 0..1'e sıkıştır
+    return t * t * (3 - 2 * t)
+
+def tween(a, b, gecen, sure, f=smoothstep):
+    """a'dan b'ye 'sure' saniyede git; 'gecen' saniye geçti. f: yumuşatma fonksiyonu."""
+    t = max(0.0, min(1.0, gecen / sure))
+    return a + (b - a) * f(t)
+
+for t in (0, 0.25, 0.5, 0.75, 1):
+    print(t, yavas_basla(t), yavas_bitir(t), smoothstep(t))
+# 0.25 → 0.0625   0.4375   0.15625
+# 0.5  → 0.25     0.75     0.5
+# 0.75 → 0.5625   0.9375   0.84375
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity'de üç yol:
+// 1) Mathf.SmoothStep(a, b, t)                        → hazır 3t² − 2t³
+// 2) AnimationCurve: eğriyi Inspector'da fareyle çizin; kodda yalnızca okuyun
+[SerializeField] AnimationCurve egri = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+IEnumerator Belir(Transform panel, float sure) {
+    for (float gecen = 0; gecen < sure; gecen += Time.unscaledDeltaTime) {   // oyun duraklasa da menü oynar
+        float t = egri.Evaluate(gecen / sure);                               // yumuşatılmış t
+        panel.localScale = Vector3.LerpUnclamped(Vector3.zero, Vector3.one, t);   // Unclamped: taşabilsin
+        yield return null;
+    }
+    panel.localScale = Vector3.one;
+}
+// 3) Tween kütüphanesi (DOTween):  panel.DOScale(1f, 0.4f).SetEase(Ease.OutBack);
+// Godot:  create_tween().tween_property(panel, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="yumuşatma">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>t * t</code></td><td style="text-align:left;">yavaş başla</td><td style="text-align:left;">t küçükken t² çok daha küçük: 0,1 → 0,01. Sonlara doğru arayı kapatır.</td></tr><tr><td style="text-align:left;"><code>1 - (1 - t) * (1 - t)</code></td><td style="text-align:left;">yavaş bitir</td><td style="text-align:left;">“Yavaş başla”nın aynadaki görüntüsü: t yerine (1 − t) koy, sonucu 1’den çıkar. Her ease-in bu numarayla ease-out’a çevrilir.</td></tr><tr><td style="text-align:left;"><code>t * t * (3 - 2 * t)</code></td><td style="text-align:left;">smoothstep</td><td style="text-align:left;">0’da ve 1’de <b>eğimi sıfır</b> olan en basit polinom: durarak başlar, durarak biter.</td></tr><tr><td style="text-align:left;"><code>lerp(-200, 40, yavasBitir(t))</code></td><td style="text-align:left;">tween’in tamamı</td><td style="text-align:left;">Üç parça: nereden, nereye, nasıl. Süre t’nin hesabında.</td></tr><tr><td style="text-align:left;"><code>tasipDon</code> ve <code>LerpUnclamped</code></td><td style="text-align:left;">ilerleme 1’i aşabiliyor</td><td style="text-align:left;">Unity’nin <code>Lerp</code>’i bunu keser ve efekt kaybolur.</td></tr><tr><td style="text-align:left;">Unity: <code>Time.unscaledDeltaTime</code></td><td style="text-align:left;">oyun zamanı durmuşken de akar</td><td style="text-align:left;">Duraklatma menüsü <code>Time.timeScale = 0</code> iken açılır; normal <code>deltaTime</code> ile animasyon hiç ilerlemez.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Bir yumuşatma fonksiyonu hareketin <b>toplam süresini ve varış noktasını değiştirmez</b> (f(0) = 0, f(1) = 1); yalnızca hızın zamana dağılımını değiştirir. Anlık hız, f’nin o andaki eğimi × (b − a) / süre’dir: smoothstep’te ortadaki hız doğrusal hareketin <b>1,5 katı</b>, uçlarda sıfırdır.</div>
+</section>
+
+<section data-sec="yumuşatma">
+  <h2>Oyunlarda: “juice” ve yumuşatmanın kısa tarihi</h2>
+<div class="cols c46">
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 Juice it or lose it (2012)</span><ul style="font-size:.9em"><li>Martin Jonasson ve Petri Purho 15 dakikalık bir konuşmada sıradan bir tuğla kırma oyununu alıp <b>kurallarına dokunmadan</b> dönüştürdüler.</li><li>İlk ekledikleri şey: tween. Tuğlalar ekrana yumuşatmayla düşüyor, raket vurunca esneyip geri geliyor, top çarpınca büyüyüp küçülüyor.</li><li>Sonra sırasıyla: renk, ses, parçacıklar, ekran sarsıntısı. Her adımda oyun aynı, his farklı.</li><li>Konuşmanın adı bir slogana dönüştü. Bugün bağımsız oyunların çoğunda (Vlambeer’ın oyunları, Celeste, Dead Cells, Balatro) her etkileşimde birkaç tween aynı anda çalışır.</li><li>Videosu ve oynanabilir demosu Kaynaklar’da: derste 3 dakikasını izletmeye değer.</li></ul></div></div>
+<div><div class="box story" style="font-size:.78em"><span class="bt">Bu eğriler nereden geldi?</span><ul style="font-size:.9em"><li><b>1930’lar, Disney:</b> çizerler “yavaş başla, yavaş bitir” için ara kareleri uçlara sık, ortaya seyrek çiziyordu. İlke 1981’de <i>The Illusion of Life</i> kitabıyla yazıya geçti.</li><li><b>2000’lerin başı, Robert Penner:</b> Flash için yazdığı yumuşatma denklemleri (quad, cubic, back, elastic, bounce; her birinin in / out / in-out sürümü) açık lisansla yayıldı. Bugün CSS’teki, Unity eklentilerindeki, Godot’daki adlar onun adlarıdır.</li><li><b>smoothstep:</b> grafik programcılığının standart fonksiyonu; gölgelendirici dillerinde (GLSL, HLSL) yerleşiktir. Y15’te Perlin gürültüsünde hücreler arasını yumuşatan da buydu.</li><li><b>Motor kodu:</b> Godot’da <code>s * s * (3.0 - 2.0 * s)</code>; Unity’de <code>-2t³ + 3t²</code> (az önceki alıntı). Aynı polinom.</li></ul><p class="mini">Bütün eğrilerin grafikleri: easings.net (Kaynaklar).</p></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: smoothstep</h2>
+  <div class="ailab" data-lab="smooth" data-lang="js">
+<textarea>
+// t'yi önce 0..1 aralığına sıkıştır, sonra 3t² − 2t³ döndür.
+function smoothstep(t) {
+  return t;
+}
+</textarea>
+    <div class="lab-tasks">İki satır: <code>t = Math.max(0, Math.min(1, t));</code> ve <code>return t * t * (3 - 2 * t);</code>. Kontrol: 0,25 → 0,15625; 0,5 → 0,5; 0,75 → 0,84375. Testlerde −0,5 ve 1,7 de var: sonuç 0 ve 1 olmalı.</div>
+  </div>
+</section>
+
+<section data-sec="yumuşatma">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 1 · yumuşatma</div>
+    <div class="q">Oyuncu envanter tuşuna bastığında panel ekranın dışından kayarak geliyor. Hangi yumuşatma en uygun ve neden?</div>
+    <div class="opts"><button data-opt="A">Yavaş başla (t²): ağır ağır hızlanması gerçekçi durur</button><button data-opt="B">Yavaş bitir (1 − (1 − t)²): tuşa basılır basılmaz hareket başlar, panel yumuşakça oturur</button><button data-opt="C">Doğrusal: en öngörülebilir olan odur</button><button data-opt="D">Sekerek (bounce): en eğlencelisi odur</button></div>
+    <div class="explain">Oyuncunun girdisine tepki hemen görünmeli. “Yavaş başla” ilk karelerde neredeyse hiç kıpırdamaz; panel donmuş gibi hissettirir (sürenin dörtte birinde yolun yalnızca %6’sı). “Yavaş bitir” aynı sürede yolun %44’ünü alır ve sert durmaz. Sekme, sık açılan bir panel için kısa sürede yorucu olur.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Hareketli hedefi izlemek</div><div class="sub">kamera takibi ve kare hızı tuzağı</div></div>
+</section>
+
+<section data-sec="takip">
+  <h2>Problem: hedef yerinde durmuyor</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Tween’in yetmediği yer</span><ul style="font-size:.92em"><li>Tween için başlangıç, bitiş ve süre <b>önceden</b> bilinmeli.</li><li>Kamera oyuncuyu izliyor: hedef her kare değişiyor. Bitiş yok, süre yok.</li><li>Kamerayı oyuncuya <b>yapıştırırsanız</b>: karakter her zıpladığında, her titrediğinde bütün dünya sarsılır.</li><li>İstenen: kamera oyuncuya doğru gitsin; uzaktaysa hızlı, yakındaysa yavaş.</li></ul><p>Herkesin bulduğu tek satır:</p><p style="text-align:center"><code>kamera += (hedef − kamera) * 0.1</code></p><p class="mini">“Her karede kalan yolun %10’unu kapat.” Yani lerp(kamera, hedef, 0,1). Hedef kıpırdasa da çalışır, durum saklamaz, güzel görünür.</p></div></div>
+<div><div class="box warn" style="font-size:.78em"><span class="bt">Tuzak: “her karede”</span><p>Her karede kalan yol 0,9 ile çarpılıyor. n kare sonra kalan: <b>0,9ⁿ</b>.</p><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">makine</th><th style="text-align:left;">1 saniyede kare</th><th style="text-align:left;">1 sn sonra kalan yol</th><th style="text-align:left;">yolun yarısı ne zaman?</th></tr><tr><td style="text-align:left;">30 FPS</td><td style="text-align:left;">30</td><td style="text-align:left;">0,9³⁰ = <b>%4,2</b></td><td style="text-align:left;">219 ms</td></tr><tr><td style="text-align:left;">60 FPS</td><td style="text-align:left;">60</td><td style="text-align:left;">0,9⁶⁰ = <b>%0,18</b></td><td style="text-align:left;">110 ms</td></tr><tr><td style="text-align:left;">144 FPS</td><td style="text-align:left;">144</td><td style="text-align:left;">0,9¹⁴⁴ ≈ <b>%0</b></td><td style="text-align:left;">46 ms</td></tr></table><ul style="font-size:.92em"><li>Aynı kod, 144 Hz ekranda <b>beş kat</b> daha sert bir kamera.</li><li>Kare hızı oyun içinde düşünce kamera o an tembelleşir: tam da ekranın kalabalıklaştığı anda.</li><li>G5’teki dersin aynısı: “kare başına” yazılan her şey makineye bağlıdır.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="takip">
+  <h2>Fikir: oranı kareden değil, süreden hesapla</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Davranışın özü şu: kalan yol <b>üstel</b> olarak azalıyor (her eşit sürede aynı oranda).</li><li>Bunu kare sayısı yerine <b>saniyeyle</b> söyleyelim: “kalan yol her <b>h</b> saniyede <b>yarıya</b> insin.” h: <b>yarı ömür</b>.</li><li>t saniye sonra kalan yol: 2<sup>−t / h</sup>. (t = h → ½; t = 2h → ¼; t = 3h → ⅛.)</li><li>Bu kare dt sürdüyse kalan yol 2<sup>−dt / h</sup> ile çarpılmalı; yani kapatılacak oran:</li></ul><p style="text-align:center;font-size:1em;margin:.3em 0">$$\text{oran} = 1 - 2^{-dt / h} \qquad x \leftarrow \text{lerp}(x, \text{hedef}, \text{oran})$$</p><ul style="font-size:.82em"><li>Tasarımcı için de daha iyi bir ayar: “0,1” ne demek belli değil; “yarı ömür 0,15 saniye” ölçülebilir bir his.</li><li>Kısa kareler küçük oran, uzun kareler büyük oran alır; sonuç aynı eğridir.</li></ul></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">Elle hesap: h = 0,1 sn, yol 100 birim</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">makine</th><th style="text-align:left;">dt</th><th style="text-align:left;">oran = 1 − 2^(−dt/h)</th><th style="text-align:left;">0,1 sn’deki adım</th><th style="text-align:left;">0,1 sn sonra kalan</th></tr><tr><td style="text-align:left;">60 FPS</td><td style="text-align:left;">16,7 ms</td><td style="text-align:left;">1 − 2^(−0,167) = <b>0,109</b></td><td style="text-align:left;">6 adım</td><td style="text-align:left;">100 · 0,891⁶ = <b>50,0</b></td></tr><tr><td style="text-align:left;">30 FPS</td><td style="text-align:left;">33,3 ms</td><td style="text-align:left;">1 − 2^(−0,333) = <b>0,206</b></td><td style="text-align:left;">3 adım</td><td style="text-align:left;">100 · 0,794³ = <b>50,0</b></td></tr><tr><td style="text-align:left;">10 FPS</td><td style="text-align:left;">100 ms</td><td style="text-align:left;">1 − 2^(−1) = <b>0,5</b></td><td style="text-align:left;">1 adım</td><td style="text-align:left;">100 · 0,5 = <b>50,0</b></td></tr></table><p class="mini">Üç makine de 0,1 saniye sonra tam yarı yolda. Neden? Üsler toplanır: 2^(−a) · 2^(−b) = 2^(−(a + b)). Süreyi nasıl bölerseniz bölün, çarpımın sonucu yalnızca <b>toplam süreye</b> bağlıdır.</p><p class="mini">Aynı şeyin başka yazımı: oran = 1 − e^(−k·dt). k = 0,693 / h.</p></div></div>
+</div>
+</section>
+
+<section data-sec="takip">
+  <h2>Canlı: aynı kod, iki makine 🎥</h2>
+<div class="demo" data-demo="follow"></div>
+</section>
+
+<section data-sec="takip">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> üstte dört top aynı sarı hedefi (kesikli çizgi) kovalıyor; hedef 1,6 saniyede bir karşı tarafa atlıyor. Altta son 4,8 saniyenin konum–zaman grafiği: sarı kesikli = hedef, kırmızı / gri / yeşil / mor = toplar.</li><li><b>30 FPS</b> (başlangıç): <b class="c-red">kırmızı</b> (kare başına %10, bu makine) gri eğrinin (aynı kod, 60 FPS’lik makine) belirgin biçimde <b>gerisinde</b>. Aynı satır, iki farklı kamera.</li><li>Kare hızını <b>144</b> yapın: kırmızı bu kez griden <b>önde</b>, neredeyse hedefe yapışık. <b>60</b> yapın: üst üste.</li><li>Bütün bunlar olurken <b class="c-green">yeşile</b> bakın: kare hızını ne yaparsanız yapın gri eğrinin üstünde. 10 FPS’te basamak basamak ilerler ama basamakların köşeleri hep aynı eğrinin üzerindedir.</li><li><b class="c-purple">Mor</b> (SmoothDamp) farklı bir şekil çizer: S harfi. Yeşil hedef atlar atlamaz en yüksek hızıyla fırlar; mor önce hızlanır. Kamera için mor daha “sinematik”, yeşil daha “atik”.</li><li>Hedefi <b>“fareyi izlesin”</b> yapıp fareyi sağa sola sallayın: hangi top elinize en çok “bağlı” hissettiriyor?</li></ol></div>
+</section>
+
+<section data-sec="takip">
+  <h2>Kod: kare hızından bağımsız yaklaşma</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// YANLIŞ (ama herkesin ilk yazdığı): her KAREDE kalan yolun %10'u
+//   kamera.x += (hedef.x - kamera.x) * 0.1;
+// 144 Hz ekranda saniyede 144 kez, 30 FPS'lik makinede 30 kez çalışır: kamera başka davranır.
+
+// DOĞRU: oran, geçen SÜREDEN hesaplanır.
+// yariOmur: kalan yolun yarıya inmesi kaç saniye sürsün?  (küçük = sert, büyük = tembel)
+function yaklas(x, hedef, yariOmur, dt) {
+  const oran = 1 - pow(2, -dt / yariOmur);     // bu kare kalan yolun ne kadarını kapatacağız?
+  return lerp(x, hedef, oran);
+}
+
+let kamera = { x: 0, y: 0 };
+function draw() {
+  const dt = deltaTime / 1000;
+  kamera.x = yaklas(kamera.x, oyuncu.x, 0.15, dt);
+  kamera.y = yaklas(kamera.y, oyuncu.y, 0.15, dt);
+
+  translate(width / 2 - kamera.x, height / 2 - kamera.y);   // dünyayı kameraya göre kaydır
+  dunyayiCiz();
+}
+
+// Aynı fonksiyon her "hedefe doğru yumuşakça" işinde:
+//   canBari  = yaklas(canBari, gercekCan, 0.08, dt);       // çubuk bir anda değil, akarak iner
+//   bakisAci = yaklas(bakisAci, hedefAci, 0.05, dt);       // nişangâh yumuşatma
+//   muzikSes = yaklas(muzikSes, savasta ? 1 : 0.3, 0.5, dt);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def damp(x, hedef, yari_omur, dt):
+    """x'i hedefe yaklaştır; kalan yol her 'yari_omur' saniyede yarıya iner. Kare hızından bağımsız."""
+    oran = 1 - 2 ** (-dt / yari_omur)
+    return x + (hedef - x) * oran
+
+# Kanıt: 0,1 saniyeyi tek adımda da, altı küçük adımda da geçsek aynı yere varırız.
+a = damp(0, 100, 0.1, 0.1)                     # tek adım: 50.0
+b = 0
+for _ in range(6):
+    b = damp(b, 100, 0.1, 0.1 / 6)             # altı adım: 50.0
+print(a, b)
+
+# Kare başına sabit oranla aynı deney:
+c = 0 + (100 - 0) * 0.1                        # 1 kare:  10.0
+d = 0
+for _ in range(6):
+    d += (100 - d) * 0.1                       # 6 kare:  46.9   → kare sayısına bağlı!
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: üç seçenek, üçü de dt alır.
+void LateUpdate() {                                    // kamera, karakter hareket ettikten SONRA
+    float dt = Time.deltaTime;
+
+    // 1) Üstel yaklaşma (bu sunumdaki fonksiyon)
+    float oran = 1f - Mathf.Pow(2f, -dt / yariOmur);
+    transform.position = Vector3.Lerp(transform.position, hedef.position + ofset, oran);
+
+    // 2) SmoothDamp: yumuşak kalkar, yumuşak durur; hızı kendisi saklar (ref)
+    transform.position = Vector3.SmoothDamp(transform.position, hedef.position + ofset, ref hiz, 0.25f);
+
+    // 3) Cinemachine: sanal kameranın "Damping" ayarları (kod yazmadan)
+}
+// YANLIŞ:  Vector3.Lerp(transform.position, hedef.position, 0.1f);   // kare hızına bağlı
+// YARIM:   Vector3.Lerp(transform.position, hedef.position, 5f * Time.deltaTime);
+//          küçük dt'de yaklaşık doğru; dt büyüyünce oran 1'i aşar ve kamera hedefe "ışınlanır".
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="takip">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>pow(2, -dt / yariOmur)</code></td><td style="text-align:left;">bu karenin sonunda kalan yolun oranı</td><td style="text-align:left;">dt = yarı ömür ise tam 0,5. dt çok küçükse 1’e yakın (neredeyse hiç ilerleme), çok büyükse 0’a yakın (neredeyse varış). Asla eksi ya da 1’den büyük olmaz.</td></tr><tr><td style="text-align:left;"><code>1 - …</code></td><td style="text-align:left;">kapatılan oran</td><td style="text-align:left;">lerp’in t’si. Her zaman 0 ile 1 arasında: kamera hedefi <b>asla aşmaz</b>.</td></tr><tr><td style="text-align:left;"><code>lerp(x, hedef, oran)</code></td><td style="text-align:left;">şimdiki yerden hedefe doğru</td><td style="text-align:left;">Dikkat: başlangıç noktası <b>her kare değişiyor</b> (x’in kendisi). Tween’de başlangıç sabitti; fark bu.</td></tr><tr><td style="text-align:left;"><code>translate(width/2 - kamera.x, …)</code></td><td style="text-align:left;">kamera = dünyayı ters yöne kaydırmak</td><td style="text-align:left;">Kamera sağa giderse dünya sola kayar. Kamera konumu ekranın ortasına gelir.</td></tr><tr><td style="text-align:left;">Python: altı adım / tek adım</td><td style="text-align:left;">ikisi de 50,0</td><td style="text-align:left;">Önermenin deneyle kanıtı. Aynı deney sabit 0,1 ile 10,0 ve 46,9 verir.</td></tr><tr><td style="text-align:left;">C#: <code>5f * Time.deltaTime</code></td><td style="text-align:left;">yaygın “yarım” düzeltme</td><td style="text-align:left;">1 − e^(−5·dt) ifadesinin küçük dt için yaklaşığıdır. dt = 0,25 sn’lik bir takılmada oran 1,25 olur: kamera hedefin <b>öbür tarafına</b> atlar.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span><code>yaklas</code> fonksiyonunu toplam T süre boyunca hangi adımlarla çağırırsanız çağırın (sabit hedef için) kalan yol tam <b>2<sup>−T / h</sup></b> katına iner. Kare başına sabit oranla (r) ise kalan yol (1 − r)<sup>kare sayısı</sup>’dır ve kare hızına bağlıdır.</div>
+</section>
+
+<section data-sec="takip">
+  <h2>Oyunlarda: Unity’nin SmoothDamp’i</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.68;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Unity — UnityCsReference, Runtime/Export/Math/Mathf.cs, SmoothDamp (kısaltılmış)
+
+// Based on Game Programming Gems 4 Chapter 1.10
+smoothTime = Mathf.Max(0.0001F, smoothTime);
+float omega = 2F / smoothTime;
+
+float x = omega * deltaTime;
+float exp = 1F / (1F + x + 0.48F * x * x + 0.235F * x * x * x);   // e^(−x) için hızlı yaklaşım
+float change = current - target;
+// ... (en büyük hız sınırı) ...
+float temp = (currentVelocity + omega * change) * deltaTime;
+currentVelocity = (currentVelocity - omega * temp) * exp;
+float output = target + (change + temp) * exp;
+
+// Prevent overshooting
+if (originalTo - current > 0.0F == output > originalTo) { output = originalTo; /* ... */ }
+return output;
+</script></code></pre><p class="mini">Kaynak: UnityCsReference, <code>Mathf.cs</code>. İlk yorum satırı özgün koddan: yöntem Game Programming Gems 4’teki (2004) “kritik sönümlü yay” bölümünden.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Satır satır</span><ul style="font-size:.86em"><li><code>deltaTime</code> bir <b>parametre</b>: fonksiyon geçen süreyi bilmeden çalışmıyor. Kare hızından bağımsızlık tasarımın içinde.</li><li><code>exp = 1 / (1 + x + 0,48x² + 0,235x³)</code>: e<sup>−x</sup>’in ucuz bir yaklaşığı. Yani içinde yine <b>üstel azalma</b> var; bizim 2<sup>−dt / h</sup>’ın akrabası.</li><li>Farkı: <code>currentVelocity</code>. Fonksiyon <b>hızı da</b> saklıyor ve yumuşatıyor; bu yüzden hareket aniden başlamaz (demodaki mor S eğrisi).</li><li>Fiziksel karşılığı: hedefe bir <b>yayla</b> bağlı, tam kararında sönümlenen bir kütle. Yay çeker, sönüm salınımı engeller: en hızlı “taşmadan varış”.</li><li>“Prevent overshooting”: büyük dt’de hedefi geçerse hedefe sabitle. G5’teki “dev kareyi kırp”ın kardeşi.</li><li><code>smoothTime</code> ≈ hedefe varma süresi. Kamera için tipik 0,1–0,3 sn.</li></ul><p class="mini">Unity’nin kamera sistemi Cinemachine’deki “Damping” ayarları ve Unreal’ın “Camera Lag” seçeneği aynı ailedendir.</p></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: kare hızından bağımsız takip</h2>
+  <div class="simlab" data-sim="damp" data-fns="damp" data-lang="js">
+<textarea>
+// x: şimdiki konum,  hedef: gidilecek yer,  yariOmur: kalan yolun yarıya inme süresi (sn),  dt: bu karenin süresi (sn)
+// Yeni konumu döndür.  Aynı kod 20 FPS'te de 144 FPS'te de aynı eğriyi çizmeli.
+function damp(x, hedef, yariOmur, dt) {
+  return x + (hedef - x) * 0.1;   // TODO: kare başına sabit oran → kare hızına bağlı
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodunda mavi top (144 FPS) hedefe yapışır, kırmızı (20 FPS) geride kalır; üstteki “iki makine arasındaki fark” satırı büyük bir sayı gösterir. Düzeltme iki satır: <code>const oran = 1 - Math.pow(2, -dt / yariOmur);</code> ve <code>return x + (hedef - x) * oran;</code>. Kontrol: dt = yarı ömür ise oran tam 0,5.</div>
+  </div>
+</section>
+
+<section data-sec="takip">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 2 · takip</div>
+    <div class="q">Kamera kodunuz <code>kamera = lerp(kamera, oyuncu, 0.08)</code>; her karede çalışıyor. Bir oyuncu “240 Hz monitörde kamera çok sert, başım dönüyor” diye yazdı. Sebep?</div>
+    <div class="opts"><button data-opt="A">240 Hz monitörler lerp’i desteklemez</button><button data-opt="B">Oran kare başına sabit: saniyede 240 kez uygulanınca kamera hedefe 4 kat hızlı yaklaşıyor</button><button data-opt="C">Oyuncunun fare hassasiyeti yüksek</button><button data-opt="D">0,08 çok büyük; 0,02 yapılmalı</button></div>
+    <div class="explain">Kalan yol her karede 0,92 ile çarpılıyor: 60 FPS’te saniyede 60 kez, 240 FPS’te 240 kez. Yarı ömür 139 ms’den 35 ms’ye iniyor. 0,02 yapmak yalnızca o oyuncunun sorununu çözer ve 60 Hz’teki herkesin kamerasını tembelleştirir. Doğrusu oranı dt’den hesaplamak: 1 − 2^(−dt / yarıÖmür).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Bézier eğrileri</div><div class="sub">lerp’lerin lerp’i</div></div>
+</section>
+
+<section data-sec="bézier">
+  <h2>Problem: düz çizgi yetmez</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Kavis isteyen işler</span><ul style="font-size:.92em"><li>El bombası, ok, basketbol topu: <b>yay</b> çizen atışlar (fizik simüle etmeden).</li><li>Kart oyunu: kart yığından ele, elden masaya kavisle uçar (Hearthstone, Slay the Spire, Balatro).</li><li>Toplanan altınlar puan göstergesine doğru savrularak gider.</li><li>Hedef göstergesi: “bu büyü şuraya düşecek” oku.</li><li>Yollar, nehirler, raylar; yazı tipleri; arayüzdeki her yuvarlak köşe.</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: çok sayıda nokta</span><ul style="font-size:.92em"><li>Eğriyi 50 noktayla elle tarif et, aralarını lerp et.</li><li>Biraz değiştirmek istediniz: 50 noktayı tek tek oynatın.</li><li>Yakınlaşınca köşeler görünür; uzaklaşınca 50 nokta israf.</li><li>İki ucu oynak bir eğri (atıcı ve hedef her an değişiyor) için noktaları kim hesaplayacak?</li></ul><p><b>İstenen:</b> eğriyi <b>birkaç</b> noktayla tarif etmek; noktaları oynatınca eğrinin akıllıca uyması; istenen sıklıkta nokta üretebilmek.</p><p>1959’da Citroën’de Paul de Casteljau, birkaç yıl sonra Renault’da Pierre Bézier aynı çözümü buldu: otomobil kaportasının kıvrımlarını birkaç “kontrol noktası”yla tarif etmek.</p></div></div>
+</div>
+</section>
+
+<section data-sec="bézier">
+  <h2>Fikir: De Casteljau — lerp et, sonuçları yine lerp et</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li><b>Üç nokta</b> (karesel Bézier): P₀, P₁, P₂ ve bir t.</li><li>A = lerp(P₀, P₁, t) ve B = lerp(P₁, P₂, t): iki kenarda t kadar ilerle.</li><li>Sonuç = lerp(A, B, t): A ile B’yi birleştiren doğruda yine t kadar.</li><li>t 0’dan 1’e giderken bu son nokta bir <b>eğri</b> çizer: P₀’da başlar, P₂’de biter, P₁’e doğru bükülür ama ona <b>değmez</b>.</li><li><b>Dört nokta</b> (kübik Bézier): bir tur daha. 3 lerp → 2 lerp → 1 lerp. En yaygın tür: iki uç + her uca bir “tutamaç”.</li><li>Eğri P₀’dan <b>P₁ yönüne doğru</b> çıkar, P₃’e <b>P₂ yönünden</b> girer. Tutamaç uzadıkça eğri o yöne daha çok “asılır”.</li></ul></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">Elle izleme: P₀ (0,0) · P₁ (0,4) · P₂ (4,4) · P₃ (4,0)</span><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">tur</th><th style="text-align:left;">t = 0,5</th><th style="text-align:left;">t = 0,25</th></tr><tr><td style="text-align:left;">1. tur (3 lerp)</td><td style="text-align:left;">A (0, 2) · B (2, 4) · C (4, 2)</td><td style="text-align:left;">A (0, 1) · B (1, 4) · C (4, 3)</td></tr><tr><td style="text-align:left;">2. tur (2 lerp)</td><td style="text-align:left;">D (1, 3) · E (3, 3)</td><td style="text-align:left;">D (0,25, 1,75) · E (1,75, 3,75)</td></tr><tr><td style="text-align:left;">3. tur (1 lerp)</td><td style="text-align:left;"><b>(2, 3)</b></td><td style="text-align:left;"><b>(0,625, 2,25)</b></td></tr></table><p class="mini">Örnek, 1. tur, t = 0,25: B = lerp(P₁, P₂, 0,25) = (0 + 4·0,25, 4) = (1, 4).</p><p class="mini">Eğri (0,0)’dan <b>yukarı</b> doğru çıkıyor (P₁ yönü), tepesi (2, 3)’te; kontrol noktalarının yüksekliği olan 4’e hiç ulaşmıyor.</p><p class="mini"><b>Açık formül</b> (aynı sonuç): (1−t)³·P₀ + 3(1−t)²t·P₁ + 3(1−t)t²·P₂ + t³·P₃. Dört ağırlığın toplamı hep 1: eğri, noktaların <b>ağırlıklı ortalamasıdır</b>.</p></div></div>
+</div>
+</section>
+
+<section data-sec="bézier">
+  <h2>Canlı: kontrol noktaları ve iskele ✏️</h2>
+<div class="demo" data-demo="bezier"></div>
+</section>
+
+<section data-sec="bézier">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> siyah eğri Bézier; beyaz halkalar kontrol noktaları (sürüklenir). Gri kesikli çizgi kontrol çokgeni. Mavi noktalar 1. turun, yeşiller 2. turun lerp sonuçları; kırmızı nokta eğrinin t anındaki yeri.</li><li><b>t sürgüsünü</b> yavaşça 0’dan 1’e çekin: mavi noktalar gri kenarlarda, yeşiller mavi çizgide, kırmızı yeşil çizgide hep <b>aynı oranda</b> ilerliyor.</li><li><b>P₁’i</b> sürükleyin: eğrinin P₀’dan çıkış yönü değişiyor ama P₃’teki giriş yönü değişmiyor. Tutamacı uzatın: eğri o yöne daha çok asılıyor.</li><li>P₁ ve P₂’yi <b>çaprazlayın</b>: eğri ilmek atar. Dördünü bir doğruya dizin: eğri düz çizgi olur.</li><li>Eğri hiçbir zaman dört noktanın oluşturduğu çokgenin <b>dışına çıkmaz</b> (G1’deki dışbükey örtü): çarpışma ve ekran dışı testleri için ucuz bir sınır.</li><li><b>“eşit t adımları”</b>nı açın: mor noktalar t = 0, 0,05, 0,10… Uçlarda seyrek, kıvrımda sık ya da tersi: <b>eşit t, eşit yol değildir</b>. Bu sorunu son bölümde çözeceğiz.</li></ol></div>
+</section>
+
+<section data-sec="bézier">
+  <h2>Kod: Bézier noktası</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// De Casteljau: Bézier eğrisi üzerindeki nokta = lerp'lerin lerp'i
+const lerpN = (p, q, t) => ({ x: lerp(p.x, q.x, t), y: lerp(p.y, q.y, t) });
+
+function bezierNokta(p0, p1, p2, p3, t) {
+  const a = lerpN(p0, p1, t), b = lerpN(p1, p2, t), c = lerpN(p2, p3, t);   // 1. tur: üç lerp
+  const d = lerpN(a, b, t),   e = lerpN(b, c, t);                           // 2. tur: iki lerp
+  return lerpN(d, e, t);                                                    // 3. tur: bir lerp
+}
+
+// Çizim: eğriyi 30 küçük doğruya böl
+function bezierCiz(p0, p1, p2, p3) {
+  noFill(); beginShape();
+  for (let i = 0; i <= 30; i++) { const p = bezierNokta(p0, p1, p2, p3, i / 30); vertex(p.x, p.y); }
+  endShape();
+}
+// p5.js'te hazırı:  bezier(x0, y0, x1, y1, x2, y2, x3, y3)  ve  bezierPoint(x0, x1, x2, x3, t)
+
+// Oyunda: kavisli atılan el bombası / karta "yay çizerek" uçan efekt
+//   P0 = atıcı, P3 = hedef, P1 ve P2 = ikisinin ortasından yukarı kaldırılmış iki nokta
+function firlat(gecen, sure, atici, hedef, yukseklik) {
+  const p1 = { x: lerp(atici.x, hedef.x, 0.25), y: atici.y - yukseklik };
+  const p2 = { x: lerp(atici.x, hedef.x, 0.75), y: hedef.y - yukseklik };
+  return bezierNokta(atici, p1, p2, hedef, constrain(gecen / sure, 0, 1));
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+def lerp2(p, q, t):
+    return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]
+
+def bezier(p0, p1, p2, p3, t):
+    """Kübik Bézier, De Casteljau ile: 3 + 2 + 1 = 6 lerp."""
+    a, b, c = lerp2(p0, p1, t), lerp2(p1, p2, t), lerp2(p2, p3, t)
+    d, e = lerp2(a, b, t), lerp2(b, c, t)
+    return lerp2(d, e, t)
+
+def bezier_formul(p0, p1, p2, p3, t):
+    """Aynı sonuç, açık formülle (Bernstein ağırlıkları): dört ağırlığın toplamı her zaman 1."""
+    s = 1 - t
+    w = [s * s * s, 3 * s * s * t, 3 * s * t * t, t * t * t]
+    return [sum(w[i] * p[k] for i, p in enumerate((p0, p1, p2, p3))) for k in (0, 1)]
+
+print(bezier([0, 0], [0, 4], [4, 4], [4, 0], 0.5))            # [2.0, 3.0]
+print(bezier_formul([0, 0], [0, 4], [4, 4], [4, 0], 0.25))    # [0.625, 2.25]
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: kendi fonksiyonunuz (motor çekirdeğinde hazır "Bezier noktası" yok)
+static Vector3 Bezier(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t) {
+    Vector3 a = Vector3.LerpUnclamped(p0, p1, t), b = Vector3.LerpUnclamped(p1, p2, t), c = Vector3.LerpUnclamped(p2, p3, t);
+    Vector3 d = Vector3.LerpUnclamped(a, b, t),   e = Vector3.LerpUnclamped(b, c, t);
+    return Vector3.LerpUnclamped(d, e, t);
+}
+
+// Hazır araçlar:
+//   AnimationCurve          → Inspector'daki eğri düzenleyici (tutamaçlı kübik parçalar)
+//   Splines paketi          → sahnede fareyle çizilen Bézier yolları; SplineAnimate ile üzerinde yürütme
+//   LineRenderer / TrailRenderer → eğriyi ekrana çizmek için noktaları buraya verin
+// Godot:  Curve2D (her noktada "in" ve "out" tutamaçları) + Path2D + PathFollow2D
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="bézier">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>lerpN(p, q, t)</code></td><td style="text-align:left;">noktalar için lerp</td><td style="text-align:left;">x ve y ayrı ayrı. 3B’de z de eklenir; algoritma değişmez.</td></tr><tr><td style="text-align:left;">üç tur: 3 + 2 + 1</td><td style="text-align:left;">kübik Bézier = 6 lerp</td><td style="text-align:left;">n + 1 kontrol noktası için n(n + 1)/2 lerp. Derece büyüdükçe pahalılaşır ve kontrolü zorlaşır; pratikte hep kübik parçalar <b>uç uca eklenir</b>.</td></tr><tr><td style="text-align:left;"><code>for (i = 0..30)</code></td><td style="text-align:left;">eğriyi 30 doğru parçasıyla çiz</td><td style="text-align:left;">Ekran kartı eğri çizmez; doğru çizer. Parça sayısı = kalite ayarı.</td></tr><tr><td style="text-align:left;"><code>firlat(…)</code></td><td style="text-align:left;">P₁ ve P₂ uçlardan <b>hesaplanıyor</b></td><td style="text-align:left;">Atıcı ve hedef her kare değişse de yay kendini yeniden kurar. <code>yukseklik</code> tek ayar.</td></tr><tr><td style="text-align:left;">Python: <code>bezier_formul</code></td><td style="text-align:left;">Bernstein ağırlıklarıyla açık formül</td><td style="text-align:left;">De Casteljau daha anlaşılır ve sayısal olarak sağlam; açık formül biraz daha hızlı. Motorlar genelde açık formülü kullanır.</td></tr><tr><td style="text-align:left;"><code>LerpUnclamped</code> (C#)</td><td style="text-align:left;">sıkıştırmasız</td><td style="text-align:left;">t zaten 0–1 arasında; boşuna sıkıştırma maliyeti ödemeyelim.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>Kübik Bézier eğrisi: (1) P₀’da başlar, P₃’te biter; (2) P₀’daki teğeti P₁ − P₀, P₃’teki teğeti P₃ − P₂ yönündedir; (3) tamamı dört kontrol noktasının dışbükey örtüsünün içindedir. İki parçanın ek yeri köşesiz olsun istiyorsanız birleşme noktası ile iki yanındaki tutamaçlar <b>aynı doğru üzerinde</b> olmalıdır.</div>
+</section>
+
+<section data-sec="bézier">
+  <h2>Oyunlarda: Godot’nun Bézier’si ve her yerdeki tutamaçlar</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.68;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Godot 4.3 — core/math/math_funcs.h
+
+static _ALWAYS_INLINE_ double lerp(double p_from, double p_to, double p_weight) {
+    return p_from + (p_to - p_from) * p_weight;
+}
+
+static _ALWAYS_INLINE_ double bezier_interpolate(double p_start, double p_control_1,
+                                                 double p_control_2, double p_end, double p_t) {
+    /* Formula from Wikipedia article on Bezier curves. */
+    double omt = (1.0 - p_t);
+    double omt2 = omt * omt;
+    double omt3 = omt2 * omt;
+    double t2 = p_t * p_t;
+    double t3 = t2 * p_t;
+
+    return p_start * omt3 + p_control_1 * omt2 * p_t * 3.0 + p_control_2 * omt * t2 * 3.0 + p_end * t3;
+}
+</script></code></pre><p class="mini">Kaynak: Godot Engine 4.3, <code>core/math/math_funcs.h</code> (MIT lisansı). Yorum satırı özgün koddan.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Nerede karşınıza çıkar</span><ul style="font-size:.86em"><li><b>Godot:</b> yukarıdaki fonksiyon, slayttaki açık formülün aynısı (omt = “one minus t”). <code>Curve2D</code>’deki her noktanın bir “in” ve bir “out” tutamacı vardır: komşu iki nokta + iki tutamaç = bir kübik parça. <code>Path2D</code> ile sahnede fareyle çizilir.</li><li><b>Unity:</b> Inspector’daki <code>AnimationCurve</code> penceresi ve Splines paketi: sürüklediğiniz o küçük kollar P₁ ve P₂’dir.</li><li><b>Yazı tipleri:</b> ekrandaki her harf Bézier parçalarından oluşur (TrueType’ta karesel, OpenType/PostScript’te kübik). Oyun motoru harfi büyütürken bu eğrileri yeniden örnekler.</li><li><b>Vektör çizim:</b> Illustrator / Inkscape / Figma’daki “kalem” aracı = kübik Bézier düzenleyici. SVG’deki <code>C</code> komutu.</li><li><b>CSS:</b> <code>cubic-bezier(.17, .67, .83, .67)</code>: az önceki yumuşatma eğrilerinin kendisi de bir Bézier ile tarif edilir.</li><li><b>Yarış oyunları:</b> pistin orta hattı spline’dır; yol ağı ve bariyerler ondan üretilir.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: De Casteljau</h2>
+  <div class="ailab" data-lab="bezier" data-lang="python">
+<textarea>
+# p0..p3: [x, y] kontrol noktaları,  t: 0..1
+# Kübik Bézier eğrisinin t anındaki noktasını [x, y] olarak döndür (yalnızca lerp kullanarak).
+def lerp2(p, q, t):
+    return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]
+
+def bezier(p0, p1, p2, p3, t):
+    return lerp2(p0, p3, t)      # TODO: şimdilik düz çizgi
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu uçları düz çizgiyle birleştiriyor. Üç tur: <code>a, b, c = lerp2(p0, p1, t), lerp2(p1, p2, t), lerp2(p2, p3, t)</code>; <code>d, e = lerp2(a, b, t), lerp2(b, c, t)</code>; <code>return lerp2(d, e, t)</code>. Kontrol: (0,0) (0,4) (4,4) (4,0), t = 0,5 → <b>[2, 3]</b>.</div>
+  </div>
+</section>
+
+<section data-sec="bézier">
+  <div class="quiz" data-karildi="1" data-answer="C">
+    <div class="qhead">Quiz 3 · Bézier</div>
+    <div class="q">Bir kübik Bézier eğrisinin kontrol noktalarından P₁’i (ikinci nokta) fareyle uzağa sürüklüyorsunuz. Aşağıdakilerden hangisi <b>değişmez</b>?</div>
+    <div class="opts"><button data-opt="A">Eğrinin P₀’dan çıkış yönü</button><button data-opt="B">Eğrinin toplam uzunluğu</button><button data-opt="C">Eğrinin başladığı ve bittiği noktalar</button><button data-opt="D">t = 0,5’teki nokta</button></div>
+    <div class="explain">Bézier eğrisi her zaman P₀’da başlar ve P₃’te biter; aradaki kontrol noktaları yalnızca “çeker”. P₁ oynayınca çıkış yönü (P₁ − P₀), eğrinin orta noktası ve uzunluğu değişir. P₃’e giriş yönü (P₃ − P₂) ise P₁’den etkilenmez.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">Catmull–Rom ve sabit hız</div><div class="sub">noktalardan geçen yol, üzerinde düzgün hareket</div></div>
+</section>
+
+<section data-sec="yol">
+  <h2>Problem: “şu noktalardan geçsin”</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Tasarımcının isteği</span><ul style="font-size:.92em"><li><b>Devriye yolu:</b> muhafız şu beş noktadan geçsin (Y19).</li><li><b>Kamera rayı:</b> ara sahnede kamera şu konumlardan süzülerek geçsin.</li><li><b>Yarış pisti / tren rayı / uçuş rotası:</b> haritaya noktalar koydum; yol hepsinden geçsin.</li><li><b>Kule savunma:</b> düşmanlar şu kıvrımlı patikayı izlesin.</li><li><b>Yol bulma sonrası</b> (Y8, Y9): A*’ın verdiği köşeli yolu yumuşat.</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Eldeki araçlar neden yetmiyor?</span><ul style="font-size:.92em"><li><b>Noktalar arası lerp:</b> her noktada <b>köşe</b>. Araba aniden döner, kamera “tık” diye yön değiştirir.</li><li><b>Bézier:</b> eğri kontrol noktalarından <b>geçmez</b>. Tasarımcı “buradan geçsin” dediği noktayı koyar, eğri oradan teğet geçer.</li><li>Bézier parçalarını uç uca eklemek mümkün; ama her nokta için iki tutamacı elle ayarlamak gerekir, yoksa ek yerleri köşeli olur.</li></ul><p><b>İstenen:</b> yalnızca noktaları ver; eğri hepsinin <b>içinden</b> geçsin ve köşesiz olsun. Tutamaçları eğri kendisi bulsun.</p><p>1974’te Edwin Catmull (sonradan Pixar’ın kurucularından) ve Raphael Rom tam bunu yapan eğriyi yayımladı.</p></div></div>
+</div>
+</section>
+
+<section data-sec="yol">
+  <h2>Fikir 1: Catmull–Rom — teğeti komşulardan al</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>Dört ardışık nokta al: p₀, p₁, p₂, p₃. Eğri parçası <b>p₁ ile p₂ arasını</b> çizer.</li><li>p₀ ve p₃’ten <b>geçmez</b>; onlar yalnızca yönü belirler.</li><li>Kural: eğrinin p₁’deki yönü, <b>komşularını birleştiren doğruya paralel</b> olsun: teğet = (p₂ − p₀) / 2. p₂’de: (p₃ − p₁) / 2.</li><li>Bir sonraki parça p₁, p₂, p₃, p₄ ile çizilir ve p₂’de <b>aynı</b> teğeti kullanır: ek yeri kendiliğinden köşesiz.</li><li>Aslında tutamaçları otomatik seçilmiş bir Bézier’dir: P₁ = p₁ + (p₂ − p₀)/6, P₂ = p₂ − (p₃ − p₁)/6.</li></ul><p style="text-align:center;font-size:.72em;margin:.4em 0">$$\tfrac{1}{2}\big(2p_1 + (-p_0 + p_2)\,t + (2p_0 - 5p_1 + 4p_2 - p_3)\,t^2 + (-p_0 + 3p_1 - 3p_2 + p_3)\,t^3\big)$$</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme (tek eksen): p₀ = 0, p₁ = 1, p₂ = 3, p₃ = 4</span><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">terim</th><th style="text-align:left;">katsayı</th><th style="text-align:left;">t = 0,5 için</th></tr><tr><td style="text-align:left;">sabit</td><td style="text-align:left;">2·p₁ = 2</td><td style="text-align:left;">2</td></tr><tr><td style="text-align:left;">t</td><td style="text-align:left;">−p₀ + p₂ = 3</td><td style="text-align:left;">3 · 0,5 = 1,5</td></tr><tr><td style="text-align:left;">t²</td><td style="text-align:left;">2·0 − 5·1 + 4·3 − 4 = 3</td><td style="text-align:left;">3 · 0,25 = 0,75</td></tr><tr><td style="text-align:left;">t³</td><td style="text-align:left;">−0 + 3·1 − 3·3 + 4 = −2</td><td style="text-align:left;">−2 · 0,125 = −0,25</td></tr><tr><td style="text-align:left;">toplam × ½</td><td style="text-align:left;"></td><td style="text-align:left;">4 · ½ = <b>2</b></td></tr></table><p class="mini">Kontrol: t = 0 → ½·2 = <b>1</b> = p₁ ✓. t = 1 → ½·(2 + 3 + 3 − 2) = <b>3</b> = p₂ ✓. Eğri iki noktadan da geçiyor; t = 0,5’te tam ortada (2).</p><p class="mini">Vektörler için: aynı formül x’e ve y’ye ayrı ayrı. Formülü ezberlemeyin; her motorda bir satırla çağrılır.</p></div></div>
+</div>
+</section>
+
+<section data-sec="yol">
+  <h2>Fikir 2: sabit hız — yay uzunluğu tablosu</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.78em"><span class="bt">Sorun: t eşit artıyor, yol eşit artmıyor</span><p>Az önceki Bézier’yi (0,0)…(4,0) dört eşit t aralığıyla örnekleyelim:</p><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">t</th><th style="text-align:left;">nokta</th><th style="text-align:left;">bu aralıkta gidilen yol</th></tr><tr><td style="text-align:left;">0</td><td style="text-align:left;">(0, 0)</td><td style="text-align:left;">—</td></tr><tr><td style="text-align:left;">0,25</td><td style="text-align:left;">(0,63, 2,25)</td><td style="text-align:left;"><b>2,34</b></td></tr><tr><td style="text-align:left;">0,5</td><td style="text-align:left;">(2, 3)</td><td style="text-align:left;">1,57</td></tr><tr><td style="text-align:left;">0,75</td><td style="text-align:left;">(3,38, 2,25)</td><td style="text-align:left;">1,57</td></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">(4, 0)</td><td style="text-align:left;"><b>2,34</b></td></tr></table><p class="mini">Aynı sürede uçlarda 2,34, ortada 1,57 birim: nesne uçlarda <b>1,5 kat hızlı</b>. Catmull–Rom’da durum daha kötü: noktalar arası uzaklık farklıysa her parça aynı sürede geçilir; uzun parçada araba fırlar, kısa parçada sürünür.</p></div></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Çözüm: tabloyu bir kez kur, her kare ara</span><ul style="font-size:.9em"><li>Eğriyi sık aralıklarla örnekle; noktalar arası uzaklıkları <b>biriktir</b>: tablo[k] = baştan k. örneğe kadar yol.</li><li>Yukarıdaki örnekte tablo: <b>0 · 2,34 · 3,90 · 5,47 · 7,80</b>. Toplam yol 7,80.</li><li>Her kare: <code>yol += hız · dt</code>. Soru: “yolun 3. birimi hangi t’de?”</li><li>Tablo <b>sıralı</b> → <b>ikili arama</b>: 3, 2,34 ile 3,90 arasında (1. ve 2. satır).</li><li>İki satırın arasında ters lerp: (3 − 2,34) / (3,90 − 2,34) = 0,42 → t = lerp(0,25, 0,5, 0,42) = <b>0,36</b>.</li><li>Gerçekte 5 değil 100–1.000 örnek alınır; hata gözle görülmez.</li></ul><p class="mini">Bu sunumun bütün araçları bir arada: örnekleme (lerp’ler), biriktirme, ikili arama (Arama Algoritmaları sunumu), ters lerp, lerp.</p></div></div>
+</div>
+</section>
+
+<section data-sec="yol">
+  <h2>Canlı: pist çiz, araba sür 🏎️</h2>
+<div class="demo" data-demo="spline"></div>
+</section>
+
+<section data-sec="yol">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri şerit pist; numaralı halkalar yol noktaları. Kırmızı araba pisti dolanıyor. Mor noktalar pist üzerinde örnekler. Alt satırda pistin uzunluğu, tur sayısı, anlık hız ve son turdaki en az / en çok hız.</li><li><b>W</b> gaz, <b>S</b> fren. Bir halkayı <b>sürükleyin</b>: pist her noktanın içinden geçmeye devam ediyor ve hiç köşe yapmıyor. Boş bir yere <b>tıklayın</b>: yeni nokta eklenir.</li><li>Yolu <b>“doğrusal”</b> yapın: araba her noktada aniden dönüyor. Geri alın.</li><li><b>“sabit hız”</b> kutusunu kapatın: mor noktalar artık eşit t adımlarında. İki halkayı birbirine yaklaştırıp ikisini uzaklaştırın: araba uzun parçada fırlıyor, kısa parçada sürünüyor. Alttaki en az / en çok hız arasındaki fark birkaç katına çıkar.</li><li>Kutuyu yeniden açın: mor noktalar eşit aralıklı; en az ve en çok hız neredeyse aynı. Araba virajda da düzlükte de aynı hızda.</li><li>Bir halkayı komşusunun çok yakınına getirin: eğri orada küçük bir <b>ilmek</b> atabilir. Catmull–Rom’un bilinen kusuru; çaresi Kaynaklar’da (“centripetal” sürüm).</li></ol></div>
+</section>
+
+<section data-sec="yol">
+  <h2>Kod: Catmull–Rom yolu ve yay uzunluğu tablosu</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Catmull–Rom: p1 ile p2 ARASINDAKİ eğri parçası. p0 ve p3 yalnızca yönü belirleyen komşular.
+function catmull(p0, p1, p2, p3, t) {
+  return 0.5 * ( 2 * p1
+               + (-p0 + p2) * t
+               + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+               + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t );
+}   // p5.js'te hazırı: curvePoint(p0, p1, p2, p3, t)
+
+// Kapalı yol: u = 0 .. nokta sayısı.  Tam kısmı "hangi parça", kesri "parçanın neresinde".
+function yolNoktasi(noktalar, u) {
+  const n = noktalar.length, i = floor(u) % n, t = u - floor(u);
+  const al = k => noktalar[(i + k + n) % n];                 // sarmalayan indis
+  return { x: catmull(al(-1).x, al(0).x, al(1).x, al(2).x, t),
+           y: catmull(al(-1).y, al(0).y, al(1).y, al(2).y, t) };
+}
+
+// Yay uzunluğu tablosu: eğriyi küçük doğrulara böl, uzunlukları biriktir (bir kez, yol değişince)
+function tabloKur(noktalar, ornek = 24) {
+  const tablo = [0]; let onceki = yolNoktasi(noktalar, 0);
+  for (let k = 1; k <= noktalar.length * ornek; k++) {
+    const p = yolNoktasi(noktalar, k / ornek);
+    tablo.push(tablo[k - 1] + dist(p.x, p.y, onceki.x, onceki.y)); onceki = p;
+  }
+  return tablo;                                              // tablo[k] = baştan k. örneğe kadar yol
+}
+
+// "Yolun s'inci pikseli hangi u?"  → sıralı tabloda ikili arama + iki satır arasında lerp
+function mesafedenU(tablo, s, ornek = 24) {
+  let alt = 0, ust = tablo.length - 1;
+  while (ust - alt > 1) { const orta = (alt + ust) >> 1; if (tablo[orta] <= s) alt = orta; else ust = orta; }
+  return (alt + (s - tablo[alt]) / (tablo[ust] - tablo[alt])) / ornek;
+}
+// Her kare:  yol += hiz * dt;   const p = yolNoktasi(noktalar, mesafedenU(tablo, yol % tablo.at(-1)));
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import bisect, math
+
+def catmull(p0, p1, p2, p3, t):
+    return 0.5 * (2 * p1 + (-p0 + p2) * t
+                  + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t
+                  + (-p0 + 3 * p1 - 3 * p2 + p3) * t ** 3)
+
+def tablo_kur(nokta_fn, parca, ornek=24):
+    """nokta_fn(u) → (x, y).  Dönen: tablo[k] = baştan k. örneğe kadar gidilen yol."""
+    tablo, onceki = [0.0], nokta_fn(0)
+    for k in range(1, parca * ornek + 1):
+        p = nokta_fn(k / ornek)
+        tablo.append(tablo[-1] + math.dist(p, onceki)); onceki = p
+    return tablo
+
+def mesafeden_u(tablo, s, ornek=24):
+    k = bisect.bisect_right(tablo, s) - 1          # ikili arama (Arama Algoritmaları sunumu)
+    k = min(k, len(tablo) - 2)
+    return (k + (s - tablo[k]) / (tablo[k + 1] - tablo[k])) / ornek
+
+print(catmull(0, 1, 3, 4, 0.5))     # 2.0
+print(catmull(0, 1, 3, 4, 0.0))     # 1.0  (p1'den geçer)
+print(catmull(0, 1, 3, 4, 1.0))     # 3.0  (p2'den geçer)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// Unity: Splines paketi (com.unity.splines) bunların hepsini yapar.
+using UnityEngine.Splines;
+
+[SerializeField] SplineContainer yol;
+[SerializeField] float hiz = 6f;        // metre/saniye
+float gidilen;
+
+void Update() {
+    gidilen += hiz * Time.deltaTime;
+    float uzunluk = yol.CalculateLength();                     // yay uzunluğu
+    float oran = Mathf.Repeat(gidilen, uzunluk) / uzunluk;     // 0..1: yolun yüzde kaçı?
+    transform.position = yol.EvaluatePosition(oran);
+    transform.forward  = yol.EvaluateTangent(oran);            // burnunu yola çevir
+}
+// Daha da kolayı: nesneye SplineAnimate bileşeni ekleyin (sabit hız, döngü, yumuşatma seçenekleriyle).
+// Godot:  Path2D + PathFollow2D;   path_follow.progress += hiz * delta    ("progress" piksel cinsinden yol)
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="yol">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>floor(u)</code> ve <code>u - floor(u)</code></td><td style="text-align:left;">hangi parça · parçanın neresinde</td><td style="text-align:left;">Tek bir sayı (u) bütün yolu dolaşır: 3,25 = “3. parçanın dörtte biri”.</td></tr><tr><td style="text-align:left;"><code>(i + k + n) % n</code></td><td style="text-align:left;">sarmalayan indis</td><td style="text-align:left;">Kapalı pistte 0. noktanın “önceki”si son noktadır. <code>+ n</code>: JavaScript’te eksi sayının kalanı eksi çıkar.</td></tr><tr><td style="text-align:left;"><code>tablo.push(tablo[k-1] + dist(…))</code></td><td style="text-align:left;">birikimli toplam</td><td style="text-align:left;">Tablo kendiliğinden <b>sıralıdır</b> (uzunluklar eksi olamaz): ikili aramanın ön koşulu bedavaya sağlanır.</td></tr><tr><td style="text-align:left;"><code>while (ust - alt &gt; 1)</code></td><td style="text-align:left;">ikili arama</td><td style="text-align:left;">Sonunda <code>tablo[alt] ≤ s &lt; tablo[ust]</code> ve ikisi komşu. 264 satırlık tabloda en çok 9 adım.</td></tr><tr><td style="text-align:left;"><code>(s - tablo[alt]) / (tablo[ust] - tablo[alt])</code></td><td style="text-align:left;">ters lerp</td><td style="text-align:left;">İki örnek arasında düz çizgi varsayıyoruz. Örnek sayısı arttıkça varsayımın hatası küçülür.</td></tr><tr><td style="text-align:left;"><code>yol % toplam</code></td><td style="text-align:left;">tur atınca başa dön</td><td style="text-align:left;">Açık yolda (devriye) bunun yerine uçta yön değiştirin ya da durun.</td></tr></table><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Önerme</span>N örnekli yay uzunluğu tablosu <b>N</b> adımda kurulur (yol değişmedikçe bir kez) ve her sorgu <b>log₂ N</b> karşılaştırma ister. Tabloyla gidilen hız, örnekler arasındaki doğrusal yaklaşımın hatası kadar sapar: demodaki pistte (512 örnek) en hızlı ve en yavaş an arasındaki fark yaklaşık %3’tür; tablo olmadan (eşit t adımlarıyla) aynı pistte <b>2,7 kat</b>.</div>
+</section>
+
+<section data-sec="yol">
+  <h2>Oyunlarda: Godot’nun yol izleyicisi</h2>
+<div class="cols c46">
+<div><pre style="zoom:0.6;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Godot 4.3 — core/math/math_funcs.h
+static _ALWAYS_INLINE_ double cubic_interpolate(double p_from, double p_to, double p_pre, double p_post, double p_weight) {
+    return 0.5 *
+            ((p_from * 2.0) +
+                    (-p_pre + p_to) * p_weight +
+                    (2.0 * p_pre - 5.0 * p_from + 4.0 * p_to - p_post) * (p_weight * p_weight) +
+                    (-p_pre + 3.0 * p_from - 3.0 * p_to + p_post) * (p_weight * p_weight * p_weight));
+}
+
+// Godot 4.3 — scene/resources/curve.cpp, Curve2D::_find_interval (kısaltılmış)
+int start = 0;
+int end = pc;                        // pc: pişirilmiş (baked) nokta sayısı
+int idx = (end + start) / 2;
+// Binary search to find baked points.
+while (start < idx) {
+    real_t offset = baked_dist_cache[idx];
+    if (p_offset <= offset) {
+        end = idx;
+    } else {
+        start = idx;
+    }
+    idx = (end + start) / 2;
+}
+real_t offset_begin = baked_dist_cache[idx];
+real_t offset_end = baked_dist_cache[idx + 1];
+interval.frac = (p_offset - offset_begin) / (offset_end - offset_begin);
+</script></code></pre><p class="mini">Kaynak: Godot Engine 4.3, <code>math_funcs.h</code> ve <code>curve.cpp</code> (MIT lisansı). “Binary search…” yorumu özgün koddan.</p></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🎮 Satır satır</span><ul style="font-size:.86em"><li><code>cubic_interpolate</code>: slayttaki Catmull–Rom formülünün <b>aynısı</b> (p_pre = p₀, p_from = p₁, p_to = p₂, p_post = p₃). GDScript’te <code>a.cubic_interpolate(b, pre, post, t)</code>.</li><li><b>“Baked”</b> (pişirilmiş): Godot eğriyi önceden küçük parçalara böler; <code>baked_dist_cache</code> bizim <b>yay uzunluğu tablomuz</b>. 2B’de örnekler arası varsayılan aralık 5 piksel (<code>bake_interval</code>).</li><li><code>_find_interval</code>: tabloda <b>ikili arama</b>; ardından <code>frac</code> = ters lerp. Bizim <code>mesafedenU</code> fonksiyonumuzun motor sürümü.</li><li><code>PathFollow2D.progress</code> piksel cinsinden yoldur: <code>progress += hiz * delta</code> yazdığınızda nesne <b>sabit hızla</b> gider, çünkü arkada bu arama çalışır.</li><li>Pişirilmiş noktalar arasında <code>cubic</code> seçeneğiyle yine Catmull–Rom, yoksa düz lerp kullanılır.</li></ul><p class="mini">Unity’nin Splines paketi, Unreal’ın Spline bileşeni (“distance along spline”) aynı tabloyu tutar. Yarış oyunlarında rakip YZ’nin “ideal çizgisi” ve oyuncunun pistin yüzde kaçında olduğu bu tabloyla ölçülür (Y17).</p></div></div>
+</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: Catmull–Rom (tek eksen)</h2>
+  <div class="ailab" data-lab="catmull" data-lang="python">
+<textarea>
+# p1 ile p2 arasındaki eğri parçasında t anındaki değeri döndür. p0 ve p3 komşu noktalar.
+# 0.5 * ( 2*p1 + (-p0 + p2)*t + (2*p0 - 5*p1 + 4*p2 - p3)*t^2 + (-p0 + 3*p1 - 3*p2 + p3)*t^3 )
+def catmull(p0, p1, p2, p3, t):
+    return p1 + (p2 - p1) * t      # TODO: şimdilik düz lerp (köşeli yol)
+</textarea>
+    <div class="lab-tasks">Formülü yorum satırından aynen yazın; Python’da üs <code>t ** 2</code> ya da <code>t * t</code>. Kontrol: (0, 1, 3, 4; t = 0,5) → <b>2</b>; t = 0 → p1; t = 1 → p2. Başlangıç kodu uçlarda doğru sonuç verir ama (0, 10, 0, 10; t = 0,25) gibi “zikzak” örneklerde tutmaz: eğri komşulara bakarak şişer.</div>
+  </div>
+</section>
+
+<section data-sec="yol">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 4 · yol izleme</div>
+    <div class="q">Kule savunma oyununuzda düşmanlar bir Catmull–Rom yolunu <code>u += 0.5 * dt</code> ile izliyor. Oyuncular “düşmanlar bazı yerlerde hızlanıyor, kulelerim ıskalıyor” diyor. Sebep ve çözüm?</div>
+    <div class="opts"><button data-opt="A">Kare hızı düşüyor; sabit zaman adımına geçmek</button><button data-opt="B">u eşit artıyor ama yol noktaları arası uzaklıklar eşit değil; yay uzunluğu tablosuyla mesafeye göre ilerletmek</button><button data-opt="C">Catmull–Rom hatalı; Bézier kullanmak</button><button data-opt="D">Düşman hızını rastgele seçmişsiniz; sabitlemek</button></div>
+    <div class="explain">Her parça u’da 1 birimdir ve aynı sürede geçilir; uzun parçada düşman hızlı, kısa parçada yavaştır. Çözüm: yolu bir kez örnekleyip birikimli uzunluk tablosu kurmak, her kare <code>yol += hız * dt</code> yapıp tablodan (ikili arama + ters lerp) u’yu bulmak. Bézier’de de aynı sorun vardır.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Hepsi bir arada</div><div class="sub">tam kod, araçlar, kapanış</div></div>
+</section>
+
+<section data-sec="kod">
+  <h2>📦 Tam kod: p5.js ile pist, araba ve kamera</h2>
+<div class="cols c64">
+<div><pre style="zoom:0.68;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
+function draw() {
+  const dt = min(deltaTime / 1000, 0.05);
+  hiz = constrain(hiz + (gaz() - fren()) * 300 * dt, 60, 700);
+  yol += hiz * dt;                                   // pist boyunca gidilen mesafe (piksel)
+  if (yol >= toplam) { yol -= toplam; tur++; turAni = millis(); }
+
+  const u = mesafedenU(yol);                         // yay uzunluğu tablosu + ikili arama
+  const [ax, ay] = pistNoktasi(u);                   // Catmull–Rom
+
+  kamera.x = yaklas(kamera.x, ax, 0.18, dt);         // kare hızından bağımsız takip
+  kamera.y = yaklas(kamera.y, ay, 0.18, dt);
+
+  translate(width / 2 - kamera.x, height / 2 - kamera.y);
+  pistiCiz(); arabayiCiz(ax, ay, u);
+
+  const gecen = (millis() - turAni) / 1000;          // "TUR 3" yazısı: 0,5 sn'de taşıp dönerek büyür
+  if (gecen < 1.6) yaziCiz('TUR ' + tur, tasipDon(constrain(gecen / 0.5, 0, 1)));
+}
+</script></code></pre><p class="mini">Döngünün iskeleti (çizim sırası sadeleştirildi). Dört araç dört satırda: tablo, eğri, takip, yumuşatma.</p></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz örneği aç</b></a> — yaklaşık 70 satır: <b>W / S</b> gaz ve fren; <b>K</b> kamerayı yumuşak / sert yapar; <b>H</b> sabit hızı açar / kapatır.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><code>NOKTALAR</code>’ı değiştirip kendi pistinizi çizin.</li><li>Kameranın yarı ömrünü 0,05 ve 0,6 yapın.</li><li>Kamerayı arabanın biraz <b>önüne</b> baktırın: hedef = araba + yön × hız × 0,3.</li><li>Tur yazısının yumuşatmasını “sekerek” ile değiştirin.</li><li>İkinci bir araba ekleyin: aynı pist, farklı <code>yol</code> ve <code>hiz</code>.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Motorlarda ve kütüphanelerde</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>p5.js</b></td><td><code>lerp</code> · <code>map</code> · <code>norm</code> · <code>lerpColor</code> · <code>bezier</code> / <code>bezierPoint</code> · <code>curve</code> / <code>curvePoint</code></td><td><code>curve</code> ailesi Catmull–Rom’dur. Yumuşatma fonksiyonları hazır değil: bu sunumdaki tek satırlıkları kopyalayın.</td></tr>
+<tr><td><b>Unity</b></td><td><code>Mathf.Lerp</code> / <code>LerpUnclamped</code> / <code>InverseLerp</code> / <code>SmoothStep</code> / <code>SmoothDamp</code> · <code>AnimationCurve</code></td><td>Tween için DOTween, LeanTween ya da PrimeTween eklentileri. Yollar için Splines paketi; kamera için Cinemachine.</td></tr>
+<tr><td><b>Godot</b></td><td><code>lerp</code> · <code>inverse_lerp</code> · <code>remap</code> · <code>smoothstep</code> · <code>Tween</code> · <code>Curve2D</code> / <code>Path2D</code> / <code>PathFollow2D</code></td><td>Tween motorun içinde: <code>create_tween().tween_property(…)</code>; geçiş türleri Penner adlarıyla.</td></tr>
+<tr><td><b>Unreal</b></td><td><code>FMath::Lerp</code> · <code>FInterpTo</code> · Timeline · Spline Component · Spring Arm (“Camera Lag”)</td><td><code>FInterpTo</code> dt alan hazır yaklaşma fonksiyonu.</td></tr>
+<tr><td><b>Web / CSS</b></td><td><code>transition: transform .3s ease-out</code> · <code>cubic-bezier(…)</code></td><td>Oyun arayüzlerini HTML ile yapıyorsanız yumuşatma tarayıcıda hazır.</td></tr>
+<tr><td><b>Görerek seçin</b></td><td>easings.net</td><td>Bütün Penner eğrilerinin grafiği ve canlı önizlemesi.</td></tr>
+</table>
+<p class="mini">Pratik kural: süresi belli geçiş → <b>tween + yumuşatma</b>. Hareketli hedef → <b>üstel yaklaşma ya da SmoothDamp</b>. Kontrol edilebilir kavis → <b>Bézier</b>. Noktalardan geçen yol → <b>Catmull–Rom + yay uzunluğu tablosu</b>.</p>
+</section>
+
+<section data-sec="yz">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c46">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.9em"><li><code>x = lerp(x, hedef, 0.1)</code> (kare hızına bağlı takip)</li><li><code>lerp(a, b, hiz * dt)</code>: büyük dt’de oran 1’i aşar</li><li>Tween’de başlangıç değerini saklamamak: <code>lerp(x, hedef, t)</code> yazıp x’i her kare güncellemek (hareket baştan hızlı, sona doğru tuhaf)</li><li>Unity’de taşan yumuşatmayı <code>Lerp</code> ile kullanmak (keser)</li><li>Açıları düz lerp etmek (350° → 10° uzun yoldan döner)</li><li>Eğri üzerinde <code>t += hiz * dt</code> ile “sabit hız” beklemek</li><li>Yay uzunluğu tablosunu her kare yeniden kurmak</li></ul></div></div>
+<div><div class="box info" style="font-size:.74em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js, kütüphane yok. (1) <code>yumusatma</code> nesnesi: linear, easeInQuad, easeOutQuad, smoothstep, easeOutBack; hepsi 0–1 alır. (2) <code>tween(a, b, gecen, sure, f)</code>. (3) <code>yaklas(x, hedef, yariOmur, dt)</code>: 1 − 2^(−dt/yariOmur) oranıyla; kare hızından bağımsız. (4) Kapalı Catmull–Rom yolu: <code>yolNoktasi(u)</code>; birikimli yay uzunluğu tablosu ve ikili aramayla <code>mesafedenU(s)</code>. (5) Araba yolu sabit hızla izlesin; kamera <code>yaklas</code> ile takip etsin. (6) Hata ayıklama: bir tuşla eşit mesafeli noktaları çiz; ekrana anlık hızı yaz. (7) Test: <code>yaklas</code> 20 ve 144 adımda 1 saniye sonunda aynı sonucu vermeli; arabanın ölçülen hızı tur boyunca %2’den fazla oynamamalı.”</p><ul style="font-size:.9em"><li>“Smooth” demeyin; <b>hangi</b> yöntemi istediğinizi söyleyin.</li><li>Kare hızı testini mutlaka isteyin: asistanların en sık ürettiği hata budur.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Sevdiğiniz bir oyunun menülerini, vuruş efektlerini ya da puan sayaçlarını gözünüzün önüne getirin. Hangi yumuşatmalar kullanılmış olabilir? Hepsi doğrusal olsaydı oyun nasıl hissettirirdi?</li><li class="fragment">“Juice” ne zaman <b>fazla</b> gelir? Her şeyin sektiği, sarsıldığı, parladığı bir oyun düşünün. Okunabilirlik, erişilebilirlik (hareket hassasiyeti olan oyuncular) ve rekabetçi oyunlar açısından tartışın.</li><li class="fragment">Kamera oyuncuya sıkı sıkıya mı yapışmalı, yumuşakça mı izlemeli? Bir platform oyunu, bir yarış oyunu ve bir nişancı oyunu için ayrı ayrı düşünün.</li><li class="fragment">Ağ oyununda rakibi 100 ms geçmişte görüyorsunuz ama akıcı; ya da “şimdiki” yerinde ama kesik kesik. Hangisini seçerdiniz? Vurduğunuzu sandığınız rakibi ıskalamanızla bunun ilgisi ne? (Ağ senkronizasyonunun ana sorusu.)</li><li class="fragment">Kule savunmada düşmanların virajda yavaşlaması bir hata mı, yoksa bilerek kullanılabilecek bir tasarım öğesi mi?</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Sulu tuğla kırma</b> — Basit bir tuğla kırma oyununa sırayla ekleyin: tuğlaların yumuşatmayla gelişi, raketin esnemesi, topun çarpınca büyümesi, puanın sayarak artması. Her adımı tuşla açılıp kapanır yapın (Juice it or lose it).</li><li><b class="c-green">[kolay]</b> <b>Yumuşatma seçici</b> — Bu sunumdaki yarış demosunu kendi 10 fonksiyonunuzla yeniden yazın; her biri için bir kullanım yeri önerin.</li><li><b class="c-amber">[orta]</b> <b>İyi bir 2B kamera</b> — Platform karakteri için: üstel takip + ileriye bakma (hız yönünde ofset) + ölü bölge (küçük hareketlerde kıpırdama) + seviye sınırlarına sıkıştırma. Her biri tuşla açılıp kapansın.</li><li><b class="c-amber">[orta]</b> <b>Kule savunma patikası</b> — Fareyle çizilen Catmull–Rom patika; düşmanlar sabit hızla izlesin; kuleler düşmanın <b>ileride</b> olacağı yere nişan alsın (tablo sayesinde kolay: yol + hız × süre).</li><li><b class="c-red">[zor]</b> <b>Pist düzenleyici</b> — Catmull–Rom orta hattan pist kenarlarını üretin (her örnekte teğete dik vektör, G1); tur süresi ölçün; “ideal çizgi”yi ayrı bir eğri olarak çizdirin (Y17).</li><li><b class="c-purple">[araştırma]</b> <b>Catmull–Rom türleri</b> — Düzgün (uniform), kirişsel (chordal) ve merkezcil (centripetal) parametrelemeyi aynı noktalarda karşılaştırın: ilmekler ve taşmalar nerede oluşuyor? (Yuksel, Schaefer ve Keyser’in makalesi.)</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Lerp:</b> a + (b − a)·t. “Yolun yüzde kaçı?” Ters lerp oranı bulur; ikisi birlikte aralık eşler. Sayı, vektör, renk: hepsinde aynı.</li><li><b>Yumuşatma:</b> lerp’e dokunma, t’yi eğ. Gelen şeyler “yavaş bitir”, taşınan şeyler smoothstep, vurgular “taşıp dön”. Süre ve varış değişmez; his değişir.</li><li><b>Hareketli hedef:</b> kare başına sabit oran kare hızına bağlıdır. Oranı süreden hesapla: 1 − 2^(−dt / yarı ömür). Daha yumuşak kalkış için SmoothDamp.</li><li><b>Bézier:</b> lerp’lerin lerp’i (De Casteljau). Uçlardan geçer, kontrol noktalarına doğru bükülür; tutamaçlar yönü verir.</li><li><b>Catmull–Rom:</b> verilen noktaların içinden köşesiz geçer; teğeti komşulardan alır.</li><li><b>Sabit hız:</b> eşit t eşit yol değildir. Yay uzunluğu tablosu + ikili arama + ters lerp (Godot’nun “baked” eğrisi).</li><li><b>Sonraki:</b> Bölüm 7: oyunlarda yapay zekâ. İlk sunum Hazırlık: bu bölümde kurduğumuz vektörler, döngü ve hareket üzerine karar veren karakterler.</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=Fy0aCDmgnxg" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Fy0aCDmgnxg/hqdefault.jpg" alt=""><span><b>Juice it or lose it</b><br>Martin Jonasson &amp; Petri Purho</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=aVwxzDHniEw" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/aVwxzDHniEw/hqdefault.jpg" alt=""><span><b>The Beauty of Bézier Curves</b><br>Freya Holmér</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=LSNQuFEDOyQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/LSNQuFEDOyQ/hqdefault.jpg" alt=""><span><b>Lerp smoothing is broken</b><br>Freya Holmér</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=jvPPXbo87ds" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/jvPPXbo87ds/hqdefault.jpg" alt=""><span><b>The Continuity of Splines</b><br>Freya Holmér</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=YJB1QnEmlTs" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/YJB1QnEmlTs/hqdefault.jpg" alt=""><span><b>An In-Depth look at Lerp, Smoothstep, and Shaping Functions</b><br>SimonDev</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=mr5xkf6zSzk" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/mr5xkf6zSzk/hqdefault.jpg" alt=""><span><b>Math for Game Programmers: Fast and Funky 1D Nonlinear Transformations</b><br>GDC (Squirrel Eiserloh)</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=tu-Qe66AvtY" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/tu-Qe66AvtY/hqdefault.jpg" alt=""><span><b>Math for Game Programmers: Juicing Your Cameras With Math</b><br>GDC (Squirrel Eiserloh)</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=216_5nu4aVQ" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/216_5nu4aVQ/hqdefault.jpg" alt=""><span><b>Secrets of Game Feel and Juice</b><br>Game Maker's Toolkit</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: kaynak kodu, yazılar ve etkileşimli sayfalar 📚</h2>
+<ul style="font-size:.78em"><li>Godot Engine kaynak kodu: <a href="https://github.com/godotengine/godot/blob/4.3-stable/core/math/math_funcs.h" target="_blank" rel="noopener">math_funcs.h</a> (lerp, smoothstep, bezier_interpolate, cubic_interpolate) · <a href="https://github.com/godotengine/godot/blob/4.3-stable/scene/resources/curve.cpp" target="_blank" rel="noopener">curve.cpp</a> (pişirilmiş eğri, ikili arama)</li><li>Unity başvuru kaynağı: <a href="https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Mathf.cs" target="_blank" rel="noopener">Mathf.cs</a> (Lerp, SmoothStep, SmoothDamp)</li><li>Andrey Sitnik ve Ivan Solovev: <a href="https://easings.net/" target="_blank" rel="noopener">easings.net</a> — yumuşatma eğrilerinin görsel kataloğu · Robert Penner: <a href="http://robertpenner.com/easing/" target="_blank" rel="noopener">Easing Functions</a></li><li>Martin Jonasson ve Petri Purho: <a href="https://github.com/grapefrukt/juicy-breakout" target="_blank" rel="noopener">Juicy Breakout</a> — konuşmadaki oyunun kaynak kodu</li><li>Pomax: <a href="https://pomax.github.io/bezierinfo/" target="_blank" rel="noopener">A Primer on Bézier Curves</a> — Bézier hakkında her şey, etkileşimli (yay uzunluğu ve Catmull–Rom dönüşümü dahil)</li><li>Rory Driscoll: <a href="https://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/" target="_blank" rel="noopener">Frame Rate Independent Damping using Lerp</a> · Daniel Holden: <a href="https://theorangeduck.com/page/spring-roll-call" target="_blank" rel="noopener">Spring-It-On: The Game Developer’s Spring-Roll-Call</a> — yarı ömür ve yaylarla yumuşatma</li><li>Valve Developer Community: <a href="https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking" target="_blank" rel="noopener">Source Multiplayer Networking</a> — ağda ara değerleme (100 ms’lik gecikme)</li><li>Catmull &amp; Rom (1974), “A Class of Local Interpolating Splines” · Yuksel, Schaefer &amp; Keyser (2011), “Parameterization and Applications of Catmull–Rom Curves”</li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Oyunlarda Yapay Zekâ: Hazırlık</div>
+    <div class="sub">Bölüm 7 başlıyor: vektörler, oyun döngüsü ve karar veren karakterler</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../yz-hazirlik/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>

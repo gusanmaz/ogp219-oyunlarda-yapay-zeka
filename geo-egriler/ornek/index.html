@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pist, araba ve kamera — eksiksiz p5.js örneği</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 24px auto; max-width: 900px; padding: 0 16px; color: #222; background: #fafaf7; }
+  h1 { font-size: 24px; margin: 0 0 4px; } .mini { color: #666; font-size: 14px; }
+  main canvas { border: 1px solid #ddd; border-radius: 10px; display: block; margin: 14px 0; max-width: 100%; height: auto !important; }
+  kbd { background: #eee; border: 1px solid #ccc; border-radius: 4px; padding: 1px 6px; font: 13px monospace; }
+  pre { background: #1e1f2b; color: #e6e6f0; padding: 16px; border-radius: 10px; overflow: auto; font: 13px/1.5 "JetBrains Mono", ui-monospace, monospace; tab-size: 2; }
+  button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Pist, araba ve kamera: eğriler ve ara değerleme (p5.js)</h1>
+<div class="mini"><a href="../">← sunuma dön</a> · <kbd>W</kbd> gaz · <kbd>S</kbd> fren · <kbd>K</kbd> kamera yumuşak / sert · <kbd>H</kbd> sabit hız aç / kapa</div>
+<main></main>
+<p>Aşağıdaki yaklaşık 80 satırın tamamı bu sayfada çalışıyor (önce tuvale tıklayın). Pist 11 noktadan geçen kapalı bir Catmull–Rom eğrisi; araba, yay uzunluğu tablosu sayesinde virajlarda da aynı hızla gider (<kbd>H</kbd> ile kapatıp farkı görün). Kamera arabaya kare hızından bağımsız bir yumuşatmayla yaklaşır (<kbd>K</kbd> ile sert takibe geçin). Her turda yazı “taşıp dönen” bir yumuşatmayla belirir. <code>NOKTALAR</code> dizisini değiştirip kendi pistinizi çizin. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editörüne</a> yapıştırabilirsiniz.</p>
+<p><button id="copy">📋 Kodu kopyala</button></p>
+<pre id="src">yükleniyor…</pre>
+<script src="sketch.js"></script>
+<script>
+  fetch('sketch.js').then(r => r.text()).then(t => { document.getElementById('src').textContent = t; });
+  document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
+</script>
+</body>
+</html>
