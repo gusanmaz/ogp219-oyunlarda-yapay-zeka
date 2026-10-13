@@ -16,7 +16,7 @@
 
   const EWD = '4-5-.35 5-4-.35 4-7-.37 5-7-.28 7-5-.28 5-1-.32 0-4-.38 0-2-.26 7-3-.39 1-3-.29 2-7-.34 6-2-.40 3-6-.52 6-0-.58 6-4-.93';
   SL.GRAPHS.tinyEWD = () => SL.Graph(8, EWD.split(' ').map(s => { const [a, b, w] = s.split('-'); return [+a, +b, +w]; }),
-    [[300, 45], [300, 320], [440, 110], [480, 290], [170, 150], [130, 290], [580, 190], [300, 200]], { directed: true, weighted: true });
+    [[300, 45], [300, 320], [462, 78], [480, 290], [170, 150], [130, 290], [580, 190], [300, 200]], { directed: true, weighted: true });
 
   /* ---------- min-yığın (grid ve lab için) ---------- */
   class Heap { constructor() { this.a = []; } get size() { return this.a.length; } push(x) { const a = this.a; a.push(x); let i = a.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (a[p][0] <= a[i][0]) break; [a[p], a[i]] = [a[i], a[p]]; i = p; } } pop() { const a = this.a, top = a[0], last = a.pop(); if (a.length) { a[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < a.length && a[l][0] < a[m][0]) m = l; if (r < a.length && a[r][0] < a[m][0]) m = r; if (m === i) break; [a[m], a[i]] = [a[i], a[m]]; i = m; } } return top; } }
@@ -149,11 +149,11 @@
     const names = ['Başla', 'Odun', 'Maden', 'Ot', 'Demir', 'Kalkan', 'İksir', 'Kılıç', 'Zırh', 'Hazır!'];
     const dur = [0, 2, 4, 1, 3, 3, 2, 5, 4, 0];
     const E = SL.parseEdges('0-1 0-2 0-3 2-4 1-5 4-5 3-6 4-7 1-7 4-8 5-9 6-9 7-9 8-9');
-    const pos = [[60, 170], [210, 70], [210, 190], [210, 300], [380, 190], [550, 70], [550, 300], [550, 190], [720, 120], [860, 190]];
+    const pos = [[62, 185], [215, 62], [215, 222], [215, 318], [385, 222], [580, 52], [580, 318], [580, 138], [580, 232], [850, 185]];
     const G = SL.Graph(10, E.map(([a, b]) => [a, b, dur[a]]), pos, { directed: true, weighted: true, labels: names.map((n, i) => (dur[i] ? `${n} (${dur[i]})` : n)) });
     const left = el('div', { class: 'gv-wrap' }), right = el('div', { class: 'gv-side' });
-    left.style.flex = '3.2'; right.style.flex = '1';
-    const gv = new SL.GraphView(left, { W: 930, H: 360, r: 17 }); gv.setGraph(G);
+    left.style.flex = '2.1'; right.style.flex = '1';
+    const gv = new SL.GraphView(left, { W: 930, H: 370, r: 17 }); gv.setGraph(G);
     const note = el('div', { class: 'sv-note tree-note' });
     const order = SL.topoFrames(G).slice(-1)[0].order;
     const dist = new Array(10).fill(-Infinity), edgeTo = new Array(10).fill(-1), F = [];
@@ -165,7 +165,7 @@
       for (let v = 0; v < 10; v++) if (edgeTo[v] >= 0) es[edgeTo[v]] = 'tree';
       if (eid != null) es[eid] = 'check';
       if (crit) { for (let x = 9; edgeTo[x] >= 0; x = G.edges[edgeTo[x]].v) { es[edgeTo[x]] = 'path'; ns[x] = 'src'; } ns[0] = 'src'; }
-      F.push({ ns, es, badge, note });
+      F.push({ ns, es, badge, note, weights: false, cur, dist: dist.slice(), from: edgeTo.map(id => (id >= 0 ? G.edges[id].v : -1)), crit: !!crit });
     };
     P(`Topolojik sırayla işle: ${order.map(v => names[v]).join(' → ')}. Rozet = en erken başlama zamanı.`);
     for (const v of order) {
@@ -173,7 +173,13 @@
       for (const a of G.adj[v]) { const e = G.edges[a.id]; if (dist[v] + e.wt > dist[e.w]) { dist[e.w] = dist[v] + e.wt; edgeTo[e.w] = a.id; P(`${names[e.w]} en erken ${dist[e.w]}. sn’de başlayabilir (EN UZUN ön koşul zincirini bekler)`, v, a.id); } }
     }
     P(`Bitti: en hızlı hazırlık ${dist[9]} sn (sınırsız işçiyle). Kırmızı = KRİTİK YOL: bu işlerden biri gecikirse her şey gecikir.`, null, null, true);
-    const fp = new SL.FramePlayer(f => { gv.render(f); right.innerHTML = '<div class="mini">Her iş: (süre). Ok: “önce bu bitmeli”. Ağırlık = önceki işin süresi.</div>'; note.textContent = f.note; }, { speed: 1.2 });
+    const fp = new SL.FramePlayer(f => {
+      gv.render(f);
+      const done = f.cur == null ? (f.crit ? order.length : -1) : order.indexOf(f.cur);
+      right.innerHTML = '<div class="mini">İşlenecek sıra (topolojik; soldan sağa):</div><div class="g-dq" style="font-size:.72em">' + order.map((v, i) => `<span style="${i < done ? 'opacity:.4' : ''}${v === f.cur ? ';background:var(--amber);border-color:var(--amber);color:#111' : ';background:var(--card)'}">${names[v]}</span>`).join('') + '</div>' +
+        '<table class="sum-t" style="font-size:15px;margin-top:6px"><tr><th>iş</th><th>süre</th><th>en erken başlar</th><th>biter</th><th>beklediği</th></tr>' + names.map((n, v) => `<tr${v === f.cur ? ' style="background:color-mix(in srgb, var(--amber) 25%, transparent)"' : ''}><td><b>${n}</b></td><td>${dur[v] || '—'}</td><td>${f.dist[v] > -Infinity ? f.dist[v] : '?'}</td><td>${f.dist[v] > -Infinity ? f.dist[v] + dur[v] : '?'}</td><td>${f.from[v] >= 0 ? names[f.from[v]] : '—'}</td></tr>`).join('') + '</table><div class="mini">Parantez içi: işin süresi. Ok: “önce bu bitmeli”. Rozet: en erken başlama.</div>';
+      note.textContent = f.note;
+    }, { speed: 1.2 });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'gv-row' }, left, right), SL.transport(fp, { min: 0.3, max: 8 }), note);
     fp.load(F);
@@ -196,9 +202,9 @@
       edgeTo.forEach(id => { if (id >= 0) es[id] = 'tree'; });
       if (eid != null) es[eid] = kind || 'check';
       if (cyc) cyc.forEach(id => (es[id] = 'path'));
-      F.push({ ns, es, badge, note, pass });
+      F.push({ ns, es, badge, note, pass, dist: dist.slice(), from: edgeTo.map(id => (id >= 0 ? G.edges[id].v : -1)) });
     };
-    P('Kenar ağırlığı = −ln(kur). Kurları ÇARPMAK yerine −ln’leri TOPLARIZ; çarpım > 1 ⇔ toplam < 0. Rozet = Altın’dan uzaklık.', null, null, null, 0);
+    P('Oklardaki sayılar kur (1 birim verince kaç birim alınır). Algoritma her kuru −ln(kur) ağırlığına çevirip toplar: kârlı tur = toplamı eksi döngü. Rozet ve tablo: Altın’dan o paraya en küçük toplam.', null, null, null, 0);
     for (let pass = 1; pass <= 3; pass++) {
       G.edges.forEach((e, i) => {
         if (dist[e.v] + W[i] < dist[e.w] - 1e-12) { dist[e.w] = dist[e.v] + W[i]; edgeTo[e.w] = i; P(`Tur ${pass}: ${names[e.v]}→${names[e.w]} gevşedi (−ln ${e.wt} = ${f2(W[i])})`, i, 'relax', null, pass); }
@@ -213,7 +219,7 @@
       const prod = cyc.reduce((p, id) => p * G.edges[id].wt, 1);
       P(`4. turda hâlâ gevşeyen kenar var → NEGATİF DÖNGÜ! ${cyc.slice().reverse().map(id => names[G.edges[id].v]).join(' → ')} → ${names[x]}: kurların çarpımı ${prod.toFixed(3)} > 1. Her turda %${((prod - 1) * 100).toFixed(1)} bedava kâr: SONSUZ ALTIN 💰`, found, 'check', cyc, 4);
     }
-    const fp = new SL.FramePlayer(f => { gv.render(f); right.innerHTML = `<div class="mini">Tur: <b>${f.pass}</b></div><div class="mini">Okların üstündeki sayı = 1 birim karşılığında alınan miktar.</div>`; note.textContent = f.note; }, { speed: 1 });
+    const fp = new SL.FramePlayer(f => { gv.render(f); right.innerHTML = `<div class="mini">Tur: <b>${f.pass}</b> · her turda bütün kenarlar sırayla gevşetilir (ek veri yapısı yok; yalnızca iki dizi):</div><table class="sum-t" style="font-size:16px;margin:6px 0"><tr><th>para</th><th>distTo[] (−ln toplamı)</th><th>edgeTo[] (nereden)</th></tr>` + names.map((n, v) => `<tr><td><b>${n}</b></td><td>${f.dist[v] === Infinity ? '∞' : f2(f.dist[v])}</td><td>${f.from[v] >= 0 ? names[f.from[v]] : '—'}</td></tr>`).join('') + `</table><div class="mini">Okların üstündeki sayı = 1 birim karşılığında alınan miktar.</div>`; note.textContent = f.note; }, { speed: 1 });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'gv-row' }, left, right), SL.transport(fp, { min: 0.3, max: 6 }), note);
     fp.load(F);

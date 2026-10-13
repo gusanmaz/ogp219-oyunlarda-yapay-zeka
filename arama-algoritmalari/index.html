@@ -46,7 +46,7 @@
       <li><b>İkili arama</b> — her adımda yarısını at <span class="en">binary search</span></li>
       <li><b>Oyunlarda ikili arama</b> — XP tabloları, loot sandıkları, animasyon eğrileri</li>
       <li><b>İkiye bölme</b> — hızlı mermi duvarın içinden neden geçer? <span class="en">bisection</span></li>
-      <li>⚙️ <b>Kaputun altında &amp; ötesi</b> — önbellek, enterpolasyon araması, sembol tabloları</li>
+      <li>⚙️ <b>Perde arkası &amp; ötesi</b> — önbellek, enterpolasyon araması, sembol tabloları</li>
     </ol>
     <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
       <p>…1 milyon kayıt içinde bir şeyi <b>20 adımda</b> bulabilecek, bir loot sandığının nasıl çalıştığını ve hızlı bir merminin duvarı neden “ıskaladığını” açıklayabileceksiniz.</p>
@@ -106,7 +106,7 @@
   <div class="lv">LEVEL 0</div>
   <div class="ttl">Arama Problemi</div>
   <div class="sub"><i>the search problem</i> — ne arıyoruz, “yok” nasıl söylenir?</div>
-  <ul class="agenda"><li class="on">arama problemi</li><li class="">sıralı arama</li><li class="">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="on">arama problemi</li><li class="">sıralı arama</li><li class="">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="arama problemi">
@@ -188,7 +188,7 @@ console.log(a.indexOf(50));    // -1  (hata yok)
   <div class="lv">LEVEL 1</div>
   <div class="ttl">Sıralı Arama</div>
   <div class="sub"><i>sequential (linear) search</i> — en basit, her yerde çalışan yöntem</div>
-  <ul class="agenda"><li class="done">arama problemi</li><li class="on">sıralı arama</li><li class="">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="on">sıralı arama</li><li class="">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="sıralı arama">
@@ -342,7 +342,7 @@ const weak = enemies.find(e => e.hp < 20);
   <p class="mini">Doğru/yanlış döndüren küçük fonksiyona <b>koşul fonksiyonu</b> <span class="en">predicate</span> denir. Modern yazımda bunu <b>lambda / ok fonksiyonu</b> olarak veririz. İkisi de aynı işi yapar: <b>sıralı arama</b>.</p>
 </section>
 
-<section data-sec="sıralı arama · kaputun altında">
+<section data-sec="sıralı arama · perde arkası">
   <h2>⚙️ Nöbetçi hilesi <span class="en">sentinel</span></h2>
   <div class="cols c46">
     <div style="font-size:.9em">
@@ -356,7 +356,7 @@ const weak = enemies.find(e => e.hp < 20);
   </div>
 </section>
 
-<section data-sec="sıralı arama · kaputun altında">
+<section data-sec="sıralı arama · perde arkası">
   <h2>⚙️ Nöbetçili sıralı arama — kod</h2>
   <div class="tabs ">
     <div class="tab" data-label="C#">
@@ -443,7 +443,7 @@ function sentinelSearch(a, key) {
   <div class="lv">LEVEL 2</div>
   <div class="ttl">İkili Arama</div>
   <div class="sub"><i>binary search</i> — her soruda adayların yarısını at</div>
-  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="on">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="on">ikili arama</li><li class="">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="ikili arama">
@@ -812,7 +812,7 @@ def search(a, key):
   <aside class="notes">1) Python’da / ondalıklı sayı üretir → “list indices must be integers or slices, not float”. 2) Fonksiyon sonuna ulaşınca Python otomatik None döndürür → testler başarısız (beklenen -1).</aside>
 </section>
 
-<section data-sec="ikili arama · kaputun altında">
+<section data-sec="ikili arama · perde arkası">
   <h2>⚙️ Küçük dizilerde sıralı arama daha hızlı olabilir!</h2>
   <div class="cols">
     <div>
@@ -833,7 +833,7 @@ def search(a, key):
   <div class="lv">LEVEL 3</div>
   <div class="ttl">Oyunlarda İkili Arama</div>
   <div class="sub">XP tabloları · loot sandıkları · animasyon eğrileri</div>
-  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="on">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="on">oyunlarda ikili arama</li><li class="">ikiye bölme (bisection)</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="oyunlarda ikili arama">
@@ -1124,7 +1124,7 @@ function search(a, key) {
   <div class="lv">LEVEL 4</div>
   <div class="ttl">İkiye Bölme</div>
   <div class="sub"><i>bisection</i> — dizide değil, “cevabın kendisinde” ikili arama</div>
-  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="done">oyunlarda ikili arama</li><li class="on">ikiye bölme (bisection)</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="done">oyunlarda ikili arama</li><li class="on">ikiye bölme (bisection)</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="ikiye bölme">
@@ -1243,9 +1243,9 @@ const tHit = firstTrue(3, 4, touches);       // fonksiyonun ADINI veriyoruz
 
 <section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
   <div class="lv">LEVEL 5</div>
-  <div class="ttl">Kaputun Altında &amp; Ötesi</div>
+  <div class="ttl">Perde Arkası &amp; Ötesi</div>
   <div class="sub">enterpolasyon araması · üstel arama · sembol tabloları</div>
-  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="done">oyunlarda ikili arama</li><li class="done">ikiye bölme (bisection)</li><li class="on">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">arama problemi</li><li class="done">sıralı arama</li><li class="done">ikili arama</li><li class="done">oyunlarda ikili arama</li><li class="done">ikiye bölme (bisection)</li><li class="on">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="ötesi">

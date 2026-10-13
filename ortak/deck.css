@@ -1,5 +1,5 @@
 /* =====================================================================
-   deck.css — Princeton (algs4) sadeliği + oyun temalı bölüm geçişleri
+   deck.css — sade slayt düzeni + oyun temalı bölüm geçişleri
    Açık / koyu tema: :root[data-theme="light" | "dark"]
    ===================================================================== */
 :root {
@@ -42,10 +42,10 @@ html, body, .reveal-viewport { background: var(--bg); color: var(--ink); }
 .reveal .controls { color: var(--blue); }
 .reveal .progress { color: var(--red); height: 4px; }
 
-/* ---------- Princeton tarzı küçük başlık şeridi ---------- */
+/* ---------- küçük bölüm etiketi (sağ üst; tema düğmesinin solunda, kırpılmadan) ---------- */
 .reveal section[data-sec]::before {
-  content: attr(data-sec); position: absolute; top: -26px; right: 0;
-  font: 600 13px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  content: attr(data-sec); position: absolute; top: -15px; right: 62px;
+  font: 600 12px "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
 }
 
 /* ---------- renk sınıfları ---------- */

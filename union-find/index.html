@@ -47,7 +47,7 @@
       <li><b>Ağırlıklandırma</b>: küçük ağacı büyüğün altına koy <span class="en">weighted</span></li>
       <li><b>Yol sıkıştırma</b>: neredeyse sabit zaman <span class="en">path compression</span></li>
       <li><b>Uygulamalar</b>: labirent üretimi, perkolasyon, Go taş grupları</li>
-      <li>⚙️ <b>Kaputun altında</b>: nesne yok, sadece tamsayı dizileri</li>
+      <li>⚙️ <b>Perde arkası</b>: nesne yok, sadece tamsayı dizileri</li>
     </ol>
     <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
       <p>…bir oyunda <b>her seferinde farklı ama her zaman çözülebilir</b> labirentler üretebilecek ve “bu ikisi bağlı mı?” sorusunu milyonlarca nesne için bile anında cevaplayabileceksiniz.</p>
@@ -95,7 +95,7 @@
   <div class="lv">LEVEL 0</div>
   <div class="ttl">Dinamik Bağlantı</div>
   <div class="sub"><i>dynamic connectivity</i> — bağlantılar zamanla geliyor, sorular araya karışıyor</div>
-  <ul class="agenda"><li class="on">problem: dinamik bağlantı</li><li class="">quick-find</li><li class="">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="on">problem: dinamik bağlantı</li><li class="">quick-find</li><li class="">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="problem">
@@ -183,7 +183,7 @@ console.log(uf.count);              // 8
   <div class="lv">LEVEL 1</div>
   <div class="ttl">Quick-Find</div>
   <div class="sub">hızlı soru, yavaş birleştirme</div>
-  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="on">quick-find</li><li class="">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="on">quick-find</li><li class="">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="quick-find">
@@ -296,7 +296,7 @@ class QuickFind {
   <div class="lv">LEVEL 2</div>
   <div class="ttl">Quick-Union</div>
   <div class="sub">tembel yaklaşım: sadece kökleri bağla</div>
-  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="on">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="on">quick-union</li><li class="">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="🎒 ön bilgi">
@@ -452,7 +452,7 @@ function find(parent, p) {
   <div class="lv">LEVEL 3</div>
   <div class="ttl">Ağırlıklandırma</div>
   <div class="sub"><i>weighted quick-union</i> — küçük ağaç, büyüğün altına</div>
-  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="on">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="on">ağırlıklandırma</li><li class="">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="ağırlıklı">
@@ -580,7 +580,7 @@ function union(parent, size, p, q) {
   <div class="lv">LEVEL 4</div>
   <div class="ttl">Yol Sıkıştırma</div>
   <div class="sub"><i>path compression</i> — her find ağacı biraz daha düzleştirsin</div>
-  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="on">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="on">yol sıkıştırma</li><li class="">uygulamalar</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="yol sıkıştırma">
@@ -703,7 +703,7 @@ def find(parent, p):
   <div class="lv">LEVEL 5</div>
   <div class="ttl">Uygulamalar</div>
   <div class="sub">labirentler · perkolasyon · Go</div>
-  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="done">yol sıkıştırma</li><li class="on">uygulamalar</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="done">yol sıkıştırma</li><li class="on">uygulamalar</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="uygulamalar · oyunda">
@@ -820,12 +820,12 @@ function makeMaze(cols, rows) {
 
 <section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
   <div class="lv">LEVEL 6</div>
-  <div class="ttl">Kaputun Altında</div>
+  <div class="ttl">Perde Arkası</div>
   <div class="sub">nesne yok, çöp yok: sadece tamsayı dizileri</div>
-  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="done">yol sıkıştırma</li><li class="done">uygulamalar</li><li class="on">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">problem: dinamik bağlantı</li><li class="done">quick-find</li><li class="done">quick-union</li><li class="done">ağırlıklandırma</li><li class="done">yol sıkıştırma</li><li class="done">uygulamalar</li><li class="on">perde arkası</li></ul>
 </section>
 
-<section data-sec="kaputun altında">
+<section data-sec="perde arkası">
   <h2>⚙️ Neden bu kadar hızlı? Diziler!</h2>
   <div class="cols">
     <div class="box low"><span class="bt">⚙️ Bellek</span>

@@ -134,22 +134,39 @@
       }
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = t.dark ? '#1d2b1d' : '#e3efd5'; ctx.fillRect(0, 0, W, H);
-      ctx.font = '30px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🎯', s.tx, s.ty);
-      // gövde
-      ctx.save(); ctx.translate(s.bx, 210); ctx.rotate(rad(s.ba));
-      ctx.fillStyle = '#4a5a2a'; ctx.fillRect(-66, -44, 132, 14); ctx.fillRect(-66, 30, 132, 14);
-      ctx.fillStyle = '#7b8f3e'; rrect(ctx, -60, -34, 120, 68, 10); ctx.fill(); ctx.strokeStyle = '#3b4720'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = '700 12px "Source Sans 3"'; ctx.fillText('GÖVDE', -30, 0);
-      if (s.child) drawTurret();
+      ctx.strokeStyle = t.dark ? '#2b3d2b' : '#d2e2c0'; ctx.lineWidth = 1; for (let x = 40; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 30; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      const BY = 215, tcx = s.child ? s.bx : 320, tcy = BY, worldA = s.child ? s.ba + s.ta : s.ta;
+      const lab = (str, x, y, col, al) => { ctx.font = '700 12px "JetBrains Mono", monospace'; ctx.textAlign = al || 'center'; ctx.textBaseline = 'middle'; const w = ctx.measureText(str).width + 10, x0 = al === 'left' ? x - 5 : x - w / 2; ctx.fillStyle = t.dark ? 'rgba(20,24,20,.85)' : 'rgba(255,255,255,.88)'; ctx.fillRect(x0, y - 9, w, 18); ctx.fillStyle = col; ctx.fillText(str, x, y); };
+      const arc = (cx, cy, r, a0, a1, col, dash) => { ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.arc(cx, cy, r, rad(a0), rad(a1), a1 < a0); ctx.stroke(); ctx.setLineDash([]); };
+      const ray = (cx, cy, a, len, col, dash) => { ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.setLineDash(dash || [6, 5]); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(rad(a)) * len, cy + Math.sin(rad(a)) * len); ctx.stroke(); ctx.setLineDash([]); };
+      // hedef
+      [[15, '#c0392b'], [10, '#fff'], [5, '#c0392b']].forEach(([r, c2]) => { ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(s.tx, s.ty, r, 0, 7); ctx.fill(); });
+      if (s.aim) ray(tcx, tcy, worldA, Math.hypot(s.tx - tcx, s.ty - tcy), '#c0392b', [3, 4]);
+      // gövde (paletler, zırh, ön ok)
+      ctx.save(); ctx.translate(s.bx, BY); ctx.rotate(rad(s.ba));
+      ctx.fillStyle = '#39441f'; rrect(ctx, -84, -58, 168, 24, 8); ctx.fill(); rrect(ctx, -84, 34, 168, 24, 8); ctx.fill();
+      ctx.strokeStyle = '#5a6a34'; ctx.lineWidth = 2; for (let x = -74; x <= 74; x += 12) { ctx.beginPath(); ctx.moveTo(x, -56); ctx.lineTo(x, -36); ctx.moveTo(x, 36); ctx.lineTo(x, 56); ctx.stroke(); }
+      ctx.fillStyle = '#7b8f3e'; rrect(ctx, -74, -40, 148, 80, 12); ctx.fill(); ctx.strokeStyle = '#3b4720'; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = '#5f7230'; ctx.beginPath(); ctx.moveTo(74, -14); ctx.lineTo(92, 0); ctx.lineTo(74, 14); ctx.closePath(); ctx.fill(); ctx.stroke();   // ön taraf
       ctx.restore();
-      if (!s.child) { ctx.save(); ctx.translate(320, 210); drawTurret(); ctx.restore(); }
-      function drawTurret() {
-        ctx.save(); ctx.rotate(rad(s.ta));
-        ctx.fillStyle = '#5c6e2c'; ctx.fillRect(10, -6, 74, 12); ctx.strokeStyle = '#2d3816'; ctx.strokeRect(10, -6, 74, 12);
-        ctx.fillStyle = '#93a94c'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, 7); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = '700 10px "Source Sans 3"'; ctx.fillText('TARET', 0, 0);
-        ctx.restore();
-      }
+      // taret + namlu
+      ctx.save(); ctx.translate(tcx, tcy); ctx.rotate(rad(worldA));
+      ctx.fillStyle = '#4c5c26'; rrect(ctx, 22, -7, 96, 14, 4); ctx.fill(); ctx.strokeStyle = '#2d3816'; ctx.lineWidth = 2; ctx.stroke(); ctx.fillRect(112, -10, 12, 20);
+      ctx.fillStyle = '#9bb154'; ctx.beginPath(); ctx.arc(0, 0, 30, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#6f8236'; ctx.beginPath(); ctx.arc(-6, 0, 9, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      // açılar: dünya ekseni (gri), gövdenin önü (mavi), namlu (kırmızı)
+      const P2 = (cx, cy, a, r2) => [cx + Math.cos(rad(a)) * r2, cy + Math.sin(rad(a)) * r2];
+      ray(s.bx, BY, 0, 215, t.muted); ray(s.bx, BY, s.ba, 215, t.blue);
+      if (s.ba) arc(s.bx, BY, 170, 0, s.ba, t.blue);
+      const base = s.child ? s.ba : 0; ray(tcx, tcy, worldA, 170, t.red, [2, 4]);
+      if (s.ta) arc(tcx, tcy, 96, base, base + s.ta, t.amber);
+      const cl = (x, y) => [Math.max(70, Math.min(W - 80, x)), Math.max(14, Math.min(H - 14, y))];
+      lab('dünya ekseni: 0°', ...cl(s.bx + 222, BY - 14), t.muted);
+      lab(`gövdenin önü: ${s.ba}°`, ...cl(...P2(s.bx, BY, s.ba, 232).map((v, k) => v + (k ? 16 : 30))), t.blue);
+      lab(`taret ${s.ta >= 0 ? '+' : ''}${s.ta}° (gövdeye göre)`, ...cl(...P2(tcx, tcy, base + s.ta / 2, 118).map((v, k) => v + (k ? -20 : 80))), t.amber);
+      lab(`namlu: dünyada ${worldA}°`, ...cl(...P2(tcx, tcy, worldA, 190)), t.red);
+      lab('GÖVDE', s.bx - Math.cos(rad(s.ba)) * 52 + Math.sin(rad(s.ba)) * 22, BY - Math.sin(rad(s.ba)) * 52 - Math.cos(rad(s.ba)) * 22, '#3b4720');
+      if (!s.child) lab('TARET (bağımsız)', 320, 215 - 46, '#3b4720');
       const world = s.child ? s.ba + s.ta : s.ta;
       info.innerHTML = `<div class="hier-title">☰ Hierarchy</div>
         <div class="hier-row on">📁 Tank (Gövde) <span class="mini">konum x=${s.bx}, açı ${s.ba}°</span></div>
@@ -174,18 +191,18 @@
 
   /* ---------- 4) Davranış ağacı (behavior tree) ---------- */
   D.bt = function (root) {
-    const W = 1180, H = 300, BW = 150, BH = 46;
-    const tree = { t: 'sel', name: 'Ne yapayım?', kids: [
-      { t: 'seq', name: 'Saldır', kids: [
-        { t: 'cond', name: 'Düşman görünüyor?', f: s => s.enemy },
-        { t: 'cond', name: 'Can > %30?', f: s => s.hp > 30 },
-        { t: 'cond', name: 'Mermi var?', f: s => s.ammo },
-        { t: 'act', name: 'Ateş et! 🔫' }] },
-      { t: 'seq', name: 'Kaç', kids: [
-        { t: 'cond', name: 'Düşman görünüyor?', f: s => s.enemy },
-        { t: 'act', name: 'Siper al 🛡️' }] },
-      { t: 'act', name: 'Devriye gez 🚶' }] };
-    const all = layoutNary(tree, W, H, { mx: 90, top: 30, bottom: 30 });
+    const W = 1180, H = 330, BW = 164, BH = 50;
+    const tree = { t: 'sel', name: 'Ne yapayım?', ico: '🤔', kids: [
+      { t: 'seq', name: 'Saldır', ico: '⚔️', kids: [
+        { t: 'cond', name: 'Düşman var mı?', ico: '👀', f: s => s.enemy },
+        { t: 'cond', name: 'Can > %30?', ico: '❤️', f: s => s.hp > 30 },
+        { t: 'cond', name: 'Mermi var mı?', ico: '🔫', f: s => s.ammo },
+        { t: 'act', name: 'Ateş et!', ico: '💥' }] },
+      { t: 'seq', name: 'Kaç', ico: '🏃', kids: [
+        { t: 'cond', name: 'Düşman var mı?', ico: '👀', f: s => s.enemy },
+        { t: 'act', name: 'Siper al', ico: '🛡️' }] },
+      { t: 'act', name: 'Devriye gez', ico: '🚶' }] };
+    const all = layoutNary(tree, W, H, { mx: 96, top: 52, bottom: 34 });
     all.forEach((x, i) => (x.id = i));
     const c = el('canvas'); const ctx = SL.setupCanvas(c, W, H);
     const st = { enemy: true, hp: 70, ammo: true };
@@ -208,9 +225,11 @@
         const icon = { sel: '? ', seq: '→ ', cond: '◇ ', act: '' }[x.t];
         ctx.fillStyle = col ? (s === 'run' ? '#111' : '#fff') : t.ink;
         ctx.font = `${x.t === 'cond' ? 'italic ' : ''}700 ${x.t === 'sel' || x.t === 'seq' ? 16 : 14}px "Source Sans 3"`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(icon + x.name, x._x, x._y + 1);
-        if (x.t === 'sel' || x.t === 'seq') { ctx.fillStyle = t.muted; ctx.font = '600 11px "JetBrains Mono"'; ctx.fillText(x.t === 'sel' ? 'Selector (Seçici)' : 'Sequence (Dizi)', x._x, x._y - BH / 2 - 9); }
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        const lbl = icon + x.name, tw = ctx.measureText(lbl).width, x0 = x._x - (tw + 28) / 2, fnt = ctx.font;
+        ctx.font = '21px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif'; ctx.fillText(x.ico || '', x0, x._y + 2);   // emoji ayrı ve büyük: her sistemde renkli çıksın
+        ctx.font = fnt; ctx.fillText(lbl, x0 + 28, x._y + 1); ctx.textAlign = 'center';
+        if (x.t === 'sel' || x.t === 'seq') { ctx.fillStyle = t.muted; ctx.font = '600 12px "JetBrains Mono"'; { const cap = x.t === 'sel' ? 'Seçici (Selector): biri başarana kadar dene' : 'Dizi (Sequence): hepsi başarmalı', cw = ctx.measureText(cap).width + 12; ctx.fillStyle = t.card; ctx.fillRect(x._x - cw / 2, x._y - BH / 2 - 20, cw, 17); ctx.fillStyle = t.muted; ctx.fillText(cap, x._x, x._y - BH / 2 - 11); } }
       });
       note.textContent = f.note;
       bubble.innerHTML = f.decision ? `💂 NPC: <b>${f.decision}</b>` : '💂 NPC: <i>düşünüyor…</i>';

@@ -355,11 +355,11 @@ enemies.sort((x, y) => y.hp - x.hp);   // canı çok olan önce
   </div>
 </section>
 
-<section data-sec="oyunun kuralları · kaputun altında">
+<section data-sec="oyunun kuralları · perde arkası">
   <h2>Dizi bellekte nasıl durur? ⚙️</h2>
   <p>Dizi = bellekte <b>yan yana</b> duran, <b>aynı boyutta</b> kutular. Bu yüzden <code>a[i]</code>’nin adresi tek bir hesapla bulunur:</p>
   <div class="demo" data-demo="memory"></div>
-  <div class="box low fragment"><span class="bt">⚙️ Kaputun altında: işaretçi <span class="en">pointer</span></span>
+  <div class="box low fragment"><span class="bt">⚙️ Perde arkası: işaretçi <span class="en">pointer</span></span>
     Adres tutan değişkene <b>işaretçi</b> denir. C’de <code>a[i]</code> aslında <code>*(a + i)</code> demektir. C#’ta <code>class</code> nesneleri dizide <b>referans</b> (işaretçi) olarak durur; <code>struct</code>’lar ise doğrudan, yan yana.
   </div>
   <aside class="notes">Eleman türünü "Vector3" ve "referans" yapıp farkı gösterin. Bu, ileride "neden struct dizisi daha hızlı gezilir" ve "swap neyi kopyalar" sorularının temeli.</aside>
@@ -643,7 +643,7 @@ public static void sort(Comparable[] a)
       Tam olarak <b>N takas</b> — N’e göre doğrusal <span class="en">linear</span>. Bildiğimiz hiçbir sıralama algoritması bundan azıyla yetinmez.
     </div>
   </div>
-  <p class="fragment">Peki az takas <b>ne zaman</b> önemli? → Takaslanan şey <b>büyük</b> ya da yazmak <b>pahalıysa</b>. (Birazdan: “kaputun altında”)</p>
+  <p class="fragment">Peki az takas <b>ne zaman</b> önemli? → Takaslanan şey <b>büyük</b> ya da yazmak <b>pahalıysa</b>. (Birazdan: “perde arkası”)</p>
 </section>
 
 <section data-sec="selection sort · laboratuvar">
@@ -695,7 +695,7 @@ def sort(a):
   </div>
 </section>
 
-<section data-sec="selection sort · kaputun altında">
+<section data-sec="selection sort · perde arkası">
   <h2>⚙️ Takas ettiğimiz şey ne kadar büyük?</h2>
   <div class="cols">
     <div>
@@ -1036,7 +1036,7 @@ function insertionSortShift(a) {
   <aside class="notes">Kaynak: .NET Array.Sort belgeleri ("If the partition size is less than or equal to 16 elements, it uses an insertion sort algorithm"), CPython listsort.txt, V8 blog "Getting things sorted in V8" (2018).</aside>
 </section>
 
-<section data-sec="kaputun altında">
+<section data-sec="perde arkası">
   <h2>⚙️ Bellek hiyerarşisi: her “okuma” eşit değil <span class="en">memory hierarchy</span></h2>
   <p class="mini">Klasik “her programcının bilmesi gereken gecikmeler” (Jeff Dean / Peter Norvig). İnsan ölçeği: <b>1 ns = 1 saniye</b> olsaydı…</p>
   <table class="lat">
@@ -1051,14 +1051,14 @@ function insertionSortShift(a) {
   <aside class="notes">Çubuklar logaritmik ölçekte. Güncel interaktif sürüm kaynaklar slaytında (colin-scott.github.io). Sayılar donanıma göre değişir; önemli olan büyüklük sıraları.</aside>
 </section>
 
-<section data-sec="kaputun altında">
+<section data-sec="perde arkası">
   <h2>⚙️ Önbellek <span class="en">cache</span> simülasyonu: dizi vs bağlı liste <span class="en">linked list</span></h2>
   <div class="demo" data-demo="cache"></div>
   <p class="mini">Her hücre bir bellek adresi, her satır (8 hücre) bir önbellek satırı. Önbellek sadece 3 satır tutabiliyor. Dizi elemanları <b>yan yana</b>; bağlı liste düğümleri belleğe <b>dağılmış</b> (her düğüm bir sonrakinin adresini tutar).</p>
   <aside class="notes">Önce diziyi gezin: 16 erişimde sadece 2–3 ıska. Sonra listeyi: neredeyse her erişim ıska. Insertion sort dizide hep komşuya (j-1) baktığı için önbellek dostudur. Ayrıca oyun motorlarındaki "Data-Oriented Design" / Unity DOTS fikrinin özü budur.</aside>
 </section>
 
-<section data-sec="kaputun altında · hikâye">
+<section data-sec="perde arkası · hikâye">
   <h2>📜 Stack Overflow’un en ünlü sorusu</h2>
   <div class="cols c64">
     <div>
@@ -1271,7 +1271,7 @@ function draw() {
   </table>
 </section>
 
-<section data-sec="kaputun altında">
+<section data-sec="perde arkası">
   <h2>⚙️ Çöp toplayıcı <span class="en">garbage collector</span> ve takılan oyunlar</h2>
   <div class="cols">
     <div>

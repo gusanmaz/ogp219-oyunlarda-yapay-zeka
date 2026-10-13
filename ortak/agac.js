@@ -59,7 +59,7 @@
     }
     show(frame, animate = true) {
       this.frame = frame;
-      const L = SL.layoutBinary(frame.root, this.W, this.H, this.o);
+      const L = SL.layoutBinary(frame.root, this.W, this.H, Object.assign({ bottom: this.o.nulls ? 54 : 32 }, this.o));   // alt pay: yapraklar ve null çizgileri kutuya sığsın
       this.L = L;
       cancelAnimationFrame(this.raf);
       const from = this.cur;

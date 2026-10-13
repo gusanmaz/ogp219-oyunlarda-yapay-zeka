@@ -38,7 +38,7 @@
     tinyG: () => SL.Graph(13, SL.parseEdges('0-5 4-3 0-1 9-12 6-4 5-4 0-2 11-12 9-10 0-6 7-8 9-11 5-3'),
       [[110, 60], [230, 60], [40, 150], [250, 300], [200, 200], [110, 270], [140, 150], [360, 60], [500, 60], [410, 170], [330, 250], [520, 220], [460, 300]]),
     friends: () => SL.Graph(12, SL.parseEdges('0-1 0-2 1-3 2-3 3-4 4-5 4-6 6-7 5-8 8-9 7-9 9-10 10-11 2-6'),
-      [[60, 170], [150, 80], [150, 260], [250, 170], [350, 170], [440, 80], [440, 260], [540, 260], [540, 80], [630, 170], [720, 170], [800, 170]],
+      [[60, 170], [150, 80], [150, 260], [250, 170], [350, 170], [440, 80], [440, 260], [540, 260], [540, 80], [630, 170], [730, 170], [860, 170]],
       { labels: ['Sen', 'Ece', 'Can', 'Deniz', 'Mert', 'Ayşe', 'Ali', 'Zeynep', 'Kerem', 'Selin', 'Burak', 'Pro Oyuncu'] })
   };
 
@@ -54,13 +54,24 @@
       this.svg.addEventListener('click', e => { const g = e.target.closest('[data-v]'); if (g && this.click) this.click(+g.dataset.v); });
       SL.onTheme(() => this.last && this.render(this.last));
     }
-    setGraph(G) { this.G = G; }
+    setGraph(G) { this.G = G; this.labelSlots = null; this.fit(); }
+    /* görünen alanı grafın kendisine göre ayarla: hiçbir düğüm, rozet ya da yay kutunun dışında kalmasın (en-boy oranı korunur) */
+    fit() {
+      const G = this.G, r = this.o.r, W = this.o.W, H = this.o.H; if (!G || !G.pos || !G.pos.length) return;
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      G.pos.forEach((p, v) => { const lab = G.name(v), hw = lab.length > 2 ? lab.length * 4.6 + 8 : r; x0 = Math.min(x0, p[0] - hw - 12); x1 = Math.max(x1, p[0] + hw + 44); y0 = Math.min(y0, p[1] - r - 22); y1 = Math.max(y1, p[1] + r + 12); });
+      if (G.directed) { x0 -= 14; x1 += 6; y0 -= 10; y1 += 14; }
+      let w = x1 - x0, h = y1 - y0; const asp = W / H;
+      if (w / h < asp) { const nw = h * asp; x0 -= (nw - w) / 2; w = nw; } else { const nh = w / asp; y0 -= (nh - h) / 2; h = nh; }
+      this.svg.setAttribute('viewBox', `${Math.round(x0)} ${Math.round(y0)} ${Math.round(w)} ${Math.round(h)}`);
+    }
     render(f = {}) {
       this.last = f;
       const t = T(), G = this.G, r = this.o.r, ns = f.ns || {}, es = f.es || {}, badge = f.badge || {};
       let s = `<defs><marker id="gv-arr-${this.uid || (this.uid = Math.random().toString(36).slice(2, 7))}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
       const mk = `url(#gv-arr-${this.uid})`;
       const ecol = st => ({ tree: t.green, cur: t.amber, path: t.red, check: t.amber, mst: t.green, cand: t.purple, back: t.red, cross: t.muted, relax: t.blue }[st] || t['ink-2']);
+      const pend = [];
       G.edges.forEach(e => {
         const st = es[e.id], [x1, y1] = G.pos[e.v], [x2, y2] = G.pos[e.w];
         const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
@@ -69,15 +80,30 @@
         const ax = x1 + ux * oa, ay = y1 + uy * oa, bx = x2 - ux * (ob + (G.directed ? 3 : 0)), by = y2 - uy * (ob + (G.directed ? 3 : 0));
         const w = st === 'path' || st === 'mst' || st === 'tree' ? 4.5 : st === 'cur' ? 4 : st ? 3 : 1.8;
         const op = st === 'dim' ? 0.18 : st === 'cross' ? 0.5 : 1;
-        // ters yönlü kenar varsa biraz kavisli çiz
+        // ters yönlü kenar varsa iki kenarı ayrı yaylarla çiz: uçlar da yana kayar ki ok başları üst üste binmesin
         const twin = G.directed && G.edges.some(o => o.v === e.w && o.w === e.v);
-        if (twin) { const mx = (ax + bx) / 2 - uy * 14, my = (ay + by) / 2 + ux * 14; s += `<path d="M${ax},${ay} Q${mx},${my} ${bx},${by}" fill="none" stroke="${ecol(st)}" stroke-width="${w}" opacity="${op}" ${st === 'check' ? 'stroke-dasharray="6 4"' : ''} ${G.directed ? `marker-end="${mk}"` : ''}/>`; }
-        else s += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${ecol(st)}" stroke-width="${w}" opacity="${op}" stroke-linecap="round" ${st === 'check' ? 'stroke-dasharray="6 4"' : ''} ${G.directed ? `marker-end="${mk}"` : ''}/>`;
-        if (G.weighted && f.weights !== false) {
-          const mx = (x1 + x2) / 2 + (twin ? -uy * 14 : 0), my = (y1 + y2) / 2 + (twin ? ux * 14 : 0);
-          const lab = typeof e.wt === 'number' ? (Number.isInteger(e.wt) ? e.wt : e.wt.toFixed(2).replace(/^0/, '')) : e.wt;
-          s += `<rect x="${mx - 15}" y="${my - 10}" width="30" height="19" rx="5" fill="${t.card}" stroke="${st ? ecol(st) : t.rule}" opacity="${st === 'dim' ? 0.4 : 1}"/><text x="${mx}" y="${my + 5}" text-anchor="middle" font-size="12" font-weight="700" font-family="JetBrains Mono" fill="${t.ink}" opacity="${st === 'dim' ? 0.4 : 1}">${lab}</text>`;
+        let at;                                               // kenar üzerindeki nokta (etiket yerleştirmek için)
+        if (twin) {
+          const px = -uy, py = ux, sa = 6, bow = 34;
+          const sx = ax + px * sa, sy = ay + py * sa, ex = bx + px * sa, ey = by + py * sa, cx = (sx + ex) / 2 + px * bow, cy = (sy + ey) / 2 + py * bow;
+          s += `<path d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" fill="none" stroke="${ecol(st)}" stroke-width="${w}" opacity="${op}" ${st === 'check' ? 'stroke-dasharray="6 4"' : ''} ${G.directed ? `marker-end="${mk}"` : ''}/>`;
+          at = q => [(1 - q) * (1 - q) * sx + 2 * (1 - q) * q * cx + q * q * ex, (1 - q) * (1 - q) * sy + 2 * (1 - q) * q * cy + q * q * ey];
+        } else {
+          s += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${ecol(st)}" stroke-width="${w}" opacity="${op}" stroke-linecap="round" ${st === 'check' ? 'stroke-dasharray="6 4"' : ''} ${G.directed ? `marker-end="${mk}"` : ''}/>`;
+          at = q => [ax + (bx - ax) * q, ay + (by - ay) * q];
         }
+        if (G.weighted && f.weights !== false) pend.push({ e, st, at });
+      });
+      // ağırlık etiketleri: bütün çizgilerden SONRA çizilir; başka etiketle ya da düğümle çakışmayan ilk yere konur
+      const placed = [];
+      const clash = (x, y) => placed.some(p => Math.abs(p[0] - x) < 33 && Math.abs(p[1] - y) < 21) || G.pos.some(p => Math.abs(p[0] - x) < r + 15 && Math.abs(p[1] - y) < r + 10);
+      const order = this.labelSlots || (this.labelSlots = new Map());
+      pend.forEach(({ e, st, at }) => {
+        let q = order.get(e.id);
+        if (q == null) { q = [0.5, 0.42, 0.58, 0.34, 0.66, 0.27, 0.73, 0.2, 0.8].find(c => !clash(...at(c))); if (q == null) q = 0.5; order.set(e.id, q); }
+        const [mx, my] = at(q); placed.push([mx, my]);
+        const lab = typeof e.wt === 'number' ? (Number.isInteger(e.wt) ? e.wt : e.wt.toFixed(2).replace(/^0/, '')) : e.wt;
+        s += `<rect x="${mx - 15}" y="${my - 10}" width="30" height="19" rx="5" fill="${t.card}" stroke="${st ? ecol(st) : t.rule}" opacity="${st === 'dim' ? 0.4 : 1}"/><text x="${mx}" y="${my + 5}" text-anchor="middle" font-size="12" font-weight="700" font-family="JetBrains Mono" fill="${t.ink}" opacity="${st === 'dim' ? 0.4 : 1}">${lab}</text>`;
       });
       for (let v = 0; v < G.V; v++) {
         const [x, y] = G.pos[v], st = ns[v] || '';
@@ -92,7 +118,8 @@
         const lab = G.name(v), wide = lab.length > 2;
         s += `<g data-v="${v}" style="cursor:pointer" opacity="${op}">` + (wide ? `<rect x="${x - lab.length * 4.6 - 8}" y="${y - r + 2}" width="${lab.length * 9.2 + 16}" height="${2 * r - 4}" rx="${r - 2}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${dash}/>` : `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${dash}/>`) +
           `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="${wide ? 14 : 15}" font-weight="700" font-family="${wide ? 'Source Sans 3' : 'JetBrains Mono'}" fill="${ink}">${lab}</text></g>`;
-        if (badge[v] != null) s += `<g><rect x="${x + r - 6}" y="${y - r - 12}" width="${String(badge[v]).length * 8 + 10}" height="18" rx="9" fill="${t.purple}"/><text x="${x + r - 1 + String(badge[v]).length * 4}" y="${y - r + 1}" text-anchor="middle" font-size="12" font-weight="700" font-family="JetBrains Mono" fill="#fff">${badge[v]}</text></g>`;
+        const bx0 = wide ? x + lab.length * 4.6 + 2 : x + r - 6;
+        if (badge[v] != null) s += `<g><rect x="${bx0}" y="${y - r - 12}" width="${String(badge[v]).length * 8 + 10}" height="18" rx="9" fill="${t.purple}"/><text x="${bx0 + 5 + String(badge[v]).length * 4}" y="${y - r + 1}" text-anchor="middle" font-size="12" font-weight="700" font-family="JetBrains Mono" fill="#fff">${badge[v]}</text></g>`;
       }
       this.svg.innerHTML = s;
     }

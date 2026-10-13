@@ -48,7 +48,7 @@
       <li><b>Şekil ve performans</b> — neden bazen çok hızlı, bazen çok yavaş?</li>
       <li><b>Sıralı işlemler</b> — eşleştirme, skor tablosu <span class="en">ordered operations</span></li>
       <li><b>Silme</b> <span class="en">deletion</span></li>
-      <li>⚙️ <b>Kaputun altında</b>: özyineleme, yığın taşması, bellek · 🌳 quadtree, BSP</li>
+      <li>⚙️ <b>Perde arkası</b>: özyineleme, yığın taşması, bellek · 🌳 quadtree, BSP</li>
     </ol>
     <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
       <p>…bir NPC’nin “beynini” ağaç olarak çizebilecek, 1 milyon oyuncu arasından birini <b>20 adımda</b> bulmanın nasıl mümkün olduğunu açıklayabileceksiniz.</p>
@@ -112,7 +112,7 @@
   <div class="lv">LEVEL 0</div>
   <div class="ttl">Ağaç Nedir?</div>
   <div class="sub"><i>tree</i> — kök yukarıda, yapraklar aşağıda (evet, ters 🙃)</div>
-  <ul class="agenda"><li class="on">ağaç nedir?</li><li class="">gezinme &amp; davranış ağaçları</li><li class="">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="on">ağaç nedir?</li><li class="">gezinme &amp; davranış ağaçları</li><li class="">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="ağaç nedir?">
@@ -194,22 +194,22 @@
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-class GameObject:                     # sınıf = kalıp
-    def __init__(self, name):         # yapıcı
-        self.name = name              # alan: ad
-        self.children = []            # alan: çocuklar (boş liste)
+class GameObject:              # sınıf = kalıp
+    def __init__(self, name):  # yapıcı
+        self.name = name       # alan: ad
+        self.children = []     # alan: çocuklar (boş liste)
 
-tank = GameObject("Tank")             # nesne üret
+tank = GameObject("Tank")      # nesne üret
 turret = GameObject("Taret")
-tank.children.append(turret)          # taret, tankın çocuğu oldu
-print(tank.children[0].name)          # Taret
+tank.children.append(turret)   # taret, tankın çocuğu oldu
+print(tank.children[0].name)   # Taret
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 class GameObj                              // sınıf = kalıp
 {
-    public string Name;                    // alan: ad
+    public string Name;                                   // alan: ad
     public List<GameObj> Children = new List<GameObj>();  // alan: çocuklar
 
     public GameObj(string name) { Name = name; }          // yapıcı
@@ -217,8 +217,8 @@ class GameObj                              // sınıf = kalıp
 
 var tank = new GameObj("Tank");            // new → nesne üret
 var turret = new GameObj("Taret");
-tank.Children.Add(turret);                 // taret, tankın çocuğu oldu
-Debug.Log(tank.Children[0].Name);          // Taret
+tank.Children.Add(turret);         // taret, tankın çocuğu oldu
+Debug.Log(tank.Children[0].Name);  // Taret
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -264,37 +264,37 @@ console.log(tank.children[0].name);   // Taret
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 a = Node("S")
-b = a                 # yeni düğüm YOK: b de aynı düğümü gösterir
+b = a               # yeni düğüm YOK: b de aynı düğümü gösterir
 b.key = "X"
-print(a.key)          # X  ← a da değişti!
+print(a.key)        # X  ← a da değişti!
 
-a.left = Node("E")    # a'nın sol bağlantısı yeni bir düğümü gösterir
-print(a.right)        # None → sağ çocuk yok
-print(a.right.key)    # ❌ HATA: None'ın key alanı olmaz
+a.left = Node("E")  # a'nın sol bağlantısı yeni bir düğümü gösterir
+print(a.right)      # None → sağ çocuk yok
+print(a.right.key)  # ❌ HATA: None'ın key alanı olmaz
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 Node a = new Node("S");
-Node b = a;              // yeni düğüm YOK: b de aynı düğümü gösterir
+Node b = a;                  // yeni düğüm YOK: b de aynı düğümü gösterir
 b.Key = "X";
-Debug.Log(a.Key);        // X  ← a da değişti!
+Debug.Log(a.Key);            // X  ← a da değişti!
 
-a.Left = new Node("E");  // sol bağlantı yeni düğümü gösterir
+a.Left = new Node("E");      // sol bağlantı yeni düğümü gösterir
 Debug.Log(a.Right == null);  // True → sağ çocuk yok
-Debug.Log(a.Right.Key);  // ❌ NullReferenceException
+Debug.Log(a.Right.Key);      // ❌ NullReferenceException
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const a = new Node("S");
-const b = a;             // yeni düğüm YOK: b de aynı düğümü gösterir
+const b = a;               // yeni düğüm YOK: b de aynı düğümü gösterir
 b.key = "X";
-console.log(a.key);      // X  ← a da değişti!
+console.log(a.key);        // X  ← a da değişti!
 
-a.left = new Node("E");  // sol bağlantı yeni düğümü gösterir
-console.log(a.right);    // null → sağ çocuk yok
-console.log(a.right.key); // ❌ TypeError: null'ın özelliği okunamaz
+a.left = new Node("E");    // sol bağlantı yeni düğümü gösterir
+console.log(a.right);      // null → sağ çocuk yok
+console.log(a.right.key);  // ❌ TypeError: null'ın özelliği okunamaz
 </script></code></pre>
     </div>
   </div>
@@ -309,9 +309,9 @@ console.log(a.right.key); // ❌ TypeError: null'ın özelliği okunamaz
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def print_tree(node, depth=0):
-    print("  " * depth + node.name)     # 1) önce kendini yaz
-    for child in node.children:         # 2) sonra her çocuk için
-        print_tree(child, depth + 1)    #    AYNI işi tekrarla
+    print("  " * depth + node.name)   # 1) önce kendini yaz
+    for child in node.children:       # 2) sonra her çocuk için
+        print_tree(child, depth + 1)  #    AYNI işi tekrarla
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -319,17 +319,17 @@ def print_tree(node, depth=0):
 void PrintTree(Transform node, int depth = 0)
 {
     Debug.Log(new string(' ', depth * 2) + node.name);  // 1) kendini yaz
-    foreach (Transform child in node)                    // 2) her çocuk için (Unity: Transform'u gezmek = çocuklarını gezmek)
-        PrintTree(child, depth + 1);                     //    AYNI işi tekrarla
+    foreach (Transform child in node)                   // 2) her çocuk için (Unity: Transform'u gezmek = çocuklarını gezmek)
+        PrintTree(child, depth + 1);                    //    AYNI işi tekrarla
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function printTree(node, depth = 0) {
-  console.log('  '.repeat(depth) + node.name);   // 1) kendini yaz
-  for (const child of node.children)             // 2) her çocuk için
-    printTree(child, depth + 1);                 //    AYNI işi tekrarla
+  console.log('  '.repeat(depth) + node.name);  // 1) kendini yaz
+  for (const child of node.children)            // 2) her çocuk için
+    printTree(child, depth + 1);                //    AYNI işi tekrarla
 }
 </script></code></pre>
     </div>
@@ -344,7 +344,7 @@ function printTree(node, depth = 0) {
   </div>
 </section>
 
-<section data-sec="ağaç nedir? · kaputun altında">
+<section data-sec="ağaç nedir? · perde arkası">
   <h2>⚙️ Özyineleme nasıl çalışır? Çağrı yığını <span class="en">call stack</span></h2>
   <div class="cols">
     <div>
@@ -394,7 +394,7 @@ function printTree(node, depth = 0) {
   <div class="lv">LEVEL 1</div>
   <div class="ttl">Gezinme &amp; Davranış Ağaçları</div>
   <div class="sub"><i>traversal · behavior trees</i> — ağacı hangi sırayla dolaşırız?</div>
-  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="on">gezinme &amp; davranış ağaçları</li><li class="">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="on">gezinme &amp; davranış ağaçları</li><li class="">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="gezinme">
@@ -410,21 +410,21 @@ function printTree(node, depth = 0) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 class Node:
     def __init__(self, key, val=None):
-        self.key = key       # anahtar (neye göre sıralıyoruz)
-        self.val = val       # değer (sakladığımız bilgi)
-        self.left = None     # sol çocuk
-        self.right = None    # sağ çocuk
-        self.size = 1        # bu alt ağaçtaki düğüm sayısı
+        self.key = key     # anahtar (neye göre sıralıyoruz)
+        self.val = val     # değer (sakladığımız bilgi)
+        self.left = None   # sol çocuk
+        self.right = None  # sağ çocuk
+        self.size = 1      # bu alt ağaçtaki düğüm sayısı
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 class Node
 {
-    public int Key;            // anahtar (gerçek kodda: TKey)
-    public string Val;         // değer   (gerçek kodda: TValue)
-    public Node Left, Right;   // çocuklar (yoksa null)
-    public int Size = 1;       // bu alt ağaçtaki düğüm sayısı
+    public int Key;           // anahtar (gerçek kodda: TKey)
+    public string Val;        // değer   (gerçek kodda: TValue)
+    public Node Left, Right;  // çocuklar (yoksa null)
+    public int Size = 1;      // bu alt ağaçtaki düğüm sayısı
     public Node(int key, string val) { Key = key; Val = val; }
 }
 </script></code></pre>
@@ -433,11 +433,11 @@ class Node
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 class Node {
   constructor(key, val) {
-    this.key = key;      // anahtar (neye göre sıralıyoruz)
-    this.val = val;      // değer (sakladığımız bilgi)
-    this.left = null;    // sol çocuk
-    this.right = null;   // sağ çocuk
-    this.size = 1;       // bu alt ağaçtaki düğüm sayısı
+    this.key = key;     // anahtar (neye göre sıralıyoruz)
+    this.val = val;     // değer (sakladığımız bilgi)
+    this.left = null;   // sol çocuk
+    this.right = null;  // sağ çocuk
+    this.size = 1;      // bu alt ağaçtaki düğüm sayısı
   }
 }
 </script></code></pre>
@@ -460,44 +460,44 @@ class Node {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def show(key):                   # sıradan bir fonksiyon
+def show(key):                               # sıradan bir fonksiyon
     print("ziyaret:", key)
 
-preorder(root, show)             # fonksiyonun ADINI veriyoruz (parantez yok)
-preorder(root, print)            # hazır print de olur
+preorder(root, show)                         # fonksiyonun ADINI veriyoruz (parantez yok)
+preorder(root, print)                        # hazır print de olur
 
 out = []
-def collect(key):                # anahtarları listeye toplayan fonksiyon
+def collect(key):                            # anahtarları listeye toplayan fonksiyon
     out.append(key)
 preorder(root, collect)
 
-preorder(root, lambda key: out.append(key))   # aynısı, lambda ile tek satırda
+preorder(root, lambda key: out.append(key))  # aynısı, lambda ile tek satırda
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 void Show(int key) { Debug.Log("ziyaret: " + key); }
 
-Preorder(root, Show);            // metodun ADINI veriyoruz
+Preorder(root, Show);                     // metodun ADINI veriyoruz
 
 // Action<int> = "int alan, bir şey döndürmeyen fonksiyon" türü
 var outList = new List<int>();
-Preorder(root, outList.Add);     // listenin Add metodu da olur
+Preorder(root, outList.Add);              // listenin Add metodu da olur
 
-Preorder(root, key => outList.Add(key));   // aynısı, lambda ile
+Preorder(root, key => outList.Add(key));  // aynısı, lambda ile
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function show(key) { console.log("ziyaret:", key); }
 
-preorder(root, show);            // fonksiyonun ADINI veriyoruz
+preorder(root, show);                  // fonksiyonun ADINI veriyoruz
 
 const out = [];
 function collect(key) { out.push(key); }
 preorder(root, collect);
 
-preorder(root, key => out.push(key));   // aynısı, ok fonksiyonu ile
+preorder(root, key => out.push(key));  // aynısı, ok fonksiyonu ile
 </script></code></pre>
     </div>
   </div>
@@ -517,10 +517,10 @@ preorder(root, key => out.push(key));   // aynısı, ok fonksiyonu ile
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def preorder(x, visit):
-    if x is None: return       # temel durum
-    visit(x.key)               # KÖK
-    preorder(x.left, visit)    # sol
-    preorder(x.right, visit)   # sağ
+    if x is None: return      # temel durum
+    visit(x.key)              # KÖK
+    preorder(x.left, visit)   # sol
+    preorder(x.right, visit)  # sağ
 # inorder: visit satırı iki çağrının ARASINA, postorder: SONA taşınır
 </script></code></pre>
     </div>
@@ -528,10 +528,10 @@ def preorder(x, visit):
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 void Preorder(Node x, Action<int> visit)
 {
-    if (x == null) return;      // temel durum
-    visit(x.Key);               // KÖK
-    Preorder(x.Left, visit);    // sol
-    Preorder(x.Right, visit);   // sağ
+    if (x == null) return;     // temel durum
+    visit(x.Key);              // KÖK
+    Preorder(x.Left, visit);   // sol
+    Preorder(x.Right, visit);  // sağ
 }
 // Inorder: visit satırı iki çağrının ARASINA, Postorder: SONA taşınır
 </script></code></pre>
@@ -539,10 +539,10 @@ void Preorder(Node x, Action<int> visit)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function preorder(x, visit) {
-  if (x === null) return;     // temel durum
-  visit(x.key);               // KÖK
-  preorder(x.left, visit);    // sol
-  preorder(x.right, visit);   // sağ
+  if (x === null) return;    // temel durum
+  visit(x.key);              // KÖK
+  preorder(x.left, visit);   // sol
+  preorder(x.right, visit);  // sağ
 }
 // inorder: visit satırı iki çağrının ARASINA, postorder: SONA taşınır
 </script></code></pre>
@@ -562,15 +562,15 @@ function preorder(x, visit) {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-from collections import deque   # deque: iki ucundan da hızlı ekleme/çıkarma yapılan kuyruk
+from collections import deque  # deque: iki ucundan da hızlı ekleme/çıkarma yapılan kuyruk
 
 def level_order(root, visit):
-    q = deque([root])            # kuyruğa kökü koy
+    q = deque([root])          # kuyruğa kökü koy
     while q:
-        x = q.popleft()          # öndekini çıkar (dequeue)
+        x = q.popleft()        # öndekini çıkar (dequeue)
         if x is None: continue
         visit(x.key)
-        q.append(x.left)         # çocukları sona ekle (enqueue)
+        q.append(x.left)       # çocukları sona ekle (enqueue)
         q.append(x.right)
 </script></code></pre>
     </div>
@@ -657,23 +657,23 @@ function levelOrder(root, visit) {
   <div class="tabs " style="font-size:.64em">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-class Selector:                          # "?" — biri başarılı olana kadar dene
-    def __init__(self, *kids):           # *kids: istediğin kadar çocuk ver
+class Selector:                 # "?" — biri başarılı olana kadar dene
+    def __init__(self, *kids):  # *kids: istediğin kadar çocuk ver
         self.kids = kids
     def tick(self, npc):
-        for k in self.kids:              # geleneksel yazım
+        for k in self.kids:     # geleneksel yazım
             if k.tick(npc):
-                return True              # biri başarılı → dur
+                return True     # biri başarılı → dur
         return False
         # modern tek satır: return any(k.tick(npc) for k in self.kids)
 
-class Sequence:                          # "→" — biri başarısız olana kadar çalıştır
+class Sequence:                 # "→" — biri başarısız olana kadar çalıştır
     def __init__(self, *kids):
         self.kids = kids
     def tick(self, npc):
         for k in self.kids:
             if not k.tick(npc):
-                return False             # biri başarısız → dur
+                return False    # biri başarısız → dur
         return True
         # modern tek satır: return all(k.tick(npc) for k in self.kids)
 
@@ -681,14 +681,14 @@ brain = Selector(
     Sequence(Cond(lambda n: n.sees_enemy), Cond(lambda n: n.hp > 30), Act(shoot)),
     Sequence(Cond(lambda n: n.sees_enemy), Act(take_cover)),
     Act(patrol))
-brain.tick(guard)                        # her karede (ya da 0.2 sn'de bir)
+brain.tick(guard)               # her karede (ya da 0.2 sn'de bir)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 interface IBTNode { bool Tick(Npc npc); }
 
-class Selector : IBTNode            // "?" — biri başarılı olana kadar dene
+class Selector : IBTNode  // "?" — biri başarılı olana kadar dene
 {
     readonly IBTNode[] kids;
     public Selector(params IBTNode[] kids) { this.kids = kids; }
@@ -699,7 +699,7 @@ class Selector : IBTNode            // "?" — biri başarılı olana kadar dene
     }
 }
 
-class Sequence : IBTNode            // "→" — biri başarısız olana kadar çalıştır
+class Sequence : IBTNode  // "→" — biri başarısız olana kadar çalıştır
 {
     readonly IBTNode[] kids;
     public Sequence(params IBTNode[] kids) { this.kids = kids; }
@@ -713,20 +713,20 @@ class Sequence : IBTNode            // "→" — biri başarısız olana kadar �
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-class Selector {                     // "?" — biri başarılı olana kadar dene
-  constructor(...kids) { this.kids = kids; }   // ...kids: istediğin kadar çocuk
+class Selector {                              // "?" — biri başarılı olana kadar dene
+  constructor(...kids) { this.kids = kids; }  // ...kids: istediğin kadar çocuk
   tick(npc) {
-    for (const k of this.kids)       // geleneksel yazım
-      if (k.tick(npc)) return true;  // biri başarılı → dur
+    for (const k of this.kids)                // geleneksel yazım
+      if (k.tick(npc)) return true;           // biri başarılı → dur
     return false;
     // modern tek satır: return this.kids.some(k => k.tick(npc));
   }
 }
-class Sequence {                     // "→" — biri başarısız olana kadar
+class Sequence {                              // "→" — biri başarısız olana kadar
   constructor(...kids) { this.kids = kids; }
   tick(npc) {
     for (const k of this.kids)
-      if (!k.tick(npc)) return false; // biri başarısız → dur
+      if (!k.tick(npc)) return false;         // biri başarısız → dur
     return true;
     // modern tek satır: return this.kids.every(k => k.tick(npc));
   }
@@ -780,7 +780,7 @@ const brain = new Selector(
   <div class="lv">LEVEL 2</div>
   <div class="ttl">Arama</div>
   <div class="sub"><i>searching</i> — 1 milyon kayıt içinde birini nasıl bulursun?</div>
-  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="on">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="on">arama &amp; ikili arama</li><li class="">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="arama">
@@ -808,32 +808,32 @@ const brain = new Selector(
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-inventory = {}                  # dict = sembol tablosu
-inventory["iksir"] = 3          # put
+inventory = {}                 # dict = sembol tablosu
+inventory["iksir"] = 3         # put
 inventory["kılıç"] = 1
-print(inventory.get("iksir"))   # get → 3
-print("kalkan" in inventory)    # var mı? → False
-del inventory["kılıç"]          # sil
+print(inventory.get("iksir"))  # get → 3
+print("kalkan" in inventory)   # var mı? → False
+del inventory["kılıç"]         # sil
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 var inventory = new Dictionary<string, int>();
-inventory["iksir"] = 3;                       // put
+inventory["iksir"] = 3;         // put
 inventory["kılıç"] = 1;
-Debug.Log(inventory["iksir"]);                // get → 3
+Debug.Log(inventory["iksir"]);  // get → 3
 if (inventory.TryGetValue("kalkan", out int n)) { /* var */ }
-inventory.Remove("kılıç");                    // sil
+inventory.Remove("kılıç");      // sil
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const inventory = new Map();
-inventory.set("iksir", 3);          // put
+inventory.set("iksir", 3);             // put
 inventory.set("kılıç", 1);
-console.log(inventory.get("iksir")); // get → 3
-console.log(inventory.has("kalkan")); // var mı? → false
-inventory.delete("kılıç");          // sil
+console.log(inventory.get("iksir"));   // get → 3
+console.log(inventory.has("kalkan"));  // var mı? → false
+inventory.delete("kılıç");             // sil
 </script></code></pre>
     </div>
   </div>
@@ -863,47 +863,47 @@ inventory.delete("kılıç");          // sil
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-11|2|3-4|5-8|9-10|11"><script type="text/template">
-def binary_search(a, key):           # a SIRALI olmalı!
+def binary_search(a, key):    # a SIRALI olmalı!
     lo, hi = 0, len(a) - 1
-    while lo <= hi:                  # aralık boş değilken
-        mid = lo + (hi - lo) // 2    # ortadaki indeks
+    while lo <= hi:           # aralık boş değilken
+        mid = lo + (hi - lo)  // 2    # ortadaki indeks
         if key < a[mid]:
-            hi = mid - 1             # sol yarıda ara
+            hi = mid - 1      # sol yarıda ara
         elif key > a[mid]:
-            lo = mid + 1             # sağ yarıda ara
+            lo = mid + 1      # sağ yarıda ara
         else:
-            return mid               # bulundu
-    return -1                        # yok
+            return mid        # bulundu
+    return -1                 # yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-static int BinarySearch(int[] a, int key)    // a SIRALI olmalı!
+static int BinarySearch(int[] a, int key)     // a SIRALI olmalı!
 {
     int lo = 0, hi = a.Length - 1;
     while (lo <= hi)
     {
         int mid = lo + (hi - lo) / 2;
-        if      (key < a[mid]) hi = mid - 1;   // sol yarı
-        else if (key > a[mid]) lo = mid + 1;   // sağ yarı
-        else return mid;                       // bulundu
+        if      (key < a[mid]) hi = mid - 1;  // sol yarı
+        else if (key > a[mid]) lo = mid + 1;  // sağ yarı
+        else return mid;                      // bulundu
     }
-    return -1;                                 // yok
+    return -1;                                // yok
 }
 // Hazırı: Array.BinarySearch(a, key)
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function binarySearch(a, key) {        // a SIRALI olmalı!
+function binarySearch(a, key) {           // a SIRALI olmalı!
   let lo = 0, hi = a.length - 1;
   while (lo <= hi) {
     const mid = lo + Math.floor((hi - lo) / 2);
-    if (key < a[mid]) hi = mid - 1;    // sol yarı
-    else if (key > a[mid]) lo = mid + 1; // sağ yarı
-    else return mid;                   // bulundu
+    if (key < a[mid]) hi = mid - 1;       // sol yarı
+    else if (key > a[mid]) lo = mid + 1;  // sağ yarı
+    else return mid;                      // bulundu
   }
-  return -1;                           // yok
+  return -1;                              // yok
 }
 </script></code></pre>
     </div>
@@ -974,15 +974,15 @@ int mid = lo + (hi - lo) / 2;  // ✅ taşma yok
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-mid = (lo + hi) // 2       # Python'da sorun yok: tamsayılar sınırsız büyür
-mid = lo + (hi - lo) // 2  # ama C#/C++/Java'ya geçince bu alışkanlık hayat kurtarır
+mid = (lo + hi)       // 2       # Python'da sorun yok: tamsayılar sınırsız büyür
+mid = lo + (hi - lo)  // 2  # ama C#/C++/Java'ya geçince bu alışkanlık hayat kurtarır
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const mid = Math.floor((lo + hi) / 2); // sayılar 2^53'e kadar güvenli
-const mid2 = (lo + hi) >>> 1;          // ✅ yaygın hile (işaretsiz kaydırma)
-const mid3 = (lo + hi) >> 1;           // ❌ 2^31'i aşınca negatif olur!
+const mid = Math.floor((lo + hi) / 2);  // sayılar 2^53'e kadar güvenli
+const mid2 = (lo + hi) >>> 1;           // ✅ yaygın hile (işaretsiz kaydırma)
+const mid3 = (lo + hi) >> 1;            // ❌ 2^31'i aşınca negatif olur!
 </script></code></pre>
     </div>
   </div>
@@ -1013,7 +1013,7 @@ const mid3 = (lo + hi) >> 1;           // ❌ 2^31'i aşınca negatif olur!
   <div class="lv">LEVEL 3</div>
   <div class="ttl">İkili Arama Ağacı</div>
   <div class="sub"><i>binary search tree (BST)</i> — solum küçük, sağım büyük</div>
-  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="on">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="on">ikili arama ağacı (BST)</li><li class="">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="BST">
@@ -1048,25 +1048,25 @@ const mid3 = (lo + hi) >> 1;           // ❌ 2^31'i aşınca negatif olur!
 <pre><code class="language-python" data-trim data-line-numbers="1-11|2-3|4-5|6-7|8-9"><script type="text/template">
 def get(x, key):
     if x is None:
-        return None                  # bulunamadı
+        return None               # bulunamadı
     if key < x.key:
-        return get(x.left, key)      # sol alt ağaçta ara
+        return get(x.left, key)   # sol alt ağaçta ara
     elif key > x.key:
-        return get(x.right, key)     # sağ alt ağaçta ara
+        return get(x.right, key)  # sağ alt ağaçta ara
     else:
-        return x.val                 # bulundu!
+        return x.val              # bulundu!
 
-get(root, "H")                       # kullanım: kökten başla
+get(root, "H")                    # kullanım: kökten başla
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 string Get(Node x, int key)
 {
-    if (x == null) return null;                 // bulunamadı
+    if (x == null) return null;          // bulunamadı
     if      (key < x.Key) return Get(x.Left, key);
     else if (key > x.Key) return Get(x.Right, key);
-    else                  return x.Val;         // bulundu!
+    else                  return x.Val;  // bulundu!
 }
 </script></code></pre>
     </div>
@@ -1117,27 +1117,27 @@ private Value get(Node x, Key key) {
 <pre><code class="language-python" data-trim data-line-numbers="1-13|2-3|4-7|8-9|10-11"><script type="text/template">
 def put(x, key, val):
     if x is None:
-        return Node(key, val)             # yeni düğüm
+        return Node(key, val)                  # yeni düğüm
     if key < x.key:
-        x.left = put(x.left, key, val)    # ← bağlantıyı yeniden kur
+        x.left = put(x.left, key, val)         # ← bağlantıyı yeniden kur
     elif key > x.key:
         x.right = put(x.right, key, val)
     else:
-        x.val = val                       # anahtar var → güncelle
-    x.size = 1 + size(x.left) + size(x.right)   # size(x): x yoksa 0, varsa x.size
-    return x                              # bu alt ağacın kökü
+        x.val = val                            # anahtar var → güncelle
+    x.size = 1 + size(x.left) + size(x.right)  # size(x): x yoksa 0, varsa x.size
+    return x                                   # bu alt ağacın kökü
 
-root = put(root, "S", 1)                  # kullanım
+root = put(root, "S", 1)                       # kullanım
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 Node Put(Node x, int key, string val)
 {
-    if (x == null) return new Node(key, val);      // yeni düğüm
+    if (x == null) return new Node(key, val);  // yeni düğüm
     if      (key < x.Key) x.Left  = Put(x.Left,  key, val);
     else if (key > x.Key) x.Right = Put(x.Right, key, val);
-    else                  x.Val = val;             // güncelle
+    else                  x.Val = val;         // güncelle
     x.Size = 1 + Size(x.Left) + Size(x.Right);
     return x;
 }
@@ -1147,10 +1147,10 @@ Node Put(Node x, int key, string val)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function put(x, key, val) {
-  if (x === null) return new Node(key, val);        // yeni düğüm
+  if (x === null) return new Node(key, val);  // yeni düğüm
   if (key < x.key)      x.left  = put(x.left, key, val);
   else if (key > x.key) x.right = put(x.right, key, val);
-  else                  x.val = val;                // güncelle
+  else                  x.val = val;          // güncelle
   x.size = 1 + size(x.left) + size(x.right);
   return x;
 }
@@ -1303,7 +1303,7 @@ function inorder(node, visit) {
   <div class="lv">LEVEL 4</div>
   <div class="ttl">Şekil ve Performans</div>
   <div class="sub">Aynı anahtarlar, farklı sıra → bambaşka ağaçlar</div>
-  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="on">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="on">şekil ve performans</li><li class="">sıralı işlemler</li><li class="">silme</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="performans">
@@ -1364,7 +1364,7 @@ function inorder(node, visit) {
   </div>
 </section>
 
-<section data-sec="performans · kaputun altında">
+<section data-sec="performans · perde arkası">
   <h2>⚙️ Derin ağaç + özyineleme = yığın taşması <span class="en">stack overflow</span></h2>
   <div class="cols c46">
     <div>
@@ -1427,7 +1427,7 @@ function get(root, key) {      // özyinelemesiz: yığın büyümez
   <div class="lv">LEVEL 5</div>
   <div class="ttl">Sıralı İşlemler</div>
   <div class="sub"><i>ordered operations</i> — BST’nin hash tablosuna karşı kozu</div>
-  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="on">sıralı işlemler</li><li class="">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="on">sıralı işlemler</li><li class="">silme</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="sıralı işlemler">
@@ -1471,43 +1471,43 @@ function get(root, key) {      // özyinelemesiz: yığın büyümez
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def floor(x, key):             # <= key olan EN BÜYÜK düğüm
+def floor(x, key):                 # <= key olan EN BÜYÜK düğüm
     if x is None:
         return None
     if key == x.key:
         return x
     if key < x.key:
-        return floor(x.left, key)      # cevap solda olmalı
-    t = floor(x.right, key)            # sağda daha iyisi var mı?
+        return floor(x.left, key)  # cevap solda olmalı
+    t = floor(x.right, key)        # sağda daha iyisi var mı?
     if t is not None:
         return t
-    return x                           # yoksa x'in kendisi
+    return x                       # yoksa x'in kendisi
     # modern: return t if t is not None else x
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-Node Floor(Node x, int key)          // <= key olan EN BÜYÜK düğüm
+Node Floor(Node x, int key)                      // <= key olan EN BÜYÜK düğüm
 {
     if (x == null) return null;
     if (key == x.Key) return x;
-    if (key < x.Key) return Floor(x.Left, key);   // cevap solda
-    Node t = Floor(x.Right, key);                 // sağda daha iyisi?
+    if (key < x.Key) return Floor(x.Left, key);  // cevap solda
+    Node t = Floor(x.Right, key);                // sağda daha iyisi?
     if (t != null) return t;
-    return x;                                     // yoksa x
+    return x;                                    // yoksa x
     // modern: return t ?? x;
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function floor(x, key) {             // <= key olan EN BÜYÜK düğüm
+function floor(x, key) {                       // <= key olan EN BÜYÜK düğüm
   if (x === null) return null;
   if (key === x.key) return x;
-  if (key < x.key) return floor(x.left, key);   // cevap solda
-  const t = floor(x.right, key);                // sağda daha iyisi?
+  if (key < x.key) return floor(x.left, key);  // cevap solda
+  const t = floor(x.right, key);               // sağda daha iyisi?
   if (t !== null) return t;
-  return x;                                     // yoksa x
+  return x;                                    // yoksa x
   // modern: return t ?? x;
 }
 </script></code></pre>
@@ -1547,12 +1547,12 @@ function floor(x, key) {             // <= key olan EN BÜYÜK düğüm
   <div class="tabs " style="font-size:.85em">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def size(x):                   # alt ağaçtaki düğüm sayısı
+def size(x):       # alt ağaçtaki düğüm sayısı
     if x is None:
         return 0
     return x.size
 
-def rank(x, key):              # key'den KÜÇÜK kaç anahtar var?
+def rank(x, key):  # key'den KÜÇÜK kaç anahtar var?
     if x is None: return 0
     if key < x.key:
         return rank(x.left, key)
@@ -1560,7 +1560,7 @@ def rank(x, key):              # key'den KÜÇÜK kaç anahtar var?
         return 1 + size(x.left) + rank(x.right, key)
     return size(x.left)
 
-def select(x, i):              # i. en küçük (0'dan sayarak)
+def select(x, i):  # i. en küçük (0'dan sayarak)
     t = size(x.left)
     if i < t:  return select(x.left, i)
     if i > t:  return select(x.right, i - t - 1)
@@ -1569,13 +1569,13 @@ def select(x, i):              # i. en küçük (0'dan sayarak)
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-int Size(Node x)                   // alt ağaçtaki düğüm sayısı
+int Size(Node x)            // alt ağaçtaki düğüm sayısı
 {
     if (x == null) return 0;
-    return x.Size;                 // modern: int Size(Node x) => x == null ? 0 : x.Size;
+    return x.Size;          // modern: int Size(Node x) => x == null ? 0 : x.Size;
 }
 
-int Rank(Node x, int key)          // key'den KÜÇÜK kaç anahtar?
+int Rank(Node x, int key)   // key'den KÜÇÜK kaç anahtar?
 {
     if (x == null) return 0;
     if (key < x.Key) return Rank(x.Left, key);
@@ -1583,7 +1583,7 @@ int Rank(Node x, int key)          // key'den KÜÇÜK kaç anahtar?
     return Size(x.Left);
 }
 
-Node Select(Node x, int i)         // i. en küçük (0'dan)
+Node Select(Node x, int i)  // i. en küçük (0'dan)
 {
     int t = Size(x.Left);
     if (i < t) return Select(x.Left, i);
@@ -1594,19 +1594,19 @@ Node Select(Node x, int i)         // i. en küçük (0'dan)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function size(x) {                 // alt ağaçtaki düğüm sayısı
+function size(x) {       // alt ağaçtaki düğüm sayısı
   if (x === null) return 0;
-  return x.size;                   // modern: const size = x => (x === null ? 0 : x.size);
+  return x.size;         // modern: const size = x => (x === null ? 0 : x.size);
 }
 
-function rank(x, key) {            // key'den KÜÇÜK kaç anahtar?
+function rank(x, key) {  // key'den KÜÇÜK kaç anahtar?
   if (x === null) return 0;
   if (key < x.key) return rank(x.left, key);
   if (key > x.key) return 1 + size(x.left) + rank(x.right, key);
   return size(x.left);
 }
 
-function select(x, i) {            // i. en küçük (0'dan)
+function select(x, i) {  // i. en küçük (0'dan)
   const t = size(x.left);
   if (i < t) return select(x.left, i);
   if (i > t) return select(x.right, i - t - 1);
@@ -1632,11 +1632,11 @@ function select(x, i) {            // i. en küçük (0'dan)
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def keys(x, lo, hi, out):
     if x is None: return
-    if lo < x.key:                 # solda da aralıkta anahtar olabilir
+    if lo < x.key:         # solda da aralıkta anahtar olabilir
         keys(x.left, lo, hi, out)
-    if lo <= x.key <= hi:          # bu düğüm aralıkta
+    if lo <= x.key <= hi:  # bu düğüm aralıkta
         out.append(x.key)
-    if hi > x.key:                 # sağda da olabilir
+    if hi > x.key:         # sağda da olabilir
         keys(x.right, lo, hi, out)
 </script></code></pre>
     </div>
@@ -1645,9 +1645,9 @@ def keys(x, lo, hi, out):
 void Keys(Node x, int lo, int hi, List<int> outList)
 {
     if (x == null) return;
-    if (lo < x.Key) Keys(x.Left, lo, hi, outList);     // sol
-    if (lo <= x.Key && x.Key <= hi) outList.Add(x.Key); // kendisi
-    if (hi > x.Key) Keys(x.Right, lo, hi, outList);    // sağ
+    if (lo < x.Key) Keys(x.Left, lo, hi, outList);       // sol
+    if (lo <= x.Key && x.Key <= hi) outList.Add(x.Key);  // kendisi
+    if (hi > x.Key) Keys(x.Right, lo, hi, outList);      // sağ
 }
 // Hazırı: sortedSet.GetViewBetween(lo, hi)
 </script></code></pre>
@@ -1656,9 +1656,9 @@ void Keys(Node x, int lo, int hi, List<int> outList)
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function keys(x, lo, hi, out) {
   if (x === null) return;
-  if (lo < x.key) keys(x.left, lo, hi, out);          // sol
-  if (lo <= x.key && x.key <= hi) out.push(x.key);    // kendisi
-  if (hi > x.key) keys(x.right, lo, hi, out);         // sağ
+  if (lo < x.key) keys(x.left, lo, hi, out);        // sol
+  if (lo <= x.key && x.key <= hi) out.push(x.key);  // kendisi
+  if (hi > x.key) keys(x.right, lo, hi, out);       // sağ
 }
 </script></code></pre>
     </div>
@@ -1674,7 +1674,7 @@ function keys(x, lo, hi, out) {
   <div class="lv">LEVEL 6</div>
   <div class="ttl">Silme</div>
   <div class="sub"><i>deletion</i> — en zor kısım: iki çocuklu düğüm</div>
-  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="done">sıralı işlemler</li><li class="on">silme</li><li class="">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="done">sıralı işlemler</li><li class="on">silme</li><li class="">perde arkası &amp; ötesi</li></ul>
 </section>
 
 <section data-sec="silme">
@@ -1693,8 +1693,8 @@ function keys(x, lo, hi, out) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def delete_min(x):
     if x.left is None:
-        return x.right             # en küçük bu → yerine sağ çocuğu
-    x.left = delete_min(x.left)    # bağlantıyı yeniden kur
+        return x.right           # en küçük bu → yerine sağ çocuğu
+    x.left = delete_min(x.left)  # bağlantıyı yeniden kur
     x.size = 1 + size(x.left) + size(x.right)
     return x
 
@@ -1705,8 +1705,8 @@ root = delete_min(root)
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 Node DeleteMin(Node x)
 {
-    if (x.Left == null) return x.Right;    // en küçük bu
-    x.Left = DeleteMin(x.Left);            // bağlantıyı yeniden kur
+    if (x.Left == null) return x.Right;  // en küçük bu
+    x.Left = DeleteMin(x.Left);          // bağlantıyı yeniden kur
     x.Size = 1 + Size(x.Left) + Size(x.Right);
     return x;
 }
@@ -1715,8 +1715,8 @@ Node DeleteMin(Node x)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function deleteMin(x) {
-  if (x.left === null) return x.right;   // en küçük bu
-  x.left = deleteMin(x.left);            // bağlantıyı yeniden kur
+  if (x.left === null) return x.right;  // en küçük bu
+  x.left = deleteMin(x.left);           // bağlantıyı yeniden kur
   x.size = 1 + size(x.left) + size(x.right);
   return x;
 }
@@ -1746,12 +1746,12 @@ def delete(x, key):
     if key < x.key:   x.left = delete(x.left, key)
     elif key > x.key: x.right = delete(x.right, key)
     else:
-        if x.right is None: return x.left    # durum 1 ve 2
+        if x.right is None: return x.left  # durum 1 ve 2
         if x.left is None:  return x.right
-        t = x                                # durum 3:
-        x = min_node(t.right)                #   ardıl = sağdaki en küçük
-        x.right = delete_min(t.right)        #   ardılı yerinden çıkar
-        x.left = t.left                      #   eski solu bağla
+        t = x                              # durum 3:
+        x = min_node(t.right)              #   ardıl = sağdaki en küçük
+        x.right = delete_min(t.right)      #   ardılı yerinden çıkar
+        x.left = t.left                    #   eski solu bağla
     x.size = 1 + size(x.left) + size(x.right)
     return x
 </script></code></pre>
@@ -1765,10 +1765,10 @@ Node Delete(Node x, int key)
     else if (key > x.Key) x.Right = Delete(x.Right, key);
     else
     {
-        if (x.Right == null) return x.Left;   // durum 1 ve 2
+        if (x.Right == null) return x.Left;  // durum 1 ve 2
         if (x.Left  == null) return x.Right;
-        Node t = x;                           // durum 3:
-        x = Min(t.Right);                     //   ardıl
+        Node t = x;                          // durum 3:
+        x = Min(t.Right);                    //   ardıl
         x.Right = DeleteMin(t.Right);
         x.Left = t.Left;
     }
@@ -1784,10 +1784,10 @@ function del(x, key) {
   if (key < x.key) x.left = del(x.left, key);
   else if (key > x.key) x.right = del(x.right, key);
   else {
-    if (x.right === null) return x.left;   // durum 1 ve 2
+    if (x.right === null) return x.left;  // durum 1 ve 2
     if (x.left === null) return x.right;
-    const t = x;                           // durum 3:
-    x = min(t.right);                      //   ardıl
+    const t = x;                          // durum 3:
+    x = min(t.right);                     //   ardıl
     x.right = deleteMin(t.right);
     x.left = t.left;
   }
@@ -1834,12 +1834,12 @@ function del(x, key) {
 
 <section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
   <div class="lv">LEVEL 7</div>
-  <div class="ttl">Kaputun Altında &amp; Ötesi</div>
+  <div class="ttl">Perde Arkası &amp; Ötesi</div>
   <div class="sub">bellek · çöp toplayıcı · hazır yapılar · uzaysal ağaçlar</div>
-  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="done">sıralı işlemler</li><li class="done">silme</li><li class="on">kaputun altında &amp; ötesi</li></ul>
+  <ul class="agenda"><li class="done">ağaç nedir?</li><li class="done">gezinme &amp; davranış ağaçları</li><li class="done">arama &amp; ikili arama</li><li class="done">ikili arama ağacı (BST)</li><li class="done">şekil ve performans</li><li class="done">sıralı işlemler</li><li class="done">silme</li><li class="on">perde arkası &amp; ötesi</li></ul>
 </section>
 
-<section data-sec="kaputun altında">
+<section data-sec="perde arkası">
   <h2>⚙️ Ağaçlar bellekte: düğümler dağınık durur</h2>
   <div class="cols">
     <div>
@@ -1854,7 +1854,7 @@ function del(x, key) {
   </div>
 </section>
 
-<section data-sec="kaputun altında">
+<section data-sec="perde arkası">
   <h2>⚙️ Nesne yerine dizi: işaretçi yerine indeks</h2>
   <div class="cols c64">
   <div class="tabs ">
@@ -1863,7 +1863,7 @@ function del(x, key) {
 // Düğüm nesneleri yerine paralel diziler:
 // tek seferde ayrılır → GC'ye çöp yok, bellekte yan yana
 int[] key   = new int[MAX];
-int[] left  = new int[MAX];    // -1 = null
+int[] left  = new int[MAX];  // -1 = null
 int[] right = new int[MAX];
 int count = 0;
 
@@ -1871,33 +1871,33 @@ int NewNode(int k)
 {
     key[count] = k;
     left[count] = right[count] = -1;
-    return count++;            // "işaretçi" artık bir indeks
+    return count++;          // "işaretçi" artık bir indeks
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 # Düğüm nesneleri yerine paralel listeler
-key, left, right = [], [], []     # -1 = None
+key, left, right = [], [], []  # -1 = None
 
 def new_node(k):
     key.append(k)
     left.append(-1)
     right.append(-1)
-    return len(key) - 1           # "işaretçi" artık bir indeks
+    return len(key) - 1        # "işaretçi" artık bir indeks
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Typed array'ler: bellekte gerçekten yan yana duran sayılar
 const key   = new Int32Array(MAX);
-const left  = new Int32Array(MAX).fill(-1);   // -1 = null
+const left  = new Int32Array(MAX).fill(-1);  // -1 = null
 const right = new Int32Array(MAX).fill(-1);
 let count = 0;
 
 function newNode(k) {
   key[count] = k;
-  return count++;               // "işaretçi" artık bir indeks
+  return count++;                            // "işaretçi" artık bir indeks
 }
 </script></code></pre>
     </div>

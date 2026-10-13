@@ -468,6 +468,31 @@ function acyclicSP(adj, s, order) {         // order: topolojik sıra
 </section>
 
 <section data-sec="negatif">
+  <h2>Problem: eksi ağırlık ne demek, Dijkstra neden yanılır?</h2>
+  <div class="cols c46">
+    <div class="box game" style="font-size:.8em"><span class="bt">🎮 Geçince <b>kazandıran</b> yollar</span>
+      <ul style="font-size:.92em">
+        <li>Şimdiye kadar her kenar bir <b>bedeldi</b>: süre, mesafe, yakıt. Hepsi artı.</li>
+        <li>Bazı kenarlar <b>kazandırır</b>: içinden geçince can dolduran şifalı pınar, yokuş aşağı inerken dolan batarya, ödül veren ara görev.</li>
+        <li>“Bedel” yerine “bedel − kazanç” yazınca ağırlık <b>eksi</b> olabilir.</li>
+        <li>Soru aynı: A’dan B’ye <b>toplamı en küçük</b> yol hangisi?</li>
+      </ul>
+      <p class="mini">Bir de en önemli kullanım var: <b>döngü</b> boyunca toplam eksiyse, o döngüde her tur kâr edilir. Oyun ekonomisindeki açıkları bulmanın yolu budur (birazdan).</p>
+    </div>
+    <div class="box warn" style="font-size:.78em"><span class="bt">Dijkstra’nın varsayımı çöker</span>
+      <p>Dijkstra kuyruktan çıkan düğüme “uzaklığı <b>kesinleşti</b>” der; çünkü daha uzun bir yoldan dolaşmak onu kısaltamaz. Eksi kenar varsa <b>kısaltabilir</b>.</p>
+      <table class="sum-t" style="font-size:20px"><tr><th>kenar</th><th>ağırlık</th></tr><tr><td>0 → 1</td><td>4</td></tr><tr><td>0 → 2</td><td>5</td></tr><tr><td>2 → 1</td><td><b>−3</b></td></tr></table>
+      <ul style="font-size:.92em">
+        <li>Dijkstra: kuyrukta 1 (uzaklık 4) ve 2 (uzaklık 5). En küçük 1 → “1’in uzaklığı <b>4</b>, kesin.”</li>
+        <li>Sonra 2 çıkar; 2 → 1 kenarı: 5 − 3 = <b>2</b>. Ama 1 çoktan “kesin” sayıldı.</li>
+        <li>Doğru cevap 2; Dijkstra 4 dedi.</li>
+      </ul>
+      <p class="mini">“Bütün ağırlıklara 3 ekleyip eksiyi yok edeyim” işe yaramaz: çok kenarlı yollar daha çok cezalanır, en kısa yol değişir.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="negatif">
   <h2>Bellman–Ford</h2>
   <div class="cols c46">
     <div style="font-size:.88em">
@@ -530,9 +555,61 @@ function bellmanFord(V, edges, s) {         // edges: [v, w, ağırlık]
 </section>
 
 <section data-sec="negatif">
+  <h2>Elle izleme: Bellman–Ford tur tur</h2>
+  <div class="cols c46">
+    <div style="font-size:.82em">
+      <p>Aynı üç kenar; kenarlar <b>listede yazıldığı sırayla</b> gevşetiliyor: 0 → 1 (4), 2 → 1 (−3), 0 → 2 (5). Kaynak 0.</p>
+      <ul>
+        <li>Fikir: hangi düğümün “kesin” olduğuna karar vermeye çalışma. <b>Bütün kenarları</b> gevşet; sonra bir daha; bir daha…</li>
+        <li>Her tur, doğru bilgiyi <b>bir kenar daha uzağa</b> taşır. En kısa yol en çok V − 1 kenarlıdır: V − 1 tur yeter.</li>
+        <li>Ek veri yapısı yok: yalnızca <code>dist[]</code> dizisi ve kenar listesi. (Dijkstra’da öncelik kuyruğu vardı.)</li>
+        <li>Son bir <b>kontrol turu</b>: hâlâ kısalan bir kenar varsa, sonsuza kadar kısaltan bir <b>eksi döngü</b> var demektir.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.78em"><span class="bt">dist[0], dist[1], dist[2]</span>
+      <table class="sum-t" style="font-size:19px"><tr><th>tur</th><th>gevşetilen kenar</th><th>hesap</th><th>dist[]</th></tr><tr><td>başlangıç</td><td>—</td><td>—</td><td>0, ∞, ∞</td></tr><tr><td>1</td><td>0 → 1 (4)</td><td>0 + 4 = 4 &lt; ∞</td><td>0, <b>4</b>, ∞</td></tr><tr><td>1</td><td>2 → 1 (−3)</td><td>∞ − 3: 2’ye henüz ulaşılmadı</td><td>0, 4, ∞</td></tr><tr><td>1</td><td>0 → 2 (5)</td><td>0 + 5 = 5 &lt; ∞</td><td>0, 4, <b>5</b></td></tr><tr><td>2</td><td>0 → 1 (4)</td><td>değişmez</td><td>0, 4, 5</td></tr><tr><td>2</td><td>2 → 1 (−3)</td><td>5 − 3 = <b>2</b> &lt; 4</td><td>0, <b>2</b>, 5</td></tr><tr><td>2</td><td>0 → 2 (5)</td><td>değişmez</td><td>0, 2, 5</td></tr><tr><td>kontrol</td><td>üç kenar da</td><td>hiçbiri kısalmıyor</td><td>eksi döngü <b>yok</b> ✔</td></tr></table>
+      <p class="mini">1. turda 2 → 1 kenarı işe yaramadı, çünkü 2’nin uzaklığı henüz bilinmiyordu. 2. turda bilindi ve 1’in uzaklığı düzeldi: turların <b>tekrarlanmasının</b> nedeni bu. Maliyet: tur sayısı × kenar sayısı = (V − 1) · E.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="negatif">
+  <h2>Kur, arbitraj ve “neden logaritma?”</h2>
+  <div class="cols c46">
+    <div style="font-size:.8em">
+      <ul>
+        <li><b>Kur</b> = takas oranı. Tüccar “1 Altın verene <b>10</b> Gümüş veririm” diyorsa Altın → Gümüş kuru 10’dur. Geri dönüş kuru ayrıdır: 1 Gümüş → 0,09 Altın.</li>
+        <li><b>Arbitraj</b>: bir tur takas yapıp başladığınız paraya <b>daha fazlasıyla</b> dönmek. Oyunda bu bir hatadır: oyuncu aynı turu yüz kez atıp sınırsız zengin olur.</li>
+        <li>Bir turun sonucu, yol üstündeki kurların <b>çarpımıdır</b>. Çarpım 1’den büyükse kâr var.</li>
+        <li>Sorun: en kısa yol algoritmaları <b>toplar</b>, çarpmaz.</li>
+        <li><b>Logaritma</b> çarpmayı toplamaya çevirir: ln(a · b) = ln a + ln b. (ln x: “2,718’in kaçıncı kuvveti x eder?” 1’den büyük sayılarda artı, küçüklerde eksi, ln 1 = 0.)</li>
+        <li>Kenar ağırlığı olarak <b>−ln(kur)</b> yazarsak: çarpım &gt; 1 ⇔ ln’lerin toplamı &gt; 0 ⇔ −ln’lerin toplamı <b>&lt; 0</b>. Yani kârlı tur = <b>eksi döngü</b>; onu da Bellman–Ford’un kontrol turu bulur.</li>
+      </ul>
+    </div>
+    <div class="box info" style="font-size:.78em"><span class="bt">Elle hesap: Altın → Gümüş → Mücevher → Altın</span>
+      <table class="sum-t" style="font-size:19px"><tr><th>takas</th><th>kur</th><th>elde</th><th>ln(kur)</th><th>ağırlık = −ln(kur)</th></tr><tr><td>başlangıç</td><td>—</td><td>1 Altın</td><td>—</td><td>—</td></tr><tr><td>Altın → Gümüş</td><td>10</td><td>10 Gümüş</td><td>2,303</td><td>−2,303</td></tr><tr><td>Gümüş → Mücevher</td><td>0,25</td><td>2,5 Mücevher</td><td>−1,386</td><td>+1,386</td></tr><tr><td>Mücevher → Altın</td><td>0,43</td><td><b>1,075 Altın</b></td><td>−0,844</td><td>+0,844</td></tr><tr><td><b>tur</b></td><td>çarpım <b>1,075</b></td><td>%7,5 kâr</td><td>toplam +0,073</td><td>toplam <b>−0,073</b></td></tr></table>
+      <p class="mini">Kontrol: e<sup>0,073</sup> = 1,075 ✓. Öbür turlar zararda: Altın → Gümüş → Altın = 10 · 0,09 = 0,90; Altın → Kürk → Altın = 2 · 0,48 = 0,96.</p>
+      <p class="mini">Aynı numara her “çarparak birleşen” ölçüde işe yarar: art arda isabet olasılıkları, hasar çarpanları, güvenilirlik. Çarpımı en büyük yol = −ln toplamı en küçük yol.</p>
+    </div>
+  </div>
+</section>
+
+<section data-sec="negatif">
+  <div class="box ask" style="font-size:.86em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span>
+    <ul>
+      <li><b>Düğümler</b> dört para birimi; <b>okların üstündeki sayı</b> kur: “okun başındaki paradan 1 verirsen ucundakinden bu kadar alırsın”.</li>
+      <li>Algoritma kurlarla değil <b>−ln(kur)</b> ağırlıklarıyla çalışır; sağdaki tabloda <code>distTo[]</code> bu ağırlıkların toplamıdır (Altın’dan o paraya en “ucuz” takas zinciri). Mor rozetler aynı sayılar.</li>
+      <li><b>“İleri ▶|”</b> ile adım adım: mavi kenar az önce gevşedi. Üç tur (V − 1 = 3) sonunda tablo oturmuş olmalıydı.</li>
+      <li><b>4. tur</b> kontrol turudur: bir kenar <b>hâlâ</b> gevşiyor → kırmızı döngü belirir: Altın → Gümüş → Mücevher → Altın, çarpım 1,075.</li>
+      <li>Soru: tüccarlardan birinin kurunu değiştirerek açığı kapatın. Mücevher → Altın kuru en çok kaç olabilir? (10 · 0,25 · k ≤ 1 → k ≤ 0,40.)</li>
+    </ul>
+  </div>
+</section>
+
+<section data-sec="negatif">
   <h2>💰 Oyun ekonomisinde arbitraj = negatif döngü</h2>
   <div class="demo" data-demo="arbitrage"></div>
-  <p class="mini">Princeton’ın döviz arbitrajı örneğinin oyun hâli: NPC tüccarlarının takas oranları. Bir döngüde oranların çarpımı 1’den büyükse, oyuncu sonsuza kadar dönüp bedava altın basar — ekonomi çöker! Hile: −ln ile çarpımı toplama çeviririz; çarpım &gt; 1 ⇔ toplam &lt; 0 ⇔ negatif döngü.</p>
+  <p class="mini">NPC tüccarlarının takas oranları. Bir döngüde kurların çarpımı 1’den büyükse oyuncu o turu tekrar tekrar atıp bedava altın basar. Bellman–Ford’un kontrol turu bu döngüyü bulur; siz de yayımlamadan önce kurları düzeltirsiniz.</p>
 </section>
 
 <section data-sec="negatif">

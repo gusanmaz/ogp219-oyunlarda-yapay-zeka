@@ -46,7 +46,7 @@
       <li><b>Klasik uygulamalar</b>: parantez kontrolü, hesap makinesi, çağrı yığını</li>
       <li><b>Oyunlarda</b>: geri al/yinele, menü yığını, RTS hedef kuyruğu, olay kuyruğu, kombo girdileri</li>
       <li><b>Yığın mı kuyruk mu?</b> Boya kovası ile DFS ve BFS</li>
-      <li>⚙️ <b>Kaputun altında</b>: yığın belleği ve öbek belleği <span class="en">stack vs heap</span></li>
+      <li>⚙️ <b>Perde arkası</b>: yığın belleği ve öbek belleği <span class="en">stack vs heap</span></li>
     </ol>
     <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
       <p>…Ctrl+Z’nin, “geri” düğmesinin ve bir RTS biriminin hedef listesinin içinde ne olduğunu bilecek, yol bulma algoritmalarının temelini atmış olacaksınız.</p>
@@ -108,7 +108,7 @@
   <div class="lv">LEVEL 0</div>
   <div class="ttl">Kurallar</div>
   <div class="sub"><i>API</i> — ne yapar? (nasıl yaptığı sonra)</div>
-  <ul class="agenda"><li class="on">kurallar: API</li><li class="">gerçekleme</li><li class="">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="on">kurallar: API</li><li class="">gerçekleme</li><li class="">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="kurallar">
@@ -230,7 +230,7 @@ const nxt = waypoints.shift();       // dequeue ⚠️ shift() O(N)!
   <div class="lv">LEVEL 1</div>
   <div class="ttl">Gerçekleme</div>
   <div class="sub"><i>implementation</i> — bağlı liste, dinamik dizi, dairesel tampon</div>
-  <ul class="agenda"><li class="done">kurallar: API</li><li class="on">gerçekleme</li><li class="">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="on">gerçekleme</li><li class="">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="gerçekleme">
@@ -625,7 +625,7 @@ class RingQueue {
   <div class="lv">LEVEL 2</div>
   <div class="ttl">Klasik Uygulamalar</div>
   <div class="sub">parantezler · hesap makinesi · çağrı yığını</div>
-  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="on">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="on">klasik uygulamalar</li><li class="">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="uygulamalar">
@@ -706,7 +706,7 @@ def eval_postfix(s):
   </div>
 </section>
 
-<section data-sec="uygulamalar · kaputun altında">
+<section data-sec="uygulamalar · perde arkası">
   <h2>⚙️ Bilgisayarın kendi yığını: çağrı yığını <span class="en">call stack</span></h2>
   <div class="demo" data-demo="callstack"></div>
   <aside class="notes">Her fonksiyon çağrısı yığına bir “kare” ekler (parametreler, yerel değişkenler, dönüş adresi). Özyineleme bu yüzden mümkün: her fakt(n) kendi n’ini ayrı bir karede tutar. Ağaçlar dersinde aynı yığını BST işlemlerinde göreceğiz.</aside>
@@ -730,7 +730,7 @@ def eval_postfix(s):
   <div class="lv">LEVEL 3</div>
   <div class="ttl">Oyunlarda</div>
   <div class="sub">geri al · menü yığını · hedef kuyruğu · olay kuyruğu · kombo tamponu</div>
-  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="on">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="on">oyunlarda</li><li class="">yığın mı kuyruk mu?</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="oyunlarda">
@@ -989,7 +989,7 @@ function processEvents() {             // draw() sonunda çağrılır
   <div class="lv">LEVEL 4</div>
   <div class="ttl">Yığın mı, Kuyruk mu?</div>
   <div class="sub">aynı algoritma, farklı kap → DFS ve BFS</div>
-  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="done">oyunlarda</li><li class="on">yığın mı kuyruk mu?</li><li class="">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="done">oyunlarda</li><li class="on">yığın mı kuyruk mu?</li><li class="">perde arkası</li></ul>
 </section>
 
 <section data-sec="DFS · BFS">
@@ -1094,12 +1094,12 @@ function floodFill(grid, sx, sy, useStack) {
 
 <section class="level" data-background-gradient="radial-gradient(circle at 70% 30%, #4a1d7a 0%, #120c2c 60%, #07060f 100%)">
   <div class="lv">LEVEL 5</div>
-  <div class="ttl">Kaputun Altında</div>
+  <div class="ttl">Perde Arkası</div>
   <div class="sub">yığın belleği ve öbek belleği · stack overflow</div>
-  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="done">oyunlarda</li><li class="done">yığın mı kuyruk mu?</li><li class="on">kaputun altında</li></ul>
+  <ul class="agenda"><li class="done">kurallar: API</li><li class="done">gerçekleme</li><li class="done">klasik uygulamalar</li><li class="done">oyunlarda</li><li class="done">yığın mı kuyruk mu?</li><li class="on">perde arkası</li></ul>
 </section>
 
-<section data-sec="kaputun altında">
+<section data-sec="perde arkası">
   <h2>⚙️ İki bellek bölgesi: yığın ve öbek <span class="en">stack vs heap</span></h2>
   <div class="cols">
     <div class="box low"><span class="bt">📚 Yığın belleği (stack)</span>
@@ -1121,7 +1121,7 @@ function floodFill(grid, sx, sy, useStack) {
   <p class="fragment mini">Uyarı: “öbek” <span class="en">heap</span> bellek bölgesinin adı; ileride göreceğimiz <b>heap veri yapısı</b> (öncelik kuyruğu) ile isim benzerliği dışında ilgisi yok!</p>
 </section>
 
-<section data-sec="kaputun altında · hikâye">
+<section data-sec="perde arkası · hikâye">
   <h2>📜 “Yığın” fikrinin kısa tarihi</h2>
   <div class="cols">
     <div>

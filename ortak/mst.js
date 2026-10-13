@@ -16,7 +16,7 @@
 
   const EWG = '4-5-.35 4-7-.37 5-7-.28 0-7-.16 1-5-.32 0-4-.38 2-3-.17 1-7-.19 0-2-.26 1-2-.36 1-3-.29 2-7-.34 6-2-.40 3-6-.52 6-0-.58 6-4-.93';
   SL.GRAPHS.tinyEWG = () => SL.Graph(8, EWG.split(' ').map(s => { const [a, b, w] = s.split('-'); return [+a, +b, +w]; }),
-    [[250, 250], [470, 95], [390, 285], [560, 230], [80, 120], [290, 50], [180, 320], [360, 155]], { weighted: true });
+    [[250, 250], [470, 95], [412, 232], [560, 230], [80, 120], [290, 50], [180, 320], [360, 155]], { weighted: true });
   const fmtW = w => (Number.isInteger(w) ? String(w) : w.toFixed(2).replace(/^0/, ''));
 
   /* ---------- kesme özelliği ---------- */
@@ -54,7 +54,8 @@
       if (cur != null) es[cur] = ok === false ? 'path' : 'cur';
       const roots = {}; let k = 0; const ns = {};
       for (let v = 0; v < G.V; v++) { const r = uf.find(v); if (!(r in roots)) roots[r] = k++; ns[v] = 'k' + roots[r]; }
-      F.push({ es, ns, note, cur, total, rows: sorted.map(e => ({ e, st: inT.has(e.id) ? 'in' : rej.has(e.id) ? 'out' : e.id === cur ? 'cur' : '' })) });
+      const comps = {}; for (let v = 0; v < G.V; v++) (comps[roots[uf.find(v)]] = comps[roots[uf.find(v)]] || []).push(v);
+      F.push({ es, ns, note, cur, total, comps: Object.values(comps), rows: sorted.map(e => ({ e, st: inT.has(e.id) ? 'in' : rej.has(e.id) ? 'out' : e.id === cur ? 'cur' : '' })) });
     };
     P('Kenarları ağırlığa göre SIRALA. Her düğüm başta kendi başına bir bileşen (her renk bir bileşen).');
     for (const e of sorted) {
@@ -65,7 +66,7 @@
     P(`Bitti: V − 1 = ${G.V - 1} kenar. Toplam ağırlık ${total.toFixed(2)}. (Kalan kenarlara bakmaya gerek yok.)`);
     const fp = new SL.FramePlayer(f => {
       gv.render(f);
-      right.innerHTML = `<div class="mini">Sıralı kenarlar:</div><div class="g-adj mst-list">${f.rows.map(r => `<div class="${r.st}">${r.e.v}–${r.e.w} &nbsp; ${fmtW(r.e.wt)} ${r.st === 'in' ? '✔' : r.st === 'out' ? '✘' : r.st === 'cur' ? '◀' : ''}</div>`).join('')}</div><div class="sv-counters"><span class="cnt">toplam <b>${f.total.toFixed(2)}</b></span></div>`;
+      right.innerHTML = `<div class="mini">Sıralı kenarlar:</div><div class="g-adj mst-list">${f.rows.map(r => `<div class="${r.st}">${r.e.v}–${r.e.w} &nbsp; ${fmtW(r.e.wt)} ${r.st === 'in' ? '✔' : r.st === 'out' ? '✘' : r.st === 'cur' ? '◀' : ''}</div>`).join('')}</div><div class="mini" style="margin-top:6px">Birleşim-bulma (union-find) bileşenleri:</div><div class="g-dq" style="font-size:.8em">${f.comps.map(c => `<span style="background:var(--card)">{${c.join(", ")}}</span>`).join("")}</div><div class="sv-counters"><span class="cnt">toplam <b>${f.total.toFixed(2)}</b></span></div>`;
       note.textContent = f.note;
     }, { speed: 1.2 });
     root.setAttribute('data-prevent-swipe', '');
