@@ -264,10 +264,10 @@ html, body, .reveal-viewport { background: var(--bg); color: var(--ink); }
 .hs-grp { margin: 2px 0; }
 
 .growth { display: flex; gap: 20px; align-items: flex-start; }
-.growth-t, .dbl-t { border-collapse: collapse; font-size: 18px; }
-.growth-t td, .growth-t th, .dbl-t td, .dbl-t th { padding: 5px 10px; border-bottom: 1px solid var(--rule); text-align: left; }
+.growth-t, .dbl-t { border-collapse: collapse; font-size: 22px; }
+.growth-t td, .growth-t th, .dbl-t td, .dbl-t th { padding: 9px 12px; border-bottom: 1px solid var(--rule); text-align: left; }
 .growth-t th, .dbl-t th { color: var(--muted); font-weight: 600; }
-.dbl-t { font-size: 19px; margin-top: 8px; }
+.dbl-t { font-size: 21px; margin-top: 8px; }
 
 .tilde { font-size: 22px; } .tilde-row { margin: 10px 0; } .tilde-row.big { font-size: 26px; }
 .tilde-bar { display: flex; height: 40px; border-radius: 8px; overflow: hidden; margin: 12px 0; }
@@ -549,14 +549,14 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 
 /* ---- analiz bileşenleri ---- */
 .sw-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 18px; align-items: start; }
-.freq-t { border-collapse: collapse; width: 100%; font-size: 17px; }
-.freq-t td, .freq-t th { padding: 4px 8px; border-bottom: 1px solid var(--rule); text-align: left; }
+.freq-t { border-collapse: collapse; width: 100%; font-size: 23px; }
+.freq-t td, .freq-t th { padding: 11px 10px; border-bottom: 1px solid var(--rule); text-align: left; }
 .freq-t th { color: var(--muted); font-weight: 600; }
-.freq-bar { height: 12px; background: var(--s1); border-radius: 4px; }
+.freq-bar { height: 22px; background: var(--s1); border-radius: 4px; }
 .pairs-wrap { display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 20px; align-items: center; }
 .pairs-info { font-size: 19px; } .pairs-info .big { margin: 4px 0; }
-.mem-l { display: grid; grid-template-columns: 330px minmax(0, 1fr) 90px; gap: 12px; align-items: center; margin: 6px 0; font-size: 16px; }
-.mem-lbar { height: 18px; background: var(--card-2); border-radius: 6px; overflow: hidden; } .mem-lbar div { height: 100%; border-radius: 6px; }
+.mem-l { display: grid; grid-template-columns: 380px minmax(0, 1fr) 110px; gap: 14px; align-items: center; margin: 16px 0; font-size: 21px; }
+.mem-lbar { height: 30px; background: var(--card-2); border-radius: 6px; overflow: hidden; } .mem-lbar div { height: 100%; border-radius: 6px; }
 
 /* ---- mergesort bileşenleri ---- */
 .mp-view { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 16px; margin: 6px 0; }
