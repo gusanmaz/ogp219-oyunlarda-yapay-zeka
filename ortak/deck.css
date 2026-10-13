@@ -824,3 +824,9 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .btd-wrap.fs { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
 .fs-now { font-size: 18px; margin: 2px 0 8px; padding: 6px 10px; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; } .fs-lab { font-size: 16px; color: var(--muted); }
 .fs-ev .btn { font-size: 16px; padding: 5px 10px; }
+
+.ev-bars { margin: 8px 0; } .ev-row { display: grid; grid-template-columns: 170px minmax(0, 1fr) 64px minmax(0, 1.1fr); gap: 12px; align-items: center; font-size: 19px; padding: 5px 8px; border-radius: 8px; border: 2px solid transparent; }
+.ev-row.win { border-color: var(--green); background: color-mix(in srgb, var(--green) 10%, var(--card)); } .ev-nm { font-weight: 700; }
+.ev-bar { height: 22px; background: var(--code-bg); border-radius: 11px; overflow: hidden; } .ev-bar i { display: block; height: 100%; background: var(--blue); transition: width .35s; } .ev-row.win .ev-bar i { background: var(--green); }
+.ev-sc { font: 700 20px "JetBrains Mono", monospace; text-align: right; } .ev-why { font: 16px "JetBrains Mono", monospace; color: var(--ink-2); }
+.ev-rule { font-size: 18px; padding: 6px 10px; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; margin: 4px 0; } .ev-sl { font-size: 16px; gap: 6px 22px; }

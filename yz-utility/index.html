@@ -99,6 +99,13 @@
   <ul class="agenda"><li class="on">neden puan?</li><li class="">yanıt eğrileri</li><li class="">etkenleri birleştirmek</li><li class="">seçim ve atalet</li><li class="">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-sec="önce basit bir örnek">
+  <h2>Önce kendi akşamınız: dört seçenek, dört ihtiyaç 🌙</h2>
+  <p style="font-size:.76em;margin:.1em 0 .2em">Her seçeneğe o anki ihtiyaçlarınıza göre <b>0 ile 1 arasında bir puan</b> verin ve en yüksek puanlıyı seçin: Utility AI’ın tamamı bu. Senaryoları sırayla deneyin; her birinde <b>önce tahmin edin</b>, sonra en alttaki “evet/hayır kuralları olsaydı” ile karşılaştırın.</p>
+  <div class="demo" data-demo="evening"></div>
+  <aside class="notes">Isınmadaki “akşam 9” sorusunun oynanabilir hâli; terim kullanmadan fikri kurar. Sonuçlar: Sıradan akşam → Dizi (0,72). Sınav yarın → Ders (0,57), dizi 0,04’e düşer. Sınav yarın ama bittiniz → Uyu (0,90), ders 0,10 (çarpımın vetosu). Biraz aç, çok yorgun → puanlama “Uyu” (0,95), evet/hayır kuralları “Ye” der: iki yöntemin ayrıştığı senaryo. Kararsız → Yemek = Uyu = 0,60: atalet bölümünün motivasyonu. Öğrenciler kaydırıcılarla kendi akşamlarını kurabilir. Formüllerin (çarpım, 1 − x) neden böyle seçildiğini sorun: “sınav yakınsa dizi keyfi kaçar”, “yorgunsan kafan almaz”.</aside>
+</section>
+
 <section data-sec="neden puan?">
   <h2>Eşik mi, eğri mi?</h2>
   <div class="cols">
@@ -226,14 +233,14 @@ d = normalize(distance, 0, 50)   # 18 m → 0.36
 <section data-sec="eğriler">
   <h2>Adım 2: eğri ailesi</h2>
   <table class="sum-t" style="font-size:18px">
-    <tr><th>eğri</th><th>biçim (x ∈ [0,1])</th><th>ne zaman?</th><th>örnek</th></tr>
-    <tr><td><b>doğrusal</b></td><td><code>y = m·(x − c) + b</code></td><td>Etki her yerde eşit artıyorsa</td><td>Düşman sayısı → siper isteği</td></tr>
-    <tr><td><b>üslü</b> (karesel, kübik)</td><td><code>y = (x − c)^k</code></td><td>Uçlarda hızlanan/yavaşlayan etki</td><td>Mermi azaldıkça şarjör isteği: önce ihmal, sonra acil</td></tr>
-    <tr><td><b>lojistik</b> (S)</td><td><code>y = 1 / (1 + e^(−s·(x − c)))</code></td><td>Bir eşik etrafında yumuşak geçiş</td><td>Can ~%25 altına inince kaçma isteği hızla artar</td></tr>
-    <tr><td><b>ters</b></td><td><code>y' = 1 − y</code></td><td>“Ne kadar azsa o kadar iyi”</td><td>Mesafe: yakın hedef daha cazip</td></tr>
-    <tr><td><b>parçalı doğrusal</b></td><td>elle noktalar + aradaki doğrular</td><td>Formülle anlatılamayan istek</td><td>The Sims’in açlık eğrisi</td></tr>
+    <tr><th>şekli</th><th>eğri</th><th>biçim (x ∈ [0,1])</th><th>ne zaman?</th><th>örnek</th></tr>
+    <tr><td><svg viewBox="0 0 120 62" style="width:120px;display:block"><rect x="6" y="4" width="108" height="52" style="fill:var(--card);stroke:var(--rule)"/><polyline points="6.0,56.0 10.3,53.9 14.6,51.8 19.0,49.8 23.3,47.7 27.6,45.6 31.9,43.5 36.2,41.4 40.6,39.4 44.9,37.3 49.2,35.2 53.5,33.1 57.8,31.0 62.2,29.0 66.5,26.9 70.8,24.8 75.1,22.7 79.4,20.6 83.8,18.6 88.1,16.5 92.4,14.4 96.7,12.3 101.0,10.2 105.4,8.2 109.7,6.1 114.0,4.0" style="fill:none;stroke:var(--blue)" stroke-width="3"/></svg></td><td><b>doğrusal</b></td><td><code>y = m·(x − c) + b</code></td><td>Etki her yerde eşit artıyorsa</td><td>Düşman sayısı → siper isteği</td></tr>
+    <tr><td><svg viewBox="0 0 120 62" style="width:120px;display:block"><rect x="6" y="4" width="108" height="52" style="fill:var(--card);stroke:var(--rule)"/><polyline points="6.0,56.0 10.3,56.0 14.6,56.0 19.0,55.9 23.3,55.8 27.6,55.6 31.9,55.3 36.2,54.9 40.6,54.3 44.9,53.6 49.2,52.7 53.5,51.6 57.8,50.2 62.2,48.7 66.5,46.9 70.8,44.8 75.1,42.4 79.4,39.6 83.8,36.6 88.1,33.2 92.4,29.4 96.7,25.2 101.0,20.6 105.4,15.5 109.7,10.0 114.0,4.0" style="fill:none;stroke:var(--blue)" stroke-width="3"/></svg></td><td><b>üslü</b> (karesel, kübik)</td><td><code>y = (x − c)^k</code></td><td>Uçlarda hızlanan/yavaşlayan etki</td><td>Mermi azaldıkça şarjör isteği: önce ihmal, sonra acil</td></tr>
+    <tr><td><svg viewBox="0 0 120 62" style="width:120px;display:block"><rect x="6" y="4" width="108" height="52" style="fill:var(--card);stroke:var(--rule)"/><polyline points="6.0,55.9 10.3,55.8 14.6,55.7 19.0,55.5 23.3,55.1 27.6,54.6 31.9,53.8 36.2,52.5 40.6,50.6 44.9,47.8 49.2,44.0 53.5,39.0 57.8,33.1 62.2,26.9 66.5,21.0 70.8,16.0 75.1,12.2 79.4,9.4 83.8,7.5 88.1,6.2 92.4,5.4 96.7,4.9 101.0,4.5 105.4,4.3 109.7,4.2 114.0,4.1" style="fill:none;stroke:var(--blue)" stroke-width="3"/></svg></td><td><b>lojistik</b> (S)</td><td><code>y = 1 / (1 + e^(−s·(x − c)))</code></td><td>Bir eşik etrafında yumuşak geçiş</td><td>Can ~%25 altına inince kaçma isteği hızla artar</td></tr>
+    <tr><td><svg viewBox="0 0 120 62" style="width:120px;display:block"><rect x="6" y="4" width="108" height="52" style="fill:var(--card);stroke:var(--rule)"/><polyline points="6.0,4.0 10.3,6.1 14.6,8.2 19.0,10.2 23.3,12.3 27.6,14.4 31.9,16.5 36.2,18.6 40.6,20.6 44.9,22.7 49.2,24.8 53.5,26.9 57.8,29.0 62.2,31.0 66.5,33.1 70.8,35.2 75.1,37.3 79.4,39.4 83.8,41.4 88.1,43.5 92.4,45.6 96.7,47.7 101.0,49.8 105.4,51.8 109.7,53.9 114.0,56.0" style="fill:none;stroke:var(--blue)" stroke-width="3"/></svg></td><td><b>ters</b></td><td><code>y' = 1 − y</code></td><td>“Ne kadar azsa o kadar iyi”</td><td>Mesafe: yakın hedef daha cazip</td></tr>
+    <tr><td><svg viewBox="0 0 120 62" style="width:120px;display:block"><rect x="6" y="4" width="108" height="52" style="fill:var(--card);stroke:var(--rule)"/><polyline points="6.0,9.2 10.3,13.8 14.6,18.4 19.0,22.9 23.3,27.5 27.6,32.1 31.9,36.7 36.2,41.2 40.6,43.8 44.9,44.5 49.2,45.1 53.5,45.7 57.8,46.3 62.2,47.0 66.5,47.6 70.8,48.2 75.1,48.8 79.4,49.4 83.8,47.1 88.1,41.6 92.4,36.2 96.7,30.8 101.0,25.4 105.4,20.0 109.7,14.6 114.0,9.2" style="fill:none;stroke:var(--blue)" stroke-width="3"/></svg></td><td><b>parçalı doğrusal</b></td><td>elle noktalar + aradaki doğrular</td><td>Formülle anlatılamayan istek</td><td>The Sims’in açlık eğrisi</td></tr>
   </table>
-  <p class="mini">Formülden korkmayın: oyunda bu eğrileri kimse formül yazarak ayarlamaz, <b>görsel bir editörde</b> (sonraki slayt, Unity AnimationCurve, Curvature) şekillendirir.</p>
+  <p class="mini">Küçük grafiklerde yatay eksen girdi (0 → 1), dikey eksen istek (0 → 1). Formülden korkmayın: oyunda bu eğrileri kimse formül yazarak ayarlamaz, <b>görsel bir editörde</b> (sonraki slayt, Unity AnimationCurve, Curvature) şekillendirir.</p>
 </section>
 
 <section class="no-grow" data-sec="eğriler">
@@ -278,6 +285,14 @@ d = normalize(distance, 0, 50)   # 18 m → 0.36
   <div class="ttl">Etkenleri birleştirmek</div>
   <div class="sub">çarpım, veto ve telafi faktörü</div>
   <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="on">etkenleri birleştirmek</li><li class="">seçim ve atalet</li><li class="">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="birleştirme">
+  <h2>Çizimle: aynı üç etken, iki birleştirme</h2>
+  <svg viewBox="0 0 1200 320" style="width:100%" font-family="Source Sans 3">
+    <rect x="10" y="8" width="580" height="304" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="26" y="36" font-size="19" font-weight="800" style="fill:var(--ink)">Asker 1: her şey yolunda</text><text x="26" y="80" font-size="17" style="fill:var(--ink)">mermi var</text><rect x="160" y="62" width="300" height="24" rx="12" style="fill:var(--code-bg)"/><rect x="160" y="62" width="270.0" height="24" rx="12" style="fill:var(--blue)"/><text x="480" y="81" font-size="19" font-weight="800" style="fill:var(--ink)">0,9</text><text x="26" y="124" font-size="17" style="fill:var(--ink)">hedef yakın</text><rect x="160" y="106" width="300" height="24" rx="12" style="fill:var(--code-bg)"/><rect x="160" y="106" width="240.0" height="24" rx="12" style="fill:var(--blue)"/><text x="480" y="125" font-size="19" font-weight="800" style="fill:var(--ink)">0,8</text><text x="26" y="168" font-size="17" style="fill:var(--ink)">canım yerinde</text><rect x="160" y="150" width="300" height="24" rx="12" style="fill:var(--code-bg)"/><rect x="160" y="150" width="270.0" height="24" rx="12" style="fill:var(--blue)"/><text x="480" y="169" font-size="19" font-weight="800" style="fill:var(--ink)">0,9</text><text x="26" y="228" font-size="18" font-weight="800" style="fill:var(--ink)">ortalama</text><rect x="160" y="208" width="300" height="28" rx="14" style="fill:var(--code-bg)"/><rect x="160" y="208" width="261.0" height="28" rx="14" style="fill:var(--muted)"/><text x="480" y="230" font-size="21" font-weight="800" style="fill:var(--muted)">0,87</text><text x="26" y="276" font-size="18" font-weight="800" style="fill:var(--ink)">çarpım</text><rect x="160" y="256" width="300" height="28" rx="14" style="fill:var(--code-bg)"/><rect x="160" y="256" width="195.0" height="28" rx="14" style="fill:var(--green)"/><text x="480" y="278" font-size="21" font-weight="800" style="fill:var(--green)">0,65</text><rect x="610" y="8" width="580" height="304" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="626" y="36" font-size="19" font-weight="800" style="fill:var(--ink)">Asker 2: mermi yok</text><text x="626" y="80" font-size="17" style="fill:var(--ink)">mermi var</text><rect x="760" y="62" width="300" height="24" rx="12" style="fill:var(--code-bg)"/><rect x="760" y="62" width="0" height="24" rx="12" style="fill:var(--blue)"/><text x="1080" y="81" font-size="19" font-weight="800" style="fill:var(--red)">0</text><text x="626" y="124" font-size="17" style="fill:var(--ink)">hedef yakın</text><rect x="760" y="106" width="300" height="24" rx="12" style="fill:var(--code-bg)"/><rect x="760" y="106" width="270.0" height="24" rx="12" style="fill:var(--blue)"/><text x="1080" y="125" font-size="19" font-weight="800" style="fill:var(--ink)">0,9</text><text x="626" y="168" font-size="17" style="fill:var(--ink)">canım yerinde</text><rect x="760" y="150" width="300" height="24" rx="12" style="fill:var(--code-bg)"/><rect x="760" y="150" width="300.0" height="24" rx="12" style="fill:var(--blue)"/><text x="1080" y="169" font-size="19" font-weight="800" style="fill:var(--ink)">1,0</text><text x="626" y="228" font-size="18" font-weight="800" style="fill:var(--ink)">ortalama</text><rect x="760" y="208" width="300" height="28" rx="14" style="fill:var(--code-bg)"/><rect x="760" y="208" width="189.0" height="28" rx="14" style="fill:var(--red)"/><text x="1080" y="230" font-size="21" font-weight="800" style="fill:var(--red)">0,63 😱</text><text x="626" y="276" font-size="18" font-weight="800" style="fill:var(--ink)">çarpım</text><rect x="760" y="256" width="300" height="28" rx="14" style="fill:var(--code-bg)"/><rect x="760" y="256" width="0.0" height="28" rx="14" style="fill:var(--green)"/><text x="1080" y="278" font-size="21" font-weight="800" style="fill:var(--green)">0,00 ✔</text>
+  </svg>
+  <p style="font-size:.8em;margin:.3em 0 0">“Ateş et” eyleminin üç etkeni var. Sağdaki askerin <b>mermisi yok</b> (ilk etken 0). Ortalama alınırsa yine de 0,63 puanla ateş etmeye kalkar; çarpılırsa puan 0 olur ve eylem <b>elenir</b>. Sonraki slayt aynı sayıları tabloyla verir.</p>
 </section>
 
 <section data-sec="birleştirmek">
@@ -472,6 +487,28 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
   </div>
 </section>
 
+<section data-sec="seçim ve atalet">
+  <h2>Çizimle: titreme ve atalet</h2>
+  <svg viewBox="0 0 1200 330" style="width:100%" font-family="Source Sans 3">
+    <rect x="10" y="8" width="1180" height="150" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/>
+    <text x="26" y="34" font-size="19" font-weight="800" style="fill:var(--ink)">Ataletsiz: her kararda en yüksek puanlıya geç</text>
+    <polyline points="60,96 150,88 240,100 330,90 420,101 510,89 600,99 690,91 780,100 870,90 960,98 1050,92 1140,99" style="fill:none;stroke:var(--red)" stroke-width="3.5"/>
+    <polyline points="60,94 150,98 240,90 330,99 420,91 510,100 600,90 690,98 780,92 870,99 960,91 1050,100 1140,93" style="fill:none;stroke:var(--blue)" stroke-width="3.5"/>
+    <text x="1150" y="84" font-size="15" text-anchor="end" font-weight="700" style="fill:var(--red)">saldır</text><text x="1150" y="116" font-size="15" text-anchor="end" font-weight="700" style="fill:var(--blue)">kaç</text>
+    <rect x="60" y="122" width="90" height="14" style="fill:var(--blue)"/><rect x="150" y="122" width="90" height="14" style="fill:var(--red)"/><rect x="240" y="122" width="90" height="14" style="fill:var(--blue)"/><rect x="330" y="122" width="90" height="14" style="fill:var(--red)"/><rect x="420" y="122" width="90" height="14" style="fill:var(--blue)"/><rect x="510" y="122" width="90" height="14" style="fill:var(--red)"/><rect x="600" y="122" width="90" height="14" style="fill:var(--blue)"/><rect x="690" y="122" width="90" height="14" style="fill:var(--red)"/><rect x="780" y="122" width="90" height="14" style="fill:var(--blue)"/><rect x="870" y="122" width="90" height="14" style="fill:var(--red)"/><rect x="960" y="122" width="90" height="14" style="fill:var(--blue)"/><rect x="1050" y="122" width="90" height="14" style="fill:var(--red)"/>
+    <text x="26" y="150" font-size="16" style="fill:var(--muted)">seçilen eylem → her kararda değişiyor: iki el ateş, üç adım kaç, bir el ateş… (titreme)</text>
+    <rect x="10" y="170" width="1180" height="150" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/>
+    <text x="26" y="196" font-size="19" font-weight="800" style="fill:var(--ink)">Ataletli: şu an yapılan eylemin puanı × 1,3</text>
+    <polyline points="60,236 150,228 240,240 330,230 420,241 510,229 600,239 690,231 780,240 870,230 960,238 1050,232 1140,239" style="fill:none;stroke:var(--red)" stroke-width="3.5" transform="translate(0,-22)"/>
+    <polyline points="60,234 150,238 240,230 330,239 420,231 510,240 600,230 690,238 780,232 870,239 960,231 1050,240 1140,233" style="fill:none;stroke:var(--blue)" stroke-width="3.5" transform="translate(0,14)"/>
+    <text x="1150" y="206" font-size="15" text-anchor="end" font-weight="700" style="fill:var(--red)">saldır × 1,3 (bonuslu)</text><text x="1150" y="268" font-size="15" text-anchor="end" font-weight="700" style="fill:var(--blue)">kaç</text>
+    <rect x="60" y="280" width="1080" height="16" rx="4" style="fill:var(--red)"/>
+    <text x="26" y="312" font-size="16" style="fill:var(--muted)">seçilen eylem → hep “saldır”: öbür seçenek ancak gerçekten (1,3 kattan fazla) iyiyse kazanır</text>
+  </svg>
+  <p style="font-size:.8em;margin:.3em 0 0">Üstteki çizgiler iki eylemin zaman içindeki puanları: neredeyse eşit ve küçük oynamalarla yer değiştiriyorlar. Alttaki renkli şerit o anda seçilen eylem. <b>Atalet</b>, yapılmakta olan eyleme küçük bir bonus vererek bu gidip gelmeyi keser.</p>
+  <aside class="notes">Sonraki slayttaki üç çareden ilkinin (mevcut eyleme bonus) resmi. “Kararsız” akşam senaryosuna geri dönün: yemek = uyku = 0,60 iken küçük bir değişiklik kararı çeviriyordu.</aside>
+</section>
+
 <section data-sec="seçim">
   <h2>Atalet: kararsız NPC sorunu</h2>
   <div class="cols">
@@ -571,6 +608,19 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
       <li>Bir nesneye tıklayın: oyuncu emri (The Sims’te tıklayıp eylem seçmek). 2 sn sonra Sim yine kendi kararlarına döner.</li>
     </ol>
   </div>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: The Sims’in zekâsı</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/9gf2MT-IOsg" title="The Genius AI Behind The Sims" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>The Genius AI Behind The Sims</b><br><span class="mini">Game Maker’s Toolkit (Mark Brown) · <a href="https://www.youtube.com/watch?v=9gf2MT-IOsg" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önce Sim odasında oynadığınız fikrin gerçek oyundaki hâli: ihtiyaç çubukları, nesnelerin “reklamları”, eğriler ve en iyiler arasından rastgele seçim.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda bir nesnenin reklam puanı hangi iki şeye göre değişiyor? Sim neden her zaman en yüksek puanlı eylemi seçmiyor? Bunların bu sunumdaki adları neydi?</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce; Türkçe otomatik altyazıyla ya da sessize alıp kendiniz anlatarak izletebilirsiniz.</aside>
 </section>
 
 <section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b0f3a 100%)">

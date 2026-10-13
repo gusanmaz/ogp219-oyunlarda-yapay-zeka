@@ -7,6 +7,43 @@
   const clamp01 = x => Math.max(0, Math.min(1, x));
   const f2 = x => (Math.round(x * 100) / 100).toFixed(2);
 
+  /* ================= hikâyeli giriş: akşam 9, ne yapsam? =================
+     Dört ihtiyaç (0–1), dört seçenek; puanlar düz cümleyle hesaplanır ve evet/hayır kurallarıyla karşılaştırılır. */
+  D.evening = function (root) {
+    const N = { ac: ['🍽 açlık', 0.3], yor: ['🥱 yorgunluk', 0.4], sinav: ['📝 sınav yakınlığı', 0.1], merak: ['📺 dizi merakı', 0.8] };
+    const v = {}; Object.keys(N).forEach(k => (v[k] = N[k][1]));
+    const OPT = [
+      ['🍝 Yemek ye', s => s.ac, s => `açlık ${f2(s.ac)}`],
+      ['😴 Uyu', s => s.yor, s => `yorgunluk ${f2(s.yor)}`],
+      ['📺 Dizi izle', s => s.merak * (1 - s.sinav), s => `merak ${f2(s.merak)} × (1 − sınav ${f2(s.sinav)})`],
+      ['📚 Ders çalış', s => s.sinav * (1 - s.yor), s => `sınav ${f2(s.sinav)} × (1 − yorgunluk ${f2(s.yor)})`]];
+    // karşılaştırma: sırayla bakılan evet/hayır kuralları
+    const rule = s => (s.ac > 0.5 ? [0, 'açlık > 0,5'] : s.yor > 0.5 ? [1, 'yorgunluk > 0,5'] : s.sinav > 0.5 ? [3, 'sınav yakınlığı > 0,5'] : [2, 'hiçbiri tutmadı']);
+    const SC = [
+      ['🌙 Sıradan akşam', { ac: 0.3, yor: 0.4, sinav: 0.1, merak: 0.8 }, 'Biraz açsınız, biraz yorgunsunuz, sınav uzak, dizinin yeni bölümü çıkmış.', 'Hiçbir ihtiyaç baskın değil; en cazip seçenek kazanıyor.'],
+      ['📝 Sınav yarın', { ac: 0.3, yor: 0.4, sinav: 0.95, merak: 0.8 }, 'Aynı akşam, tek fark: sınav yarın sabah.', 'Tek bir sayı değişti, sıralama altüst oldu. Dizinin puanı “merak × (1 − sınav)” olduğu için sınav yaklaşınca kendiliğinden söndü.'],
+      ['🥱 Sınav yarın ama bittiniz', { ac: 0.3, yor: 0.9, sinav: 0.95, merak: 0.8 }, 'Sınav yarın; ama gözleriniz kapanıyor.', '“Ders çalış” iki sayının <b>çarpımı</b>: sınav çok yakın olsa da yorgunluk onu neredeyse sıfırladı. Çarpım, tek bir kötü etkenin eylemi <b>veto etmesini</b> sağlar.'],
+      ['😴 Biraz aç, çok yorgun', { ac: 0.55, yor: 0.95, sinav: 0.1, merak: 0.5 }, 'Karnınız hafif acıkmış ama ayakta uyuyorsunuz.', 'Evet/hayır kuralları ilk tutan kuralda durur ve “ye” der; puanlama iki ihtiyacı <b>tartar</b> ve “uyu” der. Utility AI’ın kurallara üstünlüğü bu.'],
+      ['⚖️ Kararsız', { ac: 0.6, yor: 0.6, sinav: 0.1, merak: 0.3 }, 'Açlık ve yorgunluk tam eşit.', 'İki puan eşit: küçücük bir değişiklik kararı bir o yana bir bu yana çevirir. Bu “titreme” sorununu ileride <b>atalet</b> ile çözeceğiz.']];
+    const bars = el('div', { class: 'ev-bars' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' }), ruleEl = el('div', { class: 'ev-rule' });
+    const sl = {};
+    let curMoral = '';
+    const draw = () => {
+      const sc = OPT.map(o => o[1](v)), mx = Math.max(...sc), wi = sc.indexOf(mx), tie = sc.filter(x => Math.abs(x - mx) < 0.005).length > 1;
+      bars.innerHTML = OPT.map((o, i) => `<div class="ev-row${i === wi && !tie ? ' win' : ''}"><div class="ev-nm">${o[0]}</div><div class="ev-bar"><i style="width:${Math.round(sc[i] * 100)}%"></i></div><div class="ev-sc">${f2(sc[i])}</div><div class="ev-why">= ${o[2](v)}</div></div>`).join('');
+      const [ri, why] = rule(v);
+      ruleEl.innerHTML = `<b>Puanlama:</b> ${tie ? 'berabere! (' + OPT.filter((o, i) => Math.abs(sc[i] - mx) < 0.005).map(o => o[0]).join(' = ') + ')' : OPT[wi][0] + ' (en yüksek puan)'} &nbsp;·&nbsp; <b>Evet/hayır kuralları olsaydı:</b> ${OPT[ri][0]} <span class="mini">(${why})</span>${!tie && ri !== wi ? ' <b class="c-red">← farklı!</b>' : ''}`;
+      moral.innerHTML = curMoral ? '💡 ' + curMoral : '';
+    };
+    const set = (st, txt, m) => { Object.assign(v, st); Object.keys(sl).forEach(k => { sl[k].querySelector('input').value = v[k]; const b = sl[k].querySelector('b'); if (b) b.textContent = f2(v[k]); }); story.innerHTML = '📖 ' + txt; curMoral = m; draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } };
+    const bs = SC.map(([nm, st, txt, m]) => { const b = btn(nm, () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); set(st, txt, m); }); return b; });
+    Object.keys(N).forEach(k => { sl[k] = slider(N[k][0], 0, 1, v[k], 0.05, x => { v[k] = x; bs.forEach(b => b.classList.remove('primary')); story.innerHTML = '📖 Kendi akşamınız: kaydırıcıları oynatın ve sıralamanın nerede değiştiğine bakın.'; curMoral = ''; draw(); }); });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'sv-controls ev-sl' }, ...Object.values(sl)), bars, ruleEl, moral);
+    bs[0].classList.add('primary'); set(SC[0][1], SC[0][2], SC[0][3]);
+    SL.onTheme(draw);
+  };
+
   /* ================= yanıt eğrileri ================= */
   const CURVES = {
     linear: { ad: 'doğrusal', f: (x, p) => p.m * (x - p.c) + p.b, txt: p => `y = ${p.m}·(x − ${p.c}) + ${p.b}` },
