@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Çarpışma Tespiti</title>
-<meta name="description" content="Oyunlarda çarpışma tespiti: hitbox ve çarpışma şekilleri, daire/AABB testleri, ayıran eksen teoremi (SAT), çarpışma çözümü, tünelleme, ışın gönderme; p5.js kodları ve oynanabilir demolar.">
+<meta name="description" content="Oyunlarda çarpışma tespiti: hitbox ve çarpışma şekilleri, daire/AABB testleri, ayıran eksen teoremi (SAT), çarpışma çözümü, kayma ve sekme, tünelleme, ışın–daire; Quake ve Box2D kaynak kodundan, Celeste’in fizik yönteminden örnekler; p5.js kodları ve oynanabilir demolar.">
 <script>
   (function () {
     var t = null;
@@ -40,7 +40,7 @@
 <section>
   <h2>Bu derste oyunun haritası 🗺️</h2>
 <div class="cols c64">
-<div><ol style="font-size:.8em"><li><b>Çarpışma şekilleri ve hitbox</b> — gördüğünüz model ile çarpışan şekil aynı değildir</li><li><b>Temel testler</b> — daire–daire, kutu–kutu, daire–kutu</li><li><b>Ayıran eksen teoremi (SAT)</b> — dışbükey çokgenler; gölgeler ve en kısa çıkış</li><li><b>Tespit yetmez: çözüm</b> — itip ayırma; platform oyunlarında eksen eksen hareket; tünelleme</li><li><b>Işınlar</b> — hitscan mermi, görüş hattı, fare seçimi</li><li><b>Kod</b> — p5.js ile testler, SAT, platform karakteri + beş laboratuvar</li></ol></div>
+<div><ol style="font-size:.8em"><li><b>Çarpışma şekilleri ve hitbox</b> — gördüğünüz model ile çarpışan şekil aynı değildir; Rocket League’in altı kutusu</li><li><b>Temel testler</b> — daire–daire, kutu–kutu, daire–kutu; Quake’in şişirilmiş haritaları</li><li><b>Ayıran eksen teoremi (SAT)</b> — dışbükey çokgenler; gölgeler ve en kısa çıkış; Box2D</li><li><b>Tespit yetmez: çözüm</b> — eksen eksen hareket, kayma, sekme; Celeste’in piksel piksel yöntemi; tünelleme</li><li><b>Işınlar</b> — ışın–daire; hitscan mermi, görüş hattı, fare</li><li><b>Her adımda</b> — elle hesap → canlı demo → kod (JavaScript / Python / C#) → oyunlardaki karşılığı</li></ol></div>
 <div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>bir oyunun çarpışmalarının neden “haksız” ya da “cömert” hissettirdiğini açıklayabilecek; daire, kutu ve dışbükey çokgenler için çarpışma testlerini yazabilecek; çakışan iki şekli en kısa yoldan ayırabilecek ve duvarların içinden geçmeyen bir platform karakteri kodlayabileceksiniz.</p></div></div>
 </div>
 </section>
@@ -71,23 +71,14 @@
 
 <section data-sec="şekil">
   <h2>Hangi şekil, ne zaman?</h2>
-<table class="gloss" style="font-size:16px">
-<tr><td><b>şekil</b></td><td><b>test maliyeti</b></td><td><b>iyi olduğu yer</b></td><td><b>zayıf yanı</b></td></tr>
-<tr><td><b>Daire / küre</b></td><td>en ucuz: bir kare uzaklık</td><td>mermiler, toplar, patlama yarıçapı, “yaklaşık” her şey; dönse de değişmez</td><td>uzun, ince nesnelere uymaz</td></tr>
-<tr><td><b>AABB</b> (eksen hizalı kutu)</td><td>dört karşılaştırma</td><td>karolar, platformlar, arayüz, geniş aşama</td><td>dönen nesnede kutu büyür, boşluk artar</td></tr>
-<tr><td><b>Kapsül</b></td><td>parça–nokta uzaklığı</td><td>ayakta duran karakterler: basamaklardan ve köşelerden takılmadan kayar</td><td>köşeli nesnelere uymaz</td></tr>
-<tr><td><b>OBB</b> (yönlü kutu)</td><td>SAT, 4 eksen</td><td>araçlar, kasalar, dönen platformlar</td><td>AABB’den pahalı</td></tr>
-<tr><td><b>Dışbükey çokgen</b></td><td>SAT ya da GJK</td><td>kayalar, gemiler, fizik nesneleri (çoğu zaman modelin dışbükey zarfı, G1)</td><td>içbükey olamaz</td></tr>
-<tr><td><b>Üçgen ağı</b> (mesh)</td><td>pahalı; BVH şart (G2)</td><td>durağan dünya: arazi, bina</td><td>hareketli nesnede kullanılmaz</td></tr>
-</table>
-<p class="mini"><b>Kural:</b> işinizi gören <b>en basit</b> şekli seçin. İçbükey nesne (L, U, halka) birkaç dışbükey parçanın birleşimi olarak kurulur. Karmaşık karakterde tek şekil yerine birkaç kutu/kapsül: baş, gövde, kollar (kafadan vuruş hasarı).</p>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">şekil</th><th style="text-align:left;">test maliyeti</th><th style="text-align:left;">iyi olduğu yer</th><th style="text-align:left;">zayıf yanı</th></tr><tr><td style="text-align:left;"><b>Daire / küre</b></td><td style="text-align:left;">en ucuz: bir kare uzaklık</td><td style="text-align:left;">mermiler, toplar, patlama yarıçapı; dönse de değişmez</td><td style="text-align:left;">uzun, ince nesnelere uymaz</td></tr><tr><td style="text-align:left;"><b>AABB</b> (eksen hizalı kutu)</td><td style="text-align:left;">dört karşılaştırma</td><td style="text-align:left;">karolar, platformlar, arayüz, geniş aşama (G2)</td><td style="text-align:left;">dönen nesnede kutu büyür, boşluk artar</td></tr><tr><td style="text-align:left;"><b>Kapsül</b></td><td style="text-align:left;">parça–nokta uzaklığı</td><td style="text-align:left;">ayakta duran karakterler: basamak ve köşede takılmadan kayar</td><td style="text-align:left;">köşeli nesnelere uymaz</td></tr><tr><td style="text-align:left;"><b>OBB</b> (yönlü kutu)</td><td style="text-align:left;">SAT, 4 eksen</td><td style="text-align:left;">araçlar, kasalar, dönen platformlar</td><td style="text-align:left;">AABB’den pahalı</td></tr><tr><td style="text-align:left;"><b>Dışbükey çokgen</b></td><td style="text-align:left;">SAT ya da GJK</td><td style="text-align:left;">fizik nesneleri (çoğu zaman modelin dışbükey zarfı, G1)</td><td style="text-align:left;">içbükey olamaz</td></tr><tr><td style="text-align:left;"><b>Üçgen ağı</b> (mesh)</td><td style="text-align:left;">pahalı; BVH şart (G2)</td><td style="text-align:left;">durağan dünya: arazi, bina</td><td style="text-align:left;">hareketli nesnede kullanılmaz</td></tr></table><p class="mini"><b>Kural:</b> işinizi gören <b>en basit</b> şekli seçin. İçbükey nesne (L, U, halka) birkaç dışbükey parçanın birleşimi olarak kurulur. Karmaşık karakterde tek şekil yerine birkaç kutu/kapsül: baş, gövde, kollar (kafadan vuruş hasarı).</p>
 </section>
 
 <section data-sec="şekil">
-  <h2>Hikâye: hitbox bir tasarım kararıdır</h2>
+  <h2>Oyunlarda: hitbox bir tasarım kararıdır</h2>
 <div class="cols c46">
-<div><div class="box game" style="font-size:.78em"><span class="bt">🥊 Dövüş oyunları</span><ul style="font-size:.92em"><li>Her saldırı karesinde iki tür kutu: kırmızı <b>hitbox</b> (yumruğun vurduğu yer) ve mavi/yeşil <b>hurtbox</b> (karakterin vurulabildiği yer). Vuruş = bir hitbox, rakibin hurtbox’ına değdi.</li><li>Kutular animasyonla birlikte kare kare elle çizilir. Bir yumruğun kutusu kolun ucundan <b>uzun</b> olabilir; tekme sırasında bacağın hurtbox’ı <b>kaybolabilir</b>.</li><li>Rekabetçi oyuncular bu kutuları ezberler; “kare verisi” (frame data) siteleri bunları yayımlar.</li></ul></div></div>
-<div><div class="box story" style="font-size:.78em"><span class="bt">🎯 Cömert ve cimri kutular</span><ul style="font-size:.92em"><li><b>Mermi cehennemi</b> oyunlarında oyuncunun hasar kutusu geminin ortasında birkaç piksellik bir noktadır: mermi kanadınızdan geçer, ölmezsiniz. Yüzlerce mermi arasından sıyrılma hissi buradan gelir.</li><li>Platform oyunlarında düşmanın hasar kutusu çiziminden <b>küçük</b>, toplanabilir eşyanınki çiziminden <b>büyük</b> tutulur.</li><li>Y17’deki ilke: şüphede oyuncunun lehine. “Vurmadı ki!” diye bağıran oyuncu haklıdır; “vurdu mu ya?” diyen oyuncu şikâyet etmez.</li></ul></div></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🥊 Dövüş oyunları: kare kare kutular</span><ul style="font-size:.92em"><li>Her saldırı karesinde iki tür kutu: <b>hitbox</b> (saldırının vurduğu yer) ve <b>hurtbox</b> (karakterin vurulabildiği yer). Vuruş = bir hitbox, rakibin hurtbox’ına değdi.</li><li>Kutular animasyonla birlikte <b>kare kare elle</b> çizilir. Bir yumruğun kutusu kolun ucundan <b>uzun</b> olabilir; tekme sırasında bacağın hurtbox’ı <b>kaybolabilir</b> (o saldırı “bacağı vurulamaz” olur).</li><li>Denge ayarı çoğu zaman çizime dokunmadan, yalnızca kutuyu birkaç piksel büyütüp küçülterek yapılır. Oyuncular bu “kare verisini” (frame data) ezberler.</li></ul></div><div class="box story" style="font-size:.76em;margin-top:8px"><span class="bt">🎯 Mermi cehennemi: birkaç piksel</span>Bu türde oyuncunun hasar kutusu geminin ortasında birkaç piksellik bir noktadır: mermi kanadınızdan geçer, ölmezsiniz. Yüzlerce mermi arasından sıyrılma hissi bu <b>cömert</b> kutudan gelir (Y17).</div></div>
+<div><div class="box game" style="font-size:.76em"><span class="bt">🚗 Rocket League: yüzlerce araba, altı kutu</span><ul style="font-size:.92em"><li>Oyunda yüzlerce farklı araba gövdesi var, ama çarpışmada yalnızca <b>altı</b> standart kutudan biri kullanılır (Octane, Dominus, Plank, Breakout, Hybrid, Merc).</li><li>Yeni bir araba eklenince bu altı kutudan birine atanır. Böylece görünüş satılabilir ama <b>avantaj satılamaz</b>; rekabet adil kalır.</li><li>Bedeli: bazı arabaların burnu kutusundan taşar ya da kutu arabadan taşar; oyuncular “hangi araba kutusuna en iyi oturuyor” diye tartışır.</li></ul></div><div class="box story" style="font-size:.76em;margin-top:8px"><span class="bt">🔫 Counter-Strike: kutudan kapsüle</span>CS:GO’nun 2015 güncellemesi karakterlerin vuruş şekillerini kutulardan <b>kapsüllere</b> çevirdi: eklemlere daha iyi oturan, koşarken ve zıplarken modelden daha az taşan şekiller. “Vurdum ama saymadı” şikâyetlerinin bir kısmı şekil seçimiyle çözüldü.</div></div>
 </div><p class="mini">Hata ayıklama görünümü (Y19): kutuları ekranda çizdirmeden hitbox ayarlanmaz. Unity: Gizmos; Unreal: <code>show collision</code>.</p>
 </section>
 
@@ -96,10 +87,26 @@
 </section>
 
 <section data-sec="temel">
-  <h2>Üç test, hepsi birkaç satır</h2>
+  <h2>Daire–daire: merkezler ne kadar yakın?</h2>
 <div class="cols c64">
-<div><ul style="font-size:.82em"><li><b>Daire–daire:</b> merkezler arası uzaklık, yarıçaplar toplamından küçük mü? Karekök almayın: <code>dx² + dy² &lt; (r1 + r2)²</code>.</li><li><b>Kutu–kutu (AABB):</b> x ekseninde örtüşüyor <b>ve</b> y ekseninde örtüşüyor mu? Tek eksende ayrıysalar ayrıdırlar.</li><li><b>Daire–kutu:</b> dairenin merkezini kutuya <b>kıstırın</b> (her ekseni min–max arasına çekin): kutunun merkeze en yakın noktasını bulursunuz. O nokta dairenin içinde mi?</li><li><b>Nokta testleri</b> bunların özel hâli: nokta = yarıçapı 0 daire.</li></ul></div>
-<div><div class="box info" style="font-size:.82em"><span class="bt">Sık yapılan kestirme (ve hatası)</span><p>“Daire–kutu için kutuyu yarıçap kadar büyüt, merkez içinde mi diye bak.”</p><p>Kenarlarda doğru, <b>köşelerde yanlış</b>: büyütülmüş kutunun köşesi sivri kalır, oysa gerçek sınır yuvarlaktır. Köşeden geçen top “çarptı” sayılır.</p><p class="mini">Kıstırma yöntemi köşede de doğrudur; demoda daireyi köşeye yaklaştırıp görün.</p></div></div>
+<div><ul style="font-size:.84em"><li>İki daire, merkezleri arasındaki uzaklık <b>yarıçapların toplamından küçükse</b> çakışır.</li><li>Uzaklık için karekök gerekir; ama karşılaştırma için gerekmez: iki tarafın <b>karesini</b> al.</li></ul><p style="font-size:.84em">$$d_x^2 + d_y^2 \;<\; (r_1 + r_2)^2$$</p><div class="box info" style="font-size:.8em"><span class="bt">Elle hesap</span><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">A (x, y, r)</th><th style="text-align:left;">B (x, y, r)</th><th style="text-align:left;">dx² + dy²</th><th style="text-align:left;">(r₁ + r₂)²</th><th style="text-align:left;">sonuç</th></tr><tr><td style="text-align:left;">(2, 3, 1,5)</td><td style="text-align:left;">(5, 7, 3)</td><td style="text-align:left;">9 + 16 = 25</td><td style="text-align:left;">4,5² = 20,25</td><td style="text-align:left;">çakışmıyor</td></tr><tr><td style="text-align:left;">(2, 3, 1,5)</td><td style="text-align:left;">(5, 7, 4)</td><td style="text-align:left;">25</td><td style="text-align:left;">5,5² = 30,25</td><td style="text-align:left;"><b>çakışıyor</b></td></tr><tr><td style="text-align:left;">(0, 0, 5)</td><td style="text-align:left;">(10, 0, 5)</td><td style="text-align:left;">100</td><td style="text-align:left;">100</td><td style="text-align:left;">yalnızca değiyor</td></tr></table><p class="mini">“Değme” (eşitlik) çakışma sayılsın mı? <code>&lt;</code> ile <code>&lt;=</code> arasındaki fark; tutarlı olun.</p></div></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Nerede?</span><ul style="font-size:.92em"><li>Mermi–düşman (mermi cehennemi oyunlarında her şey dairedir)</li><li>Patlama yarıçapı, toplama mıknatısı, “yakınımda mı?”</li><li>Sürüde ayrılma kuralı (Y7)</li><li>3B’de küre–küre: aynı formül, bir terim fazla (d<sub>z</sub>²)</li></ul></div><div class="box warn" style="font-size:.8em;margin-top:8px"><span class="bt">Neden kareler?</span><code>sqrt</code> bölmeden bile pahalıdır ve burada tamamen gereksiz: iki pozitif sayının sırası, karelerinin sırasıyla aynıdır. Unity’de <code>sqrMagnitude</code>, Unreal’da <code>SizeSquared</code> bu yüzden var (Y0).</div></div>
+</div>
+</section>
+
+<section data-sec="temel">
+  <h2>Kutu–kutu: iki eksende de örtüşmeli</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li>Eksen hizalı iki kutu (AABB). Her kutu x’te bir <b>aralık</b>, y’de bir aralık kaplar.</li><li>İki aralık ne zaman örtüşür? <code>a.sol &lt; b.sağ</code> <b>ve</b> <code>b.sol &lt; a.sağ</code>. (Tersi: biri öbürünün tamamen solunda ya da sağında.)</li><li>Kutular çakışır ⇔ x aralıkları örtüşür <b>ve</b> y aralıkları örtüşür.</li><li>Tek bir eksende ayrıklarsa ayrıktırlar: ilk “hayır”da çıkın (çoğu çift ilk karşılaştırmada elenir).</li></ul><div class="box info" style="font-size:.8em"><span class="bt">Elle hesap</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;"></th><th style="text-align:left;">x aralıkları</th><th style="text-align:left;">y aralıkları</th><th style="text-align:left;">sonuç</th></tr><tr><td style="text-align:left;">A [0–10] × [0–6], B [8–14] × [5–9]</td><td style="text-align:left;">8 &lt; 10 ✔</td><td style="text-align:left;">5 &lt; 6 ✔</td><td style="text-align:left;"><b>çakışıyor</b></td></tr><tr><td style="text-align:left;">A aynı, B [8–14] × [7–9]</td><td style="text-align:left;">8 &lt; 10 ✔</td><td style="text-align:left;">7 &lt; 6 ✘</td><td style="text-align:left;">çakışmıyor</td></tr><tr><td style="text-align:left;">A aynı, B [12–14] × [1–3]</td><td style="text-align:left;">12 &lt; 10 ✘</td><td style="text-align:left;">—</td><td style="text-align:left;">çakışmıyor</td></tr></table></div></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Nerede?</span><ul style="font-size:.92em"><li>Karo tabanlı her oyun: karakter kutusu ile duvar karoları</li><li>Arayüz: fare bu düğmenin üstünde mi (nokta–kutu)?</li><li>Geniş aşamanın her yerinde: BVH düğümleri, sweep and prune (G2)</li><li>Kamera: nesnenin kutusu ekran kutusuyla örtüşüyor mu? (çizmeye değer mi?)</li></ul></div><div class="box story" style="font-size:.8em;margin-top:8px"><span class="bt">İpucu: SAT’ın ilk hâli</span>x ve y eksenlerindeki “gölgelere” bakıyoruz ve bir eksende boşluk bulursak “ayrık” diyoruz. Level 2’deki ayıran eksen teoremi bu fikri <b>her yöne</b> genelleştirecek.</div></div>
+</div>
+</section>
+
+<section data-sec="temel">
+  <h2>Daire–kutu: kutunun en yakın noktası</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li>Kutunun, dairenin merkezine <b>en yakın noktasını</b> bul. O nokta dairenin içindeyse çakışıyorlar.</li><li>En yakın nokta nasıl bulunur? Merkezin x’ini kutunun [sol, sağ] aralığına, y’sini [üst, alt] aralığına <b>kıstır</b> (clamp). Her eksen ayrı ayrı.</li><li>Merkez kutunun <b>solundaysa</b> en yakın nokta sol kenarda; <b>çaprazındaysa</b> köşede; <b>içindeyse</b> kendisi (uzaklık 0).</li></ul><div class="box info" style="font-size:.8em"><span class="bt">Elle hesap: kutu x 0–100, y 0–60 · r = 10</span><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">merkez</th><th style="text-align:left;">kıstırılmış nokta</th><th style="text-align:left;">uzaklık</th><th style="text-align:left;">sonuç</th></tr><tr><td style="text-align:left;">(120, 30)</td><td style="text-align:left;">(100, 30)</td><td style="text-align:left;">20</td><td style="text-align:left;">çakışmıyor</td></tr><tr><td style="text-align:left;">(105, 30)</td><td style="text-align:left;">(100, 30)</td><td style="text-align:left;">5</td><td style="text-align:left;"><b>çakışıyor</b></td></tr><tr><td style="text-align:left;">(120, 80)</td><td style="text-align:left;">(100, 60) köşe</td><td style="text-align:left;">√800 ≈ 28,3</td><td style="text-align:left;">çakışmıyor</td></tr><tr><td style="text-align:left;">(108, 68)</td><td style="text-align:left;">(100, 60) köşe</td><td style="text-align:left;">√128 ≈ 11,3</td><td style="text-align:left;">çakışmıyor (!)</td></tr></table></div></div>
+<div><div class="box warn" style="font-size:.78em"><span class="bt">Yaygın kestirme ve hatası</span><p>“Kutuyu her yönde r kadar büyüt; merkez büyük kutunun içinde mi diye bak.”</p><p>Kenarlarda doğru, <b>köşelerde yanlış</b>. Son satır: (108, 68), büyütülmüş kutunun (−10…110, −10…70) içinde → “çakışıyor” der. Gerçek uzaklık 11,3 &gt; 10: değmiyor.</p><p>Büyütülmüş kutunun köşesi <b>sivri</b>; oysa kutudan r uzaklıktaki noktaların sınırı köşede <b>yuvarlaktır</b>.</p></div><div class="box game" style="font-size:.78em;margin-top:8px"><span class="bt">🎮 Nerede?</span>Top–tuğla (Breakout), top–raket, yuvarlak karakter–karo duvar, daire biçimli patlama–kutu biçimli bina. Kıstırma aynı zamanda <b>çarpma noktasını</b> ve oradan çarpma yönünü (normal) verir.</div></div>
 </div>
 </section>
 
@@ -113,116 +120,7 @@
 </section>
 
 <section data-sec="temel">
-  <div class="quiz" data-karildi="1" data-answer="B">
-    <div class="qhead">Quiz 1 · temel testler</div>
-    <div class="q">Yarıçapı 10 olan bir top (120, 80) noktasında. Kutu x: 0–100, y: 0–60 aralığını kaplıyor. Kutunun topa en yakın noktası hangisi ve çakışıyorlar mı?</div>
-    <div class="opts"><button data-opt="A">(120, 80); evet</button><button data-opt="B">(100, 60); hayır: uzaklık ≈ 28, yarıçaptan büyük</button><button data-opt="C">(100, 80); hayır</button><button data-opt="D">(50, 30); evet</button></div>
-    <div class="explain">Kıstırma: x = 120 → 100’e, y = 80 → 60’a çekilir. En yakın nokta kutunun köşesi (100, 60). Uzaklık √(20² + 20²) ≈ 28,3 &gt; 10: çakışmıyor. Kutuyu 10 piksel büyütüp “merkez içinde mi?” diye baksaydınız da hayır derdi; ama top (108, 68)’de olsaydı büyütme yöntemi “evet” derken gerçek uzaklık ≈ 11,3 ile cevap hayırdır.</div>
-  </div>
-</section>
-
-<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
-  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Ayıran eksen teoremi</div><div class="sub">gölgeler ayrılıyorsa şekiller ayrıdır</div></div>
-</section>
-
-<section data-sec="SAT">
-  <h2>SAT: tek bir boşluk yeter</h2>
-<div class="cols c64">
-<div><ul style="font-size:.8em"><li>İki <b>dışbükey</b> şekil çakışmıyorsa aralarından bir doğru geçirebilirsiniz. O doğruya dik eksende iki şeklin <b>gölgeleri ayrıktır</b>.</li><li>Tersinden: gölgelerin ayrıldığı <b>tek bir eksen</b> bulursanız şekiller kesinlikle çakışmıyor. Hemen çıkın.</li><li>Hangi eksenlere bakılır? Yalnızca <b>kenarların dikmelerine</b>. Üçgen + dörtgen = en çok 7 eksen.</li><li>Gölge nasıl bulunur? Her köşenin eksenle <b>nokta çarpımı</b>; en küçüğü ve en büyüğü gölgenin iki ucu.</li><li>Hiçbir eksende boşluk yoksa çakışıyorlar. <b>En az örtüşen</b> eksen, onları ayırmanın en kısa yoludur (MTV).</li><li>Kutu–kutu testi SAT’ın özel hâlidir: eksenler x ve y.</li></ul></div>
-<div><div class="box warn" style="font-size:.8em"><span class="bt">⚠️ Yalnızca dışbükey</span><p>İçbükey şekilde (L, U) gölgeler her eksende örtüşebilir ama şekiller birbirine değmeyebilir: U’nun içindeki kutu.</p><p>Çare: içbükey şekli dışbükey parçalara bölün ya da dışbükey zarfıyla (G1) yetinin.</p></div><div class="box info" style="font-size:.8em;margin-top:10px"><span class="bt">Daire için</span><p>Dairenin “kenarı” yok; ek eksen olarak dairenin merkezinden çokgenin <b>en yakın köşesine</b> giden yön sınanır. Dairenin gölgesi: merkez ± yarıçap.</p></div></div>
-</div>
-</section>
-
-<section data-sec="demo">
-<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Mavi</b> şekil sizin (sürükleyin, kaydırıcıyla döndürün); <b>sarı</b> şekil sabit.</li><li><b>Kesikli doğru</b> o an seçili eksen. Üzerindeki kalın <b>mavi</b> ve <b>sarı</b> çizgiler iki şeklin o eksendeki gölgeleri; ince kesikli çizgiler gölgeyi belirleyen köşelerden iner.</li><li>Gölgelerin örtüşen kısmı <b>kırmızı</b> çizilir. Kırmızı yoksa o eksen bir <b>ayıran eksendir</b>.</li><li><b>Sağ üstteki liste</b> bütün eksenler: “AYRIK (boşluk …)” ya da “örtüşme …”. ▶ işareti seçili eksen.</li><li><b>Yeşil ok</b> (yalnızca çakışınca): en az örtüşen eksen boyunca en kısa çıkış. “↔ ayır” düğmesi mavi şekli o kadar iter.</li></ol></div>
-</section>
-
-<section data-sec="SAT">
-  <h2>Canlı: gölgelere bak 🔦</h2>
-<div class="demo" data-demo="sat"></div>
-</section>
-
-<section data-sec="SAT">
-<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>Şekilleri uzak tutun: listede en az bir satır yeşil “AYRIK”. Demo o ekseni otomatik seçer; gölgeler arasında boşluk var.</li><li>Mavi şekli sarıya yaklaştırın, ama değdirmeyin. “eksen: sıradaki ▶” ile eksenleri gezin: çoğunda gölgeler örtüşüyor! <b>Tek bir</b> ayrık eksen yetiyor.</li><li>Şimdi iç içe sokun: bütün satırlar “örtüşme”. Listede “← en küçük” yazan eksene bakın; yeşil ok o yönde.</li><li>“↔ ayır”a basın: şekiller tam değecek kadar ayrılır. Fizik motorları her karede bunu yapar.</li><li>Mavi şekli döndürün: eksenler de döner. Bir köşeyi sarı şeklin kenarına saplayın: en kısa çıkış o kenarın dikmesi.</li></ol></div>
-</section>
-
-<section data-sec="SAT">
-  <h2>Öbür büyük algoritma: GJK</h2>
-<div class="cols c64">
-<div><ul style="font-size:.82em"><li>SAT kenar sayısı kadar eksen sınar; çok köşeli şekillerde ve 3B’de (kenar çiftlerinin çarpımları da eksen olur) pahalanır.</li><li><b>GJK</b> (Gilbert–Johnson–Keerthi, 1988) başka bir yoldan gider: iki şeklin “farkını” (Minkowski farkı) düşünür ve <b>orijinin o farkın içinde olup olmadığına</b> bakar. İçindeyse şekiller çakışıyordur.</li><li>Şekle yalnızca tek bir soru sorar: “şu yönde en uçtaki noktan hangisi?” Bu yüzden daire, kapsül, çokgen, hatta yuvarlatılmış şekiller aynı kodla çalışır.</li><li>Birkaç adımda sonuca varır; çoğu 3B fizik motorunun dar aşamasıdır.</li></ul></div>
-<div><div class="box story" style="font-size:.84em"><span class="bt">🎬 İzlemeye değer</span><p>Reducible’ın “A Strange But Elegant Approach to a Surprisingly Hard Problem (GJK Algorithm)” videosu algoritmayı sıfırdan, görsel olarak kurar (Kaynaklar).</p><p class="mini">Bu derste GJK’yı yazmayacağız; adını ve fikrini bilmeniz, motor belgelerinde karşınıza çıktığında tanımanız için yeter.</p></div></div>
-</div>
-</section>
-
-<section data-sec="SAT">
-  <div class="quiz" data-karildi="1" data-answer="C">
-    <div class="qhead">Quiz 2 · SAT</div>
-    <div class="q">İki dışbükey çokgen için 7 eksenden 6’sında gölgeler örtüşüyor, 1’inde aralarında boşluk var. Sonuç?</div>
-    <div class="opts"><button data-opt="A">Çakışıyorlar: çoğunluk örtüşüyor</button><button data-opt="B">Belirsiz; daha fazla eksen gerekir</button><button data-opt="C">Çakışmıyorlar: tek bir ayıran eksen yeter</button><button data-opt="D">Yalnızca köşeleri değiyor</button></div>
-    <div class="explain">Teorem “bütün eksenlerde örtüşme varsa çakışır” der; tersinden, bir tanesinde bile boşluk varsa şekilleri ayıran bir doğru vardır. Bu aynı zamanda hız kazandırır: çoğu çift çakışmaz ve ilk birkaç eksende elenir (koddaki <code>return null</code>).</div>
-  </div>
-</section>
-
-<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
-  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Tespit yetmez: çözüm</div><div class="sub">değdi; şimdi ne olacak?</div></div>
-</section>
-
-<section data-sec="çözüm">
-  <h2>Çakışmayı bulmak işin yarısı</h2>
-<div class="cols c64">
-<div><ul style="font-size:.82em"><li><b>Yok say:</b> tetik alanı, toplanabilir eşya, hasar. Yalnızca “değdi” bilgisi yeter.</li><li><b>İptal et:</b> hareketi geri al. Basit ama karakter duvara ve zemine <b>yapışır</b>.</li><li><b>İtip ayır:</b> en kısa çıkış vektörü (MTV) kadar it. Fizik nesneleri için.</li><li><b>Eksen eksen:</b> önce x’te ilerle, çakıştıysa duvara yasla; sonra y’de ilerle, çakıştıysa zemine yasla. Karo tabanlı platform oyunlarının standardı: duvar boyunca kayma ve yürüme kendiliğinden çıkar.</li><li><b>Sektir:</b> hızın çarpışma normali yönündeki bileşenini ters çevir (G5).</li></ul></div>
-<div><div class="box warn" style="font-size:.8em"><span class="bt">⚠️ Tünelleme, yeniden</span><p>Her karede yalnızca <b>varılan yeri</b> sınarsanız, hızlı nesne ince duvarı atlar (G1). Çareler:</p><ul style="font-size:.9em"><li><b>Alt adımlar:</b> hareketi küçük parçalara böl (basit; demodaki yöntem).</li><li><b>Süpürme testi:</b> şeklin kare boyunca taradığı hacmi sına; ilk temas anını bul.</li><li><b>Işın:</b> küçük, hızlı mermi için konum yerine yol parçasını kesiştir.</li><li>Tasarım: en yüksek hızı ve en ince duvarı sınırla.</li></ul></div></div>
-</div>
-</section>
-
-<section data-sec="demo">
-<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Yeşil kutu</b> sizsiniz. <b>A / D</b> yürü, <b>W</b> zıpla, <b>X</b> atıl (bir anda 300 piksel). Sarı toplar altın; gri kareler zemin ve platformlar.</li><li><b>Mor ince çubuk</b> 6 piksel kalınlığında bir duvar: tünelleme deneyi için.</li><li><b>Üstteki menü</b> çarpışma yöntemini seçer: 1) yok, 2) yalnızca tespit, 3) eksen eksen çözüm.</li><li><b>“sürekli tespit”</b> kutusu hareketi 4 piksellik alt adımlara böler.</li><li>Sol üstte sayaçlar: toplanan altın, duvardan geçme (tünelleme) ve zeminden düşme sayısı. Sesler açık.</li></ol></div>
-</section>
-
-<section data-sec="çözüm">
-  <h2>Canlı: üç çarpışma yöntemi, bir karakter 🏃</h2>
-<div class="demo" data-demo="platform"></div>
-</section>
-
-<section data-sec="çözüm">
-<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>1) yok:</b> karakter zeminin içinden düşer. Hiçbir test yok.</li><li><b>2) yalnızca tespit:</b> düşmüyor; ama A/D ile yürümeyi deneyin. Zemine değdiği için hareket iptal ediliyor: <b>yapıştı</b>. Tespit etmek yetmedi.</li><li><b>3) eksen eksen:</b> yürüyün, zıplayın, platformlara çıkın, duvara doğru yürürken zıplayın: duvar boyunca kayıyor. Altınları toplayın.</li><li>Mor duvarın soluna geçip <b>X</b> ile sağa atılın (birkaç kez deneyin): karakter çoğu seferde duvarın öbür tarafında; “tünelleme” sayacı artar. Bazen de tam denk gelip durur: aralıklı hatalar en zor bulunanlardır.</li><li>“sürekli tespit”i işaretleyip tekrar atılın: duvar durdurur. Aynı hız, aynı duvar; fark yalnızca kaç noktada sınadığımız.</li></ol></div>
-</section>
-
-<section data-sec="çözüm">
-  <h2>Hikâye: çarpışmayı ekran kartına sormak</h2>
-<div class="cols c64">
-<div><ul style="font-size:.82em"><li>1977’de Atari 2600’ün belleği 128 bayttı. Çarpışma testi için ne yer vardı ne işlemci.</li><li>Çözüm: görüntü yongası zaten her pikseli çiziyordu. İki nesnenin pikselleri aynı noktaya gelirse yonga bir <b>çarpışma bayrağı</b> kaldırıyordu; oyun bir sonraki karede bayrağa bakıyordu.</li><li>Bedavaya <b>piksel kusursuz</b> çarpışma! Aynı fikir Commodore 64’ün ve Sega Master System’in görüntü yongalarında da vardı.</li><li>Ama bayrak yalnızca “bir şeyler çarpıştı” diyordu; neyin neye, nerede çarptığını söylemiyordu. Geliştiriciler bunun etrafından dolanmak zorundaydı.</li></ul></div>
-<div><div class="box story" style="font-size:.84em"><span class="bt">📜 Okuması keyifli</span><p>Nicole Express’in “Collision Detection Is Hard: The Story of Alf” yazısı, Master System’deki bir oyunun bu donanım bayrağına güvenmesinin, farklı konsol sürümlerinde nasıl hatalara yol açtığını adım adım çözer (Kaynaklar).</p><p class="mini">Ders: “piksel kusursuz” kulağa ideal gelir ama oyuncu için çoğu zaman en iyi his, basit ve biraz cömert bir kutudan gelir.</p></div></div>
-</div>
-</section>
-
-<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
-  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">Işınlar</div><div class="sub">mermi, görüş, fare</div></div>
-</section>
-
-<section data-sec="ışın">
-  <h2>Işın gönderme: en çok kullanılan sorgu</h2>
-<div class="cols c64">
-<div><ul style="font-size:.8em"><li><b>Hitscan mermi:</b> tetik çekildiği an namludan bir ışın; ilk çarptığı şey vurulur. Mermi nesnesi yok, uçuş süresi yok.</li><li><b>Mermi nesnesi (projectile):</b> her kare ilerleyen, yerçekiminden etkilenen bir nesne; roket, ok, el bombası. Hızlıysa tünellemeye dikkat: her kare kat ettiği yol bir ışın olarak sınanır.</li><li><b>Görüş hattı:</b> gözden hedefe ışın; arada duvar var mı? (Y11)</li><li><b>Zemin testi:</b> ayaklardan aşağı kısa ışın; yerde miyim, eğim kaç derece?</li><li><b>Fare seçimi:</b> kameradan fare yönüne ışın; ilk çarptığı nesne seçilir.</li><li>Hepsi aynı soru: <code>o + t·d</code> ışını için <b>en küçük t</b> nedir? (G1’deki t; G2’deki BVH bunu hızlandırır.)</li></ul></div>
-<div><div class="box game" style="font-size:.82em"><span class="bt">🔫 Nişancı oyunlarının küçük sırrı</span><p>Birçok nişancı oyununda ışın <b>namludan değil, kameranın ortasından</b> çıkar: nişangâhın gösterdiği yere isabet etmesi için. Silah modeli sağ altta durduğu için, köşeden bakarken namlu duvarın arkasında olsa bile mermi duvara takılmaz.</p><p class="mini">Garbaj’ın “The Slightly Odd Way Bullets Work In FPS Games” videosu bunu ve çözümlerini 4 dakikada gösterir (Kaynaklar).</p></div></div>
-</div>
-</section>
-
-<section data-sec="ışın">
-  <div class="quiz" data-karildi="1" data-answer="A">
-    <div class="qhead">Quiz 3 · çözüm ve ışın</div>
-    <div class="q">Okçuluk oyununuzda ok saniyede 3.000 piksel gidiyor (60 FPS’de karede 50 piksel) ve 10 piksel kalınlığındaki tahta hedefin içinden geçiyor. En uygun çözüm?</div>
-    <div class="opts"><button data-opt="A">Oku her karede bir ışın olarak sınamak: önceki konumdan yeni konuma giden parça hedefi kesiyor mu?</button><button data-opt="B">Hedefi görünmez yapmak</button><button data-opt="C">Kare hızını 30’a düşürmek</button><button data-opt="D">Okun hitbox’ını küçültmek</button></div>
-    <div class="explain">Ok küçük ve hızlı: bir karede aldığı yol hedefin kalınlığından büyük. Konum yerine yolu sınamak (G1’deki parça kesişimi ya da bir ışın) tünellemeyi tamamen ortadan kaldırır ve tam isabet noktasını da verir. Kare hızını düşürmek sorunu büyütür: karede 100 piksel.</div>
-  </div>
-</section>
-
-<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
-  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Kod ve laboratuvarlar</div><div class="sub">birkaç satırlık testler, bir platform karakteri</div></div>
-</section>
-
-<section data-sec="kod">
-  <h2>Temel testler ve ışın–daire</h2>
+  <h2>Kod: üç temel test</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -247,17 +145,6 @@ function daireKutu(c, b) {                        // kutunun daireye en yakın n
 
 function noktaKutu(p, b)  { return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h; }
 function noktaDaire(p, c) { return (p.x - c.x) ** 2 + (p.y - c.y) ** 2 <= c.r * c.r; }
-
-// Işın (o + t·d, t ≥ 0, d birim vektör) daireye çarpıyor mu? Çarpıyorsa uzaklık t, yoksa null
-function isinDaire(o, d, c) {
-  const mx = o.x - c.x, my = o.y - c.y;
-  const b = mx * d.x + my * d.y;                  // merkeze doğru mu gidiyoruz?
-  const k = mx * mx + my * my - c.r * c.r;        // ışın dairenin içinde mi başlıyor?
-  if (k > 0 && b > 0) return null;                // dışarıda ve uzaklaşıyor
-  const disk = b * b - k;
-  if (disk < 0) return null;                      // ıskaladı
-  return max(0, -b - sqrt(disk));
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -296,8 +183,143 @@ static bool CircleBox(Vector2 c, float r, Bounds box) =>
   </div>
 </section>
 
-<section data-sec="kod">
-  <h2>Ayıran eksen teoremi</h2>
+<section data-sec="temel">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>dx * dx + dy * dy &lt; rr * rr</code></td><td style="text-align:left;">kare uzaklık, kare yarıçap toplamı</td><td style="text-align:left;">Karekök yok. <code>**</code> yerine çarpma: en hızlısı.</td></tr><tr><td style="text-align:left;"><code>a.x &lt; b.x + b.w &amp;&amp; b.x &lt; a.x + a.w</code></td><td style="text-align:left;">x aralıkları örtüşüyor</td><td style="text-align:left;">“a’nın solu b’nin sağından önce <b>ve</b> b’nin solu a’nın sağından önce.” <code>&amp;&amp;</code> kısa devre: ilk yanlışta gerisi hesaplanmaz.</td></tr><tr><td style="text-align:left;"><code>constrain(v, lo, hi)</code> · <code>max(lo, min(hi, v))</code></td><td style="text-align:left;">v’yi [lo, hi] aralığına kıstır</td><td style="text-align:left;">p5.js’te <code>constrain</code>, Unity’de <code>Mathf.Clamp</code>, Python’da elle.</td></tr><tr><td style="text-align:left;"><code>box.ClosestPoint(c)</code></td><td style="text-align:left;">kutunun c’ye en yakın noktası</td><td style="text-align:left;">Unity’nin hazır kıstırması; her collider türünde var.</td></tr><tr><td style="text-align:left;"><code>(a - b).sqrMagnitude</code></td><td style="text-align:left;">kare uzaklık</td><td style="text-align:left;"><code>Vector2.Distance</code> karekök alır; karşılaştırmada bunu kullanın.</td></tr></table><div class="box info" style="font-size:.82em;margin-top:10px"><span class="bt">Önerme</span>Üç test de <b>sabit zamanlıdır</b>: şeklin büyüklüğünden bağımsız birkaç çarpma ve karşılaştırma. Bu yüzden karmaşık modeller yerine bu şekiller çarpıştırılır.</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: iki daire çakışıyor mu?</h2>
+  <div class="ailab" data-lab="circles" data-lang="js">
+<textarea>
+// a, b: [x, y, r]
+// Merkezler arası uzaklık, yarıçapların TOPLAMINDAN küçükse çakışıyorlar.
+// Yalnızca değen (uzaklık = toplam) daireler çakışmış sayılmaz.
+function circlesOverlap(a, b) {
+  const dx = a[0] - b[0], dy = a[1] - b[1];
+  return Math.sqrt(dx * dx + dy * dy) &lt; a[2];   // TODO: b'nin yarıçapı unutulmuş
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu yalnızca <code>a</code>’nın yarıçapına bakıyor. Düzelttikten sonra bir adım daha: <code>Math.sqrt</code>’u kaldırıp iki tarafın karesini karşılaştırın: <code>dx*dx + dy*dy &lt; (a[2] + b[2]) ** 2</code>. Elle hesap tablosundaki üç satır testlerde.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: kutunun en yakın noktası</h2>
+  <div class="ailab" data-lab="closest" data-lang="js">
+<textarea>
+// p: [x, y]   box: [x, y, genişlik, yükseklik]
+// Kutunun (kenarları dahil) p'ye EN YAKIN noktasını [x, y] olarak döndür.
+// p kutunun içindeyse cevap p'nin kendisidir.
+function closestPoint(p, box) {
+  const x = Math.max(p[0], box[0]);   // TODO: sağ kenarı da sınırla (Math.min)
+  const y = Math.max(p[1], box[1]);   // TODO: alt kenarı da sınırla
+  return [x, y];
+}
+</textarea>
+    <div class="lab-tasks">“Kıstırma” (clamp): bir sayıyı iki sınırın arasına çekmek. Her eksen için ayrı ayrı: <code>Math.min(Math.max(p[0], sol), sağ)</code>. Başlangıç kodu yalnızca sol ve üst kenarı uyguluyor; kutunun sağındaki ya da altındaki noktalar için yanlış. Bir sonraki laboratuvarın (daire–kutu) yarısı bu fonksiyon.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🧪 Canlı laboratuvar: daire kutuya değiyor mu?</h2>
+  <div class="simlab" data-sim="circbox" data-fns="circleBoxOverlap" data-lang="js">
+<textarea>
+// c: [x, y, r] daire      box: [x, y, genişlik, yükseklik]
+// 1) Kutunun daire merkezine en yakın noktasını bul (kıstırma).
+// 2) O nokta dairenin içinde mi?  (uzaklığın karesi &lt; r²)
+function circleBoxOverlap(c, box) {
+  // Kestirme (YANLIŞ): kutuyu r kadar büyütüp merkez içinde mi diye bakmak
+  return c[0] &gt; box[0] - c[2] &amp;&amp; c[0] &lt; box[0] + box[2] + c[2] &amp;&amp;
+         c[1] &gt; box[1] - c[2] &amp;&amp; c[1] &lt; box[1] + box[3] + c[2];
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu yaygın kestirmeyi kullanıyor: kenarlarda doğru, <b>köşelerde yanlış</b>. Sağda daire kutuların arasında dolaşırken köşelerin çaprazından geçtiği anlarda kalın sarı çerçeveyle “YANLIŞ” yazısını göreceksiniz. Doğrusu: <code>px = min(max(c[0], sol), sağ)</code>, <code>py</code> aynı şekilde; sonra <code>(px − c[0])² + (py − c[1])² &lt; r²</code>.</div>
+  </div>
+</section>
+
+<section data-sec="temel">
+  <h2>Oyunlarda: Quake “büyütme” hilesini nasıl doğru yaptı? (1996)</h2>
+<div class="cols c64">
+<div>  <div class="tabs">
+    <div class="tab" data-label="C · Quake kaynak kodu">
+<pre><code class="language-c" data-trim data-line-numbers><script type="text/template">
+// Quake (1996), model.c — harita yüklenirken hazırlanan "çarpışma gövdeleri" (hull)
+    hull = &loadmodel->hulls[1];                 // oyuncu boyundaki her şey için
+    hull->clip_mins[0] = -16;  hull->clip_mins[1] = -16;  hull->clip_mins[2] = -24;
+    hull->clip_maxs[0] =  16;  hull->clip_maxs[1] =  16;  hull->clip_maxs[2] =  32;
+
+    hull = &loadmodel->hulls[2];                 // iri canavarlar için
+    hull->clip_mins[0] = -32;  hull->clip_mins[1] = -32;  hull->clip_mins[2] = -24;
+    hull->clip_maxs[0] =  32;  hull->clip_maxs[1] =  32;  hull->clip_maxs[2] =  64;
+
+// world.c — hareket eden şeyin boyuna göre hangi gövdeyle sınanacağını seç
+    VectorSubtract (maxs, mins, size);
+    if (size[0] < 3)
+        hull = &model->hulls[0];                 // nokta (mermi): haritanın kendisi
+    else if (size[0] <= 32)
+        hull = &model->hulls[1];                 // 32 × 32 × 56'lık kutu kadar şişirilmiş harita
+    else
+        hull = &model->hulls[2];                 // 64 × 64 × 88'lik kutu kadar şişirilmiş harita
+</script></code></pre>
+    </div>
+  </div></div>
+<div><ul style="font-size:.74em"><li>Quake’te oyuncu bir <b>kutudur</b> (32 × 32 × 56 birim). Kutuyu haritanın binlerce yüzeyiyle çarpıştırmak 1996’da pahalıydı.</li><li><b>Hile:</b> oyuncuyu <b>noktaya</b> indir, haritayı oyuncunun kutusu kadar <b>şişir</b>. “Kutu duvara değiyor mu?” sorusu “nokta, şişirilmiş duvarın içinde mi?” sorusuna dönüşür: çok daha ucuz.</li><li>Şişirme harita <b>derlenirken</b> bir kez yapılır ve dosyaya üç ayrı çarpışma haritası (“hull”) yazılır: nokta için, oyuncu boyu için, iri canavarlar için.</li><li>Kodda görüyorsunuz: hareket eden şeyin enine bakılır (<code>size[0]</code>) ve uygun harita seçilir.</li><li><b>Bedeli:</b> yalnızca üç boy var. Quake’te her yaratığın çarpışma kutusu bu üçünden biridir; modeli ne olursa olsun.</li></ul></div>
+</div><p class="mini">Az önceki “kutuyu büyüt” kestirmesinin köşe hatası burada yok, çünkü büyütülen şekil de büyüten şekil de <b>kutu</b> (kutu ⊕ kutu = kutu). Aynı fikir Y9’da: navmesh, ajanın yarıçapı kadar <b>içeri çekilerek</b> pişirilir ki ajan nokta gibi yürüyebilsin. Matematikteki adı Minkowski toplamı.</p>
+</section>
+
+<section data-sec="temel">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 1 · temel testler</div>
+    <div class="q">Yarıçapı 10 olan bir top (120, 80) noktasında. Kutu x: 0–100, y: 0–60 aralığını kaplıyor. Kutunun topa en yakın noktası hangisi ve çakışıyorlar mı?</div>
+    <div class="opts"><button data-opt="A">(120, 80); evet</button><button data-opt="B">(100, 60); hayır: uzaklık ≈ 28, yarıçaptan büyük</button><button data-opt="C">(100, 80); hayır</button><button data-opt="D">(50, 30); evet</button></div>
+    <div class="explain">Kıstırma: x = 120 → 100’e, y = 80 → 60’a çekilir. En yakın nokta kutunun köşesi (100, 60). Uzaklık √(20² + 20²) ≈ 28,3 &gt; 10: çakışmıyor. (Elle hesap tablosunun üçüncü satırı.)</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Ayıran eksen teoremi</div><div class="sub">gölgeler ayrılıyorsa şekiller ayrıdır</div></div>
+</section>
+
+<section data-sec="SAT">
+  <h2>Problem: dönen kutular ve çokgenler</h2>
+<div class="cols c64">
+<div><ul style="font-size:.84em"><li>Araba 30° döndü. Artık kenarları eksenlere paralel değil: AABB testi çalışmaz.</li><li>Sınırlayıcı AABB’sini kullanırsak (dönmüş kutuyu saran büyük kutu): köşelerde büyük boşluklar; araba duvara değmeden “çarptı” sayılır.</li><li>Gemiler, kayalar, eğimli platformlar: genel <b>dışbükey çokgenler</b>.</li></ul><div class="box warn" style="font-size:.8em"><span class="bt">İlk akla gelen: kenarları tek tek kesiştir</span><p>A’nın her kenarını B’nin her kenarıyla kesiştir (G1). n × m kesişim testi.</p><ul style="font-size:.92em"><li>Biri öbürünün <b>tamamen içindeyse</b> hiçbir kenar kesişmez: kaçırır. Ek olarak “nokta içinde mi” testi gerekir.</li><li>Çakışıyorlarsa <b>ne kadar</b> ve <b>hangi yöne</b> itmeli? Kesişim noktaları bunu söylemez.</li></ul></div></div>
+<div><div class="box info" style="font-size:.8em"><span class="bt">Fikir: araya bir cetvel sığar mı?</span><ul style="font-size:.92em"><li>İki <b>dışbükey</b> şekil çakışmıyorsa aralarından bir <b>doğru</b> geçirebilirsiniz.</li><li>O doğruya <b>dik</b> bir eksen düşünün. İki şekli o eksene izdüşürün (üstten ışık tutup gölgelerine bakın): gölgeler <b>ayrıktır</b>.</li><li>Tersinden: gölgelerin ayrıldığı <b>tek bir eksen</b> bulursanız şekiller kesinlikle çakışmıyor.</li><li>Hiçbir eksende gölgeler ayrılmıyorsa çakışıyorlar.</li></ul></div><div class="box game" style="font-size:.8em;margin-top:8px"><span class="bt">Hangi eksenlere bakmalı?</span>Sonsuz eksen var; ama yalnızca <b>kenarların dikmelerine</b> bakmak yeter. Üçgen + dörtgen = en çok 7 eksen; iki kutu (OBB) = 4 eksen (karşılıklı kenarlar aynı ekseni verir).</div></div>
+</div>
+</section>
+
+<section data-sec="SAT">
+  <h2>Gölge nasıl hesaplanır? Nokta çarpım</h2>
+<div class="cols c46">
+<div><ul style="font-size:.8em"><li>Eksen: birim vektör <b>n</b>. Bir <b>P</b> noktasının eksendeki yeri: <b>P · n</b> = P<sub>x</sub>n<sub>x</sub> + P<sub>y</sub>n<sub>y</sub> (Y0).</li><li>Çokgenin gölgesi: bütün köşelerinin nokta çarpımlarının <b>en küçüğü</b> ve <b>en büyüğü</b>: bir [min, max] aralığı.</li><li>İki aralığın örtüşmesi: <code>min(aMax, bMax) − max(aMin, bMin)</code>. Artı: örtüşüyor (o kadar). Eksi ya da sıfır: <b>ayrık</b>.</li><li>Bir kenarın dikmesi: kenar (e<sub>x</sub>, e<sub>y</sub>) ise dikme (−e<sub>y</sub>, e<sub>x</sub>); uzunluğuna bölerek birim yap.</li></ul></div>
+<div><div class="box info" style="font-size:.76em"><span class="bt">Elle izleme: kare A (0,0) (2,0) (2,2) (0,2) ve üçgen B (1,1) (4,1) (2,5, 3)</span><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">eksen n</th><th style="text-align:left;">A’nın gölgesi</th><th style="text-align:left;">B’nin gölgesi</th><th style="text-align:left;">örtüşme</th></tr><tr><td style="text-align:left;">(1, 0) — karenin kenarı</td><td style="text-align:left;">[0, 2]</td><td style="text-align:left;">[1, 4]</td><td style="text-align:left;">2 − 1 = <b>1</b></td></tr><tr><td style="text-align:left;">(0, 1) — karenin kenarı</td><td style="text-align:left;">[0, 2]</td><td style="text-align:left;">[1, 3]</td><td style="text-align:left;">2 − 1 = <b>1</b></td></tr><tr><td style="text-align:left;">(−0,8, −0,6) — üçgenin kenarı</td><td style="text-align:left;">[−2,8, 0]</td><td style="text-align:left;">[−3,8, −1,4]</td><td style="text-align:left;">−1,4 − (−2,8) = <b>1,4</b></td></tr><tr><td style="text-align:left;">(0,8, −0,6) — üçgenin kenarı</td><td style="text-align:left;">[−1,2, 1,6]</td><td style="text-align:left;">[0,2, 2,6]</td><td style="text-align:left;">1,6 − 0,2 = <b>1,4</b></td></tr></table><p>Dört eksende de örtüşme var → <b>çakışıyorlar</b>. En küçük örtüşme <b>1</b> (x ya da y ekseni): kareyi 1 birim sola (ya da yukarı) itmek ayırmaya yeter.</p><p class="mini">Üçgeni (3, 1) (5, 1) (4, 3)’e taşıyın: ilk eksende A [0, 2], B [3, 5] → örtüşme −1. <b>Ayıran eksen bulundu</b>; kalan üç eksene bakmaya gerek yok.</p></div></div>
+</div>
+</section>
+
+<section data-sec="SAT">
+  <h2>Çakışıyorlarsa: en kısa çıkış (MTV)</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li>Hiçbir eksende boşluk yok. Her eksen için “bu yönde şu kadar itersem ayrılırlar” diyebiliriz: o eksendeki örtüşme miktarı.</li><li><b>En az örtüşen eksen</b> = en kısa çıkış yolu. İtme vektörü = o eksen × örtüşme miktarı.</li><li><b>Yön:</b> eksen A’dan B’ye mi bakıyor, tersine mi? A’nın merkezinden B’nin merkezine giden vektörle nokta çarpımına bak; A’yı B’den <b>uzaklaştıracak</b> tarafa çevir.</li><li>İki nesne de hareketliyse itmeyi paylaştır (ör. kütleyle ters orantılı); biri duvarsa hepsini öbürüne ver.</li></ul></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">⚠️ Yalnızca dışbükey</span><p>İçbükey şekilde (L, U) gölgeler her eksende örtüşebilir ama şekiller birbirine değmeyebilir: U’nun içindeki kutu.</p><p>Çare: içbükey şekli dışbükey parçalara bölün ya da dışbükey zarfıyla (G1) yetinin.</p></div><div class="box info" style="font-size:.8em;margin-top:8px"><span class="bt">Daire için</span>Dairenin “kenarı” yok; ek eksen olarak dairenin merkezinden çokgenin <b>en yakın köşesine</b> giden yön sınanır. Dairenin gölgesi: merkez · n ± yarıçap.</div><div class="box story" style="font-size:.8em;margin-top:8px"><span class="bt">Kutu–kutu testi</span>AABB testi, eksenleri (1, 0) ve (0, 1) olan SAT’tır. “En az örtüşen eksen” fikri de aynen geçerli: karakter duvara yandan mı, üstten mi girdi? Daha az gömüldüğü eksenden geri it.</div></div>
+</div>
+</section>
+
+<section data-sec="demo">
+<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Mavi</b> şekil sizin (sürükleyin, kaydırıcıyla döndürün); <b>sarı</b> şekil sabit.</li><li><b>Kesikli doğru</b> o an seçili eksen. Üzerindeki kalın <b>mavi</b> ve <b>sarı</b> çizgiler iki şeklin o eksendeki gölgeleri; ince kesikli çizgiler gölgeyi belirleyen köşelerden iner.</li><li>Gölgelerin örtüşen kısmı <b>kırmızı</b> çizilir. Kırmızı yoksa o eksen bir <b>ayıran eksendir</b>.</li><li><b>Sağ üstteki liste</b> bütün eksenler: “AYRIK (boşluk …)” ya da “örtüşme …”. ▶ işareti seçili eksen.</li><li><b>Yeşil ok</b> (yalnızca çakışınca): en az örtüşen eksen boyunca en kısa çıkış. “↔ ayır” düğmesi mavi şekli o kadar iter.</li></ol></div>
+</section>
+
+<section data-sec="SAT">
+  <h2>Canlı: gölgelere bak 🔦</h2>
+<div class="demo" data-demo="sat"></div>
+</section>
+
+<section data-sec="SAT">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>Şekilleri uzak tutun: listede en az bir satır yeşil “AYRIK”. Demo o ekseni otomatik seçer; gölgeler arasında boşluk var.</li><li>Mavi şekli sarıya yaklaştırın, ama değdirmeyin. “eksen: sıradaki ▶” ile eksenleri gezin: çoğunda gölgeler örtüşüyor! <b>Tek bir</b> ayrık eksen yetiyor.</li><li>Şimdi iç içe sokun: bütün satırlar “örtüşme”. Listede “← en küçük” yazan eksene bakın; yeşil ok o yönde.</li><li>“↔ ayır”a basın: şekiller tam değecek kadar ayrılır. Fizik motorları her karede bunu yapar.</li><li>Mavi şekli döndürün: eksenler de döner. Bir köşeyi sarı şeklin kenarına saplayın: en kısa çıkış o kenarın dikmesi.</li></ol></div>
+</section>
+
+<section data-sec="SAT">
+  <h2>Kod: ayıran eksen teoremi</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -361,8 +383,82 @@ def sat(A, B):                                   # None: ayrık; (dx, dy): A'yı
   </div>
 </section>
 
-<section data-sec="kod">
-  <h2>Platform karakteri: eksen eksen çözüm</h2>
+<section data-sec="SAT">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>for (const P of [A, B])</code></td><td style="text-align:left;">önce A’nın kenarları, sonra B’ninkiler</td><td style="text-align:left;">Aynı döngü gövdesi iki şekil için de çalışır.</td></tr><tr><td style="text-align:left;"><code>{ x: -(b.y - a.y) / u, y: (b.x - a.x) / u }</code></td><td style="text-align:left;">kenarın birim dikmesi</td><td style="text-align:left;">(e<sub>x</sub>, e<sub>y</sub>) → (−e<sub>y</sub>, e<sub>x</sub>): 90° döndürme. <code>u</code>’ya bölmezseniz örtüşme miktarı yanlış ölçekte çıkar.</td></tr><tr><td style="text-align:left;"><code>if (ortusme &lt;= 0) return null</code></td><td style="text-align:left;">ayıran eksen bulundu: hemen çık</td><td style="text-align:left;">Çoğu çift çakışmaz ve ilk birkaç eksende elenir. SAT’ı hızlı yapan satır.</td></tr><tr><td style="text-align:left;"><code>if (ortusme &lt; enAz) …</code></td><td style="text-align:left;">en az örtüşen ekseni hatırla</td><td style="text-align:left;">Döngü biterse (çakışma varsa) çıkış yönü bu eksen.</td></tr><tr><td style="text-align:left;">son <code>if</code>: nokta çarpım &lt; 0 ise ekseni ters çevir</td><td style="text-align:left;">itme A’yı B’den uzaklaştırsın</td><td style="text-align:left;">Dikmenin hangi yöne baktığı köşe sırasına bağlı; merkezlerle düzeltiyoruz.</td></tr><tr><td style="text-align:left;">dönüş: <code>null</code> ya da <code>{x, y}</code></td><td style="text-align:left;">ayrık / itme vektörü</td><td style="text-align:left;">Tek fonksiyon hem tespiti hem çözüm için gereken bilgiyi verir.</td></tr></table><div class="box info" style="font-size:.82em;margin-top:10px"><span class="bt">Önerme</span>n ve m köşeli iki dışbükey çokgen için SAT en çok <b>n + m</b> eksen sınar; her eksende n + m nokta çarpım: toplam (n + m)². İki kutu için 4 eksen × 8 köşe. Çakışmayan çiftlerde çoğu zaman ilk eksenlerde biter.</div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: gölge (izdüşüm)</h2>
+  <div class="ailab" data-lab="project" data-lang="python">
+<textarea>
+# poly: çokgenin köşeleri [[x, y], ...]     axis: birim vektör [nx, ny]
+# Çokgenin bu eksen üzerindeki gölgesini [min, max] olarak döndür.
+# Bir köşenin eksendeki yeri = nokta çarpım: x*nx + y*ny
+def project(poly, axis):
+    return [0, 0]
+</textarea>
+    <div class="lab-tasks">SAT’ın tek hesabı. Her köşe için nokta çarpımı alın; en küçüğü ve en büyüğü gölgenin iki ucudur. Python’da: <code>s = [p[0]*axis[0] + p[1]*axis[1] for p in poly]</code>, sonra <code>[min(s), max(s)]</code>. Elle izlemedeki kare ve üçgen testlerde.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: iki gölge ne kadar örtüşüyor?</h2>
+  <div class="ailab" data-lab="overlap1" data-lang="python">
+<textarea>
+# İki aralık: [a_min, a_max] ve [b_min, b_max]
+# Ortak kısmın uzunluğunu döndür; ayrıklarsa (ya da yalnızca değiyorlarsa) 0.
+def overlap(a_min, a_max, b_min, b_max):
+    return 0
+</textarea>
+    <div class="lab-tasks">SAT’ın karar adımı: <code>min(a_max, b_max) - max(a_min, b_min)</code>. Eksi çıkarsa aralıklar ayrıktır (o eksen bir ayıran eksendir): 0 döndürün. Artı çıkan değerlerin en küçüğü “en kısa çıkış” uzaklığıdır.</div>
+  </div>
+</section>
+
+<section data-sec="SAT">
+  <h2>Oyunlarda ve motorlarda SAT; öbür büyük algoritma GJK</h2>
+<div class="cols c46">
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 SAT nerede?</span><ul style="font-size:.92em"><li><b>Box2D:</b> iki çokgenin çarpışması tam olarak bu: kaynak koddaki <code>b2FindMaxSeparation</code> fonksiyonu bir çokgenin kenar dikmeleri üzerinde en büyük ayrılığı arar; ayrılık artıysa “ayıran eksen bulundu” der ve çıkar.</li><li><b>N</b> (Metanet Software, 2004): tek kişilik ninja platform oyunu; yapımcıları çarpışmayı SAT ile yazdı ve yöntemi bugün hâlâ okunan iki etkileşimli derste anlattı (Kaynaklar).</li><li><b>Araç oyunları:</b> dönen dikdörtgen arabalar için OBB–OBB testi = 4 eksenli SAT.</li></ul></div></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">GJK: aynı soru, başka yol</span><ul style="font-size:.92em"><li>SAT, çok köşeli şekillerde ve 3B’de (kenar çiftlerinin çarpımları da eksen olur) pahalanır.</li><li><b>GJK</b> (Gilbert–Johnson–Keerthi, 1988): iki şeklin “farkını” düşünür ve <b>orijinin o farkın içinde olup olmadığına</b> bakar.</li><li>Şekle tek soru sorar: “şu yönde en uçtaki noktan hangisi?” Bu yüzden daire, kapsül, çokgen aynı kodla çalışır.</li><li>Çoğu 3B fizik motorunun dar aşamasıdır.</li></ul><p class="mini">Reducible’ın “A Strange But Elegant Approach to a Surprisingly Hard Problem (GJK Algorithm)” videosu algoritmayı sıfırdan, görsel olarak kurar (Kaynaklar). Bu derste yazmayacağız; adını ve fikrini bilmeniz yeter.</p></div></div>
+</div>
+</section>
+
+<section data-sec="SAT">
+  <div class="quiz" data-karildi="1" data-answer="C">
+    <div class="qhead">Quiz 2 · SAT</div>
+    <div class="q">İki dışbükey çokgen için 7 eksenden 6’sında gölgeler örtüşüyor, 1’inde aralarında boşluk var. Sonuç?</div>
+    <div class="opts"><button data-opt="A">Çakışıyorlar: çoğunluk örtüşüyor</button><button data-opt="B">Belirsiz; daha fazla eksen gerekir</button><button data-opt="C">Çakışmıyorlar: tek bir ayıran eksen yeter</button><button data-opt="D">Yalnızca köşeleri değiyor</button></div>
+    <div class="explain">Teorem “bütün eksenlerde örtüşme varsa çakışır” der; tersinden, bir tanesinde bile boşluk varsa şekilleri ayıran bir doğru vardır. Bu aynı zamanda hız kazandırır: çoğu çift çakışmaz ve ilk birkaç eksende elenir (koddaki <code>return null</code>).</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Tespit yetmez: çözüm</div><div class="sub">değdi; şimdi ne olacak?</div></div>
+</section>
+
+<section data-sec="çözüm">
+  <h2>Çakışmayı bulmak işin yarısı</h2>
+<div class="cols c46">
+<div><table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">çözüm</th><th style="text-align:left;">ne yapar</th><th style="text-align:left;">nerede</th></tr><tr><td style="text-align:left;"><b>Yok say</b></td><td style="text-align:left;">yalnızca “değdi” olayını bildir</td><td style="text-align:left;">tetik alanı, toplanabilir eşya, hasar bölgesi</td></tr><tr><td style="text-align:left;"><b>İptal et</b></td><td style="text-align:left;">hareketi geri al</td><td style="text-align:left;">çok basit oyunlar; karakter duvara ve zemine <b>yapışır</b></td></tr><tr><td style="text-align:left;"><b>İtip ayır</b></td><td style="text-align:left;">en kısa çıkış vektörü (MTV) kadar it</td><td style="text-align:left;">fizik nesneleri, yukarıdan bakışlı oyunlar</td></tr><tr><td style="text-align:left;"><b>Eksen eksen</b></td><td style="text-align:left;">önce x’te ilerle ve çöz, sonra y’de</td><td style="text-align:left;">karo tabanlı platform oyunlarının standardı</td></tr><tr><td style="text-align:left;"><b>Kaydır</b></td><td style="text-align:left;">hızın duvara dik kısmını at</td><td style="text-align:left;">duvar boyunca sürtünerek yürüme (3B karakterler)</td></tr><tr><td style="text-align:left;"><b>Sektir</b></td><td style="text-align:left;">hızın dik kısmını ters çevir</td><td style="text-align:left;">top, mermi, pinball (G5)</td></tr></table></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: eksen eksen</span><p>Oyuncu x = 96, genişlik 20 (sağ kenarı 116). Duvar x = 120’de başlıyor. Bu kare dx = +8, dy = +3.</p><ul style="font-size:.92em"><li><b>x adımı:</b> x = 104 → sağ kenar 124 &gt; 120: çakıştı. Sağa gidiyorduk → duvarın <b>sol</b> kenarına yasla: x = 120 − 20 = <b>100</b>. vx = 0.</li><li><b>y adımı:</b> y += 3 → çakışma yok: kalır.</li><li>Sonuç: yatayda durdu, dikeyde <b>düşmeye devam ediyor</b>: duvar boyunca kayma kendiliğinden çıktı.</li></ul><p class="mini">x ve y’yi birlikte ilerletip sonra çözseydik: çakışmanın yandan mı alttan mı geldiğini bilemezdik; karakter köşelerde takılır ya da yukarı fırlardı.</p></div></div>
+</div>
+</section>
+
+<section data-sec="demo">
+<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Yeşil kutu</b> sizsiniz. <b>A / D</b> yürü, <b>W</b> zıpla, <b>X</b> atıl (bir anda 300 piksel). Sarı toplar altın; gri kareler zemin ve platformlar.</li><li><b>Mor ince çubuk</b> 6 piksel kalınlığında bir duvar: tünelleme deneyi için.</li><li><b>Üstteki menü</b> çarpışma yöntemini seçer: 1) yok, 2) yalnızca tespit, 3) eksen eksen çözüm.</li><li><b>“sürekli tespit”</b> kutusu hareketi 4 piksellik alt adımlara böler.</li><li>Sol üstte sayaçlar: toplanan altın, duvardan geçme (tünelleme) ve zeminden düşme sayısı. Sesler açık.</li></ol></div>
+</section>
+
+<section data-sec="çözüm">
+  <h2>Canlı: üç çarpışma yöntemi, bir karakter 🏃</h2>
+<div class="demo" data-demo="platform"></div>
+</section>
+
+<section data-sec="çözüm">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>1) yok:</b> karakter zeminin içinden düşer. Hiçbir test yok.</li><li><b>2) yalnızca tespit:</b> düşmüyor; ama A/D ile yürümeyi deneyin. Zemine değdiği için hareket iptal ediliyor: <b>yapıştı</b>. Tespit etmek yetmedi.</li><li><b>3) eksen eksen:</b> yürüyün, zıplayın, platformlara çıkın, duvara doğru yürürken zıplayın: duvar boyunca kayıyor. Altınları toplayın.</li><li>Mor duvarın soluna geçip <b>X</b> ile sağa atılın (birkaç kez deneyin): karakter çoğu seferde duvarın öbür tarafında; “tünelleme” sayacı artar. Bazen de tam denk gelip durur: aralıklı hatalar en zor bulunanlardır.</li><li>“sürekli tespit”i işaretleyip tekrar atılın: duvar her seferinde durdurur. Aynı hız, aynı duvar; fark yalnızca kaç noktada sınadığımız.</li></ol></div>
+</section>
+
+<section data-sec="çözüm">
+  <h2>Kod: platform karakteri, eksen eksen</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -400,6 +496,157 @@ function hareket(o, duvarlar, dt) {
   </div>
 </section>
 
+<section data-sec="çözüm">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>duvarlar.find(d =&gt; …)</code></td><td style="text-align:left;">koşulu sağlayan <b>ilk</b> duvar (yoksa <code>undefined</code>)</td><td style="text-align:left;">Çok duvar varsa G2’deki ızgarayla yalnızca yakındakilere bakılır.</td></tr><tr><td style="text-align:left;"><code>o.x = dx &gt; 0 ? d.x - o.w : d.x + d.w</code></td><td style="text-align:left;">sağa gidiyorsak duvarın soluna, sola gidiyorsak sağına yasla</td><td style="text-align:left;">Hareket yönü, hangi kenardan girdiğimizi söyler. Eksen eksen çalışmanın bütün faydası bu.</td></tr><tr><td style="text-align:left;"><code>if (dy &gt; 0) { …; o.yerde = true; }</code></td><td style="text-align:left;">yalnızca <b>aşağı</b> giderken çarptıysa yerdeyiz</td><td style="text-align:left;">Tavana kafa vurmak “yerde” sayılmamalı; yoksa tavana yapışıp tekrar zıplarsınız.</td></tr><tr><td style="text-align:left;"><code>ceil(max(abs(dx), abs(dy)) / 4)</code></td><td style="text-align:left;">en çok 4 piksellik kaç adım gerekir?</td><td style="text-align:left;">Yavaş harekette 1 adım (bedava); hızlı harekette hız kadar adım. 4 = en ince duvardan küçük bir sayı.</td></tr><tr><td style="text-align:left;"><code>o.yerde = false</code> (döngüden önce)</td><td style="text-align:left;">her kare baştan karar ver</td><td style="text-align:left;">Platformdan yürüyüp çıkınca bayrak kendiliğinden düşer.</td></tr></table>
+</section>
+
+<section data-sec="çözüm">
+  <h2>Oyunlarda: Celeste neden hiç duvara gömülmez?</h2>
+<div class="cols c64">
+<div>  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js) · Celeste yöntemi">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Celeste / TowerFall yöntemi (Maddy Thorson'ın anlattığı): konumlar TAM SAYI, piksel piksel ilerle
+// o: {x, y, w, h, kalanX, kalanY}  — x, y, w, h tam sayı
+function yatayGit(o, miktar, carpinca) {
+  o.kalanX += miktar;                       // kesirli hareket burada birikir (0,3 + 0,3 + 0,3 + 0,3 → 1 piksel)
+  let adim = round(o.kalanX);
+  if (adim === 0) return;                   // henüz bir piksel etmedi
+  o.kalanX -= adim;
+  const yon = Math.sign(adim);              // +1 sağ, −1 sol
+  while (adim !== 0) {
+    if (!duvarVar(o.x + yon, o.y, o.w, o.h)) {   // bir piksel ötesi boş mu?
+      o.x += yon; adim -= yon;                   // boş: bir piksel ilerle
+    } else {
+      if (carpinca) carpinca();                  // dolu: dur ve "çarptım" de (hızı sıfırla, ses çal…)
+      break;
+    }
+  }
+}
+// dikeyGit aynısı (y için).  Bir kare:  yatayGit(o, o.vx * dt, () => o.vx = 0);
+//                                        dikeyGit(o, o.vy * dt, () => { if (o.vy > 0) o.yerde = true; o.vy = 0; });
+</script></code></pre>
+    </div>
+  </div></div>
+<div><ul style="font-size:.74em"><li>Celeste ve TowerFall’un yapımcısı Maddy Thorson, iki oyunun fiziğini kısa bir yazıda anlattı. Kurallar şaşırtıcı derecede basit:</li><li>Her çarpıştırıcı bir <b>AABB</b>; konum ve boyutların hepsi <b>tam sayı</b> (piksel).</li><li>Hareket <b>piksel piksel</b>: her pikselde “bir ötesi dolu mu?” diye bakılır. Doluysa durulur. Karakter bir duvarın içinde <b>hiç bulunmaz</b>; “itip ayırma” diye bir adım yok.</li><li>Kesirli hız kaybolmasın diye artan kısım bir <b>kalan</b> değişkeninde birikir: karede 0,3 piksel hız → dördüncü karede 1 piksel.</li><li>Çarpınca ne olacağı çağıran tarafından verilir (<code>carpinca</code>): oyuncu hızını sıfırlar, ok duvara saplanır, top seker. Aynı hareket kodu, farklı tepkiler.</li><li><b>Tünelleme imkânsız:</b> hız ne olursa olsun her piksel sınanır. (Bedeli: çok hızlı nesnede çok test; küçük, piksel sanatlı oyunda sorun değil.)</li></ul></div>
+</div><p class="mini">Demodaki “alt adımlar”ın uç hâli: adım boyu 1 piksel. Kaynak: Maddy Thorson, “Celeste &amp; TowerFall Physics” (Kaynaklar). Kod, yazıdaki yöntemin p5.js ile yeniden yazımıdır.</p>
+</section>
+
+<section data-sec="çözüm">
+  <h2>Kayma ve sekme: hızı ikiye ayır</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li>Çarpılan yüzeyin <b>normali</b> n (yüzeye dik birim vektör; SAT’ta en az örtüşen eksen, daire–kutuda merkez − en yakın nokta).</li><li>Hızı iki parçaya ayır: yüzeye <b>dik</b> kısım = (v · n) n; yüzeye <b>paralel</b> kısım = v − (v · n) n.</li><li><b>Kayma:</b> dik kısmı at, paraleli koru. Karakter duvara çapraz yürüyünce durmaz, duvar boyunca süzülür.</li><li><b>Sekme:</b> dik kısmı ters çevir (esneklik katsayısıyla çarp), paraleli koru.</li></ul><div class="box info" style="font-size:.82em"><span class="bt">Elle hesap</span><p>v = (3, 4), zemin: n = (0, −1) (ekranda yukarı).</p><p>v · n = −4 (zemine doğru).</p><p><b>Kayma:</b> v − (−4)·n = (3, 4) − (0, 4) = <b>(3, 0)</b></p><p><b>Tam sekme (e = 1):</b> v − 2·(−4)·n = (3, 4) − (0, 8) = <b>(3, −4)</b></p></div></div>
+<div>  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Duvar boyunca kayma: hızın duvara DİK kısmını at, paralel kısmını koru
+// v: hız {x, y}    n: çarpılan yüzeyin birim normali {x, y}
+function kaydir(v, n) {
+  const dik = v.x * n.x + v.y * n.y;            // hızın normale izdüşümü (nokta çarpım)
+  if (dik >= 0) return v;                       // zaten duvardan uzaklaşıyor
+  return { x: v.x - dik * n.x, y: v.y - dik * n.y };
+}
+
+// Sektirme: dik kısmı ters çevir (e: esneklik, 0 = hiç sekmez, 1 = tam seker)
+function sektir(v, n, e) {
+  const dik = v.x * n.x + v.y * n.y;
+  if (dik >= 0) return v;
+  return { x: v.x - (1 + e) * dik * n.x, y: v.y - (1 + e) * dik * n.y };
+}
+</script></code></pre>
+    </div>
+  </div><p class="mini">Unity’de hazırları: <code>Vector3.ProjectOnPlane(v, n)</code> (kayma) ve <code>Vector3.Reflect(v, n)</code> (tam sekme). Godot’da <code>move_and_slide()</code> bütün döngüyü yapar: hareket et, çarp, kay, tekrar dene.</p></div>
+</div>
+</section>
+
+<section data-sec="çözüm">
+  <h2>Tünelleme: hesap ve çareler</h2>
+<div class="cols c64">
+<div><ul style="font-size:.8em"><li>Bir karede kat edilen yol = hız × dt. 60 FPS’de saniyede 6.000 piksel giden bir şey karede <b>100 piksel</b> atlar.</li><li>Nesnenin eni w, engelin kalınlığı d ise: karedeki yol <b>w + d</b>’den büyükse nesne hiçbir karede engelle örtüşmeyebilir.</li><li>Demodaki sayılar: w = 16, d = 6 → 22 pikselden uzun adımlar riskli. Adım 100: konuma göre yaklaşık 4 denemenin 3’ünde atlar.</li><li>Hata <b>aralıklıdır</b>: test ederken görmezsiniz, oyuncu görür. Kare hızı düşen bilgisayarda daha sık olur (dt büyür!).</li></ul></div>
+<div><table class="sum-t" style="font-size:20px"><tr><th style="text-align:left;">çare</th><th style="text-align:left;">nasıl</th><th style="text-align:left;">ne zaman</th></tr><tr><td style="text-align:left;"><b>Alt adımlar</b></td><td style="text-align:left;">hareketi küçük parçalara böl; her parçada sına</td><td style="text-align:left;">basit; çoğu 2B oyun (demo)</td></tr><tr><td style="text-align:left;"><b>Piksel piksel</b></td><td style="text-align:left;">alt adımın uç hâli</td><td style="text-align:left;">piksel sanatlı platform oyunları (Celeste)</td></tr><tr><td style="text-align:left;"><b>Süpürme testi</b></td><td style="text-align:left;">şeklin kare boyunca taradığı hacmi sına; ilk temas anını bul</td><td style="text-align:left;">fizik motorları (Unity: Continuous)</td></tr><tr><td style="text-align:left;"><b>Işın / parça</b></td><td style="text-align:left;">küçük, hızlı nesnenin yolunu kesiştir (G1)</td><td style="text-align:left;">mermiler</td></tr><tr><td style="text-align:left;"><b>Tasarım</b></td><td style="text-align:left;">en yüksek hızı ve en ince duvarı sınırla; sabit zaman adımı (G5)</td><td style="text-align:left;">her zaman</td></tr></table><div class="box game" style="font-size:.78em;margin-top:8px"><span class="bt">🥊 Hatırlatma: Melee</span>Super Smash Bros. Melee saldırı kürelerini iki kare arasında birleştirip kapsül gibi sınar (G1): hızlı yumruk için süpürme testi.</div></div>
+</div>
+</section>
+
+<section data-sec="çözüm">
+  <h2>Hikâye: çarpışmayı ekran kartına sormak</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li>1977’de Atari 2600’ün belleği 128 bayttı. Çarpışma testi için ne yer vardı ne işlemci.</li><li>Çözüm: görüntü yongası zaten her pikseli çiziyordu. İki nesnenin pikselleri aynı noktaya gelirse yonga bir <b>çarpışma bayrağı</b> kaldırıyordu; oyun bir sonraki karede bayrağa bakıyordu.</li><li>Bedavaya <b>piksel kusursuz</b> çarpışma! Aynı fikir Commodore 64’ün ve Sega Master System’in görüntü yongalarında da vardı.</li><li>Ama bayrak yalnızca “bir şeyler çarpıştı” diyordu; neyin neye, nerede çarptığını söylemiyordu. Geliştiriciler bunun etrafından dolanmak zorundaydı.</li></ul></div>
+<div><div class="box story" style="font-size:.84em"><span class="bt">📜 Okuması keyifli</span><p>Nicole Express’in “Collision Detection Is Hard: The Story of Alf” yazısı, Master System’deki bir oyunun bu donanım bayrağına güvenmesinin, farklı konsol sürümlerinde nasıl hatalara yol açtığını adım adım çözer (Kaynaklar).</p><p class="mini">Ders: “piksel kusursuz” kulağa ideal gelir ama oyuncu için çoğu zaman en iyi his, basit ve biraz cömert bir kutudan gelir.</p></div></div>
+</div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">Işınlar</div><div class="sub">mermi, görüş, fare</div></div>
+</section>
+
+<section data-sec="ışın">
+  <h2>Işın–daire: ne zaman, nerede çarpar?</h2>
+<div class="cols c64">
+<div><p style="font-size:.82em">Işın: <b>P(t) = O + t·d</b> (d birim vektör, t ≥ 0: t doğrudan <b>uzaklık</b>). Daire: merkez C, yarıçap r.</p>
+<p style="font-size:.82em">Çarpma anında |P(t) − C| = r. <b>m = O − C</b> dersek ve iki tarafın karesini açarsak:</p>
+<p style="font-size:.82em">$$t^2 + 2(m \cdot d)\,t + (m \cdot m - r^2) = 0$$</p>
+<p style="font-size:.82em">b = m · d, k = m · m − r² ile: $$t = -b \pm \sqrt{b^2 - k}$$</p><ul style="font-size:.8em"><li><b>b² − k &lt; 0</b>: kök yok → ıskaladı.</li><li>Küçük kök (−b − √…) <b>giriş</b>, büyük kök çıkış. İlk çarpma: giriş.</li><li><b>k &gt; 0 ve b &gt; 0</b>: dışarıdayız ve uzaklaşıyoruz → hemen “ıskaladı”.</li></ul></div>
+<div><div class="box info" style="font-size:.8em"><span class="bt">Elle hesap: O = (0, 0), d = (1, 0), C = (5, 1), r = 2</span><p>m = (−5, −1)</p><p>b = m · d = <b>−5</b> (merkeze doğru gidiyoruz)</p><p>k = 25 + 1 − 4 = <b>22</b> (dışarıdayız)</p><p>b² − k = 25 − 22 = <b>3</b> ≥ 0 → çarpıyor</p><p>t = 5 − √3 ≈ <b>3,27</b> → nokta (3,27, 0)</p><p class="mini">Sağlama: (3,27, 0) ile (5, 1) arası √(1,73² + 1²) = 2 ✔</p></div></div>
+</div>
+</section>
+
+<section data-sec="ışın">
+  <h2>Kod: ışın–daire</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Işın (o + t·d, t ≥ 0, d birim vektör) daireye çarpıyor mu? Çarpıyorsa uzaklık t, yoksa null
+function isinDaire(o, d, c) {
+  const mx = o.x - c.x, my = o.y - c.y;
+  const b = mx * d.x + my * d.y;                  // merkeze doğru mu gidiyoruz?
+  const k = mx * mx + my * my - c.r * c.r;        // ışın dairenin içinde mi başlıyor?
+  if (k > 0 && b > 0) return null;                // dışarıda ve uzaklaşıyor
+  const disk = b * b - k;
+  if (disk < 0) return null;                      // ıskaladı
+  return max(0, -b - sqrt(disk));
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+import math
+def isin_daire(o, d, c):                 # o: (x, y)  d: birim yön  c: (x, y, r) → uzaklık ya da None
+    mx, my = o[0] - c[0], o[1] - c[1]
+    b = mx * d[0] + my * d[1]
+    k = mx * mx + my * my - c[2] ** 2
+    if k > 0 and b > 0:
+        return None                      # dışarıda ve uzaklaşıyor
+    disk = b * b - k
+    if disk < 0:
+        return None                      # ıskaladı
+    return max(0.0, -b - math.sqrt(disk))
+</script></code></pre>
+    </div>
+  </div><p class="mini"><code>b &gt; 0</code>: merkezden uzaklaşıyoruz; <code>k &gt; 0</code>: dışarıdayız. İkisi birden doğruysa karekök bile almadan çıkıyoruz: çoğu ışın çoğu daireyi böyle eler. <code>max(0, …)</code>: ışın dairenin içinde başlıyorsa uzaklık 0.</p>
+</section>
+
+<section data-sec="ışın">
+  <h2>Işın gönderme: en çok kullanılan sorgu</h2>
+<div class="cols c64">
+<div><ul style="font-size:.78em"><li><b>Hitscan mermi:</b> tetik çekildiği an namludan bir ışın; ilk çarptığı şey vurulur. Mermi nesnesi yok, uçuş süresi yok (G1: DOOM).</li><li><b>Mermi nesnesi (projectile):</b> her kare ilerleyen, yerçekiminden etkilenen bir nesne; roket, ok, el bombası. Hızlıysa her kare kat ettiği yol bir ışın olarak sınanır.</li><li><b>Görüş hattı:</b> gözden hedefe ışın; arada duvar var mı? (Y11)</li><li><b>Zemin testi:</b> ayaklardan aşağı kısa ışın; yerde miyim, eğim kaç derece?</li><li><b>Fare seçimi:</b> kameradan fare yönüne ışın; ilk çarptığı nesne seçilir.</li><li>Hepsi aynı soru: <code>O + t·d</code> için <b>en küçük t</b>. Şekil başına bir test (ışın–daire, ışın–kutu [G2’deki dilim testi], ışın–parça [G1]); BVH hangi şekillere bakılacağını azaltır.</li></ul></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🔫 Nişancı oyunlarının küçük sırrı</span><p>Birçok nişancı oyununda ışın <b>namludan değil, kameranın ortasından</b> çıkar: nişangâhın gösterdiği yere isabet etmesi için. Silah modeli sağ altta durduğu için, köşeden bakarken namlu duvarın arkasında olsa bile mermi duvara takılmaz.</p><p class="mini">Garbaj’ın “The Slightly Odd Way Bullets Work In FPS Games” videosu bunu ve çözümlerini 4 dakikada gösterir (Kaynaklar).</p></div><div class="box story" style="font-size:.78em;margin-top:8px"><span class="bt">🦔 Sonic’in “duyargaları”</span>Klasik Sonic oyunlarında karakter bir kutuyla değil, ayaklarından, yanlarından ve başından çıkan birkaç kısa <b>algılayıcı çizgiyle</b> (ışınla) zemini yoklar: iki ayak ışını zeminin yüksekliğini ve eğimini verir. Döngülerde ve yokuşlarda koşabilmesinin temeli bu.</div></div>
+</div>
+</section>
+
+<section data-sec="ışın">
+  <div class="quiz" data-karildi="1" data-answer="A">
+    <div class="qhead">Quiz 3 · çözüm ve ışın</div>
+    <div class="q">Okçuluk oyununuzda ok saniyede 3.000 piksel gidiyor (60 FPS’de karede 50 piksel) ve 10 piksel kalınlığındaki tahta hedefin içinden geçiyor. En uygun çözüm?</div>
+    <div class="opts"><button data-opt="A">Oku her karede bir ışın olarak sınamak: önceki konumdan yeni konuma giden parça hedefi kesiyor mu?</button><button data-opt="B">Hedefi görünmez yapmak</button><button data-opt="C">Kare hızını 30’a düşürmek</button><button data-opt="D">Okun hitbox’ını küçültmek</button></div>
+    <div class="explain">Ok küçük ve hızlı: bir karede aldığı yol hedefin kalınlığından büyük. Konum yerine yolu sınamak (G1’deki parça kesişimi ya da bir ışın) tünellemeyi tamamen ortadan kaldırır ve tam isabet noktasını da verir. Kare hızını düşürmek sorunu büyütür: karede 100 piksel.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Hepsi bir arada</div><div class="sub">tam kod, araçlar, kapanış</div></div>
+</section>
+
 <section data-sec="kod">
   <h2>📦 Tam kod: p5.js ile mini platform oyunu</h2>
 <div class="cols c64">
@@ -422,7 +669,7 @@ function setup() {
 function draw() {
   oyuncu.vx = (keyIsDown(68) ? 180 : 0) - (keyIsDown(65) ? 180 : 0);      // D ve A
   if (keyIsDown(87) && oyuncu.yerde) oyuncu.vy = -420;                     // W: zıpla
-  hareket(oyuncu, duvarlar, min(deltaTime / 1000, 0.033));                 // önceki slayt
+  hareket(oyuncu, duvarlar, min(deltaTime / 1000, 0.033));                 // eksen eksen çözüm
   if (oyuncu.y > height) { oyuncu.x = 40; oyuncu.y = 100; oyuncu.vy = 0; } // düştü: baştan
 
   altinlar = altinlar.filter(a => {                                        // daire–kutu testi
@@ -437,90 +684,9 @@ function draw() {
   fill(60, 180, 90); rect(oyuncu.x, oyuncu.y, oyuncu.w, oyuncu.h);
   fill(0); text('altın ' + puan + '   A/D: yürü · W: zıpla', 10, 18);
 }
-</script></code></pre><p class="mini">Bu 35 satır + önceki slayttaki <code>hareket</code> ve <code>carpan</code> fonksiyonları.</p></div>
-<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz oyunu aç</b></a> — yaklaşık 80 satır: karolardan harita, eksen eksen çarpışma, altın toplama.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><code>hareket</code>’te x ve y adımlarını <b>tek seferde</b> yapıp sonra çözmeyi deneyin: köşelerde ne oluyor?</li><li><code>adim</code> hesabını silin, hızı 3.000 yapın: duvardan geçiyor mu?</li><li>Hareketli bir platform ekleyin (her kare x’i değişen bir duvar).</li><li>Dikenler ekleyin: hasar kutusunu çizimden küçük tutun (cömert kutu).</li></ul></div></div>
+</script></code></pre><p class="mini">Bu 35 satır + “Kod: platform karakteri” slaytındaki <code>hareket</code> ve <code>carpan</code> fonksiyonları.</p></div>
+<div><div class="box game" style="font-size:.78em"><span class="bt">🎮 Çalıştırın, kopyalayın, bozun</span><p><a href="ornek/" target="_blank" rel="noopener"><b>▶ Eksiksiz oyunu aç</b></a> — yaklaşık 90 satır: karolardan harita, eksen eksen çarpışma, atılma ve tünelleme deneyi, çarpışma kutularını gösteren <b>H</b> tuşu.</p><p><b>Deneyin:</b></p><ul style="font-size:.9em"><li><code>hareket</code>’te x ve y adımlarını <b>tek seferde</b> yapıp sonra çözmeyi deneyin: köşelerde ne oluyor?</li><li><code>hareket</code>’i Celeste yöntemiyle (piksel piksel) yeniden yazın.</li><li>Hareketli bir platform ekleyin (her kare x’i değişen bir duvar).</li><li>Dikenler ekleyin: hasar kutusunu çizimden küçük tutun (cömert kutu).</li></ul></div></div>
 </div>
-</section>
-
-<section data-sec="laboratuvar">
-  <h2>🌱 Isınma kodu: iki daire çakışıyor mu?</h2>
-  <div class="ailab" data-lab="circles" data-lang="js">
-<textarea>
-// a, b: [x, y, r]
-// Merkezler arası uzaklık, yarıçapların TOPLAMINDAN küçükse çakışıyorlar.
-// Yalnızca değen (uzaklık = toplam) daireler çakışmış sayılmaz.
-function circlesOverlap(a, b) {
-  const dx = a[0] - b[0], dy = a[1] - b[1];
-  return Math.sqrt(dx * dx + dy * dy) &lt; a[2];   // TODO: b'nin yarıçapı unutulmuş
-}
-</textarea>
-    <div class="lab-tasks">Oyunlardaki en yaygın çarpışma testi: mermi–düşman, patlama–nesne, oyuncu–eşya. Başlangıç kodu yalnızca <code>a</code>’nın yarıçapına bakıyor. Düzelttikten sonra bir adım daha: <code>Math.sqrt</code>’u kaldırıp iki tarafın karesini karşılaştırın (Y0’daki “karşılaştırırken kök alma” kuralı): <code>dx*dx + dy*dy &lt; (a[2] + b[2]) ** 2</code>.</div>
-  </div>
-</section>
-
-<section data-sec="laboratuvar">
-  <h2>🌱 Isınma kodu: kutunun en yakın noktası</h2>
-  <div class="ailab" data-lab="closest" data-lang="js">
-<textarea>
-// p: [x, y]   box: [x, y, genişlik, yükseklik]
-// Kutunun (kenarları dahil) p'ye EN YAKIN noktasını [x, y] olarak döndür.
-// p kutunun içindeyse cevap p'nin kendisidir.
-function closestPoint(p, box) {
-  const x = Math.max(p[0], box[0]);   // TODO: sağ kenarı da sınırla (Math.min)
-  const y = Math.max(p[1], box[1]);   // TODO: alt kenarı da sınırla
-  return [x, y];
-}
-</textarea>
-    <div class="lab-tasks">“Kıstırma” (clamp): bir sayıyı iki sınırın arasına çekmek. Her eksen için ayrı ayrı: <code>Math.min(Math.max(p[0], sol), sağ)</code>. Başlangıç kodu yalnızca sol ve üst kenarı uyguluyor; kutunun sağındaki ya da altındaki noktalar için yanlış. Bir sonraki laboratuvarın (daire–kutu) yarısı bu fonksiyon.</div>
-  </div>
-</section>
-
-<section data-sec="laboratuvar">
-  <h2>🧪 Canlı laboratuvar: daire kutuya değiyor mu?</h2>
-  <div class="simlab" data-sim="circbox" data-fns="circleBoxOverlap" data-lang="js">
-<textarea>
-// c: [x, y, r] daire      box: [x, y, genişlik, yükseklik]
-// 1) Kutunun daire merkezine en yakın noktasını bul (kıstırma).
-// 2) O nokta dairenin içinde mi?  (uzaklığın karesi &lt; r²)
-function circleBoxOverlap(c, box) {
-  // Kestirme (YANLIŞ): kutuyu r kadar büyütüp merkez içinde mi diye bakmak
-  return c[0] &gt; box[0] - c[2] &amp;&amp; c[0] &lt; box[0] + box[2] + c[2] &amp;&amp;
-         c[1] &gt; box[1] - c[2] &amp;&amp; c[1] &lt; box[1] + box[3] + c[2];
-}
-</textarea>
-    <div class="lab-tasks">Başlangıç kodu yaygın kestirmeyi kullanıyor: kenarlarda doğru, <b>köşelerde yanlış</b>. Sağda daire kutuların arasında dolaşırken köşelerin çaprazından geçtiği anlarda kalın sarı çerçeveyle “YANLIŞ” yazısını göreceksiniz. Doğrusu: <code>px = min(max(c[0], sol), sağ)</code>, <code>py</code> aynı şekilde; sonra <code>(px − c[0])² + (py − c[1])² &lt; r²</code>.</div>
-  </div>
-</section>
-
-<section data-sec="laboratuvar">
-  <h2>🐍 Laboratuvar: gölge (izdüşüm)</h2>
-  <div class="ailab" data-lab="project" data-lang="python">
-<textarea>
-# poly: çokgenin köşeleri [[x, y], ...]     axis: birim vektör [nx, ny]
-# Çokgenin bu eksen üzerindeki gölgesini [min, max] olarak döndür.
-# Bir köşenin eksendeki yeri = nokta çarpım: x*nx + y*ny
-def project(poly, axis):
-    return [0, 0]
-</textarea>
-    <div class="lab-tasks">SAT’ın tek hesabı. Her köşe için nokta çarpımı alın; en küçüğü ve en büyüğü gölgenin iki ucudur. Python’da: <code>s = [p[0]*axis[0] + p[1]*axis[1] for p in poly]</code>, sonra <code>[min(s), max(s)]</code>.</div>
-  </div>
-</section>
-
-<section data-sec="laboratuvar">
-  <h2>🐍 Laboratuvar: iki gölge ne kadar örtüşüyor?</h2>
-  <div class="ailab" data-lab="overlap1" data-lang="python">
-<textarea>
-# İki aralık: [a_min, a_max] ve [b_min, b_max]
-# Ortak kısmın uzunluğunu döndür; ayrıklarsa (ya da yalnızca değiyorlarsa) 0.
-def overlap(a_min, a_max, b_min, b_max):
-    return 0
-</textarea>
-    <div class="lab-tasks">SAT’ın karar adımı: <code>min(a_max, b_max) - max(a_min, b_min)</code>. Eksi çıkarsa aralıklar ayrıktır (o eksen bir ayıran eksendir): 0 döndürün. Artı çıkan değerlerin en küçüğü “en kısa çıkış” uzaklığıdır.</div>
-  </div>
-</section>
-
-<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
-  <div class="vcenter center"><div class="lv">LEVEL 6</div><div class="ttl">Araçlar ve kapanış</div><div class="sub">motor yapıyor; siz ayarlıyorsunuz</div></div>
 </section>
 
 <section data-sec="araçlar">
@@ -546,17 +712,17 @@ def overlap(a_min, a_max, b_min, b_max):
 
 <section data-sec="tartışma">
   <h2>💬 Tartışma soruları</h2>
-<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">En son hangi oyunda “vurmadı ki!” ya da “değmedim bile!” dediniz? Şimdi bakınca kutu sizce nasıldı: büyük mü, yanlış yerde mi, yoksa ağ gecikmesi mi?</li><li class="fragment">Mermi cehennemi oyunlarında oyuncunun hasar kutusu birkaç piksel. Bu “hile” mi? Kutuyu geminin tamamı kadar yapsaydınız oyun nasıl değişirdi?</li><li class="fragment">Rekabetçi bir dövüş oyununda kutuları oyunculara göstermeli misiniz (antrenman modu)? Gizli tutmanın ya da açıklamanın tasarıma etkisi ne olur?</li><li class="fragment">Hız koşucuları duvardan geçme hatalarını seviyor. Bir geliştirici olarak yıllar sonra bulunan böyle bir hatayı düzeltir miydiniz?</li><li class="fragment">Bir yarış oyununda arabalar birbirine değince ne olmalı: gerçekçi fizik mi, yumuşak bir itme mi, hiç mi? Oyunun türü cevabı nasıl değiştirir?</li></ol></div>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">En son hangi oyunda “vurmadı ki!” ya da “değmedim bile!” dediniz? Şimdi bakınca kutu sizce nasıldı: büyük mü, yanlış yerde mi, yoksa ağ gecikmesi mi?</li><li class="fragment">Rocket League’de bütün arabalar altı kutudan birini kullanıyor. Her arabaya kendi şekline oturan bir kutu verilseydi oyun daha mı iyi olurdu, daha mı kötü?</li><li class="fragment">Mermi cehennemi oyunlarında oyuncunun hasar kutusu birkaç piksel. Bu “hile” mi? Kutuyu geminin tamamı kadar yapsaydınız oyun nasıl değişirdi?</li><li class="fragment">Quake’te her yaratığın çarpışma kutusu üç boydan biri olmak zorundaydı. Bu teknik sınır yaratık tasarımını nasıl etkilemiş olabilir?</li><li class="fragment">Hız koşucuları duvardan geçme hatalarını seviyor. Bir geliştirici olarak yıllar sonra bulunan böyle bir hatayı düzeltir miydiniz?</li></ol></div>
 </section>
 
 <section data-sec="proje">
   <h2>🚀 Proje ve araştırma önerileri</h2>
-<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kutuları göster</b> — Daha önce yaptığınız bir oyuna tek tuşla açılan çarpışma kutusu görünümü ekleyin; oyuncu ve düşman kutularını ±%20 değiştirip his farkını not edin.</li><li><b class="c-green">[kolay]</b> <b>Mini platform</b> — Örnek oyunu genişletin: hareketli platform, diken (küçük hasar kutusu), çift zıplama, 3 seviye.</li><li><b class="c-amber">[orta]</b> <b>SAT oyun alanı</b> — Fareyle döndürülen ve sürüklenen dışbükey çokgenler; çakışınca en kısa itmeyle ayrılsınlar. Gölgeleri çizin.</li><li><b class="c-amber">[orta]</b> <b>Hitscan ve mermi</b> — Aynı sahnede iki silah: ışınla anında isabet ve yavaş, yerçekimli mermi. Hızlı mermide tünellemeyi gösterip parça testiyle düzeltin.</li><li><b class="c-red">[zor]</b> <b>Dövüş oyunu kutuları</b> — İki karakter, üçer saldırı; her animasyon karesi için elle tanımlanmış hitbox/hurtbox. Antrenman modunda kutuları çizin.</li><li><b class="c-purple">[araştırma]</b> <b>Cömertlik deneyi</b> — Aynı engel parkurunu üç hasar kutusu boyutuyla (çizimin %60, %100, %140’ı) 10 kişiye oynatın; ölüm sayısı ve “adil miydi?” puanlarını karşılaştırın.</li></ol>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Kutuları göster</b> — Daha önce yaptığınız bir oyuna tek tuşla açılan çarpışma kutusu görünümü ekleyin; oyuncu ve düşman kutularını ±%20 değiştirip his farkını not edin.</li><li><b class="c-green">[kolay]</b> <b>Mini platform</b> — Örnek oyunu genişletin: hareketli platform, diken (küçük hasar kutusu), çift zıplama, 3 seviye.</li><li><b class="c-amber">[orta]</b> <b>Celeste usulü</b> — Aynı platform oyununu tam sayı konumlar ve piksel piksel hareketle yeniden yazın; “kalan” değişkenini ekranda gösterin. İki yöntemi 6.000 px/sn hızda karşılaştırın.</li><li><b class="c-amber">[orta]</b> <b>SAT oyun alanı</b> — Fareyle döndürülen ve sürüklenen dışbükey çokgenler; çakışınca en kısa itmeyle ayrılsınlar. Gölgeleri çizin.</li><li><b class="c-red">[zor]</b> <b>Dövüş oyunu kutuları</b> — İki karakter, üçer saldırı; her animasyon karesi için elle tanımlanmış hitbox/hurtbox. Antrenman modunda kutuları çizin; hızlı saldırıda Melee’deki gibi kareler arası birleştirme yapın.</li><li><b class="c-purple">[araştırma]</b> <b>Cömertlik deneyi</b> — Aynı engel parkurunu üç hasar kutusu boyutuyla (çizimin %60, %100, %140’ı) 10 kişiye oynatın; ölüm sayısı ve “adil miydi?” puanlarını karşılaştırın.</li></ol>
 </section>
 
 <section data-sec="özet">
   <h2>Neler öğrendik? 🎒</h2>
-<ul style="font-size:.82em"><li>Oyun <b>çizimleri değil basit şekilleri</b> çarpıştırır; kutunun boyutu bir tasarım kararıdır (cömert kutu).</li><li><b>Daire–daire:</b> kare uzaklık &lt; (r1 + r2)². <b>Kutu–kutu:</b> iki eksende de örtüşme. <b>Daire–kutu:</b> merkezi kutuya kıstır.</li><li><b>SAT:</b> gölgelerin ayrıldığı tek eksen yeter; hiç yoksa en az örtüşen eksen en kısa çıkıştır. Yalnızca dışbükey.</li><li><b>Tespit ≠ çözüm:</b> yok say, iptal et, itip ayır, eksen eksen çöz, sektir.</li><li><b>Tünelleme:</b> alt adımlar, süpürme testi ya da ışın.</li><li><b>Işın:</b> hitscan, görüş hattı, zemin testi, fare seçimi; hep “en küçük t”.</li><li><b>Sonraki:</b> görünürlük ve ışık: bir noktadan bütün yönlere ışın gönderip “neyi görüyorum?” sorusunu cevaplamak.</li></ul>
+<ul style="font-size:.82em"><li>Oyun <b>çizimleri değil basit şekilleri</b> çarpıştırır; kutunun boyutu bir tasarım kararıdır (dövüş oyunları, Rocket League’in altı kutusu).</li><li><b>Daire–daire:</b> kare uzaklık &lt; (r1 + r2)². <b>Kutu–kutu:</b> iki eksende de örtüşme. <b>Daire–kutu:</b> merkezi kutuya kıstır. (Quake: haritayı şişir, oyuncuyu nokta yap.)</li><li><b>SAT:</b> gölgelerin ayrıldığı tek eksen yeter; hiç yoksa en az örtüşen eksen en kısa çıkıştır. Yalnızca dışbükey. (Box2D.)</li><li><b>Tespit ≠ çözüm:</b> yok say, iptal et, itip ayır, eksen eksen çöz, kaydır, sektir. (Celeste: piksel piksel, hiç gömülmeden.)</li><li><b>Tünelleme:</b> yol &gt; en + kalınlık ise risk; alt adımlar, süpürme testi ya da ışın.</li><li><b>Işın:</b> hitscan, görüş hattı, zemin testi, fare seçimi; hep “en küçük t”.</li><li><b>Sonraki:</b> görünürlük ve ışık: bir noktadan bütün yönlere ışın gönderip “neyi görüyorum?” sorusunu cevaplamak.</li></ul>
 </section>
 
 <section data-sec="kaynaklar">
@@ -574,8 +740,8 @@ def overlap(a_min, a_max, b_min, b_max):
 </section>
 
 <section data-sec="kaynaklar">
-  <h2>Kaynaklar: yazılar ve etkileşimli sayfalar 📚</h2>
-<ul style="font-size:.78em"><li>Jeffrey Thompson: <a href="https://www.jeffreythompson.org/collision-detection/" target="_blank" rel="noopener">Collision Detection</a> — her şekil çifti için çalışan örnek (Processing/p5.js)</li><li>Metanet Software: <a href="https://www.metanetsoftware.com/technique/tutorialA.html" target="_blank" rel="noopener">N Tutorial A: Collision Detection and Response</a> — “N” oyununun yapımcılarından, etkileşimli SAT anlatımı</li><li>dyn4j: <a href="https://dyn4j.org/2010/01/sat/" target="_blank" rel="noopener">SAT (Separating Axis Theorem)</a> — adım adım, şekillerle</li><li>noonat: <a href="https://noonat.github.io/intersect/" target="_blank" rel="noopener">Intersection Tests in 2D</a> — AABB, parça ve süpürme testleri, kodlu</li><li>Nicole Express: <a href="https://nicole.express/2021/remember-alf.html" target="_blank" rel="noopener">Collision Detection Is Hard: The Story of Alf</a> — donanım çarpışma bayrakları</li><li>Christer Ericson, <i>Real-Time Collision Detection</i> (2005), 4. ve 5. bölümler: sınırlayıcı şekiller ve temel testler</li></ul>
+  <h2>Kaynaklar: kaynak kodu, yazılar ve etkileşimli sayfalar 📚</h2>
+<ul style="font-size:.78em"><li>Maddy Thorson: <a href="https://www.maddymakesgames.com/articles/celeste_and_towerfall_physics/index.html" target="_blank" rel="noopener">Celeste &amp; TowerFall Physics</a> — tam sayı konumlar, piksel piksel hareket, hareketli platformlar</li><li>Quake kaynak kodu (id Software): <a href="https://github.com/id-Software/Quake/blob/master/WinQuake/world.c" target="_blank" rel="noopener">world.c</a> · Box2D: <a href="https://github.com/erincatto/box2d/blob/v2.4.1/src/collision/b2_collide_polygon.cpp" target="_blank" rel="noopener">b2_collide_polygon.cpp</a> (çokgen–çokgen, SAT)</li><li>Metanet Software: <a href="https://www.metanetsoftware.com/technique/tutorialA.html" target="_blank" rel="noopener">N Tutorial A: Collision Detection and Response</a> — “N” oyununun yapımcılarından, etkileşimli SAT anlatımı</li><li>Jeffrey Thompson: <a href="https://www.jeffreythompson.org/collision-detection/" target="_blank" rel="noopener">Collision Detection</a> · dyn4j: <a href="https://dyn4j.org/2010/01/sat/" target="_blank" rel="noopener">SAT</a> · noonat: <a href="https://noonat.github.io/intersect/" target="_blank" rel="noopener">Intersection Tests in 2D</a></li><li>Sonic Retro: <a href="https://info.sonicretro.org/Sonic_Physics_Guide" target="_blank" rel="noopener">Sonic Physics Guide</a> — algılayıcı çizgiler, eğimler, hız değerleri</li><li>Nicole Express: <a href="https://nicole.express/2021/remember-alf.html" target="_blank" rel="noopener">Collision Detection Is Hard: The Story of Alf</a> — donanım çarpışma bayrakları</li><li>Christer Ericson, <i>Real-Time Collision Detection</i> (2005), 4. ve 5. bölümler: sınırlayıcı şekiller ve temel testler</li></ul>
 </section>
 
 <section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
