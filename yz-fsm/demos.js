@@ -21,6 +21,95 @@
   };
   SL.guardRefNext = refNext;
 
+  /* ---------- olay düğmeli hikâye FSM’si: “şu durumdayken şu olursa…” ----------
+     cfg: { W, H, states: {id: [x, y, emoji, ad, renk, neYapar]}, edges: [[a, b, olay, bow]], events: {id: [düğme, cümle]},
+            any: [olay, hedef, etiket], none: (durum, olay) => açıklama, SC: [[ad, hikâye, [olaylar]]], start } */
+  function fsmStory(root, cfg, mid) {
+    let cur = cfg.start, lastEdge = null, log = [], timer = null;
+    const diag = el('div'), logEl = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), now = el('div', { class: 'fs-now' });
+    const RW = cfg.rw || 150, RH = 62;
+    const draw = () => {
+      const t = T(), S = cfg.states;
+      let g = `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="15" markerHeight="15" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
+      const lab = [];
+      const clip = (px, py, qx, qy) => { const ux = qx - px, uy = qy - py, k = Math.min((RW / 2 + 6) / Math.abs(ux || 1e-9), (RH / 2 + 6) / Math.abs(uy || 1e-9)); return [px + ux * k, py + uy * k]; };
+      cfg.edges.forEach(([a, b, ev, bow = 0, lt = 0.5]) => {
+        const [x1, y1] = S[a], [x2, y2] = S[b], dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
+        const cx = (x1 + x2) / 2 + nx * bow, cy = (y1 + y2) / 2 + ny * bow;
+        const [sx, sy] = clip(x1, y1, cx, cy), [ex, ey] = clip(x2, y2, cx, cy);
+        const hot = lastEdge && lastEdge[0] === a && lastEdge[1] === b, fromCur = a === cur;
+        g += `<path d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" fill="none" stroke="${hot ? t.red : fromCur ? t['ink-2'] : t.rule}" stroke-width="${hot ? 5 : fromCur ? 2.6 : 1.8}" marker-end="url(#${mid})"/>`;
+        const q = lt, bx = (1 - q) * (1 - q) * sx + 2 * q * (1 - q) * cx + q * q * ex, by = (1 - q) * (1 - q) * sy + 2 * q * (1 - q) * cy + q * q * ey;
+        lab.push([bx, by, cfg.events[ev][0], hot, fromCur]);
+      });
+      if (cfg.any) { const [ev, to, text, ax, ay] = cfg.any, [x2, y2] = S[to], hot = lastEdge && lastEdge[0] === '*'; const [ex, ey] = clip(x2, y2, ax, ay); g += `<path d="M${ax},${ay} L${ex},${ey}" fill="none" stroke="${hot ? t.red : t['ink-2']}" stroke-width="${hot ? 5 : 2.2}" stroke-dasharray="7 5" marker-end="url(#${mid})"/><text x="${ax}" y="${ay - 10}" text-anchor="middle" font-size="16" font-weight="700" fill="${hot ? t.red : t['ink-2']}">${text}</text>`; }
+      lab.forEach(([x, y, tx, hot, fc]) => { const w = tx.length * 8.8 + 18; g += `<rect x="${x - w / 2}" y="${y - 14}" width="${w}" height="27" rx="13" fill="${t.bg || t.card}" stroke="${hot ? t.red : fc ? t['ink-2'] : t.rule}" stroke-width="${hot ? 2.5 : 1.2}"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="16.5" font-weight="${hot || fc ? 700 : 500}" fill="${hot ? t.red : fc ? t.ink : t.muted}">${tx}</text>`; });
+      Object.entries(S).forEach(([id, [x, y, em, nm, colKey]]) => {
+        const on = id === cur, c = t[colKey];
+        g += `<rect x="${x - RW / 2}" y="${y - RH / 2}" width="${RW}" height="${RH}" rx="16" fill="${on ? c : t.card}" stroke="${c}" stroke-width="${on ? 5 : 3}"/><text x="${x - RW / 2 + 30}" y="${y + 11}" text-anchor="middle" font-size="30">${em}</text><text x="${x - RW / 2 + 56}" y="${y + 7}" text-anchor="start" font-size="19" font-weight="800" fill="${on ? '#fff' : t.ink}">${nm}</text>`;
+      });
+      diag.innerHTML = `<svg viewBox="0 0 ${cfg.W} ${cfg.H}" style="width:100%" font-family="Source Sans 3">${g}</svg>`;
+      const st = S[cur];
+      now.innerHTML = `Şu an: <b style="color:${t[st[4]]}">${st[2]} ${st[3]}</b> — ${st[5]}`;
+      const rows = log.slice(-6);
+      logEl.innerHTML = rows.length ? rows.map(([ok, tx], i) => `<div class="${ok ? 'l-ok' : ''}${i === rows.length - 1 ? ' now' : ''}"><span>${ok ? '→' : '·'}</span>${tx}</div>`).join('') : '<div class="hint">Bir senaryo seçin ya da olay düğmelerine kendiniz basın.</div>';
+    };
+    const fire = ev => {
+      const S = cfg.states, evName = cfg.events[ev][0];
+      let to = null;
+      if (cfg.any && cfg.any[0] === ev && cur !== cfg.any[1]) { to = cfg.any[1]; lastEdge = ['*', to]; }
+      else { const e = cfg.edges.find(x => x[0] === cur && x[2] === ev); if (e) { to = e[1]; lastEdge = [e[0], e[1]]; } }
+      if (to) { log.push([1, `<b>${S[cur][3]}</b> iken “${evName}” → <b>${S[to][3]}</b>`]); cur = to; if (SL.sfx) { try { SL.sfx('alert'); } catch (e) {} } }
+      else { lastEdge = null; log.push([0, `<b>${S[cur][3]}</b> iken “${evName}” → değişmez. <i>${cfg.none(cur, ev)}</i>`]); if (SL.sfx) { try { SL.sfx('tak'); } catch (e) {} } }
+      draw();
+    };
+    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+    const reset = () => { stop(); cur = cfg.start; lastEdge = null; log = []; draw(); };
+    const play = i => { reset(); story.innerHTML = '📖 ' + cfg.SC[i][1]; const evs = cfg.SC[i][2].slice(); timer = setInterval(() => { if (!evs.length) { stop(); log.push([0, '💡 ' + cfg.SC[i][3]]); draw(); return; } fire(evs.shift()); }, 1500); };
+    const scB = cfg.SC.map((sc, i) => { const b = btn(sc[0], () => { scB.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); play(i); }); return b; });
+    const evB = Object.keys(cfg.events).map(ev => btn(cfg.events[ev][1] || cfg.events[ev][0], () => { stop(); scB.forEach(x => x.classList.remove('primary')); story.innerHTML = '📖 Kendi senaryonuz: olay düğmelerine istediğiniz sırayla basın.'; fire(ev); }));
+    root.setAttribute('data-prevent-swipe', '');
+    story.innerHTML = '📖 ' + cfg.intro;
+    root.append(el('div', { class: 'sv-controls btd-sc' }, el('b', { class: 'fs-lab' }, 'Senaryo:'), ...scB, btn('↺', () => { reset(); story.innerHTML = '📖 ' + cfg.intro; scB.forEach(x => x.classList.remove('primary')); })), story,
+      el('div', { class: 'btd-wrap fs' }, diag, el('div', {}, now, logEl)),
+      el('div', { class: 'sv-controls btd-sc fs-ev' }, el('b', { class: 'fs-lab' }, 'Olay:'), ...evB));
+    draw(); SL.onTheme(draw);
+    return { stop };
+  }
+  /* kedi: üç durum, dört olay */
+  D.fsmcat = function (root) {
+    return fsmStory(root, {
+      W: 760, H: 340, rw: 236, start: 'UYU',
+      states: { UYU: [140, 60, '😴', 'UYUYOR', 'blue', 'kıvrılmış uyuyor.'], MAMA: [620, 60, '😿', 'MAMA BEKLİYOR', 'amber', 'kabın başında miyavlıyor.'], OYUN: [380, 290, '😼', 'OYNUYOR', 'green', 'evin içinde koşturuyor.'] },
+      edges: [['UYU', 'MAMA', 'sabah', 0], ['MAMA', 'OYUN', 'mama', 0], ['OYUN', 'UYU', 'yorul', -70, 0.5], ['UYU', 'OYUN', 'ip', -70, 0.5]],
+      events: { sabah: ['sabah oldu', '⏰ sabah oldu'], mama: ['mama verildi', '🍗 mama verildi'], ip: ['ip sallandı', '🧶 ip sallandı'], yorul: ['yoruldu', '🥱 yoruldu'] },
+      none: (st, ev) => ({ UYU: { mama: 'Uyuyan kedi mamayı fark etmez.', yorul: 'Zaten uyuyor.' }, MAMA: { sabah: 'Zaten kalkmış, mama bekliyor.', ip: 'Aç kedi oyun düşünmez!', yorul: 'Yorgun değil, aç.' }, OYUN: { sabah: 'Zaten ayakta.', mama: 'Karnı tok, oyuna devam.', ip: 'Zaten oynuyor.' } }[st][ev] || 'Bu durumdan bu olayla çıkan ok yok.'),
+      intro: 'Kedinin üç hâli var ve aynı anda yalnızca birindedir. Oklar “ne olursa hangi hâle geçer”i söyler.',
+      SC: [
+        ['☀️ Sıradan bir gün', 'Sabah olur, mama gelir, kedi oynar, yorulur, uyur.', ['sabah', 'mama', 'yorul'], 'Üç olay, üç geçiş: kedi başladığı duruma döndü.'],
+        ['🧶 Aynı olay, farklı tepki', 'İp üç kez sallanacak: kedi uyurken, açken ve oynarken. Tepkisi aynı mı?', ['ip', 'yorul', 'sabah', 'ip', 'mama', 'ip'], 'Aynı olay (“ip sallandı”) üç durumda üç farklı sonuç verdi. Tepkiyi belirleyen olay değil, <b>olay + o anki durum</b>.'],
+        ['🍗 Yanlış zamanda mama', 'Kedi uyurken mama veriyoruz. Sonra sabah oluyor.', ['mama', 'sabah', 'mama'], 'Uyurken verilen mama “kayboldu”: FSM yalnızca o anki durumdan çıkan oklara bakar.']]
+    }, 'fsa1');
+  };
+  /* nöbetçi: beş durum, olaylar düğmeyle */
+  D.fsmguardstory = function (root) {
+    return fsmStory(root, {
+      W: 860, H: 400, rw: 164, start: 'DEV',
+      states: { SUP: [100, 130, '❓', 'ŞÜPHE', 'amber', 'sesin geldiği yere gidip etrafa bakıyor.'], DEV: [100, 350, '🚶', 'DEVRİYE', 'blue', 'yol noktaları arasında sakin sakin yürüyor.'], KOV: [430, 130, '🏃', 'KOVALA', 'red', 'oyuncuya doğru koşuyor.'], SAL: [760, 130, '🔫', 'SALDIR', 'purple', 'durmuş, nişan alıp ateş ediyor.'], KAC: [760, 350, '💨', 'KAÇ', 'green', 'oyuncudan uzaklaşıp iyileşiyor.'] },
+      edges: [['DEV', 'SUP', 'ses', -62, 0.38], ['SUP', 'DEV', 'sure', -62, 0.38], ['DEV', 'KOV', 'gor', 0, 0.55], ['SUP', 'KOV', 'gor', -44], ['KOV', 'SUP', 'kayip', -44], ['KOV', 'SAL', 'yakin', -44], ['SAL', 'KOV', 'uzak', -44], ['SAL', 'SUP', 'kayip', 170, 0.5], ['KAC', 'DEV', 'iyi', 0, 0.5]],
+      any: ['can', 'KAC', 'her durumdan: canı azaldı', 560, 245],
+      events: { ses: ['ses duydu', '🔊 ses duydu'], gor: ['oyuncuyu gördü', '👁 oyuncuyu gördü'], kayip: ['gözden kaybetti', '🙈 gözden kaybetti'], yakin: ['yaklaştı', '📏 yaklaştı (< 60)'], uzak: ['uzaklaştı', '↔ uzaklaştı (> 90)'], sure: ['4 sn geçti', '⏱ 4 sn geçti'], can: ['canı azaldı', '💔 canı azaldı (< 30)'], iyi: ['iyileşti', '💚 iyileşti (> 70)'] },
+      none: (st, ev) => ({ DEV: { kayip: 'Zaten kimseyi görmüyordu.', yakin: 'Görmediği birine yaklaşmış sayılmaz.', sure: 'Devriyenin süresi yok.' }, SUP: { ses: 'Zaten araştırıyor.' }, KOV: { ses: 'Oyuncuyu görüyor; sese bakmaz.', gor: 'Zaten görüyor.', sure: 'Kovalamanın süresi yok.' }, SAL: { ses: 'Ateş ederken sese bakmaz.', yakin: 'Zaten menzilde.' }, KAC: { ses: 'Kaçarken sesle ilgilenmez.', gor: 'Görse de kaçmaya devam eder.', can: 'Zaten kaçıyor.' } }[st][ev] || 'Bu durumdan bu olayla çıkan ok yok.'),
+      intro: 'Canlı demodan önce nöbetçiyi elle yönetelim: olayları siz verin, hangi oku izlediğini görün. Kırmızı ok = az önce kullanılan geçiş.',
+      SC: [
+        ['🔊 Yanlış alarm', 'Oyuncu bir taş atar, nöbetçi sesi duyar ama kimseyi bulamaz.', ['ses', 'sure'], 'Ses → ŞÜPHE, 4 sn sonra → DEVRİYE. Oyuncu hiç görülmedi.'],
+        ['🏃 Yakalandın', 'Oyuncu koridorda görülür ve kaçamaz.', ['gor', 'yakin'], 'DEVRİYE → KOVALA → SALDIR: iki olay, iki geçiş.'],
+        ['🙈 Köşeyi dönüp kurtul', 'Oyuncu görülür, köşeyi dönüp saklanır.', ['gor', 'kayip', 'sure'], 'Kaybedince doğrudan devriyeye dönmedi; önce ŞÜPHE’de son görülen yere baktı. Gizlilik oyunlarındaki “neredeydi o?” anı bu durumdur.'],
+        ['💔 Yaralı nöbetçi', 'Nöbetçi saldırırken oyuncu karşılık verir.', ['gor', 'yakin', 'can', 'gor', 'iyi'], '“Canı azaldı” her durumdan KAÇ’a götürür (kesikli ok). Kaçarken oyuncuyu görse de değişmez; iyileşince devriyeye döner.'],
+        ['🔁 Aynı olay, farklı tepki', '“Ses duydu” olayı dört farklı durumda verilecek.', ['ses', 'ses', 'gor', 'ses', 'yakin', 'ses'], 'Ses yalnızca DEVRİYE’de işe yaradı. Tepkiyi belirleyen <b>olay + o anki durum</b>.']]
+    }, 'fsa2');
+  };
+
   /* ---------- FSM diyagramı (SVG) ---------- */
   const NODES = { DEVRIYE: [90, 60], SUPHE: [90, 215], KOVALA: [280, 135], SALDIR: [440, 60], KAC: [300, 290] };
   const EDGES = [['DEVRIYE', 'KOVALA', 'görüyor'], ['DEVRIYE', 'SUPHE', 'ses'], ['SUPHE', 'KOVALA', 'görüyor'], ['SUPHE', 'DEVRIYE', '4 sn'], ['KOVALA', 'SUPHE', 'kaybetti'], ['KOVALA', 'SALDIR', '< 60'], ['SALDIR', 'KOVALA', '> 90'], ['KAC', 'DEVRIYE', 'can > 70', [[248, 296], [15, 300], [10, 95], [42, 72]]]];

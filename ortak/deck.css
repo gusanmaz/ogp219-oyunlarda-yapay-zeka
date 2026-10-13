@@ -820,3 +820,7 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .bd-card.now { border-color: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 30%, transparent); }
 .bd-nm { font-size: 24px; font-weight: 800; } .bd-bar { height: 14px; background: var(--code-bg); border-radius: 7px; overflow: hidden; margin: 4px 0 6px; } .bd-bar i { display: block; height: 100%; background: var(--blue); }
 .bd-ucb { color: var(--purple); font: 15px "JetBrains Mono", monospace; } .bd-true { color: var(--muted); font-size: 15px; }
+
+.btd-wrap.fs { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+.fs-now { font-size: 18px; margin: 2px 0 8px; padding: 6px 10px; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; } .fs-lab { font-size: 16px; color: var(--muted); }
+.fs-ev .btn { font-size: 16px; padding: 5px 10px; }

@@ -121,6 +121,13 @@
 </section>
 
 <section data-sec="durum ve geçiş">
+  <h2>Önce bir kedi: “şu an ne yapıyor?” ve “ne olursa değişir?” 🐱</h2>
+  <p style="font-size:.76em;margin:.1em 0 .3em">Bir durum makinesi iki sorudan ibarettir. <b>Durum</b> = şu an ne yapıyor (kutular). <b>Geçiş</b> = ne olursa başka bir şey yapmaya başlar (oklar; üstündeki yazı <b>olay</b>). Senaryoları oynatın, sonra olay düğmelerine kendiniz basın.</p>
+  <div class="demo" data-demo="fsmcat"></div>
+  <aside class="notes">Bu slaytın tek amacı şu cümleyi oturtmak: “Tepkiyi olay değil, olay + o anki durum belirler.” En öğretici senaryo “Aynı olay, farklı tepki”: ip uyuyan kediyi oyuna kaldırır, aç kediyi etkilemez, oynayan kedide bir şey değiştirmez. “Yanlış zamanda mama” senaryosu da aynı fikri tersinden gösterir. Öğrencilere sorun: kediye “veterinere gidiyor” durumu ekleseniz hangi oklar gerekir?</aside>
+</section>
+
+<section data-sec="durum ve geçiş">
   <h2>Pac-Man hayaletleri bir FSM’dir</h2>
   <div class="cols">
     <svg viewBox="0 0 560 280" style="width:100%" font-family="Source Sans 3">
@@ -170,7 +177,7 @@
 
 <section data-ek="durumlar" data-sec="nöbetçi">
   <h2>Nöbetçinin beş durumu: her biri ne demek?</h2>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;font-size:.66em;line-height:1.32">
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;font-size:.78em;line-height:1.34">
     <div class="box" style="border-left-color:var(--blue);margin:0"><span class="bt" style="color:var(--blue)">🚶 DEVRİYE</span><p><b>Ne yapar?</b> Dört yol noktası arasında sakin sakin yürür.</p><p><b>Aklından geçen:</b> “Her şey yolunda.”</p><p><b>Çıkış:</b> oyuncuyu görürse ya da ses duyarsa.</p></div>
     <div class="box" style="border-left-color:var(--amber);margin:0"><span class="bt" style="color:var(--amber)">❓ ŞÜPHE</span><p><b>Ne yapar?</b> Sesin geldiği (ya da oyuncuyu son gördüğü) yere gider, durup etrafına bakınır.</p><p><b>Aklından geçen:</b> “Orada bir şey mi vardı?”</p><p><b>Çıkış:</b> görürse kovalar; 4 sn bir şey bulamazsa devriyeye döner.</p></div>
     <div class="box" style="border-left-color:var(--red);margin:0"><span class="bt" style="color:var(--red)">🏃 KOVALA</span><p><b>Ne yapar?</b> Oyuncuya doğru koşar.</p><p><b>Aklından geçen:</b> “Gördüm seni!”</p><p><b>Çıkış:</b> 60 birimden yakına gelirse saldırır; gözden kaybederse şüpheye düşer.</p></div>
@@ -205,6 +212,13 @@
       </ul>
       <p class="mini">Tablonun sırası önemli: “can &lt; 30” kuralı <b>önce</b> kontrol edilir. Saldırıya 60’ta girip ancak 90’da çıkmasının sebebi birazdan (“titreme”).</p></div>
   </div>
+</section>
+
+<section data-sec="nöbetçi">
+  <h2>Tablodan diyagrama: olayları siz verin 🎛️</h2>
+  <p style="font-size:.74em;margin:.1em 0 .2em">Az önceki tablonun her satırı burada bir ok. Canlı oyundan önce nöbetçiyi <b>elle</b> yönetin: bir senaryo seçin ya da alttaki olay düğmelerine basın ve her seferinde <b>önce tahmin edin</b>: hangi kutuya geçecek, yoksa hiç kıpırdamayacak mı?</p>
+  <div class="demo" data-demo="fsmguardstory"></div>
+  <aside class="notes">Kediyle aynı araç, bu kez beş durumlu nöbetçi. Senaryoların sonuçları: Yanlış alarm → ŞÜPHE, sonra DEVRİYE. Yakalandın → KOVALA, SALDIR. Köşeyi dönüp kurtul → KOVALA, ŞÜPHE, DEVRİYE. Yaralı nöbetçi → KOVALA, SALDIR, KAÇ, (gördü: değişmez), DEVRİYE. Aynı olay, farklı tepki → ses yalnızca ilk seferde (DEVRİYE’de) geçiş yaptırır. Sonraki canlı demoda aynı olayları fareyle ve tıklamayla siz üreteceksiniz.</aside>
 </section>
 
 <section data-ek="kilavuz" data-sec="nöbetçi">
@@ -247,6 +261,19 @@
     </ol>
   </div>
   <p class="mini" style="margin-top:14px">🔗 Dışarıda da deneyin: <a href="https://stately.ai/viz" target="_blank" rel="noopener">Stately görselleştirici</a> (durum makinesini yazın, diyagramı canlı çizsin, olay gönderin) · <a href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener">Game Programming Patterns: State</a> (bir platform kahramanının zıplama/eğilme hatalarından FSM’ye) · <a href="https://www.youtube.com/watch?v=hzhtrjkBXXw" target="_blank" rel="noopener">Pac-Man’s Ghosts Were Never a Team</a> (hayalet modları).</p>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: Half-Life’ın askerleri bir FSM’dir</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/JyF0oyarz4U" title="The AI of Half-Life: Finite State Machines" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>The AI of Half-Life: Finite State Machines</b><br><span class="mini">AI and Games (Tommy Thompson) · <a href="https://www.youtube.com/watch?v=JyF0oyarz4U" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önce elle yönettiğiniz nöbetçinin 1998’deki atası: Half-Life’taki askerlerin ve yaratıkların durumları, bu durumlar arasındaki geçişler ve her durumda çalışan “görev listeleri”.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videodaki canavarın durumlarından hangileri bizim nöbetçinin beş durumuna karşılık geliyor? Bizde olmayan hangi durum var? “Koşul” (condition) dedikleri şey, bizim olay düğmelerimizden hangisine benziyor?</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce; Türkçe otomatik altyazıyla ya da sessize alıp kendiniz anlatarak izletebilirsiniz. İzlerken sorusunu videodan önce okuyun.</aside>
 </section>
 
 <section class="level" data-background-gradient="linear-gradient(135deg, #0d3a2e 0%, #1b0f3a 100%)">
