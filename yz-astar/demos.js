@@ -104,6 +104,75 @@
     window.addEventListener('mouseup', () => { mode = null; });
   }
 
+  /* ================= elle A*: küçük ızgarada g, h, f =================
+     4 yön, her adım 1; h = Manhattan. Her karede: sol üst g, sağ üst h, ortada f. */
+  D.astarhand = function (root) {
+    const W = 7, H = 5, S = [0, 2], G = [6, 2];
+    const SC = [
+      ['🟩 Engelsiz', [], 'Arada engel yok. A* kaç kareye bakar?', 'Yalnızca yolun üstündeki karelere baktı: sezgi (h) onu doğrudan hedefe çekti. BFS aynı yolu bulurdu ama çok daha fazla kareye bakarak.'],
+      ['🧱 Duvar', [[3, 1], [3, 2], [3, 3]], 'Tam ortada üç karelik bir duvar var.', 'Duvara dayanınca f büyüdü; A* açık listedeki öbür küçük f’lere döndü ve duvarın etrafından dolaştı. Yol 6 adımdan 10 adıma çıktı.'],
+      ['🪤 Çıkmaz sokak', [[3, 1], [4, 1], [4, 2], [4, 3], [3, 3]], 'Hedefe bakan bir çıkmaz sokak (U biçimli duvar).', 'Sezgi A*’ı önce çıkmazın içine soktu: h yalnızca kuş uçuşu mesafedir, duvarı bilmez. Yine de en kısa yolu buldu; sadece biraz fazla kareye baktı.']];
+    let walls = new Set(), F = [], moralTxt = '';
+    const K = (x, y) => x + ',' + y, hOf = (x, y) => Math.abs(x - G[0]) + Math.abs(y - G[1]);
+    const run = () => {
+      const g = {}, par = {}, closed = new Set(), open = [], out = [];
+      g[K(...S)] = 0; open.push(S);
+      const snap = o => out.push(Object.assign({ g: Object.assign({}, g), closed: new Set(closed), open: open.map(p => p.slice()) }, o));
+      snap({ note: `Başlangıç karesi açık listeye kondu: g = 0 (henüz yürümedik), h = ${hOf(...S)} (hedefe kuş uçuşu), f = g + h = ${hOf(...S)}.` });
+      let n = 0;
+      while (open.length) {
+        open.sort((a, b) => (g[K(...a)] + hOf(...a)) - (g[K(...b)] + hOf(...b)) || hOf(...a) - hOf(...b));
+        const c = open.shift(), ck = K(...c); closed.add(ck); n++;
+        if (c[0] === G[0] && c[1] === G[1]) {
+          const path = []; for (let p = ck; p; p = par[p]) path.push(p);
+          // karşılaştırma: BFS aynı haritada kaç kare genişletir?
+          const q = [S], seen = new Set([K(...S)]); let bfs = 0;
+          while (q.length) { const u = q.shift(); bfs++; if (u[0] === G[0] && u[1] === G[1]) break; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = u[0] + dx, y = u[1] + dy, k = K(x, y); if (x < 0 || y < 0 || x >= W || y >= H || walls.has(k) || seen.has(k)) continue; seen.add(k); q.push([x, y]); } }
+          snap({ cur: c, path: new Set(path), done: true, note: `🏁 Hedef açık listeden çıktı: yol <b>${path.length - 1} adım</b>. A* <b>${n}</b> kare inceledi; BFS aynı haritada <b>${bfs}</b> kare incelerdi.` });
+          return out;
+        }
+        const added = [];
+        for (const [dx, dy] of [[1, 0], [0, -1], [0, 1], [-1, 0]]) {
+          const x = c[0] + dx, y = c[1] + dy, k = K(x, y);
+          if (x < 0 || y < 0 || x >= W || y >= H || walls.has(k) || closed.has(k)) continue;
+          const ng = g[ck] + 1;
+          if (k in g && g[k] <= ng) continue;
+          if (!(k in g)) open.push([x, y]);
+          g[k] = ng; par[k] = ck; added.push(`(${x},${y}) f=${ng}+${hOf(x, y)}=${ng + hOf(x, y)}`);
+        }
+        snap({ cur: c, note: `<b>${n}. adım:</b> açık listede f’si en küçük kare (${c[0]},${c[1]}): g=${g[ck]}, h=${hOf(...c)}, <b>f=${g[ck] + hOf(...c)}</b>. Onu kapat, komşularını ekle: ${added.length ? added.join(' · ') : 'eklenecek yeni komşu yok (duvar ya da zaten görülmüş)'}.` });
+      }
+      return out;
+    };
+    const diag = el('div'), note = el('div', { class: 'sv-note ah-note' }), story = el('div', { class: 'btd-story' }), openEl = el('div', { class: 'ah-open' }), moral = el('div', { class: 'btd-moral' });
+    const draw = f => {
+      const t = T(), C = 92; let s = '';
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const k = K(x, y), X = x * C + 2, Y = y * C + 2, isW = walls.has(k), cur = f.cur && f.cur[0] === x && f.cur[1] === y, inPath = f.path && f.path.has(k), cl = f.closed.has(k), op = f.open.some(p => p[0] === x && p[1] === y);
+        const fill = isW ? t['ink-2'] : inPath ? t.green : cur ? t.amber : cl ? (t.dark ? '#3a3a48' : '#d9dbe3') : t.card;
+        s += `<rect x="${X}" y="${Y}" width="${C - 4}" height="${C - 4}" rx="8" fill="${fill}" stroke="${op ? t.blue : t.rule}" stroke-width="${op ? 4 : 1.5}"/>`;
+        if (isW) { s += `<text x="${X + C / 2 - 2}" y="${Y + C / 2 + 10}" text-anchor="middle" font-size="30">🧱</text>`; continue; }
+        const ink = inPath ? '#fff' : cur ? '#111' : t.ink;
+        if (k in f.g) { const gv = f.g[k], hv = hOf(x, y); s += `<text x="${X + 8}" y="${Y + 20}" font-size="15" font-family="JetBrains Mono" fill="${ink}">g${gv}</text><text x="${X + C - 12}" y="${Y + 20}" text-anchor="end" font-size="15" font-family="JetBrains Mono" fill="${ink}">h${hv}</text><text x="${X + C / 2 - 2}" y="${Y + 62}" text-anchor="middle" font-size="30" font-weight="900" fill="${ink}">${gv + hv}</text>`; }
+        if (x === S[0] && y === S[1]) s += `<text x="${X + C / 2 - 2}" y="${Y + C - 12}" text-anchor="middle" font-size="17">🧍</text>`;
+        if (x === G[0] && y === G[1]) s += `<text x="${X + C / 2 - 2}" y="${Y + C - 12}" text-anchor="middle" font-size="17">🏁</text>`;
+      }
+      diag.innerHTML = `<svg viewBox="0 0 ${W * C} ${H * C}" style="width:100%;max-height:372px" font-family="Source Sans 3">${s}</svg>`;
+      note.innerHTML = f.note;
+      const srt = f.open.slice().sort((a, b) => (f.g[K(...a)] + hOf(...a)) - (f.g[K(...b)] + hOf(...b)) || hOf(...a) - hOf(...b));
+      openEl.innerHTML = '<b>Açık liste</b> (f’ye göre sıralı; en üstteki sıradaki):' + (srt.length ? srt.slice(0, 7).map((p, i) => `<div class="${i ? '' : 'first'}">(${p[0]},${p[1]}) &nbsp; g=${f.g[K(...p)]} h=${hOf(...p)} &nbsp; <b>f=${f.g[K(...p)] + hOf(...p)}</b></div>`).join('') + (srt.length > 7 ? `<div>… ${srt.length - 7} kare daha</div>` : '') : '<div>boş</div>');
+      moral.innerHTML = f.done && moralTxt ? '💡 ' + moralTxt : '';
+    };
+    const fp = new SL.FramePlayer(draw, { speed: 1.2 });
+    const load = (i, play) => { walls = new Set(SC[i][1].map(p => K(...p))); story.innerHTML = '📖 ' + SC[i][2]; moralTxt = SC[i][3]; fp.load(run()); if (play) fp.play(); };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap ah' }, diag, el('div', {}, el('div', { class: 'ah-leg' }, 'Her karede: sol üst ', el('b', {}, 'g'), ' (buraya kadar yürünen adım), sağ üst ', el('b', {}, 'h'), ' (hedefe kuş uçuşu kalan), ortada ', el('b', {}, 'f = g + h'), '. Mavi çerçeve = açık listede, gri = incelendi, turuncu = şu an incelenen.'), openEl, moral)), SL.transport(fp, { min: 0.3, max: 6 }), note);
+    bs[1].classList.add('primary'); load(1, false);
+    SL.onTheme(() => fp.render());
+    return { stop: () => fp.pause() };
+  };
+
   D.astar = function (root) {
     const GW = 30, GH = 16;
     const G = Object.assign({ W: GW, H: GH, brush: 'wall' }, PRESETS[root.dataset.preset || 'u'](GW, GH));

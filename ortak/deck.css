@@ -839,3 +839,7 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .al-step { background: var(--green); color: #fff; font-weight: 800; padding: 6px 14px; border-radius: 10px; } .al-step small { margin-left: 8px; opacity: .85; font: 14px "JetBrains Mono", monospace; }
 .al-st { padding: 6px 12px; border-radius: 10px; border: 2px solid var(--rule); background: var(--card); } .al-st.ok { border-color: var(--green); } .al-arrow { color: var(--muted); font-weight: 900; } .al-tot { margin-left: 14px; font-size: 18px; color: var(--ink-2); }
 .btd-wrap.al { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+
+.btd-wrap.ah { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); } .ah-leg { font-size: 16px; color: var(--ink-2); line-height: 1.35; margin-bottom: 8px; }
+.ah-open { font-size: 18px; } .ah-open div { font: 17px "JetBrains Mono", monospace; padding: 2px 8px; border-radius: 6px; } .ah-open .first { background: color-mix(in srgb, var(--amber) 28%, var(--card)); font-weight: 700; }
+.ah-note { font-size: 16.5px; min-height: 44px; }

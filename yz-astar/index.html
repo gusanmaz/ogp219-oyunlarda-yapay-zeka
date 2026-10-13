@@ -128,6 +128,32 @@
   <ul class="agenda"><li class="done">yol bulma problemi</li><li class="on">BFS’ten A*’a</li><li class="">sezgiler</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda tuzaklar ve hileler</li><li class="">hızlandırma</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-sec="önce basit bir örnek">
+  <h2>Önce sezgi: navigasyon gibi düşünün 🧭</h2>
+  <div class="cols">
+    <div>
+      <p style="font-size:.86em">Yola çıktınız ve bir kavşaktasınız. Hangi yöne sapacağınıza karar verirken iki şeye bakarsınız:</p>
+      <ul style="font-size:.86em">
+        <li><b>g</b> = buraya kadar <b>kaç kilometre yaptım?</b> (kesin bildiğim)</li>
+        <li><b>h</b> = buradan hedefe <b>kuş uçuşu kaç kilometre kaldı?</b> (tahmin; yolu, köprüyü, trafiği bilmez)</li>
+        <li><b>f = g + h</b> = bu kavşaktan geçersem yolculuğun <b>toplamı en az ne kadar olur?</b></li>
+      </ul>
+      <p style="font-size:.86em">A* her adımda, bildiği bütün kavşaklar içinden <b>f’si en küçük olanı</b> seçip oradan devam eder. Hepsi bu.</p>
+    </div>
+    <div>
+      <div class="box story"><span class="bt">Üç sürücü</span><ul style="font-size:.84em"><li><b>BFS / Dijkstra:</b> yalnızca g’ye bakar. Hedefin nerede olduğunu umursamadan her yöne eşit yayılır: doğru ama yavaş.</li><li><b>Açgözlü:</b> yalnızca h’ye bakar. Hep hedefe doğru koşar; çıkmaza girer, dolambaçlı yol bulur.</li><li><b>A*:</b> ikisinin toplamına bakar. Hedefe doğru çekilir ama yaptığı yolu da unutmaz.</li></ul></div>
+      <div class="box game" style="margin-top:8px"><span class="bt">Sonraki slayt</span>Aynı fikri 7 × 5’lik bir ızgarada, her karenin g, h ve f sayılarını göre göre elle izleyeceğiz.</div>
+    </div>
+  </div>
+  <aside class="notes">Formül ve terim (kabul edilebilir sezgi, öncelik kuyruğu) henüz yok; yalnızca “yaptığım yol + kalan tahmin”. Öğrencilere sorun: h yerine hep 0 yazarsak hangi sürücü olur? (BFS / Dijkstra.) g yerine hep 0 yazarsak? (Açgözlü.)</aside>
+</section>
+
+<section data-sec="önce basit bir örnek">
+  <h2>Elle A*: her karede g, h ve f</h2>
+  <div class="demo" data-demo="astarhand"></div>
+  <aside class="notes">Sunumun en önemli demosu: A*’ın her adımı sayılarla. “İleri ▶|” ile tek tek ilerleyin; her adımdan önce sınıfa “açık listede f’si en küçük hangisi?” diye sorun (sağdaki listede en üstteki). Senaryo sonuçları (ölçülmüş): Engelsiz → yol 6 adım; A* 7 kare inceler, BFS 25. Duvar → yol 10 adım; A* 16, BFS 32 kare. Çıkmaz sokak → yol 10 adım; A* 17, BFS 30 kare: A* önce U’nun içine girer (sezgi duvarı bilmez), sonra dışından dolaşır; yine en kısa yolu bulur. Eşit f’lerde h’si küçük olan önce alınır (hedefe yakın olan).</aside>
+</section>
+
 <section data-sec="algoritmalar">
   <h2>Dört kardeş: hangisini önce genişletiyoruz?</h2>
   <table class="sum-t" style="font-size:18px">
