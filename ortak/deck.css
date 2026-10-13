@@ -698,12 +698,12 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .pd-stack > div.top { background: var(--purple); color: #fff; }
 /* davranış ağacı diyagramı */
 .bt-diag { min-height: 120px; }
-.btd-sc .btn { font-size: 15px; padding: 5px 10px; } .btd-sc { gap: 6px 8px; }
+.btd-sc .btn { font-size: 17px; padding: 6px 12px; } .btd-sc { gap: 6px 8px; }
 .btd-story { font-size: 19px; background: color-mix(in srgb, var(--amber) 14%, var(--card)); border-left: 5px solid var(--amber); border-radius: 8px; padding: 6px 12px; margin: 4px 0 6px; }
 .btd-wrap { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-.btd-log { font-size: 16px; line-height: 1.32; } .btd-log div { padding: 2px 6px; border-radius: 6px; } .btd-log span { display: inline-block; width: 20px; font-weight: 900; }
+.btd-log { font-size: 17.5px; line-height: 1.32; } .btd-log div { padding: 2px 6px; border-radius: 6px; } .btd-log span { display: inline-block; width: 20px; font-weight: 900; }
 .btd-log .l-ok span { color: var(--green); } .btd-log .l-no span { color: var(--red); } .btd-log .l-no { color: var(--red); } .btd-log .now { background: color-mix(in srgb, var(--blue) 14%, var(--card)); } .btd-log .hint { color: var(--muted); }
-.btd-moral { font-size: 15.5px; margin-top: 6px; color: var(--ink-2); } .btd-own { font-size: 14px; color: var(--muted); } .btd-own .ctl { margin-left: 8px; }
+.btd-moral { font-size: 17px; margin-top: 6px; color: var(--ink-2); } .btd-own { font-size: 14px; color: var(--muted); } .btd-own .ctl { margin-left: 8px; }
 .bt-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--muted); margin: 2px 0 6px; }
 .bt-legend span[style]::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--c); margin-right: 5px; vertical-align: -1px; }
 .tree-note { min-height: 1.6em; }
@@ -813,3 +813,10 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .reveal .abbr-foot b { color: var(--ink-2); }
 
 .lf-how { font-size: 18px; color: var(--ink-2); margin: 8px 0 0; line-height: 1.35; }
+
+.btd-wrap.doors { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.bd-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 8px 0; }
+.bd-card { background: var(--card); border: 2.5px solid var(--rule); border-radius: 12px; padding: 10px 14px; font-size: 18px; line-height: 1.45; }
+.bd-card.now { border-color: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 30%, transparent); }
+.bd-nm { font-size: 24px; font-weight: 800; } .bd-bar { height: 14px; background: var(--code-bg); border-radius: 7px; overflow: hidden; margin: 4px 0 6px; } .bd-bar i { display: block; height: 100%; background: var(--blue); }
+.bd-ucb { color: var(--purple); font: 15px "JetBrains Mono", monospace; } .bd-true { color: var(--muted); font-size: 15px; }

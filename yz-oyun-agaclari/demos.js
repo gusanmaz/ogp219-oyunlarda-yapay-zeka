@@ -112,7 +112,7 @@
       (n.kids || []).forEach(nodes);
     };
     nodes(tree);
-    s += `<text x="8" y="${Y(0) + 5}" font-size="12" fill="${t.muted}">MAX ▲</text><text x="8" y="${Y(1) + 5}" font-size="12" fill="${t.muted}">MIN ▼</text>` + (maxD >= 2 ? `<text x="8" y="${Y(2) + 5}" font-size="12" fill="${t.muted}">${maxD === 2 ? 'yaprak' : 'MAX ▲'}</text>` : '') + (maxD >= 3 ? `<text x="8" y="${Y(3) + 5}" font-size="12" fill="${t.muted}">yaprak</text>` : '');
+    s += `<text x="8" y="${Y(0) + 5}" font-size="13" fill="${t.muted}">MAX ▲ (sen)</text><text x="8" y="${Y(1) + 5}" font-size="13" fill="${t.muted}">MIN ▼ (rakip)</text>` + (maxD >= 2 ? `<text x="8" y="${Y(2) + 5}" font-size="12" fill="${t.muted}">${maxD === 2 ? 'yaprak' : 'MAX ▲'}</text>` : '') + (maxD >= 3 ? `<text x="8" y="${Y(3) + 5}" font-size="12" fill="${t.muted}">yaprak</text>` : '');
     return `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
   }
   D.abtree = function (root) {
@@ -124,8 +124,147 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { useAB = e.target.checked; build(); } }); x.checked = useAB; return x; })(), ' alfa-beta budaması'),
-      btn('Ders kitabı ağacı (AIMA)', () => { spec = AIMA; build(); }), btn('🎲 Rastgele 3 katlı ağaç', rnd)), diag, SL.transport(fp, { min: 0.5, max: 8 }), note);
+      btn('🚪 Üç kapı örneği', () => { spec = AIMA; build(); }), btn('🎲 Rastgele 3 katlı ağaç', rnd)), diag, SL.transport(fp, { min: 0.5, max: 8 }), note);
     build(); SL.onTheme(() => fp.render());
+    return { stop: () => fp.pause() };
+  };
+
+  /* ================= hikâyeli giriş: üç kapı, cimri bekçi =================
+     Sen bir kapı seçersin; bekçi o kapının ardındaki sandıklardan EN AZ altın olanı verir.
+     prune=1: gereksiz sandıkları açmadan (alfa-beta fikri). */
+  D.doors = function (root) {
+    const prune = root.dataset.prune === '1', L = ['A', 'B', 'C'];
+    const SC = prune ? [
+      ['📦 Klasik', [[3, 12, 8], [2, 4, 6], [14, 5, 2]], 'Aynı üç kapı. Bu kez akıllıca açalım: bir sandık, kapının işe yaramayacağını gösterdiği an o kapıyı bırakalım.'],
+      ['👍 İyi kapı başta', [[9, 8, 7], [6, 20, 30], [5, 40, 50]], 'En iyi kapı en başta. Sonraki kapılarda tek sandık yetecek mi?'],
+      ['👎 İyi kapı sonda', [[5, 40, 50], [6, 20, 30], [9, 8, 7]], 'Aynı sandıklar, kapıların sırası ters: en iyi kapı en sonda. Kaç sandık açmak gerekecek?'],
+      ['🎲 Rastgele', null, 'Rastgele sandıklar. Önce tahmin edin: hangi sandıklar hiç açılmayacak?']
+    ] : [
+      ['📦 Klasik', [[3, 12, 8], [2, 4, 6], [14, 5, 2]], 'Üç kapı var. Hangisini seçerseniz bekçi o kapının ardındaki üç sandıktan en az altın olanı verecek. Hangi kapı?'],
+      ['🪤 Tuzak kapı', [[5, 6, 4], [100, 1, 50], [7, 3, 9]], 'B kapısının ardında 100 altınlık bir sandık var! Oraya mı girmeli?'],
+      ['🤝 Hepsi benzer', [[6, 7, 8], [7, 7, 7], [9, 6, 9]], 'Sandıklar birbirine yakın. Fark yaratan ne olacak?'],
+      ['🎲 Rastgele', null, 'Rastgele sandıklar. Oynatmadan önce cevabı kafanızdan bulun.']];
+    let ch = SC[0][1], F = [];
+    const frames = () => {
+      const out = [], open = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], dv = [null, null, null], log = [];
+      let best = -Infinity, bestD = -1, opened = 0;
+      const snap = (o = {}) => out.push(Object.assign({ open: open.map(r => r.slice()), dv: dv.slice(), log: log.slice(), best, bestD, opened }, o));
+      snap({ hint: true });
+      for (let d = 0; d < 3; d++) {
+        let m = Infinity, cut = false;
+        for (let k = 0; k < 3; k++) {
+          open[d][k] = 1; opened++; const v = ch[d][k], was = m; m = Math.min(m, v);
+          let t = `<b>${L[d]} kapısı</b>, ${k + 1}. sandık: <b>${v}</b> altın. ` + (k === 0 ? `Bekçi buradan en fazla ${m} verir.` : v < was ? `Daha az! Bekçi artık en fazla <b>${m}</b> verir.` : `Bekçi yine azı verir: en fazla ${m}.`);
+          if (prune && bestD >= 0 && m <= best && k < 2) {
+            for (let q = k + 1; q < 3; q++) open[d][q] = 2;
+            log.push(['x', t]); snap({ cur: [d, k] });
+            log.push(['cut', `✂ ${L[bestD]} kapısı zaten <b>${best}</b> altın garanti ediyor; ${L[d]} en fazla ${m} verebilir. Kalan <b>${2 - k}</b> sandığı açmaya gerek yok.`]);
+            cut = true; dv[d] = '≤' + m; snap({ cur: [d, k], cutD: d }); break;
+          }
+          log.push([prune && bestD >= 0 && k < 2 ? 'go' : 'x', t + (prune && bestD >= 0 && k < 2 ? ` Hâlâ ${best}’den iyi olabilir, devam.` : '')]); snap({ cur: [d, k] });
+        }
+        if (cut) continue;
+        dv[d] = m;
+        if (m > best) { best = m; bestD = d; log.push(['ok', `${L[d]} kapısını seçersen bekçi <b>${m}</b> altın verir. Şimdilik en iyi kapı bu.`]); }
+        else log.push(['no', `${L[d]} kapısını seçersen bekçi <b>${m}</b> altın verir. ${L[bestD]} (${best}) daha iyi.`]);
+        snap({ doorDone: d });
+      }
+      const maxAll = Math.max(...ch.flat()), md = ch.findIndex(r => r.includes(maxAll));
+      log.push(['win', `🏆 <b>${L[bestD]} kapısını seç: ${best} altın garanti.</b>`]);
+      const moral = prune ? (opened === 9 ? `Cevap aynı (${L[bestD]}, ${best}) ama <b>9 sandığın 9’u da</b> açıldı: hiç kazanç yok. İyi kapı sonda olunca hiçbir kapı erken elenemedi.` : `Cevap değişmedi (${L[bestD]}, ${best}) ama 9 sandıktan yalnızca <b>${opened}</b> tanesini açtık. İyi kapıya ne kadar erken bakarsak o kadar çok sandık elenir.`)
+        : (md !== bestD ? `En büyük sandık (${maxAll}) ${L[md]} kapısında, ama oraya girersen bekçi ${dv[md]} verir. ` : '') + 'En iyi ihtimale değil, <b>en kötü ihtimali en iyi olan</b> kapıya bakılır. Bu kuralın adı <b>minimax</b>.';
+      snap({ final: true, moral });
+      return out;
+    };
+    const story = el('div', { class: 'btd-story' }), diag = el('div'), logEl = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
+    let last = 0;
+    const draw = (f, pl) => {
+      const t = T(), W = 720, H = 330, DX = [125, 360, 595];
+      let g = `<text x="${W / 2}" y="30" text-anchor="middle" font-size="30">🧑</text><text x="${W / 2}" y="54" text-anchor="middle" font-size="17" font-weight="700" fill="${t.ink}">SEN: en çok altını veren kapıyı seç</text>`;
+      for (let d = 0; d < 3; d++) {
+        const x = DX[d], isBest = f.bestD === d && f.dv[d] !== null, done = f.dv[d] !== null, cutD = typeof f.dv[d] === 'string';
+        g += `<line x1="${W / 2}" y1="62" x2="${x}" y2="92" stroke="${f.final && isBest ? t.green : t.rule}" stroke-width="${f.final && isBest ? 5 : 2}"/>`;
+        g += `<rect x="${x - 46}" y="92" width="92" height="74" rx="10" fill="${t.card}" stroke="${f.final && isBest ? t.green : cutD ? t.red : done ? t.blue : t['ink-2']}" stroke-width="${f.final && isBest ? 5 : 2.5}"/>`;
+        g += `<text x="${x - 20}" y="138" text-anchor="middle" font-size="34">🚪</text><text x="${x + 20}" y="126" text-anchor="middle" font-size="22" font-weight="900" fill="${t.ink}">${L[d]}</text>`;
+        g += `<text x="${x + 20}" y="152" text-anchor="middle" font-size="17" font-weight="800" fill="${cutD ? t.red : t.blue}">${done ? f.dv[d] : '?'}</text>`;
+        g += `<text x="${x}" y="186" text-anchor="middle" font-size="15" fill="${t.muted}">bekçi en azı verir${cutD ? ' (elendi ✂)' : ''}</text>`;
+        const mn = Math.min(...ch[d]);
+        for (let k = 0; k < 3; k++) {
+          const cx = x + (k - 1) * 74, o = f.open[d][k], cur = f.cur && f.cur[0] === d && f.cur[1] === k, isMin = done && !cutD && ch[d][k] === mn && ch[d].indexOf(mn) === k;
+          g += `<line x1="${x}" y1="192" x2="${cx}" y2="222" stroke="${o === 2 ? t.red : t.rule}" stroke-width="2" ${o === 2 ? 'stroke-dasharray="5 4"' : ''}/>`;
+          g += `<rect x="${cx - 31}" y="222" width="62" height="70" rx="8" fill="${cur ? t.amber : o === 2 ? (t.dark ? '#3a1820' : '#fde4e7') : t.card}" stroke="${isMin ? t.blue : cur ? t.amber : o === 2 ? t.red : t.rule}" stroke-width="${isMin ? 4 : 2}" opacity="${o === 2 ? 0.75 : 1}"/>`;
+          g += o === 1 ? `<text x="${cx}" y="252" text-anchor="middle" font-size="22">💰</text><text x="${cx}" y="281" text-anchor="middle" font-size="21" font-weight="900" fill="${cur ? '#111' : t.ink}">${ch[d][k]}</text>`
+            : o === 2 ? `<text x="${cx}" y="254" text-anchor="middle" font-size="22">✂</text><text x="${cx}" y="280" text-anchor="middle" font-size="12" fill="${t.red}">açılmadı</text>`
+            : `<text x="${cx}" y="254" text-anchor="middle" font-size="24">📦</text><text x="${cx}" y="281" text-anchor="middle" font-size="17" font-weight="800" fill="${t.muted}">?</text>`;
+        }
+      }
+      g += `<text x="${W / 2}" y="318" text-anchor="middle" font-size="15.5" fill="${t.muted}">mavi çerçeveli sandık = bekçinin o kapıda vereceği sandık${prune ? ' · ✂ = açmaya gerek kalmadı' : ''}</text>`;
+      diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${g}</svg>`;
+      const rows = f.log.slice(-7);
+      logEl.innerHTML = f.hint ? '<div class="hint">▶ Oynat’a basın: sandıklar soldan sağa tek tek açılacak.</div>' : rows.map(([k, tx], i) => `<div class="${k === 'no' ? 'l-no' : k === 'cut' ? 'l-no' : 'l-ok'}${i === rows.length - 1 ? ' now' : ''}"><span>${k === 'ok' ? '✓' : k === 'no' ? '✗' : k === 'cut' ? '' : k === 'win' ? '' : '·'}</span>${tx}</div>`).join('');
+      moral.innerHTML = f.final ? '💡 ' + f.moral : `açılan sandık: <b>${f.opened}</b> / 9`;
+      if (pl.idx !== last && pl.idx > 0 && SL.sfx) { try { SL.sfx(f.final ? 'alert' : f.cutD !== undefined ? 'shot' : 'waka'); } catch (e) {} }
+      last = pl.idx;
+    };
+    const fp = new SL.FramePlayer(draw, { speed: 1.3 });
+    const load = (i, play) => {
+      if (SC[i][1]) ch = SC[i][1]; else { const r = () => 1 + Math.floor(Math.random() * 19); ch = [0, 1, 2].map(() => [r(), r(), r()]); }
+      story.innerHTML = '📖 ' + SC[i][2]; last = 0; fp.load(frames()); if (play) fp.play();
+    };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap doors' }, diag, el('div', {}, logEl, moral)), SL.transport(fp, { min: 0.4, max: 6 }));
+    bs[0].classList.add('primary'); load(0, false);
+    SL.onTheme(() => fp.render());
+    return { stop: () => fp.pause() };
+  };
+
+  /* ================= hikâyeli giriş: hangi lokanta? (keşif mi, bildiğin mi) ================= */
+  D.bandit = function (root) {
+    const P = [0.45, 0.75, 0.6], NM = ['🍜 Köşe', '🍛 Pasaj', '🥙 Meydan'], NIGHTS = 60;
+    const ST = {
+      greedy: ['😌 Hep bildiğine git', 'Her birini bir kez dene; sonra hep o ana kadar oranı en iyi olana git.'],
+      random: ['🎲 Hep rastgele', 'Her akşam zar at. Hiçbir şey öğrenmiyormuş gibi davran.'],
+      ucb: ['🧠 UCB1: iyiye git ama az denediğini unutma', 'Oranı iyi olana git; ama az denediğin lokantaya arada bir şans ver. Belirsizlik azaldıkça şans da azalır.']
+    };
+    let mode = 'ucb', F = [];
+    const sim = () => {
+      const n = [0, 0, 0], w = [0, 0, 0], out = []; let tot = 0;
+      out.push({ n: n.slice(), w: w.slice(), tot, t: 0, note: 'Üç lokanta var. Hangisinin daha iyi olduğunu <b>bilmiyorsunuz</b>; ancak yiyerek öğrenebilirsiniz. ▶ Oynat.' });
+      for (let t = 1; t <= NIGHTS; t++) {
+        let k, why;
+        const sc = [0, 1, 2].map(i => (n[i] === 0 ? Infinity : w[i] / n[i] + 1.2 * Math.sqrt(Math.log(t) / n[i])));
+        if (mode === 'random') { k = Math.floor(Math.random() * 3); why = 'zar attı'; }
+        else if (n.includes(0)) { k = n.indexOf(0); why = 'hiç denenmemişti'; }
+        else if (mode === 'greedy') { k = [0, 1, 2].reduce((a, b) => (w[b] / n[b] > w[a] / n[a] ? b : a)); why = 'şimdiye kadarki oranı en iyi'; }
+        else { k = sc.indexOf(Math.max(...sc)); const bestRate = [0, 1, 2].reduce((a, b) => (w[b] / n[b] > w[a] / n[a] ? b : a)); why = k === bestRate ? 'oranı en iyi' : 'oranı en iyi değil ama <b>az denenmiş</b>: bir şans daha'; }
+        const ok = Math.random() < P[k]; n[k]++; if (ok) { w[k]++; tot++; }
+        out.push({ n: n.slice(), w: w.slice(), tot, t, k, ok, sc: mode === 'ucb' ? sc : null, note: `<b>${t}. akşam:</b> ${NM[k]} (${why}) → ${ok ? 'beğendi 😋' : 'beğenmedi 😖'}` });
+      }
+      const fav = n.indexOf(Math.max(...n));
+      out.push({ n: n.slice(), w: w.slice(), tot, t: NIGHTS, final: true, note: `<b>${NIGHTS} akşamın ${tot} tanesinde</b> memnun kaldı. En çok gidilen: ${NM[fav]} (${n[fav]} kez). Gerçekte en iyisi ${NM[1]} idi. ` + (mode === 'greedy' ? (fav === 1 ? 'Bu sefer şanslıydı; “Yeniden” ile birkaç kez deneyin: ilk akşam şanssız geçerse iyi lokantaya bir daha hiç uğramaz.' : 'İlk akşam şanssız geçen iyi lokantaya bir daha hiç uğramadı: <b>keşif yok</b>.') : mode === 'random' ? 'Hangisinin iyi olduğunu öğrendi ama bilgisini <b>kullanmadı</b>: akşamların üçte ikisi kötü lokantalarda geçti.' : 'Önce hepsini yokladı, sonra iyi olana yüklendi; kötüleri arada bir yeniden denedi. MCTS her düğümde tam bunu yapar.') });
+      return out;
+    };
+    const cards = el('div', { class: 'bd-cards' }), note = el('div', { class: 'sv-note' }), stat = el('div', { class: 'sv-counters' }), how = el('div', { class: 'btd-story' });
+    let last = 0;
+    const draw = (f, pl) => {
+      cards.innerHTML = [0, 1, 2].map(i => {
+        const r = f.n[i] ? f.w[i] / f.n[i] : 0;
+        return `<div class="bd-card${f.k === i ? ' now' : ''}"><div class="bd-nm">${NM[i]}</div><div class="bd-bar"><i style="width:${(f.n[i] / NIGHTS) * 100}%"></i></div><div>gidildi: <b>${f.n[i]}</b> · beğenildi: <b>${f.w[i]}</b></div><div>tahmin edilen oran: <b>${f.n[i] ? '%' + Math.round(r * 100) : '?'}</b></div>` +
+          (f.sc ? `<div class="bd-ucb">UCB puanı: ${f.sc[i] === Infinity ? '∞ (hiç denenmedi)' : f.sc[i].toFixed(2)}</div>` : '') +
+          `<div class="bd-true">${f.final ? 'gerçek oran: %' + P[i] * 100 : 'gerçek oran: gizli'}</div></div>`;
+      }).join('');
+      note.innerHTML = f.note;
+      stat.innerHTML = `<span class="cnt">akşam <b>${f.t}</b> / ${NIGHTS}</span><span class="cnt ok">memnun kalınan akşam <b>${f.tot}</b></span><span class="cnt">her akşam en iyisine gidilseydi ≈ <b>${Math.round(f.t * 0.75)}</b></span>`;
+      if (pl.idx !== last && f.k !== undefined && SL.sfx) { try { SL.sfx(f.ok ? 'waka' : 'tak'); } catch (e) {} }
+      last = pl.idx;
+    };
+    const fp = new SL.FramePlayer(draw, { speed: 6 });
+    const go = play => { how.innerHTML = '📖 ' + ST[mode][1]; last = 0; fp.load(sim()); if (play) fp.play(); };
+    const bs = Object.keys(ST).map(k => { const b = btn(ST[k][0], () => { mode = k; bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); go(true); }); if (k === mode) b.classList.add('primary'); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs, btn('↺ Yeniden', () => go(true))), how, cards, SL.transport(fp, { min: 1, max: 40, unit: 'akşam/sn' }), note, stat);
+    go(false); SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
   };
 

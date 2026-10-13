@@ -154,6 +154,51 @@
   <ul class="agenda"><li class="done">oyun ağacı nedir?</li><li class="on">minimax</li><li class="">alfa-beta budaması</li><li class="">derinlik ve değerlendirme</li><li class="">Monte Carlo ağaç araması</li><li class="">kod ve laboratuvarlar</li><li class="">tarihten hikâyeler</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-sec="önce basit bir oyun">
+  <h2>Önce küçük bir oyun: üç kapı, cimri bekçi 🚪💰</h2>
+  <p style="font-size:.78em;margin:.1em 0 .3em">Kural iki cümle: <b>Siz</b> bir kapı seçersiniz. Kapının ardında üç sandık vardır ve <b>bekçi</b> size içlerinden <b>en az altın olanı</b> verir (sandıkların içini ikiniz de görüyorsunuz). Hangi kapıyı seçerdiniz? Önce tahmin edin, sonra oynatın.</p>
+  <div class="demo" data-demo="doors" data-prune="0"></div>
+  <aside class="notes">Bu sunumun temel taşı. Minimax, MAX, MIN, yaprak gibi hiçbir terim kullanmadan fikri oturtun: “en iyi ihtimale değil, en kötü ihtimali en iyi olan kapıya bak”. “Tuzak kapı” senaryosunda sınıfın yarısı 100 altınlı B kapısını ister; oynatınca bekçinin 1 verdiğini görürler. Cevaplar: Klasik → A (3). Tuzak kapı → A (4). Hepsi benzer → B (7).</aside>
+</section>
+
+<section data-sec="önce basit bir oyun">
+  <h2>Aynı oyun, “oyun ağacı” olarak</h2>
+  <div class="cols c64">
+    <div>
+      <table class="sum-t" style="font-size:19px">
+        <tr><th>kapı oyununda</th><th>oyun ağacında</th><th>XOX’ta</th></tr>
+        <tr><td>🧑 siz</td><td><b>MAX</b> ▲: puanı büyütmek ister</td><td>X oynayan</td></tr>
+        <tr><td>💂 bekçi</td><td><b>MIN</b> ▼: puanı küçültmek ister</td><td>O oynayan rakip</td></tr>
+        <tr><td>🚪 kapı seçmek</td><td>bir <b>hamle</b> (dal)</td><td>boş kareye X koymak</td></tr>
+        <tr><td>📦 sandık</td><td><b>yaprak</b>: oyunun sonu</td><td>+1 kazandım · 0 berabere · −1 kaybettim</td></tr>
+        <tr><td>“bekçi en azı verir”</td><td>MIN düğümü = çocukların <b>en küçüğü</b></td><td>rakip benim için en kötü cevabı verir</td></tr>
+        <tr><td>“en iyi kapıyı seçerim”</td><td>MAX düğümü = çocukların <b>en büyüğü</b></td><td>en iyi hamlemi oynarım</td></tr>
+      </table>
+      <p style="font-size:.74em;margin-top:.5em">Gerçek oyunlarda ağaç daha derindir: ben, rakip, ben, rakip… Kural değişmez: <b>benim sıramda en büyük, rakibin sırasında en küçük</b>. “Mini-max” adı buradan gelir.</p>
+    </div>
+    <svg viewBox="0 0 520 300" style="width:100%" font-family="Source Sans 3">
+      <g style="stroke:var(--rule)" stroke-width="2">
+        <line x1="260" y1="58" x2="100" y2="128"/><line x1="260" y1="58" x2="260" y2="128"/><line x1="260" y1="58" x2="420" y2="128"/>
+        <line x1="100" y1="148" x2="50" y2="220"/><line x1="100" y1="148" x2="100" y2="220"/><line x1="100" y1="148" x2="150" y2="220"/>
+        <line x1="260" y1="148" x2="210" y2="220"/><line x1="260" y1="148" x2="260" y2="220"/><line x1="260" y1="148" x2="310" y2="220"/>
+        <line x1="420" y1="148" x2="370" y2="220"/><line x1="420" y1="148" x2="420" y2="220"/><line x1="420" y1="148" x2="470" y2="220"/>
+      </g>
+      <line x1="260" y1="58" x2="100" y2="128" style="stroke:var(--green)" stroke-width="5"/>
+      <g font-size="16" font-weight="800" text-anchor="middle">
+        <polygon points="260,18 286,60 234,60" style="fill:var(--card);stroke:var(--green)" stroke-width="3"/><text x="260" y="54" style="fill:var(--ink)">3</text>
+        <text x="300" y="42" text-anchor="start" font-size="14" style="fill:var(--muted)">🧑 sen (MAX)</text>
+        <g style="fill:var(--card);stroke:var(--blue)" stroke-width="3"><polygon points="100,158 126,118 74,118"/><polygon points="260,158 286,118 234,118"/><polygon points="420,158 446,118 394,118"/></g>
+        <g style="fill:var(--ink)"><text x="100" y="140">3</text><text x="260" y="140">2</text><text x="420" y="140">2</text></g>
+        <g font-size="13" style="fill:var(--muted)"><text x="100" y="108">🚪 A</text><text x="260" y="108">🚪 B</text><text x="420" y="108">🚪 C</text></g>
+        <g style="fill:var(--card);stroke:var(--rule)" stroke-width="2"><rect x="32" y="220" width="36" height="34" rx="6"/><rect x="82" y="220" width="36" height="34" rx="6"/><rect x="132" y="220" width="36" height="34" rx="6"/><rect x="192" y="220" width="36" height="34" rx="6"/><rect x="242" y="220" width="36" height="34" rx="6"/><rect x="292" y="220" width="36" height="34" rx="6"/><rect x="352" y="220" width="36" height="34" rx="6"/><rect x="402" y="220" width="36" height="34" rx="6"/><rect x="452" y="220" width="36" height="34" rx="6"/></g>
+        <g style="fill:var(--ink)"><text x="50" y="243">3</text><text x="100" y="243">12</text><text x="150" y="243">8</text><text x="210" y="243">2</text><text x="260" y="243">4</text><text x="310" y="243">6</text><text x="370" y="243">14</text><text x="420" y="243">5</text><text x="470" y="243">2</text></g>
+        <text x="260" y="282" font-size="14" style="fill:var(--muted)">📦 sandıklar (yapraklar) · ▽ bekçi (MIN) en küçüğü alır</text>
+      </g>
+    </svg>
+  </div>
+  <aside class="notes">Sağdaki ağaç az önceki “Klasik” senaryonun aynısı: aynı dokuz sandık, aynı cevap (A, 3). Tablonun her satırını sağdaki çizimde gösterin. Bundan sonra MAX/MIN dediğimizde öğrencinin aklına “ben ve bekçi” gelmeli.</aside>
+</section>
+
 <section data-sec="minimax">
   <h2>Minimax fikri</h2>
   <div class="cols">
@@ -191,6 +236,7 @@
 
 <section data-sec="minimax">
   <h2>Minimax adım adım</h2>
+  <p style="font-size:.76em;margin:.1em 0 .2em">Kapı oyununun aynısı, bu kez bilgisayarın yaptığı sırayla: ağaç <b>soldan sağa, önce derine</b> gezilir; bir yaprağa varınca sayı yukarı taşınır. Turuncu düğüm = şu an bakılan yer, yeşil = değeri kesinleşti. “İleri ▶|” ile tek tek ilerleyin ve her adımda sıradaki sayıyı <b>önce siz söyleyin</b>.</p>
   <div class="demo" data-demo="abtree" data-ab="0"></div>
 </section>
 
@@ -233,6 +279,13 @@
 </section>
 
 <section data-sec="alfa-beta">
+  <h2>Bütün sandıkları açmak şart mı? ✂</h2>
+  <p style="font-size:.78em;margin:.1em 0 .3em">Aynı üç kapı. A kapısı <b>3 altın</b> garanti etti. B kapısında açtığınız ilk sandıktan <b>2</b> çıktı: bekçi buradan <b>en fazla 2</b> verir, yani B artık A’yı geçemez. B’nin kalan sandıklarında ne olduğunu bilmeye <b>gerek var mı</b>?</p>
+  <div class="demo" data-demo="doors" data-prune="1"></div>
+  <aside class="notes">Alfa-beta budamasının bütün fikri bu slaytta; α ve β harflerini henüz kullanmayın. Cevaplar: Klasik → 7 sandık açılır (B’nin son iki sandığı elenir). İyi kapı başta → 5 sandık (B ve C’de birer sandık yeter). İyi kapı sonda → 9 sandık, hiç kazanç yok. Son iki senaryo aynı sandıklardır; yalnızca kapıların sırası değişir: “sıralama her şeydir” slaytının sezgisi buradan gelir.</aside>
+</section>
+
+<section data-sec="alfa-beta">
   <h2>Alfa-beta: “bu dala bakmaya gerek yok”</h2>
   <div class="cols">
     <div>
@@ -243,7 +296,7 @@
       </ul>
       <p style="font-size:.84em">Örnekteki ikinci MIN düğümü: ilk çocuğu 2. MIN bu dalda <b>en fazla 2</b> verecek. Ama MAX solda zaten <b>3</b> garanti etti. Bu dalın geri kalanı ne olursa olsun MAX onu seçmez → 4 ve 6’ya bakmaya gerek yok.</p>
     </div>
-    <div class="box story"><span class="bt">Gündelik benzetme</span>İki arkadaş size hediye seçenekleri sunuyor ve <b>en kötüsünü</b> verecekler. Ayşe’nin torbasında en kötüsü 3 lira. Mehmet’in torbasından ilk çıkan 2 lira. Mehmet’in torbasında başka ne olduğunu bilmeye gerek yok: Mehmet’ten <b>en fazla</b> 2 lira alabilirsiniz, Ayşe 3 lira garanti ediyor. Mehmet’in torbasını “budadınız”.</div>
+    <div class="box story"><span class="bt">Kapı oyununun diliyle</span><b>α</b> = “şu ana kadar bulduğum en iyi kapı kaç altın garanti ediyor?” (az önce: 3). <b>β</b> = “bekçi bu kapıdan en fazla kaç verir?” (B’de ilk sandıktan sonra: 2). Bekçinin verebileceği en fazla, elimdeki garantiyi <b>geçemiyorsa</b> (β ≤ α) o kapının kalan sandıkları açılmaz.</div>
   </div>
 </section>
 
@@ -277,6 +330,19 @@
       <p class="mini">Dört Bir Arada demosunda “hamle sıralaması” kutusunu kapatıp açarak düğüm sayısını karşılaştırabilirsiniz.</p>
     </div>
   </div>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: minimax ve alfa-beta, 11 dakikada</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/l-hh51ncgDI" title="Algorithms Explained — minimax and alpha-beta pruning" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Algorithms Explained — minimax and alpha-beta pruning</b><br><span class="mini">Sebastian Lague · 11 dk · <a href="https://www.youtube.com/watch?v=l-hh51ncgDI" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önce kapı oyunuyla kurduğumuz iki fikrin aynısı, bu kez satranç benzeri bir oyunun ağacı üzerinde ve çok temiz çizimlerle. Videodaki beyaz düğümler bizim MAX’ımız (siz), siyahlar MIN (bekçi).</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda budanan ilk dal hangisi ve neden? Aynı durumu kapı oyununda hangi senaryoda gördük? Videonun sonunda hamle sıralaması için ne öneriliyor?</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce; sınıfta sessize alıp kendiniz anlatarak ya da Türkçe altyazıyla izletebilirsiniz. İzlerken sorusunu videodan önce okuyun.</aside>
 </section>
 
 <section data-sec="alfa-beta">
@@ -392,6 +458,13 @@
 </section>
 
 <section data-sec="MCTS">
+  <h2>Önce basit hâli: hangi lokanta daha iyi? 🍜</h2>
+  <p style="font-size:.78em;margin:.1em 0 .3em">Yeni bir şehre taşındınız; üç lokanta var ve hangisinin iyi olduğunu bilmiyorsunuz. 60 akşam yemek yiyeceksiniz. <b>Bildiğiniz iyi yere mi</b> gitmeli, yoksa <b>az denediğinize bir şans daha mı</b> vermeli? Üç stratejiyi sırayla oynatın ve memnun kalınan akşam sayılarını karşılaştırın.</p>
+  <div class="demo" data-demo="bandit"></div>
+  <aside class="notes">MCTS’nin “seçim” adımındaki ikilemi (keşif / sömürü) ağaç olmadan gösterir. Gerçek oranlar gizli: Köşe %45, Pasaj %75, Meydan %60; oynatma bitince görünür. “Hep bildiğine git” birkaç kez yeniden çalıştırılınca bazen iyi lokantayı (Pasaj) ilk akşam kötü çıktığı için sonsuza dek bırakır. “Rastgele” hangisinin iyi olduğunu öğrenir ama kullanmaz. UCB1 ikisini dengeler. Sonraki slayttaki formül, kartlardaki “UCB puanı”nın nasıl hesaplandığını söyler; önce sezgi, sonra formül.</aside>
+</section>
+
+<section data-sec="MCTS">
   <h2>UCB1: keşif mi, sömürü mü?</h2>
   <div class="cols">
     <div>
@@ -414,6 +487,19 @@
 <section data-sec="MCTS">
   <h2>MCTS’ye karşı oynayın 🎲</h2>
   <div class="demo" data-demo="c4" data-ai="mcts"></div>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: MCTS adım adım, elle</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/UXW2yZndl7U" title="Monte Carlo Tree Search" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Monte Carlo Tree Search</b><br><span class="mini">John Levine (Strathclyde Üniversitesi) · 16 dk · <a href="https://www.youtube.com/watch?v=UXW2yZndl7U" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Seçim, genişletme, simülasyon ve geri yayılım adımlarının küçük bir ağaç üzerinde <b>elle, sayılarla</b> yapılışı. Lokanta örneğindeki UCB puanının ağacın her düğümünde nasıl kullanıldığını gösterir.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>İlk dört yinelemede hangi düğümler seçiliyor ve neden? Hiç denenmemiş bir düğümün UCB puanı neden sonsuz? Lokanta örneğinde bunun karşılığı neydi?</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce; sınıfta sessize alıp kendiniz anlatarak ya da Türkçe altyazıyla izletebilirsiniz. İzlerken sorusunu videodan önce okuyun.</aside>
 </section>
 
 <section data-sec="MCTS">
