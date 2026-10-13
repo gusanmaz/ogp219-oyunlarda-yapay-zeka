@@ -477,7 +477,21 @@
       for (let k = 0; k < 10; k++) { d.style.zoom = z.toFixed(3); if (bottom(sl) <= 650 && !wide()) break; z *= 0.95; if (z < 1.08) { d.style.zoom = ''; return; } }
       grownMax = z;
     };
-    let fitT; const fitSoon = () => { clearTimeout(fitT); fitT = setTimeout(fit, 250); };
+    // Kısaltma sözlüğü: slaytta geçen kısaltmaların açılımı, yer varsa slaytın altında küçük bir satırda gösterilir.
+    const ABBR = { GC: 'çöp toplayıcı (garbage collector): kullanılmayan nesneleri bellekten kendiliğinden silen mekanizma', MMO: 'çok sayıda oyuncunun aynı çevrimiçi dünyada oynadığı oyun', RTS: 'gerçek zamanlı strateji oyunu', NPC: 'oyuncunun yönetmediği karakter', RPG: 'rol yapma oyunu', FOV: 'görüş alanı', RNG: 'rastgele sayı üreteci', HUD: 'ekrandaki gösterge katmanı (can, harita, mermi)', UI: 'kullanıcı arayüzü', API: 'bir yapının dışarıya sunduğu işlemler listesi', CPU: 'işlemci', GPU: 'grafik işlemcisi (ekran kartı)', LIFO: 'son giren ilk çıkar', FIFO: 'ilk giren ilk çıkar', BFS: 'genişlik öncelikli arama', DFS: 'derinlik öncelikli arama', MST: 'en küçük kapsayan ağaç', PQ: 'öncelik kuyruğu', BST: 'ikili arama ağacı', DAG: 'yönlü döngüsüz graf', AABB: 'eksenlere hizalı sınır kutusu', BVH: 'sınır kutuları hiyerarşisi', FSM: 'sonlu durum makinesi', HFSM: 'hiyerarşik durum makinesi', GOAP: 'hedef odaklı eylem planlama', HTN: 'hiyerarşik görev ağı', MCTS: 'Monte Carlo ağaç araması', PCG: 'prosedürel içerik üretimi', LOD: 'ayrıntı düzeyi (uzaktakini sade işle)', XP: 'deneyim puanı', HP: 'can puanı', DPS: 'saniyedeki hasar', FPS: 'saniyedeki kare sayısı (ya da birinci şahıs nişancı oyunu)', LLM: 'büyük dil modeli', SAT: 'ayıran eksen teoremi', CCD: 'sürekli çarpışma tespiti' };
+    const abbrRe = new RegExp('(^|[^A-Za-zÇĞİÖŞÜçğıöşü0-9_])(' + Object.keys(ABBR).join('|') + ')(?![A-Za-zÇĞİÖŞÜçğıöşü0-9_])', 'g');
+    const abbrFoot = sl => {
+      const old = sl.querySelector(':scope > .abbr-foot'); if (old) old.remove();
+      if (sl.classList.contains('level') || sl.classList.contains('title') || sl.querySelector('.CodeMirror')) return;
+      const clone = sl.cloneNode(true); clone.querySelectorAll('pre, code, .notes, aside, script, style, .abbr-foot, canvas, svg').forEach(e => e.remove());
+      const text = clone.textContent || '', seen = []; let m; abbrRe.lastIndex = 0;
+      while ((m = abbrRe.exec(text)) && seen.length < 4) { const k = m[2]; if (!seen.includes(k) && !new RegExp(k + '\\s*[(:=]').test(text.slice(m.index, m.index + k.length + 4))) seen.push(k); }
+      if (!seen.length || bottom(sl) > 628) return;
+      const d = document.createElement('div'); d.className = 'abbr-foot';
+      d.innerHTML = '📖 ' + seen.map(k => `<b>${k}</b>: ${ABBR[k]}`).join(' · ');
+      sl.appendChild(d);
+    };
+    let fitT; const fitSoon = () => { clearTimeout(fitT); fitT = setTimeout(() => { fit(); const sl = Reveal.getCurrentSlide(); if (sl) abbrFoot(sl); }, 250); };
     Reveal.on('slidechanged', fitSoon); Reveal.on('ready', fitSoon); Reveal.on('resize', fitSoon); Reveal.on('fragmentshown', fitSoon);
     document.addEventListener('click', fitSoon); document.addEventListener('keyup', fitSoon);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSoon);
