@@ -187,7 +187,9 @@
       s += `<line x1="${bx}" y1="${by - 14}" x2="${bx}" y2="${p.y + BH + 4}" stroke="${col}" stroke-width="2.4" marker-end="url(#ahp${o.uid})"/>`;
       s += `<text x="${bx}" y="${by + 2}" text-anchor="middle" font-size="15" font-weight="700" font-family="JetBrains Mono" fill="${col}">${name}</text>`;
     });
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    // görünümü içeriğe göre daralt: az düğümlü liste küçücük kalmasın (en fazla ~1,7 kat büyür)
+    const Wv = Math.min(W, Math.max(700, total + 300)), cx = x0 + total / 2, vx = Math.max(0, Math.min(W - Wv, cx - Wv / 2));
+    svg.setAttribute('viewBox', `${vx} 0 ${Wv} ${H}`);
     svg.innerHTML = s;
   }
   SL.renderLL = renderLL;
@@ -226,7 +228,7 @@
       }
       fp.load(fr); fp.play();
     };
-    const OPS = { pushfront: '➕ Başa ekle', popfront: '➖ Baştan sil', pushback: '➕ Sona ekle', find: '🔍 Ara', remove: '🗑 Sil', reverse: '🔄 Tersine çevir', reset: '↺ Başlangıç' };
+    const OPS = { pushfront: '➕ Başa ekle', popfront: '➖ Baştan sil', pushback: '➕ Sona ekle', find: '🔍 Ara', remove: '✖ Sil', reverse: '🔄 Tersine çevir', reset: '↺ Başlangıç' };
     const ops = (d.ops || 'pushfront,popfront,reset').split(',');
     const ctl = el('div', { class: 'sv-controls' });
     if (ops.some(o => ['pushfront', 'pushback', 'find', 'remove'].includes(o))) ctl.append(el('label', { class: 'ctl' }, 'Değer ', input));
@@ -407,7 +409,7 @@ def _run(fname, ret, cases):
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       slider('konum', 0, 8, pos, 1, v => (pos = v)), slider('değer', 1, 99, val, 1, v => (val = v)),
-      btn('➕ Araya ekle', () => plan('ins'), 'primary'), btn('🗑 Sil', () => plan('del')),
+      btn('➕ Araya ekle', () => plan('ins'), 'primary'), btn('✖ Sil', () => plan('del')),
       btn('↺', () => { a = [5, 12, 19, 27, 33, 41, 58, 64]; fp.load([{ arr: a.slice(), moves: 0, note: 'Başlangıç' }]); })),
     row, SL.transport(fp, { min: 0.5, max: 12 }), note, stat);
     fp.load([{ arr: a.slice(), moves: 0, note: 'Bir konum ve değer seçip “Araya ekle”ye basın.' }]);

@@ -468,7 +468,7 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .trace-t.bt3 td:nth-child(3) { color: var(--muted); font-size: 16px; }
 
 /* ---- liste bileşenleri ---- */
-.ll-svg { width: 100%; height: auto; max-height: 300px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
+.ll-svg { width: 100%; height: auto; max-height: 322px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
 .ll-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; align-items: start; }
 .ll-code { font-size: 16px !important; margin: 0 !important; }
 .ll-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 6px 0 10px; font: 16px "JetBrains Mono", monospace; }
