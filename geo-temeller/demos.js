@@ -93,6 +93,39 @@
     draw(); SL.onTheme(draw);
   };
 
+
+  /* ================= 2b) DOOM usulü isabet: bütün kesişimleri bul, en küçük t'den başla ================= */
+  D.raysort = function (root) {
+    const W = 720, H = 330;
+    const walls = [[V.v(250, 40), V.v(250, 200)], [V.v(360, 110), V.v(360, 310)], [V.v(470, 30), V.v(560, 150)], [V.v(600, 180), V.v(640, 320)], [V.v(160, 250), V.v(330, 300)]];
+    const mons = [{ p: V.v(310, 150), r: 16, name: 'imp' }, { p: V.v(430, 215), r: 18, name: 'şeytan' }, { p: V.v(545, 240), r: 16, name: 'asker' }];
+    const O = V.v(70, 190); let aim = V.v(660, 215), pierce = false;
+    const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
+    C.style.width = '900px'; C.style.height = 'auto'; C.style.maxWidth = '100%';
+    const draw = () => {
+      const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
+      const B = V.add(O, V.setLen(V.sub(aim, O), 760)), r = V.sub(B, O), hits = [];
+      walls.forEach((w, i) => { const s = V.sub(w[1], w[0]), den = V.cross(r, s); if (Math.abs(den) < 1e-9) return; const tt = V.cross(V.sub(w[0], O), s) / den, u = V.cross(V.sub(w[0], O), r) / den; if (tt >= 0 && tt <= 1 && u >= 0 && u <= 1) hits.push({ t: tt, kind: 'duvar', i }); });
+      mons.forEach((m, i) => { const d = V.norm(r), L = V.len(r), mo = V.sub(O, m.p), b = V.dot(mo, d), k = V.dot(mo, mo) - m.r * m.r, disc = b * b - k; if (disc < 0) return; const dist = -b - Math.sqrt(disc); if (dist >= 0 && dist <= L) hits.push({ t: dist / L, kind: m.name, i, mon: true }); });
+      hits.sort((a, b) => a.t - b.t);
+      const stopIdx = hits.findIndex(h => !h.mon || !pierce), stopT = stopIdx >= 0 ? hits[stopIdx].t : 1;
+      walls.forEach((w, i) => { const hit = hits.find((h, k) => !h.mon && h.i === i && k <= stopIdx); ctx.strokeStyle = hit ? t.red : (t.dark ? '#8a90ad' : '#4a4f63'); ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(w[0].x, w[0].y); ctx.lineTo(w[1].x, w[1].y); ctx.stroke(); });
+      mons.forEach((m, i) => { const k = hits.findIndex(h => h.mon && h.i === i), hit = k >= 0 && k <= stopIdx; ctx.fillStyle = hit ? t.red : t.purple; ctx.beginPath(); ctx.arc(m.p.x, m.p.y, m.r, 0, 7); ctx.fill(); SL.drawLabel(ctx, m.name, m.p.x, m.p.y + m.r + 11, hit ? t.red : t.muted, { size: 10 }); });
+      const E = V.add(O, V.mul(r, stopT));
+      ctx.strokeStyle = t.amber; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(E.x, E.y); ctx.stroke();
+      ctx.strokeStyle = t.rule; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.moveTo(E.x, E.y); ctx.lineTo(B.x, B.y); ctx.stroke(); ctx.setLineDash([]);
+      hits.forEach((h, k) => { const q = V.add(O, V.mul(r, h.t)), done = k <= stopIdx; ctx.fillStyle = done ? t.ink : t.muted; ctx.globalAlpha = done ? 1 : 0.5; ctx.beginPath(); ctx.arc(q.x, q.y, 9, 0, 7); ctx.fill(); ctx.fillStyle = t.card; ctx.font = 'bold 11px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(k + 1), q.x, q.y + 0.5); ctx.globalAlpha = 1; });
+      ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(O.x, O.y, 10, 0, 7); ctx.fill(); SL.drawLabel(ctx, 'oyuncu', O.x, O.y + 22, t.green, { size: 10 });
+      SL.drawLabel(ctx, 'kesişim listesi (t’ye göre sıralı)', W - 12, 14, t.muted, { size: 10, align: 'right' });
+      hits.forEach((h, k) => SL.drawLabel(ctx, `${k + 1}. t = ${h.t.toFixed(2)}  ${h.kind}${k === stopIdx ? '  ← DURDU' : k < stopIdx ? '  ✔ vuruldu' : '  (ulaşmadı)'}`, W - 12, 32 + k * 16, k === stopIdx ? t.red : k < stopIdx ? t.ink : t.muted, { size: 10, align: 'right', bg: k === stopIdx }));
+      info.innerHTML = 'Mermi yolu oyuncudan nişan yönüne tek bir doğru parçası. Yol üzerindeki <b>her</b> duvar ve canavar için kesişim parametresi <b>t</b> hesaplanır; sonra <b>en küçük t’den</b> başlanır: ilk engelde mermi durur, arkadakiler “ulaşmadı” olarak kalır. DOOM’un tabancası ve pompalısı tam olarak böyle çalışır. ' + (pierce ? '“Delici mermi” açık: canavarlardan geçer, ilk <b>duvarda</b> durur (DOOM’da bir mermi tek hedefte durur; delme sonraki oyunların eklentisi).' : 'Fareyle nişan alın.');
+    };
+    C.addEventListener('mousemove', e => { const b = C.getBoundingClientRect(); aim = V.v(((e.clientX - b.left) * W) / b.width, ((e.clientY - b.top) * H) / b.height); draw(); });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls' }, el('span', { class: 'mini' }, 'Fare: nişan al.'), el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { pierce = e.target.checked; draw(); } }); return x; })(), ' delici mermi (canavarlardan geçer)')), C, info);
+    draw(); SL.onTheme(draw);
+  };
+
   /* ================= 3) nokta çokgenin içinde mi? ================= */
   D.pip = function (root) {
     const W = 720, H = 340;
