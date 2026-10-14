@@ -181,7 +181,7 @@
     const N = 8, combo = 'combo' in root.dataset;
     let buf = Array(N).fill(null), head = 0, count = 0, msg = '', serial = 0;
     const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 0 420 300'); svg.setAttribute('class', 'ring-svg');
+    const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 -16 420 334'); svg.setAttribute('class', 'ring-svg');   // üstte ve altta indeks yazılarına yer
     const side = el('div', { class: 'ring-side' });
     const COMBOS = [['🔥 Hadouken', ['↓', '↘', '→', '👊']], ['🐉 Shoryuken', ['→', '↓', '↘', '👊']], ['🌀 Tatsumaki', ['↓', '↙', '←', '🦶']]];
     const draw = () => {

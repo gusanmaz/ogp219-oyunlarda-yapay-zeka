@@ -173,7 +173,7 @@
       // boş liste okları
       let s = `<defs><marker id="pA" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="${t.teal}"/></marker></defs>`;
       let i = freeHead, guard = 0; const cx = k => 50 + k * 100;
-      s += `<text x="4" y="58" font-size="13" fill="${t.teal}" font-family="JetBrains Mono" font-weight="700">freeHead=${freeHead}</text>`;
+      s += freeHead === -1 ? `<text x="4" y="64" font-size="13" fill="${t.red}" font-family="JetBrains Mono" font-weight="700">freeHead = −1 (havuz boş)</text>` : `<text x="${cx(freeHead)}" y="66" text-anchor="${freeHead === 0 ? 'start' : freeHead === N - 1 ? 'end' : 'middle'}" font-size="13" fill="${t.teal}" font-family="JetBrains Mono" font-weight="700">↑ freeHead=${freeHead}</text>`;   // etiket, listenin başı olan hücrenin altında
       while (i !== -1 && guard++ < N) { const j = slot[i].nextFree; if (j !== -1) { const a = cx(i), b = cx(j), up = Math.min(30, 10 + Math.abs(b - a) / 12); s += `<path d="M${a},8 C${a},${8 + up * 1.5} ${b},${8 + up * 1.5} ${b},10" fill="none" stroke="${t.teal}" stroke-width="2" marker-end="url(#pA)"/>`; } i = j; }
       svg.innerHTML = s;
       stat.innerHTML = `<span class="cnt">aktif mermi <b>${slot.filter(x => x.active).length}</b></span><span class="cnt ok">yeni nesne oluşturma (new) <b>${made}</b> — hep aynı!</span><span class="cnt cmp">yeniden kullanım <b>${reused}</b></span>`;

@@ -514,14 +514,8 @@ class LinkedQueue {
 
 <section data-sec="gerçekleme">
   <h2>Kuyruk = dairesel tampon <span class="en">ring buffer · circular array</span></h2>
-  <div class="cols c46">
-    <div style="font-size:.88em">
-      <p>Dizi ile kuyruk: baştan çıkarınca herkesi kaydırmak istemiyoruz. Çözüm: başın <b>indeksini</b> tut ve ilerlet.</p>
-      <p>Sona gelince <b>başa sar</b>: <code>(i + 1) % N</code>. Dizinin sonu başına bağlanmış gibi davranır.</p>
-      <p class="mini">🎒 <code>%</code> = mod (bölümden kalan): <code>7 % 8 = 7</code>, <code>8 % 8 = 0</code>, <code>9 % 8 = 1</code> → saat gibi döner.</p>
-    </div>
-    <div class="demo" data-demo="ring"></div>
-  </div>
+  <p style="font-size:.8em;margin:.1em 0 .3em">Dizi ile kuyruk: baştan çıkarınca herkesi kaydırmak istemiyoruz. Çözüm: başın <b>indeksini</b> tut ve ilerlet; sona gelince <b>başa sar</b>: <code>(i + 1) % N</code>. Dizinin sonu başına bağlanmış gibi davranır. <span class="mini">🎒 <code>%</code> = bölümden kalan: <code>7 % 8 = 7</code>, <code>8 % 8 = 0</code>, <code>9 % 8 = 1</code>: saat gibi döner.</span></p>
+  <div class="demo" data-demo="ring"></div>
   <aside class="notes">Enqueue’ya 10 kez basın: 8’i geçince en eski girdinin üzerine yazılır (bu sürüm “üzerine yaz” politikası kullanıyor; başka bir seçenek dolunca hata vermek ya da büyütmektir). head ve tail indekslerinin 7’den 0’a nasıl sardığını gösterin.</aside>
 </section>
 

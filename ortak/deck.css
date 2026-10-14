@@ -884,3 +884,6 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .btfig-t { font-weight: 800; font-size: 17px; margin-bottom: 2px; }
 .btfig-c { font-size: 15px; color: var(--ink-2); line-height: 1.35; margin-top: 2px; }
 .btfig .bt-legend { flex-basis: 100%; }
+/* dairesel tampon yan paneli: yazılar okunur boyda (önceden çok küçüktü) */
+.ring-side { font-size: 18px; line-height: 1.4; } .ring-side .mini { font-size: 16px; } .ring-side .sv-note { font-size: 17px; }
+.ring-side .ll-chip { font-size: 17px; } .ring-side .combo-row { font-size: 16px; } .ring-side code { font-size: 15px; }
