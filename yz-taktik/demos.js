@@ -19,6 +19,43 @@
   /* ================= etki haritası ================= */
   const fall = { linear: (d, r) => Math.max(0, 1 - d / r), exp: (d, r) => Math.exp(-3 * d / r) * (d < r * 1.5 ? 1 : 0), step: (d, r) => (d < r ? 1 : 0) };
   SL.IMAP_FALLOFF = fall;
+  /* ================= elle siper seçimi: dört aday, üç ölçüt, ağırlıklı toplam ================= */
+  D.coverhand = function (root) {
+    const C = [
+      ['A', 'kasanın arkası', [300, 250], [1, 1, 0.4], '📦'],
+      ['B', 'duvarın arkası', [170, 110], [1, 0, 0.9], '🧱'],
+      ['C', 'açık alan', [150, 345], [0, 1, 0.7], '🟩'],
+      ['D', 'uzak kule', [600, 70], [1, 1, 0.1], '🗼']];
+    const K = ['korunma', 'ateş hattı', 'yakınlık'];
+    const SC = [
+      ['⚖️ Dengeli asker', [1, 1, 1], 'Üç ölçüt de eşit önemde.', 'Hem korunan hem ateş edebilen ve fazla uzak olmayan nokta kazandı.'],
+      ['🩹 Yaralı asker', [3, 0, 3], 'Canı az: korunmak ve hemen bir yere varmak önemli; ateş etmek umurunda değil.', 'Ateş hattı olmayan ama en yakın korunaklı nokta kazandı. Nokta aynı noktalar; değişen yalnızca <b>ağırlıklar</b>.'],
+      ['🔥 Pervasız asker', [0, 3, 2], 'Korunmayı umursamıyor; yeter ki ateş edebilsin ve çabuk varsın.', 'Açık alandaki nokta kazandı: korunma ölçütünün ağırlığı 0 olunca siperin hiçbir değeri kalmadı.'],
+      ['🎯 Sabırlı nişancı', [2, 3, -1], 'Uzak durmak istiyor: yakınlık ölçütü eksi ağırlıkta.', 'Eksi ağırlık bir ölçütü tersine çevirir: “ne kadar uzaksa o kadar iyi”. Uzaktaki kule kazandı.']];
+    let w = SC[0][1].slice(), moralTxt = SC[0][3];
+    const diag = el('div'), tbl = el('div'), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
+    const f1 = x => (Math.round(x * 10) / 10).toFixed(1).replace('.', ',').replace('-', '−');
+    const draw = () => {
+      const t = T(), sc = C.map(c => c[3].reduce((a, v, i) => a + v * w[i], 0)), mx = Math.max(...sc), wi = sc.indexOf(mx);
+      let s = `<rect x="0" y="0" width="720" height="400" rx="10" fill="${t.card}" stroke="${t.rule}"/>`;
+      s += `<text x="70" y="262" text-anchor="middle" font-size="40">🧍</text><text x="70" y="290" text-anchor="middle" font-size="14" fill="${t.muted}">asker</text><text x="560" y="262" text-anchor="middle" font-size="40">👾</text><text x="560" y="290" text-anchor="middle" font-size="14" fill="${t.muted}">düşman</text>`;
+      C.forEach(([id, nm, p, v, em], i) => {
+        const on = i === wi;
+        if (v[1]) s += `<line x1="${p[0]}" y1="${p[1]}" x2="560" y2="245" stroke="${on ? t.red : t.rule}" stroke-width="${on ? 3 : 1.5}" stroke-dasharray="6 6"/>`;
+        s += `<circle cx="${p[0]}" cy="${p[1]}" r="30" fill="${on ? t.green : t.card}" fill-opacity="${on ? 0.3 : 1}" stroke="${on ? t.green : t['ink-2']}" stroke-width="${on ? 5 : 2}"/><text x="${p[0]}" y="${p[1] + 9}" text-anchor="middle" font-size="26">${em}</text><text x="${p[0]}" y="${p[1] - 38}" text-anchor="middle" font-size="18" font-weight="800" fill="${on ? t.green : t.ink}">${id}: ${nm}</text>`;
+      });
+      s += `<text x="360" y="388" text-anchor="middle" font-size="14" fill="${t.muted}">kesikli çizgi: bu noktadan düşmana ateş edilebilir · yeşil halka: seçilen nokta</text>`;
+      diag.innerHTML = `<svg viewBox="0 0 720 400" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
+      tbl.innerHTML = '<table class="sum-t" style="font-size:17px"><tr><th>aday</th>' + K.map((k, i) => `<th>${k}<br><small>ağırlık ${f1(w[i])}</small></th>`).join('') + '<th>toplam</th></tr>' +
+        C.map((c, i) => `<tr style="${i === wi ? 'background:color-mix(in srgb, var(--green) 14%, var(--card));font-weight:700' : ''}"><td><b>${c[0]}</b> ${c[1]}</td>` + c[3].map((v, k) => `<td>${f1(v)} × ${f1(w[k])}</td>`).join('') + `<td><b>${f1(sc[i])}</b>${i === wi ? ' ✔' : ''}</td></tr>`).join('') + '</table>';
+      moral.innerHTML = moralTxt ? '💡 ' + moralTxt : '';
+    };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { w = sc[1].slice(); bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); story.innerHTML = '📖 ' + sc[2]; moralTxt = sc[3]; draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap doors' }, diag, el('div', {}, tbl, moral)));
+    bs[0].classList.add('primary'); story.innerHTML = '📖 ' + SC[0][2]; draw(); SL.onTheme(draw);
+  };
+
   D.influence = function (root) {
     const W = 720, H = 380, cs = 20, GW = W / cs, GH = H / cs;
     const cfg = { view: 'diff', falloff: 'linear', r: 200 };
