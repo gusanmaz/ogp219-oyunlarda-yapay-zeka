@@ -108,10 +108,10 @@ function draw() {
   background(20);
   // p5.js aynı üç adımı sizin yerinize uygular (sıra önemli: en son yazılan en önce uygulanır):
   push();
-  translate(width / 2, height / 2);          // 3) ekranın ortasına taşı
-  scale(kamera.zoom);                        // 2) ölçekle
-  translate(-kamera.x, -kamera.y);           // 1) kamerayı çıkar
-  dunyayiCiz();                              //    … her şeyi DÜNYA koordinatıyla çizin
+  translate(width / 2, height / 2);  // 3) ekranın ortasına taşı
+  scale(kamera.zoom);                // 2) ölçekle
+  translate(-kamera.x, -kamera.y);   // 1) kamerayı çıkar
+  dunyayiCiz();                      //    … her şeyi DÜNYA koordinatıyla çizin
   pop();
   arayuzuCiz();                              // can çubuğu, puan: pop()'tan sonra, EKRAN koordinatıyla
 }
@@ -140,10 +140,10 @@ def gorunen_aralik(cam_x, zoom, screen_w):
     yari = screen_w / 2 / zoom
     return cam_x - yari, cam_x + yari
 
-print(world_to_screen(600, 500, 1, 800))     # 500.0
-print(world_to_screen(600, 500, 2, 800))     # 600.0
-print(screen_to_world(600, 500, 2, 800))     # 600.0   (gidiş-dönüş aynı noktaya varır)
-print(gorunen_aralik(500, 2, 800))           # (300.0, 700.0)
+print(world_to_screen(600, 500, 1, 800))  # 500.0
+print(world_to_screen(600, 500, 2, 800))  # 600.0
+print(screen_to_world(600, 500, 2, 800))  # 600.0   (gidiş-dönüş aynı noktaya varır)
+print(gorunen_aralik(500, 2, 800))        # (300.0, 700.0)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -220,6 +220,7 @@ function screenToWorld(sx, camX, zoom, screenW) {
 <section data-sec="takip">
   <h2>Canlı: kuralları tek tek açıp kapatın 🎬</h2>
 <div class="demo" data-demo="cam2d"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> üstte oyun; altta bütün seviye ve kırmızı çerçeveyle kameranın gördüğü kısım. Kırmızı artı = ekranın ortası. Mavi kesikli kutu = kamera penceresi; mor nokta = odak (ileri bakma); sarı kesikli çizgi = kameranın oturduğu zemin. Üst satırda kameranın kat ettiği yol ve dikey yön değiştirme sayısı.</li><li><b>Hepsi açık</b> (başlangıç): <b>A / D</b> ile koşup <b>W</b> ile platformlara çıkın. Zıplarken arka plana bakın: yerinde duruyor. Ancak yeni bir platforma <b>basınca</b> kamera yumuşakça oraya çıkıyor.</li><li><b>“Platforma oturma”yı kapatın</b> ve aynı yerde beş kez zıplayın: bütün dünya zıplıyor; “dikey yön değiştirme” sayacı 9–10 artıyor. Geri açın: hiç artmıyor.</li><li><b>“İleri bakma”yı kapatın</b> ve sağa koşun: karakter ekranın ortasının <b>sağında</b> (kamera geriden geliyor), önünüzde yarım ekrandan az yer var. Açın: karakter ortanın soluna geçer, önünüz açılır (fark ≈ 170 piksel). Yön değiştirin: odak (mor nokta) öbür tarafa <b>yumuşakça</b> geçer.</li><li><b>“Kamera penceresi”ni kapatın</b>, yerinizde A-D-A-D yapın: ekran sizinle birlikte titrer. Açın: mavi kutunun içinde kamera hiç kıpırdamaz.</li><li><b>“Yumuşatma”yı kapatın:</b> platforma basınca kamera bir karede atlar. <b>“Seviye sınırları”nı kapatın</b> ve sol kenara yürüyün: ekranın yarısı siyah.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="takip">
@@ -229,7 +230,7 @@ function screenToWorld(sx, camX, zoom, screenW) {
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/articles/coordinate-transforms/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Coordinate transforms</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Dünya, kamera ve ekran koordinatları arasında dönüşümler; oyun kamerasının matematiği.</div></a><a class="lnk" href="https://easings.net/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Easing Functions Cheat Sheet</div><div class="lnk-s">easings.net</div><div class="lnk-w">Bütün yumuşatma eğrileri tek sayfada; üstüne gelince hareketi canlı gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/game-loop.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Game Loop</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Değişken ve sabit zaman adımlı oyun döngüleri; “fizik neden her makinede aynı çalışmalı?”</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/articles/coordinate-transforms/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Coordinate transforms</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Dünya, kamera ve ekran koordinatları arasında dönüşümler; oyun kamerasının matematiği.</div></a><a class="lnk" href="https://easings.net/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Easing Functions Cheat Sheet</div><div class="lnk-s">easings.net</div><div class="lnk-w">Bütün yumuşatma eğrileri tek sayfada; üstüne gelince hareketi canlı gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/game-loop.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Game Loop</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Değişken ve sabit zaman adımlı oyun döngüleri; “fizik neden her makinede aynı çalışmalı?”</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -255,9 +256,9 @@ function kamerayiGuncelle(o, dt) {             // o: oyuncu { x, y, vx, yon, yer
 
   // 3) PLATFORMA OTURMA: dikeyde yalnızca karakter bir yere bastığında (ya da çok uzaklaştığında) izle
   if (o.yerde)                 zemin = o.y;
-  else if (o.y > zemin + 90)   zemin = o.y - 90;      // uzun düşüş: aşağıyı göster
-  else if (o.y < zemin - 170)  zemin = o.y + 170;     // çok yükseldi
-  hy = zemin - 50;                                    // karakter ekranın biraz altında dursun
+  else if (o.y > zemin + 90)   zemin = o.y - 90;   // uzun düşüş: aşağıyı göster
+  else if (o.y < zemin - 170)  zemin = o.y + 170;  // çok yükseldi
+  hy = zemin - 50;                                 // karakter ekranın biraz altında dursun
 
   // 4) YUMUŞATMA: hedefe ışınlanma, yaklaş
   kamera.x = yaklas(kamera.x, hx, 0.06, dt);
@@ -282,12 +283,12 @@ def camera_window(cam_x, hedef_x, yari):
 def clamp_camera(cam_x, gorus_w, seviye_w):
     """Kameranın gördüğü alan [0, seviye_w] dışına taşmasın."""
     if seviye_w <= gorus_w:
-        return seviye_w / 2                       # seviye ekrandan dar: ortala
+        return seviye_w / 2          # seviye ekrandan dar: ortala
     return max(gorus_w / 2, min(seviye_w - gorus_w / 2, cam_x))
 
-print(camera_window(100, 150, 60))    # 100  (pencerenin içinde)
-print(camera_window(100, 170, 60))    # 110  (sağ kenarı 10 piksel itti)
-print(clamp_camera(100, 800, 3000))   # 400.0
+print(camera_window(100, 150, 60))   # 100  (pencerenin içinde)
+print(camera_window(100, 170, 60))   # 110  (sağ kenarı 10 piksel itti)
+print(clamp_camera(100, 800, 3000))  # 400.0
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -406,6 +407,7 @@ function clampCamera(camX, viewW, levelW) {
 <section data-sec="sarsıntı">
   <h2>Canlı: patlatın 💥</h2>
 <div class="demo" data-demo="shake"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> üstte sahne; altında kırmızı travma çubuğu ve o anki sarsıntı; en altta son 4 saniyenin grafiği: kırmızı = travma, sarı = sarsıntı (travmanın kuvveti), mavi = kameranın yatay kayması.</li><li><b>1</b>’e bir kez basın: travma 0,25; ekran belli belirsiz kıpırdar. Şimdi <b>1</b>’e hızlıca dört kez basın: travma 1’e yaklaşır, sarsıntı çok daha fazla. Aynı darbe, biriken etki.</li><li><b>3</b>’e basın ve grafiği izleyin: kırmızı çizgi düz iner; sarı eğri hızlı düşüp uzun bir kuyrukla söner.</li><li><b>Kuvveti 1</b> yapın: küçük darbeler de belirgin sarsar; birikmenin etkisi azalır. <b>3</b> yapın: küçük darbeler kaybolur, yalnızca büyükler hissedilir.</li><li>Kayma yönünü <b>“her kare rastgele”</b> yapıp <b>3</b>’e basın: mavi eğri diken diken; ekran titriyor. “Yumuşak gürültü”ye dönün: mavi eğri dalga; ekran <b>sallanıyor</b>.</li><li><b>“Dönme de ekle”yi kapatın:</b> sarsıntı düzleşir. Açın: birkaç derecelik eğilme darbeyi “ağır” hissettirir.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="sarsıntı">
@@ -418,18 +420,18 @@ function clampCamera(camX, viewW, levelW) {
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Travma tabanlı ekran sarsıntısı
-let travma = 0;                               // 0..1; darbeler ekler, zaman siler
-const SONME = 0.9;                            // saniyede ne kadar azalsın?
-const EN_BUYUK_KAYMA = 26, EN_BUYUK_DONME = 0.07;     // piksel, radyan
+let travma = 0;                                    // 0..1; darbeler ekler, zaman siler
+const SONME = 0.9;                                 // saniyede ne kadar azalsın?
+const EN_BUYUK_KAYMA = 26, EN_BUYUK_DONME = 0.07;  // piksel, radyan
 
 function darbe(miktar) {                      // patlama: 0.5, mermi isabeti: 0.15, dev patlama: 1
   travma = min(1, travma + miktar);
 }
 
 function sarsintiyiUygula(dt) {
-  travma = max(0, travma - SONME * dt);       // doğrusal sönme
-  const s = travma * travma;                  // sarsıntı = travmanın KARESİ
-  const t = millis() / 1000 * 22;             // gürültüde ne kadar hızlı gezelim? (22 ≈ saniyede ~10 salınım)
+  travma = max(0, travma - SONME * dt);  // doğrusal sönme
+  const s = travma * travma;             // sarsıntı = travmanın KARESİ
+  const t = millis() / 1000 * 22;        // gürültüde ne kadar hızlı gezelim? (22 ≈ saniyede ~10 salınım)
 
   // noise(): yumuşak, sürekli gürültü (Y15). 0..1 döndürür; −1..+1'e çeviriyoruz.
   const kx = EN_BUYUK_KAYMA * s * (noise(t) * 2 - 1);
@@ -540,6 +542,7 @@ def shake_step(travma, sonme, dt, en_buyuk_kayma, gurultu):
 <section data-sec="çok hedef">
   <h2>Canlı: herkesi kadraja sığdır 🥊</h2>
 <div class="demo" data-demo="group"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> beyaz çerçeveli yeşil daire sizsiniz (<b>W / A / S / D</b>). Sarı kesikli kutu dövüşçülerin sınır kutusu. Sol altta arenanın tamamı ve kırmızı çerçeveyle kameranın gördüğü alan; yanında ölçek ve kadraj dışında kalanların sayısı.</li><li>Öbürlerinin yanına gidin: kamera <b>yakınlaşır</b> (ölçek 1’in üstüne çıkar). Arenanın köşesine kaçın: <b>uzaklaşır</b>; herkes küçülür ama görünür.</li><li>Uzaklaşma hızlı, yakınlaşma yavaş: köşeye kaçıp hemen dönün. Kamera sizi kaçırmadan açılır, sonra acele etmeden kapanır. İkisi aynı hızda olsaydı kamera sürekli “pompalardı”.</li><li><b>“Sığdırmak için yakınlaştır”ı kapatın</b> ve köşeye gidin: kamera ortalamaya bakıyor, siz kadraj dışındasınız (kırmızı sayaç).</li><li><b>Kenar payını</b> 0 yapın: dövüşçüler ekranın kenarına yapışır. 200 yapın: herkes ortada, küçük.</li><li><b>“En uzak”ı 0,8</b> yapıp köşeye gidin: kamera daha fazla açılamıyor; biri dışarıda kalıyor. Gerçek oyunlar burada ne yapıyor?</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="çok hedef">
@@ -561,8 +564,8 @@ function sigdir(hedefler) {                              // hedefler: [{ x, y },
     y0 = min(y0, h.y); y1 = max(y1, h.y);
   }
   const gereken_w = (x1 - x0) + 2 * PAY, gereken_h = (y1 - y0) + 2 * PAY;
-  const zoom = constrain(min(width / gereken_w, height / gereken_h), EN_UZAK, EN_YAKIN);   // 2) iki eksenden DAR olanı
-  return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, zoom };   // 3) kutunun ortası
+  const zoom = constrain(min(width / gereken_w, height / gereken_h), EN_UZAK, EN_YAKIN);  // 2) iki eksenden DAR olanı
+  return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, zoom };                                    // 3) kutunun ortası
 }
 
 function kamerayiGuncelle(hedefler, dt) {
@@ -584,9 +587,9 @@ def fit_zoom(xs, ekran_w, pay, en_uzak, en_yakin):
     zoom = max(en_uzak, min(en_yakin, ekran_w / gereken))
     return [merkez, zoom]
 
-print(fit_zoom([300, 700], 800, 100, 0.25, 1.5))     # [500.0, 1.333…]  yakınlaş
-print(fit_zoom([0, 1600], 800, 100, 0.25, 1.5))      # [800.0, 0.444…]  uzaklaş
-print(fit_zoom([0, 5000], 800, 100, 0.25, 1.5))      # [2500.0, 0.25]   sınıra takıldı: biri kadraj dışında
+print(fit_zoom([300, 700], 800, 100, 0.25, 1.5))  # [500.0, 1.333…]  yakınlaş
+print(fit_zoom([0, 1600], 800, 100, 0.25, 1.5))   # [800.0, 0.444…]  uzaklaş
+print(fit_zoom([0, 5000], 800, 100, 0.25, 1.5))   # [2500.0, 0.25]   sınıra takıldı: biri kadraj dışında
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -651,6 +654,7 @@ def fit_zoom(xs, ekran_w, pay, en_uzak, en_yakin):
 <section data-sec="kamera kolu">
   <h2>Canlı: sırtınızı duvara verin 🎥</h2>
 <div class="demo" data-demo="boom"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> odaya yukarıdan bakıyoruz. Yeşil daire karakter (<b>W / S</b> ileri-geri, <b>A / D</b> dön); mavi kutu kamera; açık mavi alan kameranın gördüğü. Kesikli gri çizgi kolun istenen boyu; kalın mavi çizgi şu anki kol; sarı nokta ışının duvara çarptığı yer. Sol üstte sayılar.</li><li>Açık alanda dönün: kol tam boyunda (120). Bir duvara <b>geri geri</b> yaklaşın (S): sarı nokta belirir; kamera hemen öne çekilir.</li><li>Duvardan uzaklaşın (W): kol <b>yavaşça</b> uzar. Hızlı kısalıp yavaş uzamayı sayılardan izleyin.</li><li><b>“Kamera çarpışması”nı kapatın</b> ve sırtınızı duvara verin: kamera duvarın öbür tarafına geçer (kırmızı); gördüğü alan karakteri içermez. Sayaç, karakterin görünmediği süreyi tutar.</li><li>Çarpışma açıkken dar koridora girin (ortadaki L biçimli duvarın içi) ve dönün: kol sürekli uzayıp kısalır. Gerçek oyunlar dar yerlerde kolu <b>bilerek kısa tutar</b> ya da kamerayı omuz üstüne alır.</li><li>Kol boyunu 220 yapın: kamera daha çok şeye takılır. 40 yapın: neredeyse hiç takılmaz ama karakter ekranı kaplar. Kol boyu = görüş ile sorun arasındaki pazarlık.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="kamera kolu">
@@ -705,8 +709,8 @@ def kol_boyu(istenen, engele_uzaklik, pay):
         return istenen
     return max(0.2, engele_uzaklik - pay)
 
-print(orbit((0, 1.5, 0), 0, math.radians(20), 4))     # (0.0, 2.87, 3.76): hedefin arkasında ve yukarısında
-print(kol_boyu(4.0, 1.5, 0.2))                        # 1.3
+print(orbit((0, 1.5, 0), 0, math.radians(20), 4))  # (0.0, 2.87, 3.76): hedefin arkasında ve yukarısında
+print(kol_boyu(4.0, 1.5, 0.2))                     # 1.3
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -719,10 +723,10 @@ print(kol_boyu(4.0, 1.5, 0.2))                        # 1.3
 
 // Elle (Unity):
 void LateUpdate() {
-    Vector3 yon = Quaternion.Euler(egim, sapma, 0) * Vector3.back;         // hedeften geriye
+    Vector3 yon = Quaternion.Euler(egim, sapma, 0) * Vector3.back;  // hedeften geriye
     float boy = kol;
     if (Physics.SphereCast(hedef.position, 0.25f, yon, out RaycastHit carpma, kol, engelKatmani))
-        boy = Mathf.Max(0.3f, carpma.distance);                            // küre: kameranın "gövdesi" kadar pay
+        boy = Mathf.Max(0.3f, carpma.distance);                     // küre: kameranın "gövdesi" kadar pay
     transform.position = hedef.position + yon * boy;
     transform.LookAt(hedef);
 }
@@ -741,8 +745,8 @@ void LateUpdate() {
 <div class="cols c46">
 <div><pre style="zoom:0.6;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Godot 4.3 — scene/3d/physics/spring_arm_3d.cpp, SpringArm3D::process_spring (kısaltılmış)
-const Vector3 cast_direction(get_global_transform().basis.xform(Vector3(0, 0, 1)));   // kolun yönü (geriye)
-motion = Vector3(cast_direction * (spring_length));                                   // tam boy kol
+const Vector3 cast_direction(get_global_transform().basis.xform(Vector3(0, 0, 1)));  // kolun yönü (geriye)
+motion = Vector3(cast_direction * (spring_length));                                  // tam boy kol
 
 if (shape.is_null()) {
     // ... çocuk Camera3D varsa:
@@ -877,6 +881,7 @@ function draw() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

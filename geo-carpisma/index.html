@@ -161,6 +161,7 @@
 <section data-sec="temel">
   <h2>Canlı: üç temel test 🔵⬛</h2>
 <div class="demo" data-demo="shapes"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> soldaki şekil fareyi izler, sağdaki sabit. Çakışınca ikisi de kırmızıya döner; sağ üstte sonuç yazar. Üstteki menüden testi seçin.</li><li><b>daire – daire:</b> mor çizgi merkezler arası uzaklık. Alttaki sayıları okuyun: kare uzaklık ile yarıçaplar toplamının karesi karşılaştırılıyor.</li><li><b>kutu – kutu:</b> altta ve solda iki kutunun eksenlerdeki gölgeleri (mavi, sarı çubuklar). Kutuyu yalnızca x’te örtüşecek ama y’de ayrık kalacak biçimde tutun: çakışma yok.</li><li><b>daire – kutu:</b> mor nokta kutunun daireye en yakın noktası. Daireyi kutunun kenarı boyunca kaydırın: nokta kenar üzerinde kayar, köşeye gelince köşede <b>takılır</b>.</li><li>Daireyi köşenin çaprazında, kenar hizalarının hemen dışında tutun: kutunun “büyütülmüş” hâline girmiş olurdu ama gerçekte değmiyor.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="temel">
@@ -181,18 +182,18 @@
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Daire: {x, y, r}   Kutu (AABB): {x, y, w, h}  (x, y sol üst köşe)
 
-function daireDaire(a, b) {                       // karekök yok: kareleri karşılaştır
+function daireDaire(a, b) {                   // karekök yok: kareleri karşılaştır
   const dx = a.x - b.x, dy = a.y - b.y, rr = a.r + b.r;
   return dx * dx + dy * dy < rr * rr;
 }
 
-function kutuKutu(a, b) {                         // iki eksende de örtüşmeli
+function kutuKutu(a, b) {                     // iki eksende de örtüşmeli
   return a.x < b.x + b.w && b.x < a.x + a.w &&
          a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
-function daireKutu(c, b) {                        // kutunun daireye en yakın noktasını bul
-  const px = constrain(c.x, b.x, b.x + b.w);      // merkezi kutuya "kıstır"
+function daireKutu(c, b) {                    // kutunun daireye en yakın noktasını bul
+  const px = constrain(c.x, b.x, b.x + b.w);  // merkezi kutuya "kıstır"
   const py = constrain(c.y, b.y, b.y + b.h);
   const dx = px - c.x, dy = py - c.y;
   return dx * dx + dy * dy < c.r * c.r;
@@ -204,11 +205,11 @@ function noktaDaire(p, c) { return (p.x - c.x) ** 2 + (p.y - c.y) ** 2 <= c.r * 
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def daire_daire(a, b):                 # (x, y, r)
+def daire_daire(a, b):  # (x, y, r)
     dx, dy, rr = a[0] - b[0], a[1] - b[1], a[2] + b[2]
     return dx * dx + dy * dy < rr * rr
 
-def kutu_kutu(a, b):                   # (x, y, w, h)
+def kutu_kutu(a, b):    # (x, y, w, h)
     return (a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and
             a[1] < b[1] + b[3] and b[1] < a[1] + a[3])
 
@@ -382,6 +383,8 @@ function circleBoxOverlap(c, box) {
 <section data-sec="SAT">
   <h2>Canlı: gölgelere bak 🔦</h2>
 <div class="demo" data-demo="sat"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>Şekilleri uzak tutun: listede en az bir satır yeşil “AYRIK”. Demo o ekseni otomatik seçer; gölgeler arasında boşluk var.</li><li>Mavi şekli sarıya yaklaştırın, ama değdirmeyin. “eksen: sıradaki ▶” ile eksenleri gezin: çoğunda gölgeler örtüşüyor! <b>Tek bir</b> ayrık eksen yetiyor.</li><li>Şimdi iç içe sokun: bütün satırlar “örtüşme”. Listede “← en küçük” yazan eksene bakın; yeşil ok o yönde.</li><li>“↔ ayır”a basın: şekiller tam değecek kadar ayrılır. Fizik motorları her karede bunu yapar.</li><li>Mavi şekli döndürün: eksenler de döner. Bir köşeyi sarı şeklin kenarına saplayın: en kısa çıkış o kenarın dikmesi.</li></ol></div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?"><ol style="font-size:.9em"><li><b>Mavi</b> şekil sizin (sürükleyin, kaydırıcıyla döndürün); <b>sarı</b> şekil sabit.</li><li><b>Kesikli doğru</b> o an seçili eksen. Üzerindeki kalın <b>mavi</b> ve <b>sarı</b> çizgiler iki şeklin o eksendeki gölgeleri; ince kesikli çizgiler gölgeyi belirleyen köşelerden iner.</li><li>Gölgelerin örtüşen kısmı <b>kırmızı</b> çizilir. Kırmızı yoksa o eksen bir <b>ayıran eksendir</b>.</li><li><b>Sağ üstteki liste</b> bütün eksenler: “AYRIK (boşluk …)” ya da “örtüşme …”. ▶ işareti seçili eksen.</li><li><b>Yeşil ok</b> (yalnızca çakışınca): en az örtüşen eksen boyunca en kısa çıkış. “↔ ayır” düğmesi mavi şekli o kadar iter.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="SAT">
@@ -415,8 +418,8 @@ function sat(A, B) {
   }
   // Hiçbir eksende boşluk yok → çakışıyorlar. En kısa çıkış: en az örtüşen eksen boyunca.
   const ax = ortalama(A), bx = ortalama(B);
-  if ((ax.x - bx.x) * eksen.x + (ax.y - bx.y) * eksen.y < 0) eksen = { x: -eksen.x, y: -eksen.y };   // A'yı B'den uzağa it
-  return { x: eksen.x * enAz, y: eksen.y * enAz }; // A'ya eklenecek itme vektörü
+  if ((ax.x - bx.x) * eksen.x + (ax.y - bx.y) * eksen.y < 0) eksen = { x: -eksen.x, y: -eksen.y };  // A'yı B'den uzağa it
+  return { x: eksen.x * enAz, y: eksen.y * enAz };                                                  // A'ya eklenecek itme vektörü
 }
 
 function ortalama(P) { let x = 0, y = 0; for (const p of P) { x += p.x; y += p.y; } return { x: x / P.length, y: y / P.length }; }
@@ -526,6 +529,8 @@ def overlap(a_min, a_max, b_min, b_max):
 <section data-sec="çözüm">
   <h2>Canlı: üç çarpışma yöntemi, bir karakter 🏃</h2>
 <div class="demo" data-demo="platform"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>1) yok:</b> karakter zeminin içinden düşer. Hiçbir test yok.</li><li><b>2) yalnızca tespit:</b> düşmüyor; ama A/D ile yürümeyi deneyin. Zemine değdiği için hareket iptal ediliyor: <b>yapıştı</b>. Tespit etmek yetmedi.</li><li><b>3) eksen eksen:</b> yürüyün, zıplayın, platformlara çıkın, duvara doğru yürürken zıplayın: duvar boyunca kayıyor. Altınları toplayın.</li><li>Mor duvarın soluna geçip <b>X</b> ile sağa atılın (birkaç kez deneyin): karakter çoğu seferde duvarın öbür tarafında; “tünelleme” sayacı artar. Bazen de tam denk gelip durur: aralıklı hatalar en zor bulunanlardır.</li><li>“sürekli tespit”i işaretleyip tekrar atılın: duvar her seferinde durdurur. Aynı hız, aynı duvar; fark yalnızca kaç noktada sınadığımız.</li></ol></div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?"><ol style="font-size:.9em"><li><b>Yeşil kutu</b> sizsiniz. <b>A / D</b> yürü, <b>W</b> zıpla, <b>X</b> atıl (bir anda 300 piksel). Sarı toplar altın; gri kareler zemin ve platformlar.</li><li><b>Mor ince çubuk</b> 6 piksel kalınlığında bir duvar: tünelleme deneyi için.</li><li><b>Üstteki menü</b> çarpışma yöntemini seçer: 1) yok, 2) yalnızca tespit, 3) eksen eksen çözüm.</li><li><b>“sürekli tespit”</b> kutusu hareketi 4 piksellik alt adımlara böler.</li><li>Sol üstte sayaçlar: toplanan altın, duvardan geçme (tünelleme) ve zeminden düşme sayısı. Sesler açık.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="çözüm">
@@ -560,8 +565,8 @@ function hareket(o, duvarlar, dt) {
     o.y += dy;                                     // 2) yalnızca y
     d = carpan(o, duvarlar);
     if (d) {
-      if (dy > 0) { o.y = d.y - o.h; o.yerde = true; }               // zemine indi
-      else o.y = d.y + d.h;                                           // kafasını tavana vurdu
+      if (dy > 0) { o.y = d.y - o.h; o.yerde = true; }  // zemine indi
+      else o.y = d.y + d.h;                             // kafasını tavana vurdu
       o.vy = 0;
     }
   }
@@ -574,6 +579,11 @@ function hareket(o, duvarlar, dt) {
 <section data-sec="çözüm">
   <h2>🎒 Kodu okuyalım</h2>
 <table class="sum-t" style="font-size:21px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>duvarlar.find(d =&gt; …)</code></td><td style="text-align:left;">koşulu sağlayan <b>ilk</b> duvar (yoksa <code>undefined</code>)</td><td style="text-align:left;">Çok duvar varsa G2’deki ızgarayla yalnızca yakındakilere bakılır.</td></tr><tr><td style="text-align:left;"><code>o.x = dx &gt; 0 ? d.x - o.w : d.x + d.w</code></td><td style="text-align:left;">sağa gidiyorsak duvarın soluna, sola gidiyorsak sağına yasla</td><td style="text-align:left;">Hareket yönü, hangi kenardan girdiğimizi söyler. Eksen eksen çalışmanın bütün faydası bu.</td></tr><tr><td style="text-align:left;"><code>if (dy &gt; 0) { …; o.yerde = true; }</code></td><td style="text-align:left;">yalnızca <b>aşağı</b> giderken çarptıysa yerdeyiz</td><td style="text-align:left;">Tavana kafa vurmak “yerde” sayılmamalı; yoksa tavana yapışıp tekrar zıplarsınız.</td></tr><tr><td style="text-align:left;"><code>ceil(max(abs(dx), abs(dy)) / 4)</code></td><td style="text-align:left;">en çok 4 piksellik kaç adım gerekir?</td><td style="text-align:left;">Yavaş harekette 1 adım (bedava); hızlı harekette hız kadar adım. 4 = en ince duvardan küçük bir sayı.</td></tr><tr><td style="text-align:left;"><code>o.yerde = false</code> (döngüden önce)</td><td style="text-align:left;">her kare baştan karar ver</td><td style="text-align:left;">Platformdan yürüyüp çıkınca bayrak kendiliğinden düşer.</td></tr></table>
+</section>
+
+<section data-sec="oyunda">
+  <h2>📸 Oyundan bir kare: Celeste (2018)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/celeste.png" alt="Celeste (2018) ekran görüntüsü" style="height:440px;max-width:100%;object-fit:contain;image-rendering:pixelated;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Piksel hassasiyetinde platform oyunu: karakter her karede bir piksel bir piksel ilerletilip her adımda çarpışma sınanıyor. Sonraki slayt oyunun açık kaynak kodundan bu döngüyü gösteriyor.<br><span style="color:var(--muted);font-size:.85em">Görsel: Celeste ekran görüntüsü, Maddy Makes Games, Wikimedia Commons, CC BY-SA 4.0</span></figcaption></figure>
 </section>
 
 <section data-sec="çözüm">
@@ -684,11 +694,11 @@ function sektir(v, n, e) {
 // Işın (o + t·d, t ≥ 0, d birim vektör) daireye çarpıyor mu? Çarpıyorsa uzaklık t, yoksa null
 function isinDaire(o, d, c) {
   const mx = o.x - c.x, my = o.y - c.y;
-  const b = mx * d.x + my * d.y;                  // merkeze doğru mu gidiyoruz?
-  const k = mx * mx + my * my - c.r * c.r;        // ışın dairenin içinde mi başlıyor?
-  if (k > 0 && b > 0) return null;                // dışarıda ve uzaklaşıyor
+  const b = mx * d.x + my * d.y;            // merkeze doğru mu gidiyoruz?
+  const k = mx * mx + my * my - c.r * c.r;  // ışın dairenin içinde mi başlıyor?
+  if (k > 0 && b > 0) return null;          // dışarıda ve uzaklaşıyor
   const disk = b * b - k;
-  if (disk < 0) return null;                      // ıskaladı
+  if (disk < 0) return null;                // ıskaladı
   return max(0, -b - sqrt(disk));
 }
 </script></code></pre>
@@ -713,7 +723,7 @@ def isin_daire(o, d, c):                 # o: (x, y)  d: birim yön  c: (x, y, r
 
 <section data-sec="ışın">
   <h2>Çizimle: ışın nerelerde kullanılır?</h2>
-<svg viewBox="0 0 1200 280" style="width:100%;" font-family="Source Sans 3"><defs><marker id="cz-ok12" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs><rect x="10" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="123" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Hitscan mermi</text><text x="123" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">ilk çarptığı vurulur</text><text x="50" y="118" text-anchor="middle" font-size="52">🔫</text><text x="196" y="118" text-anchor="middle" font-size="52">🧟</text><line x1="80" y1="98" x2="164" y2="98" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="248" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="361" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Görüş hattı</text><text x="361" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">arada duvar var mı?</text><text x="288" y="118" text-anchor="middle" font-size="52">👁</text><text x="434" y="118" text-anchor="middle" font-size="52">🧍</text><line x1="318" y1="98" x2="354" y2="98" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="358" y="44" width="12" height="110" style="fill:var(--ink)" fill-opacity=".5"/><line x1="372" y1="98" x2="406" y2="98" style="stroke:var(--muted)" stroke-width="2" stroke-dasharray="4 5"/><rect x="486" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="599" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Zemin testi</text><text x="599" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">yerde miyim? eğim?</text><text x="599" y="100" text-anchor="middle" font-size="64">🧍</text><polygon points="506,160 692,118 692,168 506,168" style="fill:var(--muted);stroke:var(--ink)" fill-opacity=".3" stroke-width="2"/><line x1="586" y1="104" x2="586" y2="140" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><line x1="614" y1="104" x2="614" y2="133" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="724" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="837" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Fare seçimi</text><text x="837" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">ilk çarptığı seçilir</text><text x="764" y="118" text-anchor="middle" font-size="52">📷</text><text x="910" y="118" text-anchor="middle" font-size="52">📦</text><line x1="794" y1="98" x2="878" y2="98" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="962" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="1075" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Hızlı mermi</text><text x="1075" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">karede kat edilen yol</text><text x="1008" y="112" text-anchor="middle" font-size="44">🚀</text><text x="1142" y="112" text-anchor="middle" font-size="44" opacity=".35">🚀</text><line x1="1032" y1="96" x2="1116" y2="96" style="stroke:var(--red)" stroke-width="4" stroke-dasharray="8 5" marker-end="url(#cz-ok12)"/><rect x="1070" y="50" width="8" height="100" style="fill:var(--ink)" fill-opacity=".5"/><text x="600" y="266" text-anchor="middle" font-size="18"  style="fill:var(--muted)">hepsi aynı soru: O + t·d ışını ilk olarak neye, hangi t’de çarpar?</text></svg><p style="font-size:.8em;margin:.3em 0 0">Mermi, görüş, zemin, fare: hepsi “bir noktadan bir yöne giden çizgi ilk neye çarpar?” sorusudur.</p>
+<svg viewBox="0 0 1200 280" style="width:100%;" font-family="Source Sans 3"><defs><marker id="cz-ok12" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs><rect x="10" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="123" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Hitscan mermi</text><text x="123" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">ilk çarptığı vurulur</text><text x="50" y="118" text-anchor="middle" font-size="52">🔫</text><text x="196" y="118" text-anchor="middle" font-size="52">🧟</text><line x1="80" y1="98" x2="164" y2="98" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="248" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="361" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Görüş hattı</text><text x="361" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">arada duvar var mı?</text><text x="288" y="118" text-anchor="middle" font-size="52">👁️</text><text x="434" y="118" text-anchor="middle" font-size="52">🧍</text><line x1="318" y1="98" x2="354" y2="98" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="358" y="44" width="12" height="110" style="fill:var(--ink)" fill-opacity=".5"/><line x1="372" y1="98" x2="406" y2="98" style="stroke:var(--muted)" stroke-width="2" stroke-dasharray="4 5"/><rect x="486" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="599" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Zemin testi</text><text x="599" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">yerde miyim? eğim?</text><text x="599" y="100" text-anchor="middle" font-size="64">🧍</text><polygon points="506,160 692,118 692,168 506,168" style="fill:var(--muted);stroke:var(--ink)" fill-opacity=".3" stroke-width="2"/><line x1="586" y1="104" x2="586" y2="140" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><line x1="614" y1="104" x2="614" y2="133" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="724" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="837" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Fare seçimi</text><text x="837" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">ilk çarptığı seçilir</text><text x="764" y="118" text-anchor="middle" font-size="52">📷</text><text x="910" y="118" text-anchor="middle" font-size="52">📦</text><line x1="794" y1="98" x2="878" y2="98" style="stroke:var(--red)" stroke-width="4" marker-end="url(#cz-ok12)"/><rect x="962" y="8" width="226" height="230" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="1075" y="196" text-anchor="middle" font-size="20" font-weight="800" style="fill:var(--ink)">Hızlı mermi</text><text x="1075" y="222" text-anchor="middle" font-size="16"  style="fill:var(--muted)">karede kat edilen yol</text><text x="1008" y="112" text-anchor="middle" font-size="44">🚀</text><text x="1142" y="112" text-anchor="middle" font-size="44" opacity=".35">🚀</text><line x1="1032" y1="96" x2="1116" y2="96" style="stroke:var(--red)" stroke-width="4" stroke-dasharray="8 5" marker-end="url(#cz-ok12)"/><rect x="1070" y="50" width="8" height="100" style="fill:var(--ink)" fill-opacity=".5"/><text x="600" y="266" text-anchor="middle" font-size="18"  style="fill:var(--muted)">hepsi aynı soru: O + t·d ışını ilk olarak neye, hangi t’de çarpar?</text></svg><p style="font-size:.8em;margin:.3em 0 0">Mermi, görüş, zemin, fare: hepsi “bir noktadan bir yöne giden çizgi ilk neye çarpar?” sorusudur.</p>
 </section>
 
 <section data-sec="ışın">
@@ -853,6 +863,7 @@ function draw() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

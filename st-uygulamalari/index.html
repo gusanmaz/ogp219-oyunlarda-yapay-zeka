@@ -113,18 +113,18 @@
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-banned = {"aptal", "salak", "ezik"}       # küme (süslü parantez)
+banned = {"aptal", "salak", "ezik"}      # küme (süslü parantez)
 
 def clean(message):
     out = []
-    for w in message.split():             # boşluklardan böl
-        if w.lower() in banned:           # O(1): hash ile "var mı?"
+    for w in message.split():            # boşluklardan böl
+        if w.lower() in banned:          # O(1): hash ile "var mı?"
             out.append("***")
         else:
             out.append(w)
     return " ".join(out)
 
-print(clean("Sen tam bir Aptal oldun"))   # Sen tam bir *** oldun
+print(clean("Sen tam bir Aptal oldun"))  # Sen tam bir *** oldun
 
 # modern tek satır (üretici ifade + üçlü if):
 # " ".join("***" if w.lower() in banned else w for w in message.split())
@@ -190,9 +190,9 @@ function clean(message) {
 ali  = {"ilk kan", "ejder avcısı", "hazine", "hızlı koşucu"}
 ayse = {"ilk kan", "hazine", "barışçıl"}
 
-print(ali & ayse)    # kesişim: {'ilk kan', 'hazine'}
-print(ali | ayse)    # birleşim: 5 başarım
-print(ali - ayse)    # fark: {'ejder avcısı', 'hızlı koşucu'}
+print(ali & ayse)  # kesişim: {'ilk kan', 'hazine'}
+print(ali | ayse)  # birleşim: 5 başarım
+print(ali - ayse)  # fark: {'ejder avcısı', 'hızlı koşucu'}
 
 # geleneksel kesişim (döngüyle):
 both = set()
@@ -206,14 +206,14 @@ for a in ali:
 var ali  = new HashSet<string> { "ilk kan", "ejder avcısı", "hazine", "hızlı koşucu" };
 var ayse = new HashSet<string> { "ilk kan", "hazine", "barışçıl" };
 
-var both = new HashSet<string>(ali);   // kopya! (aşağıdakiler kümeyi DEĞİŞTİRİR)
-both.IntersectWith(ayse);              // kesişim
+var both = new HashSet<string>(ali);  // kopya! (aşağıdakiler kümeyi DEĞİŞTİRİR)
+both.IntersectWith(ayse);             // kesişim
 
 var all = new HashSet<string>(ali);
-all.UnionWith(ayse);                   // birleşim
+all.UnionWith(ayse);                  // birleşim
 
 var hint = new HashSet<string>(ali);
-hint.ExceptWith(ayse);                 // fark
+hint.ExceptWith(ayse);                // fark
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -233,10 +233,11 @@ const hint = new Set([...ali].filter(a => !ayse.has(a)));  // fark
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/hashtable" target="_blank" rel="noopener"><div class="lnk-t">🎞 Hash tabloları</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Doğrusal yoklama, ikinci derece yoklama ve zincirleme; çakışmaların nasıl çözüldüğünü hücre hücre gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/data-locality.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Data Locality</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Önbellek dostu veri: diziler neden bağlı listelerden hızlıdır?</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/hashtable" target="_blank" rel="noopener"><div class="lnk-t">📊 Hash tabloları</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Doğrusal yoklama, ikinci derece yoklama ve zincirleme; çakışmaların nasıl çözüldüğünü hücre hücre gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/data-locality.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Data Locality</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Önbellek dostu veri: diziler neden bağlı listelerden hızlıdır?</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -277,35 +278,35 @@ menu.play,Oyna,Play
 hud.health,Can,Health"""
 
 tr = {}
-for line in csv_text.splitlines()[1:]:     # ilk satır başlık: atla
+for line in csv_text.splitlines()[1:]:  # ilk satır başlık: atla
     cols = line.split(",")
-    tr[cols[0]] = cols[1]                   # put(anahtar, Türkçe)
+    tr[cols[0]] = cols[1]               # put(anahtar, Türkçe)
 
 # get — anahtar yoksa ne olsun?
-if "menu.play" in tr:                       # geleneksel
+if "menu.play" in tr:                   # geleneksel
     text = tr["menu.play"]
 else:
     text = "??"
-text = tr.get("menu.play", "??")            # modern: varsayılan değerle
+text = tr.get("menu.play", "??")        # modern: varsayılan değerle
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 var tr = new Dictionary<string, string>();
-foreach (string line in csvText.Split('\n').Skip(1))   // başlığı atla
+foreach (string line in csvText.Split('\n').Skip(1))  // başlığı atla
 {
     string[] cols = line.Split(',');
-    tr[cols[0]] = cols[1];                  // put(anahtar, Türkçe)
+    tr[cols[0]] = cols[1];                            // put(anahtar, Türkçe)
 }
 
 // get — anahtar yoksa tr["x"] HATA fırlatır (KeyNotFoundException)!
 string text;
-if (tr.TryGetValue("menu.play", out text))  // geleneksel güvenli yol
+if (tr.TryGetValue("menu.play", out text))            // geleneksel güvenli yol
     Console.WriteLine(text);
 else
     Console.WriteLine("??");
 
-string t2 = tr.GetValueOrDefault("menu.play", "??");   // modern
+string t2 = tr.GetValueOrDefault("menu.play", "??");  // modern
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -313,7 +314,7 @@ string t2 = tr.GetValueOrDefault("menu.play", "??");   // modern
 const tr = new Map();
 for (const line of csvText.split("\n").slice(1)) {    // başlığı atla
   const cols = line.split(",");
-  tr.set(cols[0], cols[1]);                // put(anahtar, Türkçe)
+  tr.set(cols[0], cols[1]);                           // put(anahtar, Türkçe)
 }
 
 // get — anahtar yoksa undefined döner
@@ -321,7 +322,7 @@ let text;
 if (tr.has("menu.play")) text = tr.get("menu.play");  // geleneksel
 else text = "??";
 
-const t2 = tr.get("menu.play") ?? "??";   // modern: ?? = "soldaki yoksa sağdaki"
+const t2 = tr.get("menu.play") ?? "??";               // modern: ?? = "soldaki yoksa sağdaki"
 </script></code></pre>
     </div>
   </div>
@@ -372,36 +373,36 @@ const t2 = tr.get("menu.play") ?? "??";   // modern: ?? = "soldaki yoksa sağdak
 <pre><code class="language-python" data-trim data-line-numbers="3-8|10-12|14-16"><script type="text/template">
 words = ["ork", "goblin", "ork", "trol", "ork"]
 
-counts = {}                         # geleneksel
+counts = {}                      # geleneksel
 for w in words:
     if w in counts:
         counts[w] += 1
     else:
         counts[w] = 1
 
-counts = {}                         # modern 1: get ile varsayılan 0
+counts = {}                      # modern 1: get ile varsayılan 0
 for w in words:
     counts[w] = counts.get(w, 0) + 1
 
-from collections import Counter     # modern 2: hazır sayaç
+from collections import Counter  # modern 2: hazır sayaç
 c = Counter(words)
-print(c.most_common(2))             # [('ork', 3), ('goblin', 1)]
+print(c.most_common(2))          # [('ork', 3), ('goblin', 1)]
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 string[] words = { "ork", "goblin", "ork", "trol", "ork" };
 
-var counts = new Dictionary<string, int>();      // geleneksel
+var counts = new Dictionary<string, int>();  // geleneksel
 foreach (string w in words)
 {
     if (counts.ContainsKey(w)) counts[w]++;
     else counts[w] = 1;
 }
 
-var c2 = new Dictionary<string, int>();          // modern
+var c2 = new Dictionary<string, int>();      // modern
 foreach (string w in words)
-    c2[w] = c2.GetValueOrDefault(w) + 1;         // yoksa 0
+    c2[w] = c2.GetValueOrDefault(w) + 1;     // yoksa 0
 
 // en sık: sırala ve ilkini al
 var top = counts.OrderByDescending(kv => kv.Value).First();
@@ -411,13 +412,13 @@ var top = counts.OrderByDescending(kv => kv.Value).First();
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const words = ["ork", "goblin", "ork", "trol", "ork"];
 
-const counts = new Map();                        // geleneksel
+const counts = new Map();  // geleneksel
 for (const w of words) {
   if (counts.has(w)) counts.set(w, counts.get(w) + 1);
   else counts.set(w, 1);
 }
 
-const c2 = new Map();                            // modern
+const c2 = new Map();      // modern
 for (const w of words) c2.set(w, (c2.get(w) ?? 0) + 1);
 
 // en sık: girişleri sayıya göre sırala
@@ -484,22 +485,22 @@ items = {
     "Buz Asası":    ["silah", "buz"],
 }
 
-index = {}                              # etiket → eşya listesi
-for name, tags in items.items():        # (anahtar, değer) çiftleri
+index = {}                        # etiket → eşya listesi
+for name, tags in items.items():  # (anahtar, değer) çiftleri
     for t in tags:
-        if t not in index:              # geleneksel
+        if t not in index:        # geleneksel
             index[t] = []
         index[t].append(name)
         # modern: index.setdefault(t, []).append(name)
 
-print(index["ateş"])                    # ['Ateş Kılıcı', 'Ejder Kalkanı']
+print(index["ateş"])              # ['Ateş Kılıcı', 'Ejder Kalkanı']
 ates_ve_silah = set(index["ateş"]) & set(index["silah"])
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-var index = new Dictionary<string, List<string>>();   // etiket → eşyalar
-foreach (var (name, tags) in items)                    // (anahtar, değer)
+var index = new Dictionary<string, List<string>>();  // etiket → eşyalar
+foreach (var (name, tags) in items)                  // (anahtar, değer)
 {
     foreach (string t in tags)
     {
@@ -616,20 +617,20 @@ def build_index(items):
 class SparseVector:
     def __init__(self, n):
         self.n = n
-        self.st = {}                 # indeks → değer (sadece ≠ 0)
+        self.st = {}                  # indeks → değer (sadece ≠ 0)
 
     def put(self, i, x):
         if x == 0:
-            self.st.pop(i, None)     # sıfırsa sil
+            self.st.pop(i, None)      # sıfırsa sil
         else:
             self.st[i] = x
 
     def get(self, i):
-        return self.st.get(i, 0)     # yoksa 0
+        return self.st.get(i, 0)      # yoksa 0
 
-    def dot(self, other):            # iç çarpım
+    def dot(self, other):             # iç çarpım
         total = 0
-        for i, x in self.st.items(): # sadece dolu indeksler!
+        for i, x in self.st.items():  # sadece dolu indeksler!
             total += x * other.get(i)
         return total
 </script></code></pre>
@@ -642,7 +643,7 @@ class SparseVector
 
     public void Put(int i, double x)
     {
-        if (x == 0) st.Remove(i);     // sıfırsa sil
+        if (x == 0) st.Remove(i);  // sıfırsa sil
         else st[i] = x;
     }
 
@@ -654,7 +655,7 @@ class SparseVector
     public double Dot(SparseVector other)
     {
         double total = 0;
-        foreach (var kv in st)        // sadece dolu indeksler
+        foreach (var kv in st)     // sadece dolu indeksler
             total += kv.Value * other.Get(kv.Key);
         return total;
     }
@@ -664,18 +665,18 @@ class SparseVector
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 class SparseVector {
-  constructor() { this.st = new Map(); }    // indeks → değer
+  constructor() { this.st = new Map(); }  // indeks → değer
 
   put(i, x) {
-    if (x === 0) this.st.delete(i);          // sıfırsa sil
+    if (x === 0) this.st.delete(i);       // sıfırsa sil
     else this.st.set(i, x);
   }
 
-  get(i) { return this.st.get(i) ?? 0; }     // yoksa 0
+  get(i) { return this.st.get(i) ?? 0; }  // yoksa 0
 
   dot(other) {
     let total = 0;
-    for (const [i, x] of this.st)            // sadece dolu indeksler
+    for (const [i, x] of this.st)         // sadece dolu indeksler
       total += x * other.get(i);
     return total;
   }
@@ -753,21 +754,21 @@ class SparseVector {
 import random
 
 def build(words):
-    table = {}                                # kelime → sonraki kelimeler
+    table = {}                            # kelime → sonraki kelimeler
     for i in range(len(words) - 1):
         key, nxt = words[i], words[i + 1]
         if key not in table:
             table[key] = []
-        table[key].append(nxt)                # tekrarlar kalsın: sık olan sık seçilir
+        table[key].append(nxt)            # tekrarlar kalsın: sık olan sık seçilir
     return table
 
 def generate(table, start, n):
     out = [start]
-    for _ in range(n):                        # _ : "kullanmadığım sayaç"
-        nexts = table.get(out[-1])            # out[-1] = son eleman
+    for _ in range(n):                    # _ : "kullanmadığım sayaç"
+        nexts = table.get(out[-1])        # out[-1] = son eleman
         if not nexts:
-            break                             # devamı yok
-        out.append(random.choice(nexts))      # rastgele bir aday
+            break                         # devamı yok
+        out.append(random.choice(nexts))  # rastgele bir aday
     return " ".join(out)
 
 text = "Hey sen! Burada ne arıyorsun? Burası benim bölgem."
@@ -978,6 +979,7 @@ function generate(table, start, n) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/st.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

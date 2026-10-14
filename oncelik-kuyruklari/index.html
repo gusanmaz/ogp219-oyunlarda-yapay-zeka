@@ -139,10 +139,11 @@
   </table>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/heap" target="_blank" rel="noopener"><div class="lnk-t">🎞 İkili yığın (binary heap)</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Ekleme ve en büyüğü çıkarmada elemanın nasıl yukarı ve aşağı yüzdüğünü, ağaç ve dizi görünümü yan yana gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/event-queue.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Event Queue</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Oyunlarda olay kuyruğu: dairesel tamponla ses ve olay yönetimi.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/heap" target="_blank" rel="noopener"><div class="lnk-t">📊 İkili yığın (binary heap)</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Ekleme ve en büyüğü çıkarmada elemanın nasıl yukarı ve aşağı yüzdüğünü, ağaç ve dizi görünümü yan yana gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/event-queue.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Event Queue</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Oyunlarda olay kuyruğu: dairesel tamponla ses ve olay yönetimi.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -266,18 +267,18 @@
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-4|2|3|4|6-8"><script type="text/template">
 def swim(a, k):
-    while k > 1 and a[k // 2] < a[k]:     # ebeveynden büyük mü?
-        a[k // 2], a[k] = a[k], a[k // 2] # yer değiştir
-        k = k // 2                         # bir seviye yukarı
+    while k > 1 and a[k  // 2] < a[k]:     # ebeveynden büyük mü?
+        a[k              // 2], a[k] = a[k], a[k // 2] # yer değiştir
+        k = k            // 2                         # bir seviye yukarı
 
-def insert(a, key):         # a[0] kullanılmıyor, a[1..n] yığın
-    a.append(key)           # 1) sona ekle
-    swim(a, len(a) - 1)     # 2) yukarı yüzdür
+def insert(a, key):      # a[0] kullanılmıyor, a[1..n] yığın
+    a.append(key)        # 1) sona ekle
+    swim(a, len(a) - 1)  # 2) yukarı yüzdür
 
-heap = [None]               # a[0] boş
+heap = [None]            # a[0] boş
 for x in [5, 9, 2, 7]:
     insert(heap, x)
-print(heap[1])              # 9: en büyük kökte
+print(heap[1])           # 9: en büyük kökte
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -285,17 +286,17 @@ print(heap[1])              # 9: en büyük kökte
 // a[0] kullanılmıyor; yığın a[1..n]
 static void Swim(List<int> a, int k)
 {
-    while (k > 1 && a[k / 2] < a[k])       // ebeveynden büyük mü?
+    while (k > 1 && a[k / 2] < a[k])          // ebeveynden büyük mü?
     {
         (a[k / 2], a[k]) = (a[k], a[k / 2]);  // yer değiştir
-        k = k / 2;                           // bir seviye yukarı
+        k = k / 2;                            // bir seviye yukarı
     }
 }
 
 static void Insert(List<int> a, int key)
 {
-    a.Add(key);              // 1) sona ekle
-    Swim(a, a.Count - 1);    // 2) yukarı yüzdür
+    a.Add(key);                               // 1) sona ekle
+    Swim(a, a.Count - 1);                     // 2) yukarı yüzdür
 }
 </script></code></pre>
     </div>
@@ -303,15 +304,15 @@ static void Insert(List<int> a, int key)
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // a[0] kullanılmıyor; yığın a[1..n]
 function swim(a, k) {
-  while (k > 1 && a[k >> 1] < a[k]) {        // ebeveynden büyük mü?
-    [a[k >> 1], a[k]] = [a[k], a[k >> 1]];   // yer değiştir
-    k = k >> 1;                              // bir seviye yukarı
+  while (k > 1 && a[k >> 1] < a[k]) {       // ebeveynden büyük mü?
+    [a[k >> 1], a[k]] = [a[k], a[k >> 1]];  // yer değiştir
+    k = k >> 1;                             // bir seviye yukarı
   }
 }
 
 function insert(a, key) {
-  a.push(key);              // 1) sona ekle
-  swim(a, a.length - 1);    // 2) yukarı yüzdür
+  a.push(key);                              // 1) sona ekle
+  swim(a, a.length - 1);                    // 2) yukarı yüzdür
 }
 </script></code></pre>
     </div>
@@ -360,21 +361,21 @@ function swim(a, k) {
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-9|3-5|6-7|8-9|11-17"><script type="text/template">
 def sink(a, k, n):
-    while 2 * k <= n:                   # en az bir çocuğu var mı?
-        j = 2 * k                       # sol çocuk
-        if j < n and a[j] < a[j + 1]:   # sağ çocuk daha büyükse
-            j += 1                      # onu seç
-        if a[k] >= a[j]:                # çocuklardan büyükse: yerinde
+    while 2 * k <= n:                  # en az bir çocuğu var mı?
+        j = 2 * k                      # sol çocuk
+        if j < n and a[j] < a[j + 1]:  # sağ çocuk daha büyükse
+            j += 1                     # onu seç
+        if a[k] >= a[j]:               # çocuklardan büyükse: yerinde
             break
-        a[k], a[j] = a[j], a[k]         # yer değiştir
-        k = j                           # bir seviye aşağı
+        a[k], a[j] = a[j], a[k]        # yer değiştir
+        k = j                          # bir seviye aşağı
 
 def del_max(a):
     n = len(a) - 1
-    top = a[1]                          # en büyük kökte
-    a[1] = a[n]                         # son elemanı köke taşı
-    a.pop()                             # sonu sil
-    sink(a, 1, n - 1)                   # yeni kökü batır
+    top = a[1]                         # en büyük kökte
+    a[1] = a[n]                        # son elemanı köke taşı
+    a.pop()                            # sonu sil
+    sink(a, 1, n - 1)                  # yeni kökü batır
     return top
 </script></code></pre>
     </div>
@@ -382,23 +383,23 @@ def del_max(a):
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 static void Sink(List<int> a, int k, int n)
 {
-    while (2 * k <= n)                        // en az bir çocuk var mı?
+    while (2 * k <= n)                      // en az bir çocuk var mı?
     {
-        int j = 2 * k;                        // sol çocuk
-        if (j < n && a[j] < a[j + 1]) j++;    // sağ daha büyükse onu seç
-        if (a[k] >= a[j]) break;              // yerinde
-        (a[k], a[j]) = (a[j], a[k]);          // yer değiştir
-        k = j;                                // bir seviye aşağı
+        int j = 2 * k;                      // sol çocuk
+        if (j < n && a[j] < a[j + 1]) j++;  // sağ daha büyükse onu seç
+        if (a[k] >= a[j]) break;            // yerinde
+        (a[k], a[j]) = (a[j], a[k]);        // yer değiştir
+        k = j;                              // bir seviye aşağı
     }
 }
 
 static int DelMax(List<int> a)
 {
     int n = a.Count - 1;
-    int top = a[1];                           // en büyük kökte
-    a[1] = a[n];                              // son elemanı köke taşı
-    a.RemoveAt(n);                            // sonu sil
-    Sink(a, 1, n - 1);                        // yeni kökü batır
+    int top = a[1];                         // en büyük kökte
+    a[1] = a[n];                            // son elemanı köke taşı
+    a.RemoveAt(n);                          // sonu sil
+    Sink(a, 1, n - 1);                      // yeni kökü batır
     return top;
 }
 </script></code></pre>
@@ -406,21 +407,21 @@ static int DelMax(List<int> a)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function sink(a, k, n) {
-  while (2 * k <= n) {                        // en az bir çocuk var mı?
-    let j = 2 * k;                            // sol çocuk
-    if (j < n && a[j] < a[j + 1]) j++;        // sağ daha büyükse onu seç
-    if (a[k] >= a[j]) break;                  // yerinde
-    [a[k], a[j]] = [a[j], a[k]];              // yer değiştir
-    k = j;                                    // bir seviye aşağı
+  while (2 * k <= n) {                  // en az bir çocuk var mı?
+    let j = 2 * k;                      // sol çocuk
+    if (j < n && a[j] < a[j + 1]) j++;  // sağ daha büyükse onu seç
+    if (a[k] >= a[j]) break;            // yerinde
+    [a[k], a[j]] = [a[j], a[k]];        // yer değiştir
+    k = j;                              // bir seviye aşağı
   }
 }
 
 function delMax(a) {
   const n = a.length - 1;
-  const top = a[1];                           // en büyük kökte
-  a[1] = a[n];                                // son elemanı köke taşı
-  a.pop();                                    // sonu sil
-  sink(a, 1, n - 1);                          // yeni kökü batır
+  const top = a[1];                     // en büyük kökte
+  a[1] = a[n];                          // son elemanı köke taşı
+  a.pop();                              // sonu sil
+  sink(a, 1, n - 1);                    // yeni kökü batır
   return top;
 }
 </script></code></pre>
@@ -447,9 +448,9 @@ function delMax(a) {
   <div class="tabs short">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-tmp = a[k]       # 1) birini kenara koy
-a[k] = a[j]      # 2) ötekini onun yerine yaz
-a[j] = tmp       # 3) kenara koyduğunu geri yaz
+tmp = a[k]   # 1) birini kenara koy
+a[k] = a[j]  # 2) ötekini onun yerine yaz
+a[j] = tmp   # 3) kenara koyduğunu geri yaz
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -461,9 +462,9 @@ a[j] = tmp;      // 3) kenara koyduğunu geri yaz
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const tmp = a[k]; // 1) birini kenara koy
-a[k] = a[j];      // 2) ötekini onun yerine yaz
-a[j] = tmp;       // 3) kenara koyduğunu geri yaz
+const tmp = a[k];  // 1) birini kenara koy
+a[k] = a[j];       // 2) ötekini onun yerine yaz
+a[j] = tmp;        // 3) kenara koyduğunu geri yaz
 </script></code></pre>
     </div>
   </div>
@@ -518,7 +519,7 @@ a[j] = tmp;       // 3) kenara koyduğunu geri yaz
 
 <section data-sec="heapsort">
   <h2>Heapsort — adım adım</h2>
-  <div class="demo" data-demo="heapviz" data-ops="heapify,sort" data-init="S O R T E X A M P L E" data-note="Başlangıç dizisi: S O R T E X A M P L E — henüz yığın DEĞİL (ör. O &lt; T ve R &lt; X: ebeveyn çocuğundan küçük)." data-h="240"></div>
+  <div class="demo" data-demo="heapviz" data-ops="heapify,sort" data-init="S U P E R M A R I O" data-note="Başlangıç dizisi: S U P E R M A R I O — henüz yığın DEĞİL (ör. S &lt; U ve E &lt; R: ebeveyn çocuğundan küçük)." data-h="240"></div>
   <p class="mini">“Yığın kur” sadece 1. aşamayı, “Heapsort” iki aşamayı birlikte oynatır. Dizide <b class="c-green">yeşil</b> hücreler son yerine oturmuş elemanlar; ağaçta sadece yığında kalanlar görünür.</p>
 </section>
 
@@ -527,7 +528,7 @@ a[j] = tmp;       // 3) kenara koyduğunu geri yaz
   <div class="tabs short">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-9|11-14|15-18"><script type="text/template">
-def sink(a, k, n):              # 0 tabanlı: çocuklar 2k+1 ve 2k+2
+def sink(a, k, n):               # 0 tabanlı: çocuklar 2k+1 ve 2k+2
     while 2 * k + 1 < n:
         j = 2 * k + 1
         if j + 1 < n and a[j] < a[j + 1]:
@@ -539,17 +540,17 @@ def sink(a, k, n):              # 0 tabanlı: çocuklar 2k+1 ve 2k+2
 
 def heapsort(a):
     n = len(a)
-    for k in range(n // 2 - 1, -1, -1):   # 1) yığın kur: n/2-1, ..., 1, 0
+    for k in range(n             // 2 - 1, -1, -1):   # 1) yığın kur: n/2-1, ..., 1, 0
         sink(a, k, n)
-    while n > 1:                          # 2) sırala
+    while n > 1:                 # 2) sırala
         n -= 1
-        a[0], a[n] = a[n], a[0]           # en büyük → son yerine
-        sink(a, 0, n)                     # kalan yığını onar
+        a[0], a[n] = a[n], a[0]  # en büyük → son yerine
+        sink(a, 0, n)            # kalan yığını onar
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-static void Sink(int[] a, int k, int n)      // 0 tabanlı
+static void Sink(int[] a, int k, int n)   // 0 tabanlı
 {
     while (2 * k + 1 < n)
     {
@@ -564,9 +565,9 @@ static void Sink(int[] a, int k, int n)      // 0 tabanlı
 static void HeapSort(int[] a)
 {
     int n = a.Length;
-    for (int k = n / 2 - 1; k >= 0; k--)     // 1) yığın kur
+    for (int k = n / 2 - 1; k >= 0; k--)  // 1) yığın kur
         Sink(a, k, n);
-    while (n > 1)                            // 2) sırala
+    while (n > 1)                         // 2) sırala
     {
         n--;
         (a[0], a[n]) = (a[n], a[0]);
@@ -577,7 +578,7 @@ static void HeapSort(int[] a)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function sink(a, k, n) {                     // 0 tabanlı
+function sink(a, k, n) {                            // 0 tabanlı
   while (2 * k + 1 < n) {
     let j = 2 * k + 1;
     if (j + 1 < n && a[j] < a[j + 1]) j++;
@@ -589,9 +590,9 @@ function sink(a, k, n) {                     // 0 tabanlı
 
 function heapsort(a) {
   let n = a.length;
-  for (let k = Math.floor(n / 2) - 1; k >= 0; k--)   // 1) yığın kur
+  for (let k = Math.floor(n / 2) - 1; k >= 0; k--)  // 1) yığın kur
     sink(a, k, n);
-  while (n > 1) {                                    // 2) sırala
+  while (n > 1) {                                   // 2) sırala
     n--;
     [a[0], a[n]] = [a[n], a[0]];
     sink(a, 0, n);
@@ -734,12 +735,12 @@ timers.Enqueue("bomba patlar", 3.2f);
 timers.Enqueue("kalkan biter", 5.0f);
 timers.Enqueue("düşman doğar", 1.5f);
 
-void Update(float now)                        // her karede
+void Update(float now)     // her karede
 {
     // kökteki olayın zamanı geldi mi? (gelmediyse hiçbirininki gelmemiştir)
     while (timers.TryPeek(out string ev, out float t) && t <= now)
     {
-        timers.Dequeue();                     // kökü çıkar (delMin)
+        timers.Dequeue();  // kökü çıkar (delMin)
         Console.WriteLine(now + ": " + ev);
     }
 }
@@ -747,16 +748,16 @@ void Update(float now)                        // her karede
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-import heapq                       # Python'un hazır MIN-yığını
+import heapq                                   # Python'un hazır MIN-yığını
 
-timers = []                        # sıradan bir liste
-heapq.heappush(timers, (3.2, "bomba patlar"))   # (öncelik, olay)
+timers = []                                    # sıradan bir liste
+heapq.heappush(timers, (3.2, "bomba patlar"))  # (öncelik, olay)
 heapq.heappush(timers, (5.0, "kalkan biter"))
 heapq.heappush(timers, (1.5, "düşman doğar"))
 
-def update(now):                   # her karede
-    while timers and timers[0][0] <= now:       # kök = en erken olay
-        t, ev = heapq.heappop(timers)           # delMin
+def update(now):                               # her karede
+    while timers and timers[0][0] <= now:      # kök = en erken olay
+        t, ev = heapq.heappop(timers)          # delMin
         print(now, ":", ev)
 </script></code></pre>
     </div>
@@ -764,7 +765,7 @@ def update(now):                   # her karede
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // JS'te hazır PQ yok → bu sunumdaki swim/sink ile küçük bir MinPQ
 class MinPQ {
-  constructor() { this.a = [null]; }                 // a[0] boş
+  constructor() { this.a = [null]; }  // a[0] boş
   get size() { return this.a.length - 1; }
   peek() { return this.a[1]; }
   push(t, ev) { this.a.push({ t, ev }); /* swim (t'ye göre, küçük yukarı) */ }
@@ -774,7 +775,7 @@ class MinPQ {
 const timers = new MinPQ();
 timers.push(3.2, "bomba patlar");
 
-function update(now) {                               // her karede
+function update(now) {                // her karede
   while (timers.size > 0 && timers.peek().t <= now) {
     const { ev } = timers.pop();
     console.log(now + ": " + ev);
@@ -988,6 +989,7 @@ function update(now) {                               // her karede
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/agac.js"></script>
 <script src="../ortak/siralama.js"></script>
 <script src="../ortak/mergesort.js"></script>

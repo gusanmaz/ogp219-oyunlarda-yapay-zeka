@@ -88,7 +88,7 @@
 
 <section data-sec="neden denge?">
   <h2>Hatırlatma: BST’ye sıralı ekleme</h2>
-  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-seq="A C E H L M P R S X" data-h="330" data-hint="▶ Sırayla ekle’ye basın: alfabetik sırayla gelen 10 harf. Sonra karışık sırayla kendiniz deneyin (ör. M E R A C H S X L P)."></div>
+  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-seq="A E I K M O P R S T U" data-h="330" data-hint="▶ Sırayla ekle’ye basın: alfabetik sırayla gelen 10 harf. Sonra karışık sırayla kendiniz deneyin (ör. M E R A C H S X L P)."></div>
   <aside class="notes">Önceki sunumda gördük: BST’nin şekli ekleme sırasına bağlı. Sıralı eklemede yükseklik N−1. Rastgele sırada ~2,99 lg N ortalama yükseklik.</aside>
 </section>
 
@@ -104,10 +104,11 @@
   <div class="box game fragment" style="margin-top:14px"><span class="bt">🎮 Oyunda neden “en kötü durum” önemli?</span>60 FPS’te bir karenin bütçesi <b>16,6 ms</b>. Ortalama 1 ms süren işlem bir karede 40 ms sürerse oyuncu <b>takılma</b> <span class="en">stutter / hitch</span> görür. Oyuncular ortalamayı değil, takılmayı hatırlar!</div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/bst" target="_blank" rel="noopener"><div class="lnk-t">🎞 İkili arama ağacı ve AVL</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Ekleme, silme ve döndürmeleri adım adım gösterir; AVL kipinde ağacın kendini nasıl dengelediğini izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/bst" target="_blank" rel="noopener"><div class="lnk-t">📊 İkili arama ağacı ve AVL</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Ekleme, silme ve döndürmeleri adım adım gösterir; AVL kipinde ağacın kendini nasıl dengelediğini izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -192,7 +193,7 @@
 <section data-sec="2-3 ağaçları">
   <h2>2-3 ağacı — oyun alanı</h2>
   <div class="demo" data-demo="t23" data-h="270"></div>
-  <p class="mini">Renkler: <b class="c-amber">sarı</b> = aşağı inerken bakılan düğüm · <b class="c-red">kırmızı</b> = geçici 4-düğüm · <b style="color:var(--purple)">mor</b> = bölünen parçalar · <b class="c-green">yeşil</b> = yeni / değişen. Önce “S E A R C H X M P L”, sonra “Sıralı” deneyin: yapraklar hep aynı seviyede mi?</p>
+  <p class="mini">Renkler: <b class="c-amber">sarı</b> = aşağı inerken bakılan düğüm · <b class="c-red">kırmızı</b> = geçici 4-düğüm · <b style="color:var(--purple)">mor</b> = bölünen parçalar · <b class="c-green">yeşil</b> = yeni / değişen. Önce “S U P E R M A R I O K A R T”, sonra “Sıralı” deneyin: yapraklar hep aynı seviyede mi?</p>
 </section>
 
 <section data-sec="2-3 ağaçları">
@@ -332,10 +333,10 @@ class Node:
         self.val = val
         self.left = None
         self.right = None
-        self.red = RED        # yeni düğüm hep kırmızı gelir
+        self.red = RED  # yeni düğüm hep kırmızı gelir
 
 def is_red(x):
-    if x is None:             # null bağlantı = siyah
+    if x is None:       # null bağlantı = siyah
         return False
     return x.red
 </script></code></pre>
@@ -373,12 +374,12 @@ class Node {
     this.val = val;
     this.left = null;
     this.right = null;
-    this.red = RED;             // yeni düğüm hep kırmızı
+    this.red = RED;              // yeni düğüm hep kırmızı
   }
 }
 
 function isRed(x) {
-  if (x === null) return false; // null bağlantı = siyah
+  if (x === null) return false;  // null bağlantı = siyah
   return x.red;
 }
 </script></code></pre>
@@ -408,8 +409,8 @@ def get(x, key):
         elif key > x.key:
             x = x.right
         else:
-            return x.val          # bulundu
-    return None                   # yok
+            return x.val  # bulundu
+    return None           # yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -420,9 +421,9 @@ static string Get(Node x, int key)
     {
         if (key < x.Key) x = x.Left;
         else if (key > x.Key) x = x.Right;
-        else return x.Val;        // bulundu
+        else return x.Val;  // bulundu
     }
-    return null;                  // yok
+    return null;            // yok
 }
 </script></code></pre>
     </div>
@@ -432,9 +433,9 @@ function get(x, key) {
   while (x !== null) {
     if (key < x.key) x = x.left;
     else if (key > x.key) x = x.right;
-    else return x.val;            // bulundu
+    else return x.val;  // bulundu
   }
-  return null;                    // yok
+  return null;          // yok
 }
 </script></code></pre>
     </div>
@@ -494,13 +495,13 @@ function get(x, key) {
 <pre><code class="language-python" data-trim data-line-numbers="1-7|2|3|4|5-6|7|9-15"><script type="text/template">
 def rotate_left(h):
     x = h.right
-    h.right = x.left       # orta alt ağaç h'ye geçer
-    x.left = h             # h, x'in soluna iner
-    x.red = h.red          # x, h'nin rengini alır
-    h.red = RED            # h-x bağlantısı kırmızı
-    return x               # yeni kök
+    h.right = x.left  # orta alt ağaç h'ye geçer
+    x.left = h        # h, x'in soluna iner
+    x.red = h.red     # x, h'nin rengini alır
+    h.red = RED       # h-x bağlantısı kırmızı
+    return x          # yeni kök
 
-def rotate_right(h):       # ayna görüntüsü
+def rotate_right(h):  # ayna görüntüsü
     x = h.left
     h.left = x.right
     x.right = h
@@ -514,14 +515,14 @@ def rotate_right(h):       # ayna görüntüsü
 static Node RotateLeft(Node h)
 {
     Node x = h.Right;
-    h.Right = x.Left;      // orta alt ağaç h'ye geçer
-    x.Left = h;            // h, x'in soluna iner
-    x.Red = h.Red;         // x, h'nin rengini alır
-    h.Red = RED;           // h-x bağlantısı kırmızı
-    return x;              // yeni kök
+    h.Right = x.Left;            // orta alt ağaç h'ye geçer
+    x.Left = h;                  // h, x'in soluna iner
+    x.Red = h.Red;               // x, h'nin rengini alır
+    h.Red = RED;                 // h-x bağlantısı kırmızı
+    return x;                    // yeni kök
 }
 
-static Node RotateRight(Node h)   // ayna görüntüsü
+static Node RotateRight(Node h)  // ayna görüntüsü
 {
     Node x = h.Left;
     h.Left = x.Right;
@@ -674,13 +675,13 @@ function flipColors(h) {
 <pre><code class="language-python" data-trim data-line-numbers="1-9|11-17|12-13|14-15|16-17|20-22"><script type="text/template">
 def put(h, key, val):
     if h is None:
-        return Node(key, val)           # yeni düğüm: KIRMIZI
+        return Node(key, val)  # yeni düğüm: KIRMIZI
     if key < h.key:
         h.left = put(h.left, key, val)
     elif key > h.key:
         h.right = put(h.right, key, val)
     else:
-        h.val = val                     # anahtar varsa değeri güncelle
+        h.val = val            # anahtar varsa değeri güncelle
 
     # --- yukarı çıkarken onar (BST'den farkı sadece bu 6 satır) ---
     if is_red(h.right) and not is_red(h.left):
@@ -693,14 +694,14 @@ def put(h, key, val):
 
 def insert(tree, key, val):
     tree.root = put(tree.root, key, val)
-    tree.root.red = BLACK               # kök her zaman siyah
+    tree.root.red = BLACK      # kök her zaman siyah
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 static Node Put(Node h, int key, string val)
 {
-    if (h == null) return new Node(key, val);   // yeni düğüm: KIRMIZI
+    if (h == null) return new Node(key, val);  // yeni düğüm: KIRMIZI
 
     if (key < h.Key) h.Left = Put(h.Left, key, val);
     else if (key > h.Key) h.Right = Put(h.Right, key, val);
@@ -716,14 +717,14 @@ static Node Put(Node h, int key, string val)
 public void Insert(int key, string val)
 {
     root = Put(root, key, val);
-    root.Red = BLACK;                            // kök her zaman siyah
+    root.Red = BLACK;                          // kök her zaman siyah
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function put(h, key, val) {
-  if (h === null) return new Node(key, val);   // yeni düğüm: KIRMIZI
+  if (h === null) return new Node(key, val);  // yeni düğüm: KIRMIZI
 
   if (key < h.key) h.left = put(h.left, key, val);
   else if (key > h.key) h.right = put(h.right, key, val);
@@ -738,7 +739,7 @@ function put(h, key, val) {
 
 function insert(tree, key, val) {
   tree.root = put(tree.root, key, val);
-  tree.root.red = BLACK;                       // kök her zaman siyah
+  tree.root.red = BLACK;                      // kök her zaman siyah
 }
 </script></code></pre>
     </div>
@@ -798,7 +799,7 @@ if (isRed(h.left)) {
 <section data-sec="ekleme">
   <h2>Ekleme — adım adım</h2>
   <div class="demo" data-demo="llrb" data-h="290"></div>
-  <p class="mini">“S E A R C H X M P L”i oynatın ve <b>◀ Geri / İleri ▶</b> ile tek tek ilerleyin. Her notta hangi kuralın çalıştığı yazıyor. Kendi harflerinizi de ekleyebilirsiniz.</p>
+  <p class="mini">“S U P E R M A R I O K A R T” düğmesine basın ve <b>◀ Geri / İleri ▶</b> ile tek tek ilerleyin. Her notta hangi kuralın çalıştığı yazıyor. Kendi harflerinizi de ekleyebilirsiniz.</p>
 </section>
 
 <section data-sec="ekleme">
@@ -993,41 +994,41 @@ static double Floor(SortedSet<double> times, double t)
 {
     // [en küçük, t] aralığına bir "pencere" aç, en büyüğünü al
     SortedSet<double> view = times.GetViewBetween(double.MinValue, t);
-    return view.Max;     // dikkat: pencere boşsa 0 döner!
+    return view.Max;                    // dikkat: pencere boşsa 0 döner!
 }
 
-Console.WriteLine(Floor(times, 0.12));   // 0.1
+Console.WriteLine(Floor(times, 0.12));  // 0.1
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import bisect
 
-times = [0.00, 0.05, 0.10, 0.15]     # SIRALI tutulan liste
+times = [0.00, 0.05, 0.10, 0.15]       # SIRALI tutulan liste
 
-bisect.insort(times, 0.20)           # sırayı bozmadan ekle (ama O(N)!)
+bisect.insort(times, 0.20)             # sırayı bozmadan ekle (ama O(N)!)
 
 def floor(t):
-    i = bisect.bisect_right(times, t)    # t'den büyük ilk elemanın yeri
+    i = bisect.bisect_right(times, t)  # t'den büyük ilk elemanın yeri
     if i == 0:
-        return None                      # t'den küçük-eşit eleman yok
+        return None                    # t'den küçük-eşit eleman yok
     return times[i - 1]
 
-print(floor(0.12))                       # 0.1
+print(floor(0.12))                     # 0.1
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // JS'te hazır dengeli ağaç yok → kendi kırmızı-siyah ağacımızı kullanalım.
 // floor, BST sunumundakinin aynısı (renklere bakmaz):
-function floor(x, key) {          // x: ağacın kökü
+function floor(x, key) {  // x: ağacın kökü
   let best = null;
   while (x !== null) {
     if (key === x.key) return x.key;
     if (key < x.key) {
-      x = x.left;                 // daha küçüğünü ara
+      x = x.left;         // daha küçüğünü ara
     } else {
-      best = x.key;               // aday bulundu, daha iyisi sağda olabilir
+      best = x.key;       // aday bulundu, daha iyisi sağda olabilir
       x = x.right;
     }
   }
@@ -1265,6 +1266,7 @@ function floor(x, key) {          // x: ağacın kökü
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/agac.js"></script>
 <script src="../ortak/dengeli.js"></script>
 <script src="demos.js"></script>

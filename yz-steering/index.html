@@ -135,24 +135,24 @@
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // p5.js — draw() içinde her kare (kütle = 1)
-const dt = deltaTime / 1000;                    // saniye
-const force = steering().limit(maxForce);       // davranışlardan gelen kuvvet
-vel.add(p5.Vector.mult(force, dt));             // ivme → hız
+const dt = deltaTime / 1000;               // saniye
+const force = steering().limit(maxForce);  // davranışlardan gelen kuvvet
+vel.add(p5.Vector.mult(force, dt));        // ivme → hız
 vel.limit(maxSpeed);
-pos.add(p5.Vector.mult(vel, dt));               // hız → konum
-const heading = vel.heading();                  // gittiği yöne baksın
+pos.add(p5.Vector.mult(vel, dt));          // hız → konum
+const heading = vel.heading();             // gittiği yöne baksın
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Her FixedUpdate’te (kütle = 1)
-Vector2 force = Steering();                     // davranışlardan
+Vector2 force = Steering();                  // davranışlardan
 force = Vector2.ClampMagnitude(force, maxForce);
-velocity += force * Time.fixedDeltaTime;        // ivme → hız
+velocity += force * Time.fixedDeltaTime;     // ivme → hız
 velocity = Vector2.ClampMagnitude(velocity, maxSpeed);
-position += velocity * Time.fixedDeltaTime;     // hız → konum
+position += velocity * Time.fixedDeltaTime;  // hız → konum
 if (velocity.sqrMagnitude > 0.01f)
-    transform.right = velocity;                 // gittiği yöne baksın
+    transform.right = velocity;              // gittiği yöne baksın
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -245,11 +245,11 @@ Vector2 Flee(Vector2 threat) {
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 seek(target) {
   const desired = p5.Vector.sub(target, this.pos).setMag(this.maxSpeed);
-  return p5.Vector.sub(desired, this.vel);    // direksiyon
+  return p5.Vector.sub(desired, this.vel);  // direksiyon
 }
 
 flee(threat) {
-  return this.seek(threat).mult(-1);          // kısayol: tam tersi
+  return this.seek(threat).mult(-1);        // kısayol: tam tersi
 }
 </script></code></pre>
     </div>
@@ -280,6 +280,16 @@ def flee(self, threat):
 <section data-sec="seek">
   <h2>Canlı: vektörleri görün 🎯</h2>
   <div class="demo" data-demo="steer" data-mode="seek"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Fareyi ajanın arkasına götürün: <b>kırmızı</b> direksiyon oku geriye dönüyor, ajan kavis çizerek dönüyor.</li>
+      <li><b>Azami kuvveti</b> 40’a indirin: ajan bir gemi gibi geniş dönüyor. 800’e çıkarın: bir sinek gibi keskin.</li>
+      <li>Fareyi bir noktada sabit tutun: ajan hedefin etrafında <b>yörüngeye</b> giriyor mu? (Seek’in kusuru.)</li>
+      <li>“Flee (kaç)” seçin: kırmızı çember panik yarıçapı. Ajanı bir köşeye sıkıştırabiliyor musunuz?</li>
+      <li>▶| 1 kare ile adım adım ilerleyin: her karede yeşil (istenen) ile mavi (mevcut) arasındaki fark = kırmızı.</li>
+      <li>🔗 Kaynağından okuyun ve oynayın: <a href="https://www.red3d.com/cwr/steer/" target="_blank" rel="noopener">Craig Reynolds — Steering Behaviors</a> (her davranışın orijinal çizimi) · <a href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener">The Nature of Code: Autonomous Agents</a> (p5.js ile, tarayıcıda çalışan örnekler).</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="seek">
@@ -294,6 +304,7 @@ def flee(self, threat):
     </ol>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -326,7 +337,7 @@ arrive(target, slowRadius) {
   const offset = p5.Vector.sub(target, this.pos);
   const d = offset.mag();
   if (d < 0.001) return p5.Vector.mult(this.vel, -1);            // dur
-  const speed = d < slowRadius ? this.maxSpeed * d / slowRadius   // yaklaşınca yavaşla
+  const speed = d < slowRadius ? this.maxSpeed * d / slowRadius  // yaklaşınca yavaşla
                                : this.maxSpeed;
   const desired = offset.setMag(speed);
   return p5.Vector.sub(desired, this.vel);
@@ -368,6 +379,15 @@ def arrive(self, target, slow_radius):
 <section data-sec="arrive">
   <h2>Canlı: arrive, pursue, evade, wander</h2>
   <div class="demo" data-demo="steer" data-mode="arrive"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li><b>Arrive</b>: fareyi sabitleyin; ajan sarı çemberin içinde yavaşlayıp tam üstünde duruyor. Seek ile karşılaştırın.</li>
+      <li><b>Pursue</b>: mor bot sekerek dolaşıyor. Ajan botun <b>önüne</b> (tahmini konuma) koşuyor mu? Mor kesikli çizgi tahmin.</li>
+      <li><b>Evade</b>: ajan botun gelecekteki konumundan kaçıyor; bot ona doğru gelirken erkenden kenara çekiliyor.</li>
+      <li><b>Wander</b>: turuncu çember ve üstündeki nokta. Ajan sarhoş gibi değil, keşif yapan bir hayvan gibi gezmeli.</li>
+      <li>Hepsinde azami kuvveti düşürün: tahmin doğru olsa bile hantal bir ajan yakalayamıyor. <b>Zorluk ayarı</b> için güzel bir düğme!</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="arrive">
@@ -471,6 +491,14 @@ def arrive(self, target, slow_radius):
 <section data-sec="boids">
   <h2>Canlı: boids 🐟</h2>
   <div class="demo" data-demo="boids"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.88em">
+      <li>Üç kaydırıcıyı tek tek sıfırlayın. Ayrılma 0: boidler üst üste biner. Hizalanma 0: her biri kendi yönüne. Bütünleşme 0: sürü dağılır.</li>
+      <li>Fareyi sürünün içine sokun (yırtıcı): sürü yarılıp yeniden birleşiyor. Balık sürülerinin köpekbalığından kaçışı.</li>
+      <li>Görüş yarıçapını 15’e indirin: küçük gruplar. 120’ye çıkarın: tek dev sürü.</li>
+      <li><b>Uzamsal ızgara</b>yı kapatın ve boid sayısını 400 yapın. Üstteki “komşu kontrolü” sayısına bakın: 400 × 399 ≈ <b>160.000</b>. Izgara açıkken? Bu, BST Geometrik ve Hash sunumlarındaki fikrin aynısı: herkesi herkesle karşılaştırma, sadece yakın hücrelere bak.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="boids">
@@ -612,7 +640,7 @@ class Vehicle {
     this.pos = createVector(x, y);
     this.vel = p5.Vector.random2D();
     this.acc = createVector(0, 0);
-    this.maxSpeed = 4;      // piksel / kare
+    this.maxSpeed = 4;  // piksel / kare
     this.maxForce = 0.2;
   }
   applyForce(f) { this.acc.add(f); }
@@ -630,7 +658,7 @@ class Vehicle {
   update() {
     this.vel.add(this.acc).limit(this.maxSpeed);
     this.pos.add(this.vel);
-    this.acc.mult(0);       // kuvvetler her kare sıfırlanır
+    this.acc.mult(0);   // kuvvetler her kare sıfırlanır
   }
   show() {
     push(); translate(this.pos.x, this.pos.y); rotate(this.vel.heading());
@@ -1031,6 +1059,7 @@ def alignment(vels, max_speed):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

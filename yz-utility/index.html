@@ -197,8 +197,8 @@
 function normalize(v, min, max) {
   return constrain((v - min) / (max - min), 0, 1);
 }
-const d = normalize(distance, 0, 50);   // 18 m → 0,36
-const h = normalize(hp, 0, maxHp);      // 70/100 → 0,70
+const d = normalize(distance, 0, 50);  // 18 m → 0,36
+const h = normalize(hp, 0, maxHp);     // 70/100 → 0,70
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -209,8 +209,8 @@ float Normalize(float v, float min, float max)
     return Mathf.Clamp01((v - min) / (max - min));
 }
 
-float d = Normalize(distance, 0f, 50f);   // 18 m → 0,36
-float h = Normalize(hp, 0f, maxHp);       // 70/100 → 0,70
+float d = Normalize(distance, 0f, 50f);  // 18 m → 0,36
+float h = Normalize(hp, 0f, maxHp);      // 70/100 → 0,70
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -324,9 +324,9 @@ d = normalize(distance, 0, 50)   # 18 m → 0.36
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function compensate(score, n) {
   if (n < 2 || score === 0) return score;
-  const mod    = 1 - 1 / n;                // n=2 → 0,5 · n=5 → 0,8
-  const makeUp = (1 - score) * mod;        // kaybın bir kısmı
-  return score + makeUp * score;           // puana orantılı ekle
+  const mod    = 1 - 1 / n;          // n=2 → 0,5 · n=5 → 0,8
+  const makeUp = (1 - score) * mod;  // kaybın bir kısmı
+  return score + makeUp * score;     // puana orantılı ekle
 }
 </script></code></pre>
     </div>
@@ -335,9 +335,9 @@ function compensate(score, n) {
 float Compensate(float score, int n)
 {
     if (n < 2 || score == 0f) return score;
-    float mod    = 1f - 1f / n;              // n=2 → 0,5 · n=5 → 0,8
-    float makeUp = (1f - score) * mod;        // kaybın bir kısmı
-    return score + makeUp * score;            // puana orantılı ekle
+    float mod    = 1f - 1f / n;         // n=2 → 0,5 · n=5 → 0,8
+    float makeUp = (1f - score) * mod;  // kaybın bir kısmı
+    return score + makeUp * score;      // puana orantılı ekle
 }
 </script></code></pre>
     </div>
@@ -368,6 +368,14 @@ def compensate(score, n):
 <section data-sec="birleştirmek">
   <h2>Canlı: bir askerin beş seçeneği 🪖</h2>
   <div class="demo" data-demo="combat"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Mermiyi 0 yapın: “Ateş et”in kırmızı etkeni bütün eylemi veto ediyor; “Şarjör değiştir” öne çıkıyor. Düşmanı 5 m’ye getirin: şarjör değiştirmek artık riskli (düşman uzak etkeni düştü).</li>
+      <li>Canı yavaş yavaş azaltın: önce “İyileş”, sonra çok düşük canda “Kaç” kazanıyor. Hiçbir yerde “eşik” yazmadık!</li>
+      <li>Medkit kutusunu kaldırın: “İyileş” sıfırlanıyor. Kutu, tasarımcının “bu eylem şu an mümkün mü?” sorusunu etken olarak sormasıdır.</li>
+      <li>Telafi faktörünü kapatın: 3 etkenli eylemlerin puanı düşüyor, 2 etkenliler kazançlı çıkıyor. Kazanan değişti mi?</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="birleştirmek">
@@ -381,10 +389,11 @@ def compensate(score, n):
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.desmos.com/calculator" target="_blank" rel="noopener"><div class="lnk-t">🔗 Desmos grafik hesaplayıcı</div><div class="lnk-s">Desmos</div><div class="lnk-w">Yanıt eğrilerini, yumuşatma fonksiyonlarını ve parabolleri kaydırıcılarla kendiniz çizin.</div></a><a class="lnk" href="https://www.redblobgames.com/articles/probability/damage-rolls.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Probability and damage rolls</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Zar atarak hasar hesaplamanın olasılık dağılımı; zorluk ve “adil rastgelelik” için.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.desmos.com/calculator" target="_blank" rel="noopener"><div class="lnk-t">🔗 Desmos grafik hesaplayıcı</div><div class="lnk-s">Desmos</div><div class="lnk-w">Yanıt eğrilerini, yumuşatma fonksiyonlarını ve parabolleri kaydırıcılarla kendiniz çizin.</div></a><a class="lnk" href="https://www.redblobgames.com/articles/probability/damage-rolls.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Probability and damage rolls</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Zar atarak hasar hesaplamanın olasılık dağılımı; zorluk ve “adil rastgelelik” için.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -422,15 +431,15 @@ def compensate(score, n):
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Ağırlıklı rastgele: puanları bir "çark"a diz, rastgele bir nokta seç
-function weightedRandom(opts) {          // opts: [{ action, score }, ...]
+function weightedRandom(opts) {         // opts: [{ action, score }, ...]
   let total = 0;
   for (const o of opts) total += o.score;
-  let r = random(total);                 // p5.js: 0 ile total arası
+  let r = random(total);                // p5.js: 0 ile total arası
   for (const o of opts) {
     r -= o.score;
     if (r <= 0) return o.action;
   }
-  return opts[opts.length - 1].action;   // yuvarlama hatasına karşı
+  return opts[opts.length - 1].action;  // yuvarlama hatasına karşı
 }
 </script></code></pre>
     </div>
@@ -541,6 +550,11 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
   <ul class="agenda"><li class="done">neden puan?</li><li class="done">yanıt eğrileri</li><li class="done">etkenleri birleştirmek</li><li class="done">seçim ve atalet</li><li class="on">The Sims ve akıllı nesneler</li><li class="">kod ve laboratuvarlar</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-sec="oyunda" class="no-grow">
+  <h2>📸 Oyundan bir kare: The Sims (2000)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/sims.jpg" alt="The Sims (2000) ekran görüntüsü" style="height:440px;max-width:100%;object-fit:contain;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Ekrandaki her Sim’in açlık, uyku, eğlence gibi ihtiyaç çubukları var; evdeki her nesne bu ihtiyaçlara puan “reklamı” yapıyor. Sim, “kendi akşamınız” demosundaki gibi en yüksek puanlıya gidiyor.<br><span style="color:var(--muted);font-size:.85em">Görsel: The Sims ekran görüntüsü, Maxis/Electronic Arts, Wikipedia (eğitim amaçlı adil kullanım)</span></figcaption></figure>
+</section>
+
 <section data-sec="The Sims">
   <h2>Derin hikâye: The Sims (2000) ve “reklam yapan” nesneler 🏠</h2>
   <div class="cols c64">
@@ -603,6 +617,15 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
 <section data-sec="The Sims">
   <h2>Canlı: ihtiyaçlarla yaşayan bir Sim 🙂</h2>
   <div class="demo" data-demo="simroom"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.88em">
+      <li>Bir süre izleyin: Sim hangi sırayla ihtiyaçlarını gideriyor? Sağdaki puan çubukları her an güncelleniyor; yeşil olan seçilen.</li>
+      <li>🎡 Joy Booth ekleyin. Sim’in kabinde ne kadar vakit geçirdiğine ve <b>kriz</b> sayısına bakın (ihtiyaçlardan biri sıfıra düştü). Reklamın yalan olması ortalama mutluluğu nasıl etkiliyor?</li>
+      <li>Atalet: “her kare karar (atalet yok)” + seçim: “ağırlıklı rastgele (hepsi)”. Sim odanın ortasında kararsızca titriyor mu? “Fikir değiştirme” sayacı ne oldu?</li>
+      <li>“Mesafe zayıflatması”nı kapatın: Sim uzaktaki nesneler için gereksiz yere odayı arşınlıyor mu?</li>
+      <li>Bir nesneye tıklayın: oyuncu emri (The Sims’te tıklayıp eylem seçmek). 2 sn sonra Sim yine kendi kararlarına döner.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="The Sims">
@@ -646,10 +669,10 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 let best = null;
-let bestScore = -Infinity;            // "çok küçük bir sayı" ile başla
+let bestScore = -Infinity;  // "çok küçük bir sayı" ile başla
 for (const a of actions) {
   const s = a.score(npc);
-  if (s > bestScore) {                // daha iyisini bulduysan hatırla
+  if (s > bestScore) {      // daha iyisini bulduysan hatırla
     bestScore = s;
     best = a;
   }
@@ -659,10 +682,10 @@ for (const a of actions) {
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 Action best = null;
-float bestScore = float.MinValue;   // "çok küçük bir sayı" ile başla
+float bestScore = float.MinValue;  // "çok küçük bir sayı" ile başla
 foreach (Action a in actions) {
     float s = a.Score(npc);
-    if (s > bestScore) {             // daha iyisini bulduysan hatırla
+    if (s > bestScore) {           // daha iyisini bulduysan hatırla
         bestScore = s;
         best = a;
     }
@@ -701,7 +724,7 @@ using UnityEngine;
 public class Consideration {
     public string name;
     public AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);  // Inspector’da çizilir
-    public Func<Npc, float> input;                                     // 0–1 döndürür
+    public Func<Npc, float> input;                                    // 0–1 döndürür
     public float Score(Npc npc) => Mathf.Clamp01(curve.Evaluate(input(npc)));
 }
 
@@ -806,13 +829,13 @@ best = max(actions, key=lambda name: score(actions[name], npc))
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 class UtilityBrain {
   constructor(actions, thinkInterval = 0.25, inertia = 1.25) {
-    this.actions = actions;              // [{ name, score(npc), run(npc, dt) }, ...]
-    this.thinkInterval = thinkInterval;  // saniyede 4 karar
-    this.inertia = inertia;              // mevcut eyleme bonus
+    this.actions = actions;                       // [{ name, score(npc), run(npc, dt) }, ...]
+    this.thinkInterval = thinkInterval;           // saniyede 4 karar
+    this.inertia = inertia;                       // mevcut eyleme bonus
     this.current = null;
     this.timer = 0;
   }
-  update(npc, dt) {                      // draw() içinde her kare: brain.update(npc, deltaTime / 1000)
+  update(npc, dt) {                               // draw() içinde her kare: brain.update(npc, deltaTime / 1000)
     this.timer -= dt;
     if (this.timer <= 0) {
       this.timer = this.thinkInterval;
@@ -825,7 +848,7 @@ class UtilityBrain {
       if (best !== this.current) console.log(`${this.current?.name} → ${best?.name} (${bestScore.toFixed(2)})`);
       this.current = best;
     }
-    if (this.current) this.current.run(npc, dt);   // seçilen eylemi her kare yürüt
+    if (this.current) this.current.run(npc, dt);  // seçilen eylemi her kare yürüt
   }
 }
 </script></code></pre>
@@ -834,8 +857,8 @@ class UtilityBrain {
 <pre><code class="language-csharp" data-trim data-line-numbers="3-4|12-21|23"><script type="text/template">
 public class UtilityBrain : MonoBehaviour {
     public List<UtilityAction> actions;
-    public float thinkInterval = 0.25f;   // saniyede 4 karar
-    public float inertia = 1.25f;          // mevcut eyleme bonus
+    public float thinkInterval = 0.25f;         // saniyede 4 karar
+    public float inertia = 1.25f;               // mevcut eyleme bonus
     UtilityAction current;
     float nextThink;
     Npc npc;
@@ -854,7 +877,7 @@ public class UtilityBrain : MonoBehaviour {
             if (best != current) Debug.Log($"{name}: {current?.name} → {best?.name} ({bestScore:0.00})");
             current = best;
         }
-        if (current != null) current.run(npc);   // seçilen eylemi her kare yürüt
+        if (current != null) current.run(npc);  // seçilen eylemi her kare yürüt
     }
 }
 </script></code></pre>
@@ -1112,8 +1135,8 @@ def dual_candidates(options, pct):
 [CreateAssetMenu(menuName = "AI/Utility Action")]
 public class ActionAsset : ScriptableObject {
     public string displayName;
-    public InputKind[] inputs;            // Distance, Health, Ammo, ...
-    public AnimationCurve[] curves;       // her girdi için bir eğri
+    public InputKind[] inputs;             // Distance, Health, Ammo, ...
+    public AnimationCurve[] curves;        // her girdi için bir eğri
     public float weight = 1f;
 
     public float Score(AIContext ctx) {
@@ -1251,6 +1274,7 @@ public class ActionAsset : ScriptableObject {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

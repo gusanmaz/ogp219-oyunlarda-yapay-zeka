@@ -97,8 +97,8 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, el('label', { class: 'ctl' }, 'Anahtar ', input),
       btn('➕ Ekle', () => { const k = input.value.trim().toUpperCase(); if (k) run(m.opInsert(isNaN(+k) ? k : +k)); }, 'primary'),
-      btn('▶ S E A R C H X M P L', () => seq('S E A R C H X M P L'.split(' '))),
-      btn('📈 Sıralı: A C E H L M P R S X', () => seq('A C E H L M P R S X'.split(' '))),
+      btn('▶ S U P E R M A R I O K A R T', () => seq('S U P E R M A R I O K A R T'.split(' '))),
+      btn('📈 Sıralı: A E I K M O P R S T U', () => seq('A E I K M O P R S T U'.split(' '))),
       btn('🧹 Temizle', () => { m = new T23(); fp.load([{ root: null, hl: {}, note: 'Boş ağaç' }]); info(); })),
     svg, SL.transport(fp, { min: 0.3, max: 8 }), note, stat);
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const k = input.value.trim().toUpperCase(); if (k) run(m.opInsert(isNaN(+k) ? k : +k)); } });
@@ -154,7 +154,7 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, el('label', { class: 'ctl' }, 'Anahtar ', input),
       btn('➕ Ekle', () => { const k = val(); if (k !== '') go([k]); }, 'primary'),
-      btn('▶ S E A R C H X M P L', () => { m = new LLRB(); go('S E A R C H X M P L'.split(' ')); }),
+      btn('▶ S U P E R M A R I O K A R T', () => { m = new LLRB(); go('S U P E R M A R I O K A R T'.split(' ')); }),
       btn('📈 Sıralı A…O', () => { m = new LLRB(); go('A B C D E F G H I J K L M N O'.split(' ')); }),
       el('label', { class: 'ctl' }, el('input', { type: 'checkbox', onchange: e => { flat = e.target.checked; fp.render(); } }), ' 2-3 görünümü (kırmızıları yatay çiz)'),
       btn('🧹', () => { m = new LLRB(); fp.load([{ root: null, hl: {}, note: 'Boş ağaç' }]); })),

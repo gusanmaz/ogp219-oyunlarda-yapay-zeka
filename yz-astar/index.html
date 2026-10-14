@@ -172,6 +172,15 @@
 <section data-sec="algoritmalar">
   <h2>Yarış: aynı harita, dört algoritma 🏁</h2>
   <div class="demo" data-demo="compare4"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>U şeklindeki engel: <b>Greedy</b> önce düz hedefe koşuyor, U’nun içine giriyor, sonra çıkış arıyor. Bulduğu yolun maliyeti diğerlerinden yüksek mi?</li>
+      <li><b>BFS</b> ve <b>Dijkstra</b> neredeyse bütün haritayı renklendiriyor (genişletilen düğüm sayısına bakın). <b>A*</b> hedefe doğru “uzanıyor”.</li>
+      <li>U’nun ağzını bir duvarla kapatın: Greedy artık daha iyi mi, daha kötü mü?</li>
+      <li>B’yi U’nun içine taşıyın. Hangi algoritma en az düğümle buluyor?</li>
+      <li>Renkler: mavi → kırmızı, başlangıçtan uzaklık (g). Sarı = açık liste (keşfedilmiş, sırada bekliyor).</li>
+    </ol>
+  </div><!--/dh-->
   <div class="demo-help" data-title="ℹ️ Ekranda ne var, düğmeler ne yapar?"><ul>
     <li>Dört küçük harita <b>aynı haritadır</b>; her birinde başka bir algoritma çalışıyor: BFS, Dijkstra, Greedy best-first ve A*.</li>
     <li><b>B</b> başlangıç, <b>H</b> hedef, koyu kareler duvar. Renkli kareler, algoritmanın o ana kadar <b>baktığı</b> (genişlettiği) kareler; kalın çizgi bulunan yol.</li>
@@ -202,10 +211,11 @@
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Grids and Graphs</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Izgaranın bir graf olduğunu ve komşuların nasıl bulunduğunu çizimlerle anlatır.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Flow Field Pathfinding (kule savunması)</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Tek bir BFS ile bütün düşmanlara yol bulmak: haritaya tıklayıp hedefi değiştirin, oklar anında güncellenir.</div></a><a class="lnk" href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener"><div class="lnk-t">🔗 PathFinding.js</div><div class="lnk-s">Xueqiao Xu</div><div class="lnk-w">A*, Dijkstra, BFS ve Jump Point Search’ü aynı ızgarada yarıştırın; duvarları fareyle çizin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Grids and Graphs</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Izgaranın bir graf olduğunu ve komşuların nasıl bulunduğunu çizimlerle anlatır.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Flow Field Pathfinding (kule savunması)</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Tek bir BFS ile bütün düşmanlara yol bulmak: haritaya tıklayıp hedefi değiştirin, oklar anında güncellenir.</div></a><a class="lnk" href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener"><div class="lnk-t">🔗 PathFinding.js</div><div class="lnk-s">Xueqiao Xu</div><div class="lnk-w">A*, Dijkstra, BFS ve Jump Point Search’ü aynı ızgarada yarıştırın; duvarları fareyle çizin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -268,6 +278,17 @@
 <section data-sec="sezgiler">
   <h2>Canlı: A* laboratuvarı 🧭</h2>
   <div class="demo" data-demo="astar"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.88em">
+      <li><b>Çizim</b>: ızgaraya tıklayıp sürükleyin (duvar). Fırçayı “bataklık” yapın. B ve H’yi sürükleyin: arama anında yenilenir.</li>
+      <li>“Bataklık” hazır haritası: <b>BFS</b> bataklıktan geçiyor (maliyeti bilmiyor), <b>A*</b> üstteki dar yoldan dolaşıyor. Yol maliyetlerini karşılaştırın.</li>
+      <li>Sezgiyi “sıfır” yapın: A* = Dijkstra. Genişletilen düğüm sayısı kaç kat arttı?</li>
+      <li>Ağırlık w = 3: düğüm sayısı düşüyor; yol maliyeti değişti mi? “Labirent”te dene: ağırlık orada işe yarıyor mu?</li>
+      <li>8 yön açıkken sezgiyi “Manhattan” yapın: yol maliyeti octile ile aynı mı? (Abartılı sezgi.)</li>
+      <li>“g değerleri”ni açıp adım adım oynatın: her karede başlangıçtan gerçek uzaklık yazıyor.</li>
+      <li>🔗 Bu konunun en iyi etkileşimli anlatımı: <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">Red Blob Games — Introduction to A*</a> (sayfadaki her şekil oynanabilir). Onlarca algoritmayı yan yana denemek için: <a href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener">PathFinding.js görselleştirici</a>.</li>
+    </ol>
+  </div><!--/dh-->
   <div class="demo-help" data-title="ℹ️ Düğmeler ve araçlar"><ul>
     <li><b>Fırça menüsü:</b> 🧱 duvar çizer, 🟩 bataklık çizer (geçmek 5 kat pahalı), 🧽 siler. Haritaya tıklayıp sürükleyin.</li>
     <li><b>B</b> ve <b>H</b>’yi sürükleyerek başlangıcı ve hedefi taşıyın.</li>
@@ -346,7 +367,7 @@ def neighbors(grid, x, y):
             nx, ny = x + dx, y + dy
             if (dx or dy) and 0 <= ny < len(grid) and 0 <= nx < len(grid[0]) and grid[ny][nx] != "#":
                 if dx and dy and (grid[y][nx] == "#" or grid[ny][x] == "#"):
-                    continue                              # köşeden geçme
+                    continue               # köşeden geçme
                 yield (nx, ny), (math.sqrt(2) if dx and dy else 1.0)
 
 def astar(grid, start, goal):
@@ -355,25 +376,25 @@ def astar(grid, start, goal):
     came_from = {start: None}
     while open_:
         f, cur = heapq.heappop(open_)
-        if cur == goal:                                   # yolu geriye doğru çıkar
+        if cur == goal:                    # yolu geriye doğru çıkar
             path = []
             while cur is not None:
                 path.append(cur); cur = came_from[cur]
             return path[::-1], g[goal]
         for nxt, step in neighbors(grid, *cur):
             ng = g[cur] + step
-            if ng < g.get(nxt, math.inf):                 # daha ucuz yol bulundu
+            if ng < g.get(nxt, math.inf):  # daha ucuz yol bulundu
                 g[nxt] = ng
                 came_from[nxt] = cur
                 heapq.heappush(open_, (ng + octile(nxt, goal), nxt))
-    return None, math.inf                                 # yol yok
+    return None, math.inf                  # yol yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Unity 6 (.NET Standard 2.1): PriorityQueue yoksa basit bir ikili yığın yazın ya da SortedSet kullanın
 public static List<Vector2Int> AStar(bool[,] walkable, Vector2Int start, Vector2Int goal) {
-    var open = new PriorityQueue<Vector2Int, float>();           // .NET 6+ ya da kendi yığınınız
+    var open = new PriorityQueue<Vector2Int, float>();  // .NET 6+ ya da kendi yığınınız
     var g = new Dictionary<Vector2Int, float> { [start] = 0f };
     var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
     open.Enqueue(start, Octile(start, goal));
@@ -388,7 +409,7 @@ public static List<Vector2Int> AStar(bool[,] walkable, Vector2Int start, Vector2
             }
         }
     }
-    return null;                                                // yol yok
+    return null;                                        // yol yok
 }
 
 static float Octile(Vector2Int a, Vector2Int b) {
@@ -400,7 +421,7 @@ static float Octile(Vector2Int a, Vector2Int b) {
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Basit hâli: açık listeyi her seferinde sıralıyoruz (küçük ızgaralar için yeterli)
-function astar(grid, start, goal) {      // grid[y][x] === 1 → duvar; düğüm = "x,y"
+function astar(grid, start, goal) {        // grid[y][x] === 1 → duvar; düğüm = "x,y"
   const key = (x, y) => x + "," + y, h = (x, y) => Math.abs(x - goal.x) + Math.abs(y - goal.y);
   const open = [{ x: start.x, y: start.y, g: 0, f: h(start.x, start.y) }];
   const g = { [key(start.x, start.y)]: 0 }, from = {};
@@ -414,7 +435,7 @@ function astar(grid, start, goal) {      // grid[y][x] === 1 → duvar; düğüm
     }
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = cur.x + dx, ny = cur.y + dy;
-      if (grid[ny]?.[nx] !== 0) continue;                 // dışarı ya da duvar
+      if (grid[ny]?.[nx] !== 0) continue;  // dışarı ya da duvar
       const ng = cur.g + 1, k = key(nx, ny);
       if (ng < (g[k] ?? Infinity)) { g[k] = ng; from[k] = key(cur.x, cur.y); open.push({ x: nx, y: ny, g: ng, f: ng + h(nx, ny) }); }
     }
@@ -445,18 +466,18 @@ function astar(grid, start, goal) {      // grid[y][x] === 1 → duvar; düğüm
     <div>
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 while (open.length > 0) {
-  const cur = popSmallestF(open);          // f = g + h en küçük
+  const cur = popSmallestF(open);        // f = g + h en küçük
   if (same(cur, target)) return rebuild(cameFrom, cur);
   for (const [n, cost] of neighbors(cur)) {
-    const ng = g[key(cur)] + cost;         // n'ye bu yoldan maliyet
-    if (ng < (g[key(n)] ?? Infinity)) {    // daha ucuzsa
+    const ng = g[key(cur)] + cost;       // n'ye bu yoldan maliyet
+    if (ng < (g[key(n)] ?? Infinity)) {  // daha ucuzsa
       g[key(n)] = ng;
-      cameFrom[key(n)] = cur;              // nereden geldim?
+      cameFrom[key(n)] = cur;            // nereden geldim?
       open.push({ cell: n, f: ng + heuristic(n, target) });
     }
   }
 }
-return null;                               // yol yok
+return null;                             // yol yok
 </script></code></pre>
       <p class="mini">A*’ın tamamı bu döngüdür. Üç tablo: <code>open</code> (sırada bekleyenler), <code>g</code> (buraya en ucuz maliyet), <code>cameFrom</code> (buraya nereden geldim). <code>heuristic</code>’i 0 yaparsanız Dijkstra olur.</p>
     </div>
@@ -891,6 +912,7 @@ print([(n.x, n.y) for n in path], runs)
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

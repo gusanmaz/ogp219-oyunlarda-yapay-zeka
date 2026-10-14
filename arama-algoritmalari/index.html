@@ -158,15 +158,15 @@ section > .demo .sv-note { font-size: 1.05em; }
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-i = search(a, 88)          # dönen değeri bir değişkene al
+i = search(a, 88)   # dönen değeri bir değişkene al
 if i == -1:
     print("yok")
 else:
     print("bulundu, indeks", i)
 
-print(88 in a)             # True / False   (var mı?)
-print(a.index(88))         # 3
-print(a.index(50))         # ❌ ValueError: 50 is not in list
+print(88 in a)      # True / False   (var mı?)
+print(a.index(88))  # 3
+print(a.index(50))  # ❌ ValueError: 50 is not in list
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -183,15 +183,15 @@ int j = list.IndexOf(50);      // -1  (hata yok)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const i = search(a, 88);       // dönen değeri bir değişkene al
+const i = search(a, 88);      // dönen değeri bir değişkene al
 if (i === -1) {
   console.log("yok");
 } else {
   console.log("bulundu, indeks", i);
 }
 
-console.log(a.includes(88));   // true / false
-console.log(a.indexOf(50));    // -1  (hata yok)
+console.log(a.includes(88));  // true / false
+console.log(a.indexOf(50));   // -1  (hata yok)
 </script></code></pre>
     </div>
   </div>
@@ -221,10 +221,10 @@ console.log(a.indexOf(50));    // -1  (hata yok)
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-9|2|3-4|5"><script type="text/template">
 def sequential_search(a, key):
-    for i in range(len(a)):     # i = 0, 1, 2, ..., N-1
+    for i in range(len(a)):  # i = 0, 1, 2, ..., N-1
         if a[i] == key:
-            return i            # bulundu → hemen dön
-    return -1                   # döngü bitti → yok
+            return i         # bulundu → hemen dön
+    return -1                # döngü bitti → yok
 
 # modern yazım (aynı iş): enumerate hem indeksi hem değeri verir
 # for i, x in enumerate(a):
@@ -235,20 +235,20 @@ def sequential_search(a, key):
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 static int SequentialSearch(int[] a, int key)
 {
-    for (int i = 0; i < a.Length; i++)   // i = 0, 1, ..., N-1
+    for (int i = 0; i < a.Length; i++)  // i = 0, 1, ..., N-1
         if (a[i] == key)
-            return i;                    // bulundu → hemen dön
-    return -1;                           // döngü bitti → yok
+            return i;                   // bulundu → hemen dön
+    return -1;                          // döngü bitti → yok
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function sequentialSearch(a, key) {
-  for (let i = 0; i < a.length; i++)   // i = 0, 1, ..., N-1
+  for (let i = 0; i < a.length; i++)  // i = 0, 1, ..., N-1
     if (a[i] === key)
-      return i;                        // bulundu → hemen dön
-  return -1;                           // döngü bitti → yok
+      return i;                       // bulundu → hemen dön
+  return -1;                          // döngü bitti → yok
 }
 </script></code></pre>
     </div>
@@ -280,6 +280,7 @@ function sequentialSearch(a, key) {
     </div>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -323,8 +324,8 @@ function sequentialSearch(a, key) {
 def first_weak(enemies):
     for e in enemies:
         if e.hp < 20:
-            return e          # bulduğumuz ilk düşman
-    return None               # hiç yok
+            return e  # bulduğumuz ilk düşman
+    return None       # hiç yok
 
 # Modern: next(...) + üreteç ifadesi — "koşulu sağlayan ilkini ver, yoksa None"
 weak = next((e for e in enemies if e.hp < 20), None)
@@ -337,8 +338,8 @@ Enemy FirstWeak(List<Enemy> enemies)
 {
     foreach (Enemy e in enemies)
         if (e.Hp < 20)
-            return e;          // bulduğumuz ilk düşman
-    return null;               // hiç yok
+            return e;  // bulduğumuz ilk düşman
+    return null;       // hiç yok
 }
 
 // Modern: Find + lambda   (e => e.Hp < 20 : "bir e al, canı 20'den az mı söyle")
@@ -351,8 +352,8 @@ Enemy weak = enemies.Find(e => e.Hp < 20);
 function firstWeak(enemies) {
   for (const e of enemies)
     if (e.hp < 20)
-      return e;              // bulduğumuz ilk düşman
-  return null;               // hiç yok (find ise undefined döndürür)
+      return e;  // bulduğumuz ilk düşman
+  return null;   // hiç yok (find ise undefined döndürür)
 }
 
 // Modern: find + ok fonksiyonu   (e => e.hp < 20 : "bir e al, canı 20'den az mı?")
@@ -385,11 +386,11 @@ const weak = enemies.find(e => e.hp < 20);
 // a: son hücresi BOŞ bırakılmış dizi (a.Length = n + 1)
 static int SentinelSearch(int[] a, int n, int key)
 {
-    a[n] = key;                 // nöbetçiyi sona koy
+    a[n] = key;             // nöbetçiyi sona koy
     int i = 0;
-    while (a[i] != key)         // tek kontrol: i < n YOK!
+    while (a[i] != key)     // tek kontrol: i < n YOK!
         i++;
-    return i < n ? i : -1;      // nöbetçide durduysak → yok
+    return i < n ? i : -1;  // nöbetçide durduysak → yok
     // geleneksel: if (i < n) return i; else return -1;
 }
 </script></code></pre>
@@ -397,11 +398,11 @@ static int SentinelSearch(int[] a, int n, int key)
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def sentinel_search(a, key):
-    a.append(key)               # nöbetçiyi sona koy
+    a.append(key)       # nöbetçiyi sona koy
     i = 0
-    while a[i] != key:          # tek kontrol: i < N yok!
+    while a[i] != key:  # tek kontrol: i < N yok!
         i += 1
-    a.pop()                     # nöbetçiyi geri al
+    a.pop()             # nöbetçiyi geri al
     if i < len(a):
         return i
     return -1
@@ -413,10 +414,10 @@ def sentinel_search(a, key):
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function sentinelSearch(a, key) {
   const n = a.length;
-  a.push(key);                  // nöbetçiyi sona koy
+  a.push(key);               // nöbetçiyi sona koy
   let i = 0;
-  while (a[i] !== key) i++;     // tek kontrol: i < n yok!
-  a.pop();                      // nöbetçiyi geri al
+  while (a[i] !== key) i++;  // tek kontrol: i < n yok!
+  a.pop();                   // nöbetçiyi geri al
   if (i < n) return i;
   return -1;
 }
@@ -505,14 +506,14 @@ function sentinelSearch(a, key) {
 
 <section data-sec="ikili arama">
   <h2>İz tablosu <span class="en">trace</span> — başarılı arama: P</h2>
-  <div class="demo" data-demo="bintrace" data-values="A C E H L M P R S X" data-key="P"></div>
+  <div class="demo" data-demo="bintrace" data-values="A E I K M O P R S T U" data-key="P"></div>
   <div class="trace-legend"><b class="r">kırmızı</b> = a[mid] · <b>siyah</b> = hâlâ aday (lo…hi) · <b class="g">gri</b> = elendi</div>
   <aside class="notes">İz tablosu. Ok tuşlarıyla satır satır ilerleyin; her satırda öğrencilere “mid kaç olacak?” diye sorun.</aside>
 </section>
 
 <section data-sec="ikili arama">
   <h2>İz tablosu — başarısız arama: Q</h2>
-  <div class="demo" data-demo="bintrace" data-values="A C E H L M P R S X" data-key="Q"></div>
+  <div class="demo" data-demo="bintrace" data-values="A E I K M O P R S T U" data-key="Q"></div>
   <div class="trace-legend">Aralık boşaldığında <code>lo</code>, Q’nun <b>eklenmesi gereken yeri</b> gösterir — birazdan çok işimize yarayacak!</div>
 </section>
 
@@ -533,23 +534,23 @@ function sentinelSearch(a, key) {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-12|2-3|4|5|6-9|10-11|12"><script type="text/template">
-def binary_search(a, key):           # a SIRALI olmalı!
+def binary_search(a, key):    # a SIRALI olmalı!
     lo = 0
     hi = len(a) - 1
-    while lo <= hi:                  # aralık boş değilken
-        mid = lo + (hi - lo) // 2    # ortadaki indeks (// : tam sayı bölmesi)
+    while lo <= hi:           # aralık boş değilken
+        mid = lo + (hi - lo)  // 2    # ortadaki indeks (// : tam sayı bölmesi)
         if key < a[mid]:
-            hi = mid - 1             # sol yarıda ara
+            hi = mid - 1      # sol yarıda ara
         elif key > a[mid]:
-            lo = mid + 1             # sağ yarıda ara
+            lo = mid + 1      # sağ yarıda ara
         else:
-            return mid               # bulundu
-    return -1                        # aralık boşaldı → yok
+            return mid        # bulundu
+    return -1                 # aralık boşaldı → yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-static int BinarySearch(int[] a, int key)    // a SIRALI olmalı!
+static int BinarySearch(int[] a, int key)     // a SIRALI olmalı!
 {
     int lo = 0, hi = a.Length - 1;
     while (lo <= hi)                          // aralık boş değilken
@@ -565,15 +566,15 @@ static int BinarySearch(int[] a, int key)    // a SIRALI olmalı!
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function binarySearch(a, key) {          // a SIRALI olmalı!
+function binarySearch(a, key) {           // a SIRALI olmalı!
   let lo = 0, hi = a.length - 1;
-  while (lo <= hi) {                     // aralık boş değilken
+  while (lo <= hi) {                      // aralık boş değilken
     const mid = lo + Math.floor((hi - lo) / 2);
-    if (key < a[mid]) hi = mid - 1;      // sol yarı
-    else if (key > a[mid]) lo = mid + 1; // sağ yarı
-    else return mid;                     // bulundu
+    if (key < a[mid]) hi = mid - 1;       // sol yarı
+    else if (key > a[mid]) lo = mid + 1;  // sağ yarı
+    else return mid;                      // bulundu
   }
-  return -1;                             // yok
+  return -1;                              // yok
 }
 </script></code></pre>
     </div>
@@ -626,17 +627,17 @@ public static int indexOf(int[] a, int key) {
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def search(a, key, lo, hi):
-    if lo > hi:                       # temel durum: aralık boş
+    if lo > hi:                             # temel durum: aralık boş
         return -1
-    mid = lo + (hi - lo) // 2
+    mid = lo + (hi - lo)                    // 2
     if key < a[mid]:
-        return search(a, key, lo, mid - 1)    # sol yarı
+        return search(a, key, lo, mid - 1)  # sol yarı
     elif key > a[mid]:
-        return search(a, key, mid + 1, hi)    # sağ yarı
+        return search(a, key, mid + 1, hi)  # sağ yarı
     else:
         return mid
 
-search(a, 42, 0, len(a) - 1)          # ilk çağrı: tüm dizi
+search(a, 42, 0, len(a) - 1)                # ilk çağrı: tüm dizi
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -751,15 +752,15 @@ int mid = lo + (hi - lo) / 2;  // ✅ taşma yok
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-mid = (lo + hi) // 2       # Python'da sorun yok: tam sayılar sınırsız büyür
-mid = lo + (hi - lo) // 2  # ama C#/C++/Java'ya geçince bu alışkanlık hayat kurtarır
+mid = (lo + hi)       // 2       # Python'da sorun yok: tam sayılar sınırsız büyür
+mid = lo + (hi - lo)  // 2  # ama C#/C++/Java'ya geçince bu alışkanlık hayat kurtarır
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const mid = Math.floor((lo + hi) / 2); // sayılar 2^53'e kadar güvenli
-const mid2 = (lo + hi) >>> 1;          // ✅ yaygın hile (işaretsiz kaydırma)
-const mid3 = (lo + hi) >> 1;           // ❌ 2^31'i aşınca negatif olur!
+const mid = Math.floor((lo + hi) / 2);  // sayılar 2^53'e kadar güvenli
+const mid2 = (lo + hi) >>> 1;           // ✅ yaygın hile (işaretsiz kaydırma)
+const mid3 = (lo + hi) >> 1;            // ❌ 2^31'i aşınca negatif olur!
 </script></code></pre>
     </div>
   </div>
@@ -876,7 +877,7 @@ def search(a, key):
 def lower_bound(a, key):      # a[i] >= key olan ilk i (yoksa len(a))
     lo, hi = 0, len(a)        # dikkat: hi = len(a), aralık [lo, hi)
     while lo < hi:
-        mid = lo + (hi - lo) // 2
+        mid = lo + (hi - lo)  // 2
         if a[mid] < key:
             lo = mid + 1      # mid ve solu çok küçük
         else:
@@ -888,14 +889,14 @@ def lower_bound(a, key):      # a[i] >= key olan ilk i (yoksa len(a))
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-static int LowerBound(int[] a, int key)   // a[i] >= key olan ilk i
+static int LowerBound(int[] a, int key)  // a[i] >= key olan ilk i
 {
-    int lo = 0, hi = a.Length;            // aralık [lo, hi)
+    int lo = 0, hi = a.Length;           // aralık [lo, hi)
     while (lo < hi)
     {
         int mid = lo + (hi - lo) / 2;
-        if (a[mid] < key) lo = mid + 1;   // mid ve solu çok küçük
-        else              hi = mid;       // mid aday, tut
+        if (a[mid] < key) lo = mid + 1;  // mid ve solu çok küçük
+        else              hi = mid;      // mid aday, tut
     }
     return lo;
 }
@@ -903,12 +904,12 @@ static int LowerBound(int[] a, int key)   // a[i] >= key olan ilk i
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function lowerBound(a, key) {         // a[i] >= key olan ilk i
-  let lo = 0, hi = a.length;          // aralık [lo, hi)
+function lowerBound(a, key) {        // a[i] >= key olan ilk i
+  let lo = 0, hi = a.length;         // aralık [lo, hi)
   while (lo < hi) {
     const mid = lo + Math.floor((hi - lo) / 2);
-    if (a[mid] < key) lo = mid + 1;   // mid ve solu çok küçük
-    else hi = mid;                    // mid aday, tut
+    if (a[mid] < key) lo = mid + 1;  // mid ve solu çok küçük
+    else hi = mid;                   // mid aday, tut
   }
   return lo;
 }
@@ -958,15 +959,15 @@ import random, bisect
 names   = ["Sıradan", "Nadir", "Epik", "Efsanevi"]
 weights = [60, 28, 10, 2]
 
-cum = []                        # kümülatif toplam: [60, 88, 98, 100]
+cum = []                             # kümülatif toplam: [60, 88, 98, 100]
 total = 0
 for w in weights:
     total += w
     cum.append(total)
 
 def roll():
-    r = random.random() * total          # 0 <= r < total
-    i = bisect.bisect_right(cum, r)      # r'den büyük ilk cum'un indeksi
+    r = random.random() * total      # 0 <= r < total
+    i = bisect.bisect_right(cum, r)  # r'den büyük ilk cum'un indeksi
     return names[i]
 </script></code></pre>
     </div>
@@ -980,8 +981,8 @@ for (int i = 0; i < weights.Length; i++) { total += weights[i]; cum[i] = total; 
 
 string Roll()
 {
-    float r = Random.Range(0f, total);      // Unity: 0 <= r < total
-    int lo = 0, hi = cum.Length - 1;        // r'den BÜYÜK ilk cum
+    float r = Random.Range(0f, total);  // Unity: 0 <= r < total
+    int lo = 0, hi = cum.Length - 1;    // r'den BÜYÜK ilk cum
     while (lo < hi)
     {
         int mid = lo + (hi - lo) / 2;
@@ -1000,8 +1001,8 @@ let total = 0;
 for (const w of weights) { total += w; cum.push(total); }
 
 function roll() {
-  const r = Math.random() * total;      // 0 <= r < total
-  let lo = 0, hi = cum.length - 1;      // r'den BÜYÜK ilk cum
+  const r = Math.random() * total;  // 0 <= r < total
+  let lo = 0, hi = cum.length - 1;  // r'den BÜYÜK ilk cum
   while (lo < hi) {
     const mid = lo + Math.floor((hi - lo) / 2);
     if (cum[mid] > r) hi = mid; else lo = mid + 1;
@@ -1033,16 +1034,16 @@ function roll() {
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import bisect
-times  = [0.0, 0.5, 1.2, 2.0]       # anahtar karelerin zamanları (SIRALI)
-values = [0.0, 2.0, 1.0, 3.0]       # o anlardaki değerler
+times  = [0.0, 0.5, 1.2, 2.0]  # anahtar karelerin zamanları (SIRALI)
+values = [0.0, 2.0, 1.0, 3.0]  # o anlardaki değerler
 
 def evaluate(t):
-    i = bisect.bisect_right(times, t)   # t'den büyük ilk zaman
-    if i == 0: return values[0]          # eğrinin başından önce
+    i = bisect.bisect_right(times, t)      # t'den büyük ilk zaman
+    if i == 0: return values[0]            # eğrinin başından önce
     if i == len(times): return values[-1]  # sonundan sonra
     t0, t1 = times[i - 1], times[i]
-    u = (t - t0) / (t1 - t0)             # 0..1 arası oran
-    return values[i - 1] + (values[i] - values[i - 1]) * u   # lerp
+    u = (t - t0) / (t1 - t0)                                # 0..1 arası oran
+    return values[i - 1] + (values[i] - values[i - 1]) * u  # lerp
 
 print(evaluate(0.8))                     # 1.571...
 </script></code></pre>
@@ -1050,12 +1051,12 @@ print(evaluate(0.8))                     # 1.571...
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Unity bunu sizin için yapar:
-public AnimationCurve jumpCurve;     // Inspector'da eğriyi çizin
+public AnimationCurve jumpCurve;      // Inspector'da eğriyi çizin
 
 void Update()
 {
-    float t = Time.time % 2f;              // 0..2 sn arası dönen zaman
-    float h = jumpCurve.Evaluate(t);       // içeride: ikili arama + enterpolasyon
+    float t = Time.time % 2f;         // 0..2 sn arası dönen zaman
+    float h = jumpCurve.Evaluate(t);  // içeride: ikili arama + enterpolasyon
     transform.position = new Vector3(0, h, 0);
 }
 // Mathf.Lerp(a, b, u) = a + (b - a) * u
@@ -1063,11 +1064,11 @@ void Update()
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const times  = [0.0, 0.5, 1.2, 2.0];    // anahtar kare zamanları (SIRALI)
+const times  = [0.0, 0.5, 1.2, 2.0];                          // anahtar kare zamanları (SIRALI)
 const values = [0.0, 2.0, 1.0, 3.0];
 
 function evaluate(t) {
-  let lo = 0, hi = times.length;          // t'den büyük ilk zaman
+  let lo = 0, hi = times.length;                              // t'den büyük ilk zaman
   while (lo < hi) {
     const mid = lo + Math.floor((hi - lo) / 2);
     if (times[mid] <= t) lo = mid + 1; else hi = mid;
@@ -1075,7 +1076,7 @@ function evaluate(t) {
   if (lo === 0) return values[0];
   if (lo === times.length) return values[values.length - 1];
   const u = (t - times[lo - 1]) / (times[lo] - times[lo - 1]);
-  return values[lo - 1] + (values[lo] - values[lo - 1]) * u;   // lerp
+  return values[lo - 1] + (values[lo] - values[lo - 1]) * u;  // lerp
 }
 </script></code></pre>
     </div>
@@ -1090,17 +1091,17 @@ function evaluate(t) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import bisect
 a = [10, 20, 30, 30, 40]
-bisect.bisect_left(a, 30)    # 2  → 30'dan büyük ya da eşit İLK yer (lower bound)
-bisect.bisect_right(a, 30)   # 4  → 30'dan BÜYÜK ilk yer
-bisect.insort(a, 25)         # sıralı yere ekle: [10, 20, 25, 30, 30, 40]
+bisect.bisect_left(a, 30)   # 2  → 30'dan büyük ya da eşit İLK yer (lower bound)
+bisect.bisect_right(a, 30)  # 4  → 30'dan BÜYÜK ilk yer
+bisect.insort(a, 25)        # sıralı yere ekle: [10, 20, 25, 30, 30, 40]
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 int[] a = { 10, 20, 30, 40 };
-int i = Array.BinarySearch(a, 30);   // 2
-int j = Array.BinarySearch(a, 25);   // -3  ← negatif: "yok"!
-int yer = ~j;                        // ~(-3) = 2  → 25 buraya eklenmeli
+int i = Array.BinarySearch(a, 30);  // 2
+int j = Array.BinarySearch(a, 25);  // -3  ← negatif: "yok"!
+int yer = ~j;                       // ~(-3) = 2  → 25 buraya eklenmeli
 // List<int> için: list.BinarySearch(30)
 </script></code></pre>
     </div>
@@ -1109,8 +1110,8 @@ int yer = ~j;                        // ~(-3) = 2  → 25 buraya eklenmeli
 // JavaScript'te hazır ikili arama YOK → kendiniz yazın
 // (önceki slaytlardaki binarySearch / lowerBound fonksiyonları)
 const a = [10, 20, 30, 40];
-a.indexOf(30);      // 2 ama bu SIRALI arama (N adım)!
-a.includes(30);     // true — yine sıralı arama
+a.indexOf(30);   // 2 ama bu SIRALI arama (N adım)!
+a.includes(30);  // true — yine sıralı arama
 </script></code></pre>
     </div>
   </div>
@@ -1182,18 +1183,18 @@ function search(a, key) {
 def first_true(lo, hi, cond, steps=20):
     """cond(lo) yanlış, cond(hi) doğru olsun.
        Koşulun doğru olmaya başladığı noktayı bul."""
-    for _ in range(steps):       # her adımda aralık yarıya iner
-        mid = (lo + hi) / 2      # ondalıklı: burada // DEĞİL /
+    for _ in range(steps):         # her adımda aralık yarıya iner
+        mid = (lo + hi) / 2        # ondalıklı: burada // DEĞİL /
         if cond(mid):
-            hi = mid             # sınır mid'de ya da solunda
+            hi = mid               # sınır mid'de ya da solunda
         else:
-            lo = mid             # sınır sağda
+            lo = mid               # sınır sağda
     return hi
 
-def touches(t):                  # t anında mermi duvara değmiş mi?
+def touches(t):                    # t anında mermi duvara değmiş mi?
     return x0 + v * t + r >= wall_x
 
-t_hit = first_true(3, 4, touches)    # kare 3 ile 4 arasında
+t_hit = first_true(3, 4, touches)  # kare 3 ile 4 arasında
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -1204,14 +1205,14 @@ static float FirstTrue(float lo, float hi, Func<float, bool> cond, int steps = 2
     for (int k = 0; k < steps; k++)
     {
         float mid = (lo + hi) / 2f;
-        if (cond(mid)) hi = mid;     // sınır mid'de ya da solunda
-        else           lo = mid;     // sınır sağda
+        if (cond(mid)) hi = mid;          // sınır mid'de ya da solunda
+        else           lo = mid;          // sınır sağda
     }
     return hi;
 }
 
 bool Touches(float t) { return x0 + v * t + r >= wallX; }
-float tHit = FirstTrue(3f, 4f, Touches);     // metodun ADINI veriyoruz
+float tHit = FirstTrue(3f, 4f, Touches);  // metodun ADINI veriyoruz
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -1219,14 +1220,14 @@ float tHit = FirstTrue(3f, 4f, Touches);     // metodun ADINI veriyoruz
 function firstTrue(lo, hi, cond, steps = 20) {
   for (let k = 0; k < steps; k++) {
     const mid = (lo + hi) / 2;
-    if (cond(mid)) hi = mid;     // sınır mid'de ya da solunda
-    else lo = mid;               // sınır sağda
+    if (cond(mid)) hi = mid;            // sınır mid'de ya da solunda
+    else lo = mid;                      // sınır sağda
   }
   return hi;
 }
 
 function touches(t) { return x0 + v * t + r >= wallX; }
-const tHit = firstTrue(3, 4, touches);       // fonksiyonun ADINI veriyoruz
+const tHit = firstTrue(3, 4, touches);  // fonksiyonun ADINI veriyoruz
 </script></code></pre>
     </div>
   </div>
@@ -1410,7 +1411,7 @@ const tHit = firstTrue(3, 4, touches);       // fonksiyonun ADINI veriyoruz
 <section data-sec="alıştırmalar">
   <h2>Alıştırmalar 🏋️</h2>
   <ol style="font-size:.86em">
-    <li>Kâğıt-kalem: <code>A C E H L M P R S X</code> dizisinde <b>H</b> ve <b>Z</b> için ikili aramanın iz tablosunu (lo, hi, mid) çıkarın.</li>
+    <li>Kâğıt-kalem: <code>A E I K M O P R S T U</code> dizisinde <b>I</b> ve <b>Z</b> için ikili aramanın iz tablosunu (lo, hi, mid) çıkarın.</li>
     <li>Kod laboratuvarında <b>upper bound</b>’u (key’den <b>büyük</b> ilk eleman) yazın. lower bound ile farkı nedir?</li>
     <li>“Bir sayının dizide kaç kez geçtiğini” lg N zamanda bulun. (İpucu: upper bound − lower bound.)</li>
     <li>p5.js’te bir loot sandığı yapın: ağırlıklar bir dizide, tıklayınca sandık açılsın ve çıkan eşya ekranda görünsün. 1000 kez açıp yüzdeleri yazdırın.</li>
@@ -1469,6 +1470,7 @@ const tHit = firstTrue(3, 4, touches);       // fonksiyonun ADINI veriyoruz
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/arama.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

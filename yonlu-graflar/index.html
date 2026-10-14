@@ -120,10 +120,10 @@ class Digraph:
         self.adj = [[] for v in range(V)]
 
     def add_edge(self, v, w):
-        self.adj[v].append(w)       # SADECE v → w
+        self.adj[v].append(w)  # SADECE v → w
         self.E += 1
 
-    def reverse(self):              # bütün oklar ters
+    def reverse(self):         # bütün oklar ters
         R = Digraph(self.V)
         for v in range(self.V):
             for w in self.adj[v]:
@@ -175,10 +175,11 @@ class Digraph {
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/dfsbfs" target="_blank" rel="noopener"><div class="lnk-t">🎞 DFS, BFS, topolojik sıralama</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Graf gezintilerini ve yığın/kuyruk içeriğini adım adım gösterir.</div></a><a class="lnk" href="https://visualgo.net/en/graphds" target="_blank" rel="noopener"><div class="lnk-t">🎞 Graf gösterimleri</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı grafı komşuluk matrisi, komşuluk listesi ve kenar listesi olarak yan yana gösterir; grafı kendiniz çizebilirsiniz.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/dfsbfs" target="_blank" rel="noopener"><div class="lnk-t">📊 DFS, BFS, topolojik sıralama</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Graf gezintilerini ve yığın/kuyruk içeriğini adım adım gösterir.</div></a><a class="lnk" href="https://visualgo.net/en/graphds" target="_blank" rel="noopener"><div class="lnk-t">📊 Graf gösterimleri</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı grafı komşuluk matrisi, komşuluk listesi ve kenar listesi olarak yan yana gösterir; grafı kendiniz çizebilirsiniz.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -306,19 +307,19 @@ class Digraph {
 <pre><code class="language-python" data-trim data-line-numbers="1-10|12-16"><script type="text/template">
 def topological_order(G):
     marked = [False] * G.V
-    post = []                           # sonsıra
+    post = []           # sonsıra
 
     def dfs(v):
         marked[v] = True
         for w in G.adj[v]:
             if not marked[w]:
                 dfs(w)
-        post.append(v)                  # v BİTTİ
+        post.append(v)  # v BİTTİ
 
     for v in range(G.V):
         if not marked[v]:
             dfs(v)
-    post.reverse()                      # ters sonsıra
+    post.reverse()      # ters sonsıra
     return post
 
 order = topological_order(tech_tree)
@@ -333,12 +334,12 @@ static List<int> TopologicalOrder(Digraph G)
     var marked = new bool[G.V];
     var post = new List<int>();
 
-    void Dfs(int v)                          // yerel fonksiyon
+    void Dfs(int v)   // yerel fonksiyon
     {
         marked[v] = true;
         foreach (int w in G.Adj[v])
             if (!marked[w]) Dfs(w);
-        post.Add(v);                         // v BİTTİ
+        post.Add(v);  // v BİTTİ
     }
 
     for (int v = 0; v < G.V; v++)
@@ -356,10 +357,10 @@ function topologicalOrder(G) {
   function dfs(v) {
     marked[v] = true;
     for (const w of G.adj[v]) if (!marked[w]) dfs(w);
-    post.push(v);                     // v BİTTİ
+    post.push(v);         // v BİTTİ
   }
   for (let v = 0; v < G.V; v++) if (!marked[v]) dfs(v);
-  return post.reverse();              // ters sonsıra
+  return post.reverse();  // ters sonsıra
 }
 </script></code></pre>
     </div>
@@ -429,13 +430,13 @@ def has_cycle(G):
 
     def dfs(v):
         marked[v] = True
-        on_stack[v] = True          # gri
+        on_stack[v] = True   # gri
         for w in G.adj[v]:
-            if on_stack[w]:         # yığındakine geri ok
+            if on_stack[w]:  # yığındakine geri ok
                 return True
             if not marked[w] and dfs(w):
                 return True
-        on_stack[v] = False         # siyah: bitti
+        on_stack[v] = False  # siyah: bitti
         return False
 
     for v in range(G.V):
@@ -453,13 +454,13 @@ static bool HasCycle(Digraph G)
 
     bool Dfs(int v)
     {
-        marked[v] = onStack[v] = true;          // gri
+        marked[v] = onStack[v] = true;    // gri
         foreach (int w in G.Adj[v])
         {
-            if (onStack[w]) return true;        // geri ok
+            if (onStack[w]) return true;  // geri ok
             if (!marked[w] && Dfs(w)) return true;
         }
-        onStack[v] = false;                     // siyah
+        onStack[v] = false;               // siyah
         return false;
     }
 
@@ -475,12 +476,12 @@ function hasCycle(G) {
   const marked = new Array(G.V).fill(false);
   const onStack = new Array(G.V).fill(false);
   function dfs(v) {
-    marked[v] = onStack[v] = true;          // gri
+    marked[v] = onStack[v] = true;  // gri
     for (const w of G.adj[v]) {
-      if (onStack[w]) return true;          // geri ok
+      if (onStack[w]) return true;  // geri ok
       if (!marked[w] && dfs(w)) return true;
     }
-    onStack[v] = false;                     // siyah
+    onStack[v] = false;             // siyah
     return false;
   }
   for (let v = 0; v < G.V; v++)
@@ -733,6 +734,7 @@ function topoSort(adj) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/graf.js"></script>
 <script src="../ortak/yonlu.js"></script>
 <script src="demos.js"></script>

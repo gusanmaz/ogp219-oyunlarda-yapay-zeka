@@ -119,13 +119,13 @@
   <div class="tabs short">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-INF = float("inf")                   # sonsuz: "henüz yol yok"
+INF = float("inf")                        # sonsuz: "henüz yol yok"
 
 def relax(v, w, weight, dist_to, edge_to):
-    if dist_to[v] + weight < dist_to[w]:   # v üzerinden daha kısa mı?
-        dist_to[w] = dist_to[v] + weight   # yeni en iyi uzaklık
-        edge_to[w] = v                     # oraya v'den geldik
-        return True                        # değişti
+    if dist_to[v] + weight < dist_to[w]:  # v üzerinden daha kısa mı?
+        dist_to[w] = dist_to[v] + weight  # yeni en iyi uzaklık
+        edge_to[w] = v                    # oraya v'den geldik
+        return True                       # değişti
     return False
 </script></code></pre>
     </div>
@@ -163,10 +163,11 @@ function relax(v, w, weight, distTo, edgeTo) {
   <p class="mini">🎒 Sonsuz (∞) neden işe yarar? ∞ + 5 = ∞ ve her sayı ∞’dan küçük → ilk bulunan yol her zaman kabul edilir. Tam sayı dizilerde ∞ yoksa çok büyük bir sayı (ör. <code>int.MaxValue / 2</code> — taşmasın diye yarısı!) kullanılır.</p>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sssp" target="_blank" rel="noopener"><div class="lnk-t">🎞 En kısa yollar</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Bellman–Ford ve Dijkstra; negatif kenarda Dijkstra’nın neden yanıldığını kendiniz deneyin.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener"><div class="lnk-t">🔗 PathFinding.js</div><div class="lnk-s">Xueqiao Xu</div><div class="lnk-w">A*, Dijkstra, BFS ve Jump Point Search’ü aynı ızgarada yarıştırın; duvarları fareyle çizin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sssp" target="_blank" rel="noopener"><div class="lnk-t">📊 En kısa yollar</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Bellman–Ford ve Dijkstra; negatif kenarda Dijkstra’nın neden yanıldığını kendiniz deneyin.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener"><div class="lnk-t">🔗 PathFinding.js</div><div class="lnk-s">Xueqiao Xu</div><div class="lnk-w">A*, Dijkstra, BFS ve Jump Point Search’ü aynı ızgarada yarıştırın; duvarları fareyle çizin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -217,17 +218,17 @@ function relax(v, w, weight, distTo, edgeTo) {
 <pre><code class="language-python" data-trim data-line-numbers="1-7|8-11|12-16"><script type="text/template">
 import heapq
 
-def dijkstra(G, s):                      # G.adj[v] = [(w, ağırlık), ...]
+def dijkstra(G, s):                     # G.adj[v] = [(w, ağırlık), ...]
     dist = [float("inf")] * G.V
     edge_to = [-1] * G.V
     dist[s] = 0
-    pq = [(0, s)]                        # (uzaklık, düğüm)
+    pq = [(0, s)]                       # (uzaklık, düğüm)
     while pq:
-        d, v = heapq.heappop(pq)         # en yakın düğüm
+        d, v = heapq.heappop(pq)        # en yakın düğüm
         if d > dist[v]:
-            continue                     # bayat kayıt: daha iyisi zaten bulundu
+            continue                    # bayat kayıt: daha iyisi zaten bulundu
         for w, wt in G.adj[v]:
-            if dist[v] + wt < dist[w]:   # gevşet
+            if dist[v] + wt < dist[w]:  # gevşet
                 dist[w] = dist[v] + wt
                 edge_to[w] = v
                 heapq.heappush(pq, (dist[w], w))
@@ -242,14 +243,14 @@ static double[] Dijkstra(List<(int w, double wt)>[] adj, int s, int[] edgeTo)
     var dist = new double[V];
     Array.Fill(dist, double.PositiveInfinity);
     dist[s] = 0;
-    var pq = new PriorityQueue<int, double>();      // eleman: düğüm, öncelik: uzaklık
+    var pq = new PriorityQueue<int, double>();  // eleman: düğüm, öncelik: uzaklık
     pq.Enqueue(s, 0);
     while (pq.TryDequeue(out int v, out double d))
     {
-        if (d > dist[v]) continue;                  // bayat kayıt
+        if (d > dist[v]) continue;              // bayat kayıt
         foreach (var (w, wt) in adj[v])
         {
-            if (dist[v] + wt < dist[w])             // gevşet
+            if (dist[v] + wt < dist[w])         // gevşet
             {
                 dist[w] = dist[v] + wt;
                 edgeTo[w] = v;
@@ -264,7 +265,7 @@ static double[] Dijkstra(List<(int w, double wt)>[] adj, int s, int[] edgeTo)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // MinHeap: Öncelik Kuyrukları sunumundaki ikili yığın, [öncelik, değer]
-function dijkstra(adj, s) {                 // adj[v] = [[w, ağırlık], ...]
+function dijkstra(adj, s) {          // adj[v] = [[w, ağırlık], ...]
   const V = adj.length;
   const dist = new Array(V).fill(Infinity);
   const edgeTo = new Array(V).fill(-1);
@@ -272,10 +273,10 @@ function dijkstra(adj, s) {                 // adj[v] = [[w, ağırlık], ...]
   const pq = new MinHeap();
   pq.push([0, s]);
   while (pq.size > 0) {
-    const [d, v] = pq.pop();                // en yakın düğüm
-    if (d > dist[v]) continue;              // bayat kayıt
+    const [d, v] = pq.pop();         // en yakın düğüm
+    if (d > dist[v]) continue;       // bayat kayıt
     for (const [w, wt] of adj[v]) {
-      if (dist[v] + wt < dist[w]) {         // gevşet
+      if (dist[v] + wt < dist[w]) {  // gevşet
         dist[w] = dist[v] + wt;
         edgeTo[w] = v;
         pq.push([dist[w], w]);
@@ -405,11 +406,11 @@ function dijkstra(adj, s) {                 // adj[v] = [[w, ağırlık], ...]
   <div class="tabs short">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def acyclic_sp(G, s, order):        # order: topolojik sıra
+def acyclic_sp(G, s, order):  # order: topolojik sıra
     dist = [float("inf")] * G.V
     edge_to = [-1] * G.V
     dist[s] = 0
-    for v in order:                 # sırayla, PQ'suz
+    for v in order:           # sırayla, PQ'suz
         for w, wt in G.adj[v]:
             if dist[v] + wt < dist[w]:
                 dist[w] = dist[v] + wt
@@ -514,16 +515,16 @@ function acyclicSP(adj, s, order) {         // order: topolojik sıra
   <div class="tabs short">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def bellman_ford(V, edges, s):          # edges: (v, w, ağırlık)
+def bellman_ford(V, edges, s):  # edges: (v, w, ağırlık)
     dist = [float("inf")] * V
     dist[s] = 0
-    for _ in range(V - 1):              # V-1 tur
+    for _ in range(V - 1):      # V-1 tur
         for v, w, wt in edges:
             if dist[v] + wt < dist[w]:
                 dist[w] = dist[v] + wt
-    for v, w, wt in edges:              # V. tur: hâlâ iyileşen var mı?
+    for v, w, wt in edges:      # V. tur: hâlâ iyileşen var mı?
         if dist[v] + wt < dist[w]:
-            return None                 # NEGATİF DÖNGÜ!
+            return None         # NEGATİF DÖNGÜ!
     return dist
 </script></code></pre>
     </div>
@@ -545,14 +546,14 @@ static double[] BellmanFord(int V, List<(int v, int w, double wt)> edges, int s)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function bellmanFord(V, edges, s) {         // edges: [v, w, ağırlık]
+function bellmanFord(V, edges, s) {           // edges: [v, w, ağırlık]
   const dist = new Array(V).fill(Infinity);
   dist[s] = 0;
   for (let pass = 0; pass < V - 1; pass++)
     for (const [v, w, wt] of edges)
       if (dist[v] + wt < dist[w]) dist[w] = dist[v] + wt;
   for (const [v, w, wt] of edges)
-    if (dist[v] + wt < dist[w]) return null;   // negatif döngü
+    if (dist[v] + wt < dist[w]) return null;  // negatif döngü
   return dist;
 }
 </script></code></pre>
@@ -616,6 +617,15 @@ function bellmanFord(V, edges, s) {         // edges: [v, w, ağırlık]
 <section data-sec="negatif">
   <h2>💰 Oyun ekonomisinde arbitraj = negatif döngü</h2>
   <div class="demo" data-demo="arbitrage"></div>
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?">
+    <ul>
+      <li><b>Düğümler</b> dört para birimi; <b>okların üstündeki sayı</b> kur: “okun başındaki paradan 1 verirsen ucundakinden bu kadar alırsın”.</li>
+      <li>Algoritma kurlarla değil <b>−ln(kur)</b> ağırlıklarıyla çalışır; sağdaki tabloda <code>distTo[]</code> bu ağırlıkların toplamıdır (Altın’dan o paraya en “ucuz” takas zinciri). Mor rozetler aynı sayılar.</li>
+      <li><b>“İleri ▶|”</b> ile adım adım: mavi kenar az önce gevşedi. Üç tur (V − 1 = 3) sonunda tablo oturmuş olmalıydı.</li>
+      <li><b>4. tur</b> kontrol turudur: bir kenar <b>hâlâ</b> gevşiyor → kırmızı döngü belirir: Altın → Gümüş → Mücevher → Altın, çarpım 1,075.</li>
+      <li>Soru: tüccarlardan birinin kurunu değiştirerek açığı kapatın. Mücevher → Altın kuru en çok kaç olabilir? (10 · 0,25 · k ≤ 1 → k ≤ 0,40.)</li>
+    </ul>
+  </div><!--/dh-->
   <p class="mini">NPC tüccarlarının takas oranları. Bir döngüde kurların çarpımı 1’den büyükse oyuncu o turu tekrar tekrar atıp bedava altın basar. Bellman–Ford’un kontrol turu bu döngüyü bulur; siz de yayımlamadan önce kurları düzeltirsiniz.</p>
 </section>
 
@@ -825,6 +835,7 @@ def dijkstra(V, adj, s):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/graf.js"></script>
 <script src="../ortak/yonlu.js"></script>
 <script src="../ortak/sp.js"></script>

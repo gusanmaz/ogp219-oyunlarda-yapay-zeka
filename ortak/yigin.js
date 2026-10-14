@@ -94,7 +94,7 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Bekleyenleri tut: ', select({ stack: '📚 Yığın (stack) → DFS', queue: '🎟️ Kuyruk (queue) → BFS' }, mode, v => { mode = v; plan(); fp.play(); })),
-      btn('🗺 Yeni harita', () => { makeMap(); plan(); fp.play(); }), el('span', { class: 'mini' }, 'Haritaya tıklayarak kovayı taşıyın')),
+      btn('🗺️ Yeni harita', () => { makeMap(); plan(); fp.play(); }), el('span', { class: 'mini' }, 'Haritaya tıklayarak kovayı taşıyın')),
     c, SL.transport(fp, { min: 2, max: 400, unit: 'hücre/sn' }), stat, note);
     SL.onTheme(() => fp.render());
     makeMap(); plan();

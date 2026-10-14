@@ -864,9 +864,16 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 /* okunurluk: kutu ve paneller içinde ferah satır aralığı */
 .box { line-height: 1.42; } .box li { margin: .22em 0; } .box p { margin: .35em 0; }
 /* yardım düğmeleri demonun sağ üst köşesine biner; yer kaplamaz */
-.dh-bar { height: 0; margin: 0; } .dh-bar > .dh-btn:first-child { margin-left: auto; }
-.dh-bar { justify-content: flex-end; align-items: flex-start; } .dh-bar .dh-btn { position: relative; top: 2px; }
+.dh-bar { margin: 0 0 6px; justify-content: flex-end; align-items: center; }
+.dh-bar.in-tr { margin: 0 0 0 auto; gap: 6px; } .dh-bar.in-tr .dh-panel { top: auto; bottom: 46px; }
 
 .tight .box { line-height: 1.28; } .tight .box li { margin: .08em 0; } .tight .box p { margin: .2em 0; }
 
 .rad { white-space: nowrap; } .rad > span { display: inline-block; border-top: .07em solid currentColor; line-height: 1.02; padding: .06em .1em 0 .08em; margin-left: -.04em; }
+/* demoların altındaki satırlar arasında nefes payı (oynatma çubuğu, açıklama, sayaçlar) */
+.sv-transport { margin: 10px 0 8px; } .sv-note { margin: 8px 0 4px; line-height: 1.42; } .sv-counters { margin: 8px 0 6px; gap: 10px; }
+.demo + p.mini, .demo + .legend-bar, .sortviz + .legend-bar, .bstviz + p.mini { margin-top: 12px; }
+.sv-controls { margin-bottom: 10px; }
+.dh-bar.in-tr .dh-panel { max-height: 400px; z-index: 40; }
+
+.dh-bar.in-h2 { position: absolute; top: 18px; right: 66px; margin: 0; z-index: 30; } .dh-bar.in-h2 .dh-panel { top: 40px; }

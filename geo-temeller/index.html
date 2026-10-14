@@ -107,6 +107,7 @@
 <section data-sec="yön">
   <h2>Canlı: yön testi 🧭</h2>
 <div class="demo" data-demo="orient"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> siyah ok A→B; kesikli çizgi o okun sonsuz uzantısı. Düzlem ikiye ayrılıyor: mavi yarı (çapraz &gt; 0) ve turuncu yarı (çapraz &lt; 0). Altta formül, sayılar yerine konmuş hâliyle.</li><li>C’yi kesikli çizginin üzerinden karşıya geçirin: alttaki sayının <b>işareti</b> o anda değişir.</li><li>C’yi çizgiye <b>paralel</b> kaydırın: sayı hiç değişmiyor (az önceki tablonun son satırları).</li><li>C’yi çizgiden uzaklaştırın: sayı büyür. Sayı, “ne kadar yanda” sorusunun da kaba bir ölçüsü.</li><li>A ile B’nin yerini değiştirin (B’yi A’nın soluna sürükleyin): renkler yer değiştirir. Yön testi <b>yöne</b> bağlıdır: A→B ile B→A zıt cevap verir.</li></ol></div><!--/dh-->
   <aside class="notes">C’yi doğrunun üzerinden geçirin: sayı işaret değiştirir. C’yi doğruya paralel kaydırın: sayı değişmez (alan aynı).</aside>
 </section>
 
@@ -117,7 +118,7 @@
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.jeffreythompson.org/collision-detection/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Collision Detection</div><div class="lnk-s">Jeffrey Thompson</div><div class="lnk-w">Nokta, daire, dikdörtgen, çizgi ve çokgen çarpışmalarının p5.js ile adım adım anlatımı.</div></a><a class="lnk" href="https://visualgo.net/en/convexhull" target="_blank" rel="noopener"><div class="lnk-t">🎞 Dışbükey zarf</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi noktalarınızı tıklayıp zarf algoritmalarının nasıl ilerlediğini izleyin.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.jeffreythompson.org/collision-detection/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Collision Detection</div><div class="lnk-s">Jeffrey Thompson</div><div class="lnk-w">Nokta, daire, dikdörtgen, çizgi ve çokgen çarpışmalarının p5.js ile adım adım anlatımı.</div></a><a class="lnk" href="https://visualgo.net/en/convexhull" target="_blank" rel="noopener"><div class="lnk-t">📊 Dışbükey zarf</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi noktalarınızı tıklayıp zarf algoritmalarının nasıl ilerlediğini izleyin.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -129,13 +130,13 @@
 // Bu sunumda nokta = {x, y} nesnesi.  (p5.js'te createVector(x, y) de aynı alanları taşır.)
 const A = { x: 1, y: 1 }, B = { x: 5, y: 3 }, C = { x: 3, y: 5 };
 
-function cross(a, b, c) {                       // a → b yönüne göre c nerede?
+function cross(a, b, c) {            // a → b yönüne göre c nerede?
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 
-print(cross(A, B, C));                          // 12  → pozitif
-print(cross(A, B, { x: 4, y: 1 }));             // -6  → negatif
-print(cross(A, B, { x: 7, y: 4 }));             // 0   → aynı doğru üzerinde
+print(cross(A, B, C));               // 12  → pozitif
+print(cross(A, B, { x: 4, y: 1 }));  // -6  → negatif
+print(cross(A, B, { x: 7, y: 4 }));  // 0   → aynı doğru üzerinde
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -143,12 +144,12 @@ print(cross(A, B, { x: 7, y: 4 }));             // 0   → aynı doğru üzerind
 # Python'da nokta = (x, y) demeti
 A, B, C = (1, 1), (5, 3), (3, 5)
 
-def cross(a, b, c):                       # a → b yönüne göre c nerede?
+def cross(a, b, c):         # a → b yönüne göre c nerede?
     return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
 
-print(cross(A, B, C))                     # 12
-print(cross(A, B, (4, 1)))                # -6
-print(cross(A, B, (7, 4)))                # 0
+print(cross(A, B, C))       # 12
+print(cross(A, B, (4, 1)))  # -6
+print(cross(A, B, (7, 4)))  # 0
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -194,15 +195,15 @@ int P_PointOnLineSide (fixed_t x, fixed_t y, line_t* line)
 {
     fixed_t dx, dy, left, right;
 
-    dx = (x - line->v1->x);                       // C − A  (x bileşeni)
-    dy = (y - line->v1->y);                       // C − A  (y bileşeni)
+    dx = (x - line->v1->x);                        // C − A  (x bileşeni)
+    dy = (y - line->v1->y);                        // C − A  (y bileşeni)
 
-    left  = FixedMul ( line->dy>>FRACBITS , dx ); // (B − A).y · (C − A).x
-    right = FixedMul ( dy , line->dx>>FRACBITS ); // (C − A).y · (B − A).x
+    left  = FixedMul ( line->dy>>FRACBITS , dx );  // (B − A).y · (C − A).x
+    right = FixedMul ( dy , line->dx>>FRACBITS );  // (C − A).y · (B − A).x
 
     if (right < left)
-        return 0;        // ön taraf
-    return 1;            // arka taraf
+        return 0;                                  // ön taraf
+    return 1;                                      // arka taraf
 }
 </script></code></pre>
     </div>
@@ -222,8 +223,8 @@ function ucgende(p, a, b, c) {
   const d1 = cross(a, b, p), d2 = cross(b, c, p), d3 = cross(c, a, p);
   const eksiVar = d1 < 0 || d2 < 0 || d3 < 0;
   const artiVar = d1 > 0 || d2 > 0 || d3 > 0;
-  return !(eksiVar && artiVar);                 // hem eksi hem artı varsa: bir kenarın dışında
-}                                               // (köşelerin sırası saat yönü de olsa tersi de olsa çalışır)
+  return !(eksiVar && artiVar);  // hem eksi hem artı varsa: bir kenarın dışında
+}                                // (köşelerin sırası saat yönü de olsa tersi de olsa çalışır)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C · Super Mario 64">
@@ -237,10 +238,10 @@ if ((z1 - z) * (x2 - x1) - (x1 - x) * (z2 - z1) < 0) {
     continue;
 }
 x3 = surf->vertex3[0];  z3 = surf->vertex3[2];
-if ((z2 - z) * (x3 - x2) - (x2 - x) * (z3 - z2) < 0) {     // 2. kenar
+if ((z2 - z) * (x3 - x2) - (x2 - x) * (z3 - z2) < 0) {  // 2. kenar
     continue;
 }
-if ((z3 - z) * (x1 - x3) - (x3 - x) * (z1 - z3) < 0) {     // 3. kenar
+if ((z3 - z) * (x1 - x3) - (x3 - x) * (z1 - z3) < 0) {  // 3. kenar
     continue;
 }
 // üç testi de geçti: Mario bu üçgenin üstünde → zemin yüksekliğini bu üçgenden hesapla
@@ -304,6 +305,7 @@ if ((z3 - z) * (x1 - x3) - (x3 - x) * (z1 - z3) < 0) {     // 3. kenar
 <section data-sec="kesişim">
   <h2>Canlı: kesişim testi ✂️</h2>
 <div class="demo" data-demo="segint"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> mavi AB merminin bir karedeki yolu, sarı CD duvar. Sağdaki tabloda dört yön testinin işareti (+, −, 0) ve altında iki koşul.</li><li>B’yi duvarın öbür tarafına geçirin: ikinci koşul da ✔ olur ve kırmızı halka belirir.</li><li>AB’yi, duvarın <b>hizasında ama ucundan ötede</b> tutun: “C ve D farklı tarafta” ✔ ama “A ve B farklı tarafta” ✘. Doğrular kesişir, <b>parçalar</b> kesişmez.</li><li>“⇄ paralel yap”: işaretler çift çift aynı; kesişim yok.</li><li>Bir ucu öbür parçanın tam üstüne getirmeye çalışın: işaret 0 olur. İşte özel durumların ve eşik payının gerektiği an.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="kesişim">
@@ -320,9 +322,9 @@ function onSegment(a, b, p) {                   // p zaten a–b DOĞRUSU üzeri
          min(a.y, b.y) <= p.y && p.y <= max(a.y, b.y);
 }
 
-function segmentsIntersect(a, b, c, d) {        // ab ve cd parçaları kesişiyor mu?
-  const d1 = cross(a, b, c), d2 = cross(a, b, d);     // c ve d, ab'nin hangi tarafında?
-  const d3 = cross(c, d, a), d4 = cross(c, d, b);     // a ve b, cd'nin hangi tarafında?
+function segmentsIntersect(a, b, c, d) {           // ab ve cd parçaları kesişiyor mu?
+  const d1 = cross(a, b, c), d2 = cross(a, b, d);  // c ve d, ab'nin hangi tarafında?
+  const d3 = cross(c, d, a), d4 = cross(c, d, b);  // a ve b, cd'nin hangi tarafında?
 
   if (d1 * d2 < 0 && d3 * d4 < 0) return true;        // GENEL DURUM: ikisi de öbürünü ikiye ayırıyor
 
@@ -460,9 +462,9 @@ fixed_t P_InterceptVector (divline_t* v2, divline_t* v1)
         for (scan = intercepts ; scan < intercept_p ; scan++)
             if (scan->frac < dist) { dist = scan->frac; in = scan; }
 
-        if (dist > maxfrac) return true;      // menzilin ötesi: bitti
-        if ( !func (in) )   return false;     // bu engel mermiyi durdurdu: daha ileri bakma
-        in->frac = MAXINT;                    // işlendi; sıradaki en yakına geç
+        if (dist > maxfrac) return true;   // menzilin ötesi: bitti
+        if ( !func (in) )   return false;  // bu engel mermiyi durdurdu: daha ileri bakma
+        in->frac = MAXINT;                 // işlendi; sıradaki en yakına geç
     }
 </script></code></pre>
     </div>
@@ -474,6 +476,7 @@ fixed_t P_InterceptVector (divline_t* v2, divline_t* v1)
 <section data-sec="kesişim">
   <h2>Canlı: DOOM usulü isabet 🔫</h2>
 <div class="demo" data-demo="raysort"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> yeşil nokta oyuncu; sarı çizgi merminin gittiği yer; kesikli gri çizgi menzilin geri kalanı. Koyu çubuklar duvar, mor daireler canavar.</li><li>Yol üzerindeki her kesişim <b>numaralı bir nokta</b>: 1 en yakın. Sağ üstteki liste aynı kesişimleri <code>t</code> değerleriyle, küçükten büyüğe gösterir.</li><li>İlk engelde “← DURDU” yazar; arkasındakiler “(ulaşmadı)”. Canavarın önüne duvar gelecek biçimde nişan alın: canavar vurulmaz.</li><li>Aynı canavarı duvarın yanından görecek biçimde nişanı kaydırın: şimdi listede 1 numara o.</li><li>“delici mermi”yi açın: canavarlardan geçer, ilk duvarda durur. Listede kaç “✔ vuruldu” var? (Tek fark: <code>func</code> canavarda “devam et” diyor.)</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="kesişim">
@@ -548,6 +551,7 @@ def segments_intersect(a, b, c, d):
 <section data-sec="içinde">
   <h2>Canlı: içeride mi, dışarıda mı? 🎯</h2>
 <div class="demo" data-demo="pip"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri nokta sizsiniz (fareyi izler). Mor kesikli çizgi sağa giden ışın; kırmızı numaralı noktalar kenarlarla kesişimleri. Altta sayım ve sonuç; içerideyken şekil yeşile döner.</li><li>Fareyi soldan sağa yavaşça geçirin: sayı 4 → 3 → 2 → 1 → 0 diye düşer; tek sayılarda yeşil.</li><li>Girintinin (şeklin sol ortasındaki çentik) içine girin: şeklin “kutusunun” içindesiniz ama dışarıdasınız.</li><li>Tıklayıp noktayı sabitleyin, sonra bir köşeyi sürükleyip ışının üstünden geçirin: kesişim sayısı 2 artar ya da azalır, sonuç değişmez (köşe kuralı!).</li><li>Noktayı bir köşeyle <b>tam aynı yüksekliğe</b> getirmeye çalışın. Sayım bozuluyor mu? (Bozulmamalı.)</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="içinde">
@@ -563,8 +567,8 @@ def segments_intersect(a, b, c, d):
 function inside(p, poly) {
   let ic = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const a = poly[i], b = poly[j];                       // a–b kenarı (j hep i'nin bir gerisinde)
-    const arasinda = (a.y > p.y) !== (b.y > p.y);         // 1) p.y, iki ucun ARASINDA mı?
+    const a = poly[i], b = poly[j];                // a–b kenarı (j hep i'nin bir gerisinde)
+    const arasinda = (a.y > p.y) !== (b.y > p.y);  // 1) p.y, iki ucun ARASINDA mı?
     if (arasinda) {
       const kesisimX = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);   // kenar, p.y yüksekliğinde nerede?
       if (p.x < kesisimX) ic = !ic;                       // 2) kesişim p'nin SAĞINDA mı? → iç ↔ dış
@@ -580,8 +584,8 @@ def inside(p, poly):
     ic = False
     n = len(poly)
     for i in range(n):
-        a, b = poly[i], poly[i - 1]                 # poly[-1] son köşedir: ilk kenar son → ilk
-        if (a[1] > p[1]) != (b[1] > p[1]):          # p'nin y'si iki ucun arasında
+        a, b = poly[i], poly[i - 1]         # poly[-1] son köşedir: ilk kenar son → ilk
+        if (a[1] > p[1]) != (b[1] > p[1]):  # p'nin y'si iki ucun arasında
             kesisim_x = a[0] + (p[1] - a[1]) * (b[0] - a[0]) / (b[1] - a[1])
             if p[0] < kesisim_x:
                 ic = not ic
@@ -648,16 +652,16 @@ function inside(p, poly) {
 <div>  <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function polygonArea(poly) {                    // ayakkabı bağı formülü
+function polygonArea(poly) {                             // ayakkabı bağı formülü
   let s = 0;
   for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];   // % ile son köşeden ilk köşeye dön
-    s += a.x * b.y - b.x * a.y;                 // her kenarın "çaprazı"
+    const a = poly[i], b = poly[(i + 1) % poly.length];  // % ile son köşeden ilk köşeye dön
+    s += a.x * b.y - b.x * a.y;                          // her kenarın "çaprazı"
   }
-  return abs(s) / 2;                            // s'nin İŞARETİ = köşelerin dönüş yönü
+  return abs(s) / 2;                                     // s'nin İŞARETİ = köşelerin dönüş yönü
 }
 
-function saatYonundeMi(poly) {                  // ekranda (y aşağı): toplam pozitif → saat yönü
+function saatYonundeMi(poly) {                           // ekranda (y aşağı): toplam pozitif → saat yönü
   let s = 0;
   for (let i = 0; i < poly.length; i++) { const a = poly[i], b = poly[(i + 1) % poly.length]; s += a.x * b.y - b.x * a.y; }
   return s > 0;
@@ -747,6 +751,7 @@ function polygonArea(pts) {
 <section data-sec="zarf">
   <h2>Canlı: zarfı adım adım kur 🪢</h2>
 <div class="demo" data-demo="hull"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri noktalar girdi; üstlerindeki sayı x’e göre sıra numarası. Sarı: şu an bakılan nokta. Mavi çizgi: yığındaki zincir. Kırmızı: atılacak nokta. Yeşil: biten 1. tur zinciri.</li><li>“1 adım ▶” ile ilerleyin ve alttaki cümleyi okuyun: her adım ya “yığına koy” ya “yığından at”. “◀” ile geri gelebilirsiniz.</li><li>Bir noktanın önce yığına girip birkaç adım sonra <b>atıldığını</b> bulun; art arda iki atışın olduğu bir an yakalayın (az önceki tablodaki P5 gibi).</li><li>“⏭ sonuç”tan sonra şeklin içine tıklayıp nokta ekleyin: zarf değişmez. Dışına tıklayın: zarf o noktaya doğru genişler, bazı eski köşeler içeride kalır.</li><li>Nokta sayısını 40 yapın: zarfın köşe sayısı pek artmıyor. Rastgele noktalarda zarf, nokta sayısından çok daha küçüktür.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="zarf">
@@ -967,6 +972,7 @@ function draw() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

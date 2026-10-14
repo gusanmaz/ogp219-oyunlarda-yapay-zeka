@@ -149,6 +149,26 @@
 <section data-sec="canlı örnek">
   <h2>Canlı: gizlilik mini oyunu 🥷</h2>
   <div class="demo" data-demo="stealth"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.86em">
+      <li><b>Yol (Y8)</b>: haritaya tıklayın; yeşil çizgi A* yolu. Muhafızların kesikli çizgileri de A*.</li>
+      <li><b>Algılama + farkındalık (Y11)</b>: bir muhafızın konisine girin: çubuk yeşil → sarı (incele) → kırmızı (kovala). Uzaktan görünmek daha yavaş doldurur.</li>
+      <li><b>Hafıza / kara tahta</b>: görüş alanından çıkın: muhafız “son görülen yer”e (çarpı) gider, etrafına bakar, 3 sn sonra vazgeçer. “Hafıza”yı kapatın: görüş kesildiği an unutur. Hangisi daha inandırıcı?</li>
+      <li><b>İşitme</b>: altın toplamak ses dalgası çıkarır; yakındaki muhafız oraya gelir. İşitmeyi kapatıp karşılaştırın. <b>X tuşu</b> ile farenin olduğu yere taş atın (3 hak): muhafızı bilerek başka yere çekip arkasından geçin.</li>
+      <li><b>Yönetmen (Y17)</b>: her yakalanışta muhafızların görüşü kısalır; uzun süre yakalanmazsanız yavaşça uzar. Sağ panelde günlük.</li>
+      <li><b>Performans (Y18)</b>: sağ panelde YZ’nin kare başına süresi ve A* çağrı sayısı. Kovalama sırasında çağrı sayısı nasıl artıyor?</li>
+    </ol>
+  </div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?">
+    <ol style="font-size:.9em">
+      <li><b>Siz</b> yeşil topsunuz. <b>Tıklayın:</b> oraya A* ile yürür (yeşil çizgi). Amaç: 5 sarı altını toplayıp sağ alttaki ÇIKIŞ’a varmak.</li>
+      <li><b>X tuşu:</b> farenin durduğu yere taş atar (3 hak). Ses halkasının içindeki muhafız oraya gidip 3 saniye bakınır: dikkat dağıtma. Altın toplamak da ses çıkarır!</li>
+      <li><b>Muhafızın rengi = durumu:</b> mavi devriye, sarı incele, kırmızı kovala. Üstündeki küçük çubuk <b>farkındalık</b>: koninin içinde kaldıkça dolar; 0,4’te şüphelenir, 1’de kovalar.</li>
+      <li><b>Kesikli çizgi</b> muhafızın A* yolu; <b>çarpı</b> kara tahtadaki “son görülen/duyulan yer”. Alt satırda üç muhafızın kara tahtası yazıyla da görünür.</li>
+      <li><b>Sağ panel:</b> altın, taş, yakalanma, muhafız görüş menzili (yönetmen ayarlar), YZ’nin kare başına süresi, toplam A* çağrısı.</li>
+      <li>Üstteki kutucuklar hata ayıklama katmanları ve sistemleri açıp kapatır. Ses açık: yakalanınca ve fark edilince duyarsınız.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="canlı örnek">
@@ -341,10 +361,11 @@ def test_idle_patrols():
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener"><div class="lnk-t">📘 State (durum deseni)</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">FSM’yi bir platform oyunu karakteri üzerinden anlatan, mizahi ve çok anlaşılır bölüm; hiyerarşik ve yığınlı durum makineleri de var.</div></a><a class="lnk" href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Autonomous Agents (steering ve sürüler)</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Reynolds’ın steering davranışları ve boids, p5.js ile; her kod parçası tarayıcıda çalışır.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener"><div class="lnk-t">📘 State (durum deseni)</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">FSM’yi bir platform oyunu karakteri üzerinden anlatan, mizahi ve çok anlaşılır bölüm; hiyerarşik ve yığınlı durum makineleri de var.</div></a><a class="lnk" href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Autonomous Agents (steering ve sürüler)</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Reynolds’ın steering davranışları ve boids, p5.js ile; her kod parçası tarayıcıda çalışır.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -354,9 +375,9 @@ def test_idle_patrols():
     <div>
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function muhafizGuncelle(m, dt) {
-  const kt = m.kt;                          // KARA TAHTA
+  const kt = m.kt;                                           // KARA TAHTA
   // 1) ALGILA
-  kt.goruyor = goruyorMu(m);                // menzil+koni+duvar
+  kt.goruyor = goruyorMu(m);                                 // menzil+koni+duvar
   if (ses && ses.yeni && uzaklik(ses.p, m.p) < ses.r) {
     kt.sesDuydu = true; kt.sonGorulen = hucre(ses.p);
   }
@@ -368,8 +389,8 @@ function muhafizGuncelle(m, dt) {
   kt.durum = kararVer(kt);
   // 4) DAVRAN
   if (kt.durum === 'devriye')     devriyeGez(m, dt);
-  else if (kt.durum === 'incele') sonGorulenYereGit(m, dt);   // A*
-  else                            oyuncuyuKovala(m, dt);      // A*
+  else if (kt.durum === 'incele') sonGorulenYereGit(m, dt);  // A*
+  else                            oyuncuyuKovala(m, dt);     // A*
 }
 </script></code></pre>
       <p class="mini">Bir NPC’nin bir karesi (sadeleştirilmiş): dört katman, aralarındaki tek bağ <b>kara tahta</b>. Örnekteki gerçek kod aynı iskelete sınırları (0–1,5), “bakmadan unutma” kuralını ve yol yenilemeyi ekler.</p>
@@ -668,6 +689,7 @@ def select_behavior(order, conditions):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

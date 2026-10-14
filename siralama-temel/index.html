@@ -198,52 +198,52 @@
   <div class="tabs">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-class Enemy:                        # sınıf = kalıp
-    def __init__(self, name, hp):   # yapıcı: yeni nesne üretilirken çalışır
-        self.name = name            # self = "bu nesnenin"
+class Enemy:                                  # sınıf = kalıp
+    def __init__(self, name, hp):             # yapıcı: yeni nesne üretilirken çalışır
+        self.name = name                      # self = "bu nesnenin"
         self.hp = hp
 
-ork = Enemy("Ork", 30)              # nesne = kalıptan üretilen örnek
+ork = Enemy("Ork", 30)                        # nesne = kalıptan üretilen örnek
 goblin = Enemy("Goblin", 12)
-enemies = [ork, goblin, Enemy("Ejder", 300)]   # nesnelerden liste
+enemies = [ork, goblin, Enemy("Ejder", 300)]  # nesnelerden liste
 
-print(ork.hp)                       # 30   → "ork'un canı"
-print(enemies[1].name)              # Goblin
+print(ork.hp)                                 # 30   → "ork'un canı"
+print(enemies[1].name)                        # Goblin
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-class Enemy                              // sınıf = kalıp
+class Enemy                            // sınıf = kalıp
 {
-    public string Name;                  // alan (field)
+    public string Name;                // alan (field)
     public int Hp;
 
-    public Enemy(string name, int hp)    // yapıcı (constructor)
+    public Enemy(string name, int hp)  // yapıcı (constructor)
     {
         Name = name;
         Hp = hp;
     }
 }
 
-var ork = new Enemy("Ork", 30);          // new → yeni nesne üret
-var enemies = new List<Enemy>();         // Enemy'lerden oluşan liste
+var ork = new Enemy("Ork", 30);        // new → yeni nesne üret
+var enemies = new List<Enemy>();       // Enemy'lerden oluşan liste
 enemies.Add(ork);
 enemies.Add(new Enemy("Goblin", 12));
-Debug.Log(ork.Hp);                       // 30
+Debug.Log(ork.Hp);                     // 30
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-class Enemy {                         // sınıf = kalıp
-  constructor(name, hp) {             // yapıcı: new ile çağrılır
-    this.name = name;                 // this = "bu nesnenin"
+class Enemy {                      // sınıf = kalıp
+  constructor(name, hp) {          // yapıcı: new ile çağrılır
+    this.name = name;              // this = "bu nesnenin"
     this.hp = hp;
   }
 }
 
-const ork = new Enemy("Ork", 30);     // new → yeni nesne üret
+const ork = new Enemy("Ork", 30);  // new → yeni nesne üret
 const enemies = [ork, new Enemy("Goblin", 12), new Enemy("Ejder", 300)];
-console.log(ork.hp);                  // 30
+console.log(ork.hp);               // 30
 
 // p5.js'te sık görülen kısa yol: nesne sabiti (sınıfsız)
 const slime = { name: "Slime", hp: 5 };
@@ -271,10 +271,10 @@ const slime = { name: "Slime", hp: 5 };
   <div class="tabs">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def hp_of(e):                   # bir düşman al...
-    return e.hp                 # ...canını döndür
+def hp_of(e):            # bir düşman al...
+    return e.hp          # ...canını döndür
 
-enemies.sort(key=hp_of)         # fonksiyonun ADINI veriyoruz (parantez yok!)
+enemies.sort(key=hp_of)  # fonksiyonun ADINI veriyoruz (parantez yok!)
 
 # Aynı şeyin kısa yazımı: lambda = isimsiz, tek satırlık fonksiyon
 enemies.sort(key=lambda e: e.hp)
@@ -284,12 +284,12 @@ enemies.sort(key=lambda e: e.hp)
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-int ByHp(Enemy x, Enemy y)            // iki düşmanı karşılaştır
+int ByHp(Enemy x, Enemy y)        // iki düşmanı karşılaştır
 {
-    return x.Hp.CompareTo(y.Hp);      // negatif: x önce
-}                                     // 0: eşit, pozitif: y önce
+    return x.Hp.CompareTo(y.Hp);  // negatif: x önce
+}                                 // 0: eşit, pozitif: y önce
 
-enemies.Sort(ByHp);                   // metodun ADINI veriyoruz
+enemies.Sort(ByHp);               // metodun ADINI veriyoruz
 
 // Kısa yazım: lambda ifadesi   (parametreler) => sonuç
 enemies.Sort((x, y) => x.Hp.CompareTo(y.Hp));
@@ -297,11 +297,11 @@ enemies.Sort((x, y) => x.Hp.CompareTo(y.Hp));
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function byHp(x, y) {      // negatif: x önce, 0: eşit, pozitif: y önce
+function byHp(x, y) {  // negatif: x önce, 0: eşit, pozitif: y önce
   return x.hp - y.hp;
 }
 
-enemies.sort(byHp);        // fonksiyonun ADINI veriyoruz (parantez yok!)
+enemies.sort(byHp);    // fonksiyonun ADINI veriyoruz (parantez yok!)
 
 // Kısa yazım: ok fonksiyonu   (parametreler) => sonuç
 enemies.sort((x, y) => x.hp - y.hp);
@@ -340,10 +340,11 @@ enemies.sort((x, y) => y.hp - x.hp);   // canı çok olan önce
   <p class="fragment mini">Sıralama algoritması, anahtarın ne olduğunu <b>bilmez</b>; sadece “şu ikisinden hangisi önce?” diye sorar. Bu yüzden aynı algoritma her şeyi sıralayabilir.</p>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sorting" target="_blank" rel="noopener"><div class="lnk-t">🎞 Sıralama algoritmaları, adım adım</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi dizinizi girin; her karşılaştırma ve takas renkli olarak, kodun hangi satırında olduğu gösterilerek oynatılır.</div></a><a class="lnk" href="https://bost.ocks.org/mike/algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Visualizing Algorithms</div><div class="lnk-s">Mike Bostock</div><div class="lnk-w">Örnekleme, karıştırma ve sıralamanın çok güzel görselleştirmeleri; “yanlış karıştırma neden yanlıştır?” bölümü özellikle öğretici.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sorting" target="_blank" rel="noopener"><div class="lnk-t">📊 Sıralama algoritmaları, adım adım</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi dizinizi girin; her karşılaştırma ve takas renkli olarak, kodun hangi satırında olduğu gösterilerek oynatılır.</div></a><a class="lnk" href="https://bost.ocks.org/mike/algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Visualizing Algorithms</div><div class="lnk-s">Mike Bostock</div><div class="lnk-w">Örnekleme, karıştırma ve sıralamanın çok güzel görselleştirmeleri; “yanlış karıştırma neden yanlıştır?” bölümü özellikle öğretici.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -409,9 +410,9 @@ static bool Less<T>(T v, T w) where T : IComparable<T>
 
 static void Exch<T>(T[] a, int i, int j)
 {
-    T t = a[i];      // 1) yedeğe al
-    a[i] = a[j];     // 2) üzerine yaz
-    a[j] = t;        // 3) yedeği geri koy
+    T t = a[i];   // 1) yedeğe al
+    a[i] = a[j];  // 2) üzerine yaz
+    a[j] = t;     // 3) yedeği geri koy
 }
 </script></code></pre>
     </div>
@@ -495,8 +496,8 @@ private static void exch(Comparable[] a, int i, int j)
 </section>
 
 <section data-sec="selection sort">
-  <h2>İz tablosu <span class="en">trace</span> — S O R T E X A M P L E</h2>
-  <div class="trace" data-alg="selection" data-values="S O R T E X A M P L E"></div>
+  <h2>İz tablosu <span class="en">trace</span> — S U P E R M A R I O</h2>
+  <div class="trace" data-alg="selection" data-values="S U P E R M A R I O"></div>
   <div class="trace-legend">
     <b class="r">kırmızı</b> = a[min] (bulunan en küçük) · <b>siyah</b> = en küçüğü bulmak için bakılanlar · <b class="g">gri</b> = son yerine yerleşmiş
   </div>
@@ -734,9 +735,9 @@ def sort(a):
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def find_nearest(enemies, me):
     best, best_d = None, float('inf')
-    for e in enemies:                  # selection sort'un iç döngüsü!
+    for e in enemies:          # selection sort'un iç döngüsü!
         dx, dy = e.x - me.x, e.y - me.y
-        d = dx * dx + dy * dy          # karekök almaya gerek yok
+        d = dx * dx + dy * dy  # karekök almaya gerek yok
         if d < best_d:
             best_d, best = d, e
     return best
@@ -761,9 +762,9 @@ Enemy FindNearest(List<Enemy> enemies, Vector3 me)
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function findNearest(enemies, me) {
   let best = null, bestD = Infinity;
-  for (const e of enemies) {         // selection sort'un iç döngüsü!
+  for (const e of enemies) {      // selection sort'un iç döngüsü!
     const dx = e.x - me.x, dy = e.y - me.y;
-    const d = dx * dx + dy * dy;     // dist() yerine: karekök yok
+    const d = dx * dx + dy * dy;  // dist() yerine: karekök yok
     if (d < bestD) { bestD = d; best = e; }
   }
   return best;
@@ -821,12 +822,12 @@ function findNearest(enemies, me) {
 </section>
 
 <section data-sec="insertion sort">
-  <h2>İz tablosu — S O R T E X A M P L E</h2>
-  <div class="trace" data-alg="insertion" data-values="S O R T E X A M P L E"></div>
+  <h2>İz tablosu — S U P E R M A R I O</h2>
+  <div class="trace" data-alg="insertion" data-values="S U P E R M A R I O"></div>
   <div class="trace-legend">
     <b class="r">kırmızı</b> = a[j] (yeni eklenen, yerine oturdu) · <b>siyah</b> = bir sağa kaydırılanlar · <b class="g">gri</b> = yerinden oynamayanlar
   </div>
-  <aside class="notes">Selection'ın iziyle karşılaştırın: burada gri elemanlar "son yerlerinde" DEĞİL, sadece bu turda oynamadılar. Örneğin A en sonda geliyor ve herkesi kaydırıyor.</aside>
+  <aside class="notes">Selection'ın iziyle karşılaştırın: burada gri elemanlar "son yerlerinde" DEĞİL, sadece bu turda oynamadılar. Örneğin 7. sıradaki A gelince kendinden büyük herkesi bir sağa kaydırıp en başa geçiyor.</aside>
 </section>
 
 <section data-sec="insertion sort">
@@ -983,12 +984,12 @@ function sort(a) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 def insertion_sort_shift(a):
     for i in range(1, len(a)):
-        v = a[i]                  # eleman elimizde
+        v = a[i]             # eleman elimizde
         j = i
         while j > 0 and a[j - 1] > v:
-            a[j] = a[j - 1]       # büyükleri sağa kaydır
+            a[j] = a[j - 1]  # büyükleri sağa kaydır
             j -= 1
-        a[j] = v                  # boşluğa yerleştir
+        a[j] = v             # boşluğa yerleştir
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -997,11 +998,11 @@ public static void InsertionSortShift(int[] a)
 {
     for (int i = 1; i < a.Length; i++)
     {
-        int v = a[i];             // eleman elimizde
+        int v = a[i];         // eleman elimizde
         int j = i;
         for (; j > 0 && a[j - 1] > v; j--)
-            a[j] = a[j - 1];      // büyükleri sağa kaydır
-        a[j] = v;                 // boşluğa yerleştir
+            a[j] = a[j - 1];  // büyükleri sağa kaydır
+        a[j] = v;             // boşluğa yerleştir
     }
 }
 </script></code></pre>
@@ -1010,11 +1011,11 @@ public static void InsertionSortShift(int[] a)
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function insertionSortShift(a) {
   for (let i = 1; i < a.length; i++) {
-    const v = a[i];             // eleman elimizde
+    const v = a[i];     // eleman elimizde
     let j = i;
     for (; j > 0 && a[j - 1] > v; j--)
-      a[j] = a[j - 1];          // büyükleri sağa kaydır
-    a[j] = v;                   // boşluğa yerleştir
+      a[j] = a[j - 1];  // büyükleri sağa kaydır
+    a[j] = v;           // boşluğa yerleştir
   }
 }
 </script></code></pre>
@@ -1072,22 +1073,22 @@ function insertionSortShift(a) {
   <div class="tabs">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-for x in data:          # data: 0..255 arası rastgele sayılar
-    if x >= 128:        # ← CPU bu cevabı TAHMİN etmeye çalışır
+for x in data:    # data: 0..255 arası rastgele sayılar
+    if x >= 128:  # ← CPU bu cevabı TAHMİN etmeye çalışır
         total += x
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-foreach (int x in data)     // data: 0..255 arası rastgele sayılar
-    if (x >= 128)           // ← CPU bu cevabı TAHMİN etmeye çalışır
+foreach (int x in data)  // data: 0..255 arası rastgele sayılar
+    if (x >= 128)        // ← CPU bu cevabı TAHMİN etmeye çalışır
         total += x;
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-for (const x of data)       // data: 0..255 arası rastgele sayılar
-  if (x >= 128)             // ← CPU bu cevabı TAHMİN etmeye çalışır
+for (const x of data)  // data: 0..255 arası rastgele sayılar
+  if (x >= 128)        // ← CPU bu cevabı TAHMİN etmeye çalışır
     total += x;
 </script></code></pre>
     </div>
@@ -1213,9 +1214,9 @@ public class DepthSorter : MonoBehaviour
 
     void LateUpdate()
     {
-        InsertionSort(sprites, byY);            // önceki karenin sırası neredeyse doğru
+        InsertionSort(sprites, byY);      // önceki karenin sırası neredeyse doğru
         for (int i = 0; i < sprites.Count; i++)
-            sprites[i].sortingOrder = i;        // büyük numara = önde
+            sprites[i].sortingOrder = i;  // büyük numara = önde
     }
 
     static void InsertionSort<T>(List<T> a, Comparison<T> cmp)
@@ -1238,8 +1239,8 @@ def insertion_sort_by_y(a):
             j -= 1
 
 def draw(screen):
-    insertion_sort_by_y(draw_list)    # neredeyse sıralı → çok hızlı
-    for s in draw_list:               # yukarıdakiler (uzak) önce çizilir
+    insertion_sort_by_y(draw_list)  # neredeyse sıralı → çok hızlı
+    for s in draw_list:             # yukarıdakiler (uzak) önce çizilir
         screen.blit(s.image, s.rect)
 </script></code></pre>
     </div>
@@ -1254,8 +1255,8 @@ function insertionSortByY(a) {
 
 function draw() {
   background(220);
-  insertionSortByY(things);   // neredeyse sıralı → çok hızlı
-  for (const t of things) t.show();   // yukarıdakiler (uzak) önce
+  insertionSortByY(things);          // neredeyse sıralı → çok hızlı
+  for (const t of things) t.show();  // yukarıdakiler (uzak) önce
 }
 </script></code></pre>
     </div>
@@ -1302,12 +1303,12 @@ void Update()   // saniyede 60 kez!
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def update():   # saniyede 60 kez!
+def update():                  # saniyede 60 kez!
     # ❌ her karede YENİ bir liste üretir → çöp
     ordered = sorted(enemies, key=lambda e: e.dist)
 
     # ✅ var olan listeyi YERİNDE sıralar
-    enemies.sort(key=by_dist)   # by_dist önceden tanımlı fonksiyon
+    enemies.sort(key=by_dist)  # by_dist önceden tanımlı fonksiyon
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -1372,8 +1373,8 @@ function draw() {   // saniyede 60 kez!
 </section>
 
 <section data-sec="shellsort">
-  <h2>İz: S H E L L S O R T E X A M P L E</h2>
-  <div class="trace" data-alg="shell" data-values="S H E L L S O R T E X A M P L E"></div>
+  <h2>İz: S T R E E T F I G H T E R T W O</h2>
+  <div class="trace" data-alg="shell" data-values="S T R E E T F I G H T E R T W O"></div>
   <div class="trace-legend"><b class="r">kırmızı</b> = bu h-turunda yeri değişen elemanlar</div>
   <p class="fragment mini center">h dizisi: 13 → 4 → 1 (Knuth’un “3x+1” dizisi: 1, 4, 13, 40, 121, 364, …)</p>
 </section>
@@ -1764,9 +1765,9 @@ import random
 PIECES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L']
 
 def next_bag():
-    bag = PIECES[:]       # kopyala
-    random.shuffle(bag)   # karıştır
-    return bag            # sırayla dağıt
+    bag = PIECES[:]      # kopyala
+    random.shuffle(bag)  # karıştır
+    return bag           # sırayla dağıt
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -2050,6 +2051,7 @@ def sort(a):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/siralama.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

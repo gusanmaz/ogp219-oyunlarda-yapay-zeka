@@ -440,6 +440,19 @@
       document.querySelectorAll('.tabs').forEach(r => SL.Tabs(r));
       document.querySelectorAll('.quiz').forEach(r => SL.Quiz(r));
       registry.forEach(([sel, f]) => document.querySelectorAll(sel).forEach(r => make(r, f)));
+      // ortak yardım metinleri (ortak/yardim.js): bileşen türüne ve algoritmasına göre panel ekle
+      if (SL.HELP) document.querySelectorAll('.demo[data-demo], .sortviz, .ufviz, .bstviz').forEach(r => {
+        if (r.dataset.helpDone) return; r.dataset.helpDone = 1;
+        const cls = ['sortviz', 'ufviz', 'bstviz'].find(c => r.classList.contains(c));
+        const keys = cls ? [cls + ':' + (r.dataset.alg || ''), cls] : ['demo:' + r.dataset.demo];
+        const pick = f => { for (const k of keys) if (SL.HELP[k] && SL.HELP[k][f]) return SL.HELP[k][f]; return null; };
+        let at = r; while (at.nextElementSibling && at.nextElementSibling.classList.contains('demo-help')) at = at.nextElementSibling;
+        const have = [...r.parentNode.querySelectorAll(':scope > .demo-help')].map(x => x.dataset.title || '');
+        [['ui', 'ℹ️ Düğmeler ne yapar?'], ['alg', '🧠 Algoritma adım adım']].forEach(([f, title]) => {
+          const t = pick(f); if (!t || have.some(h => h.startsWith(title.slice(0, 2)))) return;
+          const d = document.createElement('div'); d.className = 'demo-help'; d.dataset.title = title; d.innerHTML = t; at.after(d); at = d;
+        });
+      });
       // Açılır yardım panelleri: bir demonun hemen ardından gelen <div class="demo-help" data-title="…">…</div> öğeleri
       // demonun sağ üstüne birer düğme olur; tıklayınca demonun üstünde bir panel açılır (ekran kalabalıklaşmaz).
       document.querySelectorAll('.demo-help').forEach(h => {
@@ -447,7 +460,21 @@
         let host = h.previousElementSibling; while (host && host.classList.contains('demo-help')) host = host.previousElementSibling;
         if (!host) return;
         let bar = host.previousElementSibling && host.previousElementSibling.classList.contains('dh-bar') ? host.previousElementSibling : null;
-        if (!bar) { bar = document.createElement('div'); bar.className = 'dh-bar'; host.parentNode.insertBefore(bar, host); }
+        if (!bar) bar = host.querySelector(':scope .sv-transport > .dh-bar');
+        const tr = !bar && host.querySelector('.sv-transport');
+        if (tr) { bar = document.createElement('div'); bar.className = 'dh-bar in-tr'; tr.appendChild(bar); }
+        const sec = host.closest('section'), h2 = sec && sec.querySelector(':scope > h2');
+        if (!bar && h2 && h2.textContent.trim().length <= 44 && !sec.querySelector(':scope > .dh-bar.in-h2')) {   // kısa başlıkta düğmeler başlık satırının sağına
+          bar = document.createElement('div'); bar.className = 'dh-bar in-h2'; sec.appendChild(bar);
+        }
+        if (!bar) {
+          bar = document.createElement('div'); bar.className = 'dh-bar';
+          const pd = getComputedStyle(host.parentNode).display;
+          if (pd === 'grid' || pd === 'flex' || pd === 'inline-grid') {   // sütunlu düzende demoyla aynı hücrede kalsın
+            const w = document.createElement('div'); w.className = 'dh-wrap'; host.before(w); w.append(bar, host);
+            let n = w.nextElementSibling; while (n && n.classList.contains('demo-help')) { const nx = n.nextElementSibling; w.append(n); n = nx; }
+          } else host.parentNode.insertBefore(bar, host);
+        }
         const wrap = document.createElement('div'); wrap.className = 'dh-panel'; wrap.hidden = true;
         wrap.innerHTML = `<button class="dh-x" title="Kapat">✕</button><div class="dh-h">${h.dataset.title || 'Açıklama'}</div>` + h.innerHTML;
         bar.appendChild(wrap);
@@ -467,11 +494,19 @@
     // Emniyet: içerik 720 piksellik slayt alanına sığmazsa (farklı çözünürlük/yazı tipi, büyüyen demo çıktısı) slaydı küçült
     const fit = () => {
       const sl = Reveal.getCurrentSlide(); if (!sl || sl.classList.contains('level')) return;
+      sl.querySelectorAll('[data-grown]').forEach(e => { e.style.zoom = ''; delete e.dataset.grown; });
       sl.style.zoom = ''; sl.classList.remove('tight'); radFix(sl); codeFit(sl); mathFit(sl);
       if (bottomR(sl) > 652) sl.classList.add('tight');   // önce kutuların satır aralığını daralt
       const h = sl.scrollHeight, room = 700;
-      const used0 = bottom(sl);
-      if (h > room + 4 && used0 > room - 40) { sl.style.zoom = Math.max(0.6, room / h).toFixed(3); return; }
+      const used0 = bottomR(sl);
+      if ((h > room + 4 && used0 > room - 40) || used0 > room - 12) {
+        let z = Math.max(0.6, (room - 8) / Math.max(h, used0)); sl.style.zoom = z.toFixed(3);
+        // gerçek ekran konumuyla doğrula: içerik slayt alanının altını aşıyorsa biraz daha küçült
+        const top = document.querySelector('.reveal .slides').getBoundingClientRect().top, lim = top + 708 * Reveal.getScale();
+        const low = () => Math.max(...[...sl.children].filter(c => c.offsetHeight && getComputedStyle(c).position !== 'absolute').map(c => c.getBoundingClientRect().bottom));
+        for (let k = 0; k < 8 && low() > lim && z > 0.6; k++) { z *= 0.97; sl.style.zoom = z.toFixed(3); }
+        return;
+      }
       grow(sl); growText(sl); mathFit(sl);
     };
     // zoom uygulanmış öğelerde offsetHeight yanıltır; ekrandaki dikdörtgenden ölç
@@ -516,7 +551,8 @@
       const t = k.closest('.katex-display') || k; t.style.fontSize = '';
       const box = (k.closest('.katex-display') || k).parentElement.closest('p, div, li, td, th'); if (!box || !box.clientWidth) return;
       const br = box.getBoundingClientRect(), kr = k.getBoundingClientRect(), cs = getComputedStyle(box);
-      const room = br.right - parseFloat(cs.paddingRight) * (br.width / box.offsetWidth || 1) - kr.left;
+      const sc = br.width / box.offsetWidth || 1, cw = br.width - (parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) * sc;
+      const room = k.closest('.katex-display') ? cw : br.right - parseFloat(cs.paddingRight) * sc - kr.left;
       if (kr.width > room + 1) t.style.fontSize = Math.max(55, Math.floor(room / kr.width * 97)) + '%';
     });
     // Kod bloğu yatayda taşıyorsa (yorumlar sağda kesiliyorsa) yazıyı sığana kadar küçült; %72'nin altına inmez.
@@ -545,7 +581,7 @@
       let z = Math.min(1.42, grownMax, (640 - other) / dh);
       if (z < 1.1) return;
       const wide = () => { if (d.scrollWidth > d.clientWidth + 2) return true; const R = d.getBoundingClientRect().right + 1; for (const e of d.querySelectorAll('*')) { if (e.offsetWidth && e.getBoundingClientRect().right > R) return true; } return false; };
-      for (let k = 0; k < 10; k++) { d.style.zoom = z.toFixed(3); if (bottomR(sl) <= 650 && !wide()) break; z *= 0.95; if (z < 1.08) { d.style.zoom = ''; return; } }
+      for (let k = 0; k < 10; k++) { d.style.zoom = z.toFixed(3); d.dataset.grown = 1; if (bottomR(sl) <= 650 && !wide()) break; z *= 0.95; if (z < 1.08) { d.style.zoom = ''; return; } }
       grownMax = z;
     };
     // Kısaltma sözlüğü: slaytta geçen kısaltmaların açılımı, yer varsa slaytın altında küçük bir satırda gösterilir.
@@ -563,7 +599,7 @@
       sl.appendChild(d);
     };
     let fitT; const fitSoon = () => { clearTimeout(fitT); fitT = setTimeout(() => { fit(); const sl = Reveal.getCurrentSlide(); if (sl) abbrFoot(sl); }, 250); };
-    Reveal.on('slidechanged', fitSoon); Reveal.on('ready', fitSoon); Reveal.on('resize', fitSoon); Reveal.on('fragmentshown', fitSoon);
+    Reveal.on('slidechanged', fitSoon); Reveal.on('slidechanged', () => setTimeout(fitSoon, 900)); Reveal.on('ready', fitSoon); Reveal.on('resize', fitSoon); Reveal.on('fragmentshown', fitSoon);
     document.addEventListener('click', fitSoon); document.addEventListener('keyup', fitSoon);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSoon);
 

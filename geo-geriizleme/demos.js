@@ -168,7 +168,7 @@
       { const p = G.s.player, x = ox + (p % L.W) * S, y = oy + Math.floor(p / L.W) * S; ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(x + S / 2, y + S / 2, S * 0.33, 0, 7); ctx.fill(); if (G.hint) { const dv = { w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[G.hint]; ctx.strokeStyle = t.red; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x + S / 2, y + S / 2); ctx.lineTo(x + S / 2 + dv[0] * S * 0.8, y + S / 2 + dv[1] * S * 0.8); ctx.stroke(); } }
       const bx = ox + L.W * S + 24; let y = 28; const Ln = (s, c, o = {}) => { SL.drawLabel(ctx, s, bx, y, c || t.ink, { size: 12, align: 'left', ...o }); y += 21; };
       const done = BT.sokoSolved(L, G.s);
-      Ln(done ? '✔ ÇÖZÜLDÜ!' : G.stuck() ? '⚠ bir kutu köşeye sıkıştı: çözüm yok. Z ile geri alın.' : 'W / A / S / D: yürü, kutuyu it', done ? t.green : G.stuck() ? t.red : t.ink, { bold: true });
+      Ln(done ? '✔ ÇÖZÜLDÜ!' : G.stuck() ? '⚠️ bir kutu köşeye sıkıştı: çözüm yok. Z ile geri alın.' : 'W / A / S / D: yürü, kutuyu it', done ? t.green : G.stuck() ? t.red : t.ink, { bold: true });
       Ln(`hamle: ${G.moves} · geri alma yığını: ${G.undo.length} durum`); Ln('Z: son hamleyi geri al · R: baştan', t.muted, { size: 11 });
       y += 8; if (G.sol) { Ln(G.sol.ok ? `çözücü: buradan en kısa çözüm ${G.sol.path.length} hamle` : 'çözücü: bu durumdan çözüm YOK', G.sol.ok ? t.green : t.red, { bold: true }); Ln(`taranan durum: ${nf(G.sol.explored)} (${prune ? 'köşe budamasıyla' : 'budamasız'})`); if (G.sol.ok) { const s = G.sol.path.join('').toUpperCase(); Ln(s.slice(0, 30), t.muted, { size: 11 }); if (s.length > 30) Ln(s.slice(30, 60), t.muted, { size: 11 }); } } else Ln('“çöz”e basın: bilgisayar bütün durumları tarasın', t.muted, { size: 11 });
       if (msg) Ln(msg, t.amber, { size: 11 });

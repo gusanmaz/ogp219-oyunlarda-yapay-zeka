@@ -185,6 +185,14 @@ Query_CoverCompromised_FindNearby = {
 <section data-sec="konum">
   <h2>Canlı: siper seçimi 🎯</h2>
   <div class="demo" data-demo="position"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Tehdidi (kırmızı) sürükleyin: gri noktalar elendi (tehdide açık), renkliler puanlandı. Yeşil halka: seçilen konum. Siperin “hangi tarafının” iyi olduğu tehdide göre değişiyor.</li>
+      <li>Askeri (mavi) sürükleyin: yakınlık ağırlığı yüzünden seçim askere yakın siperlere kayıyor.</li>
+      <li>“Siper şart” koşulunu kapatın: siper artık sadece bir ağırlık. Siper ağırlığını 0 yaparsanız asker açık alanda menzil içine koşar: “cesur” bir kişilik.</li>
+      <li>Tercih edilen menzili 80’e indirin (yakın dövüşçü), 340’a çıkarın (keskin nişancı): aynı fonksiyon, farklı karakter (Killzone: “kişilik = hangi etkenler önemli?”).</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="konum">
@@ -198,10 +206,11 @@ Query_CoverCompromised_FindNearby = {
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Flow Field Pathfinding (kule savunması)</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Tek bir BFS ile bütün düşmanlara yol bulmak: haritaya tıklayıp hedefi değiştirin, oklar anında güncellenir.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Flow Field Pathfinding (kule savunması)</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Tek bir BFS ile bütün düşmanlara yol bulmak: haritaya tıklayıp hedefi değiştirin, oklar anında güncellenir.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -333,6 +342,14 @@ Query_CoverCompromised_FindNearby = {
 <section data-sec="taktik yol">
   <h2>Canlı: tehlike maliyetli A*</h2>
   <div class="demo" data-demo="tacpath"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Tehlike maliyeti 0: yeşil yol gri yolla aynı, açık alandan dümdüz geçiyor. 5’e, sonra 10’a çıkarın: yeşil yol önce kısmen, sonra tamamen uzun duvarın “gölgesine” iniyor.</li>
+      <li>Alttaki sayılara bakın: taktik yol kaç adım daha uzun, kaç hücre daha az açıkta? (Birkaç adım fazlası, ateş altında kalan hücrelerin büyük kısmını siler.)</li>
+      <li>Tehdidi duvarın altına sürükleyin: güvenli bölge tersine döner, yol da yukarı çıkar. Oyuncu hareket ettikçe NPC’nin rotası da değişmeli.</li>
+      <li>Başlangıcı ve hedefi taşıyın: bazen gölgede bir yol hiç yoktur ve maliyet ne olursa olsun açıktan geçmek gerekir. O zaman taktik YZ’nin işi <b>hızlı</b> geçmek ya da bastırma ateşi istemektir (Y10).</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="taktik yol">
@@ -419,10 +436,10 @@ Query_CoverCompromised_FindNearby = {
 function findBest(agent, threat, candidates, coveredFn,
                   wProx = 20, wCover = 40, wRange = 10, pref = 180, minDist = 40) {
   let best = null, bestScore = -Infinity;
-  for (const p of candidates) {                           // 1) ÜRET: adaylar
+  for (const p of candidates) {                    // 1) ÜRET: adaylar
     const dThreat = p.dist(threat);
-    if (dThreat < minDist) continue;                      // 2) ELE: koşul
-    const prox = max(0, 1 - p.dist(agent) / 500);         // 3) PUANLA
+    if (dThreat < minDist) continue;               // 2) ELE: koşul
+    const prox = max(0, 1 - p.dist(agent) / 500);  // 3) PUANLA
     const inRange = abs(dThreat - pref) < 60 ? 1 : 0;
     const s = wProx * prox + wCover * coveredFn(p, threat) + wRange * inRange;
     if (s > bestScore) { bestScore = s; best = p; }
@@ -496,9 +513,9 @@ class InfluenceMap {
       }
     }
   }
-  control(i) { return this.blue[i] - this.red[i]; }       // > 0 mavi baskın, < 0 kırmızı
-  tension(i) { return min(this.blue[i], this.red[i]); }   // iki taraf da güçlü: çatışma bölgesi
-  weakestEnemyCell() {                                    // mavinin ulaşabildiği, kırmızının en zayıf olduğu hücre
+  control(i) { return this.blue[i] - this.red[i]; }      // > 0 mavi baskın, < 0 kırmızı
+  tension(i) { return min(this.blue[i], this.red[i]); }  // iki taraf da güçlü: çatışma bölgesi
+  weakestEnemyCell() {                                   // mavinin ulaşabildiği, kırmızının en zayıf olduğu hücre
     let best = -1, bestScore = Infinity;
     for (let i = 0; i < this.blue.length; i++) {
       if (this.blue[i] <= 0.15) continue;
@@ -519,13 +536,13 @@ class InfluenceMap:
         self.cell, self.w, self.h = cell, w, h
         self.blue = np.zeros((h, w)); self.red = np.zeros((h, w))
         ys, xs = np.mgrid[0:h, 0:w]
-        self.cx, self.cy = (xs + 0.5) * cell, (ys + 0.5) * cell      # hücre merkezleri
+        self.cx, self.cy = (xs + 0.5) * cell, (ys + 0.5) * cell  # hücre merkezleri
 
     def update(self, units, radius):
         self.blue[:] = 0; self.red[:] = 0
         for (x, y, side, strength) in units:
             d = np.hypot(self.cx - x, self.cy - y)
-            stamp = strength * np.clip(1 - d / radius, 0, 1)           # doğrusal azalma
+            stamp = strength * np.clip(1 - d / radius, 0, 1)     # doğrusal azalma
             (self.blue if side == "b" else self.red)[:] += stamp
 
     def control(self):  return self.blue - self.red
@@ -533,7 +550,7 @@ class InfluenceMap:
     def weakest_enemy_cell(self):
         reachable = self.blue > 0.15
         score = np.where(reachable, self.red - 0.3 * self.blue, np.inf)
-        return np.unravel_index(np.argmin(score), score.shape)        # (satır, sütun)
+        return np.unravel_index(np.argmin(score), score.shape)   # (satır, sütun)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -776,6 +793,7 @@ def pick_position(cands, min_dist, w_prox, w_cover):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

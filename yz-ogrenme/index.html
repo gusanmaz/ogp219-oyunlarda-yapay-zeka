@@ -188,6 +188,14 @@
 <section data-sec="RL">
   <h2>Canlı: keşif mi, sömürü mü? 🎰</h2>
   <div class="demo" data-demo="bandit"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>ε = 0 (hiç keşif yok) ile 1000 çekin. Ajan ilk “şanslı” makineye takılıp kalabilir: tahminleri çoğu makine için hiç güncellenmez. Gerçeği gösterip kontrol edin.</li>
+      <li>ε = 1 (hep keşif): bütün tahminler doğru çıkar, ama ödül hep ortalamada kalır, pişmanlık büyür.</li>
+      <li>ε = 0,1 civarı: hem iyi makineyi bulur hem de çoğunlukla onu çeker. “Yeni makineler” ile birkaç kez deneyin.</li>
+      <li>Oyundaki karşılığı: hep aynı taktiği deneyen YZ hiçbir zaman daha iyisini bulamaz; hep rastgele oynayan ise bildiğini kullanamaz. Y6’daki MCTS’nin UCB formülü de aynı ikilemi çözüyordu.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="RL">
@@ -200,6 +208,7 @@
     </ol>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -253,6 +262,15 @@
 <section data-sec="Q-learning">
   <h2>Canlı: Q-learning ızgarası 🧠</h2>
   <div class="demo" data-demo="qgrid"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.88em">
+      <li>“1 adım”a 10–15 kez basın: alttaki satır her Bellman güncellemesini sayılarla gösteriyor. Ajan hazineyi bulana kadar neredeyse hiçbir şey öğrenmez (seyrek ödül!).</li>
+      <li>“100 bölüm eğit”: her hücrenin dört üçgeni o yöndeki Q değeri (yeşil = iyi, kırmızı = kötü). Oklar hazineye doğru “akıyor” mu? Lavın yanındaki hücrelerde lava bakan üçgenler kırmızı.</li>
+      <li>γ’yı 0,3’e düşürüp “unut” + 100 bölüm: uzak hücrelerin değeri neredeyse sıfır; ajan “miyop” olur.</li>
+      <li>Adım cezasını 0 yapın: ajan acele etmez, dolambaçlı yollar da “iyi” görünür. −0,5 yapın: lava atlamak, uzun yol yürümekten “ucuz” hâle gelebilir!</li>
+      <li>Hücrelere tıklayarak duvar ve lav ekleyin, eğitimi sürdürün: yeni haritaya uyum sağlıyor mu?</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="Q-learning">
@@ -338,6 +356,14 @@
 <section data-sec="ödül">
   <h2>Canlı: ödül hilesini kendiniz üretin 🚤</h2>
   <div class="demo" data-demo="rewardhack"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>“Oyun puanı” tasarımında eğitip izleyin: tekne ilk köşedeki lagüne girip A ile B arasında gidip geliyor. Puanı yüksek, ama yarışı bitirmiyor. Tıpkı CoastRunners gibi.</li>
+      <li>Neden? γ = 0,97 ile her iki adımda bir gelen +1’in değeri ≈ 17. Uzaktaki bitişin +3’ü buna karşı devede kulak.</li>
+      <li>“Niyet” tasarımına geçip eğitin: aynı algoritma, aynı harita. Tekne artık doğrudan bitişe koşuyor.</li>
+      <li>Kendinize sorun: “niyet” tasarımında altın tamamen anlamsız oldu. Oyuncu “altın toplayan ama yarışı da bitiren” bir rakip görmek isterse ödülü nasıl yazardınız? (İpucu: her altın bir kez, bitiş çok büyük.)</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="ödül">
@@ -614,9 +640,9 @@ public class GridQLearner {
     float[] Row(Vector2Int s) { if (!Q.TryGetValue(s, out var q)) Q[s] = q = new float[4]; return q; }
 
     public int ChooseAction(Vector2Int s) {
-        if (Random.value < epsilon) return Random.Range(0, 4);          // keşif
+        if (Random.value < epsilon) return Random.Range(0, 4);     // keşif
         float[] q = Row(s); int best = 0;
-        for (int a = 1; a < 4; a++) if (q[a] > q[best]) best = a;        // sömürü
+        for (int a = 1; a < 4; a++) if (q[a] > q[best]) best = a;  // sömürü
         return best;
     }
 
@@ -660,26 +686,26 @@ public class RollerAgent : Agent {
 
     public override void Initialize() { rb = GetComponent<Rigidbody>(); }
 
-    public override void OnEpisodeBegin() {               // her bölümün başında
+    public override void OnEpisodeBegin() {                          // her bölümün başında
         if (transform.localPosition.y < 0) { rb.linearVelocity = Vector3.zero; transform.localPosition = new Vector3(0, 0.5f, 0); }
         target.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.value * 8 - 4);
     }
 
-    public override void CollectObservations(VectorSensor sensor) {   // ajanın gördükleri: 8 sayı
+    public override void CollectObservations(VectorSensor sensor) {  // ajanın gördükleri: 8 sayı
         sensor.AddObservation(target.localPosition);
         sensor.AddObservation(transform.localPosition);
         sensor.AddObservation(rb.linearVelocity.x);
         sensor.AddObservation(rb.linearVelocity.z);
     }
 
-    public override void OnActionReceived(ActionBuffers actions) {    // ağın kararı → fizik
+    public override void OnActionReceived(ActionBuffers actions) {   // ağın kararı → fizik
         var a = actions.ContinuousActions;
         rb.AddForce(new Vector3(a[0], 0, a[1]) * force);
         if (Vector3.Distance(transform.localPosition, target.localPosition) < 1.42f) { SetReward(1f); EndEpisode(); }
-        else if (transform.localPosition.y < 0) EndEpisode();     // platformdan düştü
+        else if (transform.localPosition.y < 0) EndEpisode();        // platformdan düştü
     }
 
-    public override void Heuristic(in ActionBuffers actionsOut) {     // klavyeyle test
+    public override void Heuristic(in ActionBuffers actionsOut) {    // klavyeyle test
         var c = actionsOut.ContinuousActions;
         c[0] = Input.GetAxis("Horizontal"); c[1] = Input.GetAxis("Vertical");
     }
@@ -716,9 +742,9 @@ public class RollerAgent : Agent {
 import gymnasium as gym
 from stable_baselines3 import PPO
 
-env = gym.make("LunarLander-v3")                 # ay aracını yumuşakça indir
-model = PPO("MlpPolicy", env, verbose=1)         # küçük bir sinir ağı politikası
-model.learn(total_timesteps=300_000)             # ~10-20 dk, CPU yeterli
+env = gym.make("LunarLander-v3")          # ay aracını yumuşakça indir
+model = PPO("MlpPolicy", env, verbose=1)  # küçük bir sinir ağı politikası
+model.learn(total_timesteps=300_000)      # ~10-20 dk, CPU yeterli
 model.save("ppo_lander")
 
 env = gym.make("LunarLander-v3", render_mode="human")
@@ -1035,6 +1061,7 @@ def forward(x, W1, b1, W2, b2):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

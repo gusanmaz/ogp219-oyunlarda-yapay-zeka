@@ -243,6 +243,15 @@
 <section data-sec="minimax">
   <h2>XOX: asla kaybetmeyen rakip ❌⭕</h2>
   <div class="demo" data-demo="ttt"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Köşeye oynayın. Boş karelerdeki sayılar YZ’nin <b>her olası hamlesinin</b> minimax değeri: kaç kare “kaybettirir” (kırmızı −)?</li>
+      <li>YZ’yi yenmeye çalışın. Hata payı %0 iken mümkün mü? (Değil: XOX çözülmüş bir oyun.)</li>
+      <li>Hata payını %30 yapın. Artık kazanabiliyor musunuz? <b>Zorluk ayarı</b> böyle yapılır: kusursuz YZ eğlenceli değildir (Y1, Y17).</li>
+      <li>“alfa-beta”yı kapatıp açın: YZ’nin incelediği düğüm sayısı ilk hamlede kaç kat değişiyor?</li>
+      <li>Değerler neden +9, +7 gibi? Derinlik cezası: YZ <b>çabuk kazanmayı</b>, mecbursa <b>geç kaybetmeyi</b> tercih eder (10 − derinlik).</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="minimax">
@@ -256,6 +265,7 @@
     </ol>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -404,6 +414,16 @@
 <section data-sec="değerlendirme">
   <h2>Dört Bir Arada: alfa-beta’ya karşı oynayın 🔴🟡</h2>
   <div class="demo" data-demo="c4"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Derinlik 1 ile oynayın, sonra 5, sonra 7. YZ hangi derinlikte üçlü tuzaklarınızı görmeye başlıyor?</li>
+      <li>Her YZ hamlesinden sonra üstteki sayılara bakın: her sütunun alfa-beta değeri. “KAZAN/KAYIP”: YZ kesin sonucu gördü.</li>
+      <li>“Hamle sıralaması”nı kapatıp derinlik 6–7’de düğüm sayısını ve süreyi karşılaştırın.</li>
+      <li>YZ’ye başlatın, ilk hamleyi nereye yapıyor? (Çözüm: başlayan oyuncu orta sütunla başlarsa kusursuz oyunda kazanır.)</li>
+      <li>Derinlik 7’de bile bazen “aptalca” hamleler mi görüyorsunuz? Bu, ufuk etkisi ve değerlendirme fonksiyonunun sınırıdır.</li>
+      <li>🔗 Kusursuz oyuncuyla kıyaslayın: <a href="https://connect4.gamesolver.org/" target="_blank" rel="noopener">connect4.gamesolver.org</a> her sütun için “kaç hamlede kazanılır/kaybedilir”i gösterir. Satranç için: <a href="https://lichess.org/analysis" target="_blank" rel="noopener">Lichess analiz tahtası</a> (tarayıcıda Stockfish).</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="değerlendirme">
@@ -579,9 +599,9 @@ public interface IGame {
     List<int> Moves();               // yapılabilir hamleler (iyi olanlar önce!)
     void Apply(int move);
     void Undo(int move);
-    bool IsOver(out int winner);     // winner: 1, 2 ya da 0 (berabere)
-    int  Evaluate(int player);       // bitmemiş konum: player açısından puan
-    int  Current { get; }            // sıradaki oyuncu (1/2)
+    bool IsOver(out int winner);  // winner: 1, 2 ya da 0 (berabere)
+    int  Evaluate(int player);    // bitmemiş konum: player açısından puan
+    int  Current { get; }         // sıradaki oyuncu (1/2)
 }
 
 public static class Search {
@@ -640,7 +660,7 @@ function bestMove(game, depth) {
 import math
 
 def negamax(game, depth, alpha=-math.inf, beta=math.inf):
-    me, w = game.current, game.winner()        # winner: 1, 2, 0 (berabere) ya da None
+    me, w = game.current, game.winner()  # winner: 1, 2, 0 (berabere) ya da None
     if w is not None:
         return 0 if w == 0 else (100000 + depth if w == me else -100000 - depth)
     if depth == 0:
@@ -653,7 +673,7 @@ def negamax(game, depth, alpha=-math.inf, beta=math.inf):
         best = max(best, v)
         alpha = max(alpha, v)
         if alpha >= beta:
-            break                               # ✂ budama
+            break                        # ✂ budama
     return best
 </script></code></pre>
     </div>
@@ -668,7 +688,7 @@ def negamax(game, depth, alpha=-math.inf, beta=math.inf):
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 class Node {
   constructor(move = null, parent = null, player = null) {
-    this.move = move; this.parent = parent; this.player = player;   // player: bu hamleyi yapan
+    this.move = move; this.parent = parent; this.player = player;  // player: bu hamleyi yapan
     this.kids = null; this.N = 0; this.W = 0;
   }
 }
@@ -692,14 +712,14 @@ function mcts(game, iterations, c = 1.41) {
     }
     // 3) Simülasyon: oyun bitene kadar rastgele
     while (g.winner() === null) g.apply(pick(g.moves()));
-    const w = g.winner();                          // 1, 2 ya da 0 (berabere)
+    const w = g.winner();                                          // 1, 2 ya da 0 (berabere)
     // 4) Geri yayılım: her düğüm, o hamleyi yapan oyuncu açısından
     for (; node; node = node.parent) {
       node.N += 1;
       node.W += w === node.player ? 1 : w === 0 ? 0.5 : 0;
     }
   }
-  return root.kids.reduce((a, b) => (b.N > a.N ? b : a)).move;   // en çok ziyaret edilen hamle
+  return root.kids.reduce((a, b) => (b.N > a.N ? b : a)).move;     // en çok ziyaret edilen hamle
 }
 </script></code></pre>
     </div>
@@ -1063,6 +1083,7 @@ def ucb1(w, n, N, c):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

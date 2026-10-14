@@ -152,6 +152,14 @@
 <section data-sec="difüzyon">
   <h2>Canlı: gürültüden şekle ✨</h2>
   <div class="demo" data-demo="diffusion"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>“boz” yönünde oynatın: yıldızın noktaları adım adım dağılıyor. Eğitim verisi böyle hazırlanır.</li>
+      <li>“üret” yönünde oynatın: gürültü önce kabaca bir “bulut”a, sonra yıldız şekline toplanıyor. Büyük yapı <b>önce</b>, ayrıntı <b>sonra</b> belirir (gerçek görüntü modellerinde de: önce kompozisyon, sonra doku).</li>
+      <li>İstemi “kalp” yapın: aynı gürültü, farklı koşul, farklı sonuç. “hepsi (koşulsuz)” seçince bazı noktalar yıldıza, bazıları kalbe gider: model ne istediğinizi bilmiyor.</li>
+      <li>“yeni gürültü” ile birkaç kez üretin: aynı istem, farklı tohum, biraz farklı dağılım.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="difüzyon">
@@ -165,10 +173,11 @@
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://playground.tensorflow.org/" target="_blank" rel="noopener"><div class="lnk-t">🔗 TensorFlow Playground</div><div class="lnk-s">Google</div><div class="lnk-w">Tarayıcıda küçük bir sinir ağı eğitin; nöron ve katman ekleyip karar sınırının nasıl değiştiğini izleyin.</div></a><a class="lnk" href="https://natureofcode.com/neural-networks/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Neural Networks</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Tek bir yapay nörondan başlayarak sinir ağını p5.js ile kurar.</div></a><a class="lnk" href="https://www.redblobgames.com/maps/terrain-from-noise/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Making maps with noise functions</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Gürültüden arazi üretmeyi kaydırıcılarla adım adım kurar: oktav, frekans, adalar, biyomlar.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://playground.tensorflow.org/" target="_blank" rel="noopener"><div class="lnk-t">🔗 TensorFlow Playground</div><div class="lnk-s">Google</div><div class="lnk-w">Tarayıcıda küçük bir sinir ağı eğitin; nöron ve katman ekleyip karar sınırının nasıl değiştiğini izleyin.</div></a><a class="lnk" href="https://natureofcode.com/neural-networks/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Neural Networks</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Tek bir yapay nörondan başlayarak sinir ağını p5.js ile kurar.</div></a><a class="lnk" href="https://www.redblobgames.com/maps/terrain-from-noise/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Making maps with noise functions</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Gürültüden arazi üretmeyi kaydırıcılarla adım adım kurar: oktav, frekans, adalar, biyomlar.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -271,6 +280,14 @@
 <section data-sec="dünya modeli">
   <h2>Canlı: oyunu ezberleyen bir “dünya modeli” 🌀</h2>
   <div class="demo" data-demo="worldmodel"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Eğitim verisini 50’ye indirin ve ok düğmeleriyle duvarlara doğru yürüyün: model hiç görmediği durumlarda “genelde bir kare ilerlenir” diye genelliyor ve <b>duvarın içinden geçiyor</b> (kırmızı halka).</li>
+      <li>Bir kez ayrıştıktan sonra iki dünya bir daha birleşmiyor: model kendi hatalı tahmininin üzerine tahmin yürütüyor. Gerçek dünya modellerinde de hatalar <b>birikir</b>; bu yüzden uzun süreli tutarlılık en zor problem.</li>
+      <li>Veriyi 5000’e çıkarın: neredeyse her durum görüldüğü için model gerçeğe çok yakın. Ama gerçek oyunlarda durum sayısı astronomik; her şeyi görmek imkânsız, <b>genelleme</b> şart.</li>
+      <li>Buradaki “model” bir tablo; GameNGen ve Genie aynı işi <b>piksellerle</b> ve milyarlarca parametreyle yapıyor.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="dünya modeli">
@@ -406,8 +423,8 @@ pipe = AutoPipelineForText2Image.from_pretrained(
     "stabilityai/sdxl-turbo", torch_dtype=torch.float16, variant="fp16").to("cuda")
 
 img = pipe(prompt="treasure chest, isometric game asset, white background",
-           num_inference_steps=1, guidance_scale=0.0,          # Turbo: tek adım
-           generator=torch.Generator("cuda").manual_seed(42)   # tohum = tekrarlanabilirlik
+           num_inference_steps=1, guidance_scale=0.0,         # Turbo: tek adım
+           generator=torch.Generator("cuda").manual_seed(42)  # tohum = tekrarlanabilirlik
            ).images[0]
 img.save("sandik.png")
 # ⚠️ SDXL-Turbo’nun lisansı ticari kullanımı kısıtlar: ticari oyunda kullanmadan önce lisansı okuyun.
@@ -484,20 +501,20 @@ let data = [], pts = [], adim = 0;
 
 function setup() {
   createCanvas(500, 500); frameRate(12);
-  for (let i = 0; i < 120; i++) {                     // "veri kümesi": kalp eğrisinin 120 noktası
+  for (let i = 0; i < 120; i++) {                // "veri kümesi": kalp eğrisinin 120 noktası
     const t = TWO_PI * i / 120;
     data.push([0.055 * 16 * pow(sin(t), 3),
               -0.055 * (13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t))]);
   }
   yeni();
 }
-function mousePressed() { yeni(); }                   // tıkla: yeni gürültüyle baştan
+function mousePressed() { yeni(); }              // tıkla: yeni gürültüyle baştan
 
-function yeni() {                                     // saf gürültü: her nokta rastgele bir yerde
+function yeni() {                                // saf gürültü: her nokta rastgele bir yerde
   pts = []; adim = 0;
   for (let i = 0; i < 250; i++) pts.push([randomGaussian(0, 1.2), randomGaussian(0, 1.2)]);
 }
-function sigma(k) { return 0.02 * pow(60, k); }       // gürültü seviyesi: k=1 → 1.2, k=0 → 0.02
+function sigma(k) { return 0.02 * pow(60, k); }  // gürültü seviyesi: k=1 → 1.2, k=0 → 0.02
 </script></code></pre>
 </section>
 
@@ -791,6 +808,7 @@ def most_likely_next(seq, note):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

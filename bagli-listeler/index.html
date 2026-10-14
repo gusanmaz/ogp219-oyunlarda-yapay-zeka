@@ -132,10 +132,11 @@
   <aside class="notes">Önce 2. konuma ekleyin, sonra 0. konuma: taşıma sayısı nasıl değişiyor? Ekleme sırasında sağdan sola kopyalamanın nedeni: soldan başlarsak elemanların üzerine yazarız.</aside>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/list" target="_blank" rel="noopener"><div class="lnk-t">🎞 Bağlı liste, yığın, kuyruk</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı sayfada bağlı liste, yığın, kuyruk ve çift uçlu kuyruk; her işlemde işaretçilerin nasıl değiştiğini gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/object-pool.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Object Pool</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Mermi havuzu: serbest listeyi bağlı liste olarak tutmak ve çöp toplayıcıdan kaçmak.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/data-locality.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Data Locality</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Önbellek dostu veri: diziler neden bağlı listelerden hızlıdır?</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/list" target="_blank" rel="noopener"><div class="lnk-t">📊 Bağlı liste, yığın, kuyruk</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı sayfada bağlı liste, yığın, kuyruk ve çift uçlu kuyruk; her işlemde işaretçilerin nasıl değiştiğini gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/object-pool.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Object Pool</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Mermi havuzu: serbest listeyi bağlı liste olarak tutmak ve çöp toplayıcıdan kaçmak.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/data-locality.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Data Locality</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Önbellek dostu veri: diziler neden bağlı listelerden hızlıdır?</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -176,45 +177,45 @@
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-class Node:                       # sınıf = kalıp
-    def __init__(self, key):      # yapıcı: Node("to") yazınca çalışır
-        self.key = key            # bu düğümün değeri
-        self.next = None          # bu düğümün sonraki bağlantısı (şimdilik yok)
+class Node:                   # sınıf = kalıp
+    def __init__(self, key):  # yapıcı: Node("to") yazınca çalışır
+        self.key = key        # bu düğümün değeri
+        self.next = None      # bu düğümün sonraki bağlantısı (şimdilik yok)
 
-n = Node("to")                    # nesne = kalıptan üretilen düğüm
-print(n.key)                      # to
-print(n.next)                     # None
+n = Node("to")                # nesne = kalıptan üretilen düğüm
+print(n.key)                  # to
+print(n.next)                 # None
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-class Node                         // sınıf = kalıp
+class Node                   // sınıf = kalıp
 {
-    public string Key;             // değer
-    public Node Next;              // sonraki düğüm (yoksa null)
+    public string Key;       // değer
+    public Node Next;        // sonraki düğüm (yoksa null)
 
-    public Node(string key)        // yapıcı
+    public Node(string key)  // yapıcı
     {
         Key = key;
         Next = null;
     }
 }
 
-Node n = new Node("to");           // new → nesne üret
-Debug.Log(n.Key);                  // to
+Node n = new Node("to");     // new → nesne üret
+Debug.Log(n.Key);            // to
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-class Node {                       // sınıf = kalıp
-  constructor(key) {               // yapıcı: new Node("to") ile çalışır
-    this.key = key;                // değer
-    this.next = null;              // sonraki düğüm (şimdilik yok)
+class Node {               // sınıf = kalıp
+  constructor(key) {       // yapıcı: new Node("to") ile çalışır
+    this.key = key;        // değer
+    this.next = null;      // sonraki düğüm (şimdilik yok)
   }
 }
 
-const n = new Node("to");          // new → nesne üret
-console.log(n.key);                // to
+const n = new Node("to");  // new → nesne üret
+console.log(n.key);        // to
 </script></code></pre>
     </div>
   </div>
@@ -238,10 +239,10 @@ console.log(n.key);                // to
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 a = Node("to")
 b = Node("be")
-a.next = b            # a → b   (a'nın içine b'nin adresi yazıldı)
-print(a.next.key)     # be      ("a'nın sonrakinin değeri")
-print(b.next)         # None    → b son düğüm
-print(b.next.key)     # ❌ AttributeError: None'ın key alanı yok
+a.next = b         # a → b   (a'nın içine b'nin adresi yazıldı)
+print(a.next.key)  # be      ("a'nın sonrakinin değeri")
+print(b.next)      # None    → b son düğüm
+print(b.next.key)  # ❌ AttributeError: None'ın key alanı yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -258,10 +259,10 @@ Debug.Log(b.Next.Key);      // ❌ NullReferenceException
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const a = new Node("to");
 const b = new Node("be");
-a.next = b;                 // a → b
-console.log(a.next.key);    // be
-console.log(b.next);        // null → b son düğüm
-console.log(b.next.key);    // ❌ TypeError: null'ın özelliği okunamaz
+a.next = b;               // a → b
+console.log(a.next.key);  // be
+console.log(b.next);      // null → b son düğüm
+console.log(b.next.key);  // ❌ TypeError: null'ın özelliği okunamaz
 </script></code></pre>
     </div>
   </div>
@@ -297,49 +298,49 @@ console.log(b.next.key);    // ❌ TypeError: null'ın özelliği okunamaz
 </section>
 
 <section data-sec="bağlı liste">
-  <h2>Elle bir liste kuralım: “to be or”</h2>
+  <h2>Elle bir liste kuralım: “kılıç → kalkan → iksir”</h2>
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-9|1-3|5-6|8|9"><script type="text/template">
-first = Node("to")         # üç ayrı düğüm oluştur
-second = Node("be")
-third = Node("or")
+first = Node("kılıç")      # üç ayrı düğüm oluştur
+second = Node("kalkan")
+third = Node("iksir")
 
-first.next = second        # okları bağla: to → be
-second.next = third        #               be → or   (third.next zaten None)
+first.next = second        # okları bağla: kılıç → kalkan
+second.next = third        #               kalkan → iksir   (third.next zaten None)
 
 head = first               # listeye artık head üzerinden ulaşırız
-print(head.next.next.key)  # or
+print(head.next.next.key)  # iksir
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-Node first  = new Node("to");    // üç ayrı düğüm oluştur
-Node second = new Node("be");
-Node third  = new Node("or");
+Node first  = new Node("kılıç");  // üç ayrı düğüm oluştur
+Node second = new Node("kalkan");
+Node third  = new Node("iksir");
 
-first.Next  = second;            // to → be
-second.Next = third;             // be → or
+first.Next  = second;             // kılıç → kalkan
+second.Next = third;              // kalkan → iksir
 
 Node head = first;
-Debug.Log(head.Next.Next.Key);   // or
+Debug.Log(head.Next.Next.Key);    // iksir
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const first = new Node("to");    // üç ayrı düğüm oluştur
-const second = new Node("be");
-const third = new Node("or");
+const first = new Node("kılıç");  // üç ayrı düğüm oluştur
+const second = new Node("kalkan");
+const third = new Node("iksir");
 
-first.next = second;             // to → be
-second.next = third;             // be → or
+first.next = second;              // kılıç → kalkan
+second.next = third;              // kalkan → iksir
 
 const head = first;
-console.log(head.next.next.key); // or
+console.log(head.next.next.key);  // iksir
 </script></code></pre>
     </div>
   </div>
-  <p class="mini">Klasik örnek (Shakespeare: <i>“to be or not to be”</i>).</p>
+  <p class="mini">Örnek: bir envanterde art arda duran üç eşya.</p>
 </section>
 
 <section data-sec="bağlı liste">
@@ -358,9 +359,9 @@ console.log(head.next.next.key); // or
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 x = head
-while x is not None:        # liste bitmediyse
-    print(x.key)            # düğümü kullan
-    x = x.next              # sonrakine geç
+while x is not None:  # liste bitmediyse
+    print(x.key)      # düğümü kullan
+    x = x.next        # sonrakine geç
 
 # Arama da aynı kalıp:
 def contains(head, key):
@@ -410,7 +411,7 @@ function contains(head, key) {
 
 <section data-sec="bağlı liste">
   <h2>Arama animasyonu</h2>
-  <div class="llviz" data-keys="to be or not to" data-ops="find,reset" data-default="not" data-hint="Bir değer yazıp Ara’ya basın. x işaretçisinin listede nasıl ilerlediğini izleyin."></div>
+  <div class="llviz" data-keys="kılıç kalkan iksir harita anahtar" data-ops="find,reset" data-default="harita" data-hint="Bir değer yazıp Ara’ya basın. x işaretçisinin listede nasıl ilerlediğini izleyin."></div>
   <p class="mini">Dizide ikili arama yapabiliyorduk; bağlı listede <b>yapamayız</b>: ortadaki düğüme ulaşmak için zaten yarısını yürümek gerekir. Arama hep <b>O(N)</b>.</p>
 </section>
 
@@ -432,15 +433,15 @@ function contains(head, key) {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def push_front(head, key):     # yeni baş düğümü döndürür
+def push_front(head, key):  # yeni baş düğümü döndürür
     old_first = head
     head = Node(key)
     head.next = old_first
     return head
 
-def pop_front(head):           # (değer, yeni baş) döndürür
+def pop_front(head):        # (değer, yeni baş) döndürür
     key = head.key
-    head = head.next           # eski ilk düğüme kimse bağlı değil → çöp
+    head = head.next        # eski ilk düğüme kimse bağlı değil → çöp
     return key, head
 
 head = push_front(head, "to")
@@ -453,13 +454,13 @@ Node PushFront(Node head, string key)
     Node oldFirst = head;
     head = new Node(key);
     head.Next = oldFirst;
-    return head;              // yeni baş
+    return head;                // yeni baş
 }
 
-string PopFront(ref Node head)   // ref: head değişkenini fonksiyon içinde değiştir
+string PopFront(ref Node head)  // ref: head değişkenini fonksiyon içinde değiştir
 {
     string key = head.Key;
-    head = head.Next;         // eski ilk düğüm → çöp (GC toplar)
+    head = head.Next;           // eski ilk düğüm → çöp (GC toplar)
     return key;
 }
 </script></code></pre>
@@ -470,10 +471,10 @@ function pushFront(head, key) {
   const oldFirst = head;
   head = new Node(key);
   head.next = oldFirst;
-  return head;              // yeni baş
+  return head;             // yeni baş
 }
 
-function popFront(head) {   // [değer, yeni baş] döndürür
+function popFront(head) {  // [değer, yeni baş] döndürür
   return [head.key, head.next];
 }
 </script></code></pre>
@@ -484,12 +485,12 @@ function popFront(head) {   // [değer, yeni baş] döndürür
 
 <section data-sec="işlemler">
   <h2>Sona ekleme — <code>tail</code> olmadan: yürümek zorundayız</h2>
-  <div class="llviz" data-keys="to be or not" data-ops="pushback,reset" data-default="to" data-hint="Sona ekle: son düğümü bulmak için baştan yürümek gerekiyor."></div>
+  <div class="llviz" data-keys="kılıç kalkan iksir harita" data-ops="pushback,reset" data-default="anahtar" data-hint="Sona ekle: son düğümü bulmak için baştan yürümek gerekiyor."></div>
 </section>
 
 <section data-sec="işlemler">
   <h2>Sona ekleme — <code>tail</code> ile: O(1)</h2>
-  <div class="llviz" data-keys="to be or not" data-ops="pushback,popfront,reset" data-tail data-default="be" data-code="oldLast = tail|oldLast.next = yeni düğüm|tail = yeni düğüm" data-h="270"></div>
+  <div class="llviz" data-keys="kılıç kalkan iksir harita" data-ops="pushback,popfront,reset" data-tail data-default="anahtar" data-code="oldLast = tail|oldLast.next = yeni düğüm|tail = yeni düğüm" data-h="270"></div>
   <aside class="notes">Son düğümü gösteren ikinci bir değişken (tail) tutmak, sona eklemeyi O(1) yapar. Bedeli: her işlemde tail’i doğru güncellemek (özellikle liste boşalınca!). Kuyruk (queue) veri yapısı tam olarak budur: sona ekle, baştan çıkar → sonraki ders.</aside>
 </section>
 
@@ -505,11 +506,11 @@ class LinkedList:
 
     def push_back(self, key):
         node = Node(key)
-        if self.tail is None:       # liste boşsa: ilk ve son aynı düğüm
+        if self.tail is None:      # liste boşsa: ilk ve son aynı düğüm
             self.head = node
         else:
-            self.tail.next = node   # eski sonun next'i yeni düğüm
-        self.tail = node            # yeni son
+            self.tail.next = node  # eski sonun next'i yeni düğüm
+        self.tail = node           # yeni son
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -521,9 +522,9 @@ class LinkedList
     public void PushBack(string key)
     {
         Node node = new Node(key);
-        if (tail == null) head = node;   // liste boştu
-        else tail.Next = node;           // eski sonu bağla
-        tail = node;                     // yeni son
+        if (tail == null) head = node;  // liste boştu
+        else tail.Next = node;          // eski sonu bağla
+        tail = node;                    // yeni son
     }
 }
 </script></code></pre>
@@ -535,9 +536,9 @@ class LinkedList {
 
   pushBack(key) {
     const node = new Node(key);
-    if (this.tail === null) this.head = node;   // liste boştu
-    else this.tail.next = node;                 // eski sonu bağla
-    this.tail = node;                           // yeni son
+    if (this.tail === null) this.head = node;  // liste boştu
+    else this.tail.next = node;                // eski sonu bağla
+    this.tail = node;                          // yeni son
   }
 }
 </script></code></pre>
@@ -548,7 +549,7 @@ class LinkedList {
 
 <section data-sec="işlemler">
   <h2>Ortadan silme: “üzerinden atla”</h2>
-  <div class="llviz" data-keys="to be or not to" data-ops="remove,reset" data-default="or" data-h="215" data-hint="Bir değer yazıp Sil’e basın. prev ve x işaretçilerini izleyin."></div>
+  <div class="llviz" data-keys="kılıç kalkan iksir harita anahtar" data-ops="remove,reset" data-default="iksir" data-h="215" data-hint="Bir değer yazıp Sil’e basın. prev ve x işaretçilerini izleyin."></div>
   <div class="cols">
     <div class="box game"><span class="bt">👍 Kaydırma yok</span>Sadece <code>prev.next = x.next</code>: tek bir bağlantı değişir.</div>
     <div class="box warn"><span class="bt">👎 Ama önce bulmak lazım</span>Silinecek düğümü ve <b>bir öncekini</b> bulmak için baştan yürümek gerekir: O(N). Elimizde düğümün kendisi varsa (ve çift yönlü listeyse) O(1).</div>
@@ -570,11 +571,11 @@ def reverse(head):
     prev = None
     cur = head
     while cur is not None:
-        nxt = cur.next      # 1) devamını kaybetme
-        cur.next = prev     # 2) oku ters çevir
-        prev = cur          # 3) bir adım ilerle
+        nxt = cur.next   # 1) devamını kaybetme
+        cur.next = prev  # 2) oku ters çevir
+        prev = cur       # 3) bir adım ilerle
         cur = nxt
-    return prev             # yeni baş = eski son
+    return prev          # yeni baş = eski son
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -584,12 +585,12 @@ Node Reverse(Node head)
     Node prev = null, cur = head;
     while (cur != null)
     {
-        Node nxt = cur.Next;   // 1) devamını kaybetme
-        cur.Next = prev;       // 2) oku ters çevir
-        prev = cur;            // 3) bir adım ilerle
+        Node nxt = cur.Next;  // 1) devamını kaybetme
+        cur.Next = prev;      // 2) oku ters çevir
+        prev = cur;           // 3) bir adım ilerle
         cur = nxt;
     }
-    return prev;               // yeni baş
+    return prev;              // yeni baş
 }
 </script></code></pre>
     </div>
@@ -598,12 +599,12 @@ Node Reverse(Node head)
 function reverse(head) {
   let prev = null, cur = head;
   while (cur !== null) {
-    const nxt = cur.next;   // 1) devamını kaybetme
-    cur.next = prev;        // 2) oku ters çevir
-    prev = cur;             // 3) bir adım ilerle
+    const nxt = cur.next;  // 1) devamını kaybetme
+    cur.next = prev;       // 2) oku ters çevir
+    prev = cur;            // 3) bir adım ilerle
     cur = nxt;
   }
-  return prev;              // yeni baş
+  return prev;             // yeni baş
 }
 </script></code></pre>
     </div>
@@ -751,13 +752,13 @@ def push_back(head, key):
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 class DynArray:
     def __init__(self):
-        self.a = [None] * 1        # kapasite 1 (sabit boyutlu "dizi")
-        self.n = 0                 # eleman sayısı
+        self.a = [None] * 1                # kapasite 1 (sabit boyutlu "dizi")
+        self.n = 0                         # eleman sayısı
 
     def _resize(self, cap):
-        b = [None] * cap           # yeni, farklı boyutta dizi
+        b = [None] * cap                   # yeni, farklı boyutta dizi
         for i in range(self.n):
-            b[i] = self.a[i]       # eskileri kopyala
+            b[i] = self.a[i]               # eskileri kopyala
         self.a = b
 
     def push(self, x):
@@ -770,8 +771,8 @@ class DynArray:
         self.n -= 1
         x = self.a[self.n]
         self.a[self.n] = None              # referansı bırak (GC için!)
-        if 0 < self.n == len(self.a) // 4:
-            self._resize(len(self.a) // 2) # dörtte bire düşünce yarıya indir
+        if 0 < self.n == len(self.a)       // 4:
+            self._resize(len(self.a)       // 2) # dörtte bire düşünce yarıya indir
         return x
 </script></code></pre>
     </div>
@@ -791,13 +792,13 @@ class DynArray
 
     public void Push(int x)
     {
-        if (n == a.Length) Resize(2 * a.Length);   // dolu → iki katı
-        a[n++] = x;                                // a[n] = x; n = n + 1;
+        if (n == a.Length) Resize(2 * a.Length);  // dolu → iki katı
+        a[n++] = x;                               // a[n] = x; n = n + 1;
     }
 
     public int Pop()
     {
-        int x = a[--n];                            // n = n - 1; x = a[n];
+        int x = a[--n];                           // n = n - 1; x = a[n];
         if (n > 0 && n == a.Length / 4) Resize(a.Length / 2);
         return x;
     }
@@ -1015,17 +1016,17 @@ function draw() {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-class DNode:                       # çift yönlü düğüm
+class DNode:                    # çift yönlü düğüm
     def __init__(self, key):
         self.key = key
         self.prev = None
         self.next = None
 
-def remove(node):                  # elimizdeki düğümü O(1) sil
-    node.prev.next = node.next     # (ilk/son değilse)
+def remove(node):               # elimizdeki düğümü O(1) sil
+    node.prev.next = node.next  # (ilk/son değilse)
     node.next.prev = node.prev
 
-def insert_after(node, new):       # node'dan sonra ekle: 4 ok
+def insert_after(node, new):    # node'dan sonra ekle: 4 ok
     new.prev = node
     new.next = node.next
     node.next.prev = new
@@ -1037,10 +1038,10 @@ def insert_after(node, new):       # node'dan sonra ekle: 4 ok
 class DNode
 {
     public string Key;
-    public DNode Prev, Next;          // iki yönlü oklar
+    public DNode Prev, Next;  // iki yönlü oklar
 }
 
-void Remove(DNode node)               // O(1)
+void Remove(DNode node)       // O(1)
 {
     node.Prev.Next = node.Next;
     node.Next.Prev = node.Prev;
@@ -1048,7 +1049,7 @@ void Remove(DNode node)               // O(1)
 
 // Hazırı: var list = new LinkedList<string>();
 //         LinkedListNode<string> n = list.AddLast("a");
-//         list.Remove(n);            // O(1)
+//         list.Remove(n);    // O(1)
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -1090,23 +1091,23 @@ function remove(node) {               // O(1)
 void RemoveAtSwapBack(List<Enemy> list, int i)
 {
     int last = list.Count - 1;
-    list[i] = list[last];       // sondakini ölünün yerine koy
-    list.RemoveAt(last);        // sondan silmek: kaydırma yok
+    list[i] = list[last];  // sondakini ölünün yerine koy
+    list.RemoveAt(last);   // sondan silmek: kaydırma yok
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def remove_swap(lst, i):        # sıra önemli değilse: O(1)
-    lst[i] = lst[-1]            # sondakini ölünün yerine koy
-    lst.pop()                   # sondan sil
+def remove_swap(lst, i):  # sıra önemli değilse: O(1)
+    lst[i] = lst[-1]      # sondakini ölünün yerine koy
+    lst.pop()             # sondan sil
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function removeSwap(arr, i) {   // sıra önemli değilse: O(1)
-  arr[i] = arr[arr.length - 1]; // sondakini ölünün yerine koy
-  arr.pop();                    // sondan sil
+function removeSwap(arr, i) {    // sıra önemli değilse: O(1)
+  arr[i] = arr[arr.length - 1];  // sondakini ölünün yerine koy
+  arr.pop();                     // sondan sil
 }
 </script></code></pre>
     </div>
@@ -1129,8 +1130,8 @@ public class BulletPool : MonoBehaviour
 {
     public Bullet prefab;
     Bullet[] bullets;
-    int[] nextFree;          // boş liste: her kutu bir sonraki boş kutunun İNDEKSİNİ tutar
-    int freeHead;            // -1 = havuz dolu
+    int[] nextFree;  // boş liste: her kutu bir sonraki boş kutunun İNDEKSİNİ tutar
+    int freeHead;    // -1 = havuz dolu
 
     void Awake()
     {
@@ -1255,20 +1256,20 @@ class BulletPool {
 
 typedef struct Node {
     int key;
-    struct Node* next;          // sonraki düğümün ADRESİ
+    struct Node* next;               // sonraki düğümün ADRESİ
 } Node;
 
 Node* push_front(Node* head, int key) {
-    Node* n = malloc(sizeof(Node));   // bellekten yer al
-    n->key = key;                     // ->  =  "işaretçinin gösterdiğinin"
+    Node* n = malloc(sizeof(Node));  // bellekten yer al
+    n->key = key;                    // ->  =  "işaretçinin gösterdiğinin"
     n->next = head;
     return n;
 }
 
 Node* pop_front(Node* head) {
     Node* rest = head->next;
-    free(head);                       // ⚠️ elle geri ver (unutursan sızıntı)
-    return rest;                      // head'i bir daha KULLANMA (sarkan işaretçi)
+    free(head);                      // ⚠️ elle geri ver (unutursan sızıntı)
+    return rest;                     // head'i bir daha KULLANMA (sarkan işaretçi)
 }
 </script></code></pre>
     </div>
@@ -1432,6 +1433,7 @@ def pop_front(head):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/liste.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

@@ -130,45 +130,46 @@
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-uf = UnionFind(10)          # 0..9, her biri kendi bileşeninde
+uf = UnionFind(10)         # 0..9, her biri kendi bileşeninde
 
-uf.union(4, 3)              # 4 ile 3'ü bağla
+uf.union(4, 3)             # 4 ile 3'ü bağla
 uf.union(3, 8)
-print(uf.connected(4, 8))   # True  (4–3–8 yolu var)
-print(uf.connected(4, 5))   # False
-print(uf.count)             # bileşen sayısı: 8
+print(uf.connected(4, 8))  # True  (4–3–8 yolu var)
+print(uf.connected(4, 5))  # False
+print(uf.count)            # bileşen sayısı: 8
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-var uf = new UnionFind(10);         // 0..9, her biri kendi bileşeninde
+var uf = new UnionFind(10);     // 0..9, her biri kendi bileşeninde
 
-uf.Union(4, 3);                     // 4 ile 3'ü bağla
+uf.Union(4, 3);                 // 4 ile 3'ü bağla
 uf.Union(3, 8);
-Debug.Log(uf.Connected(4, 8));      // True
-Debug.Log(uf.Connected(4, 5));      // False
-Debug.Log(uf.Count);                // 8
+Debug.Log(uf.Connected(4, 8));  // True
+Debug.Log(uf.Connected(4, 5));  // False
+Debug.Log(uf.Count);            // 8
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const uf = new UnionFind(10);       // 0..9, her biri kendi bileşeninde
+const uf = new UnionFind(10);     // 0..9, her biri kendi bileşeninde
 
-uf.union(4, 3);                     // 4 ile 3'ü bağla
+uf.union(4, 3);                   // 4 ile 3'ü bağla
 uf.union(3, 8);
-console.log(uf.connected(4, 8));    // true
-console.log(uf.connected(4, 5));    // false
-console.log(uf.count);              // 8
+console.log(uf.connected(4, 8));  // true
+console.log(uf.connected(4, 5));  // false
+console.log(uf.count);            // 8
 </script></code></pre>
     </div>
   </div>
   <p>Bugün bu sınıfın <b>içini</b> dört farklı şekilde yazacağız ve hızlarını karşılaştıracağız. Kullanan kod hiç değişmeyecek (soyutlama!).</p>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/ufds" target="_blank" rel="noopener"><div class="lnk-t">🎞 Union–find (ayrık kümeler)</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Birleştirme ve yol sıkıştırmanın ağaç üzerinde ne yaptığını gösterir.</div></a><a class="lnk" href="https://jamisbuck.org/mazes/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Maze Algorithms</div><div class="lnk-s">Jamis Buck</div><div class="lnk-w">Labirent üreten on iki algoritmayı (Kruskal, Prim, geri izleme…) yan yana, canlı izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/ufds" target="_blank" rel="noopener"><div class="lnk-t">📊 Union–find (ayrık kümeler)</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Birleştirme ve yol sıkıştırmanın ağaç üzerinde ne yaptığını gösterir.</div></a><a class="lnk" href="https://jamisbuck.org/mazes/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Maze Algorithms</div><div class="lnk-s">Jamis Buck</div><div class="lnk-w">Labirent üreten on iki algoritmayı (Kruskal, Prim, geri izleme…) yan yana, canlı izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -229,8 +230,8 @@ class QuickFind:
     def union(self, p, q):
         pid, qid = self.id[p], self.id[q]
         if pid == qid:
-            return                       # zaten bağlı
-        for i in range(len(self.id)):    # ⚠️ tüm diziyi tara
+            return                     # zaten bağlı
+        for i in range(len(self.id)):  # ⚠️ tüm diziyi tara
             if self.id[i] == pid:
                 self.id[i] = qid
         self.count -= 1
@@ -267,14 +268,14 @@ class QuickFind
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 class QuickFind {
   constructor(n) {
-    this.id = Array.from({ length: n }, (_, i) => i);   // [0, 1, 2, ..., n-1]
+    this.id = Array.from({ length: n }, (_, i) => i);  // [0, 1, 2, ..., n-1]
     this.count = n;
   }
   connected(p, q) { return this.id[p] === this.id[q]; }
   union(p, q) {
     const pid = this.id[p], qid = this.id[q];
     if (pid === qid) return;
-    for (let i = 0; i < this.id.length; i++)   // ⚠️ tüm diziyi tara
+    for (let i = 0; i < this.id.length; i++)           // ⚠️ tüm diziyi tara
       if (this.id[i] === pid) this.id[i] = qid;
     this.count--;
   }
@@ -358,12 +359,12 @@ class QuickFind {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 class QuickUnion:
     def __init__(self, n):
-        self.id = list(range(n))       # id[i] = i'nin ebeveyni
+        self.id = list(range(n))  # id[i] = i'nin ebeveyni
         self.count = n
 
     def find(self, p):
-        while p != self.id[p]:         # kök kendini gösterir
-            p = self.id[p]             # ebeveyne çık
+        while p != self.id[p]:    # kök kendini gösterir
+            p = self.id[p]        # ebeveyne çık
         return p
 
     def connected(self, p, q):
@@ -373,7 +374,7 @@ class QuickUnion:
         i, j = self.find(p), self.find(q)
         if i == j:
             return
-        self.id[i] = j                 # p'nin kökü, q'nun köküne bağlandı
+        self.id[i] = j            # p'nin kökü, q'nun köküne bağlandı
         self.count -= 1
 </script></code></pre>
     </div>
@@ -388,7 +389,7 @@ class QuickUnion
 
     public int Find(int p)
     {
-        while (p != id[p]) p = id[p];   // ebeveyne çık
+        while (p != id[p]) p = id[p];  // ebeveyne çık
         return p;
     }
 
@@ -398,7 +399,7 @@ class QuickUnion
     {
         int i = Find(p), j = Find(q);
         if (i == j) return;
-        id[i] = j;                      // kökü köke bağla
+        id[i] = j;                     // kökü köke bağla
         Count--;
     }
 }
@@ -409,14 +410,14 @@ class QuickUnion
 class QuickUnion {
   constructor(n) { this.id = Array.from({ length: n }, (_, i) => i); this.count = n; }
   find(p) {
-    while (p !== this.id[p]) p = this.id[p];   // ebeveyne çık
+    while (p !== this.id[p]) p = this.id[p];  // ebeveyne çık
     return p;
   }
   connected(p, q) { return this.find(p) === this.find(q); }
   union(p, q) {
     const i = this.find(p), j = this.find(q);
     if (i === j) return;
-    this.id[i] = j;                            // kökü köke bağla
+    this.id[i] = j;                           // kökü köke bağla
     this.count--;
   }
 }
@@ -491,7 +492,7 @@ function find(parent, p) {
 class WeightedQuickUnion:
     def __init__(self, n):
         self.id = list(range(n))
-        self.sz = [1] * n                  # her ağaçta başta 1 düğüm
+        self.sz = [1] * n            # her ağaçta başta 1 düğüm
         self.count = n
 
     def find(self, p):
@@ -503,7 +504,7 @@ class WeightedQuickUnion:
         i, j = self.find(p), self.find(q)
         if i == j:
             return
-        if self.sz[i] < self.sz[j]:        # küçük ağacı büyüğün altına
+        if self.sz[i] < self.sz[j]:  # küçük ağacı büyüğün altına
             self.id[i] = j
             self.sz[j] += self.sz[i]
         else:
@@ -615,17 +616,17 @@ function union(parent, size, p, q) {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def find(self, p):                     # yarılama: tek satırlık ek
+def find(self, p):                        # yarılama: tek satırlık ek
     while p != self.id[p]:
-        self.id[p] = self.id[self.id[p]]   # p'yi dedesine bağla
+        self.id[p] = self.id[self.id[p]]  # p'yi dedesine bağla
         p = self.id[p]
     return p
 
-def find_full(self, p):                # tam sıkıştırma: iki geçiş
+def find_full(self, p):                   # tam sıkıştırma: iki geçiş
     root = p
-    while root != self.id[root]:       # 1) kökü bul
+    while root != self.id[root]:          # 1) kökü bul
         root = self.id[root]
-    while p != root:                   # 2) yoldaki herkesi köke bağla
+    while p != root:                      # 2) yoldaki herkesi köke bağla
         nxt = self.id[p]
         self.id[p] = root
         p = nxt
@@ -727,20 +728,20 @@ def find(parent, p):
 import random
 
 def make_maze(cols, rows):
-    uf = UnionFind(cols * rows)            # hücre (x, y) → numara y * cols + x
+    uf = UnionFind(cols * rows)                           # hücre (x, y) → numara y * cols + x
     walls = []
     for y in range(rows):
         for x in range(cols):
             c = y * cols + x
-            if x < cols - 1: walls.append((c, c + 1))      # sağ duvar
-            if y < rows - 1: walls.append((c, c + cols))   # alt duvar
-    random.shuffle(walls)                  # duvarları rastgele sırala
+            if x < cols - 1: walls.append((c, c + 1))     # sağ duvar
+            if y < rows - 1: walls.append((c, c + cols))  # alt duvar
+    random.shuffle(walls)                                 # duvarları rastgele sırala
     passages = []
     for a, b in walls:
-        if not uf.connected(a, b):         # farklı bileşenler → yık
+        if not uf.connected(a, b):                        # farklı bileşenler → yık
             uf.union(a, b)
             passages.append((a, b))
-    return passages                        # açılan geçitler (cols*rows - 1 tane)
+    return passages                                       # açılan geçitler (cols*rows - 1 tane)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -987,6 +988,7 @@ function makeMaze(cols, rows) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/birlesim.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

@@ -155,6 +155,23 @@
 <section data-sec="akış">
   <h2>Canlı: akışta tutmak 🌊</h2>
   <div class="demo" data-demo="flow"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>“sabit” politikada öğrenme hızını 2’ye çıkarın: çizgi sağa kayıp sıkıntı bölgesine giriyor. Öğrenme hızı 0,25 ve başlangıç becerisi 0: oyuncu kaygıda takılıyor.</li>
+      <li>“basamaklı”: ortalama bir oyuncu için iyi bir eğri. Ama hızlı öğrenen biri için yetersiz, yavaş öğrenen biri için fazla. “başka oyuncu” ile birkaç profil deneyin.</li>
+      <li>“dinamik”: çizgi akış kanalında kalmaya çalışıyor. Hedef galibiyeti 0,5’e indirin (zorlu, yarı yarıya) ve 0,9’a çıkarın (rahat). Hangisi sizin oyununuza uygun?</li>
+      <li>Alt şeride bakın: DDA’da bile kayıplar var; amaç hiç kaybetmemek değil, kayıpların <b>anlamlı</b> olması.</li>
+    </ol>
+  </div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?">
+    <ol style="font-size:.9em">
+      <li><b>Sol kare</b> akış kanalı: yatay eksen oyuncunun becerisi, dikey eksen oyunun zorluğu. Yeşil şerit <b>akış</b>, üstü kırmızı <b>kaygı</b> (oyun becerinin çok üstünde), altı mavi <b>sıkıntı</b>.</li>
+      <li><b>Siyah çizgi</b> 120 karşılaşma boyunca bir oyuncunun yolculuğu; sarı nokta şu an bulunduğu yer. Oyuncu öğrendikçe çizgi sağa gider; zorluk arttıkça yukarı.</li>
+      <li><b>Sağ üst</b>: mor çizgi her karşılaşmada kazanma olasılığı (yeşil bant %50–80). Altındaki şerit: yeşil kazandı, kırmızı kaybetti.</li>
+      <li><b>Sağ alt</b> üç çubuk: oyuncu zamanının yüzde kaçını akışta, kaygıda, sıkıntıda geçirdi. Karşılaştıracağınız sayı bu.</li>
+      <li>Simülasyondaki oyuncu, dengeli maçlarda daha hızlı öğrenir (çok kolay ya da çok zor karşılaşmadan az şey öğrenilir).</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="akış">
@@ -168,10 +185,11 @@
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/articles/probability/damage-rolls.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Probability and damage rolls</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Zar atarak hasar hesaplamanın olasılık dağılımı; zorluk ve “adil rastgelelik” için.</div></a><a class="lnk" href="https://ncase.me/trust/" target="_blank" rel="noopener"><div class="lnk-t">🔗 The Evolution of Trust</div><div class="lnk-s">Nicky Case</div><div class="lnk-w">Tekrarlanan mahkûm ikilemi; strateji, evrim ve oyun kuramı oynanabilir bir hikâye olarak.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/articles/probability/damage-rolls.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Probability and damage rolls</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Zar atarak hasar hesaplamanın olasılık dağılımı; zorluk ve “adil rastgelelik” için.</div></a><a class="lnk" href="https://ncase.me/trust/" target="_blank" rel="noopener"><div class="lnk-t">🔗 The Evolution of Trust</div><div class="lnk-s">Nicky Case</div><div class="lnk-w">Tekrarlanan mahkûm ikilemi; strateji, evrim ve oyun kuramı oynanabilir bir hikâye olarak.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -194,6 +212,11 @@
   <div class="ttl">YZ yönetmeni ve tempo</div>
   <div class="sub">gerilim, zirve, rahatlama</div>
   <ul class="agenda"><li class="done">zorluk neden zor?</li><li class="done">akış ve dinamik zorluk</li><li class="on">YZ yönetmeni ve tempo</li><li class="">yarış ve lastik bant</li><li class="">adil hissettiren rastgelelik</li><li class="">oyuncu modelleme ve eşleştirme</li><li class="">kod ve laboratuvarlar</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="oyunda" class="no-grow">
+  <h2>📸 Oyundan bir kare: Left 4 Dead (2008)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/l4d.jpg" alt="Left 4 Dead (2008) ekran görüntüsü" style="height:440px;max-width:100%;object-fit:contain;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">“YZ Yönetmeni” oyuncuların ne kadar zorlandığını ölçüp zombi dalgalarının ne zaman ve ne kadar kalabalık geleceğine karar veriyor: gerginlik yükselir, sonra nefes alma anı gelir.<br><span style="color:var(--muted);font-size:.85em">Görsel: Left 4 Dead ekran görüntüsü, Valve, Wikipedia (eğitim amaçlı adil kullanım)</span></figcaption></figure>
 </section>
 
 <section data-sec="yönetmen">
@@ -222,6 +245,14 @@
 <section data-sec="yönetmen">
   <h2>Canlı: YZ yönetmeni 🎬</h2>
   <div class="demo" data-demo="director"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Bir süre izleyin: kırmızı yoğunluk eğrisi dalgalanıyor; arka plan renkleri yönetmenin durumunu gösteriyor. Mavi çizgi: aktif düşman. Rahatlama (yeşil) sırasında mavi sıfıra iniyor.</li>
+      <li>Oyuncu becerisini 0,1’e indirin: düşmanlar yavaş temizleniyor, Peak Fade uzuyor; yönetmen savaş bitmeden dinlenmeyi başlatmıyor. 0,9: dalgalar kısa ve sık.</li>
+      <li>Rahatlama süresini 2 saniyeye indirin: dinlenme yok, sürekli gerilim; sonra 40: uzun sessizlik. Hangisi korku, hangisi aksiyon oyununa uyar?</li>
+      <li>“Pusu!” düğmesi: senaryolu bir olay yoğunluğu aniden zirveye taşırsa yönetmen otomatik olarak geri çekilir.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="yönetmen">
@@ -264,6 +295,15 @@
 <section data-sec="lastik bant">
   <h2>Canlı: lastik bant 🏎️</h2>
   <div class="demo" data-demo="rubber"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li><b>Ekranı okuyun:</b> görünüm size göre. Ortadaki kesikli çizgi sizsiniz; sağdaki arabalar önünüzde, soldakiler arkanızda. Sağdaki <code>×1.00</code> o YZ’nin hız çarpanı: kırmızı = yavaşlatılıyor, yeşil = hızlandırılıyor.</li>
+      <li>“🏁 yarışı başlat”: yeşil şeridin (ölü bölge) içindeki arabanın çarpanı hep ×1.00. Yan yana yarışta hile yok.</li>
+      <li>Lastik bant gücünü 0 yapıp yeniden başlatın: hızlı YZ’ler kaybolur, yavaşlar geride kalır; yarış 10 saniyede “biter”. 1 yapın: herkes dibinizde.</li>
+      <li><b>🚀 Nitro</b>’ya basıp öne geçin: az önce yeşil olan çarpanlar ne oldu? Arkaya düşünce ne oluyor? Oyun sizi hem yakalıyor hem bekliyor.</li>
+      <li>Ölü bölgeyi 0 yapın: yanınızdaki araba bile ayarlanıyor. Gerçek bir oyunda bunu nasıl fark ederdiniz?</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-ek="deney-rubber" data-sec="demo">
@@ -401,15 +441,15 @@
 // JavaScript (p5.js): zorluk yönetmeni — son 5 karşılaşmaya bakar, küçük adımlarla ayarlar
 class DifficultyDirector {
   constructor() {
-    this.difficulty = 5;          // 0 … 10
-    this.targetWinRate = 0.7;     // oyuncu karşılaşmaların %70'ini kazansın
+    this.difficulty = 5;                 // 0 … 10
+    this.targetWinRate = 0.7;            // oyuncu karşılaşmaların %70'ini kazansın
     this.step = 0.4;
-    this.recent = [];             // son 5 sonucun kayan penceresi (true = oyuncu kazandı)
+    this.recent = [];                    // son 5 sonucun kayan penceresi (true = oyuncu kazandı)
   }
-  reportEncounter(playerWon) {    // her karşılaşma sonunda çağır
+  reportEncounter(playerWon) {           // her karşılaşma sonunda çağır
     this.recent.push(playerWon);
     if (this.recent.length > 5) this.recent.shift();
-    if (this.recent.length < 3) return;                    // az veriyle karar verme
+    if (this.recent.length < 3) return;  // az veriyle karar verme
     const wins = this.recent.filter(w => w).length;
     const winRate = wins / this.recent.length;
     this.difficulty = constrain(this.difficulty + (winRate - this.targetWinRate) * this.step * 2, 0, 10);
@@ -512,9 +552,9 @@ const crit = new PRD(0.084744);
 // Unity: lastik bant çarpanı (Melder’in eğrisi): ölü bölge + doğrusal + üst sınır
 public static float RubberBand(float gap, float dead = 100f, float full = 500f, float max = 0.2f) {
     float a = Mathf.Abs(gap);
-    if (a <= dead) return 1f;                                   // oyuncunun yanında: dokunma
+    if (a <= dead) return 1f;          // oyuncunun yanında: dokunma
     float s = Mathf.Min(1f, (a - dead) / (full - dead)) * max;
-    return gap > 0 ? 1f - s : 1f + s;                           // öndeyse yavaşla, arkadaysa hızlan
+    return gap > 0 ? 1f - s : 1f + s;  // öndeyse yavaşla, arkadaysa hızlan
 }
 // Önce sürücü becerisine uygula (fren noktası, viraj hızı); sınırdaysa motor gücüne.
 </script></code></pre>
@@ -765,6 +805,7 @@ def next_phase(phase, intensity, t, enemies, peak, sustain, relax):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

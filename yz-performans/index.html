@@ -220,6 +220,23 @@
 <section data-sec="zaman dilimleme">
   <h2>Canlı: kare bütçesi ⏱️</h2>
   <div class="demo" data-demo="budget"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>“herkes her kare” + 400 ajan: mor YZ çubukları bütçe çizgisini aşıyor; kırmızı çubuklar pahalı yol isteklerinin sıçramaları.</li>
+      <li>“zaman dilimleme”: kare süresi sabit! Ama ajan sayısını artırınca “en bayat ajan” büyüyor; soluk noktalar uzun süredir düşünmeyen ajanlar.</li>
+      <li>“uzaklığa göre LOD”: oyuncuyu (mavi) kalabalığın ortasına sürükleyin: yakındaki herkes her kare güncelleniyor, bütçe yine aşılabiliyor.</li>
+      <li>“LOD + bütçe”: yakındakiler ve takip ettiğiniz sarı ajan her kare; kalan bütçe en uzun süredir bekleyenlere. “Başka ajanı takip et” ile uzaktaki birini seçin: hâlâ her kare güncelleniyor mu?</li>
+    </ol>
+  </div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?">
+    <ol style="font-size:.9em">
+      <li><b>Sol alan</b> oyun dünyası: her nokta bir NPC. Mavi büyük nokta kamera/oyuncu (fareyle sürükleyin); çevresindeki iki kesikli halka LOD sınırları.</li>
+      <li>Nokta rengi = ayrıntı düzeyi: <b>yeşil</b> yakın (LOD 0), <b>mavi</b> orta (LOD 1), <b>gri</b> uzak (LOD 2). <b>Sarı</b> büyük nokta “takip ettiğiniz” ajan: uzakta bile olsa önemli.</li>
+      <li><b>Soluk</b> nokta = uzun süredir düşünmemiş (bayat) ajan. Ne kadar soluksa o kadar uzun süredir güncellenmedi.</li>
+      <li><b>Sağ grafik</b> son 160 karenin süresi: gri taban diğer sistemler (9 ms), üstündeki mor kısım YZ. Kırmızı kesikli çizgi 16,7 ms bütçe; çizgiyi aşan kare <b>kırmızı</b> olur (takılma).</li>
+      <li>Alttaki üç satır: son 60 karede kaç kez bütçe aşıldı, kare başına kaç ajan güncellendi, en bayat ajan kaç karedir bekliyor.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="zaman dilimleme">
@@ -233,6 +250,7 @@
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
@@ -243,6 +261,15 @@
 <section data-sec="zaman dilimleme">
   <h2>Canlı: yol isteği kuyruğu 📨</h2>
   <div class="demo" data-demo="pathqueue"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li><b>Ekranı okuyun:</b> koyu kareler duvar. Mor alan şu an aranan yolun açtığı düğümler; yeşil çizgi yeni bulunan yol (birkaç saniyede solar). Sağda kuyruk uzunluğu, ortalama bekleme ve kare başına açılan düğüm grafiği.</li>
+      <li>“📨 12 NPC aynı anda yol istesin”e bir kez basın: grafik bütçe çizgisinde düz gider, yollar <b>sırayla</b> belirir. Hiçbir karede sıçrama yok.</li>
+      <li>Düğmeye hızlıca 5 kez basın (60 istek): kuyruk kırmızıya döner, ortalama bekleme büyür. Kare süresi hâlâ sabit; bedeli gecikme.</li>
+      <li>Bütçeyi 1000 yapın: bekleme sıfıra yakın. Peki neden hep 1000 yapmıyoruz? (Her düğüm zaman demek: 1000 düğüm bir karenin YZ bütçesini tek başına yiyebilir.)</li>
+      <li>Bütçeyi 20 yapın: uzun bir yol birkaç kareye yayılıyor; mor alan kare kare büyüyor. Arama <b>kaldığı yerden</b> devam ediyor.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-ek="deney-pathq" data-sec="demo">
@@ -407,7 +434,7 @@ public class AIScheduler : MonoBehaviour {
     readonly List<IAIAgent> agents = new();
     int next;
     readonly System.Diagnostics.Stopwatch sw = new();
-    static readonly ProfilerMarker s_Think = new("AI.Think");     // profilleyicide ayrı satır
+    static readonly ProfilerMarker s_Think = new("AI.Think");  // profilleyicide ayrı satır
 
     public void Register(IAIAgent a) => agents.Add(a);
 
@@ -417,8 +444,8 @@ public class AIScheduler : MonoBehaviour {
         int done = 0;
         using (s_Think.Auto()) {
             while (done < agents.Count && sw.Elapsed.TotalMilliseconds < budgetMs) {
-                agents[next].Think();                     // algılama + karar + istekler
-                next = (next + 1) % agents.Count;         // sırayla: açlık yok
+                agents[next].Think();                          // algılama + karar + istekler
+                next = (next + 1) % agents.Count;              // sırayla: açlık yok
                 done++;
             }
         }
@@ -447,8 +474,8 @@ pstats.Stats("ai.prof").sort_stats("cumulative").print_stats(10)   # en pahalı 
 let aiMs = 0;
 function draw() {
   const t0 = performance.now();
-  updateAI();                                  // sizin YZ güncellemeniz
-  aiMs = 0.9 * aiMs + 0.1 * (performance.now() - t0);   // yumuşatılmış ortalama
+  updateAI();                                          // sizin YZ güncellemeniz
+  aiMs = 0.9 * aiMs + 0.1 * (performance.now() - t0);  // yumuşatılmış ortalama
   render();
   fill(aiMs > 4 ? 'red' : 'black');
   text(`YZ: ${aiMs.toFixed(2)} ms  FPS: ${frameRate().toFixed(0)}`, 10, 20);
@@ -466,14 +493,14 @@ function draw() {
 // JavaScript: C# işinin (NearestThreatJob) yaptığı hesabın düz hâli + süre ölçümü
 // agents ve threats: [{x, y}, ...].  Her ajan için en yakın tehdidin uzaklığını bul.
 function nearestThreats(agents, threats) {
-  const out = new Float32Array(agents.length);     // sonuçlar art arda duran tek bir dizide
-  for (let i = 0; i < agents.length; i++) {        // C#'ta bu döngünün her turu Execute(i)
+  const out = new Float32Array(agents.length);   // sonuçlar art arda duran tek bir dizide
+  for (let i = 0; i < agents.length; i++) {      // C#'ta bu döngünün her turu Execute(i)
     let best = Infinity;
     for (let k = 0; k < threats.length; k++) {
       const dx = agents[i].x - threats[k].x, dy = agents[i].y - threats[k].y;
-      best = Math.min(best, dx * dx + dy * dy);    // karşılaştırırken kök alma (Y0)
+      best = Math.min(best, dx * dx + dy * dy);  // karşılaştırırken kök alma (Y0)
     }
-    out[i] = Math.sqrt(best);                      // kök yalnızca bir kez, en sonda
+    out[i] = Math.sqrt(best);                    // kök yalnızca bir kez, en sonda
   }
   return out;
 }
@@ -497,11 +524,11 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
-[BurstCompile]                                    // yerel koda derlenir, SIMD kullanır
+[BurstCompile]                                       // yerel koda derlenir, SIMD kullanır
 struct NearestThreatJob : IJobParallelFor {
     [ReadOnly] public NativeArray<float3> agents;
     [ReadOnly] public NativeArray<float3> threats;
-    public NativeArray<float> nearestDist;        // her iş sadece kendi indisini yazar
+    public NativeArray<float> nearestDist;           // her iş sadece kendi indisini yazar
 
     public void Execute(int i) {
         float best = float.MaxValue;
@@ -513,8 +540,8 @@ struct NearestThreatJob : IJobParallelFor {
 
 // Bir MonoBehaviour içinde (diziler Allocator.Persistent ile bir kez oluşturulur, OnDestroy'da Dispose):
 // var job = new NearestThreatJob { agents = agentPos, threats = threatPos, nearestDist = result };
-// JobHandle h = job.Schedule(agentPos.Length, 64);   // 64'lük paketler hâlinde çekirdeklere dağıt
-// h.Complete();                                       // sonuçlara ihtiyaç olduğu anda bekle
+// JobHandle h = job.Schedule(agentPos.Length, 64);  // 64'lük paketler hâlinde çekirdeklere dağıt
+// h.Complete();                                     // sonuçlara ihtiyaç olduğu anda bekle
 </script></code></pre>
     </div>
   </div>
@@ -767,6 +794,7 @@ def time_until(value, rate, threshold):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

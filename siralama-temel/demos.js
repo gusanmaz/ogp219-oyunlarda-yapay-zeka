@@ -217,7 +217,7 @@
     root.append(el('div', { class: 'sv-controls' },
       slider('Düşman N =', 3, 40, N, 1, v => { N = v; gen(); }),
       slider('En yakın K =', 1, 5, K, 1, v => { K = v; plan(); }),
-      btn('🗺 Yeni harita', gen)),
+      btn('🗺️ Yeni harita', gen)),
     c, SL.transport(fp, { min: 0.5, max: 40 }), stat, note);
     SL.onTheme(() => fp.render()); gen();
     return { stop() { fp.pause(); } };
@@ -418,7 +418,7 @@
 
   /* ---------- 9) h-sıralama ---------- */
   D.hsort = function (root) {
-    let a = SL.parseValues('S H E L L S O R T E X A M P L E'), h = 4;
+    let a = SL.parseValues('S T R E E T F I G H T E R T W O'), h = 4;
     const seq = [13, 4, 1]; let si = 0;
     const view = el('div', { class: 'hs-view' });
     const groupsEl = el('div', { class: 'hs-groups' });

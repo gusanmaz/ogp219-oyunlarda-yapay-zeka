@@ -121,6 +121,11 @@
   <ul class="agenda"><li class="on">FSM’den ağaca</li><li class="">düğüm türleri</li><li class="">tick: ağaç nasıl düşünür</li><li class="">kod: kendi BT motorumuz</li><li class="">kara tahta, hafıza, olaylar</li><li class="">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-sec="oyunda" class="no-grow">
+  <h2>📸 Oyundan bir kare: Halo 2 (2004)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/halo2.jpg" alt="Halo 2 (2004) ekran görüntüsü" style="height:440px;max-width:100%;object-fit:contain;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Davranış ağaçlarını oyun endüstrisine tanıtan oyun. Ekrandaki her düşman her karede aynı ağacı kökten yaprağa gezip “şu an ne yapmalıyım?” sorusuna cevap arıyor: siper al, el bombası at, araca bin, kaç…<br><span style="color:var(--muted);font-size:.85em">Görsel: Halo 2 ekran görüntüsü, Bungie/Microsoft, Wikipedia (eğitim amaçlı adil kullanım)</span></figcaption></figure>
+</section>
+
 <section data-sec="FSM’den ağaca">
   <h2>Hikâye: Halo 2 (2004) ve 50 davranış</h2>
   <div class="cols c64">
@@ -293,6 +298,14 @@
 <section data-sec="tick">
   <h2>Adım adım tick 👣</h2>
   <div class="demo" data-demo="bttrace"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.92em">
+      <li>Varsayılan: “görüyorum” açık, “yakın” kapalı. “Saldır” dalında “görüyor mu?” yeşil, “yakın mı?” kırmızı olur ve sequence orada durur. Selector bir sonraki dala (“Kovala”) geçer.</li>
+      <li>“canım az” kutusunu açın: tick ilk dalda biter, geri kalan her şey <b>gri</b> kalır. Yüksek öncelik = ucuz karar.</li>
+      <li>Her şeyi kapatın: ağacın tamamı dolaşılır, devriyeye ulaşmak <b>en pahalı</b> yoldur. (Halo 2 bu maliyeti “davranış etiketleri” ile düşürdü — Level 4.)</li>
+      <li>Dikkat: “görüyor mu?” iki kez soruluyor. Gerçek motorlarda bu tür koşullar önbelleğe alınır ya da bir <b>kara tahtadan</b> okunur.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="tick">
@@ -305,6 +318,7 @@
     </ol>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -413,11 +427,11 @@
 <pre><code class="language-csharp" data-trim data-line-numbers="1|3-5|7-17|19-29"><script type="text/template">
 public enum Status { Success, Failure, Running }
 
-public abstract class Node {                  // her düğümün sözleşmesi
+public abstract class Node {                    // her düğümün sözleşmesi
     public abstract Status Tick(Guard g);
 }
 
-public class Selector : Node {                // "?" — B planı
+public class Selector : Node {                  // "?" — B planı
     readonly Node[] kids;
     public Selector(params Node[] children) { kids = children; }
     public override Status Tick(Guard g) {
@@ -425,11 +439,11 @@ public class Selector : Node {                // "?" — B planı
             Status s = k.Tick(g);
             if (s != Status.Failure) return s;  // başarılı ya da sürüyor: dur
         }
-        return Status.Failure;                 // hiçbir plan işe yaramadı
+        return Status.Failure;                  // hiçbir plan işe yaramadı
     }
 }
 
-public class Sequence : Node {                // "→" — tarif
+public class Sequence : Node {                  // "→" — tarif
     readonly Node[] kids;
     public Sequence(params Node[] children) { kids = children; }
     public override Status Tick(Guard g) {
@@ -437,7 +451,7 @@ public class Sequence : Node {                // "→" — tarif
             Status s = k.Tick(g);
             if (s != Status.Success) return s;  // başarısız ya da sürüyor: dur
         }
-        return Status.Success;                 // bütün adımlar tamam
+        return Status.Success;                  // bütün adımlar tamam
     }
 }
 </script></code></pre>
@@ -446,23 +460,23 @@ public class Sequence : Node {                // "→" — tarif
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const SUCCESS = "SUCCESS", FAILURE = "FAILURE", RUNNING = "RUNNING";
 
-class Selector {                       // "?" — B planı
+class Selector {                    // "?" — B planı
   constructor(...children) { this.kids = children; }
   tick(g) {
     for (const k of this.kids) {
       const s = k.tick(g);
-      if (s !== FAILURE) return s;     // başarılı ya da sürüyor: dur
+      if (s !== FAILURE) return s;  // başarılı ya da sürüyor: dur
     }
     return FAILURE;
   }
 }
 
-class Sequence {                       // "→" — tarif
+class Sequence {                    // "→" — tarif
   constructor(...children) { this.kids = children; }
   tick(g) {
     for (const k of this.kids) {
       const s = k.tick(g);
-      if (s !== SUCCESS) return s;     // başarısız ya da sürüyor: dur
+      if (s !== SUCCESS) return s;  // başarısız ya da sürüyor: dur
     }
     return SUCCESS;
   }
@@ -473,23 +487,23 @@ class Sequence {                       // "→" — tarif
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 SUCCESS, FAILURE, RUNNING = "SUCCESS", "FAILURE", "RUNNING"
 
-class Selector:                  # "?" — B planı
+class Selector:               # "?" — B planı
     def __init__(self, *children):
         self.kids = children
     def tick(self, g):
         for k in self.kids:
             s = k.tick(g)
-            if s != FAILURE:     # başarılı ya da sürüyor: dur
+            if s != FAILURE:  # başarılı ya da sürüyor: dur
                 return s
         return FAILURE
 
-class Sequence:                  # "→" — tarif
+class Sequence:               # "→" — tarif
     def __init__(self, *children):
         self.kids = children
     def tick(self, g):
         for k in self.kids:
             s = k.tick(g)
-            if s != SUCCESS:     # başarısız ya da sürüyor: dur
+            if s != SUCCESS:  # başarısız ya da sürüyor: dur
                 return s
         return SUCCESS
 </script></code></pre>
@@ -505,34 +519,34 @@ class Sequence:                  # "→" — tarif
 using System;
 using UnityEngine;
 
-public class Condition : Node {                         // soru sorar
+public class Condition : Node {                          // soru sorar
     readonly Func<Guard, bool> test;
     public Condition(Func<Guard, bool> test) { this.test = test; }
     public override Status Tick(Guard g) => test(g) ? Status.Success : Status.Failure;
 }
 
-public class ActionNode : Node {                        // iş yapar
+public class ActionNode : Node {                         // iş yapar
     readonly Func<Guard, Status> run;
     public ActionNode(Func<Guard, Status> run) { this.run = run; }
     public override Status Tick(Guard g) => run(g);
 }
 
-public class Inverter : Node {                          // "!"
+public class Inverter : Node {                           // "!"
     readonly Node child;
     public Inverter(Node child) { this.child = child; }
     public override Status Tick(Guard g) {
         Status s = child.Tick(g);
         if (s == Status.Success) return Status.Failure;
         if (s == Status.Failure) return Status.Success;
-        return s;                                       // Running aynen
+        return s;                                        // Running aynen
     }
 }
 
-public class Cooldown : Node {                          // "X sn’de bir"
+public class Cooldown : Node {                           // "X sn’de bir"
     readonly Node child; readonly float seconds; float readyAt;
     public Cooldown(float seconds, Node child) { this.seconds = seconds; this.child = child; }
     public override Status Tick(Guard g) {
-        if (Time.time < readyAt) return Status.Failure; // henüz soğumadı
+        if (Time.time < readyAt) return Status.Failure;  // henüz soğumadı
         Status s = child.Tick(g);
         if (s == Status.Success) readyAt = Time.time + seconds;
         return s;
@@ -542,17 +556,17 @@ public class Cooldown : Node {                          // "X sn’de bir"
     </div>
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-class Condition {                       // soru sorar
+class Condition {                 // soru sorar
   constructor(test) { this.test = test; }
   tick(g) { return this.test(g) ? SUCCESS : FAILURE; }
 }
 
-class Action {                          // iş yapar
+class Action {                    // iş yapar
   constructor(run) { this.run = run; }
   tick(g) { return this.run(g); }
 }
 
-class Inverter {                        // "!"
+class Inverter {                  // "!"
   constructor(child) { this.child = child; }
   tick(g) {
     const s = this.child.tick(g);
@@ -560,10 +574,10 @@ class Inverter {                        // "!"
   }
 }
 
-class Cooldown {                        // "X sn’de bir"
+class Cooldown {                  // "X sn’de bir"
   constructor(seconds, child) { this.seconds = seconds; this.child = child; this.readyAt = 0; }
   tick(g) {
-    const now = millis() / 1000;        // p5.js: program başından beri geçen ms
+    const now = millis() / 1000;  // p5.js: program başından beri geçen ms
     if (now < this.readyAt) return FAILURE;
     const s = this.child.tick(g);
     if (s === SUCCESS) this.readyAt = now + this.seconds;
@@ -576,19 +590,19 @@ class Cooldown {                        // "X sn’de bir"
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import time
 
-class Condition:                 # soru sorar
+class Condition:  # soru sorar
     def __init__(self, test):
         self.test = test
     def tick(self, g):
         return SUCCESS if self.test(g) else FAILURE
 
-class Action:                    # iş yapar
+class Action:     # iş yapar
     def __init__(self, run):
         self.run = run
     def tick(self, g):
         return self.run(g)
 
-class Inverter:                  # "!"
+class Inverter:   # "!"
     def __init__(self, child):
         self.child = child
     def tick(self, g):
@@ -597,7 +611,7 @@ class Inverter:                  # "!"
         if s == FAILURE: return SUCCESS
         return s
 
-class Cooldown:                  # "X sn’de bir"
+class Cooldown:   # "X sn’de bir"
     def __init__(self, seconds, child):
         self.seconds, self.child, self.ready_at = seconds, child, 0.0
     def tick(self, g):
@@ -804,8 +818,8 @@ def tick(node, s):
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // p5.js — en basit hâli: bir nesne
 const bb = { target: null, lastSeen: null, ammo: 30 };
-bb.lastSeen = player.pos.copy();        // algı yazar
-if (bb.lastSeen !== null) { /* ... */ } // koşul okur
+bb.lastSeen = player.pos.copy();         // algı yazar
+if (bb.lastSeen !== null) { /* ... */ }  // koşul okur
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -823,8 +837,8 @@ BB->SetValueAsBool("HasLineOfSight", true);
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 # En basit hâli: bir sözlük
 bb = {"target": None, "last_seen": None, "ammo": 30}
-bb["last_seen"] = player.pos          # algı yazar
-if bb["last_seen"] is not None: ...   # koşul okur
+bb["last_seen"] = player.pos         # algı yazar
+if bb["last_seen"] is not None: ...  # koşul okur
 </script></code></pre>
     </div>
   </div>
@@ -1290,6 +1304,7 @@ print(py_trees.display.unicode_tree(root, show_status=True))
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

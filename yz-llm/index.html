@@ -126,6 +126,14 @@
 <section data-sec="LLM">
   <h2>Canlı: minicik bir dil modeli 🔤</h2>
   <div class="demo" data-demo="minilm"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>“en olası” düğmesine arka arkaya basın: model hep aynı cümleyi kurar. Gerçek LLM’lerde sıcaklık 0 olunca da aynı soruya hep aynı cevap gelir.</li>
+      <li>T = 1 ile “cümle üret”e birkaç kez basın: “Babam ejderha ile savaştı.” gibi derlemde <b>olmayan ama dilbilgisine uygun</b> cümleler çıkar. Halüsinasyonun tohumu: yerel olarak doğru, bütünde uydurma.</li>
+      <li>T = 3: olasılık çubukları neredeyse eşitlenir, cümleler anlamsızlaşır.</li>
+      <li>Bu model sadece <b>bir</b> önceki kelimeye bakıyor; bu yüzden “ejderha” deyip sonra köyü unutabiliyor. LLM’ler binlerce parçalık bağlama bakar, ama o bağlamın da bir <b>sınırı</b> var (Level 2).</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="LLM">
@@ -138,6 +146,7 @@
     </ol>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -249,6 +258,14 @@ KURALLAR  - Bilmediğin şeyi uydurma; "bilmiyorum, Ayşe'ye sor" de.
 <section data-sec="hafıza">
   <h2>Canlı: hancının hafıza akışı 🧠</h2>
   <div class="demo" data-demo="memory"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.88em">
+      <li>“Kurtlar hakkında…” sorusunda kurt anıları yeşil satırlara çıkıyor mu? Sağdaki istem metni, modelin <b>göreceği tek şey</b>. Dikkat: “kızımı nehirden <b>kurt</b>ardı” anısı da “ilgili” sayıldı: kaba kök eşleşmesi “kurt” ile “kurtarmak”ı ayıramıyor. Anlam tabanlı gömme vektörleri tam da bu yüzden kullanılır.</li>
+      <li>“Bana bir iyilik yapar mısın?”: anahtar kelime eşleşmesi yok, ama “kızımı kurtardın, ona borçluyum” anısı çok önemli olduğu için yine de seçiliyor. Önem ağırlığını 0 yapın: o anı düşer, hancı oyuncuya borçlu olduğunu “unutur”.</li>
+      <li>Yakınlık ağırlığını 3 yapın: hancı sadece son birkaç saati hatırlar (“kedi mutfağa girdi”), eski ama önemli olaylar kaybolur.</li>
+      <li>Kendi sorunuzu yazın (ör. “çatı” ya da “gümüş”). Demo anlam yerine <b>kelime köklerini</b> karşılaştırıyor; gerçek sistemler gömme vektörleri kullanır ve “silah” sorusunda “kılıç” anısını da bulur.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="hafıza">
@@ -454,13 +471,13 @@ KURALLAR  - Bilmediğin şeyi uydurma; "bilmiyorum, Ayşe'ye sor" de.
   <div class="tabs short">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="4-17|19-28|29-32"><script type="text/template">
-import anthropic                                  # pip install anthropic
-client = anthropic.Anthropic()                    # ANTHROPIC_API_KEY ortam değişkeninden
+import anthropic                       # pip install anthropic
+client = anthropic.Anthropic()         # ANTHROPIC_API_KEY ortam değişkeninden
 
 NPC_TOOL = {
     "name": "npc_eylem",
     "description": "Hancı Mehmet'in bir sonraki eylemi ve sözü",
-    "strict": True,                               # girdi şemaya birebir uyar
+    "strict": True,                    # girdi şemaya birebir uyar
     "input_schema": {
         "type": "object",
         "properties": {
@@ -475,17 +492,17 @@ NPC_TOOL = {
 
 def npc_cevap(sistem_istemi, gecmis, oyuncu_sozu):
     resp = client.messages.create(
-        model="claude-haiku-5-5",                 # en hızlı ve en ucuz güncel model
+        model="claude-haiku-5-5",      # en hızlı ve en ucuz güncel model
         max_tokens=1024,
         system=sistem_istemi + "\nHer cevabını npc_eylem aracını çağırarak ver.",
         tools=[NPC_TOOL],
-        tool_choice={"type": "auto"},             # yeni modeller "aracı zorla"yı kabul etmeyebilir
+        tool_choice={"type": "auto"},  # yeni modeller "aracı zorla"yı kabul etmeyebilir
         messages=gecmis + [{"role": "user", "content": "Oyuncu dedi ki: " + oyuncu_sozu}],
     )
     for blok in resp.content:
         if blok.type == "tool_use" and len(blok.input["söz"]) <= 200:
-            return blok.input        # sözlük: {"eylem": ..., "söz": ...}  → yine de DOĞRULA!
-    return None                      # araç çağırmadıysa / söz çok uzunsa: el yazımı yedek replik
+            return blok.input          # sözlük: {"eylem": ..., "söz": ...}  → yine de DOĞRULA!
+    return None                        # araç çağırmadıysa / söz çok uzunsa: el yazımı yedek replik
 </script></code></pre>
     </div>
   </div>
@@ -530,12 +547,12 @@ public class OllamaNpc : MonoBehaviour {
         www.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(req)));
         www.downloadHandler = new DownloadHandlerBuffer();
         www.SetRequestHeader("Content-Type", "application/json");
-        www.timeout = 10;                                         // takılırsa yedeğe düş
+        www.timeout = 10;  // takılırsa yedeğe düş
         yield return www.SendWebRequest();
         if (www.result != UnityWebRequest.Result.Success) { done(null); yield break; }
         NpcAction act = null;
         try { act = JsonUtility.FromJson<NpcAction>(JsonUtility.FromJson<Res>(www.downloadHandler.text).message.content); } catch { }
-        done(act);                                                // çağıran taraf DOĞRULAR
+        done(act);         // çağıran taraf DOĞRULAR
     }
 }
 // Kullanım: StartCoroutine(npc.Ask(istem, metin, a => { if (Validate(a)) Apply(a); else Fallback(); }));
@@ -795,6 +812,7 @@ def trim_history(messages, max_tokens):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

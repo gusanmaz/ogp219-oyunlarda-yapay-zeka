@@ -47,7 +47,7 @@
       R.F(`1) item = head.key  → ${old.key}`, { hl: { [old.id]: 'cur' }, code: 1 });
       this.head = old.next; if (!this.head && this.useTail) this.tail = null;
       R.F('2) head = head.next  → eski ilk düğüme artık kimse bağlı değil', { order: [old.id].concat(this.order()), float: { [old.id]: 'garbage' }, hl: { [old.id]: 'del' }, code: 2 });
-      R.F(`Ulaşılamayan düğüm = çöp 🗑 → çöp toplayıcı (GC) onu sonra siler. Dönen değer: ${old.key}`, { order: [old.id].concat(this.order()), float: { [old.id]: 'garbage' }, hl: { [old.id]: 'del' } });
+      R.F(`Ulaşılamayan düğüm = çöp 🗑️ → çöp toplayıcı (GC) onu sonra siler. Dönen değer: ${old.key}`, { order: [old.id].concat(this.order()), float: { [old.id]: 'garbage' }, hl: { [old.id]: 'del' } });
       this.cleanup();
       R.F('Bitti ✔ (O(1))');
       return R.frames;
@@ -168,7 +168,7 @@
       s += `<circle cx="${p.x + BW - 14}" cy="${p.y + BH / 2}" r="4" fill="${st ? st[1] : t['ink-2']}"/>`;
       s += `<text x="${p.x + (BW - 28) / 2}" y="${p.y + BH / 2 + 7}" text-anchor="middle" font-size="${String(nd.key).length > 3 ? 15 : 20}" font-weight="700" font-family="JetBrains Mono" fill="${st ? st[1] : t.ink}">${nd.key}</text>`;
       s += `<text x="${p.x + 4}" y="${p.y - 6}" font-size="11" font-family="JetBrains Mono" fill="${t.muted}">key │ next</text>`;
-      if (garbage) s += `<text x="${p.x + BW / 2}" y="${p.y + BH + 18}" text-anchor="middle" font-size="13" fill="${t.red}">🗑 çöp</text>`;
+      if (garbage) s += `<text x="${p.x + BW / 2}" y="${p.y + BH + 18}" text-anchor="middle" font-size="13" fill="${t.red}">🗑️ çöp</text>`;
       s += `</g>`;
     });
     // işaretçi değişkenleri (head, tail, cur…)
@@ -197,7 +197,7 @@
   let uidc = 0;
   SL.LLViz = function (root) {
     const d = root.dataset, uid = ++uidc;
-    const keys = SL.parseValues(d.keys || 'to be or not') || [];
+    const keys = SL.parseValues(d.keys || 'kılıç kalkan iksir') || [];
     const useTail = 'tail' in d;
     let m = new LLModel(keys, { tail: useTail });
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

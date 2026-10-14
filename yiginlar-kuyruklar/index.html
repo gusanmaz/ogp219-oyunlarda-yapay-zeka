@@ -132,10 +132,11 @@
   <div class="box prop fragment"><span class="bt">💡 API = sözleşme</span>Kullanan kişi sadece bu işlemleri bilir; içeride dizi mi, bağlı liste mi kullanıldığını <b>bilmek zorunda değildir</b>. Gerçeklemeyi değiştirsek de onun kodu çalışmaya devam eder. Buna <b>soyutlama</b> <span class="en">abstraction</span> denir.</div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/list" target="_blank" rel="noopener"><div class="lnk-t">🎞 Bağlı liste, yığın, kuyruk</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı sayfada bağlı liste, yığın, kuyruk ve çift uçlu kuyruk; her işlemde işaretçilerin nasıl değiştiğini gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/event-queue.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Event Queue</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Oyunlarda olay kuyruğu: dairesel tamponla ses ve olay yönetimi.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/command.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Command</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Geri alma (undo) için komutları yığında tutmak; tekrar oynatma ve girdi eşleme.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/list" target="_blank" rel="noopener"><div class="lnk-t">📊 Bağlı liste, yığın, kuyruk</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı sayfada bağlı liste, yığın, kuyruk ve çift uçlu kuyruk; her işlemde işaretçilerin nasıl değiştiğini gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/event-queue.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Event Queue</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Oyunlarda olay kuyruğu: dairesel tamponla ses ve olay yönetimi.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/command.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Command</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Geri alma (undo) için komutları yığında tutmak; tekrar oynatma ve girdi eşleme.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -175,16 +176,16 @@
   <div class="tabs ">
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-var undo = new Stack<string>();     // string tutan yığın
+var undo = new Stack<string>();        // string tutan yığın
 undo.Push("sağa git");
 undo.Push("zıpla");
-string last = undo.Pop();           // "zıpla"
-string top = undo.Peek();           // "sağa git" (çıkarmadan bak)
+string last = undo.Pop();              // "zıpla"
+string top = undo.Peek();              // "sağa git" (çıkarmadan bak)
 
-var waypoints = new Queue<Vector3>();   // Vector3 tutan kuyruk
+var waypoints = new Queue<Vector3>();  // Vector3 tutan kuyruk
 waypoints.Enqueue(new Vector3(5, 0, 2));
 Vector3 next = waypoints.Dequeue();
-Debug.Log(waypoints.Count);         // 0
+Debug.Log(waypoints.Count);            // 0
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -204,15 +205,15 @@ nxt = waypoints.popleft()    # dequeue (baştan)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const undo = [];               // JS'te yığın = dizi
+const undo = [];                    // JS'te yığın = dizi
 undo.push("sağa git");
 undo.push("zıpla");
-const last = undo.pop();       // "zıpla"
-const top = undo[undo.length - 1];   // peek
+const last = undo.pop();            // "zıpla"
+const top = undo[undo.length - 1];  // peek
 
-const waypoints = [];          // kuyruk: dizi + push/shift
-waypoints.push({ x: 5, y: 2 });      // enqueue
-const nxt = waypoints.shift();       // dequeue ⚠️ shift() O(N)!
+const waypoints = [];               // kuyruk: dizi + push/shift
+waypoints.push({ x: 5, y: 2 });     // enqueue
+const nxt = waypoints.shift();      // dequeue ⚠️ shift() O(N)!
 </script></code></pre>
     </div>
   </div>
@@ -258,16 +259,16 @@ class Node:
 
 class Stack:
     def __init__(self):
-        self.first = None       # tepe = listenin başı
+        self.first = None                    # tepe = listenin başı
         self.n = 0
 
     def push(self, item):
-        self.first = Node(item, self.first)   # yeni düğüm, eski başı göstersin
+        self.first = Node(item, self.first)  # yeni düğüm, eski başı göstersin
         self.n += 1
 
     def pop(self):
         item = self.first.item
-        self.first = self.first.next          # eski tepe → çöp
+        self.first = self.first.next         # eski tepe → çöp
         self.n -= 1
         return item
 
@@ -280,7 +281,7 @@ class Stack:
 class LinkedStack<T>
 {
     class Node { public T Item; public Node Next; }
-    Node first;          // tepe = listenin başı
+    Node first;              // tepe = listenin başı
     int n;
 
     public void Push(T item)
@@ -295,7 +296,7 @@ class LinkedStack<T>
     public T Pop()
     {
         T item = first.Item;
-        first = first.Next;      // eski tepe → çöp
+        first = first.Next;  // eski tepe → çöp
         n--;
         return item;
     }
@@ -307,7 +308,7 @@ class LinkedStack<T>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 class LinkedStack {
-  constructor() { this.first = null; this.n = 0; }   // tepe = listenin başı
+  constructor() { this.first = null; this.n = 0; }  // tepe = listenin başı
 
   push(item) {
     this.first = { item: item, next: this.first };  // nesne sabiti ile düğüm
@@ -316,7 +317,7 @@ class LinkedStack {
 
   pop() {
     const item = this.first.item;
-    this.first = this.first.next;     // eski tepe → çöp
+    this.first = this.first.next;                   // eski tepe → çöp
     this.n--;
     return item;
   }
@@ -346,7 +347,7 @@ class LinkedStack {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 class ArrayStack:
     def __init__(self):
-        self.a = [None]          # kapasite 1
+        self.a = [None]               # kapasite 1
         self.n = 0
 
     def push(self, item):
@@ -358,9 +359,9 @@ class ArrayStack:
     def pop(self):
         self.n -= 1
         item = self.a[self.n]
-        self.a[self.n] = None    # referansı bırak (bekleyen referans olmasın)
-        if 0 < self.n == len(self.a) // 4:
-            self._resize(len(self.a) // 2)
+        self.a[self.n] = None         # referansı bırak (bekleyen referans olmasın)
+        if 0 < self.n == len(self.a)  // 4:
+            self._resize(len(self.a)  // 2)
         return item
 
     def _resize(self, cap):
@@ -434,14 +435,14 @@ class ArrayStack {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 class Queue:
     def __init__(self):
-        self.first = None      # baş: buradan çıkar
-        self.last = None       # son: buraya ekle
+        self.first = None       # baş: buradan çıkar
+        self.last = None        # son: buraya ekle
         self.n = 0
 
     def enqueue(self, item):
         old_last = self.last
         self.last = Node(item)
-        if self.first is None:          # kuyruk boştuysa
+        if self.first is None:  # kuyruk boştuysa
             self.first = self.last
         else:
             old_last.next = self.last
@@ -450,8 +451,8 @@ class Queue:
     def dequeue(self):
         item = self.first.item
         self.first = self.first.next
-        if self.first is None:          # kuyruk boşaldıysa
-            self.last = None            # ⚠️ unutma!
+        if self.first is None:  # kuyruk boşaldıysa
+            self.last = None    # ⚠️ unutma!
         self.n -= 1
         return item
 </script></code></pre>
@@ -467,8 +468,8 @@ class LinkedQueue<T>
     public void Enqueue(T item)
     {
         Node oldLast = last;
-        last = new Node { Item = item };       // nesne başlatıcı
-        if (first == null) first = last;       // boştuysa
+        last = new Node { Item = item };  // nesne başlatıcı
+        if (first == null) first = last;  // boştuysa
         else oldLast.Next = last;
         n++;
     }
@@ -477,7 +478,7 @@ class LinkedQueue<T>
     {
         T item = first.Item;
         first = first.Next;
-        if (first == null) last = null;        // ⚠️ boşaldıysa
+        if (first == null) last = null;   // ⚠️ boşaldıysa
         n--;
         return item;
     }
@@ -492,7 +493,7 @@ class LinkedQueue {
   enqueue(item) {
     const oldLast = this.last;
     this.last = { item: item, next: null };
-    if (this.first === null) this.first = this.last;   // boştuysa
+    if (this.first === null) this.first = this.last;  // boştuysa
     else oldLast.next = this.last;
     this.n++;
   }
@@ -500,7 +501,7 @@ class LinkedQueue {
   dequeue() {
     const item = this.first.item;
     this.first = this.first.next;
-    if (this.first === null) this.last = null;   // ⚠️ boşaldıysa
+    if (this.first === null) this.last = null;        // ⚠️ boşaldıysa
     this.n--;
     return item;
   }
@@ -532,14 +533,14 @@ class LinkedQueue {
 class RingQueue<T>
 {
     T[] a;
-    int head, count;               // baş indeksi ve eleman sayısı
+    int head, count;                           // baş indeksi ve eleman sayısı
 
     public RingQueue(int capacity) { a = new T[capacity]; }
 
     public void Enqueue(T item)
     {
         if (count == a.Length) throw new InvalidOperationException("Dolu");
-        int tail = (head + count) % a.Length;    // sona yaz, gerekirse başa sar
+        int tail = (head + count) % a.Length;  // sona yaz, gerekirse başa sar
         a[tail] = item;
         count++;
     }
@@ -549,7 +550,7 @@ class RingQueue<T>
         if (count == 0) throw new InvalidOperationException("Boş");
         T item = a[head];
         a[head] = default;
-        head = (head + 1) % a.Length;            // baş ilerler, başa sarar
+        head = (head + 1) % a.Length;          // baş ilerler, başa sarar
         count--;
         return item;
     }
@@ -751,7 +752,7 @@ def eval_postfix(s):
   <div class="tabs short" style="font-size:.8em">
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-interface ICommand            // "Yapılabilen ve geri alınabilen bir iş"
+interface ICommand                                  // "Yapılabilen ve geri alınabilen bir iş"
 {
     void Do();
     void Undo();
@@ -762,7 +763,7 @@ class MoveCommand : ICommand
     Transform unit; Vector3 delta;
     public MoveCommand(Transform u, Vector3 d) { unit = u; delta = d; }
     public void Do()   { unit.position += delta; }
-    public void Undo() { unit.position -= delta; }   // tersini yap
+    public void Undo() { unit.position -= delta; }  // tersini yap
 }
 
 class History
@@ -841,16 +842,16 @@ public class MenuStack : MonoBehaviour
 
     public void Open(GameObject screen)
     {
-        if (screens.Count > 0) screens.Peek().SetActive(false);   // alttakini gizle
+        if (screens.Count > 0) screens.Peek().SetActive(false);  // alttakini gizle
         screen.SetActive(true);
         screens.Push(screen);
     }
 
-    public void Back()                       // Esc ya da "Geri" düğmesi
+    public void Back()                                           // Esc ya da "Geri" düğmesi
     {
         if (screens.Count == 0) return;
-        screens.Pop().SetActive(false);      // tepedekini kapat
-        if (screens.Count > 0) screens.Peek().SetActive(true);    // öncekini göster
+        screens.Pop().SetActive(false);                          // tepedekini kapat
+        if (screens.Count > 0) screens.Peek().SetActive(true);   // öncekini göster
     }
 }
 </script></code></pre>
@@ -919,9 +920,9 @@ public class EventBus : MonoBehaviour
 {
     readonly Queue<GameEvent> events = new Queue<GameEvent>();
 
-    public void Post(GameEvent e) { events.Enqueue(e); }   // herkes olay atabilir
+    public void Post(GameEvent e) { events.Enqueue(e); }  // herkes olay atabilir
 
-    void LateUpdate()                         // karenin sonunda sırayla işle
+    void LateUpdate()                                     // karenin sonunda sırayla işle
     {
         while (events.Count > 0)
         {
@@ -953,17 +954,17 @@ def process_events():                 # her karenin sonunda çağrılır
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const events = [];
-let head = 0;                          // shift() yerine baş indeksi
+let head = 0;                   // shift() yerine baş indeksi
 
 function post(kind, pos) { events.push({ kind, pos }); }
 
-function processEvents() {             // draw() sonunda çağrılır
+function processEvents() {      // draw() sonunda çağrılır
   while (head < events.length) {
     const e = events[head++];
     if (e.kind === "enemyDied") playSound("pop", e.pos);
     if (e.kind === "coin") playSound("ding", e.pos);
   }
-  events.length = 0; head = 0;         // kuyruğu sıfırla
+  events.length = 0; head = 0;  // kuyruğu sıfırla
 }
 </script></code></pre>
     </div>
@@ -1030,11 +1031,11 @@ def flood_fill(grid, sx, sy, use_stack):
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 void FloodFill(char[,] grid, int sx, int sy)
 {
-    var box = new Queue<(int x, int y)>();   // Stack<> yaparsan → DFS
+    var box = new Queue<(int x, int y)>();  // Stack<> yaparsan → DFS
     box.Enqueue((sx, sy));
     while (box.Count > 0)
     {
-        var (x, y) = box.Dequeue();          // Stack ise: box.Pop()
+        var (x, y) = box.Dequeue();         // Stack ise: box.Pop()
         if (grid[y, x] != '.') continue;
         grid[y, x] = '#';
         box.Enqueue((x + 1, y)); box.Enqueue((x - 1, y));
@@ -1046,10 +1047,10 @@ void FloodFill(char[,] grid, int sx, int sy)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function floodFill(grid, sx, sy, useStack) {
-  const box = [[sx, sy]];                    // bekleyen hücreler
+  const box = [[sx, sy]];                   // bekleyen hücreler
   while (box.length) {
-    const [x, y] = useStack ? box.pop()      // 📚 DFS
-                            : box.shift();   // 🎟️ BFS
+    const [x, y] = useStack ? box.pop()     // 📚 DFS
+                            : box.shift();  // 🎟️ BFS
     if (grid[y][x] !== ".") continue;
     grid[y][x] = "#";
     box.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
@@ -1277,6 +1278,7 @@ function floodFill(grid, sx, sy, useStack) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/yigin.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

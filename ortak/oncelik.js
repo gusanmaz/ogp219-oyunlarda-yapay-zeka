@@ -129,9 +129,9 @@
     const ctl = el('div', { class: 'sv-controls' });
     if (ops.includes('insert')) ctl.append(el('label', { class: 'ctl' }, 'Anahtar ', input), btn('➕ insert', () => { const k = val(); if (k !== '') run(() => m.insert(k)); }, 'primary'));
     if (ops.includes('del')) ctl.append(btn(min ? '⬇ delMin' : '⬆ delMax', () => run(() => m.delTop())));
-    if (ops.includes('book')) ctl.append(btn('▶ P Q E * X A M * P L E *', () => { m = new HeapModel(min); run(() => { m.P('Boş yığın. * = delMax'); 'P Q E * X A M * P L E *'.split(' ').forEach(k => (k === '*' ? m.delTop() : m.insert(k))); }); }));
-    if (ops.includes('heapify')) ctl.append(btn('🏗 Yığın kur: S O R T E X A M P L E', () => { m = new HeapModel(min); run(() => m.heapify('S O R T E X A M P L E'.split(' '))); }, 'primary'));
-    if (ops.includes('sort')) ctl.append(btn('🔢 Heapsort (kur + sırala)', () => { m = new HeapModel(min); run(() => { m.heapify('S O R T E X A M P L E'.split(' ')); m.sortdown(); }); }));
+    if (ops.includes('book')) ctl.append(btn('▶ Z E L D A * L I N K *', () => { m = new HeapModel(min); run(() => { m.P('Boş yığın. * = delMax'); 'Z E L D A * L I N K *'.split(' ').forEach(k => (k === '*' ? m.delTop() : m.insert(k))); }); }));
+    if (ops.includes('heapify')) ctl.append(btn('🏗️ Yığın kur: S U P E R M A R I O', () => { m = new HeapModel(min); run(() => m.heapify('S U P E R M A R I O'.split(' '))); }, 'primary'));
+    if (ops.includes('sort')) ctl.append(btn('🔢 Heapsort (kur + sırala)', () => { m = new HeapModel(min); run(() => { m.heapify('S U P E R M A R I O'.split(' ')); m.sortdown(); }); }));
     if (ops.includes('random')) ctl.append(btn('🎲 15 rastgele', () => { m = new HeapModel(min); run(() => { m.P('Boş yığın'); for (let i = 0; i < 15; i++) m.insert(10 + rint(90)); }); }));
     ctl.append(btn('🧹', () => { m = new HeapModel(min); m.F = []; m.P('Boş yığın'); const F = m.F; m.F = null; fp.load(F); }));
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const k = val(); if (k !== '') run(() => m.insert(k)); } });

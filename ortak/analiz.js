@@ -81,7 +81,7 @@
       }
       busy = false;
     };
-    root.append(el('div', { class: 'sv-controls' }, el('label', { class: 'ctl' }, 'Algoritma ', select(Object.fromEntries(Object.entries(WORK).map(([k, v]) => [k, v.name])), alg, v => (alg = v))), btn('⏱ Deneyi başlat', run, 'primary')),
+    root.append(el('div', { class: 'sv-controls' }, el('label', { class: 'ctl' }, 'Algoritma ', select(Object.fromEntries(Object.entries(WORK).map(([k, v]) => [k, v.name])), alg, v => (alg = v))), btn('⏱️ Deneyi başlat', run, 'primary')),
       el('div', { class: 'sw-wrap' }, tbl, c), pred);
     SL.onTheme(draw); draw();
   };

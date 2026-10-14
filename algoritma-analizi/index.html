@@ -129,8 +129,8 @@
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import time
 
-start = time.perf_counter()            # yüksek çözünürlüklü saat
-count_collisions(enemies)              # ölçmek istediğimiz iş
+start = time.perf_counter()  # yüksek çözünürlüklü saat
+count_collisions(enemies)    # ölçmek istediğimiz iş
 elapsed = time.perf_counter() - start
 print(f"{elapsed * 1000:.2f} ms")
 </script></code></pre>
@@ -148,8 +148,8 @@ Debug.Log($"{sw.Elapsed.TotalMilliseconds:F2} ms");
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const start = performance.now();       // milisaniye, ondalıklı
-countCollisions(enemies);              // ölçmek istediğimiz iş
+const start = performance.now();  // milisaniye, ondalıklı
+countCollisions(enemies);         // ölçmek istediğimiz iş
 const elapsed = performance.now() - start;
 console.log(elapsed.toFixed(2) + " ms");
 </script></code></pre>
@@ -182,6 +182,7 @@ console.log(elapsed.toFixed(2) + " ms");
     </div>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -678,6 +679,7 @@ function work(N) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/analiz.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

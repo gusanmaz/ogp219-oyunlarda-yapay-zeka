@@ -130,10 +130,10 @@
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def rank(a, key):              # a sıralı; key'den küçüklerin sayısı
+def rank(a, key):        # a sıralı; key'den küçüklerin sayısı
     lo, hi = 0, len(a) - 1
     while lo <= hi:
-        mid = (lo + hi) // 2
+        mid = (lo + hi)  // 2
         if key < a[mid]:
             hi = mid - 1
         elif key > a[mid]:
@@ -144,14 +144,14 @@ def rank(a, key):              # a sıralı; key'den küçüklerin sayısı
 
 def range_count(a, lo, hi):
     count = rank(a, hi) - rank(a, lo)
-    if hi in a:                # (BST'de: contains(hi))
+    if hi in a:          # (BST'de: contains(hi))
         count += 1
     return count
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
-static int Rank(int[] a, int key)   // a sıralı
+static int Rank(int[] a, int key)             // a sıralı
 {
     int lo = 0, hi = a.Length - 1;
     while (lo <= hi)
@@ -168,14 +168,14 @@ static int RangeCount(int[] a, int lo, int hi)
 {
     int count = Rank(a, hi) - Rank(a, lo);
     int r = Rank(a, hi);
-    if (r < a.Length && a[r] == hi) count++;   // hi dizide mi?
+    if (r < a.Length && a[r] == hi) count++;  // hi dizide mi?
     return count;
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function rank(a, key) {            // a sıralı
+function rank(a, key) {                      // a sıralı
   let lo = 0, hi = a.length - 1;
   while (lo <= hi) {
     const mid = Math.floor((lo + hi) / 2);
@@ -189,7 +189,7 @@ function rank(a, key) {            // a sıralı
 function rangeCount(a, lo, hi) {
   let count = rank(a, hi) - rank(a, lo);
   const r = rank(a, hi);
-  if (r < a.length && a[r] === hi) count++;   // hi dizide mi?
+  if (r < a.length && a[r] === hi) count++;  // hi dizide mi?
   return count;
 }
 </script></code></pre>
@@ -219,6 +219,7 @@ function rangeCount(a, lo, hi) {
     <div class="box prop fragment"><span class="bt">Önerme</span>Dengeli bir BST’de aralık arama <b>R + lg N</b> ile orantılı süre alır.<p class="mini">Sadece iki “sınır yolu” (lo’ya ve hi’ye giden yollar, ≤ lg N’er düğüm) ve aralığın içindeki R düğüm ziyaret edilir.</p></div>
   </div>
 </section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
@@ -404,9 +405,9 @@ class Point
 
 class KdNode
 {
-    public Point P;               // nokta
-    public bool Vertical;         // true: x'e göre böl (dikey çizgi)
-    public KdNode Left, Right;    // sol/üst · sağ/alt
+    public Point P;             // nokta
+    public bool Vertical;       // true: x'e göre böl (dikey çizgi)
+    public KdNode Left, Right;  // sol/üst · sağ/alt
     public KdNode(Point p, bool vertical) { P = p; Vertical = vertical; }
 }
 </script></code></pre>
@@ -419,10 +420,10 @@ class Point {
 
 class KdNode {
   constructor(p, vertical) {
-    this.p = p;                 // nokta
-    this.vertical = vertical;   // true: x'e göre böl (dikey çizgi)
-    this.left = null;           // sol (ya da üst) taraf
-    this.right = null;          // sağ (ya da alt) taraf
+    this.p = p;                // nokta
+    this.vertical = vertical;  // true: x'e göre böl (dikey çizgi)
+    this.left = null;          // sol (ya da üst) taraf
+    this.right = null;         // sağ (ya da alt) taraf
   }
 }
 </script></code></pre>
@@ -446,9 +447,9 @@ def insert(x, p, vertical=True):
     if x is None:
         return KdNode(p, vertical)
     if vertical:
-        go_left = p.x < x.p.x      # dikey çizginin solunda mı?
+        go_left = p.x < x.p.x  # dikey çizginin solunda mı?
     else:
-        go_left = p.y < x.p.y      # yatay çizginin üstünde mi?
+        go_left = p.y < x.p.y  # yatay çizginin üstünde mi?
     if go_left:
         x.left = insert(x.left, p, not vertical)
     else:
@@ -466,8 +467,8 @@ static KdNode Insert(KdNode x, Point p, bool vertical = true)
 {
     if (x == null) return new KdNode(p, vertical);
     bool goLeft;
-    if (vertical) goLeft = p.X < x.P.X;     // dikey çizginin solunda mı?
-    else          goLeft = p.Y < x.P.Y;     // yatay çizginin üstünde mi?
+    if (vertical) goLeft = p.X < x.P.X;  // dikey çizginin solunda mı?
+    else          goLeft = p.Y < x.P.Y;  // yatay çizginin üstünde mi?
     if (goLeft) x.Left = Insert(x.Left, p, !vertical);
     else        x.Right = Insert(x.Right, p, !vertical);
     return x;
@@ -479,8 +480,8 @@ static KdNode Insert(KdNode x, Point p, bool vertical = true)
 function insert(x, p, vertical = true) {
   if (x === null) return new KdNode(p, vertical);
   let goLeft;
-  if (vertical) goLeft = p.x < x.p.x;       // dikey çizginin solunda mı?
-  else          goLeft = p.y < x.p.y;       // yatay çizginin üstünde mi?
+  if (vertical) goLeft = p.x < x.p.x;  // dikey çizginin solunda mı?
+  else          goLeft = p.y < x.p.y;  // yatay çizginin üstünde mi?
   if (goLeft) x.left = insert(x.left, p, !vertical);
   else        x.right = insert(x.right, p, !vertical);
   return x;
@@ -593,13 +594,13 @@ class Rect {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def range_search(x, q, found):        # q: sorgu dikdörtgeni (Rect)
+def range_search(x, q, found):    # q: sorgu dikdörtgeni (Rect)
     if x is None:
         return
-    if not x.rect.intersects(q):      # bölge sorguyla kesişmiyor
-        return                        # → BUDA: bu alt ağaca hiç girme
+    if not x.rect.intersects(q):  # bölge sorguyla kesişmiyor
+        return                    # → BUDA: bu alt ağaca hiç girme
     if q.contains(x.p):
-        found.append(x.p)             # nokta içeride: listeye ekle
+        found.append(x.p)         # nokta içeride: listeye ekle
     range_search(x.left, q, found)
     range_search(x.right, q, found)
 
@@ -613,8 +614,8 @@ print(len(found), "birim seçildi")
 static void RangeSearch(KdNode x, Rect q, List<Point> found)
 {
     if (x == null) return;
-    if (!x.Rect.Intersects(q)) return;      // BUDA
-    if (q.Contains(x.P)) found.Add(x.P);    // nokta içeride
+    if (!x.Rect.Intersects(q)) return;    // BUDA
+    if (q.Contains(x.P)) found.Add(x.P);  // nokta içeride
     RangeSearch(x.Left, q, found);
     RangeSearch(x.Right, q, found);
 }
@@ -628,8 +629,8 @@ Console.WriteLine(found.Count + " birim seçildi");
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function rangeSearch(x, q, found) {
   if (x === null) return;
-  if (!x.rect.intersects(q)) return;        // BUDA
-  if (q.contains(x.p)) found.push(x.p);     // nokta içeride
+  if (!x.rect.intersects(q)) return;     // BUDA
+  if (q.contains(x.p)) found.push(x.p);  // nokta içeride
   rangeSearch(x.left, q, found);
   rangeSearch(x.right, q, found);
 }
@@ -707,20 +708,20 @@ console.log(found.length + " birim seçildi");
 import math
 
 def dist(a, b):
-    return math.hypot(a.x - b.x, a.y - b.y)     # √(dx² + dy²)
+    return math.hypot(a.x - b.x, a.y - b.y)  # √(dx² + dy²)
 
-def nearest(x, q, best):              # best: şu ana kadarki en iyi düğüm
+def nearest(x, q, best):                     # best: şu ana kadarki en iyi düğüm
     if x is None:
         return best
     if best is not None and x.rect.distance_to(q) >= dist(best.p, q):
-        return best                   # BUDA: bölge daha uzakta
+        return best                          # BUDA: bölge daha uzakta
     if best is None or dist(x.p, q) < dist(best.p, q):
-        best = x                      # yeni en iyi
+        best = x                             # yeni en iyi
     if x.vertical:
         q_on_left = q.x < x.p.x
     else:
         q_on_left = q.y < x.p.y
-    if q_on_left:                     # önce sorgunun olduğu taraf
+    if q_on_left:                            # önce sorgunun olduğu taraf
         best = nearest(x.left, q, best)
         best = nearest(x.right, q, best)
     else:
@@ -743,13 +744,13 @@ static KdNode Nearest(KdNode x, Point q, KdNode best)
 {
     if (x == null) return best;
     if (best != null && x.Rect.DistanceTo(q) >= Dist(best.P, q))
-        return best;                                   // BUDA
+        return best;                             // BUDA
     if (best == null || Dist(x.P, q) < Dist(best.P, q))
-        best = x;                                      // yeni en iyi
+        best = x;                                // yeni en iyi
     bool qOnLeft;
     if (x.Vertical) qOnLeft = q.X < x.P.X;
     else            qOnLeft = q.Y < x.P.Y;
-    KdNode first  = qOnLeft ? x.Left : x.Right;        // önce sorgunun tarafı
+    KdNode first  = qOnLeft ? x.Left : x.Right;  // önce sorgunun tarafı
     KdNode second = qOnLeft ? x.Right : x.Left;
     best = Nearest(first, q, best);
     best = Nearest(second, q, best);
@@ -760,19 +761,19 @@ static KdNode Nearest(KdNode x, Point q, KdNode best)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function dist(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);        // √(dx² + dy²)
+  return Math.hypot(a.x - b.x, a.y - b.y);    // √(dx² + dy²)
 }
 
 function nearest(x, q, best) {
   if (x === null) return best;
   if (best !== null && x.rect.distanceTo(q) >= dist(best.p, q))
-    return best;                                  // BUDA
+    return best;                              // BUDA
   if (best === null || dist(x.p, q) < dist(best.p, q))
-    best = x;                                     // yeni en iyi
+    best = x;                                 // yeni en iyi
   let qOnLeft;
   if (x.vertical) qOnLeft = q.x < x.p.x;
   else            qOnLeft = q.y < x.p.y;
-  const first  = qOnLeft ? x.left : x.right;      // önce sorgunun tarafı
+  const first  = qOnLeft ? x.left : x.right;  // önce sorgunun tarafı
   const second = qOnLeft ? x.right : x.left;
   best = nearest(first, q, best);
   best = nearest(second, q, best);
@@ -893,17 +894,17 @@ function nearest(x, q, best) {
 def intersects(a_lo, a_hi, b_lo, b_hi):
     return a_lo <= b_hi and b_lo <= a_hi
 
-def search(x, lo, hi):                    # [lo, hi] ile kesişen bir aralık
+def search(x, lo, hi):         # [lo, hi] ile kesişen bir aralık
     while x is not None:
         if intersects(x.lo, x.hi, lo, hi):
-            return x                      # bulundu
+            return x           # bulundu
         if x.left is None:
             x = x.right
-        elif x.left.max < lo:             # soldakilerin hepsi erken bitiyor
+        elif x.left.max < lo:  # soldakilerin hepsi erken bitiyor
             x = x.right
         else:
             x = x.left
-    return None                           # yok
+    return None                # yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -917,12 +918,12 @@ static IntervalNode Search(IntervalNode x, int lo, int hi)
 {
     while (x != null)
     {
-        if (Intersects(x.Lo, x.Hi, lo, hi)) return x;   // bulundu
+        if (Intersects(x.Lo, x.Hi, lo, hi)) return x;  // bulundu
         if (x.Left == null) x = x.Right;
-        else if (x.Left.Max < lo) x = x.Right;          // soldakiler erken bitiyor
+        else if (x.Left.Max < lo) x = x.Right;         // soldakiler erken bitiyor
         else x = x.Left;
     }
-    return null;                                        // yok
+    return null;                                       // yok
 }
 </script></code></pre>
     </div>
@@ -934,12 +935,12 @@ function intersects(aLo, aHi, bLo, bHi) {
 
 function search(x, lo, hi) {
   while (x !== null) {
-    if (intersects(x.lo, x.hi, lo, hi)) return x;   // bulundu
+    if (intersects(x.lo, x.hi, lo, hi)) return x;  // bulundu
     if (x.left === null) x = x.right;
-    else if (x.left.max < lo) x = x.right;          // soldakiler erken bitiyor
+    else if (x.left.max < lo) x = x.right;         // soldakiler erken bitiyor
     else x = x.left;
   }
-  return null;                                      // yok
+  return null;                                     // yok
 }
 </script></code></pre>
     </div>
@@ -1215,6 +1216,7 @@ def overlaps(a, b):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/agac.js"></script>
 <script src="../ortak/geometri.js"></script>
 <script src="demos.js"></script>

@@ -130,10 +130,11 @@
   <p class="mini">Bu bölümün karar verme sunumları tam bu çizgi boyunca soldan sağa ilerliyor. Sağa gittikçe karakter daha “kendi kafasına göre” davranır ama tasarımcının istediği deneyimi garanti etmek zorlaşır.</p>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener"><div class="lnk-t">📘 State (durum deseni)</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">FSM’yi bir platform oyunu karakteri üzerinden anlatan, mizahi ve çok anlaşılır bölüm; hiyerarşik ve yığınlı durum makineleri de var.</div></a><a class="lnk" href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Autonomous Agents (steering ve sürüler)</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Reynolds’ın steering davranışları ve boids, p5.js ile; her kod parçası tarayıcıda çalışır.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener"><div class="lnk-t">📘 State (durum deseni)</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">FSM’yi bir platform oyunu karakteri üzerinden anlatan, mizahi ve çok anlaşılır bölüm; hiyerarşik ve yığınlı durum makineleri de var.</div></a><a class="lnk" href="https://natureofcode.com/autonomous-agents/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Autonomous Agents (steering ve sürüler)</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Reynolds’ın steering davranışları ve boids, p5.js ile; her kod parçası tarayıcıda çalışır.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -261,14 +262,14 @@ Vector2Int Target(Ghost g, Vector2Int pac, Vector2Int pacDir, Vector2Int blinky)
 {
     switch (g.name)
     {
-        case "Blinky": return pac;                          // doğrudan
-        case "Pinky":  return pac + pacDir * 4;             // 4 kare önü
+        case "Blinky": return pac;                  // doğrudan
+        case "Pinky":  return pac + pacDir * 4;     // 4 kare önü
         case "Inky":
-            Vector2Int mid = pac + pacDir * 2;              // 2 kare önü
-            return mid + (mid - blinky);                    // Blinky'den oraya okun 2 katı
-        default:                                            // Clyde
+            Vector2Int mid = pac + pacDir * 2;      // 2 kare önü
+            return mid + (mid - blinky);            // Blinky'den oraya okun 2 katı
+        default:                                    // Clyde
             float d = Vector2Int.Distance(g.tile, pac);
-            return d >= 8 ? pac : g.scatterCorner;          // yaklaşınca köşesine kaç
+            return d >= 8 ? pac : g.scatterCorner;  // yaklaşınca köşesine kaç
     }
 }
 </script></code></pre>
@@ -697,6 +698,7 @@ def clyde_target(clyde, pac, corner):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

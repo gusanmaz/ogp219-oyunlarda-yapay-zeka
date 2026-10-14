@@ -45,7 +45,7 @@
       ['🏔️ Çok uzakta', [640, 330], 'Oyuncu nöbetçinin önünde ama çok uzakta.', 'İlk (en ucuz) kontrol “hayır” dedi; açıya ve pahalı ışın testine <b>hiç bakılmadı</b>. Yüzlerce NPC’li bir oyunda testlerin çoğu burada biter.'],
       ['🔙 Arkasında', [90, 150], 'Oyuncu çok yakın ama nöbetçinin arkasında.', 'Mesafe tuttu, açı tutmadı. Işın testi yine yapılmadı.'],
       ['🧱 Duvarın ardında', [480, 180], 'Oyuncu yakın ve nöbetçinin baktığı yönde; ama arada duvar var.', 'İlk iki ucuz kontrol geçti; bu yüzden pahalı ışın testi yapıldı ve duvarı buldu. Üç kontrol de gerekliydi.'],
-      ['👁 Görüş hattında', [400, 300], 'Oyuncu yakın, önde ve arada engel yok.', 'Üç kontrol de “evet”: görüldü. Dikkat: bu evet/hayır cevabı bir sonraki slayttaki sorunun kaynağı; 1 milimetre uzaklaşınca “görülmedi” olur.']];
+      ['👁️ Görüş hattında', [400, 300], 'Oyuncu yakın, önde ve arada engel yok.', 'Üç kontrol de “evet”: görüldü. Dikkat: bu evet/hayır cevabı bir sonraki slayttaki sorunun kaynağı; 1 milimetre uzaklaşınca “görülmedi” olur.']];
     let P = SC[2][1].slice(), moralTxt = SC[2][3];
     const diag = el('div'), log = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
     const cross = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
@@ -221,7 +221,7 @@
     const loop = () => { if (!running) return; step(1 / 30); draw(); timer = setTimeout(loop, 33); };
     const press = () => { if (on) return; on = true; tOn = t; };
     const release = () => { if (!on) return; on = false; tOff = t; relFrom = val; };
-    const hold = btn('👁 uyaran (basılı tutun)', () => {}, 'primary');
+    const hold = btn('👁️ uyaran (basılı tutun)', () => {}, 'primary');
     hold.addEventListener('mousedown', press); hold.addEventListener('mouseup', release); hold.addEventListener('mouseleave', release);
     hold.addEventListener('touchstart', e => { e.preventDefault(); press(); }); hold.addEventListener('touchend', release);
     root.setAttribute('data-prevent-swipe', '');

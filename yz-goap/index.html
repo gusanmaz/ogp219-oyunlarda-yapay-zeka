@@ -191,6 +191,11 @@
   <ul class="agenda"><li class="done">plan nedir?</li><li class="on">F.E.A.R. ve GOAP</li><li class="">A* ile plan aramak</li><li class="">canlı: yeniden planlama</li><li class="">kod ve laboratuvarlar</li><li class="">HTN: görevleri bölmek</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-sec="oyunda" class="no-grow">
+  <h2>📸 Oyundan bir kare: F.E.A.R. (2005)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/fear.jpg" alt="F.E.A.R. (2005) ekran görüntüsü" style="height:440px;max-width:100%;object-fit:contain;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Oyuncuların “takım hâlinde düşünüyorlar” dediği askerler. Aslında her biri kendi küçük planlayıcısıyla, Alma’nın mutfağındaki gibi eylem kartlarını zincirliyor: siper al, kapıyı tekmele, el bombası at.<br><span style="color:var(--muted);font-size:.85em">Görsel: F.E.A.R. oynanış görüntüsü, Monolith Productions, Wikipedia (eğitim amaçlı adil kullanım)</span></figcaption></figure>
+</section>
+
 <section data-sec="F.E.A.R.">
   <h2>Derin hikâye: F.E.A.R. (Monolith, 2005) 👻</h2>
   <div class="cols c64">
@@ -377,6 +382,15 @@
 <section data-sec="A* ile plan">
   <h2>Adım adım plan arama 🔎</h2>
   <div class="demo" data-demo="goapsearch"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
+    <ol style="font-size:.9em">
+      <li>Varsayılan durumda adım adım ilerleyin: en ucuz plan <b>Cephane al → Şarjör tak → Kapıdan geç → Ateş et</b> (4). Kesikli kutular üretilmiş ama genişletilmemiş düğümler.</li>
+      <li>“🧠 kapı açılmıyor” kutusunu işaretleyin: plan kapı yerine <b>tekmeyi</b> kullanıyor. İkinci 🧠 kutusunu da işaretleyin: <b>pencere</b>.</li>
+      <li>“🧠 cephanelik boş”: silah doldurulamıyor; tek yol <b>Yumruk</b> (7). Ama dikkat: yumruk her zaman mümkündü, sadece pahalıydı!</li>
+      <li>“sezgiyi kapat”: kaç düğüm genişletildiğini karşılaştırın. Küçük problemde fark az; büyük alanlarda çok önemli.</li>
+      <li>“silah dolu” + “sağ odada”: tek adımlık plan. Planlayıcı gereksiz eylem eklemez.</li>
+    </ol>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="A* ile plan">
@@ -391,10 +405,11 @@
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/command.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Command</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Geri alma (undo) için komutları yığında tutmak; tekrar oynatma ve girdi eşleme.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/command.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Command</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Geri alma (undo) için komutları yığında tutmak; tekrar oynatma ve girdi eşleme.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -501,9 +516,9 @@ const actions = [
   { name: "Yumruk",      pre: { inB: true }, eff: { targetDead: true }, cost: 6 },
 ];
 
-const get = (s, k) => !!s[k];                         // yoksa false
+const get = (s, k) => !!s[k];                  // yoksa false
 const satisfies = (s, cond) => Object.keys(cond).every(k => get(s, k) === cond[k]);
-const apply = (s, eff) => ({ ...s, ...eff });         // kopyala + üzerine yaz
+const apply = (s, eff) => ({ ...s, ...eff });  // kopyala + üzerine yaz
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -567,16 +582,16 @@ function plan(start, goal, actions) {
 import heapq, itertools
 
 def plan(start, goal, actions):
-    def h(s):                                     # sağlanmamış hedef gerçeği sayısı
+    def h(s):                  # sağlanmamış hedef gerçeği sayısı
         return sum(1 for k, v in goal.items() if s.get(k, False) != v)
     key = lambda s: tuple(sorted(k for k, v in s.items() if v))
-    tie = itertools.count()                       # eşitlikte sıra bozulmasın
+    tie = itertools.count()    # eşitlikte sıra bozulmasın
     open_ = [(h(start), next(tie), 0, start, [])]
     best = {key(start): 0}
     while open_:
         f, _, g, s, path = heapq.heappop(open_)
         if satisfies(s, goal):
-            return path, g                        # eylem adları ve toplam maliyet
+            return path, g     # eylem adları ve toplam maliyet
         for name, pre, eff, cost in actions:
             if not satisfies(s, pre):
                 continue
@@ -584,7 +599,7 @@ def plan(start, goal, actions):
             if g2 < best.get(key(s2), float("inf")):
                 best[key(s2)] = g2
                 heapq.heappush(open_, (g2 + h(s2), next(tie), g2, s2, path + [name]))
-    return None, float("inf")                     # plan yok
+    return None, float("inf")  # plan yok
 
 print(plan({}, {"targetDead": True}, actions))
 # (['Cephane al', 'Şarjör tak', 'Kapıdan geç', 'Ateş et'], 4)
@@ -598,7 +613,7 @@ public static List<GoapAction> Plan(Dictionary<string, bool> start,
     var open = new List<Node> { new Node(start, 0f, null, null) };
     var best = new Dictionary<string, float> { [Key(start)] = 0f };
     while (open.Count > 0) {
-        int bi = 0;                                           // f’si en küçük düğüm
+        int bi = 0;  // f’si en küçük düğüm
         for (int i = 1; i < open.Count; i++)
             if (open[i].g + H(open[i].s, goal) < open[bi].g + H(open[bi].s, goal)) bi = i;
         Node n = open[bi]; open.RemoveAt(bi);
@@ -611,7 +626,7 @@ public static List<GoapAction> Plan(Dictionary<string, bool> start,
             open.Add(new Node(s2, g2, n, a));
         }
     }
-    return null;                                              // plan yok
+    return null;     // plan yok
 }
 // Node: (durum, g, ebeveyn, eylem); Path(): ebeveynleri izleyip eylemleri ters sırayla döndürür
 // Key(s): doğru olan anahtarların sıralı birleşimi, ör. "hasAmmo,inB"
@@ -628,9 +643,9 @@ public static List<GoapAction> Plan(Dictionary<string, bool> start,
 // p5.js — draw() içinde her kare agent.update(deltaTime / 1000)
 class GoapAgent {
   constructor(actions) {
-    this.actions = actions;            // tasarımcının eylem listesi
-    this.memory = {};                  // çalışma belleği (algı yazar)
-    this.plan = null;                  // kalan eylemler (kuyruk)
+    this.actions = actions;  // tasarımcının eylem listesi
+    this.memory = {};        // çalışma belleği (algı yazar)
+    this.plan = null;        // kalan eylemler (kuyruk)
     this.replanTimer = 0;
   }
   update(dt) {
@@ -643,8 +658,8 @@ class GoapAgent {
     }
     if (!this.plan || this.plan.length === 0) return;       // boşta bekle
     const a = this.plan[0];
-    if (!satisfies(this.memory, a.pre)) { this.plan = null; return; }   // dünya değişti
-    const r = this.execute(a, dt);                          // "RUNNING" | "SUCCESS" | "FAILURE"
+    if (!satisfies(this.memory, a.pre)) { this.plan = null; return; }  // dünya değişti
+    const r = this.execute(a, dt);                                     // "RUNNING" | "SUCCESS" | "FAILURE"
     if (r === "SUCCESS") { Object.assign(this.memory, a.eff); this.plan.shift(); }
     else if (r === "FAILURE") { this.rememberFailure(a); this.plan = null; }   // ör. memory.doorStuck = true
   }
@@ -654,8 +669,8 @@ class GoapAgent {
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="3-5|9-15|17-19|20-21"><script type="text/template">
 public class GoapAgent : MonoBehaviour {
-    public List<GoapAction> actions;                        // tasarımcının eylem listesi
-    Dictionary<string, bool> memory = new();               // çalışma belleği (algı yazar)
+    public List<GoapAction> actions;          // tasarımcının eylem listesi
+    Dictionary<string, bool> memory = new();  // çalışma belleği (algı yazar)
     Queue<GoapAction> plan;
     float replanTimer;
 
@@ -669,8 +684,8 @@ public class GoapAgent : MonoBehaviour {
         }
         if (plan == null) return;                           // sıradaki hedefi dene / boşta bekle
         var a = plan.Peek();
-        if (!Goap.Satisfies(memory, a.pre)) { plan = null; return; }   // dünya değişti
-        Status r = Execute(a);                              // animasyon, NavMesh hareketi…
+        if (!Goap.Satisfies(memory, a.pre)) { plan = null; return; }  // dünya değişti
+        Status r = Execute(a);                                        // animasyon, NavMesh hareketi…
         if (r == Status.Success) { foreach (var kv in a.eff) memory[kv.Key] = kv.Value; plan.Dequeue(); }
         else if (r == Status.Failure) { RememberFailure(a); plan = null; }  // ör. memory["doorStuck"] = true
     }
@@ -883,14 +898,14 @@ const primitives = {
   ChooseBridge: [s => true, {}], NavigateToBridge: [s => true, {}], CheckBridge: [s => true, {}],
 };
 function decompose(tasks, s, plan = []) {
-  if (tasks.length === 0) return plan;                     // bitti
+  if (tasks.length === 0) return plan;             // bitti
   const [task, ...rest] = tasks;
   if (primitives[task]) {
     const [cond, eff] = primitives[task];
-    if (!cond(s)) return null;                             // geri izle
+    if (!cond(s)) return null;                     // geri izle
     return decompose(rest, { ...s, ...eff }, [...plan, task]);
   }
-  for (const [cond, subtasks] of methods[task]) {          // yöntemleri sırayla dene
+  for (const [cond, subtasks] of methods[task]) {  // yöntemleri sırayla dene
     if (!cond(s)) continue;
     const result = decompose([...subtasks, ...rest], s, plan);
     if (result) return result;
@@ -921,14 +936,14 @@ primitives = {
 
 def decompose(tasks, s, plan=()):
     if not tasks:
-        return list(plan)                              # bitti
+        return list(plan)                 # bitti
     task, rest = tasks[0], tasks[1:]
     if task in primitives:
         cond, eff = primitives[task]
         if not cond(s):
-            return None                                # geri izle
+            return None                   # geri izle
         return decompose(rest, {**s, **eff}, plan + (task,))
-    for cond, subtasks in methods[task]:               # yöntemleri sırayla dene
+    for cond, subtasks in methods[task]:  # yöntemleri sırayla dene
         if cond(s):
             result = decompose(subtasks + rest, s, plan)
             if result is not None:
@@ -1139,6 +1154,7 @@ print(decompose(["BeTrunkThumper"], {"sees_enemy": True, "has_trunk": False,
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

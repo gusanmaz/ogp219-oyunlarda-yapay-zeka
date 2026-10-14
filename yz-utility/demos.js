@@ -10,7 +10,7 @@
   /* ================= hikâyeli giriş: akşam 9, ne yapsam? =================
      Dört ihtiyaç (0–1), dört seçenek; puanlar düz cümleyle hesaplanır ve evet/hayır kurallarıyla karşılaştırılır. */
   D.evening = function (root) {
-    const N = { ac: ['🍽 açlık', 0.3], yor: ['🥱 yorgunluk', 0.4], sinav: ['📝 sınav yakınlığı', 0.1], merak: ['📺 dizi merakı', 0.8] };
+    const N = { ac: ['🍽️ açlık', 0.3], yor: ['🥱 yorgunluk', 0.4], sinav: ['📝 sınav yakınlığı', 0.1], merak: ['📺 dizi merakı', 0.8] };
     const v = {}; Object.keys(N).forEach(k => (v[k] = N[k][1]));
     const OPT = [
       ['🍝 Yemek ye', s => s.ac, s => `açlık ${f2(s.ac)}`],

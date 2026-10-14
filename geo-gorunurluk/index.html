@@ -93,6 +93,7 @@
 <section data-sec="ızgara">
   <h2>Canlı: örnekleme mi, DDA mı? 🔦</h2>
 <div class="demo" data-demo="dda"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> yeşil gözcü (tıklayarak taşınır), mavi hedef (fareyi izler). Sarı kareler ışının baktığı hücreler; kırmızı kare ışını kesen duvar. Sol üstte sonuç, sağ üstte kaç hücre/örnek sınandığı.</li><li><b>DDA:</b> sarı hücrelerdeki numaralar ziyaret sırası. Işını çapraza çevirin: merdiven gibi, hiç boşluk bırakmadan ilerliyor.</li><li><b>Örnekleme</b>, adım 0,5: mor noktalar örnekler. Aynı hücreye iki-üç nokta düşüyor: boşa iş.</li><li>Adımı <b>1,5</b> yapın ve hedefi duvarların köşelerinin hemen arkasında gezdirin: “HATA: görüyor dedi ama arada duvar var!” yazısını yakalayın.</li><li>Aynı konumda yönteme DDA deyin: duvarı kaçırmıyor ve sınadığı hücre sayısı daha az.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="ızgara">
@@ -102,7 +103,7 @@
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/articles/visibility/" target="_blank" rel="noopener"><div class="lnk-t">🟥 2D Visibility</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Işık kaynağından görüş çokgeni çıkarmanın etkileşimli anlatımı; duvarları sürükleyebilirsiniz.</div></a><a class="lnk" href="https://ncase.me/sight-and-light/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Sight & Light</div><div class="lnk-s">Nicky Case</div><div class="lnk-w">2B görüş ve gölgeyi “yalnızca köşelere ışın” fikriyle anlatan kısa, etkileşimli sayfa.</div></a><a class="lnk" href="https://www.roguebasin.com/index.php/FOV_using_recursive_shadowcasting" target="_blank" rel="noopener"><div class="lnk-t">🔗 FOV using recursive shadowcasting</div><div class="lnk-s">RogueBasin</div><div class="lnk-w">Roguelike oyunlarda görüş alanı için gölge dökümünün adım adım anlatımı.</div></a><a class="lnk" href="https://journal.stuffwithstuff.com/2015/09/07/what-the-hero-sees/" target="_blank" rel="noopener"><div class="lnk-t">🔗 What the Hero Sees</div><div class="lnk-s">Robert Nystrom</div><div class="lnk-w">Bir roguelike’ta görüş alanı algoritmasının nasıl seçildiğini ve geliştirildiğini anlatan yazı.</div></a><a class="lnk" href="https://www.redblobgames.com/grids/line-drawing/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Line drawing on a grid</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Izgarada iki nokta arasındaki hücreleri bulmak; görüş hattı ve DDA için.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/articles/visibility/" target="_blank" rel="noopener"><div class="lnk-t">🔴 2D Visibility</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Işık kaynağından görüş çokgeni çıkarmanın etkileşimli anlatımı; duvarları sürükleyebilirsiniz.</div></a><a class="lnk" href="https://ncase.me/sight-and-light/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Sight & Light</div><div class="lnk-s">Nicky Case</div><div class="lnk-w">2B görüş ve gölgeyi “yalnızca köşelere ışın” fikriyle anlatan kısa, etkileşimli sayfa.</div></a><a class="lnk" href="https://www.roguebasin.com/index.php/FOV_using_recursive_shadowcasting" target="_blank" rel="noopener"><div class="lnk-t">🔗 FOV using recursive shadowcasting</div><div class="lnk-s">RogueBasin</div><div class="lnk-w">Roguelike oyunlarda görüş alanı için gölge dökümünün adım adım anlatımı.</div></a><a class="lnk" href="https://journal.stuffwithstuff.com/2015/09/07/what-the-hero-sees/" target="_blank" rel="noopener"><div class="lnk-t">🔗 What the Hero Sees</div><div class="lnk-s">Robert Nystrom</div><div class="lnk-w">Bir roguelike’ta görüş alanı algoritmasının nasıl seçildiğini ve geliştirildiğini anlatan yazı.</div></a><a class="lnk" href="https://www.redblobgames.com/grids/line-drawing/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Line drawing on a grid</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Izgarada iki nokta arasındaki hücreleri bulmak; görüş hattı ve DDA için.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -123,8 +124,8 @@ function isinAt(ox, oy, dx, dy, menzil, duvarMi) {
 
   while (true) {
     let t, yan;
-    if (tMaxX < tMaxY) { cx += adimX; t = tMaxX; tMaxX += tDeltaX; yan = 0; }   // dikey çizgi daha yakın
-    else               { cy += adimY; t = tMaxY; tMaxY += tDeltaY; yan = 1; }   // yatay çizgi daha yakın
+    if (tMaxX < tMaxY) { cx += adimX; t = tMaxX; tMaxX += tDeltaX; yan = 0; }  // dikey çizgi daha yakın
+    else               { cy += adimY; t = tMaxY; tMaxY += tDeltaY; yan = 1; }  // yatay çizgi daha yakın
     if (t > menzil) return null;
     if (duvarMi(cx, cy)) return { hucre: [cx, cy], t, yan };   // (dx, dy) birim vektörse t = uzaklık
   }
@@ -145,19 +146,19 @@ def line_cells(x0, y0, x1, y1):
     dx, dy = abs(x1 - x0), -abs(y1 - y0)
     sx = 1 if x0 < x1 else -1
     sy = 1 if y0 < y1 else -1
-    err = dx + dy                       # "hata": gerçek doğrudan ne kadar saptık?
+    err = dx + dy                   # "hata": gerçek doğrudan ne kadar saptık?
     while True:
         cells.append((x0, y0))
         if x0 == x1 and y0 == y1:
             break
         e2 = 2 * err
-        if e2 >= dy:                    # x yönünde bir adım
+        if e2 >= dy:                # x yönünde bir adım
             err += dy; x0 += sx
-        if e2 <= dx:                    # y yönünde bir adım (ikisi birden: çapraz adım)
+        if e2 <= dx:                # y yönünde bir adım (ikisi birden: çapraz adım)
             err += dx; y0 += sy
     return cells
 
-def can_see(grid, x0, y0, x1, y1):      # grid[y][x] == 1 duvar
+def can_see(grid, x0, y0, x1, y1):  # grid[y][x] == 1 duvar
     return all(grid[y][x] == 0 for x, y in line_cells(x0, y0, x1, y1)[1:-1])
 </script></code></pre>
     </div>
@@ -237,6 +238,7 @@ def line_cells(x0, y0, x1, y1):
 <section data-sec="ışın">
   <h2>Canlı: iki boyuttan üç boyuta 🕹️</h2>
 <div class="demo" data-demo="wolf"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> solda harita ve oyuncu (yeşil); sarı çizgiler ekran sütunlarının ışınları (her beş sütunda biri çizili), kırmızı çizgi tam ortadaki ışın. Sağda aynı ışınlardan kurulan “3B” görüntü: 100 sütun = 100 ışın.</li><li><b>W / S</b> ile yürüyün, <b>A / D</b> ile dönün. Bir duvara yaklaşın: çubuklar uzar. Uzaklaşın: kısalır.</li><li>Bir köşeye bakın: dikey ve yatay yüzler farklı tonda (koddaki <code>yan</code> değişkeni). Bu basit hile derinlik hissinin yarısı.</li><li>Düz bir duvara dik bakıp <b>“balık gözü”</b> kutusunu işaretleyin: duvarın üst ve alt kenarı kavislenir. Kutuyu kaldırın: düzelir.</li><li>Görüş açısını 2 radyana çıkarın: geniş açı; kenarlarda gerilme. 0,5: dürbün. Oyunlardaki “FOV” ayarı bu sayıdır.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="ışın">
@@ -255,8 +257,8 @@ function ciz3B(oyuncu, bakis, gorusAcisi) {
     const v = isinAt(oyuncu.x, oyuncu.y, cos(aci), sin(aci), 100, duvarMi);
     if (!v) continue;
 
-    const dik = v.t * cos(aci - bakis);          // BALIK GÖZÜ DÜZELTMESİ: bakış yönüne izdüşür
-    const yukseklik = height / dik;              // yakın duvar uzun, uzak duvar kısa
+    const dik = v.t * cos(aci - bakis);  // BALIK GÖZÜ DÜZELTMESİ: bakış yönüne izdüşür
+    const yukseklik = height / dik;      // yakın duvar uzun, uzak duvar kısa
 
     stroke(v.yan === 0 ? 200 : 140);             // dikey ve yatay yüzleri farklı tonla: köşeler belli olsun
     line(sutun, height / 2 - yukseklik / 2, sutun, height / 2 + yukseklik / 2);
@@ -286,6 +288,11 @@ def column_height(dist, ray_angle, player_angle, screen_h):
 </textarea>
     <div class="lab-tasks">Başlangıç kodu düzeltmeyi yapmıyor: ortadaki sütun doğru, yanlardakiler kısa (balık gözü). Tek değişiklik: paydaya <code>math.cos(ray_angle - player_angle)</code> çarpanını eklemek. Slayttaki sayılarla sınayın: uzaklık 2,31, açı farkı 30° (0,5236 rad), ekran 200 → 100.</div>
   </div>
+</section>
+
+<section data-sec="oyunda">
+  <h2>📸 Oyundan bir kare: Wolfenstein 3D (1992)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/wolf3d.png" alt="Wolfenstein 3D (1992) ekran görüntüsü" style="height:440px;max-width:100%;object-fit:contain;image-rendering:pixelated;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Duvarlar, az önceki demodaki gibi her ekran sütunu için bir ışın gönderilip “yükseklik = sabit / uzaklık” boyunda çizilen çubuklardan oluşuyor. Zemin ve tavan düz renk; yukarı aşağı bakılamıyor.<br><span style="color:var(--muted);font-size:.85em">Görsel: Wolfenstein 3D ekran görüntüsü, id Software, Wikipedia (eğitim amaçlı adil kullanım)</span></figcaption></figure>
 </section>
 
 <section data-sec="ışın">
@@ -328,6 +335,8 @@ def column_height(dist, ray_angle, player_angle, screen_h):
 <section data-sec="alan">
   <h2>Canlı: zindanda görüş alanı ve sis 🕯️</h2>
 <div class="demo" data-demo="fov"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>Zindanı dolaşın: kapılardan geçerken yeni odalar <b>bir anda</b> açılır; köşeleri dönerken görüş koniler hâlinde genişler.</li><li>Bir sütunun (tek duvar hücresi) yanında durun: arkasında incelen bir <b>gölge konisi</b>.</li><li>“ışın yelpazesi”ne geçin, ışın sayısını <b>40</b> yapın, büyük bir odada durun: uzaktaki hücrelerde delikler. Sayıyı artırın: delikler kapanır, “bakılan hücre” binlere çıkar.</li><li>Aynı yerde “gölge dökümü”: delik yok ve bakılan hücre sayısı, görünen hücre sayısına yakın.</li><li>“savaş sisi”ni kapatın: yalnızca şu an görünenler; arkanızda bıraktığınız her şey siyah. Hangisi “keşif” hissi veriyor?</li></ol></div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?"><ol style="font-size:.9em"><li><b>Yeşil nokta</b> sizsiniz: <b>W / A / S / D</b> ile hücre hücre yürüyün (ya da boş bir hücreye tıklayın).</li><li><b>Açık renkli</b> hücreler şu an görünenler; <b>koyu gri</b> olanlar daha önce görülüp şu an görünmeyenler (savaş sisi); <b>siyah</b>: hiç görülmedi.</li><li><b>Sarı çember</b> görüş yarıçapı.</li><li><b>Alt satır:</b> şu an görünen hücre sayısı, keşfedilen hücre sayısı ve algoritmanın <b>baktığı hücre sayısı</b> (karşılaştıracağınız sayı).</li><li>Menü: gölge dökümü / ışın yelpazesi / yok. “↺ unut” keşfi sıfırlar.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="alan">
@@ -356,13 +365,13 @@ function gorusAlani(px, py, R, duvarMi, gorunur) {
       for (let dx = -uzak; dx <= 0; dx++) {
         const X = px + dx * xx + dy * xy, Y = py + dx * yx + dy * yy;       // dilimden haritaya
         const solEgim = (dx - 0.5) / (dy + 0.5), sagEgim = (dx + 0.5) / (dy - 0.5);
-        if (bas < sagEgim) continue;                     // henüz aydınlık aralığa girmedik
-        if (son > solEgim) break;                        // aydınlık aralığı geçtik
+        if (bas < sagEgim) continue;  // henüz aydınlık aralığa girmedik
+        if (son > solEgim) break;     // aydınlık aralığı geçtik
         if (dx * dx + dy * dy <= R * R) gorunur(X, Y);
         if (kapali) {                                    // bir duvar dizisinin içindeyiz
           if (duvarMi(X, Y)) { yeniBas = sagEgim; continue; }
-          kapali = false; bas = yeniBas;                 // duvar bitti: aralık daraldı
-        } else if (duvarMi(X, Y) && uzak < R) {          // duvar başladı
+          kapali = false; bas = yeniBas;         // duvar bitti: aralık daraldı
+        } else if (duvarMi(X, Y) && uzak < R) {  // duvar başladı
           kapali = true;
           tara(uzak + 1, bas, solEgim, xx, xy, yx, yy);  // duvarın SOLUNDA kalan aralığı alt satırlarda sürdür
           yeniBas = sagEgim;
@@ -476,6 +485,7 @@ function fogState(visibleNow, seenBefore) {
 <section data-sec="çokgen">
   <h2>Canlı: fener ve gölgeler 🔦</h2>
 <div class="demo" data-demo="vispoly"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> sarı nokta fener (fareyi izler); açık alan fenerin gördüğü bölge; koyu alan gölge. İnce kırmızı çizgiler gönderilen ışınlar. Sol üstte ışın ve test sayıları.</li><li>“yalnızca köşelere”: ışınların hepsi bir duvar köşesinden geçiyor. Feneri bir duvarın ucuna yaklaştırın: köşeyi sıyıran ışın arkadaki duvara uzanıyor.</li><li>“eşit aralıklı”, 60 ışın: gölge kenarları tırtıklı. Feneri yavaşça oynatın: kenarlar <b>titriyor</b>.</li><li>Işın sayısını 720’ye çıkarın: düzeliyor; sol üstteki test sayısını “köşelere” modundakiyle karşılaştırın.</li><li>“ışınları göster”i kapatın: oyuncunun göreceği hâl. Bu, bir 2B oyunun dinamik ışığıdır.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="çokgen">
@@ -488,13 +498,13 @@ function fogState(visibleNow, seenBefore) {
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Görüş çokgeni: yalnızca duvar köşelerine ışın gönder. duvarlar: [[x1, y1, x2, y2], ...] (dünya sınırı dahil)
-function isin(o, aci, duvarlar) {                      // en yakın çarpma noktası
+function isin(o, aci, duvarlar) {                             // en yakın çarpma noktası
   const d = { x: cos(aci), y: sin(aci) }; let enYakin = Infinity;
   for (const [x1, y1, x2, y2] of duvarlar) {
     const sx = x2 - x1, sy = y2 - y1, payda = d.x * sy - d.y * sx;
-    if (abs(payda) < 1e-9) continue;                   // paralel
-    const t = ((x1 - o.x) * sy - (y1 - o.y) * sx) / payda;     // ışın üzerindeki yer (G1'deki t)
-    const u = ((x1 - o.x) * d.y - (y1 - o.y) * d.x) / payda;   // duvar üzerindeki yer
+    if (abs(payda) < 1e-9) continue;                          // paralel
+    const t = ((x1 - o.x) * sy - (y1 - o.y) * sx) / payda;    // ışın üzerindeki yer (G1'deki t)
+    const u = ((x1 - o.x) * d.y - (y1 - o.y) * d.x) / payda;  // duvar üzerindeki yer
     if (t > 0 && u >= 0 && u <= 1 && t < enYakin) enYakin = t;
   }
   return { x: o.x + d.x * enYakin, y: o.y + d.y * enYakin, aci };
@@ -505,9 +515,9 @@ function gorusCokgeni(o, duvarlar) {
   for (const [x1, y1, x2, y2] of duvarlar)
     for (const [x, y] of [[x1, y1], [x2, y2]]) {
       const a = atan2(y - o.y, x - o.x);
-      acilar.push(a - 0.0001, a, a + 0.0001);          // köşeye ve iki yanından sıyırarak
+      acilar.push(a - 0.0001, a, a + 0.0001);                 // köşeye ve iki yanından sıyırarak
     }
-  acilar.sort((a, b) => a - b);                        // açıya göre sırala: çokgenin köşe sırası
+  acilar.sort((a, b) => a - b);                               // açıya göre sırala: çokgenin köşe sırası
   return acilar.map(a => isin(o, a, duvarlar));
 }
 
@@ -545,6 +555,7 @@ function gorusCokgeni(o, duvarlar) {
 <section data-sec="bsp">
   <h2>Canlı: çizim sırası ağaçtan gelir 🌲</h2>
 <div class="demo" data-demo="bsp"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> kalın renkli çizgiler duvarlar; üstlerindeki sayı çizim sırası (1 = göze en yakın, yeşil; sonuncu = en uzak, kırmızı). Mavi nokta göz (fareyi izler). Kesikli ince çizgiler bölme doğruları.</li><li>Gözü yavaşça gezdirin. Sıra ne zaman değişiyor? Yalnızca göz bir <b>kesikli çizgiyi</b> geçtiğinde: o düğümde “ön” ve “arka” yer değiştirir.</li><li>Gözü bir duvarın bir yanından öbür yanına taşıyın: o duvarın arkasındaki bütün grup ile önündeki grup sıra değiştirir.</li><li>Sol üstteki sayıya bakın: 8 duvar ağaçta daha fazla parça olmuş. Bir bölme doğrusunun kestiği duvarlar ikiye ayrıldı (aynı duvarın iki parçası farklı sıra numarası alabilir).</li><li>“bölme doğrularını göster”i kapatın: geriye yalnızca doğru sıra kalır. Oyun her kare bunu, tek bir sıralama yapmadan üretir.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="bsp">
@@ -565,9 +576,9 @@ function ondenArkaya(dugum, goz, ciz) {
   const taraf = (x2 - x1) * (goz.y - y1) - (y2 - y1) * (goz.x - x1);   // G1: yön testi
   const yakin = taraf >= 0 ? dugum.on : dugum.arka;
   const uzak  = taraf >= 0 ? dugum.arka : dugum.on;
-  ondenArkaya(yakin, goz, ciz);     // 1) gözün olduğu taraf
-  ciz(dugum.duvar);                 // 2) bölme çizgisindeki duvar
-  ondenArkaya(uzak, goz, ciz);      // 3) öbür taraf
+  ondenArkaya(yakin, goz, ciz);  // 1) gözün olduğu taraf
+  ciz(dugum.duvar);              // 2) bölme çizgisindeki duvar
+  ondenArkaya(uzak, goz, ciz);   // 3) öbür taraf
 }
 </script></code></pre>
     </div>
@@ -585,21 +596,21 @@ void R_RenderBSPNode (int bspnum)
         if (bspnum == -1)
             R_Subsector (0);
         else
-            R_Subsector (bspnum&(~NF_SUBSECTOR));     // yaprak: bu küçük bölgenin duvarlarını çiz
+            R_Subsector (bspnum&(~NF_SUBSECTOR));  // yaprak: bu küçük bölgenin duvarlarını çiz
         return;
     }
 
     bsp = &nodes[bspnum];
 
     // Decide which side the view point is on.
-    side = R_PointOnSide (viewx, viewy, bsp);          // G1'deki yön testi
+    side = R_PointOnSide (viewx, viewy, bsp);      // G1'deki yön testi
 
     // Recursively divide front space.
-    R_RenderBSPNode (bsp->children[side]);             // ÖNCE gözün olduğu taraf
+    R_RenderBSPNode (bsp->children[side]);         // ÖNCE gözün olduğu taraf
 
     // Possibly divide back space.
-    if (R_CheckBBox (bsp->bbox[side^1]))               // öbür tarafın kutusu ekranda görünebiliyorsa
-        R_RenderBSPNode (bsp->children[side^1]);       // SONRA öbür taraf
+    if (R_CheckBBox (bsp->bbox[side^1]))           // öbür tarafın kutusu ekranda görünebiliyorsa
+        R_RenderBSPNode (bsp->children[side^1]);   // SONRA öbür taraf
 }
 </script></code></pre>
     </div>
@@ -739,6 +750,7 @@ function draw() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

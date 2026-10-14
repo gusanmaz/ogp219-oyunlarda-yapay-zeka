@@ -135,7 +135,7 @@
 
   /* ---------- 2) iz tablosu ---------- */
   D.mergetrace = function (root) {
-    const a = SL.parseValues(root.dataset.values || 'M E R G E S O R T E X A M P L E');
+    const a = SL.parseValues(root.dataset.values || 'D O N K E Y K O N G J U N I O R');
     const n = a.length, rows = [];
     const cells = (lo, hi) => a.map((v, i) => `<td class="${i >= lo && i <= hi ? 'red' : 'gry'}">${v}</td>`).join('');
     rows.push(`<tr class="init"><td></td><td></td><td></td>${a.map(v => `<td class="blk">${v}</td>`).join('')}</tr>`);

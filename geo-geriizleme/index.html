@@ -88,6 +88,7 @@
 <section data-sec="kalıp">
   <h2>Canlı: vezirler satır satır ♛</h2>
 <div class="demo" data-demo="queens"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> solda tahta; mavi daireler konmuş vezirler; pembe kareler onların tehdit ettiği yerler. Kırmızı çarpı: az önce sınanıp tehdit altında bulunan kare. Sarı çerçeve: geri alınan vezirin yeri. Sağda o anki adımın açıklaması ve sayaçlar.</li><li><b>N = 4</b>, hızı en düşüğe alın ve <b>“⏭ tek adım”</b> ile ilerleyin: önceki slayttaki tabloyu satır satır izleyin. Sayaçlar 26 / 8 / 4’te durmalı.</li><li><b>N = 6</b>: ilk vezir sütun 1’deyken algoritma 25 kez geri alır. İlk veziri taşımadan çözüm yoktur; algoritma bunu ancak altındaki bütün dalları tüketince “anlar”.</li><li><b>N = 8</b>, hızı artırın: 876 kare sınanır, 113 vezir konur, 105’i geri alınır. Kaba kuvvetin 16,7 milyon tahtasına karşı.</li><li>Soru: pembe karelere hiç vezir konmuyor. Bu “budama”yı kodda hangi satır yapıyor? (Bir sonraki slayt: <code>guvenliMi</code>.)</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="kalıp">
@@ -118,10 +119,10 @@ function guvenliMi(vezirler, satir, sutun) {
 function yerlestir(vezirler, satir, n) {
   if (satir === n) return true;                  // TABAN: bütün satırlar doldu → çözüm
   for (let sutun = 0; sutun < n; sutun++) {
-    if (!guvenliMi(vezirler, satir, sutun)) continue;   // BUDA: bu dalı hiç açma
-    vezirler[satir] = sutun;                     // SEÇ
-    if (yerlestir(vezirler, satir + 1, n)) return true; // DENE: gerisi çözülüyor mu?
-    vezirler.length = satir;                     // GERİ AL: seçimi sil, sıradaki sütuna geç
+    if (!guvenliMi(vezirler, satir, sutun)) continue;    // BUDA: bu dalı hiç açma
+    vezirler[satir] = sutun;                             // SEÇ
+    if (yerlestir(vezirler, satir + 1, n)) return true;  // DENE: gerisi çözülüyor mu?
+    vezirler.length = satir;                             // GERİ AL: seçimi sil, sıradaki sütuna geç
   }
   return false;                                  // bu satırda hiçbir sütun olmadı → çağıran geri alacak
 }
@@ -142,10 +143,10 @@ def yerlestir(vezirler, n):
         return True
     for sutun in range(n):
         if guvenli_mi(vezirler, satir, sutun):
-            vezirler.append(sutun)          # SEÇ
-            if yerlestir(vezirler, n):      # DENE
+            vezirler.append(sutun)                         # SEÇ
+            if yerlestir(vezirler, n):                     # DENE
                 return True
-            vezirler.pop()                  # GERİ AL
+            vezirler.pop()                                 # GERİ AL
     return False
 
 def count_queens(n, vezirler=None):
@@ -156,10 +157,10 @@ def count_queens(n, vezirler=None):
     toplam = 0
     for sutun in range(n):
         if guvenli_mi(vezirler, len(vezirler), sutun):
-            toplam += count_queens(n, vezirler + [sutun])     # kopyayla: geri almaya gerek yok
+            toplam += count_queens(n, vezirler + [sutun])  # kopyayla: geri almaya gerek yok
     return toplam
 
-print(count_queens(8))      # 92
+print(count_queens(8))                                     # 92
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -176,9 +177,9 @@ static bool Yerlestir(List<int> vezirler, int n) {
     if (satir == n) return true;
     for (int sutun = 0; sutun < n; sutun++) {
         if (!GuvenliMi(vezirler, satir, sutun)) continue;
-        vezirler.Add(sutun);                              // SEÇ
-        if (Yerlestir(vezirler, n)) return true;          // DENE
-        vezirler.RemoveAt(vezirler.Count - 1);            // GERİ AL
+        vezirler.Add(sutun);                      // SEÇ
+        if (Yerlestir(vezirler, n)) return true;  // DENE
+        vezirler.RemoveAt(vezirler.Count - 1);    // GERİ AL
     }
     return false;
 }
@@ -251,6 +252,7 @@ def count_queens(n):
 <section data-sec="çanta">
   <h2>Canlı: çantayı bilgisayar düzenlesin 🎒</h2>
 <div class="demo" data-demo="bag"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> solda 8 × 5 çanta; sağda eşyalar, deneneceği sırayla (yerleşenler soluk ve ✓). Altında son olay ile “yerleştirme denemesi” ve “geri alma” sayaçları.</li><li><b>Silah çantası, küçükten büyüğe</b> (başlangıç): ▶. Otlar ve mermiler sol üst köşeyi doldurur; sıra tüfeğe gelince yer kalmamıştır. Algoritma küçükleri tek tek söküp taşır: 2.248 deneme. Hızı artırın ya da “⏩ sonuna git”.</li><li>Sırayı <b>“büyükten küçüğe”</b> yapın: 10 deneme, sıfır geri alma. Aynı eşyalar, aynı algoritma.</li><li><b>“Döndürmek serbest”i kapatın</b> (büyükten küçüğe): 1.432 denemeden sonra “SIĞMIYOR”. Algoritma bunu ancak <b>bütün</b> yerleşimleri tüketerek söyleyebilir: “yok” demek “var” demekten pahalıdır.</li><li><b>Şekilli eşyalar</b> (L, T, Z biçimleri): büyükten küçüğe 104, küçükten büyüğe 78.786 deneme. Biçim karmaşıklaştıkça sıra daha da önem kazanır.</li><li><b>Sığmayan</b> çanta: toplam alan 37 kare (40’tan az!) ama üç uzun silah 5 satıra sığmaz. Alan denetimi gerekli, yeterli değil.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="çanta">
@@ -294,8 +296,8 @@ function yerlestir(esyalar, i, izgara) {
 
 function otomatikYerlestir(esyalar) {
   const alan = esyalar.reduce((t, e) => t + e.w * e.h, 0);
-  if (alan > GEN * YUK) return false;                     // en ucuz budama: toplam alan sığmıyorsa hiç deneme
-  esyalar.sort((a, b) => b.w * b.h - a.w * a.h);          // büyükten küçüğe: zor olanı önce koy
+  if (alan > GEN * YUK) return false;             // en ucuz budama: toplam alan sığmıyorsa hiç deneme
+  esyalar.sort((a, b) => b.w * b.h - a.w * a.h);  // büyükten küçüğe: zor olanı önce koy
   const izgara = Array.from({ length: YUK }, () => Array(GEN).fill(-1));
   return yerlestir(esyalar, 0, izgara);
 }
@@ -323,15 +325,15 @@ def yerlestir(esyalar, i, izgara, sonuc):
         for y in range(YUK):
             for x in range(GEN):
                 if sigar_mi(izgara, w, h, x, y):
-                    doldur(izgara, w, h, x, y, i)             # SEÇ
+                    doldur(izgara, w, h, x, y, i)   # SEÇ
                     if yerlestir(esyalar, i + 1, izgara, sonuc):
                         sonuc[i] = (x, y, w, h)
                         return True
-                    doldur(izgara, w, h, x, y, -1)            # GERİ AL
+                    doldur(izgara, w, h, x, y, -1)  # GERİ AL
     return False
 
 esyalar = sorted([(6, 2), (5, 2), (2, 2), (2, 2), (1, 2), (1, 2), (2, 1), (2, 1), (1, 1), (1, 1)],
-                 key=lambda e: -e[0] * e[1])                  # büyükten küçüğe
+                 key=lambda e: -e[0] * e[1])        # büyükten küçüğe
 izgara = [[-1] * GEN for _ in range(YUK)]
 sonuc = {}
 print(yerlestir(esyalar, 0, izgara, sonuc), sonuc)
@@ -340,7 +342,7 @@ print(yerlestir(esyalar, 0, izgara, sonuc), sonuc)
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Unity: ızgara envanter çoğu zaman bir int[,] (ya da Item[,]) dizisidir.
-int[,] izgara = new int[YUK, GEN];          // -1: boş; değilse eşya kimliği
+int[,] izgara = new int[YUK, GEN];        // -1: boş; değilse eşya kimliği
 
 bool SigarMi(int w, int h, int x, int y) {
     if (x < 0 || y < 0 || x + w > GEN || y + h > YUK) return false;
@@ -354,7 +356,7 @@ bool SigarMi(int w, int h, int x, int y) {
 int deneme;
 bool Yerlestir(List<Esya> esyalar, int i) {
     if (i == esyalar.Count) return true;
-    if (++deneme > 50_000) return false;                 // sigorta: oyuncuyu bekletme, "sığdıramadım" de
+    if (++deneme > 50_000) return false;  // sigorta: oyuncuyu bekletme, "sığdıramadım" de
     // ... yönler × y × x döngüsü: SigarMi → Doldur → Yerlestir(i + 1) → Doldur(-1) ...
     return false;
 }
@@ -423,6 +425,7 @@ function fits(grid, w, h, x, y) {
 <section data-sec="kısıt">
   <h2>Canlı: aynı algoritma, iki sıra 🔢</h2>
 <div class="demo" data-demo="sudoku"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> kalın siyah rakamlar ipuçları; mavi rakamlar algoritmanın denemeleri. Yeşil yanan hücre: az önce rakam kondu; kırmızı: rakam geri alındı. Sağda sayaçlar: yerleştirme, geri alma, çıkmaz.</li><li><b>Gazete bulmacası, “ilk boş hücre”:</b> ▶. Mavi rakamlar üst satırlarda yazılıp silinir, yazılıp silinir… 4.208 yerleştirme. Hızı en sağa çekin.</li><li>Hücre seçimini <b>“en az seçenekli”</b> yapın: rakamlar tahtanın her yerine, bir kez ve doğru konur. 51 yerleştirme, 0 geri alma. Yavaş hızda izleyin: algoritma hep “tek adaylı” bir hücre buluyor.</li><li>Bulmacayı <b>“kaba kuvvete karşı tasarlanmış”</b> yapın, “ilk boş hücre” ile ▶ ve “⏩ sonuna git”: 400.000 denemede çözemez. Aynı bulmaca “en az seçenekli” ile 45.267 yerleştirmede çözülür.</li><li>Soru: iki yöntemin kodu arasındaki fark kaç satır? (Yalnızca <code>siradakiHucre</code> fonksiyonu.)</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="kısıt">
@@ -437,8 +440,8 @@ function fits(grid, w, h, x, y) {
 // tahta: 81 sayılık dizi (0 = boş).  i. hücrenin satırı floor(i / 9), sütunu i % 9.
 function adaylar(tahta, i) {
   const s = floor(i / 9), k = i % 9, kullanilan = new Set();
-  for (let j = 0; j < 9; j++) { kullanilan.add(tahta[s * 9 + j]); kullanilan.add(tahta[j * 9 + k]); }   // satır + sütun
-  const ks = s - s % 3, kk = k - k % 3;                                                                 // 3×3 kutunun köşesi
+  for (let j = 0; j < 9; j++) { kullanilan.add(tahta[s * 9 + j]); kullanilan.add(tahta[j * 9 + k]); }  // satır + sütun
+  const ks = s - s % 3, kk = k - k % 3;                                                                // 3×3 kutunun köşesi
   for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) kullanilan.add(tahta[(ks + y) * 9 + kk + x]);
   return [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(r => !kullanilan.has(r));
 }
@@ -456,11 +459,11 @@ function siradakiHucre(tahta) {
 
 function coz(tahta) {
   const i = siradakiHucre(tahta);
-  if (i === -1) return true;                 // TABAN: boş hücre kalmadı
-  for (const rakam of adaylar(tahta, i)) {   // aday yoksa döngü hiç dönmez → false (çıkmaz)
-    tahta[i] = rakam;                        // SEÇ
-    if (coz(tahta)) return true;             // DENE
-    tahta[i] = 0;                            // GERİ AL
+  if (i === -1) return true;                // TABAN: boş hücre kalmadı
+  for (const rakam of adaylar(tahta, i)) {  // aday yoksa döngü hiç dönmez → false (çıkmaz)
+    tahta[i] = rakam;                       // SEÇ
+    if (coz(tahta)) return true;            // DENE
+    tahta[i] = 0;                           // GERİ AL
   }
   return false;
 }
@@ -481,12 +484,12 @@ def coz(grid, say=None):
     if not bos:
         if say is not None: say[0] += 1
         return say is None
-    _, r, c = min(bos)                               # en az adaylı hücre
+    _, r, c = min(bos)                                    # en az adaylı hücre
     for d in candidates(grid, r, c):
-        grid[r][c] = d                               # SEÇ
-        if coz(grid, say): return True               # DENE
-        grid[r][c] = 0                               # GERİ AL
-        if say is not None and say[0] >= 2: return False   # ikinci çözüm bulundu: daha fazla arama
+        grid[r][c] = d                                    # SEÇ
+        if coz(grid, say): return True                    # DENE
+        grid[r][c] = 0                                    # GERİ AL
+        if say is not None and say[0] >= 2: return False  # ikinci çözüm bulundu: daha fazla arama
     return False
 
 def tek_cozumlu_mu(grid):
@@ -603,10 +606,11 @@ def candidates(grid, r, c):
 <section data-sec="durum">
   <h2>Canlı: Sokoban — oynayın, geri alın, çözdürün 📦</h2>
 <div class="demo" data-demo="sokoban"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> mavi daire sizsiniz; sarı kutular; yeşil halkalar hedefler (hedefteki kutu yeşile döner). Sağda hamle sayısı, geri alma yığınının boyu ve çözücünün raporu.</li><li><b>W / A / S / D</b> ile oynayın. Bir kutuyu bilerek <b>köşeye</b> itin: “⚠️ bir kutu köşeye sıkıştı: çözüm yok” uyarısı çıkar. <b>Z</b> ile geri alın. (Uyarı olmasaydı ne kadar sonra fark ederdiniz?)</li><li>Birkaç hamle yapıp <b>“🤖 çöz”</b>e basın: “buradan en kısa çözüm N hamle”, “taranan durum: …”. <b>“💡 ipucu”</b> yalnızca ilk hamleyi kırmızı okla gösterir; <b>“▶ çözümü oynat”</b> hepsini.</li><li><b>“Köşe budaması”nı kapatıp</b> yeniden çözdürün: aynı çözüm, iki katından fazla durum (başlangıçta 11.226 yerine 24.813).</li><li>Kutuyu köşeye itip “çöz”e basın: “bu durumdan çözüm YOK”. Çözücü bunu, ulaşılabilen <b>bütün</b> durumları tüketerek söyler. Bir seviye editöründe bu denetim, kilitlenen seviyelerin yayımlanmasını önler.</li><li>“Zor” seviyeyi kendiniz çözmeyi deneyin (27 hamle). Kaç kez Z’ye bastınız?</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="durum">
-<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> mavi daire sizsiniz; sarı kutular; yeşil halkalar hedefler (hedefteki kutu yeşile döner). Sağda hamle sayısı, geri alma yığınının boyu ve çözücünün raporu.</li><li><b>W / A / S / D</b> ile oynayın. Bir kutuyu bilerek <b>köşeye</b> itin: “⚠ bir kutu köşeye sıkıştı: çözüm yok” uyarısı çıkar. <b>Z</b> ile geri alın. (Uyarı olmasaydı ne kadar sonra fark ederdiniz?)</li><li>Birkaç hamle yapıp <b>“🤖 çöz”</b>e basın: “buradan en kısa çözüm N hamle”, “taranan durum: …”. <b>“💡 ipucu”</b> yalnızca ilk hamleyi kırmızı okla gösterir; <b>“▶ çözümü oynat”</b> hepsini.</li><li><b>“Köşe budaması”nı kapatıp</b> yeniden çözdürün: aynı çözüm, iki katından fazla durum (başlangıçta 11.226 yerine 24.813).</li><li>Kutuyu köşeye itip “çöz”e basın: “bu durumdan çözüm YOK”. Çözücü bunu, ulaşılabilen <b>bütün</b> durumları tüketerek söyler. Bir seviye editöründe bu denetim, kilitlenen seviyelerin yayımlanmasını önler.</li><li>“Zor” seviyeyi kendiniz çözmeyi deneyin (27 hamle). Kaç kez Z’ye bastınız?</li></ol></div>
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> mavi daire sizsiniz; sarı kutular; yeşil halkalar hedefler (hedefteki kutu yeşile döner). Sağda hamle sayısı, geri alma yığınının boyu ve çözücünün raporu.</li><li><b>W / A / S / D</b> ile oynayın. Bir kutuyu bilerek <b>köşeye</b> itin: “⚠️ bir kutu köşeye sıkıştı: çözüm yok” uyarısı çıkar. <b>Z</b> ile geri alın. (Uyarı olmasaydı ne kadar sonra fark ederdiniz?)</li><li>Birkaç hamle yapıp <b>“🤖 çöz”</b>e basın: “buradan en kısa çözüm N hamle”, “taranan durum: …”. <b>“💡 ipucu”</b> yalnızca ilk hamleyi kırmızı okla gösterir; <b>“▶ çözümü oynat”</b> hepsini.</li><li><b>“Köşe budaması”nı kapatıp</b> yeniden çözdürün: aynı çözüm, iki katından fazla durum (başlangıçta 11.226 yerine 24.813).</li><li>Kutuyu köşeye itip “çöz”e basın: “bu durumdan çözüm YOK”. Çözücü bunu, ulaşılabilen <b>bütün</b> durumları tüketerek söyler. Bir seviye editöründe bu denetim, kilitlenen seviyelerin yayımlanmasını önler.</li><li>“Zor” seviyeyi kendiniz çözmeyi deneyin (27 hamle). Kaç kez Z’ye bastınız?</li></ol></div>
 </section>
 
 <section data-sec="durum">
@@ -620,8 +624,8 @@ function hamleYap(seviye, durum, yon) {            // yeni durum ya da null (ham
   const yeni = durum.oyuncu + adim;
   if (seviye.duvar[yeni]) return null;
   const k = durum.kutular.indexOf(yeni);
-  if (k === -1) return { oyuncu: yeni, kutular: durum.kutular };            // boş kareye yürüdü
-  const kutuYeni = yeni + adim;                                             // kutuyu it
+  if (k === -1) return { oyuncu: yeni, kutular: durum.kutular };  // boş kareye yürüdü
+  const kutuYeni = yeni + adim;                                   // kutuyu it
   if (seviye.duvar[kutuYeni] || durum.kutular.includes(kutuYeni)) return null;
   const kutular = durum.kutular.slice(); kutular[k] = kutuYeni; kutular.sort((a, b) => a - b);
   return { oyuncu: yeni, kutular, itilen: kutuYeni };
@@ -689,11 +693,11 @@ Stack<Durum> gecmis = new Stack<Durum>();
 void Update() {
     Vector2Int yon = YonTusu();
     if (yon != Vector2Int.zero && HamleGecerli(yon)) {
-        gecmis.Push(durum.Kopya());          // ÖNCE sakla
-        HamleyiUygula(yon);                  // SONRA değiştir
+        gecmis.Push(durum.Kopya());  // ÖNCE sakla
+        HamleyiUygula(yon);          // SONRA değiştir
     }
-    if (Input.GetKeyDown(KeyCode.Z) && gecmis.Count > 0) durum = gecmis.Pop();     // geri al
-    if (Input.GetKeyDown(KeyCode.R)) { gecmis.Push(durum.Kopya()); durum = baslangic.Kopya(); }   // baştan (o da geri alınabilir!)
+    if (Input.GetKeyDown(KeyCode.Z) && gecmis.Count > 0) durum = gecmis.Pop();                   // geri al
+    if (Input.GetKeyDown(KeyCode.R)) { gecmis.Push(durum.Kopya()); durum = baslangic.Kopya(); }  // baştan (o da geri alınabilir!)
 }
 // Durum küçükse (ızgara + birkaç konum) kopyalamak en basit ve en sağlam yoldur.
 // Büyükse "komut" kalıbı: her hamle kendi tersini bilir (Yap / GeriAl).
@@ -767,8 +771,8 @@ def best_loot(esyalar, kapasite):
         if deger + kalan_deger <= en_iyi:
             return                                   # BUDA 2 (sınır): kalan her şeyi alsam bile geçemem
         a, d = esyalar[i]
-        dene(i + 1, agirlik + a, deger + d, kalan_deger - d)    # AL
-        dene(i + 1, agirlik, deger, kalan_deger - d)            # ALMA
+        dene(i + 1, agirlik + a, deger + d, kalan_deger - d)  # AL
+        dene(i + 1, agirlik, deger, kalan_deger - d)          # ALMA
 
     dene(0, 0, 0, sum(d for _, d in esyalar))
     return en_iyi
@@ -907,6 +911,7 @@ function keyPressed() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

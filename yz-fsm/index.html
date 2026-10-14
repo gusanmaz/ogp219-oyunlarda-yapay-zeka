@@ -127,6 +127,11 @@
   <aside class="notes">Bu slaytın tek amacı şu cümleyi oturtmak: “Tepkiyi olay değil, olay + o anki durum belirler.” En öğretici senaryo “Aynı olay, farklı tepki”: ip uyuyan kediyi oyuna kaldırır, aç kediyi etkilemez, oynayan kedide bir şey değiştirmez. “Yanlış zamanda mama” senaryosu da aynı fikri tersinden gösterir. Öğrencilere sorun: kediye “veterinere gidiyor” durumu ekleseniz hangi oklar gerekir?</aside>
 </section>
 
+<section data-sec="oyunda" class="no-grow">
+  <h2>📸 Oyundan bir kare: Pac-Man (1980)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/pacman.png" alt="Pac-Man (1980) ekran görüntüsü" style="height:450px;image-rendering:pixelated;max-width:100%;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Dört hayalet (Blinky, Pinky, Inky, Clyde) aynı labirentte ama her biri başka bir “kovala” kuralıyla. Hepsi aynı üç durum arasında geçiş yapar: dağıl, kovala, kork (mavi). Sonraki slayt bu durumları diyagram olarak çiziyor.<br><span style="color:var(--muted);font-size:.85em">Görsel: Pac-Man gameplay, Bandai Namco Entertainment America, Wikimedia Commons, CC BY 3.0</span></figcaption></figure>
+</section>
+
 <section data-sec="durum ve geçiş">
   <h2>Pac-Man hayaletleri bir FSM’dir</h2>
   <div class="cols">
@@ -263,6 +268,7 @@
   <p class="mini" style="margin-top:14px">🔗 Dışarıda da deneyin: <a href="https://stately.ai/viz" target="_blank" rel="noopener">Stately görselleştirici</a> (durum makinesini yazın, diyagramı canlı çizsin, olay gönderin) · <a href="https://gameprogrammingpatterns.com/state.html" target="_blank" rel="noopener">Game Programming Patterns: State</a> (bir platform kahramanının zıplama/eğilme hatalarından FSM’ye) · <a href="https://www.youtube.com/watch?v=hzhtrjkBXXw" target="_blank" rel="noopener">Pac-Man’s Ghosts Were Never a Team</a> (hayalet modları).</p>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
@@ -361,14 +367,14 @@ class Guard {
         else if (this.distToPlayer() < 60) next = "ATTACK";
         break;
       case "SUSPICIOUS":
-        this.moveTo(this.noisePos, dt);            // ses / son görülen yer
+        this.moveTo(this.noisePos, dt);                     // ses / son görülen yer
         if (this.seesPlayer()) next = "CHASE";
         else if (this.timeInState > 4) next = "PATROL";
         break;
       case "ATTACK":
         this.shoot(dt);
         if (!this.seesPlayer()) next = "SUSPICIOUS";
-        else if (this.distToPlayer() > 90) next = "CHASE";   // histerezis: 60'ta gir, 90'da çık
+        else if (this.distToPlayer() > 90) next = "CHASE";  // histerezis: 60'ta gir, 90'da çık
         break;
       case "FLEE":
         this.moveAwayFrom(player.pos, dt); this.heal(dt);
@@ -406,7 +412,7 @@ class Guard:
             elif self.dist_to_player() < 60:
                 nxt = "ATTACK"
         elif self.state == "SUSPICIOUS":
-            self.move_to(self.noise_pos, dt)       # ses / son görülen yer
+            self.move_to(self.noise_pos, dt)  # ses / son görülen yer
             if self.sees_player():
                 nxt = "CHASE"
             elif self.time_in_state > 4:
@@ -415,7 +421,7 @@ class Guard:
             self.shoot(dt)
             if not self.sees_player():
                 nxt = "SUSPICIOUS"
-            elif self.dist_to_player() > 90:       # histerezis: 60'ta gir, 90'da çık
+            elif self.dist_to_player() > 90:  # histerezis: 60'ta gir, 90'da çık
                 nxt = "CHASE"
         elif self.state == "FLEE":
             self.move_away_from(player_pos, dt); self.heal(dt)
@@ -470,11 +476,11 @@ class PatrolState {
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-class PatrolState:                 # aynı metot adları = aynı "arayüz"
+class PatrolState:  # aynı metot adları = aynı "arayüz"
     def enter(self):
         print("Devriyeye başladım")
     def update(self):
-        pass                       # yol noktalarında yürü
+        pass        # yol noktalarında yürü
     def exit(self):
         pass
 </script></code></pre>
@@ -494,9 +500,9 @@ public class StateMachine
 
     public void ChangeState(IState next)
     {
-        current?.Exit();       // eski durumdan çık (null değilse)
+        current?.Exit();                            // eski durumdan çık (null değilse)
         current = next;
-        current.Enter();       // yeniye gir
+        current.Enter();                            // yeniye gir
     }
     public void Update() { current?.Update(); }
 }
@@ -505,7 +511,7 @@ public class ChaseState : IState
 {
     readonly Guard g;
     public ChaseState(Guard guard) { g = guard; }
-    public void Enter()  { g.PlayBark("Orada!"); }        // giriş eylemi: bir kez
+    public void Enter()  { g.PlayBark("Orada!"); }  // giriş eylemi: bir kez
     public void Update()
     {
         g.MoveTo(g.player.position);
@@ -578,7 +584,7 @@ class ChaseState:
 public class Transition
 {
     public string from, to;
-    public Func<Guard, bool> condition;   // "koşul" = bool döndüren fonksiyon
+    public Func<Guard, bool> condition;  // "koşul" = bool döndüren fonksiyon
     public Transition(string f, string t, Func<Guard, bool> c) { from = f; to = t; condition = c; }
 }
 
@@ -597,7 +603,7 @@ List<Transition> table = new List<Transition> {
 
 string Step(string state, Guard g)
 {
-    foreach (var t in table)                        // sırayla: ilk uyan kazanır
+    foreach (var t in table)             // sırayla: ilk uyan kazanır
         if ((t.from == state || (t.from == "*" && state != t.to)) && t.condition(g))
             return t.to;
     return state;
@@ -947,14 +953,14 @@ public class StackFSM
 {
     readonly Stack<IState> stack = new Stack<IState>();
 
-    public void Push(IState s)              // kesinti: üste koy
+    public void Push(IState s)                      // kesinti: üste koy
     {
         if (stack.Count > 0) stack.Peek().Exit();   // (istersen "Pause")
         stack.Push(s);
         s.Enter();
     }
 
-    public void Pop()                       // bitti: öncekine dön
+    public void Pop()                               // bitti: öncekine dön
     {
         stack.Pop().Exit();
         if (stack.Count > 0) stack.Peek().Enter();  // (istersen "Resume")
@@ -1019,6 +1025,11 @@ class StackFSM:
   <ul class="agenda"><li class="done">durum ve geçiş</li><li class="done">bir nöbetçi tasarlayalım</li><li class="done">kod: üç yol</li><li class="done">sorunlar ve çözümler</li><li class="done">hiyerarşik ve yığınlı FSM</li><li class="on">gerçek oyunlarda FSM</li><li class="">kütüphaneler ve entegrasyon</li></ul>
 </section>
 
+<section data-sec="oyunda" class="no-grow">
+  <h2>📸 Oyundan bir kare: DOOM (1993)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/doom.png" alt="DOOM (1993) ekran görüntüsü" style="height:450px;image-rendering:pixelated;max-width:100%;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Ekrandaki her canavar, birkaç slayt sonra satır satır okuyacağımız <code>info.c</code> tablosundaki durumlardan birinde: ayakta bekliyor, yürüyor, saldırıyor ya da acı çekiyor.<br><span style="color:var(--muted);font-size:.85em">Görsel: DOOM oyun içi görüntüsü, id Software, Wikipedia (eğitim amaçlı adil kullanım)</span></figcaption></figure>
+</section>
+
 <section data-sec="oyunlarda">
   <h2>📜 Doom (1993): kaynak kodda bir FSM</h2>
   <div class="tabs short">
@@ -1026,15 +1037,15 @@ class StackFSM:
 <pre><code class="language-c" data-trim data-line-numbers><script type="text/template">
 // id Software'in 1997'de yayımladığı Doom kaynak kodundan (linuxdoom-1.10/info.c)
 // { sprite, kare, süre (tic, 1/35 sn), eylem, SONRAKİ durum }
-{SPR_TROO,0,10,{A_Look},S_TROO_STND2,0,0},     // S_TROO_STND : bekle, etrafa bak
-{SPR_TROO,1,10,{A_Look},S_TROO_STND,0,0},      // S_TROO_STND2
-{SPR_TROO,0,3,{A_Chase},S_TROO_RUN2,0,0},      // S_TROO_RUN1 : oyuncuyu kovala
+{SPR_TROO,0,10,{A_Look},S_TROO_STND2,0,0},      // S_TROO_STND : bekle, etrafa bak
+{SPR_TROO,1,10,{A_Look},S_TROO_STND,0,0},       // S_TROO_STND2
+{SPR_TROO,0,3,{A_Chase},S_TROO_RUN2,0,0},       // S_TROO_RUN1 : oyuncuyu kovala
 // ... S_TROO_RUN2..8 (A_Chase) ...
-{SPR_TROO,4,8,{A_FaceTarget},S_TROO_ATK2,0,0}, // S_TROO_ATK1 : dön, nişan al
-{SPR_TROO,5,8,{A_FaceTarget},S_TROO_ATK3,0,0}, // S_TROO_ATK2
+{SPR_TROO,4,8,{A_FaceTarget},S_TROO_ATK2,0,0},  // S_TROO_ATK1 : dön, nişan al
+{SPR_TROO,5,8,{A_FaceTarget},S_TROO_ATK3,0,0},  // S_TROO_ATK2
 {SPR_TROO,6,6,{A_TroopAttack},S_TROO_RUN1,0,0},// S_TROO_ATK3 : ateş topu at, kovalamaya dön
-{SPR_TROO,7,2,{NULL},S_TROO_PAIN2,0,0},        // S_TROO_PAIN : acı çek
-{SPR_TROO,7,2,{A_Pain},S_TROO_RUN1,0,0},       // S_TROO_PAIN2
+{SPR_TROO,7,2,{NULL},S_TROO_PAIN2,0,0},         // S_TROO_PAIN : acı çek
+{SPR_TROO,7,2,{A_Pain},S_TROO_RUN1,0,0},        // S_TROO_PAIN2
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -1110,6 +1121,11 @@ imp = {
   </div>
 </section>
 
+<section data-sec="oyunda" class="no-grow">
+  <h2>📸 Oyundan bir kare: Metal Gear Solid 2 (2001)</h2>
+  <figure style="margin:0;text-align:center"><img src="gorsel/mgs2.jpg" alt="Metal Gear Solid 2 (2001) ekran görüntüsü" style="height:440px;max-width:100%;object-fit:contain;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--shadow)"><figcaption style="font-size:.72em;margin-top:.5em;line-height:1.4">Muhafızlar oyuncuyu fark edince bütün üs “alarm” evresine geçer; ekranın köşesindeki sayaç evrenin ne kadar süreceğini gösterir. Sonraki slayttaki diyagram bu evreleri çiziyor.<br><span style="color:var(--muted);font-size:.85em">Görsel: Metal Gear Solid 2: Substance ekran görüntüsü, Konami, Wikipedia (eğitim amaçlı adil kullanım)</span></figcaption></figure>
+</section>
+
 <section data-sec="oyunlarda">
   <h2>Metal Gear Solid 2: bütün üssün tek bir durum makinesi</h2>
   <svg viewBox="0 0 900 330" style="width:100%;max-height:330px;display:block" font-family="Source Sans 3"><defs><marker id="mg-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/></marker></defs><rect x="20" y="20" width="190" height="96" rx="14" fill="color-mix(in srgb, var(--green) 16%, var(--card))" stroke="var(--green)" stroke-width="3"/><text x="115" y="50" text-anchor="middle" font-size="19" font-weight="800" fill="var(--green)">SIZMA</text><text x="115" y="69" text-anchor="middle" font-size="12" font-style="italic" fill="var(--muted)">Infiltration</text><text x="115" y="88" text-anchor="middle" font-size="12.5" fill="var(--ink)">normal devriye</text><text x="115" y="104" text-anchor="middle" font-size="12.5" fill="var(--ink)">sayaç yok</text><rect x="355" y="20" width="190" height="96" rx="14" fill="color-mix(in srgb, var(--red) 16%, var(--card))" stroke="var(--red)" stroke-width="3"/><text x="450" y="50" text-anchor="middle" font-size="19" font-weight="800" fill="var(--red)">ALARM</text><text x="450" y="69" text-anchor="middle" font-size="12" font-style="italic" fill="var(--muted)">Alert</text><text x="450" y="88" text-anchor="middle" font-size="12.5" fill="var(--ink)">bütün üs sizi biliyor</text><text x="450" y="104" text-anchor="middle" font-size="12.5" fill="var(--ink)">takviye geliyor</text><rect x="690" y="20" width="190" height="96" rx="14" fill="color-mix(in srgb, var(--amber) 16%, var(--card))" stroke="var(--amber)" stroke-width="3"/><text x="785" y="50" text-anchor="middle" font-size="19" font-weight="800" fill="var(--amber)">KAÇIŞ</text><text x="785" y="69" text-anchor="middle" font-size="12" font-style="italic" fill="var(--muted)">Evasion</text><text x="785" y="88" text-anchor="middle" font-size="12.5" fill="var(--ink)">sizi kaybettiler</text><text x="785" y="104" text-anchor="middle" font-size="12.5" fill="var(--ink)">son görülen yeri arıyorlar</text><rect x="355" y="200" width="190" height="96" rx="14" fill="color-mix(in srgb, var(--blue) 16%, var(--card))" stroke="var(--blue)" stroke-width="3"/><text x="450" y="230" text-anchor="middle" font-size="19" font-weight="800" fill="var(--blue)">DİKKAT</text><text x="450" y="249" text-anchor="middle" font-size="12" font-style="italic" fill="var(--muted)">Caution</text><text x="450" y="268" text-anchor="middle" font-size="12.5" fill="var(--ink)">tetikte devriye</text><text x="450" y="284" text-anchor="middle" font-size="12.5" fill="var(--ink)">sayaç geri sayıyor</text><path d="M210,68 L351,68" fill="none" stroke="var(--ink-2)" stroke-width="2.5" marker-end="url(#mg-a)"/><rect x="192.8" y="37" width="174.4" height="22" rx="6" fill="var(--card)" stroke="var(--rule)"/><text x="280" y="53" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">bir nöbetçi sizi gördü</text><path d="M545,68 L686,68" fill="none" stroke="var(--ink-2)" stroke-width="2.5" marker-end="url(#mg-a)"/><rect x="568.4" y="37" width="95.2" height="22" rx="6" fill="var(--card)" stroke="var(--rule)"/><text x="616" y="53" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">görüş koptu</text><path d="M700,116 C640,190 600,230 549,246" fill="none" stroke="var(--ink-2)" stroke-width="2.5" marker-end="url(#mg-a)"/><rect x="620.4" y="177" width="95.2" height="22" rx="6" fill="var(--card)" stroke="var(--rule)"/><text x="668" y="193" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">sayaç bitti</text><path d="M351,250 C220,250 140,200 116,120" fill="none" stroke="var(--ink-2)" stroke-width="2.5" marker-end="url(#mg-a)"/><rect x="148.4" y="223" width="95.2" height="22" rx="6" fill="var(--card)" stroke="var(--rule)"/><text x="196" y="239" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">sayaç bitti</text><path d="M450,196 L450,120" fill="none" stroke="var(--ink-2)" stroke-width="2.5" marker-end="url(#mg-a)"/><rect x="379.2" y="147" width="145.6" height="22" rx="6" fill="var(--card)" stroke="var(--rule)"/><text x="452" y="163" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">yeniden görüldünüz</text><path d="M740,116 C700,150 600,140 549,100" fill="none" stroke="var(--ink-2)" stroke-width="2.5" marker-end="url(#mg-a)"/><rect x="616.0" y="127" width="88.0" height="22" rx="6" fill="var(--card)" stroke="var(--rule)"/><text x="660" y="143" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--ink)">görüldünüz</text><rect x="600" y="250" width="290" height="56" rx="8" fill="#111"/><text x="614" y="272" font-size="13" font-weight="800" fill="#ff5a4a" font-family="JetBrains Mono">ALERT</text><rect x="680" y="261" width="196" height="12" fill="#333"/><rect x="680" y="261" width="130" height="12" fill="#ff5a4a"/><text x="614" y="295" font-size="10.5" fill="#bbb" font-family="JetBrains Mono">ekranda: durumun adı + kalan süre</text></svg>
@@ -1142,7 +1158,7 @@ public class ChaseBehaviour : StateMachineBehaviour
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo info, int layer)
     {
-        player = GameObject.FindWithTag("Player").transform;   // bir kez
+        player = GameObject.FindWithTag("Player").transform;  // bir kez
     }
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo info, int layer)
@@ -1150,7 +1166,7 @@ public class ChaseBehaviour : StateMachineBehaviour
         var self = animator.transform;
         self.position = Vector3.MoveTowards(self.position, player.position, 3f * Time.deltaTime);
         float d = Vector3.Distance(self.position, player.position);
-        animator.SetBool("InRange", d < 2f);       // geçiş koşulunu güncelle
+        animator.SetBool("InRange", d < 2f);                  // geçiş koşulunu güncelle
     }
 }
 </script></code></pre>
@@ -1266,7 +1282,7 @@ guard.send({ type: "HEAR_NOISE" });     // durum: suspicious
     </div>
     <div class="tab" data-label="Python (transitions)">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-from transitions import Machine         # pip install transitions
+from transitions import Machine  # pip install transitions
 
 class Guard:
     pass
@@ -1280,10 +1296,10 @@ machine.add_transition("ses_duydu", "devriye", "suphe")
 machine.add_transition("oyuncuyu_gordu", ["devriye", "suphe"], "kovala")
 machine.add_transition("yaklasti", "kovala", "saldir")
 
-g.ses_duydu()           # tetikleyiciler nesneye METOT olarak eklenir
-print(g.state)          # suphe
+g.ses_duydu()                    # tetikleyiciler nesneye METOT olarak eklenir
+print(g.state)                   # suphe
 g.oyuncuyu_gordu()
-print(g.state)          # kovala
+print(g.state)                   # kovala
 </script></code></pre>
     </div>
   </div>
@@ -1395,6 +1411,7 @@ print(g.state)          # kovala
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

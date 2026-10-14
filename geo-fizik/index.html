@@ -93,6 +93,7 @@
 <section data-sec="euler">
   <h2>Canlı: üç yöntem, bir gezegen 🪐</h2>
 <div class="demo" data-demo="integr"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> ortada sarı güneş; kesikli çember gerçek yörünge. Üç gezegen aynı yerden aynı hızla başlar: <b class="c-red">kırmızı</b> açık Euler, <b class="c-green">yeşil</b> yarı-örtük Euler, <b class="c-blue">mavi</b> Verlet (4. bölümde). Sağda her birinin toplam enerjisi ve başlangıca göre yüzde farkı.</li><li><b>dt = 0,05</b> (başlangıç): kırmızı her turda biraz daha dışarı açılıyor. Enerjisi sürekli artı yönde büyüyor.</li><li><b>dt = 0,005</b>: üçü de çembere yapışık görünür; ama kırmızının yüzdesi yine yavaş yavaş artar. Hata küçüldü, <b>yönü</b> değişmedi.</li><li><b>dt = 0,2</b>: kırmızı birkaç turda “uçtu gitti”. Yeşil ve mavi köşeli ama kapalı bir yörüngede kalır; yüzdeleri artı-eksi salınır.</li><li>Soru: yeşil ile kırmızının kodları arasında kaç satır fark var? (Sıfır. Aynı iki satır, ters sırada.)</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="euler">
@@ -102,7 +103,7 @@
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://gafferongames.com/post/fix_your_timestep/" target="_blank" rel="noopener"><div class="lnk-t">🕹 Fix Your Timestep!</div><div class="lnk-s">Glenn Fiedler (Gaffer on Games)</div><div class="lnk-w">Biriktiricili sabit zaman adımının klasik yazısı; oyun fiziği yazan herkesin okuduğu metin.</div></a><a class="lnk" href="https://gafferongames.com/post/integration_basics/" target="_blank" rel="noopener"><div class="lnk-t">🕹 Integration Basics</div><div class="lnk-s">Glenn Fiedler (Gaffer on Games)</div><div class="lnk-w">Euler ve yarı-örtük Euler farkını yay örneğiyle anlatır.</div></a><a class="lnk" href="https://natureofcode.com/forces/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Forces</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Konum, hız, ivme ve kuvvet; Euler adımının p5.js ile sezgisel anlatımı.</div></a><a class="lnk" href="https://natureofcode.com/physics-libraries/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Physics Libraries</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Hazır fizik motorlarıyla (Matter.js) çalışmak; kısıtlar ve yaylar.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://gafferongames.com/post/fix_your_timestep/" target="_blank" rel="noopener"><div class="lnk-t">🎮 Fix Your Timestep!</div><div class="lnk-s">Glenn Fiedler (Gaffer on Games)</div><div class="lnk-w">Biriktiricili sabit zaman adımının klasik yazısı; oyun fiziği yazan herkesin okuduğu metin.</div></a><a class="lnk" href="https://gafferongames.com/post/integration_basics/" target="_blank" rel="noopener"><div class="lnk-t">🎮 Integration Basics</div><div class="lnk-s">Glenn Fiedler (Gaffer on Games)</div><div class="lnk-w">Euler ve yarı-örtük Euler farkını yay örneğiyle anlatır.</div></a><a class="lnk" href="https://natureofcode.com/forces/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Forces</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Konum, hız, ivme ve kuvvet; Euler adımının p5.js ile sezgisel anlatımı.</div></a><a class="lnk" href="https://natureofcode.com/physics-libraries/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Physics Libraries</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Hazır fizik motorlarıyla (Matter.js) çalışmak; kısıtlar ve yaylar.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -113,7 +114,7 @@
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Bir top: konum (x, y) ve hız (vx, vy). Birimler: piksel ve saniye.
 let top = { x: 100, y: 50, vx: 120, vy: 0 };
-const YERCEKIMI = 900;                 // piksel/sn²  (aşağı doğru: p5'te y aşağı artar)
+const YERCEKIMI = 900;          // piksel/sn²  (aşağı doğru: p5'te y aşağı artar)
 
 function adim(p, dt) {
   // 1) Kuvvetlerden ivme (burada yalnızca yerçekimi)
@@ -133,7 +134,7 @@ function adim(p, dt) {
 
 function draw() {
   background(245);
-  adim(top, deltaTime / 1000);         // deltaTime milisaniye; şimdilik "kare ne kadar sürdüyse"
+  adim(top, deltaTime / 1000);  // deltaTime milisaniye; şimdilik "kare ne kadar sürdüyse"
   circle(top.x, top.y, 20);
 }
 </script></code></pre>
@@ -164,15 +165,15 @@ for i in range(3):
 // Unity'de İKİ yol var.
 // (a) Fiziği motora bırak: Rigidbody2D ekle; kuvvet ya da hız ver. İntegrali motor (Box2D) yapar.
 void FixedUpdate() {
-    govde.AddForce(Vector2.right * itme);          // kuvvet → ivme → hız → konum: hepsi motorda
+    govde.AddForce(Vector2.right * itme);       // kuvvet → ivme → hız → konum: hepsi motorda
 }
 
 // (b) Kendin yaz (kinematik karakter; platform oyunlarının çoğu böyle):
 Vector2 hiz;
 void FixedUpdate() {
     float dt = Time.fixedDeltaTime;
-    hiz += Vector2.down * yercekimi * dt;          // ÖNCE hız
-    transform.position += (Vector3)(hiz * dt);     // SONRA konum (yeni hızla)
+    hiz += Vector2.down * yercekimi * dt;       // ÖNCE hız
+    transform.position += (Vector3)(hiz * dt);  // SONRA konum (yeni hızla)
 }
 </script></code></pre>
     </div>
@@ -256,6 +257,7 @@ function eulerStep(x, v, a, dt) {
 <section data-sec="adım">
   <h2>Canlı: değişken adım mı, sabit adım mı? ⏱️</h2>
 <div class="demo" data-demo="timestep"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> iki top aynı ilk hızla zıplıyor. Soldaki (kırmızı) her karede kare süresi kadar tek adım atıyor; sağdaki (yeşil) biriktiriciyle hep 1/120 sn’lik adımlar atıyor. Sarı kesikli çizgi 2,4 m’deki platform; gri çizgi gerçek tepe (2,50 m). Altlarında son zıplamanın tepe yüksekliği.</li><li><b>60 FPS</b> (başlangıç): ikisi de platforma çıkıyor (sol 2,42; sağ 2,46).</li><li>Kare hızını <b>30</b> yapın: sol 2,33’e düşer, “platforma ÇIKAMAZ”. Sağ aynı: 2,46. <b>10</b> yapın: sol 2,00; sağ yine 2,46 (yalnızca görüntüsü kesik kesik).</li><li>Yöntemi <b>açık Euler</b> yapın: hata bu kez ters yönde; yavaş makinede sol top 3 metreye çıkar. Oyuncular bunu hemen bulur ve kare hızını bilerek düşürür.</li><li><b>⚡ takılma</b> düğmesi tek bir 300 ms’lik kare gönderir: sol top bir anda ışınlanır (ve yere gömülüp zıplamayı kaçırabilir); sağ top 36 küçük adım atıp yoluna devam eder.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="adım">
@@ -267,25 +269,25 @@ function eulerStep(x, v, a, dt) {
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const DT = 1 / 60;            // fizik adımı (saniye): HER makinede, HER karede aynı
-let biriken = 0;              // henüz simüle edilmemiş gerçek zaman
-let onceki, simdiki;          // çizimde ara değer almak için son iki fizik durumu
+const DT = 1 / 60;               // fizik adımı (saniye): HER makinede, HER karede aynı
+let biriken = 0;                 // henüz simüle edilmemiş gerçek zaman
+let onceki, simdiki;             // çizimde ara değer almak için son iki fizik durumu
 
 function draw() {
   // 1) Bu kare gerçekte ne kadar sürdü?  (p5: deltaTime milisaniye)
   let kare = deltaTime / 1000;
-  if (kare > 0.25) kare = 0.25;          // dev kareleri kırp: "ölüm sarmalı"na karşı sigorta
+  if (kare > 0.25) kare = 0.25;  // dev kareleri kırp: "ölüm sarmalı"na karşı sigorta
 
   // 2) Süreyi biriktir; içinde kaç tam fizik adımı varsa o kadar adım at
   biriken += kare;
   while (biriken >= DT) {
     onceki = kopyala(simdiki);
-    fizikAdimi(simdiki, DT);             // fizik YALNIZCA DT ile çağrılır
+    fizikAdimi(simdiki, DT);     // fizik YALNIZCA DT ile çağrılır
     biriken -= DT;
   }
 
   // 3) Kalan süre bir sonraki kareye devreder. Çizimi iki durumun arasından yap:
-  const alfa = biriken / DT;             // 0 ile 1 arası: bir sonraki adıma ne kadar yaklaştık?
+  const alfa = biriken / DT;     // 0 ile 1 arası: bir sonraki adıma ne kadar yaklaştık?
   const cx = onceki.x + (simdiki.x - onceki.x) * alfa;
   const cy = onceki.y + (simdiki.y - onceki.y) * alfa;
   background(245); circle(cx, cy, 20);
@@ -300,17 +302,17 @@ DT = 1 / 60
 def fixed_steps(biriken, kare, dt):
     """Kare süresini birikene ekle; (atılacak adım sayısı, yeni biriken) döndür."""
     biriken += kare
-    adim = int(biriken // dt)
+    adim = int(biriken                         // dt)
     return adim, biriken - adim * dt
 
 biriken, son = 0.0, time.perf_counter()
 while oyun_suruyor:
     simdi = time.perf_counter()
-    kare, son = min(simdi - son, 0.25), simdi          # dev kareleri kırp
+    kare, son = min(simdi - son, 0.25), simdi  # dev kareleri kırp
     adim, biriken = fixed_steps(biriken, kare, DT)
     for _ in range(adim):
-        fizik_adimi(dunya, DT)                         # fizik yalnızca DT ile
-    ciz(dunya, alfa=biriken / DT)                      # ara değerle çiz
+        fizik_adimi(dunya, DT)                 # fizik yalnızca DT ile
+    ciz(dunya, alfa=biriken / DT)              # ara değerle çiz
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -321,11 +323,11 @@ while oyun_suruyor:
 
 bool ziplaIstegi;
 void Update() {
-    if (Input.GetButtonDown("Jump")) ziplaIstegi = true;      // GİRDİYİ burada oku: hiçbir basış kaçmaz
+    if (Input.GetButtonDown("Jump")) ziplaIstegi = true;  // GİRDİYİ burada oku: hiçbir basış kaçmaz
 }
 void FixedUpdate() {
     if (ziplaIstegi) { hiz.y = ziplamaHizi; ziplaIstegi = false; }
-    hiz.y -= yercekimi * Time.fixedDeltaTime;                 // FİZİĞİ burada yap: adım hep aynı
+    hiz.y -= yercekimi * Time.fixedDeltaTime;             // FİZİĞİ burada yap: adım hep aynı
     govde.MovePosition(govde.position + hiz * Time.fixedDeltaTime);
 }
 // Çizimde ara değer: Rigidbody2D → Interpolate = "Interpolate"
@@ -433,6 +435,7 @@ function fixedSteps(biriken, kare, DT) {
 <section data-sec="zıplama">
   <h2>Canlı: zıplama laboratuvarı 🕹️</h2>
 <div class="demo" data-demo="jump"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> <b>A / D</b> yürü, <b>W</b> ya da boşluk zıpla. Mor noktalar son zıplamanın yayı. Üst satırda sürgülerden hesaplanan yerçekimi ve ilk hız; ikinci satırda sayaçlar. Karakter <b>sarı</b> olduğunda yerde değilsiniz ama çakal süresi açık.</li><li><b>W’ye kısa ve uzun basın:</b> iki farklı yay. “Değişken yükseklik” kutusunu kapatın: her basış aynı yükseklik.</li><li><b>Tepeye süre</b> sürgüsünü 0,15’ten 0,8’e çekin (yükseklik aynı): çevik bir böcekten ay yürüyüşüne. Üstteki g değerinin nasıl değiştiğine bakın.</li><li><b>Düşüş çarpanı</b> 1 → 3: yayın sağ yarısı dikleşir. 1’de yay simetrik bir parabol.</li><li><b>Çakal süresi:</b> ilk platformun sağ ucundan koşarak çıkın ve biraz geç zıplayın; “çakal süresi kurtardı” sayacı artar. Kutuyu kapatıp aynı boşluğu 5 kez deneyin: kaç kez düştünüz?</li><li><b>Tampon:</b> zıplayın ve yere inmeden hemen önce yeniden basın: karakter değdiği an tekrar zıplar. Kutuyu kapatın: aynı basış boşa gider.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="zıplama">
@@ -446,8 +449,8 @@ function fixedSteps(biriken, kare, DT) {
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Tasarımcının iki sayısı: ne kadar yükseğe, tepeye kaç saniyede?
 const H = 4 * KARO, T = 0.4;
-const G  = 2 * H / (T * T);                // yerçekimi    (piksel/sn²)
-const V0 = 2 * H / T;                      // zıplama hızı (piksel/sn)
+const G  = 2 * H / (T * T);  // yerçekimi    (piksel/sn²)
+const V0 = 2 * H / T;        // zıplama hızı (piksel/sn)
 const DUSUS = 1.8, CAKAL = 0.1, TAMPON = 0.12;
 
 let cakal = 0, tampon = 0;                 // iki geri sayım (saniye)
@@ -456,22 +459,22 @@ function keyPressed() {
   if (key === 'w') tampon = TAMPON;        // basışı işleme: HATIRLA ("0,12 sn içinde zıplamak istiyor")
 }
 
-function ziplamaAdimi(o, dt) {             // her fizik adımında
-  cakal  = o.yerde ? CAKAL : cakal - dt;   // yerdeyken dolu; ayrılınca azalır
+function ziplamaAdimi(o, dt) {            // her fizik adımında
+  cakal  = o.yerde ? CAKAL : cakal - dt;  // yerdeyken dolu; ayrılınca azalır
   tampon -= dt;
 
-  if (tampon > 0 && cakal > 0) {           // "zıplamak istiyor" VE "zıplayabilir" → ZIPLA
-    o.vy = -V0;                            // (p5'te yukarı = eksi y)
+  if (tampon > 0 && cakal > 0) {  // "zıplamak istiyor" VE "zıplayabilir" → ZIPLA
+    o.vy = -V0;                   // (p5'te yukarı = eksi y)
     tampon = 0; cakal = 0; o.zipliyor = true;
   }
 
-  if (o.zipliyor && o.vy < 0 && !keyIsDown(87)) {    // yükselirken tuş bırakıldı (87 = W)
-    o.vy *= 0.5;                           // yükselişi kes: alçak zıplama
+  if (o.zipliyor && o.vy < 0 && !keyIsDown(87)) {  // yükselirken tuş bırakıldı (87 = W)
+    o.vy *= 0.5;                                   // yükselişi kes: alçak zıplama
     o.zipliyor = false;
   }
 
-  const g = o.vy > 0 ? G * DUSUS : G;      // düşerken yerçekimi daha güçlü
-  o.vy += g * dt;                          // yarı-örtük Euler
+  const g = o.vy > 0 ? G * DUSUS : G;  // düşerken yerçekimi daha güçlü
+  o.vy += g * dt;                      // yarı-örtük Euler
   o.y  += o.vy * dt;
 }
 </script></code></pre>
@@ -490,8 +493,8 @@ def jump_params_yatay(h, tepe_uzakligi, yurume_hizi):
     t = tepe_uzakligi / yurume_hizi
     return jump_params(h, t)
 
-print(jump_params(4, 0.4))              # (50.0, 20.0)
-print(jump_params_yatay(4, 3, 7.5))     # tepe 3 karo ileride, hız 7,5 karo/sn → t = 0,4 → aynı sonuç
+print(jump_params(4, 0.4))           # (50.0, 20.0)
+print(jump_params_yatay(4, 3, 7.5))  # tepe 3 karo ileride, hız 7,5 karo/sn → t = 0,4 → aynı sonuç
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -529,12 +532,12 @@ void FixedUpdate() {
 <div><pre style="zoom:0.64;max-height:none"><code style="max-height:none" class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Celeste — Player.cs (geliştiricilerin yayımladığı kaynaktan kısa alıntı)
 // Birim: piksel ve saniye
-public const  float MaxFall = 160f;             // en büyük düşme hızı
+public const  float MaxFall = 160f;        // en büyük düşme hızı
 private const float Gravity = 900f;
 private const float HalfGravThreshold = 40f;
-private const float JumpGraceTime = 0.1f;       // "çakal süresi"
+private const float JumpGraceTime = 0.1f;  // "çakal süresi"
 private const float JumpSpeed = -105f;
-private const float VarJumpTime = .2f;          // tuş tutulursa zıplama hızının korunduğu süre
+private const float VarJumpTime = .2f;     // tuş tutulursa zıplama hızının korunduğu süre
 
 //Jump Grace
 if (onGround) jumpGraceTimer = JumpGraceTime;
@@ -615,6 +618,7 @@ function jumpParams(h, t) {
 <section data-sec="verlet">
   <h2>Canlı: ip ve kumaş 🧵</h2>
 <div class="demo" data-demo="rope"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> kırmızı noktalar çivili. Bağlar gri; boyundan uzamış bağ kırmızıya döner. Altta nokta ve bağ sayısı ile en çok gerilen bağın yüzdesi (%100 = tam boyunda).</li><li><b>Fareyle bir noktayı tutup sürükleyin</b> ve bırakın: ip savrulur. Kodda “fırlatma hızı” diye bir şey yok; hız, son iki konumun farkından kendiliğinden çıkıyor.</li><li><b>Kısıt tekrarı = 1:</b> ip kendi ağırlığıyla uzar (alttaki yüzde %130’ları bulur, bağlar kızarır). <b>30:</b> çelik halat gibi; yüzde %100’e yapışır.</li><li>Nesneyi <b>kumaş</b> yapın (153 nokta, 280 bağ) ve <b>💨 rüzgâr</b>a basın. Tekrarı 2’ye indirin: kumaş lastikleşir ama <b>patlamaz</b>.</li><li>Kumaşı bir köşesinden tutup hızla çekin: en kötü durumda bile birkaç karede toparlanır. Aynı deneyi sert yaylarla yapsaydık simülasyon sonsuza giderdi.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="verlet">
@@ -634,10 +638,10 @@ function verletAdimi(noktalar, baglar, dt) {
   // 1) Hareket: hız saklanmaz; "şimdiki − önceki" hızın kendisidir
   for (const p of noktalar) {
     if (p.civili) continue;
-    const vx = p.x - p.ox, vy = p.y - p.oy;        // bir adımda gidilen yol
-    p.ox = p.x;  p.oy = p.y;                       // şimdiki, "önceki" olur
-    p.x += vx;                                     // aynı yolu bir daha git
-    p.y += vy + YERCEKIMI * dt * dt;               // + ivmenin katkısı (a · dt²)
+    const vx = p.x - p.ox, vy = p.y - p.oy;  // bir adımda gidilen yol
+    p.ox = p.x;  p.oy = p.y;                 // şimdiki, "önceki" olur
+    p.x += vx;                               // aynı yolu bir daha git
+    p.y += vy + YERCEKIMI * dt * dt;         // + ivmenin katkısı (a · dt²)
   }
 
   // 2) Kısıtlar: her bağı sırayla düzelt; birkaç kez tekrarla (gevşetme)
@@ -646,8 +650,8 @@ function verletAdimi(noktalar, baglar, dt) {
       const p = noktalar[bag.a], q = noktalar[bag.b];
       const dx = q.x - p.x, dy = q.y - p.y;
       const d = Math.hypot(dx, dy);
-      const oran = (d - bag.boy) / d;              // boyun yüzde kaçı fazla (ya da eksik)?
-      const pPay = p.civili ? 0 : q.civili ? 1 : 0.5;     // çivili nokta kıpırdamaz
+      const oran = (d - bag.boy) / d;                  // boyun yüzde kaçı fazla (ya da eksik)?
+      const pPay = p.civili ? 0 : q.civili ? 1 : 0.5;  // çivili nokta kıpırdamaz
       const qPay = q.civili ? 0 : p.civili ? 1 : 0.5;
       p.x += dx * oran * pPay;  p.y += dy * oran * pPay;  // p, q'ya doğru
       q.x -= dx * oran * qPay;  q.y -= dy * oran * qPay;  // q, p'ye doğru
@@ -669,11 +673,11 @@ def satisfy(p1, p2, boy):
     """Uzaklık kısıtı: iki noktayı, aralarındaki uzaklık 'boy' olacak şekilde eşit miktarda kaydır."""
     dx, dy = p2[0] - p1[0], p2[1] - p1[1]
     d = math.hypot(dx, dy)
-    k = (d - boy) / d / 2                  # her ucun payı: hatanın yarısı (uzaklığa oranla)
+    k = (d - boy) / d / 2           # her ucun payı: hatanın yarısı (uzaklığa oranla)
     return [p1[0] + dx * k, p1[1] + dy * k], [p2[0] - dx * k, p2[1] - dy * k]
 
-print(verlet_step(1, 0, -10, 0.1))         # (1.9, 1)
-print(satisfy([0, 0], [3, 4], 3))          # ([0.6, 0.8], [2.4, 3.2])
+print(verlet_step(1, 0, -10, 0.1))  # (1.9, 1)
+print(satisfy([0, 0], [3, 4], 3))   # ([0.6, 0.8], [2.4, 3.2])
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -706,14 +710,14 @@ void LateUpdate() {
 // Hitman: Codename 47'nin fiziği
 
 // Verlet integration step
-x += x-oldx+a*fTimeStep*fTimeStep;      // yeni konum = 2x − eski + a·dt²
-oldx = temp;                            // (temp: x'in adımdan önceki değeri)
+x += x-oldx+a*fTimeStep*fTimeStep;  // yeni konum = 2x − eski + a·dt²
+oldx = temp;                        // (temp: x'in adımdan önceki değeri)
 
 // Uzaklık kısıtı ("çubuk"): iki parçacık arası restlength kalsın
 Vector3 delta = x2-x1;
 float deltalength = sqrt(delta*delta);
 float diff = (deltalength-restlength)/deltalength;
-x1 -= delta*0.5*diff;                   // (yazıdaki işaretlerle birebir)
+x1 -= delta*0.5*diff;               // (yazıdaki işaretlerle birebir)
 x2 += delta*0.5*diff;
 </script></code></pre><p class="mini">Kaynak: Thomas Jakobsen (IO Interactive), “Advanced Character Physics”, Game Developers Conference 2001. Oyun fiziğinin en çok okunan yazılarından.</p></div>
 <div><div class="box game" style="font-size:.74em"><span class="bt">🎮 2000 yılında, tek işlemci çekirdeğinde</span><ul style="font-size:.84em"><li>Hitman: Codename 47, vurulan karakterlerin hazır animasyon oynatmak yerine <b>fizikle</b> yere yığıldığı ilk oyunlardandı.</li><li>Yazıya göre cesetler katı cisimlerden değil, <b>çubuk kısıtlarıyla bağlı parçacıklardan</b> oluşan “çöp adamlar”dı. Kol ve bacakların yönü, çizim için parçacık konumlarından sonradan hesaplanıyordu.</li><li>Kod, az önce yazdıklarımızın aynısı: tek satırlık Verlet adımı ve “hatanın yarısı sana, yarısı bana” kısıtı.</li><li>Kumaş ve bitkilerde gevşetme döngüsünden kare başına <b>tek geçiş</b> yetmişti: kalan hata sonraki karelerde eriyor; az tekrar bitkilere “tam kıvamında” bir esneklik veriyordu.</li><li>Karekök pahalıydı: yazı, kökü bağın boyu çevresinde yaklaşık hesaplayan bir numara da verir.</li><li><b>Bugün:</b> aynı fikir “position based dynamics” adıyla Unreal’ın kumaşında, NVIDIA’nın fizik kütüphanelerinde ve çoğu oyunun ip/saç/pelerin kodunda.</li></ul></div></div>
@@ -777,6 +781,7 @@ def satisfy(p1, p2, boy):
 <section data-sec="itme">
   <h2>Canlı: kütle ve sekme 🎱</h2>
 <div class="demo" data-demo="bounce"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> altı top; üstlerinde kütleleri (büyük top = ağır top). Yeşil çizgi hız vektörü. Çarpışan toplar bir an sarı yanar. Üst satırda çarpışma sayısı, toplam enerjinin başlangıca oranı ve toplam momentum.</li><li><b>e = 1:</b> enerji %100’de kalır; toplar sonsuza kadar sekmeye devam eder. Küçük bir topun büyüğe çarpıp geri fırladığını, büyüğün ise yolundan pek sapmadığını izleyin.</li><li><b>e = 0,5:</b> her çarpışmada enerji azalır; bir dakika içinde hepsi durulur.</li><li><b>e = 0:</b> toplar çarpışma doğrultusunda birbirine yapışır, yalnızca teğet yönde kayarlar.</li><li><b>💥 karıştır</b> ile yeni hızlar verin. Momentum satırı yalnızca bir top <b>duvara</b> çarptığında değişir; top–top çarpışmalarında sabit kalır: itmeler eşit ve zıt.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="itme">
@@ -792,10 +797,10 @@ def satisfy(p1, p2, boy):
 function carpismaCoz(a, b, n, e) {
   // 1) Normal boyunca göreli hız: eksi ise yaklaşıyorlar
   const vn = (b.vx - a.vx) * n.x + (b.vy - a.vy) * n.y;
-  if (vn >= 0) return;                               // zaten uzaklaşıyorlar: dokunma
+  if (vn >= 0) return;                             // zaten uzaklaşıyorlar: dokunma
 
   // 2) İtmenin büyüklüğü
-  const tersA = 1 / a.kutle, tersB = 1 / b.kutle;    // kıpırdamaz cisim: ters kütle = 0
+  const tersA = 1 / a.kutle, tersB = 1 / b.kutle;  // kıpırdamaz cisim: ters kütle = 0
   const j = -(1 + e) * vn / (tersA + tersB);
 
   // 3) Aynı itme, zıt yönlerde; hız değişimi = itme / kütle
@@ -917,6 +922,7 @@ function fizikAdimi(dt) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

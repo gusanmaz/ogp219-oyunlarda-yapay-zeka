@@ -299,7 +299,7 @@
     const SC = [
       ['🧬 Normal mutasyon (±5°)', 5, 'Sekiz mancınık alçak açılarla (5°–25°) başlıyor. En iyisi 45° (40,8 m); bunu kimse söylemedi.', 'Kimse “45° iyidir” demedi; yalnızca <b>iyi olanlar çoğaldı</b>. Her nesilde en iyi açı biraz yükseldi (25° → 27° → 30° → 43° → 44°) ve nüfus 45° civarına toplandı. Arabalar demosundaki tek fark: orada gen tek bir açı değil, bir sinir ağının yüzlerce ağırlığı.'],
       ['🧊 Mutasyon yok (±0°)', 0, 'Aynı başlangıç, ama çocuklar ebeveynlerin tam ortalaması: hiç rastgele değişiklik yok.', 'Altı nesil boyunca en iyisi 25°’de (31,3 m) takılı kaldı: çocuklar hep iki ebeveynin arasında kalıyor, başlangıçta olmayan bir açıyı hiç denemiyor. Mutasyon, <b>yeni fikirlerin</b> tek kaynağıdır.'],
-      ['🌪 Çok büyük mutasyon (±30°)', 30, 'Aynı başlangıç, ama çocuklar ebeveynlerinden 30°’ye kadar sapabiliyor.', 'En iyisi şans eseri çabuk bulundu, çünkü en iyi iki ebeveyn her nesilde aynen korunuyor. Ama çubuklara bakın: çocukların çoğu çok kötü ve her nesilde savruluyor. Arabalar demosunda “mutasyon σ” çok büyükse arabaların çoğu ilk virajda ölür.']];
+      ['🌪️ Çok büyük mutasyon (±30°)', 30, 'Aynı başlangıç, ama çocuklar ebeveynlerinden 30°’ye kadar sapabiliyor.', 'En iyisi şans eseri çabuk bulundu, çünkü en iyi iki ebeveyn her nesilde aynen korunuyor. Ama çubuklara bakın: çocukların çoğu çok kötü ve her nesilde savruluyor. Arabalar demosunda “mutasyon σ” çok büyükse arabaların çoğu ilk virajda ölür.']];
     let F = [], moralTxt = '';
     const build = sig => {
       let seed = 42; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647), gauss = () => { const u = rnd() || 1e-9, v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };

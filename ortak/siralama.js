@@ -416,7 +416,7 @@
   /* ---------------- .trace (iz tablosu) ---------------- */
   SL.Trace = function (root) {
     const d = root.dataset;
-    const a = parseValues(d.values || 'S O R T E X A M P L E');
+    const a = parseValues(d.values || 'S U P E R M A R I O');
     const n = a.length;
     const rows = [];
     const cellsOf = (arr, cls) => arr.map((v, k) => `<td class="${cls(k)}">${v}</td>`).join('');

@@ -116,9 +116,9 @@ function esle(v, a, b, c, d) {
 let gecen = 0;
 function draw() {
   gecen += deltaTime / 1000;
-  const t = constrain(gecen / 0.5, 0, 1);      // geçen sürenin oranı; 1'de dur
+  const t = constrain(gecen / 0.5, 0, 1);     // geçen sürenin oranı; 1'de dur
   circle(lerp(100, 300, t), 200, 20);
-  const canBari = esle(can, 0, 100, 0, 200);   // can 0..100 → çubuk genişliği 0..200 piksel
+  const canBari = esle(can, 0, 100, 0, 200);  // can 0..100 → çubuk genişliği 0..200 piksel
 }
 </script></code></pre>
     </div>
@@ -138,28 +138,28 @@ def lerp_renk(c1, c2, t):
     """Renk de sayıdır: her kanalı ayrı ayrı lerp et."""
     return tuple(round(lerp(x, y, t)) for x, y in zip(c1, c2))
 
-print(lerp(100, 300, 0.25))                           # 150.0
-print(esle(30, 0, 100, 0, 200))                       # 60.0  (can 30 → çubuk 60 piksel)
-print(lerp_renk((255, 0, 0), (0, 0, 255), 0.5))       # (128, 0, 128)
+print(lerp(100, 300, 0.25))                      # 150.0
+print(esle(30, 0, 100, 0, 200))                  # 60.0  (can 30 → çubuk 60 piksel)
+print(lerp_renk((255, 0, 0), (0, 0, 255), 0.5))  # (128, 0, 128)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 // Unity: hepsi hazır.
-float x   = Mathf.Lerp(100f, 300f, t);                 // DİKKAT: t'yi 0..1'e sıkıştırır
-float y   = Mathf.LerpUnclamped(100f, 300f, t);        // sıkıştırmaz (taşan yumuşatmalar için)
-float o   = Mathf.InverseLerp(0f, 100f, can);          // ters lerp
-Vector3 p = Vector3.Lerp(baslangic, hedef, t);         // vektörler
-Color c   = Color.Lerp(Color.red, Color.blue, t);      // renkler
-Quaternion q = Quaternion.Slerp(q1, q2, t);            // dönüşler (küre üzerinde lerp)
+float x   = Mathf.Lerp(100f, 300f, t);             // DİKKAT: t'yi 0..1'e sıkıştırır
+float y   = Mathf.LerpUnclamped(100f, 300f, t);    // sıkıştırmaz (taşan yumuşatmalar için)
+float o   = Mathf.InverseLerp(0f, 100f, can);      // ters lerp
+Vector3 p = Vector3.Lerp(baslangic, hedef, t);     // vektörler
+Color c   = Color.Lerp(Color.red, Color.blue, t);  // renkler
+Quaternion q = Quaternion.Slerp(q1, q2, t);        // dönüşler (küre üzerinde lerp)
 
 // "0,5 saniyede git" (Coroutine ile):
 IEnumerator Git(Vector3 a, Vector3 b, float sure) {
     for (float gecen = 0; gecen < sure; gecen += Time.deltaTime) {
         transform.position = Vector3.Lerp(a, b, gecen / sure);
-        yield return null;                             // bir sonraki kareye kadar bekle
+        yield return null;                         // bir sonraki kareye kadar bekle
     }
-    transform.position = b;                            // tam hedefte bitir
+    transform.position = b;                        // tam hedefte bitir
 }
 </script></code></pre>
     </div>
@@ -249,6 +249,7 @@ function remap(v, a, b, c, d) {
 <section data-sec="yumuşatma">
   <h2>Canlı: yumuşatma yarışı 🏁</h2>
 <div class="demo" data-demo="ease"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> sağda yedi şerit, yedi kutu; hepsi aynı anda çıkıp aynı anda varıyor. Solda seçili fonksiyonun grafiği: yatay eksen zamanın oranı, dikey eksen gidilen yolun oranı. Kırmızı nokta “şu an”.</li><li>Tek tek kutulara bakın: hangisi robot gibi? Hangisi “ağır”? Hangisi “neşeli”? Sınıfça her birine bir sıfat bulun.</li><li>Grafikte <b>“yavaş bitir”</b>i seçin: eğri başta dik (hızlı), sonda yatık (yavaş). <b>“yavaş başla”</b> bunun tersi.</li><li><b>“taşıp dön”</b> ve <b>“yay gibi”</b>: grafik 1 çizgisinin üstüne çıkıyor; kutu B’yi geçip geri geliyor. lerp’in t’yi sıkıştırmaması bu yüzden önemli.</li><li>Süreyi <b>0,2</b> sn yapın: farklar kaybolmuyor, “çıt” diye bir his kalıyor. <b>3</b> sn yapın: “sekerek” ve “yay gibi” abartılı, yorucu. Arayüz animasyonlarının çoğu 0,15–0,5 saniyedir.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="yumuşatma">
@@ -258,7 +259,7 @@ function remap(v, a, b, c, d) {
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://easings.net/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Easing Functions Cheat Sheet</div><div class="lnk-s">easings.net</div><div class="lnk-w">Bütün yumuşatma eğrileri tek sayfada; üstüne gelince hareketi canlı gösterir.</div></a><a class="lnk" href="https://ciechanow.ski/curves-and-surfaces/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Curves and Surfaces</div><div class="lnk-s">Bartosz Ciechanowski</div><div class="lnk-w">Bézier ve spline eğrilerinin, sürüklenebilir noktalarla şimdiye kadar yazılmış en güzel anlatımlarından biri.</div></a><a class="lnk" href="https://www.gamedeveloper.com/design/the-continuity-of-splines" target="_blank" rel="noopener"><div class="lnk-t">🔗 The Continuity of Splines</div><div class="lnk-s">Freya Holmér (Game Developer)</div><div class="lnk-w">Eğrilerin “süreklilik” türleri ve oyunlardaki önemi.</div></a><a class="lnk" href="https://www.redblobgames.com/articles/curved-paths/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Curved paths</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Kavisli yolların ve dönüş yarıçapının etkileşimli anlatımı.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://easings.net/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Easing Functions Cheat Sheet</div><div class="lnk-s">easings.net</div><div class="lnk-w">Bütün yumuşatma eğrileri tek sayfada; üstüne gelince hareketi canlı gösterir.</div></a><a class="lnk" href="https://ciechanow.ski/curves-and-surfaces/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Curves and Surfaces</div><div class="lnk-s">Bartosz Ciechanowski</div><div class="lnk-w">Bézier ve spline eğrilerinin, sürüklenebilir noktalarla şimdiye kadar yazılmış en güzel anlatımlarından biri.</div></a><a class="lnk" href="https://www.gamedeveloper.com/design/the-continuity-of-splines" target="_blank" rel="noopener"><div class="lnk-t">🔗 The Continuity of Splines</div><div class="lnk-s">Freya Holmér (Game Developer)</div><div class="lnk-w">Eğrilerin “süreklilik” türleri ve oyunlardaki önemi.</div></a><a class="lnk" href="https://www.redblobgames.com/articles/curved-paths/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Curved paths</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Kavisli yolların ve dönüş yarıçapının etkileşimli anlatımı.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -268,10 +269,10 @@ function remap(v, a, b, c, d) {
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // Yumuşatma fonksiyonları: 0..1 arası t alır, 0..1 arası (bazen biraz taşan) ilerleme döndürür.
-const yavasBasla = t => t * t;                         // ease-in  (ivmelenerek)
-const yavasBitir = t => 1 - (1 - t) * (1 - t);         // ease-out (frenleyerek)
-const yumusak    = t => t * t * (3 - 2 * t);           // smoothstep: iki ucu da yumuşak
-const tasipDon   = t => {                              // "back": hedefi %10 geç, geri dön
+const yavasBasla = t => t * t;                  // ease-in  (ivmelenerek)
+const yavasBitir = t => 1 - (1 - t) * (1 - t);  // ease-out (frenleyerek)
+const yumusak    = t => t * t * (3 - 2 * t);    // smoothstep: iki ucu da yumuşak
+const tasipDon   = t => {                       // "back": hedefi %10 geç, geri dön
   const c = 1.70158;
   return 1 + (c + 1) * pow(t - 1, 3) + c * pow(t - 1, 2);
 };
@@ -281,15 +282,15 @@ let gecen = 0;
 function draw() {
   background(245);
   gecen += deltaTime / 1000;
-  const t = constrain(gecen / 0.4, 0, 1);              // 0,4 saniyelik animasyon
+  const t = constrain(gecen / 0.4, 0, 1);       // 0,4 saniyelik animasyon
 
-  const x = lerp(-200, 40, yavasBitir(t));             // menü soldan kayarak gelir, yumuşak durur
+  const x = lerp(-200, 40, yavasBitir(t));      // menü soldan kayarak gelir, yumuşak durur
   rect(x, 60, 200, 280, 12);
 
-  const olcek = lerp(0, 1, tasipDon(t));               // düğme büyüyerek belirir, biraz taşar, oturur
+  const olcek = lerp(0, 1, tasipDon(t));        // düğme büyüyerek belirir, biraz taşar, oturur
   push(); translate(400, 200); scale(olcek); circle(0, 0, 80); pop();
 }
-function mousePressed() { gecen = 0; }                 // tıklayınca yeniden oynat
+function mousePressed() { gecen = 0; }          // tıklayınca yeniden oynat
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -320,9 +321,9 @@ for t in (0, 0.25, 0.5, 0.75, 1):
 [SerializeField] AnimationCurve egri = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
 IEnumerator Belir(Transform panel, float sure) {
-    for (float gecen = 0; gecen < sure; gecen += Time.unscaledDeltaTime) {   // oyun duraklasa da menü oynar
-        float t = egri.Evaluate(gecen / sure);                               // yumuşatılmış t
-        panel.localScale = Vector3.LerpUnclamped(Vector3.zero, Vector3.one, t);   // Unclamped: taşabilsin
+    for (float gecen = 0; gecen < sure; gecen += Time.unscaledDeltaTime) {       // oyun duraklasa da menü oynar
+        float t = egri.Evaluate(gecen / sure);                                   // yumuşatılmış t
+        panel.localScale = Vector3.LerpUnclamped(Vector3.zero, Vector3.one, t);  // Unclamped: taşabilsin
         yield return null;
     }
     panel.localScale = Vector3.one;
@@ -397,6 +398,7 @@ function smoothstep(t) {
 <section data-sec="takip">
   <h2>Canlı: aynı kod, iki makine 🎥</h2>
 <div class="demo" data-demo="follow"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> üstte dört top aynı sarı hedefi (kesikli çizgi) kovalıyor; hedef 1,6 saniyede bir karşı tarafa atlıyor. Altta son 4,8 saniyenin konum–zaman grafiği: sarı kesikli = hedef, kırmızı / gri / yeşil / mor = toplar.</li><li><b>30 FPS</b> (başlangıç): <b class="c-red">kırmızı</b> (kare başına %10, bu makine) gri eğrinin (aynı kod, 60 FPS’lik makine) belirgin biçimde <b>gerisinde</b>. Aynı satır, iki farklı kamera.</li><li>Kare hızını <b>144</b> yapın: kırmızı bu kez griden <b>önde</b>, neredeyse hedefe yapışık. <b>60</b> yapın: üst üste.</li><li>Bütün bunlar olurken <b class="c-green">yeşile</b> bakın: kare hızını ne yaparsanız yapın gri eğrinin üstünde. 10 FPS’te basamak basamak ilerler ama basamakların köşeleri hep aynı eğrinin üzerindedir.</li><li><b class="c-purple">Mor</b> (SmoothDamp) farklı bir şekil çizer: S harfi. Yeşil hedef atlar atlamaz en yüksek hızıyla fırlar; mor önce hızlanır. Kamera için mor daha “sinematik”, yeşil daha “atik”.</li><li>Hedefi <b>“fareyi izlesin”</b> yapıp fareyi sağa sola sallayın: hangi top elinize en çok “bağlı” hissettiriyor?</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="takip">
@@ -430,8 +432,8 @@ function draw() {
 }
 
 // Aynı fonksiyon her "hedefe doğru yumuşakça" işinde:
-//   canBari  = yaklas(canBari, gercekCan, 0.08, dt);       // çubuk bir anda değil, akarak iner
-//   bakisAci = yaklas(bakisAci, hedefAci, 0.05, dt);       // nişangâh yumuşatma
+//   canBari  = yaklas(canBari, gercekCan, 0.08, dt);  // çubuk bir anda değil, akarak iner
+//   bakisAci = yaklas(bakisAci, hedefAci, 0.05, dt);  // nişangâh yumuşatma
 //   muzikSes = yaklas(muzikSes, savasta ? 1 : 0.3, 0.5, dt);
 </script></code></pre>
     </div>
@@ -443,17 +445,17 @@ def damp(x, hedef, yari_omur, dt):
     return x + (hedef - x) * oran
 
 # Kanıt: 0,1 saniyeyi tek adımda da, altı küçük adımda da geçsek aynı yere varırız.
-a = damp(0, 100, 0.1, 0.1)                     # tek adım: 50.0
+a = damp(0, 100, 0.1, 0.1)          # tek adım: 50.0
 b = 0
 for _ in range(6):
-    b = damp(b, 100, 0.1, 0.1 / 6)             # altı adım: 50.0
+    b = damp(b, 100, 0.1, 0.1 / 6)  # altı adım: 50.0
 print(a, b)
 
 # Kare başına sabit oranla aynı deney:
-c = 0 + (100 - 0) * 0.1                        # 1 kare:  10.0
+c = 0 + (100 - 0) * 0.1             # 1 kare:  10.0
 d = 0
 for _ in range(6):
-    d += (100 - d) * 0.1                       # 6 kare:  46.9   → kare sayısına bağlı!
+    d += (100 - d) * 0.1            # 6 kare:  46.9   → kare sayısına bağlı!
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -561,6 +563,7 @@ function damp(x, hedef, yariOmur, dt) {
 <section data-sec="bézier">
   <h2>Canlı: kontrol noktaları ve iskele ✏️</h2>
 <div class="demo" data-demo="bezier"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> siyah eğri Bézier; beyaz halkalar kontrol noktaları (sürüklenir). Gri kesikli çizgi kontrol çokgeni. Mavi noktalar 1. turun, yeşiller 2. turun lerp sonuçları; kırmızı nokta eğrinin t anındaki yeri.</li><li><b>t sürgüsünü</b> yavaşça 0’dan 1’e çekin: mavi noktalar gri kenarlarda, yeşiller mavi çizgide, kırmızı yeşil çizgide hep <b>aynı oranda</b> ilerliyor.</li><li><b>P₁’i</b> sürükleyin: eğrinin P₀’dan çıkış yönü değişiyor ama P₃’teki giriş yönü değişmiyor. Tutamacı uzatın: eğri o yöne daha çok asılıyor.</li><li>P₁ ve P₂’yi <b>çaprazlayın</b>: eğri ilmek atar. Dördünü bir doğruya dizin: eğri düz çizgi olur.</li><li>Eğri hiçbir zaman dört noktanın oluşturduğu çokgenin <b>dışına çıkmaz</b> (G1’deki dışbükey örtü): çarpışma ve ekran dışı testleri için ucuz bir sınır.</li><li><b>“eşit t adımları”</b>nı açın: mor noktalar t = 0, 0,05, 0,10… Uçlarda seyrek, kıvrımda sık ya da tersi: <b>eşit t, eşit yol değildir</b>. Bu sorunu son bölümde çözeceğiz.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="bézier">
@@ -576,9 +579,9 @@ function damp(x, hedef, yariOmur, dt) {
 const lerpN = (p, q, t) => ({ x: lerp(p.x, q.x, t), y: lerp(p.y, q.y, t) });
 
 function bezierNokta(p0, p1, p2, p3, t) {
-  const a = lerpN(p0, p1, t), b = lerpN(p1, p2, t), c = lerpN(p2, p3, t);   // 1. tur: üç lerp
-  const d = lerpN(a, b, t),   e = lerpN(b, c, t);                           // 2. tur: iki lerp
-  return lerpN(d, e, t);                                                    // 3. tur: bir lerp
+  const a = lerpN(p0, p1, t), b = lerpN(p1, p2, t), c = lerpN(p2, p3, t);  // 1. tur: üç lerp
+  const d = lerpN(a, b, t),   e = lerpN(b, c, t);                          // 2. tur: iki lerp
+  return lerpN(d, e, t);                                                   // 3. tur: bir lerp
 }
 
 // Çizim: eğriyi 30 küçük doğruya böl
@@ -615,8 +618,8 @@ def bezier_formul(p0, p1, p2, p3, t):
     w = [s * s * s, 3 * s * s * t, 3 * s * t * t, t * t * t]
     return [sum(w[i] * p[k] for i, p in enumerate((p0, p1, p2, p3))) for k in (0, 1)]
 
-print(bezier([0, 0], [0, 4], [4, 4], [4, 0], 0.5))            # [2.0, 3.0]
-print(bezier_formul([0, 0], [0, 4], [4, 4], [4, 0], 0.25))    # [0.625, 2.25]
+print(bezier([0, 0], [0, 4], [4, 4], [4, 0], 0.5))          # [2.0, 3.0]
+print(bezier_formul([0, 0], [0, 4], [4, 4], [4, 0], 0.25))  # [0.625, 2.25]
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -730,6 +733,7 @@ def bezier(p0, p1, p2, p3, t):
 <section data-sec="yol">
   <h2>Canlı: pist çiz, araba sür 🏎️</h2>
 <div class="demo" data-demo="spline"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri şerit pist; numaralı halkalar yol noktaları. Kırmızı araba pisti dolanıyor. Mor noktalar pist üzerinde örnekler. Alt satırda pistin uzunluğu, tur sayısı, anlık hız ve son turdaki en az / en çok hız.</li><li><b>W</b> gaz, <b>S</b> fren. Bir halkayı <b>sürükleyin</b>: pist her noktanın içinden geçmeye devam ediyor ve hiç köşe yapmıyor. Boş bir yere <b>tıklayın</b>: yeni nokta eklenir.</li><li>Yolu <b>“doğrusal”</b> yapın: araba her noktada aniden dönüyor. Geri alın.</li><li><b>“sabit hız”</b> kutusunu kapatın: mor noktalar artık eşit t adımlarında. İki halkayı birbirine yaklaştırıp ikisini uzaklaştırın: araba uzun parçada fırlıyor, kısa parçada sürünüyor. Alttaki en az / en çok hız arasındaki fark birkaç katına çıkar.</li><li>Kutuyu yeniden açın: mor noktalar eşit aralıklı; en az ve en çok hız neredeyse aynı. Araba virajda da düzlükte de aynı hızda.</li><li>Bir halkayı komşusunun çok yakınına getirin: eğri orada küçük bir <b>ilmek</b> atabilir. Catmull–Rom’un bilinen kusuru; çaresi Kaynaklar’da (“centripetal” sürüm).</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="yol">
@@ -794,13 +798,13 @@ def tablo_kur(nokta_fn, parca, ornek=24):
     return tablo
 
 def mesafeden_u(tablo, s, ornek=24):
-    k = bisect.bisect_right(tablo, s) - 1          # ikili arama (Arama Algoritmaları sunumu)
+    k = bisect.bisect_right(tablo, s) - 1  # ikili arama (Arama Algoritmaları sunumu)
     k = min(k, len(tablo) - 2)
     return (k + (s - tablo[k]) / (tablo[k + 1] - tablo[k])) / ornek
 
-print(catmull(0, 1, 3, 4, 0.5))     # 2.0
-print(catmull(0, 1, 3, 4, 0.0))     # 1.0  (p1'den geçer)
-print(catmull(0, 1, 3, 4, 1.0))     # 3.0  (p2'den geçer)
+print(catmull(0, 1, 3, 4, 0.5))            # 2.0
+print(catmull(0, 1, 3, 4, 0.0))            # 1.0  (p1'den geçer)
+print(catmull(0, 1, 3, 4, 1.0))            # 3.0  (p2'den geçer)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -809,15 +813,15 @@ print(catmull(0, 1, 3, 4, 1.0))     # 3.0  (p2'den geçer)
 using UnityEngine.Splines;
 
 [SerializeField] SplineContainer yol;
-[SerializeField] float hiz = 6f;        // metre/saniye
+[SerializeField] float hiz = 6f;                            // metre/saniye
 float gidilen;
 
 void Update() {
     gidilen += hiz * Time.deltaTime;
-    float uzunluk = yol.CalculateLength();                     // yay uzunluğu
-    float oran = Mathf.Repeat(gidilen, uzunluk) / uzunluk;     // 0..1: yolun yüzde kaçı?
+    float uzunluk = yol.CalculateLength();                  // yay uzunluğu
+    float oran = Mathf.Repeat(gidilen, uzunluk) / uzunluk;  // 0..1: yolun yüzde kaçı?
     transform.position = yol.EvaluatePosition(oran);
-    transform.forward  = yol.EvaluateTangent(oran);            // burnunu yola çevir
+    transform.forward  = yol.EvaluateTangent(oran);         // burnunu yola çevir
 }
 // Daha da kolayı: nesneye SplineAnimate bileşeni ekleyin (sabit hız, döngü, yumuşatma seçenekleriyle).
 // Godot:  Path2D + PathFollow2D;   path_follow.progress += hiz * delta    ("progress" piksel cinsinden yol)
@@ -993,6 +997,7 @@ function draw() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

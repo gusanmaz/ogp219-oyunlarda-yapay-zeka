@@ -236,21 +236,22 @@ grid2 = {(3, 4): "ork"}
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const map = new Map();
 map.set([3, 4], "ork");
-console.log(map.get([3, 4]));         // undefined ❌ (farklı dizi!)
+console.log(map.get([3, 4]));       // undefined ❌ (farklı dizi!)
 
-const key = (x, y) => x + "," + y;    // "3,4"
+const key = (x, y) => x + "," + y;  // "3,4"
 map.set(key(3, 4), "ork");
-console.log(map.get(key(3, 4)));      // ork ✔
+console.log(map.get(key(3, 4)));    // ork ✔
 </script></code></pre>
     </div>
   </div>
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/hashtable" target="_blank" rel="noopener"><div class="lnk-t">🎞 Hash tabloları</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Doğrusal yoklama, ikinci derece yoklama ve zincirleme; çakışmaların nasıl çözüldüğünü hücre hücre gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/spatial-partition.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Spatial Partition</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Izgara, quadtree ve BSP ile “yakınımdaki nesneler” sorusunu hızlandırmak.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/hashtable" target="_blank" rel="noopener"><div class="lnk-t">📊 Hash tabloları</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Doğrusal yoklama, ikinci derece yoklama ve zincirleme; çakışmaların nasıl çözüldüğünü hücre hücre gösterir.</div></a><a class="lnk" href="https://gameprogrammingpatterns.com/spatial-partition.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Spatial Partition</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Izgara, quadtree ve BSP ile “yakınımdaki nesneler” sorusunu hızlandırmak.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -312,17 +313,17 @@ class Node:
         self.next = next
 
 M = 97
-table = [None] * M                  # M tane boş zincir
+table = [None] * M                       # M tane boş zincir
 
 def put(key, val):
-    i = hash(key) % M               # Python'da % hep 0..M-1
+    i = hash(key) % M                    # Python'da % hep 0..M-1
     x = table[i]
-    while x is not None:            # zincirde var mı?
+    while x is not None:                 # zincirde var mı?
         if x.key == key:
-            x.val = val             # varsa güncelle
+            x.val = val                  # varsa güncelle
             return
         x = x.next
-    table[i] = Node(key, val, table[i])   # yoksa BAŞINA ekle
+    table[i] = Node(key, val, table[i])  # yoksa BAŞINA ekle
 
 def get(key):
     x = table[hash(key) % M]
@@ -350,8 +351,8 @@ void Put(string key, int val)
 {
     int i = Index(key);
     for (Node x = table[i]; x != null; x = x.Next)
-        if (x.Key == key) { x.Val = val; return; }   // güncelle
-    table[i] = new Node(key, val, table[i]);         // başına ekle
+        if (x.Key == key) { x.Val = val; return; }  // güncelle
+    table[i] = new Node(key, val, table[i]);        // başına ekle
 }
 
 int? Get(string key)
@@ -374,8 +375,8 @@ const table = new Array(M).fill(null);
 function put(key, val) {
   const i = hashStr(key, M);
   for (let x = table[i]; x !== null; x = x.next)
-    if (x.key === key) { x.val = val; return; }   // güncelle
-  table[i] = new Node(key, val, table[i]);        // başına ekle
+    if (x.key === key) { x.val = val; return; }  // güncelle
+  table[i] = new Node(key, val, table[i]);       // başına ekle
 }
 
 function get(key) {
@@ -461,11 +462,11 @@ vals = [None] * M
 
 def put(key, val):
     i = hash(key) % M
-    while keys[i] is not None:      # dolu hücreleri geç
+    while keys[i] is not None:  # dolu hücreleri geç
         if keys[i] == key:
-            vals[i] = val           # varsa güncelle
+            vals[i] = val       # varsa güncelle
             return
-        i = (i + 1) % M             # bir sağa (sonda başa sar)
+        i = (i + 1) % M         # bir sağa (sonda başa sar)
     keys[i] = key
     vals[i] = val
 
@@ -475,7 +476,7 @@ def get(key):
         if keys[i] == key:
             return vals[i]
         i = (i + 1) % M
-    return None                     # boş hücre: yok
+    return None                 # boş hücre: yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -490,7 +491,7 @@ void Put(string key, int val)
     while (keys[i] != null)
     {
         if (keys[i] == key) { vals[i] = val; return; }
-        i = (i + 1) % M;                 // bir sağa, sonda başa
+        i = (i + 1) % M;  // bir sağa, sonda başa
     }
     keys[i] = key; vals[i] = val;
 }
@@ -499,7 +500,7 @@ int? Get(string key)
 {
     for (int i = Index(key); keys[i] != null; i = (i + 1) % M)
         if (keys[i] == key) return vals[i];
-    return null;                         // boş hücre: yok
+    return null;          // boş hücre: yok
 }
 </script></code></pre>
     </div>
@@ -513,7 +514,7 @@ function put(key, val) {
   let i = hashStr(key, M);
   while (keys[i] !== null) {
     if (keys[i] === key) { vals[i] = val; return; }
-    i = (i + 1) % M;                    // bir sağa, sonda başa
+    i = (i + 1) % M;  // bir sağa, sonda başa
   }
   keys[i] = key; vals[i] = val;
 }
@@ -521,7 +522,7 @@ function put(key, val) {
 function get(key) {
   for (let i = hashStr(key, M); keys[i] !== null; i = (i + 1) % M)
     if (keys[i] === key) return vals[i];
-  return null;                          // boş hücre: yok
+  return null;        // boş hücre: yok
 }
 </script></code></pre>
     </div>
@@ -691,6 +692,15 @@ function get(key) {
 <section data-sec="oyunda">
   <h2>🎮 Uzaysal hash ızgarası <span class="en">spatial hashing</span></h2>
   <div class="demo" data-demo="spatialhash"></div>
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?">
+    <ul>
+      <li>Noktalar hareket eden nesneler; ince çizgiler hücre sınırları. Her karede tablo baştan kurulur: her nesne kendi hücresinin listesine eklenir.</li>
+      <li><b>Fareyi bir nesnenin üstüne getirin:</b> sarı 3 × 3 alan, o nesne için bakılan hücreler. Yalnızca o alandaki nesneler adaydır.</li>
+      <li>Alttaki sayaçlar: uzaysal hash ile yapılan test sayısı ve aynı iş için kaba kuvvetin yapacağı test sayısı.</li>
+      <li><b>Hücre boyutunu büyütün:</b> her hücrede çok nesne birikir, test sayısı artar (en uçta tek hücre = kaba kuvvet). <b>Küçültün:</b> testler azalır ama nesne çapından küçük hücrede komşular kaçırılmaya başlar.</li>
+      <li>Kural: hücre boyu ≈ en büyük nesnenin çapı (ya da sorgu yarıçapı).</li>
+    </ul>
+  </div><!--/dh-->
   <p class="mini">Her nesne bulunduğu hücreye (anahtar = hücre koordinatı) konur. Bir nesne sadece kendi hücresi ve 8 komşusundakilerle test edilir. Fareyi bir parçacığın üstüne getirin: sarı 3×3 alan. Hücre boyutunu değiştirip test sayısına bakın.</p>
 </section>
 
@@ -746,20 +756,20 @@ function get(key) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import random
 
-PIECES, SQUARES = 12, 64            # 6 taş × 2 renk, 64 kare
+PIECES, SQUARES = 12, 64           # 6 taş × 2 renk, 64 kare
 Z = [[random.getrandbits(64) for sq in range(SQUARES)]
-     for p in range(PIECES)]        # bir kez üret
+     for p in range(PIECES)]       # bir kez üret
 
-def full_hash(board):               # board[sq] = taş no ya da None
+def full_hash(board):              # board[sq] = taş no ya da None
     h = 0
     for sq in range(SQUARES):
         if board[sq] is not None:
-            h ^= Z[board[sq]][sq]   # ^ = XOR
+            h ^= Z[board[sq]][sq]  # ^ = XOR
     return h
 
-def move(h, piece, frm, to):        # artımlı güncelleme
-    h ^= Z[piece][frm]              # taşı eski kareden "çıkar"
-    h ^= Z[piece][to]               # yeni kareye "koy"
+def move(h, piece, frm, to):       # artımlı güncelleme
+    h ^= Z[piece][frm]             # taşı eski kareden "çıkar"
+    h ^= Z[piece][to]              # yeni kareye "koy"
     return h
 </script></code></pre>
     </div>
@@ -769,16 +779,16 @@ ulong[,] Z = new ulong[12, 64];
 var rng = new System.Random(2024);
 for (int p = 0; p < 12; p++)
     for (int sq = 0; sq < 64; sq++)
-        Z[p, sq] = (ulong)rng.NextInt64();   // .NET 6+
+        Z[p, sq] = (ulong)rng.NextInt64();  // .NET 6+
 
 ulong Move(ulong h, int piece, int from, int to)
 {
-    h ^= Z[piece, from];     // eski kareden çıkar
-    h ^= Z[piece, to];       // yeni kareye koy
+    h ^= Z[piece, from];                    // eski kareden çıkar
+    h ^= Z[piece, to];                      // yeni kareye koy
     return h;
 }
 
-var tt = new Dictionary<ulong, int>();   // pozisyon → değer
+var tt = new Dictionary<ulong, int>();      // pozisyon → değer
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -790,12 +800,12 @@ const Z = Array.from({ length: 12 }, () =>
           Array.from({ length: 64 }, rnd64));
 
 function move(h, piece, from, to) {
-  h ^= Z[piece][from];    // eski kareden çıkar
-  h ^= Z[piece][to];      // yeni kareye koy
+  h ^= Z[piece][from];  // eski kareden çıkar
+  h ^= Z[piece][to];    // yeni kareye koy
   return h;
 }
 
-const tt = new Map();     // pozisyon hash'i → değer
+const tt = new Map();   // pozisyon hash'i → değer
 </script></code></pre>
     </div>
   </div>
@@ -847,18 +857,18 @@ public class Player : MonoBehaviour
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 # Aynı fikir: sık kullanılan string'leri bir kez sayıya çevir
-PARAMS = {}                      # isim → numara
+PARAMS = {}                         # isim → numara
 
 def param_id(name):
     if name not in PARAMS:
-        PARAMS[name] = len(PARAMS)   # ilk görüşte numara ver
+        PARAMS[name] = len(PARAMS)  # ilk görüşte numara ver
     return PARAMS[name]
 
-RUN = param_id("isRunning")      # bir kez
+RUN = param_id("isRunning")         # bir kez
 HIT = param_id("hit")
 
-values = [False] * 16            # parametre değerleri dizide
-values[RUN] = True               # string karşılaştırması yok
+values = [False] * 16               # parametre değerleri dizide
+values[RUN] = True                  # string karşılaştırması yok
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -1062,6 +1072,7 @@ def hash_str(s, M):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/hash.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

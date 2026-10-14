@@ -158,10 +158,11 @@
   <aside class="notes">Önce “Sahne”ye (kök), sonra “Namlu”ya (yaprak, derinlik 3), sonra “Oyuncu”ya (yükseklik 2) tıklayın. Yükseklik ve derinliğin farkını vurgulayın: derinlik yukarıya, yükseklik aşağıya bakar.</aside>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/bst" target="_blank" rel="noopener"><div class="lnk-t">🎞 İkili arama ağacı ve AVL</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Ekleme, silme ve döndürmeleri adım adım gösterir; AVL kipinde ağacın kendini nasıl dengelediğini izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/bst" target="_blank" rel="noopener"><div class="lnk-t">📊 İkili arama ağacı ve AVL</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Ekleme, silme ve döndürmeleri adım adım gösterir; AVL kipinde ağacın kendini nasıl dengelediğini izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a><a class="lnk" href="https://cp-algorithms.com/" target="_blank" rel="noopener"><div class="lnk-t">🔗 cp-algorithms</div><div class="lnk-s">cp-algorithms.com</div><div class="lnk-w">Algoritmaların matematiksel ve kod düzeyinde ayrıntılı anlatımı (geometri, graf, veri yapıları).</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -1034,7 +1035,7 @@ const mid3 = (lo + hi) >> 1;            // ❌ 2^31'i aşınca negatif olur!
       <p class="fragment">Kök = ikili aramadaki “ortadaki eleman”. Sol alt ağaç = sol yarı, sağ alt ağaç = sağ yarı. 💡</p>
       <p class="fragment mini">Dikkat: kural sadece çocuklar için değil, <b>tüm alt ağaç</b> için geçerli.</p>
     </div>
-    <div class="bstviz" data-keys="S E A R C H X M P L" data-ops="get" data-w="700" data-h="330" data-nulls data-hint="Ağaçtan bir harf yazıp Ara’ya basın. Küçük noktalar = null bağlantılar."></div>
+    <div class="bstviz" data-keys="S U P E R M A I O K T" data-ops="get" data-w="700" data-h="330" data-nulls data-hint="Ağaçtan bir harf yazıp Ara’ya basın. Küçük noktalar = null bağlantılar."></div>
   </div>
 </section>
 
@@ -1104,7 +1105,7 @@ private Value get(Node x, Key key) {
 
 <section data-sec="BST">
   <h2>Arama animasyonu — çağrı yığını ile</h2>
-  <div class="bstviz" data-keys="S E A R C H X M P L" data-ops="get,min,max" data-stack data-default="H" data-h="340" data-hint="H’yi arayın, sonra ağaçta olmayan bir harf (ör. G) deneyin. Sağda özyinelemeli çağrılar yığına ekleniyor."></div>
+  <div class="bstviz" data-keys="S U P E R M A I O K T" data-ops="get,min,max" data-stack data-default="I" data-h="340" data-hint="I’yı arayın, sonra ağaçta olmayan bir harf (ör. G) deneyin. Sağda özyinelemeli çağrılar yığına ekleniyor."></div>
   <aside class="notes">Yığın panelinde her get çağrısının üst üste bindiğini gösterin. min/max: sürekli sola / sağa gitmek. Ağaçta olmayan bir anahtar için null’a kadar inildiğini gösterin.</aside>
 </section>
 
@@ -1182,22 +1183,22 @@ private Node put(Node x, Key key, Value val) {
 </section>
 
 <section data-sec="BST">
-  <h2>Ekleme animasyonu: S E A R C H E X A M P L E</h2>
-  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-stack data-seq="S E A R C H E X A M P L E" data-h="330" data-hint="▶ Sırayla ekle. Ya da kendi harfinizi yazıp Ekle’ye basın (Enter)."></div>
-  <aside class="notes">İkinci E ve ikinci A geldiğinde yeni düğüm OLUŞMAZ (değer güncellenir). Kendi harfleri ile ekleme yapın; dönüş (return) adımlarında yığından çıkılırken bağlantıların yeniden kurulduğunu gösterin.</aside>
+  <h2>Ekleme animasyonu: S U P E R M A R I O K A R T</h2>
+  <div class="bstviz" data-keys="" data-ops="seq,put,clear" data-stack data-seq="S U P E R M A R I O K A R T" data-h="330" data-hint="▶ Sırayla ekle. Ya da kendi harfinizi yazıp Ekle’ye basın (Enter)."></div>
+  <aside class="notes">İkinci A ve ikinci R geldiğinde yeni düğüm OLUŞMAZ (değer güncellenir). Kendi harfleri ile ekleme yapın; dönüş (return) adımlarında yığından çıkılırken bağlantıların yeniden kurulduğunu gösterin.</aside>
 </section>
 
 <section data-sec="BST">
   <div class="quiz" data-answer="B">
     <div class="qhead">Quiz 5 · BST</div>
-    <div class="q"><code>S E A R C H X M P L</code> ağacına (önceki slaytlardaki ağaç) <b>D</b> eklenirse nereye gider?</div>
+    <div class="q"><code>S U P E R M A I O K T</code> ağacına (önceki slaytlardaki ağaç) <b>L</b> eklenirse nereye gider?</div>
     <div class="opts">
-      <button data-opt="A">A’nın sol çocuğu</button>
-      <button data-opt="B">C’nin sağ çocuğu</button>
-      <button data-opt="C">E’nin sol çocuğu</button>
-      <button data-opt="D">H’nin sol çocuğu</button>
+      <button data-opt="A">I’nın sol çocuğu</button>
+      <button data-opt="B">K’nin sağ çocuğu</button>
+      <button data-opt="C">M’nin sol çocuğu</button>
+      <button data-opt="D">O’nun sol çocuğu</button>
     </div>
-    <div class="explain">D &lt; S → sola (E) · D &lt; E → sola (A) · D &gt; A → sağa (C) · D &gt; C → sağa: <b>null</b> → D, C’nin sağ çocuğu olur. Ekleme hep bir <b>null</b> bağlantıya, yani yaprak olarak yapılır.</div>
+    <div class="explain">L &lt; S → sola (P) · L &lt; P → sola (E) · L &gt; E → sağa (M) · L &lt; M → sola (I) · L &gt; I → sağa (K) · L &gt; K → sağa: <b>null</b> → L, K’nin sağ çocuğu olur. Ekleme hep bir <b>null</b> bağlantıya, yani yaprak olarak yapılır.</div>
   </div>
 </section>
 
@@ -1217,7 +1218,7 @@ private Node put(Node x, Key key, Value val) {
 
 <section data-sec="BST · laboratuvar">
   <h2>🧪 Kod laboratuvarı: put</h2>
-  <div class="treelab" data-lang="js" data-task="put" data-keys="S E A R C H E X A M P L E">
+  <div class="treelab" data-lang="js" data-task="put" data-keys="S U P E R M A R I O K A R T">
 <textarea>
 // Node: new Node(key) ile oluştur. Alanlar: key, left, right
 function put(node, key) {
@@ -1244,7 +1245,7 @@ function put(node, key) {
 
 <section data-sec="BST · laboratuvar">
   <h2>🐍 Aynı laboratuvar — Python (ve bir yığın taşması deneyi)</h2>
-  <div class="treelab" data-lang="python" data-task="put" data-keys="S E A R C H E X A M P L E">
+  <div class="treelab" data-lang="python" data-task="put" data-keys="S U P E R M A R I O K A R T">
 <textarea>
 # Node(key) ile oluştur. Alanlar: key, left, right
 def put(node, key):
@@ -1258,7 +1259,7 @@ def put(node, key):
 </textarea>
     <div class="lab-tasks">Python tarayıcıda çalışır (ilk açılışta internet gerekir).
       <ol>
-        <li>Önce S E A R C H E X A M P L E ile çalıştır.</li>
+        <li>Önce S U P E R M A R I O K A R T ile çalıştır.</li>
         <li>Hazır listeden <b>1..1200 (çok derin!)</b> seç. Hata mesajını oku: neden?</li>
         <li>Fonksiyonu <code>while</code> döngüsüyle (özyinelemesiz) yeniden yaz ve 1..1200’ü tekrar dene.</li>
       </ol>
@@ -1283,7 +1284,7 @@ def put(node, key):
 
 <section data-sec="BST · laboratuvar">
   <h2>🧪 Kod laboratuvarı: inorder gezinme</h2>
-  <div class="treelab" data-lang="js" data-task="traverse" data-keys="S E A R C H X M P L">
+  <div class="treelab" data-lang="js" data-task="traverse" data-keys="S U P E R M A I O K T">
 <textarea>
 // node: ağacın kökü (Node: key, left, right)
 // visit(key): bir anahtarı "ziyaret et" (çıktıya yaz)
@@ -1532,9 +1533,9 @@ function floor(x, key) {                       // <= key olan EN BÜYÜK düğü
 <section data-sec="sıralı işlemler">
   <div class="quiz" data-answer="B">
     <div class="qhead">Quiz 9 · sıralı işlemler</div>
-    <div class="q"><code>A C E H L M P R S X</code> anahtarlarını içeren bir BST’de <code>floor(G)</code> ve <code>ceiling(Q)</code> nedir?</div>
+    <div class="q"><code>A E I K M O P R S T U</code> anahtarlarını içeren bir BST’de <code>floor(G)</code> ve <code>ceiling(Q)</code> nedir?</div>
     <div class="opts">
-      <button data-opt="A">floor(G) = H, ceiling(Q) = P</button>
+      <button data-opt="A">floor(G) = I, ceiling(Q) = P</button>
       <button data-opt="B">floor(G) = E, ceiling(Q) = R</button>
       <button data-opt="C">floor(G) = G, ceiling(Q) = Q</button>
       <button data-opt="D">floor(G) = E, ceiling(Q) = P</button>
@@ -1808,21 +1809,21 @@ function del(x, key) {
 
 <section data-sec="silme">
   <h2>Silme animasyonu</h2>
-  <div class="bstviz" data-keys="S E A R C H X M P L" data-ops="del,delmin,put,reset" data-default="E" data-h="350" data-nulls data-hint="Önce bir yaprak (L), sonra tek çocuklu bir düğüm (A), sonra iki çocuklu bir düğüm (E) silin. ↺ ile başa dönün."></div>
-  <aside class="notes">E silinince ardılı H olur (sağ alt ağaç R-H-M-P-L’nin en küçüğü). H’nin yerine onun sağ çocuğu M geçer. Kökü (S) silmeyi de deneyin.</aside>
+  <div class="bstviz" data-keys="S U P E R M A I O K T" data-ops="del,delmin,put,reset" data-default="E" data-h="350" data-nulls data-hint="Önce bir yaprak (K), sonra tek çocuklu bir düğüm (U), sonra iki çocuklu bir düğüm (E) silin. ↺ ile başa dönün."></div>
+  <aside class="notes">E silinince ardılı I olur (sağ alt ağaç M-I-K-O’nun en küçüğü). I’nın eski yerine onun sağ çocuğu K geçer. Kökü (S) silmeyi de deneyin.</aside>
 </section>
 
 <section data-sec="silme">
   <div class="quiz" data-answer="C">
     <div class="qhead">Quiz 10 · silme</div>
-    <div class="q"><code>S E A R C H X M P L</code> ağacında <b>E</b> (iki çocuklu) silinirse yerine hangi anahtar gelir?</div>
+    <div class="q"><code>S U P E R M A I O K T</code> ağacında <b>E</b> (iki çocuklu) silinirse yerine hangi anahtar gelir?</div>
     <div class="opts">
       <button data-opt="A">A</button>
-      <button data-opt="B">C</button>
-      <button data-opt="C">H</button>
-      <button data-opt="D">R</button>
+      <button data-opt="B">M</button>
+      <button data-opt="C">I</button>
+      <button data-opt="D">K</button>
     </div>
-    <div class="explain">E’nin sağ alt ağacı: R, H, M, P, L. Bunların en küçüğü (sürekli sola giderek): R → H → (H’nin solu boş) → <b>H</b>. H, E’nin yerine geçer; H’nin eski yerine sağ çocuğu M gelir.</div>
+    <div class="explain">E’nin sağ alt ağacı: M, I, K, O. Bunların en küçüğü (sürekli sola giderek): M → I → (I’nın solu boş) → <b>I</b>. I, E’nin yerine geçer; I’nın eski yerine sağ çocuğu K gelir.</div>
   </div>
 </section>
 
@@ -2123,6 +2124,7 @@ function newNode(k) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/agac.js"></script>
 <script src="../ortak/arama.js"></script>
 <script src="demos.js"></script>

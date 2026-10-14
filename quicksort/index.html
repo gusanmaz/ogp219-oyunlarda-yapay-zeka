@@ -124,21 +124,21 @@
 <pre><code class="language-python" data-trim data-line-numbers="1-17|3|5-8|9-12|13-15|16-17"><script type="text/template">
 def partition(a, lo, hi):
     i, j = lo, hi + 1
-    v = a[lo]                          # pivot
+    v = a[lo]                    # pivot
     while True:
         i += 1
-        while a[i] < v:                # soldan: v'den küçükleri geç
+        while a[i] < v:          # soldan: v'den küçükleri geç
             if i == hi: break
             i += 1
         j -= 1
-        while v < a[j]:                # sağdan: v'den büyükleri geç
+        while v < a[j]:          # sağdan: v'den büyükleri geç
             if j == lo: break
             j -= 1
-        if i >= j:                     # kesiştiler mi?
+        if i >= j:               # kesiştiler mi?
             break
-        a[i], a[j] = a[j], a[i]        # yanlış taraftakileri takasla
-    a[lo], a[j] = a[j], a[lo]          # pivotu yerine koy
-    return j                           # pivotun son yeri
+        a[i], a[j] = a[j], a[i]  # yanlış taraftakileri takasla
+    a[lo], a[j] = a[j], a[lo]    # pivotu yerine koy
+    return j                     # pivotun son yeri
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -146,15 +146,15 @@ def partition(a, lo, hi):
 static int Partition(int[] a, int lo, int hi)
 {
     int i = lo, j = hi + 1;
-    int v = a[lo];                                  // pivot
+    int v = a[lo];                              // pivot
     while (true)
     {
-        while (a[++i] < v) if (i == hi) break;      // soldan
-        while (v < a[--j]) if (j == lo) break;      // sağdan
-        if (i >= j) break;                          // kesiştiler
+        while (a[++i] < v) if (i == hi) break;  // soldan
+        while (v < a[--j]) if (j == lo) break;  // sağdan
+        if (i >= j) break;                      // kesiştiler
         (a[i], a[j]) = (a[j], a[i]);
     }
-    (a[lo], a[j]) = (a[j], a[lo]);                  // pivotu yerine koy
+    (a[lo], a[j]) = (a[j], a[lo]);              // pivotu yerine koy
     return j;
 }
 // 🎒 a[++i]: önce i'yi BİR ARTIR, sonra a[i]'yi oku (modern kısa yazım)
@@ -164,14 +164,14 @@ static int Partition(int[] a, int lo, int hi)
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function partition(a, lo, hi) {
   let i = lo, j = hi + 1;
-  const v = a[lo];                                  // pivot
-  for (;;) {                                        // sonsuz döngü, break ile çıkılır
-    while (a[++i] < v) if (i === hi) break;         // soldan
-    while (v < a[--j]) if (j === lo) break;         // sağdan
-    if (i >= j) break;                              // kesiştiler
+  const v = a[lo];                           // pivot
+  for (;;) {                                 // sonsuz döngü, break ile çıkılır
+    while (a[++i] < v) if (i === hi) break;  // soldan
+    while (v < a[--j]) if (j === lo) break;  // sağdan
+    if (i >= j) break;                       // kesiştiler
     [a[i], a[j]] = [a[j], a[i]];
   }
-  [a[lo], a[j]] = [a[j], a[lo]];                    // pivotu yerine koy
+  [a[lo], a[j]] = [a[j], a[lo]];             // pivotu yerine koy
   return j;
 }
 </script></code></pre>
@@ -180,10 +180,11 @@ function partition(a, lo, hi) {
   <p class="mini">🎒 <code>while True:</code> / <code>for (;;)</code>: “sonsuza kadar dön” — döngüden <code>break</code> ile çıkılır. Koşul ortada kontrol edildiği için bu kalıp kullanılır.</p>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sorting" target="_blank" rel="noopener"><div class="lnk-t">🎞 Sıralama algoritmaları, adım adım</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi dizinizi girin; her karşılaştırma ve takas renkli olarak, kodun hangi satırında olduğu gösterilerek oynatılır.</div></a><a class="lnk" href="https://bost.ocks.org/mike/algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Visualizing Algorithms</div><div class="lnk-s">Mike Bostock</div><div class="lnk-w">Örnekleme, karıştırma ve sıralamanın çok güzel görselleştirmeleri; “yanlış karıştırma neden yanlıştır?” bölümü özellikle öğretici.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sorting" target="_blank" rel="noopener"><div class="lnk-t">📊 Sıralama algoritmaları, adım adım</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi dizinizi girin; her karşılaştırma ve takas renkli olarak, kodun hangi satırında olduğu gösterilerek oynatılır.</div></a><a class="lnk" href="https://bost.ocks.org/mike/algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Visualizing Algorithms</div><div class="lnk-s">Mike Bostock</div><div class="lnk-w">Örnekleme, karıştırma ve sıralamanın çok güzel görselleştirmeleri; “yanlış karıştırma neden yanlıştır?” bölümü özellikle öğretici.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -225,46 +226,46 @@ function partition(a, lo, hi) {
 import random
 
 def quicksort(a):
-    random.shuffle(a)                  # 1) karıştır: kötü durumdan korun
+    random.shuffle(a)         # 1) karıştır: kötü durumdan korun
     _sort(a, 0, len(a) - 1)
 
 def _sort(a, lo, hi):
     if hi <= lo:
         return
-    j = partition(a, lo, hi)           # 2) pivot a[j] son yerinde
-    _sort(a, lo, j - 1)                # 3) solu sırala
-    _sort(a, j + 1, hi)                #    sağı sırala
+    j = partition(a, lo, hi)  # 2) pivot a[j] son yerinde
+    _sort(a, lo, j - 1)       # 3) solu sırala
+    _sort(a, j + 1, hi)       #    sağı sırala
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 public static void QuickSort(int[] a)
 {
-    Shuffle(a);                        // 1) karıştır (Fisher–Yates)
+    Shuffle(a);                    // 1) karıştır (Fisher–Yates)
     Sort(a, 0, a.Length - 1);
 }
 
 static void Sort(int[] a, int lo, int hi)
 {
     if (hi <= lo) return;
-    int j = Partition(a, lo, hi);      // 2) bölümle
-    Sort(a, lo, j - 1);                // 3) sol
-    Sort(a, j + 1, hi);                //    sağ
+    int j = Partition(a, lo, hi);  // 2) bölümle
+    Sort(a, lo, j - 1);            // 3) sol
+    Sort(a, j + 1, hi);            //    sağ
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function quickSort(a) {
-  shuffle(a);                          // 1) karıştır (Fisher–Yates)
+  shuffle(a);                      // 1) karıştır (Fisher–Yates)
   sortRange(a, 0, a.length - 1);
 }
 
 function sortRange(a, lo, hi) {
   if (hi <= lo) return;
-  const j = partition(a, lo, hi);      // 2) bölümle
-  sortRange(a, lo, j - 1);             // 3) sol
-  sortRange(a, j + 1, hi);             //    sağ
+  const j = partition(a, lo, hi);  // 2) bölümle
+  sortRange(a, lo, j - 1);         // 3) sol
+  sortRange(a, j + 1, hi);         //    sağ
 }
 </script></code></pre>
     </div>
@@ -386,16 +387,16 @@ function sortRange(a, lo, hi) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 CUTOFF = 10
 def _sort(a, lo, hi):
-    if hi - lo + 1 <= CUTOFF:            # 1) küçük parça
+    if hi - lo + 1 <= CUTOFF:              # 1) küçük parça
         insertion_sort(a, lo, hi)
         return
-    m = median_of_3(a, lo, lo + (hi - lo) // 2, hi)   # 2) iyi pivot
-    a[lo], a[m] = a[m], a[lo]            #    pivotu başa al
+    m = median_of_3(a, lo, lo + (hi - lo)  // 2, hi)   # 2) iyi pivot
+    a[lo], a[m] = a[m], a[lo]              #    pivotu başa al
     j = partition(a, lo, hi)
     _sort(a, lo, j - 1)
     _sort(a, j + 1, hi)
 
-def median_of_3(a, i, j, k):             # üçünün ortadakinin indeksi
+def median_of_3(a, i, j, k):               # üçünün ortadakinin indeksi
     if a[i] < a[j]:
         if a[j] < a[k]: return j
         return k if a[i] < a[k] else i
@@ -408,8 +409,8 @@ def median_of_3(a, i, j, k):             # üçünün ortadakinin indeksi
 const int Cutoff = 10;
 static void Sort(int[] a, int lo, int hi)
 {
-    if (hi - lo + 1 <= Cutoff) { InsertionSort(a, lo, hi); return; }   // 1)
-    int m = MedianOf3(a, lo, lo + (hi - lo) / 2, hi);                  // 2)
+    if (hi - lo + 1 <= Cutoff) { InsertionSort(a, lo, hi); return; }  // 1)
+    int m = MedianOf3(a, lo, lo + (hi - lo) / 2, hi);                 // 2)
     (a[lo], a[m]) = (a[m], a[lo]);
     int j = Partition(a, lo, hi);
     Sort(a, lo, j - 1);
@@ -422,7 +423,7 @@ static void Sort(int[] a, int lo, int hi)
 const CUTOFF = 10;
 function sortRange(a, lo, hi) {
   if (hi - lo + 1 <= CUTOFF) { insertionSort(a, lo, hi); return; }  // 1)
-  const m = medianOf3(a, lo, lo + Math.floor((hi - lo) / 2), hi);  // 2)
+  const m = medianOf3(a, lo, lo + Math.floor((hi - lo) / 2), hi);   // 2)
   [a[lo], a[m]] = [a[m], a[lo]];
   const j = partition(a, lo, hi);
   sortRange(a, lo, j - 1);
@@ -471,15 +472,15 @@ def sort3(a, lo, hi):
     lt, i, gt = lo, lo + 1, hi
     v = a[lo]
     while i <= gt:
-        if a[i] < v:                         # küçük → sola
+        if a[i] < v:      # küçük → sola
             a[lt], a[i] = a[i], a[lt]
             lt += 1; i += 1
-        elif a[i] > v:                       # büyük → sağa
+        elif a[i] > v:    # büyük → sağa
             a[i], a[gt] = a[gt], a[i]
-            gt -= 1                          # (i ilerlemez: gelen elemana bakılmadı)
-        else:                                # eşit → yerinde kal
+            gt -= 1       # (i ilerlemez: gelen elemana bakılmadı)
+        else:             # eşit → yerinde kal
             i += 1
-    sort3(a, lo, lt - 1)                     # a[lt..gt] = v → bitti!
+    sort3(a, lo, lt - 1)  # a[lt..gt] = v → bitti!
     sort3(a, gt + 1, hi)
 </script></code></pre>
     </div>
@@ -552,17 +553,17 @@ function sort3(a, lo, hi) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 import random
 
-def select(a, k):                       # sıralanınca k. sıraya gelecek eleman
+def select(a, k):                  # sıralanınca k. sıraya gelecek eleman
     random.shuffle(a)
     lo, hi = 0, len(a) - 1
     while hi > lo:
         j = partition(a, lo, hi)
-        if j < k:   lo = j + 1          # aranan sağda
-        elif j > k: hi = j - 1          # aranan solda
-        else:       return a[k]         # bulundu
+        if j < k:   lo = j + 1     # aranan sağda
+        elif j > k: hi = j - 1     # aranan solda
+        else:       return a[k]    # bulundu
     return a[k]
 
-median = select(times, len(times) // 2)
+median = select(times, len(times)  // 2)
 # Hazırları: statistics.median(...), heapq.nsmallest(k, ...)
 </script></code></pre>
     </div>
@@ -646,12 +647,12 @@ int PartitionAlive(Enemy[] a, int count)
     int i = 0, j = count - 1;
     while (true)
     {
-        while (i <= j && a[i].alive) i++;      // soldan: ölü ara
-        while (i <= j && !a[j].alive) j--;     // sağdan: canlı ara
+        while (i <= j && a[i].alive) i++;   // soldan: ölü ara
+        while (i <= j && !a[j].alive) j--;  // sağdan: canlı ara
         if (i >= j) break;
         (a[i], a[j]) = (a[j], a[i]);
     }
-    return i;                                  // a[0..i-1] canlı
+    return i;                               // a[0..i-1] canlı
 }
 </script></code></pre>
     </div>
@@ -669,7 +670,7 @@ def partition_alive(a):               # canlıları başa topla, sayısını dö
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-function partitionAlive(a) {          // canlıları başa topla
+function partitionAlive(a) {  // canlıları başa topla
   let i = 0, j = a.length - 1;
   for (;;) {
     while (i <= j && a[i].alive) i++;
@@ -677,7 +678,7 @@ function partitionAlive(a) {          // canlıları başa topla
     if (i >= j) break;
     [a[i], a[j]] = [a[j], a[i]];
   }
-  return i;                           // a[0..i-1] canlı
+  return i;                   // a[0..i-1] canlı
 }
 </script></code></pre>
     </div>
@@ -905,6 +906,7 @@ def partition(a, lo, hi):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/siralama.js"></script>
 <script src="../ortak/mergesort.js"></script>
 <script src="../ortak/quicksort.js"></script>

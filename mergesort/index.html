@@ -134,17 +134,17 @@
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-13|2-3|4|6-9|10-13"><script type="text/template">
 def merge(a, aux, lo, mid, hi):
-    for k in range(lo, hi + 1):       # 1) kopyala
+    for k in range(lo, hi + 1):  # 1) kopyala
         aux[k] = a[k]
-    i, j = lo, mid + 1                # 2) iki yarının başları
-    for k in range(lo, hi + 1):       # 3) a[k]'yi doldur
-        if i > mid:                   # sol bitti
+    i, j = lo, mid + 1           # 2) iki yarının başları
+    for k in range(lo, hi + 1):  # 3) a[k]'yi doldur
+        if i > mid:              # sol bitti
             a[k] = aux[j]; j += 1
-        elif j > hi:                  # sağ bitti
+        elif j > hi:             # sağ bitti
             a[k] = aux[i]; i += 1
-        elif aux[j] < aux[i]:         # sağdaki küçük
+        elif aux[j] < aux[i]:    # sağdaki küçük
             a[k] = aux[j]; j += 1
-        else:                         # soldaki küçük ya da EŞİT
+        else:                    # soldaki küçük ya da EŞİT
             a[k] = aux[i]; i += 1
 </script></code></pre>
     </div>
@@ -152,7 +152,7 @@ def merge(a, aux, lo, mid, hi):
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 static void Merge(int[] a, int[] aux, int lo, int mid, int hi)
 {
-    for (int k = lo; k <= hi; k++) aux[k] = a[k];   // kopyala
+    for (int k = lo; k <= hi; k++) aux[k] = a[k];    // kopyala
     int i = lo, j = mid + 1;
     for (int k = lo; k <= hi; k++)
     {
@@ -168,13 +168,13 @@ static void Merge(int[] a, int[] aux, int lo, int mid, int hi)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function merge(a, aux, lo, mid, hi) {
-  for (let k = lo; k <= hi; k++) aux[k] = a[k];   // kopyala
+  for (let k = lo; k <= hi; k++) aux[k] = a[k];  // kopyala
   let i = lo, j = mid + 1;
   for (let k = lo; k <= hi; k++) {
-    if (i > mid)              a[k] = aux[j++];    // sol bitti
-    else if (j > hi)          a[k] = aux[i++];    // sağ bitti
-    else if (aux[j] < aux[i]) a[k] = aux[j++];    // sağdaki küçük
-    else                      a[k] = aux[i++];    // soldaki ≤
+    if (i > mid)              a[k] = aux[j++];   // sol bitti
+    else if (j > hi)          a[k] = aux[i++];   // sağ bitti
+    else if (aux[j] < aux[i]) a[k] = aux[j++];   // sağdaki küçük
+    else                      a[k] = aux[i++];   // soldaki ≤
   }
 }
 </script></code></pre>
@@ -183,10 +183,11 @@ function merge(a, aux, lo, mid, hi) {
   </div>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sorting" target="_blank" rel="noopener"><div class="lnk-t">🎞 Sıralama algoritmaları, adım adım</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi dizinizi girin; her karşılaştırma ve takas renkli olarak, kodun hangi satırında olduğu gösterilerek oynatılır.</div></a><a class="lnk" href="https://bost.ocks.org/mike/algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Visualizing Algorithms</div><div class="lnk-s">Mike Bostock</div><div class="lnk-w">Örnekleme, karıştırma ve sıralamanın çok güzel görselleştirmeleri; “yanlış karıştırma neden yanlıştır?” bölümü özellikle öğretici.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/sorting" target="_blank" rel="noopener"><div class="lnk-t">📊 Sıralama algoritmaları, adım adım</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kendi dizinizi girin; her karşılaştırma ve takas renkli olarak, kodun hangi satırında olduğu gösterilerek oynatılır.</div></a><a class="lnk" href="https://bost.ocks.org/mike/algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Visualizing Algorithms</div><div class="lnk-s">Mike Bostock</div><div class="lnk-w">Örnekleme, karıştırma ve sıralamanın çok güzel görselleştirmeleri; “yanlış karıştırma neden yanlıştır?” bölümü özellikle öğretici.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -217,29 +218,29 @@ function merge(a, aux, lo, mid, hi) {
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-11|2|6-7|8|9-10|11"><script type="text/template">
 def sort(a):
-    aux = [None] * len(a)              # yardımcı dizi bir kez ayrılır
+    aux = [None] * len(a)       # yardımcı dizi bir kez ayrılır
     _sort(a, aux, 0, len(a) - 1)
 
 def _sort(a, aux, lo, hi):
-    if hi <= lo:                       # 0 ya da 1 eleman: zaten sıralı
+    if hi <= lo:                # 0 ya da 1 eleman: zaten sıralı
         return
-    mid = lo + (hi - lo) // 2
-    _sort(a, aux, lo, mid)             # sol yarıyı sırala
-    _sort(a, aux, mid + 1, hi)         # sağ yarıyı sırala
-    merge(a, aux, lo, mid, hi)         # birleştir
+    mid = lo + (hi - lo)        // 2
+    _sort(a, aux, lo, mid)      # sol yarıyı sırala
+    _sort(a, aux, mid + 1, hi)  # sağ yarıyı sırala
+    merge(a, aux, lo, mid, hi)  # birleştir
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 public static void Sort(int[] a)
 {
-    int[] aux = new int[a.Length];     // bir kez ayır
+    int[] aux = new int[a.Length];  // bir kez ayır
     Sort(a, aux, 0, a.Length - 1);
 }
 
 static void Sort(int[] a, int[] aux, int lo, int hi)
 {
-    if (hi <= lo) return;              // temel durum
+    if (hi <= lo) return;           // temel durum
     int mid = lo + (hi - lo) / 2;
     Sort(a, aux, lo, mid);
     Sort(a, aux, mid + 1, hi);
@@ -250,12 +251,12 @@ static void Sort(int[] a, int[] aux, int lo, int hi)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 function mergeSort(a) {
-  const aux = new Array(a.length);     // bir kez ayır
+  const aux = new Array(a.length);  // bir kez ayır
   sortRange(a, aux, 0, a.length - 1);
 }
 
 function sortRange(a, aux, lo, hi) {
-  if (hi <= lo) return;                // temel durum
+  if (hi <= lo) return;             // temel durum
   const mid = lo + Math.floor((hi - lo) / 2);
   sortRange(a, aux, lo, mid);
   sortRange(a, aux, mid + 1, hi);
@@ -279,7 +280,7 @@ private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
 </section>
 
 <section data-sec="yukarıdan aşağı">
-  <h2>İz tablosu — M E R G E S O R T E X A M P L E</h2>
+  <h2>İz tablosu — D O N K E Y K O N G J U N I O R</h2>
   <div class="demo" data-demo="mergetrace"></div>
   <div class="trace-legend"><b class="r">kırmızı</b> = bu adımda birleştirilen parça (artık sıralı) · <b class="g">gri</b> = bu adımda dokunulmayanlar</div>
   <aside class="notes">İz tablosu. Önce ikililer (0-1, 2-3), sonra dörtlüler (0-3), sonra sekizli (0-7)… Sağ yarı sol yarı tamamen bittikten SONRA başlar: bu özyinelemenin derinlik öncelikli doğası (yığınlar dersindeki DFS!).</aside>
@@ -378,13 +379,13 @@ private static void sort(Comparable[] a, Comparable[] aux, int lo, int hi) {
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 CUTOFF = 10
 def _sort(a, aux, lo, hi):
-    if hi - lo + 1 <= CUTOFF:          # 1) küçük parça → insertion sort
+    if hi - lo + 1 <= CUTOFF:  # 1) küçük parça → insertion sort
         insertion_sort(a, lo, hi)
         return
-    mid = lo + (hi - lo) // 2
+    mid = lo + (hi - lo)       // 2
     _sort(a, aux, lo, mid)
     _sort(a, aux, mid + 1, hi)
-    if a[mid] <= a[mid + 1]:           # 2) zaten sıralı → birleştirme gereksiz
+    if a[mid] <= a[mid + 1]:   # 2) zaten sıralı → birleştirme gereksiz
         return
     merge(a, aux, lo, mid, hi)
 </script></code></pre>
@@ -394,11 +395,11 @@ def _sort(a, aux, lo, hi):
 const int Cutoff = 10;
 static void Sort(int[] a, int[] aux, int lo, int hi)
 {
-    if (hi - lo + 1 <= Cutoff) { InsertionSort(a, lo, hi); return; }   // 1)
+    if (hi - lo + 1 <= Cutoff) { InsertionSort(a, lo, hi); return; }  // 1)
     int mid = lo + (hi - lo) / 2;
     Sort(a, aux, lo, mid);
     Sort(a, aux, mid + 1, hi);
-    if (a[mid] <= a[mid + 1]) return;                                  // 2)
+    if (a[mid] <= a[mid + 1]) return;                                 // 2)
     Merge(a, aux, lo, mid, hi);
 }
 </script></code></pre>
@@ -407,11 +408,11 @@ static void Sort(int[] a, int[] aux, int lo, int hi)
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 const CUTOFF = 10;
 function sortRange(a, aux, lo, hi) {
-  if (hi - lo + 1 <= CUTOFF) { insertionSort(a, lo, hi); return; }   // 1)
+  if (hi - lo + 1 <= CUTOFF) { insertionSort(a, lo, hi); return; }  // 1)
   const mid = lo + Math.floor((hi - lo) / 2);
   sortRange(a, aux, lo, mid);
   sortRange(a, aux, mid + 1, hi);
-  if (a[mid] <= a[mid + 1]) return;                                   // 2)
+  if (a[mid] <= a[mid + 1]) return;                                 // 2)
   merge(a, aux, lo, mid, hi);
 }
 </script></code></pre>
@@ -588,11 +589,11 @@ function mergeSortBU(a) {
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
 # Yol 1: anahtar olarak DEMET (tuple) — önce ilk eleman, eşitse ikinci
-players.sort(key=lambda p: (-p.score, p.time))   # -score: büyükten küçüğe
+players.sort(key=lambda p: (-p.score, p.time))     # -score: büyükten küçüğe
 
 # Yol 2: kararlılığı kullan — önce İKİNCİL anahtar, sonra BİRİNCİL
-players.sort(key=lambda p: p.time)               # 1) süreye göre
-players.sort(key=lambda p: p.score, reverse=True)   # 2) puana göre (kararlı → süre sırası korunur)
+players.sort(key=lambda p: p.time)                 # 1) süreye göre
+players.sort(key=lambda p: p.score, reverse=True)  # 2) puana göre (kararlı → süre sırası korunur)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -605,9 +606,9 @@ var board = players.OrderByDescending(p => p.Score)
 // Yol 2: List.Sort (KARARSIZ!) — eşitliği karşılaştırıcının içinde çöz
 players.Sort((x, y) =>
 {
-    int c = y.Score.CompareTo(x.Score);      // puan: büyükten küçüğe
+    int c = y.Score.CompareTo(x.Score);  // puan: büyükten küçüğe
     if (c != 0) return c;
-    return x.Time.CompareTo(y.Time);         // eşitse süre: kısadan uzuna
+    return x.Time.CompareTo(y.Time);     // eşitse süre: kısadan uzuna
 });
 </script></code></pre>
     </div>
@@ -615,8 +616,8 @@ players.Sort((x, y) =>
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // JS'in sort'u ES2019'dan beri KARARLI (Timsort)
 players.sort((x, y) => {
-  if (x.score !== y.score) return y.score - x.score;   // puan: büyükten küçüğe
-  return x.time - y.time;                              // eşitse süre
+  if (x.score !== y.score) return y.score - x.score;  // puan: büyükten küçüğe
+  return x.time - y.time;                             // eşitse süre
 });
 </script></code></pre>
     </div>
@@ -796,6 +797,7 @@ def merge(a, aux, lo, mid, hi):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/siralama.js"></script>
 <script src="../ortak/mergesort.js"></script>
 <script src="demos.js"></script>

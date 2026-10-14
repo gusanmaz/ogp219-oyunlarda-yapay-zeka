@@ -143,10 +143,11 @@
   <p class="mini">Arkadaşlık “karşılıklı” → <b>yönsüz</b> kenar. “Takip ediyor”, “tek yönlü kapı”, “önce bu görev” → <b>yönlü</b> (sonraki sunum).</p>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/graphds" target="_blank" rel="noopener"><div class="lnk-t">🎞 Graf gösterimleri</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı grafı komşuluk matrisi, komşuluk listesi ve kenar listesi olarak yan yana gösterir; grafı kendiniz çizebilirsiniz.</div></a><a class="lnk" href="https://visualgo.net/en/dfsbfs" target="_blank" rel="noopener"><div class="lnk-t">🎞 DFS, BFS, topolojik sıralama</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Graf gezintilerini ve yığın/kuyruk içeriğini adım adım gösterir.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Flow Field Pathfinding (kule savunması)</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Tek bir BFS ile bütün düşmanlara yol bulmak: haritaya tıklayıp hedefi değiştirin, oklar anında güncellenir.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Grids and Graphs</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Izgaranın bir graf olduğunu ve komşuların nasıl bulunduğunu çizimlerle anlatır.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/graphds" target="_blank" rel="noopener"><div class="lnk-t">📊 Graf gösterimleri</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Aynı grafı komşuluk matrisi, komşuluk listesi ve kenar listesi olarak yan yana gösterir; grafı kendiniz çizebilirsiniz.</div></a><a class="lnk" href="https://visualgo.net/en/dfsbfs" target="_blank" rel="noopener"><div class="lnk-t">📊 DFS, BFS, topolojik sıralama</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Graf gezintilerini ve yığın/kuyruk içeriğini adım adım gösterir.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Flow Field Pathfinding (kule savunması)</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Tek bir BFS ile bütün düşmanlara yol bulmak: haritaya tıklayıp hedefi değiştirin, oklar anında güncellenir.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank" rel="noopener"><div class="lnk-t">🔴 Grids and Graphs</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Izgaranın bir graf olduğunu ve komşuların nasıl bulunduğunu çizimlerle anlatır.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -210,7 +211,7 @@ class Graph:
     def __init__(self, V):
         self.V = V
         self.E = 0
-        self.adj = [[] for v in range(V)]   # V tane boş liste
+        self.adj = [[] for v in range(V)]  # V tane boş liste
 
     def add_edge(self, v, w):
         self.adj[v].append(w)              # yönsüz: iki yöne de
@@ -228,7 +229,7 @@ for w in g.adj[0]:
 class Graph
 {
     public int V, E;
-    public List<int>[] Adj;                 // her düğüm için bir liste
+    public List<int>[] Adj;  // her düğüm için bir liste
 
     public Graph(int v)
     {
@@ -239,7 +240,7 @@ class Graph
 
     public void AddEdge(int v, int w)
     {
-        Adj[v].Add(w);                      // yönsüz: iki yöne de
+        Adj[v].Add(w);       // yönsüz: iki yöne de
         Adj[w].Add(v);
         E++;
     }
@@ -252,10 +253,10 @@ class Graph {
   constructor(V) {
     this.V = V;
     this.E = 0;
-    this.adj = Array.from({ length: V }, () => []);   // V tane boş liste
+    this.adj = Array.from({ length: V }, () => []);  // V tane boş liste
   }
   addEdge(v, w) {
-    this.adj[v].push(w);                // yönsüz: iki yöne de
+    this.adj[v].push(w);                             // yönsüz: iki yöne de
     this.adj[w].push(v);
     this.E++;
   }
@@ -281,13 +282,13 @@ MAP = ["#########",
        "#.......#",
        "#########"]
 
-def neighbors(r, c):                  # graf bellekte yok: komşular hesaplanır
-    for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:   # sağ, alt, sol, üst
+def neighbors(r, c):                                   # graf bellekte yok: komşular hesaplanır
+    for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:  # sağ, alt, sol, üst
         nr, nc = r + dr, c + dc
-        if MAP[nr][nc] != "#":        # duvar değilse kenar var
+        if MAP[nr][nc] != "#":                         # duvar değilse kenar var
             yield (nr, nc)
 
-print(list(neighbors(1, 1)))          # [(1, 2), (2, 1)]
+print(list(neighbors(1, 1)))                           # [(1, 2), (2, 1)]
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -309,13 +310,13 @@ static List<(int, int)> Neighbors(char[,] map, int r, int c)
     </div>
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]];   // sağ, alt, sol, üst
+const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]];     // sağ, alt, sol, üst
 
 function neighbors(map, r, c) {
   const result = [];
   for (const [dr, dc] of DIRS) {
     const nr = r + dr, nc = c + dc;
-    if (map[nr][nc] !== "#") result.push([nr, nc]);   // duvar değilse kenar
+    if (map[nr][nc] !== "#") result.push([nr, nc]);  // duvar değilse kenar
   }
   return result;
 }
@@ -375,8 +376,8 @@ function neighbors(map, r, c) {
 <pre><code class="language-python" data-trim data-line-numbers="1-6|8-13|15-24"><script type="text/template">
 class DepthFirstPaths:
     def __init__(self, G, s):
-        self.marked = [False] * G.V     # bu düğüme ulaştık mı?
-        self.edge_to = [-1] * G.V       # buraya hangi düğümden geldik?
+        self.marked = [False] * G.V  # bu düğüme ulaştık mı?
+        self.edge_to = [-1] * G.V    # buraya hangi düğümden geldik?
         self.s = s
         self._dfs(G, s)
 
@@ -384,14 +385,14 @@ class DepthFirstPaths:
         self.marked[v] = True
         for w in G.adj[v]:
             if not self.marked[w]:
-                self.edge_to[w] = v     # w'ye v'den geldik
-                self._dfs(G, w)         # özyineleme: derine in
+                self.edge_to[w] = v  # w'ye v'den geldik
+                self._dfs(G, w)      # özyineleme: derine in
 
-    def path_to(self, v):               # s → v yolu (yoksa None)
+    def path_to(self, v):            # s → v yolu (yoksa None)
         if not self.marked[v]:
             return None
         path = []
-        while v != self.s:              # edgeTo zincirini geriye izle
+        while v != self.s:           # edgeTo zincirini geriye izle
             path.append(v)
             v = self.edge_to[v]
         path.append(self.s)
@@ -403,8 +404,8 @@ class DepthFirstPaths:
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 class DepthFirstPaths
 {
-    bool[] marked;          // bu düğüme ulaştık mı?
-    int[] edgeTo;           // buraya hangi düğümden geldik?
+    bool[] marked;  // bu düğüme ulaştık mı?
+    int[] edgeTo;   // buraya hangi düğümden geldik?
     int s;
 
     public DepthFirstPaths(Graph G, int s)
@@ -515,7 +516,7 @@ function depthFirstPaths(G, s) {
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-from collections import deque           # hızlı kuyruk
+from collections import deque  # hızlı kuyruk
 
 def bfs(G, s):
     marked = [False] * G.V
@@ -524,14 +525,14 @@ def bfs(G, s):
     q = deque([s])
     marked[s] = True
     dist_to[s] = 0
-    while q:                            # kuyruk boş değilken
-        v = q.popleft()                 # baştan çıkar (FIFO)
+    while q:                   # kuyruk boş değilken
+        v = q.popleft()        # baştan çıkar (FIFO)
         for w in G.adj[v]:
             if not marked[w]:
                 marked[w] = True
                 edge_to[w] = v
                 dist_to[w] = dist_to[v] + 1
-                q.append(w)             # sona ekle
+                q.append(w)    # sona ekle
     return edge_to, dist_to
 </script></code></pre>
     </div>
@@ -545,14 +546,14 @@ static int[] Bfs(Graph G, int s, int[] edgeTo)
     marked[s] = true; q.Enqueue(s);
     while (q.Count > 0)
     {
-        int v = q.Dequeue();                     // baştan çıkar
+        int v = q.Dequeue();  // baştan çıkar
         foreach (int w in G.Adj[v])
         {
             if (marked[w]) continue;
             marked[w] = true;
             edgeTo[w] = v;
             distTo[w] = distTo[v] + 1;
-            q.Enqueue(w);                        // sona ekle
+            q.Enqueue(w);     // sona ekle
         }
     }
     return distTo;
@@ -566,15 +567,15 @@ function bfs(G, s) {
   const edgeTo = new Array(G.V).fill(-1);
   const distTo = new Array(G.V).fill(-1);
   const q = [s];
-  let head = 0;                         // shift() yavaş: baş işaretçisi
+  let head = 0;           // shift() yavaş: baş işaretçisi
   marked[s] = true; distTo[s] = 0;
   while (head < q.length) {
-    const v = q[head++];                // baştan çıkar
+    const v = q[head++];  // baştan çıkar
     for (const w of G.adj[v]) {
       if (marked[w]) continue;
       marked[w] = true; edgeTo[w] = v;
       distTo[w] = distTo[v] + 1;
-      q.push(w);                        // sona ekle
+      q.push(w);          // sona ekle
     }
   }
   return { edgeTo, distTo };
@@ -647,8 +648,8 @@ def connected_components(G):
     id_ = [-1] * G.V
     count = 0
     for s in range(G.V):
-        if id_[s] == -1:            # yeni bileşen bulundu
-            stack = [s]             # açık yığınla DFS (taşma yok)
+        if id_[s] == -1:  # yeni bileşen bulundu
+            stack = [s]   # açık yığınla DFS (taşma yok)
             id_[s] = count
             while stack:
                 v = stack.pop()
@@ -937,6 +938,7 @@ def count_islands(grid):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/graf.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

@@ -106,6 +106,8 @@
 <section data-sec="ızgara">
   <h2>Canlı: kaba kuvvet mi, ızgara mı? 🧮</h2>
 <div class="demo" data-demo="gridhash"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>“kaba kuvvet”i seçip top sayısını 300 → 600 → 1200 yapın: test sayısı her seferinde <b>dört</b> katına çıkıyor (44.850 → 179.700 → 719.400).</li><li>“düzgün ızgara”ya geçin: aynı 1200 top için test sayısı kaç? “kat fazla” yazısını okuyun.</li><li>Hücre boyunu 160 yapın: hücreler kalabalıklaşır, test sayısı yükselir. 10 yapın: hücre topun çapı kadar; 3×3 komşuluk sınırda.</li><li>Fareyi kalabalık bir bölgeye götürün: 1200 toptan yalnızca birkaç düzinesi “aday”.</li><li>Bir sonraki slayttaki formülle 300 top ve hücre boyu 40 için test sayısını tahmin edin; sonra demoda okuyun.</li></ol></div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?"><ol style="font-size:.9em"><li><b>Toplar</b> hareket ediyor; <b>kırmızı</b> olanlar o an bir başkasıyla çakışanlar.</li><li><b>Mavi kareler</b> ızgara hücreleri; ne kadar koyuysa içinde o kadar çok top var.</li><li><b>Sol üst:</b> bu karede yapılan çift testi sayısı; altında “kaba kuvvet olsaydı” sayısı ve kaç kat fark ettiği.</li><li><b>Fare:</b> sarı çerçeve, farenin bulunduğu hücrenin 3×3 komşuluğu; sarı toplar “yakınımda kim var?” sorgusunun adayları.</li><li><b>Alt satır:</b> dolu hücre sayısı ve en kalabalık hücredeki top sayısı (hücre boyunu ayarlarken bakacağınız sayı).</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="ızgara">
@@ -115,7 +117,7 @@
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://gameprogrammingpatterns.com/spatial-partition.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Spatial Partition</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Izgara, quadtree ve BSP ile “yakınımdaki nesneler” sorusunu hızlandırmak.</div></a><a class="lnk" href="https://www.jeffreythompson.org/collision-detection/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Collision Detection</div><div class="lnk-s">Jeffrey Thompson</div><div class="lnk-w">Nokta, daire, dikdörtgen, çizgi ve çokgen çarpışmalarının p5.js ile adım adım anlatımı.</div></a><a class="lnk" href="https://www.redblobgames.com/grids/hexagons/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Hexagonal Grids</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Altıgen ızgarada koordinat, komşu, mesafe ve yol bulma; oyun geliştiricilerin en çok başvurduğu sayfalardan biri.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://gameprogrammingpatterns.com/spatial-partition.html" target="_blank" rel="noopener"><div class="lnk-t">📘 Spatial Partition</div><div class="lnk-s">Game Programming Patterns (Robert Nystrom)</div><div class="lnk-w">Izgara, quadtree ve BSP ile “yakınımdaki nesneler” sorusunu hızlandırmak.</div></a><a class="lnk" href="https://www.jeffreythompson.org/collision-detection/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Collision Detection</div><div class="lnk-s">Jeffrey Thompson</div><div class="lnk-w">Nokta, daire, dikdörtgen, çizgi ve çokgen çarpışmalarının p5.js ile adım adım anlatımı.</div></a><a class="lnk" href="https://www.redblobgames.com/grids/hexagons/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Hexagonal Grids</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Altıgen ızgarada koordinat, komşu, mesafe ve yol bulma; oyun geliştiricilerin en çok başvurduğu sayfalardan biri.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -367,6 +369,7 @@ def candidates(grid, size, x, y, r):
 <section data-sec="dörtlü">
   <h2>Canlı: dörtlü ağaç 🌳</h2>
 <div class="demo" data-demo="quadtree"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri noktalar nesneler; ince çizgiler ağacın kareleri. Yeşil daire fareyi izleyen sorgu. Sarı kareler sorgunun açtığı yapraklar; sarı noktalar bakılanlar; yeşil noktalar daire içindekiler.</li><li>Boş bir yere birkaç kez üst üste tıklayın: beşinci noktada (kapasite 4) kare dörde bölünür. Aynı yere tıklamaya devam edin: bölünme derinleşir.</li><li>Alt satırı okuyun: “… dal hiç açılmadı · … noktaya bakıldı (kaba kuvvet: …)”. Daireyi boş bölgeye götürün: bakılan nokta 0’a yakın.</li><li>“kare kapasitesi”ni 1 yapın: çok derin, çok düğümlü ağaç. 10 yapın: sığ ağaç, yaprak başına daha çok test. Tatlı nokta ortada.</li><li>“🎯 +100 kümeli”ye birkaç kez basın: sağ üstteki küme incecik bölünürken sol alt hâlâ dört büyük kare.</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="dörtlü">
@@ -465,6 +468,7 @@ def quadrant(px, py, cx, cy):
 <section data-sec="bvh">
   <h2>Canlı: ışın ve kutu ağacı 🎯</h2>
 <div class="demo" data-demo="bvh"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> gri kutular nesneler; renkli çerçeveler BVH düğümleri (her renk bir derinlik). Mavi nokta nişancı (sürüklenir), siyah çizgi ışın, kırmızı nokta ilk vuruş.</li><li><b>Kalın</b> çerçeveler ışının girdiği düğümler; <b>soluk kesikli</b> çerçeveler ıskalanan ve içi hiç açılmayan düğümler. Sarı: gerçekten test edilen nesneler.</li><li>“gösterilen derinlik”i 0’dan 5’e tek tek artırın: ağacın katlarını görün (0 = bütün sahne, sonra ikiye, dörde…).</li><li>Işını boşluğa doğrultun: birkaç düğüm testiyle “hiçbir şeye çarpmıyor” cevabı gelir.</li><li>Sol üstteki iki satırı karşılaştırın. Nesne sayısını 8 → 60 yapın: kaba kuvvet 8 → 60; BVH’nin sayısı çok daha yavaş artar (ağaç yalnızca birkaç kat derinleşir).</li></ol></div><!--/dh-->
 </section>
 
 <section data-sec="bvh">
@@ -481,8 +485,8 @@ function bvhKur(nesneler) {
   const kutu = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
   for (const n of nesneler) { kutu.x0 = min(kutu.x0, n.x); kutu.y0 = min(kutu.y0, n.y);
                               kutu.x1 = max(kutu.x1, n.x + n.w); kutu.y1 = max(kutu.y1, n.y + n.h); }
-  if (nesneler.length <= 2) return { kutu, nesneler };            // yaprak
-  const yatay = kutu.x1 - kutu.x0 >= kutu.y1 - kutu.y0;            // uzun eksen boyunca sırala, ortadan böl
+  if (nesneler.length <= 2) return { kutu, nesneler };   // yaprak
+  const yatay = kutu.x1 - kutu.x0 >= kutu.y1 - kutu.y0;  // uzun eksen boyunca sırala, ortadan böl
   const s = nesneler.slice().sort((a, b) => yatay ? (a.x + a.w / 2) - (b.x + b.w / 2) : (a.y + a.h / 2) - (b.y + b.h / 2));
   const m = s.length >> 1;
   return { kutu, cocuklar: [bvhKur(s.slice(0, m)), bvhKur(s.slice(m))] };
@@ -501,7 +505,7 @@ function isinKutu(o, d, x0, y0, x1, y1) {
 
 function isinAt(dugum, o, d, enIyi = { t: Infinity, nesne: null }) {
   const t = isinKutu(o, d, dugum.kutu.x0, dugum.kutu.y0, dugum.kutu.x1, dugum.kutu.y1);
-  if (t === null || t > enIyi.t) return enIyi;                    // büyük kutuyu ıskaladı: içindekilerin HEPSİNİ atla
+  if (t === null || t > enIyi.t) return enIyi;           // büyük kutuyu ıskaladı: içindekilerin HEPSİNİ atla
   if (dugum.nesneler) { for (const n of dugum.nesneler) { const tn = isinKutu(o, d, n.x, n.y, n.x + n.w, n.y + n.h);
                                                            if (tn !== null && tn < enIyi.t) { enIyi.t = tn; enIyi.nesne = n; } } }
   else for (const c of dugum.cocuklar) isinAt(c, o, d, enIyi);
@@ -714,6 +718,7 @@ function draw() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/oyunai.js"></script>
 <script src="demos.js"></script>
 <script>SL.boot();</script>

@@ -107,7 +107,7 @@
 
   /* ---------- 2) ikili arama izi ---------- */
   D.bintrace = function (root) {
-    const a = SL.parseValues(root.dataset.values || 'A C E H L M P R S X');
+    const a = SL.parseValues(root.dataset.values || 'A E I K M O P R S T U');
     const key = root.dataset.key || 'P';
     const rows = [];
     const cells = f => a.map((v, i) => `<td class="${i < f.lo || i > f.hi ? 'gry' : i === f.mid ? 'red' : 'blk'}">${v}</td>`).join('');

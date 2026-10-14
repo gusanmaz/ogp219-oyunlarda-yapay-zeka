@@ -127,10 +127,11 @@
   </table>
 </section>
 
+
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
   <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
-  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/mst" target="_blank" rel="noopener"><div class="lnk-t">🎞 En küçük kapsayan ağaç</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kruskal ve Prim’i aynı graf üzerinde, kenar kenar karşılaştırın.</div></a><a class="lnk" href="https://jamisbuck.org/mazes/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Maze Algorithms</div><div class="lnk-s">Jamis Buck</div><div class="lnk-w">Labirent üreten on iki algoritmayı (Kruskal, Prim, geri izleme…) yan yana, canlı izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
+  <div class="lnks"><a class="lnk" href="https://visualgo.net/en/mst" target="_blank" rel="noopener"><div class="lnk-t">📊 En küçük kapsayan ağaç</div><div class="lnk-s">VisuAlgo (NUS)</div><div class="lnk-w">Kruskal ve Prim’i aynı graf üzerinde, kenar kenar karşılaştırın.</div></a><a class="lnk" href="https://jamisbuck.org/mazes/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Maze Algorithms</div><div class="lnk-s">Jamis Buck</div><div class="lnk-w">Labirent üreten on iki algoritmayı (Kruskal, Prim, geri izleme…) yan yana, canlı izleyin.</div></a><a class="lnk" href="https://www.cs.usfca.edu/~galles/visualization/Algorithms.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Data Structure Visualizations</div><div class="lnk-s">David Galles (USF)</div><div class="lnk-w">Neredeyse her veri yapısı için bir oyun alanı: ekle, sil, ara düğmeleriyle yapının nasıl değiştiğini izleyin.</div></a></div>
   <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
@@ -222,18 +223,18 @@
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-11|4|5-8|9-10"><script type="text/template">
-def kruskal(V, edges):                  # edges: (v, w, ağırlık) listesi
-    uf = UnionFind(V)                   # Ders 1'deki yapı
+def kruskal(V, edges):                                        # edges: (v, w, ağırlık) listesi
+    uf = UnionFind(V)                                         # Ders 1'deki yapı
     mst = []
-    for v, w, wt in sorted(edges, key=lambda e: e[2]):   # hafiften ağıra
-        if uf.find(v) != uf.find(w):    # farklı bileşenler mi?
-            uf.union(v, w)              # birleştir
+    for v, w, wt in sorted(edges, key=lambda e: e[2]):        # hafiften ağıra
+        if uf.find(v) != uf.find(w):                          # farklı bileşenler mi?
+            uf.union(v, w)                                    # birleştir
             mst.append((v, w, wt))
-            if len(mst) == V - 1:       # ağaç tamam
+            if len(mst) == V - 1:                             # ağaç tamam
                 break
     return mst
 
-edges = [(0, 7, .16), (2, 3, .17), (1, 7, .19), (0, 2, .26)]   # ...
+edges = [(0, 7, .16), (2, 3, .17), (1, 7, .19), (0, 2, .26)]  # ...
 print(sum(e[2] for e in kruskal(8, edges)))
 </script></code></pre>
     </div>
@@ -241,12 +242,12 @@ print(sum(e[2] for e in kruskal(8, edges)))
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
 static List<(int v, int w, double wt)> Kruskal(int V, List<(int v, int w, double wt)> edges)
 {
-    edges.Sort((a, b) => a.wt.CompareTo(b.wt));   // hafiften ağıra
+    edges.Sort((a, b) => a.wt.CompareTo(b.wt));      // hafiften ağıra
     var uf = new UnionFind(V);
     var mst = new List<(int v, int w, double wt)>();
     foreach (var e in edges)
     {
-        if (uf.Find(e.v) == uf.Find(e.w)) continue;   // döngü yapar: atla
+        if (uf.Find(e.v) == uf.Find(e.w)) continue;  // döngü yapar: atla
         uf.Union(e.v, e.w);
         mst.Add(e);
         if (mst.Count == V - 1) break;
@@ -286,10 +287,10 @@ function kruskal(V, edges) {                  // edges: [v, w, ağırlık]
   <div class="tabs short">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
-def weight(e):            # "bir kenar al, ağırlığını döndür"
+def weight(e):                            # "bir kenar al, ağırlığını döndür"
     return e[2]
 
-edges_sorted = sorted(edges, key=weight)     # lambda'sız aynısı
+edges_sorted = sorted(edges, key=weight)  # lambda'sız aynısı
 </script></code></pre>
     </div>
     <div class="tab" data-label="C#">
@@ -368,12 +369,12 @@ function kruskal(V, edges) {
 <pre><code class="language-python" data-trim data-line-numbers="1-11|13-20"><script type="text/template">
 import heapq
 
-def prim(V, adj):                       # adj[v] = [(w, ağırlık), ...]
-    marked = [False] * V                # ağaçta mı?
-    pq = []                             # (ağırlık, v, w)
+def prim(V, adj):                     # adj[v] = [(w, ağırlık), ...]
+    marked = [False] * V              # ağaçta mı?
+    pq = []                           # (ağırlık, v, w)
     total = 0
 
-    def visit(v):                       # v'yi ağaca al, kenarlarını PQ'ya koy
+    def visit(v):                     # v'yi ağaca al, kenarlarını PQ'ya koy
         marked[v] = True
         for w, wt in adj[v]:
             if not marked[w]:
@@ -381,9 +382,9 @@ def prim(V, adj):                       # adj[v] = [(w, ağırlık), ...]
 
     visit(0)
     while pq:
-        wt, v, w = heapq.heappop(pq)    # en hafif kesişen kenar
+        wt, v, w = heapq.heappop(pq)  # en hafif kesişen kenar
         if marked[v] and marked[w]:
-            continue                    # bayat kenar: atla
+            continue                  # bayat kenar: atla
         total += wt
         visit(w if not marked[w] else v)
     return total
@@ -407,8 +408,8 @@ static double Prim(int V, List<(int w, double wt)>[] adj)
     Visit(0);
     while (pq.Count > 0)
     {
-        var e = pq.Dequeue();                       // en hafif kesişen kenar
-        if (marked[e.v] && marked[e.w]) continue;   // bayat
+        var e = pq.Dequeue();                      // en hafif kesişen kenar
+        if (marked[e.v] && marked[e.w]) continue;  // bayat
         total += e.wt;
         Visit(marked[e.w] ? e.v : e.w);
     }
@@ -419,9 +420,9 @@ static double Prim(int V, List<(int w, double wt)>[] adj)
     <div class="tab" data-label="JavaScript">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
 // MinPQ: Öncelik Kuyrukları sunumundaki ikili yığın (push/pop/size)
-function prim(V, adj) {                 // adj[v] = [[w, ağırlık], ...]
+function prim(V, adj) {                         // adj[v] = [[w, ağırlık], ...]
   const marked = new Array(V).fill(false);
-  const pq = new MinPQ((a, b) => a[2] - b[2]);   // [v, w, ağırlık]
+  const pq = new MinPQ((a, b) => a[2] - b[2]);  // [v, w, ağırlık]
   let total = 0;
   const visit = v => {
     marked[v] = true;
@@ -429,8 +430,8 @@ function prim(V, adj) {                 // adj[v] = [[w, ağırlık], ...]
   };
   visit(0);
   while (pq.size > 0) {
-    const [v, w, wt] = pq.pop();        // en hafif kesişen kenar
-    if (marked[v] && marked[w]) continue;   // bayat
+    const [v, w, wt] = pq.pop();                // en hafif kesişen kenar
+    if (marked[v] && marked[w]) continue;       // bayat
     total += wt;
     visit(marked[w] ? v : w);
   }
@@ -549,6 +550,15 @@ def prim(V, adj):
 <section data-sec="oyunda">
   <h2>🎮 Prosedürel zindan: odaları MST ile bağla</h2>
   <div class="demo" data-demo="dungeon"></div>
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?">
+    <ul>
+      <li>Dikdörtgenler odalar (A = giriş, son harf = patron odası). <b>İnce gri çizgiler</b> aday koridorlar; kazılmış koridorlar kalın kahverengi.</li>
+      <li><b>Odanın rengi, bağlı olduğu grubu gösterir.</b> Başta her oda ayrı renktedir. Bir koridor kazılınca iki grup aynı renge boyanır. Bütün odalar tek renk olduğunda zindan bağlanmıştır.</li>
+      <li><b>“İleri ▶|”</b> ile adım adım gidin. Sarı çizgi şu an bakılan aday; üstündeki sayı uzunluğu. İki ucu <b>farklı renkteyse</b> kazılır; <b>aynı renkteyse</b> kırmızı kesikli olur ve atlanır.</li>
+      <li>Sayaçlardan “ayrı grup”u izleyin: her kazıda bir azalır; 1 olunca ağaç tamamdır.</li>
+      <li>Son adım tasarım kararı: ağaçta her iki oda arasında <b>tek</b> yol vardır. Atlanan koridorların bir kısmı geri eklenir (mor): oyuncu dolanabilsin, düşmandan kaçabilsin.</li>
+    </ul>
+  </div><!--/dh-->
 </section>
 
 <section data-sec="oyunda">
@@ -751,6 +761,7 @@ def prim(V, adj):
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
 <script src="../ortak/graf.js"></script>
 <script src="../ortak/mst.js"></script>
 <script src="demos.js"></script>

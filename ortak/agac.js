@@ -475,7 +475,7 @@
         }
         case 'seq': {
           model.clear(); model.nid = 0;
-          const seq = (SL.parseValues(d.seq || 'S E A R C H E X A M P L E') || []).map(k => (type === 'num' ? +k : String(k).toUpperCase()));
+          const seq = (SL.parseValues(d.seq || 'S U P E R M A R I O K A R T') || []).map(k => (type === 'num' ? +k : String(k).toUpperCase()));
           let frames = [{ root: null, hl: {}, note: 'Boş ağaç. Anahtarlar sırayla eklenecek: ' + seq.join(' '), stack: [], cmps: 0 }];
           seq.forEach(k => { frames = frames.concat(model.opPut(k, { unwind: false }).slice(1)); });
           show(frames); break;
@@ -513,7 +513,7 @@
   /* ---------------- .travviz — gezinme animasyonu ---------------- */
   SL.TravViz = function (root) {
     const d = root.dataset;
-    const trees = { bal: 'H D L B F J N A C E G I K M O', sea: 'S E A R C H X M P L', small: 'D B F A C E G' };
+    const trees = { bal: 'H D L B F J N A C E G I K M O', sea: 'S U P E R M A I O K T', small: 'D B F A C E G' };
     let tkey = d.tree || 'bal', kind = d.kind || 'pre';
     const model = new BSTModel();
     const canvas = el('canvas');
@@ -526,7 +526,7 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Gezinme ', select({ pre: 'preorder (kök–sol–sağ)', in: 'inorder (sol–kök–sağ)', post: 'postorder (sol–sağ–kök)', level: 'level-order (seviye seviye)' }, kind, v => { kind = v; build(); })),
-      el('label', { class: 'ctl' }, 'Ağaç ', select({ bal: 'dengeli (15)', sea: 'S E A R C H X M P L', small: 'küçük (7)' }, tkey, v => { tkey = v; build(); }))),
+      el('label', { class: 'ctl' }, 'Ağaç ', select({ bal: 'dengeli (15)', sea: 'S U P E R M A I O K T', small: 'küçük (7)' }, tkey, v => { tkey = v; build(); }))),
     el('div', { class: 'bst-main' }, canvas, panel), SL.transport(fp, { min: 0.3, max: 8 }), note, outBox);
     build();
     return { stop: () => fp.pause() };
@@ -664,9 +664,9 @@ def _run_trav(keys):
   SL.TreeLab = function (root) {
     const d = root.dataset, task = d.task || 'put';
     const shell = SL.labShell(root);
-    const presets = { sea: 'S E A R C H E X A M P L E', sorted: 'A B C D E F G H I J', bal: 'H D L B F J N A C E G I K M O', nums: '50 30 70 20 40 60 80', deep: '1..1200' };
+    const presets = { sea: 'S U P E R M A R I O K A R T', sorted: 'A B C D E F G H I J', bal: 'H D L B F J N A C E G I K M O', nums: '50 30 70 20 40 60 80', deep: '1..1200' };
     const keysIn = el('input', { type: 'text', class: 'keys-in', value: d.keys || presets.sea });
-    const pre = select({ '': 'hazır…', sea: 'S E A R C H E X A M P L E', sorted: 'sıralı A…J', bal: 'dengeli 15', nums: 'sayılar', deep: '1..1200 (çok derin!)' }, '', v => { if (v) { keysIn.value = presets[v]; shell.run(); } });
+    const pre = select({ '': 'hazır…', sea: 'S U P E R M A R I O K A R T', sorted: 'sıralı A…J', bal: 'dengeli 15', nums: 'sayılar', deep: '1..1200 (çok derin!)' }, '', v => { if (v) { keysIn.value = presets[v]; shell.run(); } });
     const canvas = el('canvas');
     const tv = new TreeView(canvas, +(d.cw || 540), +(d.ch || 270), { maxSp: 46 });
     const note = el('div', { class: 'sv-note tree-note' });
