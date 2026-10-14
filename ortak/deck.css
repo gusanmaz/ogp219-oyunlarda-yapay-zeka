@@ -847,3 +847,6 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .btd-wrap.sh { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
 .sh-tbl { font-size: 18px; line-height: 1.35; } .sh-tbl > div { margin: 5px 0; } .sh-tbl i { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
 .sh-tbl span { color: var(--ink-2); font-size: 16px; } .sh-k { font: 700 20px "JetBrains Mono", monospace; } .sh-next { color: var(--muted); font-size: 16px; }
+
+.ev-side { font-size: 17px; } .ev-big { font-size: 24px; font-weight: 800; margin-bottom: 6px; } .ev-big span { color: var(--blue); }
+.ev-h { display: grid; grid-template-columns: 26px 1fr 70px; align-items: center; gap: 6px; font: 15px "JetBrains Mono", monospace; margin: 3px 0; } .ev-h i { display: block; height: 12px; background: var(--green); border-radius: 6px; }

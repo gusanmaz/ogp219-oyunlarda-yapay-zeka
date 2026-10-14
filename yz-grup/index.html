@@ -205,6 +205,12 @@
 </section>
 
 <section data-sec="saldırı">
+  <h2>Çizimle: on düşman, iki bilet 🎟</h2>
+  <svg viewBox="0 0 1200 430" style="width:100%" font-family="Source Sans 3"><defs><marker id="kf" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--red)"/></marker></defs><circle cx="330" cy="215" r="95" style="fill:var(--red);stroke:var(--red)" fill-opacity=".07" stroke-width="2.5" stroke-dasharray="8 6"/><circle cx="330" cy="215" r="185" style="fill:none;stroke:var(--muted)" stroke-width="2" stroke-dasharray="8 6"/><text x="330" y="231" text-anchor="middle" font-size="44">🧍</text><text x="330" y="259" text-anchor="middle" font-size="14" style="fill:var(--muted)">oyuncu</text><text x="412" y="182" text-anchor="middle" font-size="38">👹</text><text x="434" y="154" font-size="22">🎟</text><line x1="392" y1="179" x2="361" y2="197" style="stroke:var(--red)" stroke-width="4" marker-end="url(#kf)"/><text x="248" y="276" text-anchor="middle" font-size="38">👹</text><text x="270" y="248" font-size="22">🎟</text><line x1="268" y1="251" x2="299" y2="233" style="stroke:var(--red)" stroke-width="4" marker-end="url(#kf)"/><text x="512" y="259" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="449" y="369" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="330" y="412" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="211" y="369" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="148" y="195" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="211" y="85" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="330" y="42" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="449" y="85" text-anchor="middle" font-size="32" opacity=".75">👹</text><text x="640" y="90" text-anchor="start" font-size="21" font-weight="800" style="fill:var(--red)">İç halka: saldıranlar</text><text x="640" y="116" text-anchor="start" font-size="17" style="fill:var(--ink-2)">Yalnızca bileti 🎟 olan 2 düşman yaklaşıp vurur.</text><text x="640" y="176" text-anchor="start" font-size="21" font-weight="800" style="fill:var(--muted)">Dış halka: bekleyenler</text><text x="640" y="202" text-anchor="start" font-size="17" style="fill:var(--ink-2)">Öbür 8 düşman uzakta dolanır, bağırır, poz verir;</text><text x="640" y="226" text-anchor="start" font-size="17" style="fill:var(--ink-2)">oyuncuya baskı hissi verir ama vurmaz.</text><text x="640" y="286" text-anchor="start" font-size="21" font-weight="800" style="fill:var(--green)">Bilet el değiştirir</text><text x="640" y="312" text-anchor="start" font-size="17" style="fill:var(--ink-2)">Saldıran vurup geri çekilince bileti bırakır;</text><text x="640" y="336" text-anchor="start" font-size="17" style="fill:var(--ink-2)">sıradaki bekleyen alır ve iç halkaya girer.</text><text x="640" y="396" text-anchor="start" font-size="18" font-weight="800" style="fill:var(--blue)">Zorluk ayarı: bilet sayısı (kolay 1, zor 3).</text></svg>
+  <aside class="notes">Kung-fu filmlerindeki sahne: kahraman on kişiyle çevrili ama kötüler sırayla saldırır. Oyunlarda bunu bir “saldırı bileti” (token) sistemi yapar: aynı anda kaç düşmanın vurabileceği sınırlıdır. Sonraki slayt kuralı, ardından gelen demo da canlı hâlini gösterir. Soru: bilet sayısını 10 yaparsak oyun nasıl hissettirir? (Isınmadaki “iki saniyede ölürsünüz”.)</aside>
+</section>
+
+<section data-sec="saldırı">
   <h2>Kung-fu çemberi</h2>
   <div class="cols">
     <div>
@@ -297,6 +303,19 @@
   <h2>Canlı: güven ve cephe hattı</h2>
   <div class="demo" data-demo="squad"></div>
   <p class="mini">Mavi tim sizin kontrolünüzde değil; düşman ve müttefik ekleyip çıkararak <b>güveni</b> değiştirin. Güç oranı düşünce cephe hattı geri çekilir (geri çekil), yükselince ileri itilir (baskı yap). Turuncu bant: tarafsız bölge; kırmızı: düşman alanı. (Güven eşikleri bizim seçimimiz; Days Gone’un gerçek değerleri yayımlanmadı.)</p>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: Days Gone’un timleri nasıl koordine oluyor?</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/7TQ-WS3MPlE" title="Squad Coordination in Days Gone" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Squad Coordination in ‘Days Gone’</b><br><span class="mini">GDC, Tobias Karlsson (Bend Studio) · <a href="https://www.youtube.com/watch?v=7TQ-WS3MPlE" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önceki demodaki “güven” ve “cephe hattı” fikirlerinin geliştiricisinden anlatımı: timin üyeleri birbirine nasıl haber veriyor, kim önden gidiyor, kim kuşatıyor.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Konuşmanın ilk 15 dakikası yeter. Tim üyelerinin paylaştığı bilgi neler? Bir üye oyuncuyu görünce öbürleri ne öğreniyor, neyi öğrenmiyor? Bu, Y11’deki algı sisteminin hangi kısmına benziyor?</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce ve uzun (GDC konuşması); sınıfta ilk 10–15 dakikayı izletmek yeterli.</aside>
 </section>
 
 <section data-sec="tim">

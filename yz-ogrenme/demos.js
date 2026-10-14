@@ -232,7 +232,7 @@
   }
   SL.trainHack = trainHack;
   D.rewardhack = function (root) {
-    const W = 720, H = 330, cs = 40, ox = 80, oy = 14;
+    const W = 720, H = 350, cs = 40, ox = 80, oy = 32;
     let design = 'score', env, Q, c, k, score, t, done, timer = null, trained = false, laps = 0;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const setup = () => { env = hackEnv(design); Q = null; trained = false; c = env.start; k = 0; score = 0; t = 0; done = false; laps = 0; };
@@ -249,13 +249,13 @@
         if (ch === '#') { ctx.fillStyle = tt.dark ? '#1f3a52' : '#9cc7e6'; ctx.fillRect(px, py, cs - 1, cs - 1); return; }
         ctx.fillStyle = tt.dark ? '#2b2f40' : '#eef0f6'; ctx.fillRect(px, py, cs - 1, cs - 1);
         if (ch === 'F') { for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(px + i * 10, py + j * 10, 10, 10); } }
-        if (ch === 'S') SL.drawLabel(ctx, 'başla', px + cs / 2, py + cs / 2, tt.blue, { size: 10 });
+        if (ch === 'S') { ctx.fillStyle = tt.green; ctx.globalAlpha = 0.28; ctx.fillRect(px, py, cs - 1, cs - 1); ctx.globalAlpha = 1; ctx.fillStyle = tt.green; ctx.font = '700 11px "Source Sans 3"'; ctx.textAlign = 'center'; ctx.fillText('BAŞLA', px + cs / 2, py + cs - 5); }
         const isA = ch === 'A', isB = ch === 'B';
-        if (isA || isB) { const active = (isA && k === 0) || (isB && k === 1); ctx.fillStyle = active ? tt.amber : tt.rule; ctx.beginPath(); ctx.arc(px + cs / 2, py + cs / 2, 10, 0, 7); ctx.fill(); SL.drawLabel(ctx, isA ? 'A' : 'B', px + cs / 2, py + cs / 2, '#222', { size: 10 }); }
+        if (isA || isB) { const active = (isA && k === 0) || (isB && k === 1); ctx.fillStyle = active ? tt.amber : tt.card; ctx.strokeStyle = active ? tt.amber : tt.muted; ctx.lineWidth = 2; ctx.setLineDash(active ? [] : [3, 3]); ctx.beginPath(); ctx.arc(px + cs / 2, py + cs / 2, 12, 0, 7); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = active ? '#222' : tt.muted; ctx.font = '700 12px "Source Sans 3"'; ctx.textAlign = 'center'; ctx.fillText(isA ? 'A' : 'B', px + cs / 2, py + cs / 2 + 4); }
       }));
       const bx = ox + (c % env.Ww) * cs + cs / 2, by = oy + Math.floor(c / env.Ww) * cs + cs / 2;
-      ctx.fillStyle = tt.red; ctx.beginPath(); ctx.moveTo(bx + 12, by); ctx.lineTo(bx - 9, by - 8); ctx.lineTo(bx - 9, by + 8); ctx.closePath(); ctx.fill();
-      SL.drawLabel(ctx, 'tekne', bx, by - 16, tt.red, { size: 10 });
+      ctx.fillStyle = tt.red; ctx.beginPath(); ctx.moveTo(bx + 12, by - 4); ctx.lineTo(bx - 9, by - 12); ctx.lineTo(bx - 9, by + 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = tt.ink; ctx.font = '600 13px "Source Sans 3"'; ctx.textAlign = 'left'; ctx.fillText('kırmızı üçgen: tekne · sarı daire: şu an alınabilecek altın · kesikli daire: sonra doğacak altın', ox, oy - 8);
       SL.drawLabel(ctx, `puan: ${score.toFixed(1)}   adım: ${t}/120   altın: ${laps}   ${done ? '🏁 YARIŞI BİTİRDİ' : t >= 120 ? '⌛ süre bitti — yarışı hiç bitirmedi!' : ''}`, W / 2, H - 22, done ? tt.green : t >= 120 ? tt.red : tt.ink, { size: 13 });
       info.innerHTML = design === 'score'
         ? '<b>Ödül = oyunun puanı</b> (CoastRunners gibi): her altın +1, bitiş +3. Altınlar A ve B arasında sırayla yeniden doğar. Eğitip izleyin: ajan neyi “öğrendi”?'
@@ -291,6 +291,55 @@
   const forward = (w, x) => { const xin = [...x, 1], h = []; for (let j = 0; j < NH; j++) { let s = 0; for (let i = 0; i < NI; i++) s += w[j * NI + i] * xin[i]; h.push(Math.tanh(s)); } const o = []; for (let k = 0; k < NO; k++) { let s = 0; for (let j = 0; j < NH; j++) s += w[NI * NH + k * NH + j] * h[j]; o.push(Math.tanh(s)); } return o; };
   SL.NE_forward = forward;
   const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  /* ================= elle evrim: en uzağa atan mancınık =================
+     Gen = tek sayı (atış açısı). Uygunluk = menzil. Her nesil: dene → en iyi 2’yi seç → çocuk üret (ortalama + mutasyon). */
+  D.evohand = function (root) {
+    const range = a => Math.round(400 * Math.sin(2 * a * Math.PI / 180) / 9.8 * 10) / 10;   // hız 20 m/sn
+    const START = [12, 8, 20, 17, 25, 5, 10, 15];
+    const SC = [
+      ['🧬 Normal mutasyon (±5°)', 5, 'Sekiz mancınık alçak açılarla (5°–25°) başlıyor. En iyisi 45° (40,8 m); bunu kimse söylemedi.', 'Kimse “45° iyidir” demedi; yalnızca <b>iyi olanlar çoğaldı</b>. Her nesilde en iyi açı biraz yükseldi (25° → 27° → 30° → 43° → 44°) ve nüfus 45° civarına toplandı. Arabalar demosundaki tek fark: orada gen tek bir açı değil, bir sinir ağının yüzlerce ağırlığı.'],
+      ['🧊 Mutasyon yok (±0°)', 0, 'Aynı başlangıç, ama çocuklar ebeveynlerin tam ortalaması: hiç rastgele değişiklik yok.', 'Altı nesil boyunca en iyisi 25°’de (31,3 m) takılı kaldı: çocuklar hep iki ebeveynin arasında kalıyor, başlangıçta olmayan bir açıyı hiç denemiyor. Mutasyon, <b>yeni fikirlerin</b> tek kaynağıdır.'],
+      ['🌪 Çok büyük mutasyon (±30°)', 30, 'Aynı başlangıç, ama çocuklar ebeveynlerinden 30°’ye kadar sapabiliyor.', 'En iyisi şans eseri çabuk bulundu, çünkü en iyi iki ebeveyn her nesilde aynen korunuyor. Ama çubuklara bakın: çocukların çoğu çok kötü ve her nesilde savruluyor. Arabalar demosunda “mutasyon σ” çok büyükse arabaların çoğu ilk virajda ölür.']];
+    let F = [], moralTxt = '';
+    const build = sig => {
+      let seed = 42; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647), gauss = () => { const u = rnd() || 1e-9, v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+      let pop = START.slice(); F = []; const hist = [];
+      for (let g = 1; g <= 6; g++) {
+        const sc = pop.map(range), order = pop.map((a, i) => i).sort((i, j) => sc[j] - sc[i]), par = order.slice(0, 2);
+        hist.push(Math.max(...sc));
+        F.push({ g, pop: pop.slice(), sc, phase: 'dene', hist: hist.slice(), note: `<b>${g}. nesil · dene:</b> her mancınık kendi açısıyla bir kez atıyor; menziller çubuklarda.` });
+        F.push({ g, pop: pop.slice(), sc, par, phase: 'seç', hist: hist.slice(), note: `<b>${g}. nesil · seç:</b> en uzağa atan iki mancınık: ${pop[par[0]]}° (${sc[par[0]]} m) ve ${pop[par[1]]}° (${sc[par[1]]} m). Öbürleri elenir.` });
+        const a = pop[par[0]], b = pop[par[1]], kids = [a, b];
+        while (kids.length < 8) kids.push(Math.max(1, Math.min(89, Math.round((a + b) / 2 + gauss() * sig))));
+        if (g < 6) F.push({ g, pop: kids.slice(), sc: kids.map(range), phase: 'çoğal', kidsFrom: [a, b], hist: hist.slice(), note: `<b>${g}. nesil · çoğal:</b> iki ebeveyn aynen kalır; 6 çocuk = ortalamaları (${String((a + b) / 2).replace('.', ',')}°) ${sig ? `± en çok ~${sig * 2}° rastgele sapma (mutasyon)` : '(mutasyon yok)'}.` });
+        pop = kids;
+      }
+      F[F.length - 1].final = true;
+    };
+    const diag = el('div'), note = el('div', { class: 'sv-note ah-note' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' }), side = el('div', { class: 'ev-side' });
+    const draw = (f, pl) => {
+      const t = T(); let s = '';
+      const order = f.pop.map((a, i) => i);
+      order.forEach((i, r) => {
+        const y = 14 + r * 40, a = f.pop[i], d = f.sc[i], isPar = f.par && f.par.includes(i), dead = f.par && !isPar, isKid = f.phase === 'çoğal' && r >= 2;
+        s += `<text x="10" y="${y + 22}" font-size="17" font-weight="700" font-family="JetBrains Mono" fill="${dead ? t.muted : t.ink}">${String(a).padStart(2, ' ')}°</text>`;
+        s += `<line x1="76" y1="${y + 30}" x2="${76 + 28 * Math.cos(a * Math.PI / 180)}" y2="${y + 30 - 28 * Math.sin(a * Math.PI / 180)}" stroke="${dead ? t.muted : t.amber}" stroke-width="4" stroke-linecap="round"/>`;
+        s += `<rect x="110" y="${y + 6}" width="${d * 13}" height="24" rx="5" fill="${isPar ? t.green : dead ? t.rule : isKid ? t.purple : t.blue}" opacity="${dead ? 0.6 : 0.85}"/><text x="${118 + d * 13}" y="${y + 24}" font-size="15" fill="${dead ? t.muted : t.ink}">${String(d).replace('.', ',')} m${isPar ? '  ✔ seçildi' : isKid ? '  (çocuk)' : ''}</text>`;
+      });
+      s += `<line x1="${110 + 40.8 * 13}" y1="8" x2="${110 + 40.8 * 13}" y2="${14 + 8 * 40}" stroke="${t.green}" stroke-width="2" stroke-dasharray="6 5"/><text x="${110 + 40.8 * 13}" y="${26 + 8 * 40}" text-anchor="middle" font-size="14" fill="${t.green}">en iyisi: 45° → 40,8 m</text>`;
+      diag.innerHTML = `<svg viewBox="0 0 760 360" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
+      side.innerHTML = `<div class="ev-big">${f.g}. nesil · <span>${f.phase}</span></div><div class="ah-leg">Her satır bir mancınık. Soldaki sayı ve turuncu çizgi atış açısı (geni), çubuk attığı mesafe (uygunluğu).</div><b>Nesillerin en iyisi:</b>` + f.hist.map((h, i) => `<div class="ev-h"><span>${i + 1}.</span><i style="width:${h / 40.8 * 100}%"></i>${String(h).replace('.', ',')} m</div>`).join('');
+      note.innerHTML = f.note; moral.innerHTML = f.final && moralTxt ? '💡 ' + moralTxt : '';
+    };
+    const fp = new SL.FramePlayer(draw, { speed: 1.2 });
+    const load = (i, play) => { build(SC[i][1]); story.innerHTML = '📖 ' + SC[i][2]; moralTxt = SC[i][3]; fp.load(F); if (play) fp.play(); };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap ah' }, diag, side), SL.transport(fp, { min: 0.4, max: 6 }), note, moral);
+    bs[0].classList.add('primary'); load(0, false); SL.onTheme(() => fp.render());
+    return { stop: () => fp.pause() };
+  };
+
   D.neuro = function (root) {
     const W = 720, H = 340, POP = 30;
     let gen = 1, cars, genes, best = [], timer = null, sigma = 0.3, fast = 1, tframe = 0, bestEver = null;

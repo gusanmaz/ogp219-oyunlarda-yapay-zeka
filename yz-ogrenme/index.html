@@ -303,7 +303,7 @@
   <h2>Hikâye: CoastRunners’ın hiç bitmeyen yarışı (OpenAI, 2016)</h2>
   <div class="cols c64">
     <div>
-      <p style="font-size:.84em">Dario Amodei ve Jack Clark, “Faulty Reward Functions in the Wild” yazısında bir tekne yarışı oyununu anlattı. İnsanların anladığı hedef açık: yarışı hızlıca, mümkünse önde bitirmek. Ama oyun ilerlemeyi doğrudan ödüllendirmiyordu; puan, parkur boyunca dizilmiş <b>hedefleri vurarak</b> kazanılıyordu.</p>
+      <p style="font-size:.84em">Dario Amodei ve Jack Clark, <a href="https://openai.com/index/faulty-reward-functions/" target="_blank" rel="noopener">“Faulty Reward Functions in the Wild”</a> (OpenAI, 2016) yazısında bir tekne yarışı oyununu anlattı. İnsanların anladığı hedef açık: yarışı hızlıca, mümkünse önde bitirmek. Ama oyun ilerlemeyi doğrudan ödüllendirmiyordu; puan, parkur boyunca dizilmiş <b>hedefleri vurarak</b> kazanılıyordu.</p>
       <ul style="font-size:.82em">
         <li>RL ajanı, içinde <b>yeniden doğan</b> üç hedef bulunan yalıtılmış bir lagün buldu.</li>
         <li>Orada dar daireler çizerek aynı hedefleri tekrar tekrar vurmayı öğrendi; bu sırada alev aldı, başka teknelere çarptı, ters yöne gitti.</li>
@@ -313,6 +313,19 @@
     </div>
     <div class="box warn"><span class="bt">Oyunlardaki karşılığı</span>“Daha çok öldürme = daha iyi” diye eğitilen bir NPC, oyuncuyu bekleyip doğma noktasında avlayabilir. “Hayatta kal” diye eğitilen bir NPC bir köşeye saklanıp hiç çıkmayabilir. “Puan = skor” diye eğitilen bir test botu oyunun puan hatasını bulur, oyunu değil.</div>
   </div>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: CoastRunners’taki tekne, kendi gözünüzle</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/tlOIHko8ySg" title="CoastRunners 7" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>CoastRunners 7</b><br><span class="mini">Jack Clark (OpenAI) · 1 dk · <a href="https://www.youtube.com/watch?v=tlOIHko8ySg" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önce okuduğunuz hikâyenin kaydı: ödülü “puan” olan ajan yarışı bitirmek yerine aynı lagünde dönüp duruyor, yanıyor, çarpışıyor ama puanı yükseliyor. Kaynak yazı: <a href="https://openai.com/index/faulty-reward-functions/" target="_blank" rel="noopener">Faulty Reward Functions in the Wild</a>.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Tekne neden hep aynı yerde dönüyor? Ödül “yarışı bitir” olsaydı ne değişirdi? Bir sonraki slayttaki demoda aynı hileyi kendiniz üreteceksiniz.</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce; görüntü kendini anlatıyor. İzlerken sorusunu videodan önce okuyun.</aside>
 </section>
 
 <section data-sec="ödül">
@@ -419,9 +432,30 @@
   </div>
 </section>
 
+<section data-sec="önce basit bir örnek">
+  <h2>Önce elle: evrim üç adımda 🧬</h2>
+  <p style="font-size:.76em;margin:.1em 0 .2em">Sekiz mancınık var; her birinin tek bir “geni” var: <b>atış açısı</b>. Hangi açının en uzağa attığını kimse söylemiyor. Her nesilde üç şey olur: <b>dene</b> (herkes bir kez atar), <b>seç</b> (en uzağa atan ikisi kalır), <b>çoğal</b> (onların ortalaması + biraz rastgele sapma ile 6 çocuk). “İleri ▶|” ile adım adım izleyin.</p>
+  <div class="demo" data-demo="evohand"></div>
+  <aside class="notes">Sonraki arabalar demosunun en basit hâli: gen tek bir sayı, uygunluk tek bir ölçüm. Doğru cevap 45° (40,8 m); başlangıçtaki açılar 12, 8, 20, 17, 25, 5, 10, 15 (hepsi alçak). Ölçülmüş: normal mutasyonda (±5°) nesillerin en iyisi 25° → 27° → 30° → 43° → 44°. Mutasyon yoksa altı nesil boyunca 25°’de (31,3 m) takılı kalır. Çok büyük mutasyonda (±30°) en iyisi şans eseri 2. nesilde 48°’ye sıçrar ama çocukların çoğu çok kötüdür. Arabalar demosuna geçerken söyleyin: “Orada gen tek bir açı değil, arabanın sinir ağındaki bütün ağırlıklar; ‘mesafe’ de arabanın pistte aldığı yol. Gerisi aynı: dene, seç, çoğal.”</aside>
+</section>
+
 <section data-sec="nöroevrim">
   <h2>Canlı: evrimleşen arabalar 🏎️</h2>
+  <p style="font-size:.72em;margin:.1em 0 .3em"><b>Ne göreceksiniz?</b> Az önceki mancınıkların aynısı, bu kez 30 araba. Hepsi aynı anda yola çıkar; çoğu duvara çarpıp <b>soluklaşır</b> (öldü). Herkes ölünce nesil biter: en çok yol alan 5 arabanın “beyni” karıştırılıp yeni 30 araba üretilir. Sağ üstteki grafik her neslin en iyisini gösterir; birkaç nesilde yükselir. Yeşil araba önde gidendir, sarı çizgiler onun gözleri (duvara uzaklık).</p>
   <div class="demo" data-demo="neuro"></div>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: MarI/O, Super Mario’yu evrimle öğreniyor</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/qv6UVOQ0F44" title="MarI/O - Machine Learning for Video Games" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>MarI/O - Machine Learning for Video Games</b><br><span class="mini">SethBling · 6 dk · <a href="https://www.youtube.com/watch?v=qv6UVOQ0F44" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Arabalar demosunun aynı fikri, gerçek bir oyunda: Mario’nun “beyni” küçük bir sinir ağı; nesiller boyunca en uzağa gidenler çoğalıyor ve sonunda bölüm bitiriliyor. Kullanılan yöntemin adı NEAT: ağırlıkların yanında ağın şeklini de evrimleştiriyor.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda “uygunluk” (fitness) neye göre ölçülüyor? Mancınık demosundaki “mesafe”nin karşılığı ne? İlk nesillerdeki Mario’lar neden yerinde sayıyor?</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce; görüntü kendini anlatıyor. İzlerken sorusunu videodan önce okuyun.</aside>
 </section>
 
 <section data-sec="nöroevrim">
@@ -516,6 +550,19 @@
     </div>
     <div class="explain">Oyun sırasında öğrenen örnekler var (Black &amp; White, Drivatar), yani B yanlış. Ama Drivatar’ın agresiflik sorunu ve Alien: Isolation’ın “öğreniyor gibi görünen” kilitli dalları gösteriyor ki çoğu zaman doğru yol, öğrenmeyi geliştirmede yapmak ve oyunda <b>uyum hissini</b> tasarımla vermektir. ARC Raiders da tam olarak böyle: yürüyüş öğrenildi, oyuncudan değil.</div>
   </div>
+</section>
+
+<section data-sec="video">
+  <h2>🎬 Ara: saklambaç oynayan ajanlar beklenmedik hileler buluyor</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/kopoLzvh5jY" title="Multi-Agent Hide and Seek" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Multi-Agent Hide and Seek</b><br><span class="mini">OpenAI · 3 dk · <a href="https://www.youtube.com/watch?v=kopoLzvh5jY" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Ödül çok basit: saklananlar görülmezse +1, arayanlar görürse +1. Milyonlarca oyunun sonunda ajanlar kutularla sığınak kurmayı, rampa kullanmayı, hatta fizik motorundaki bir açıktan yararlanıp “kutu sörfü” yapmayı kendi kendine buldu.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Ajanların bulduğu stratejileri sırayla yazın. Hangisi tasarımcıların hiç beklemediği bir “ödül hilesi”ydi? CoastRunners teknesiyle ortak noktası ne?</div>
+    </div>
+  </div>
+  <aside class="notes">Video İngilizce; görüntü kendini anlatıyor. İzlerken sorusunu videodan önce okuyun.</aside>
 </section>
 
 <section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
