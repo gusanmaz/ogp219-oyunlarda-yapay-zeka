@@ -24,11 +24,8 @@
 <main></main>
 <p>Aşağıdaki yaklaşık 80 satırın tamamı bu sayfada çalışıyor (önce tuvale tıklayın). Pist 11 noktadan geçen kapalı bir Catmull–Rom eğrisi; araba, yay uzunluğu tablosu sayesinde virajlarda da aynı hızla gider (<kbd>H</kbd> ile kapatıp farkı görün). Kamera arabaya kare hızından bağımsız bir yumuşatmayla yaklaşır (<kbd>K</kbd> ile sert takibe geçin). Her turda yazı “taşıp dönen” bir yumuşatmayla belirir. <code>NOKTALAR</code> dizisini değiştirip kendi pistinizi çizin. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editörüne</a> yapıştırabilirsiniz.</p>
 <p><button id="copy">📋 Kodu kopyala</button></p>
-<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
+<div id="kod" data-src="sketch.js"></div>
 <script src="sketch.js"></script>
-<script>
-  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
-  document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
-</script>
+<script src="../../ortak/ornek.js"></script>
 </body>
 </html>

@@ -24,11 +24,8 @@
 <main></main>
 <p>Aşağıdaki yaklaşık 80 satırın tamamı bu sayfada çalışıyor (önce tuvale tıklayın). <code>kamerayiGuncelle</code> beş kuralı sırayla uygular: ileri bakma, kamera penceresi, platforma oturma, yumuşatma, seviye sınırları. <kbd>1</kbd>–<kbd>5</kbd> ile her birini kapatıp farkı hissedin: <kbd>3</kbd> kapalıyken her zıplamada bütün ekran zıplar; <kbd>5</kbd> kapalıyken seviyenin dışındaki boşluk görünür. <kbd>X</kbd> ya da yüksekten sert iniş “travma” ekler; sarsıntı travmanın karesiyle orantılıdır ve yumuşak gürültüyle (p5’in <code>noise()</code> fonksiyonu) üretilir. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editörüne</a> yapıştırabilirsiniz.</p>
 <p><button id="copy">📋 Kodu kopyala</button></p>
-<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
+<div id="kod" data-src="sketch.js"></div>
 <script src="sketch.js"></script>
-<script>
-  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
-  document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
-</script>
+<script src="../../ortak/ornek.js"></script>
 </body>
 </html>

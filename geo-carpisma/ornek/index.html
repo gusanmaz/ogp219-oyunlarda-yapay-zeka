@@ -22,12 +22,9 @@
 <div class="mini"><a href="../">← sunuma dön</a> · <kbd>A</kbd>/<kbd>D</kbd> yürü · <kbd>W</kbd> zıpla · <kbd>X</kbd> atıl · <kbd>C</kbd> sürekli tespit aç/kapa · <kbd>H</kbd> çarpışma kutuları</div>
 <div class="about"><b>Bu sayfa ne işe yarar?</b> Sunumdaki “tam kod” slaytının çalışan hâli: slaytlardan bağımsız, tek dosyalık bir p5.js programı. Burada oynayın, kodu kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editöründe</a> değiştirin ya da kendi projenize başlangıç olarak alın.</div>
 <main></main>
-<p>Aşağıdaki yaklaşık 90 satırın tamamı bu sayfada çalışıyor (önce tuvale tıklayın). Mor çubuk 6 piksellik ince bir duvar: <kbd>C</kbd> ile sürekli tespiti kapatıp soldan <kbd>X</kbd> ile atılın: karakter çoğu denemede duvarın içinden geçer (tünelleme sayacı artar; ara sıra tam denk gelip durur). Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın. Deneyin: hareketli platform, diken (çizimden küçük hasar kutusu), çift zıplama. <button id="copy">📋 Kodu kopyala</button> <a href="sketch.js" download>⬇ sketch.js</a></p>
-<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
+<p>Aşağıdaki yaklaşık 90 satırın tamamı bu sayfada çalışıyor (önce tuvale tıklayın). Mor çubuk 6 piksellik ince bir duvar: <kbd>C</kbd> ile sürekli tespiti kapatıp soldan <kbd>X</kbd> ile atılın: karakter çoğu denemede duvarın içinden geçer (tünelleme sayacı artar; ara sıra tam denk gelip durur). Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın. Deneyin: hareketli platform, diken (çizimden küçük hasar kutusu), çift zıplama.</p>
+<div id="kod" data-src="sketch.js"></div>
 <script src="sketch.js"></script>
-<script>
-  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
-  document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
-</script>
+<script src="../../ortak/ornek.js"></script>
 </body>
 </html>

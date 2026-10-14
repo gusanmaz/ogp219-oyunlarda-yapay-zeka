@@ -22,12 +22,9 @@
 <div class="mini"><a href="../">← sunuma dön</a> · <b>Tıkla</b> = oraya yürü · <kbd>X</kbd> = farenin olduğu yere taş at (3 hak) · <kbd>R</kbd> = baştan · 5 altını topla, çıkışa ulaş</div>
 <div class="about"><b>Bu sayfa ne işe yarar?</b> Sunumdaki “tam kod” slaytının çalışan hâli: slaytlardan bağımsız, tek dosyalık bir p5.js programı. Burada oynayın, kodu kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editöründe</a> değiştirin ya da kendi projenize başlangıç olarak alın.</div>
 <main></main>
-<p>Aşağıdaki yaklaşık 200 satırın tamamı bu sayfada çalışıyor: A* (Y8), görüş konisi ve görüş hattı (Y11), farkındalık ve kara tahta (Y3), üç durumlu karar (Y2) ve ses. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın. Deneyin: <code>kararVer</code>’i değiştirin (sesi duyunca kaçan muhafız?), <code>GORUS</code> ve <code>YARIM_ACI</code> ile zorluğu ayarlayın, dördüncü bir muhafız ekleyin, yakalandıkça görüşü kısaltan bir yönetmen (Y17) yazın. <button id="copy">📋 Kodu kopyala</button> <a href="sketch.js" download>⬇ sketch.js</a></p>
-<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
+<p>Aşağıdaki yaklaşık 200 satırın tamamı bu sayfada çalışıyor: A* (Y8), görüş konisi ve görüş hattı (Y11), farkındalık ve kara tahta (Y3), üç durumlu karar (Y2) ve ses. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın. Deneyin: <code>kararVer</code>’i değiştirin (sesi duyunca kaçan muhafız?), <code>GORUS</code> ve <code>YARIM_ACI</code> ile zorluğu ayarlayın, dördüncü bir muhafız ekleyin, yakalandıkça görüşü kısaltan bir yönetmen (Y17) yazın.</p>
+<div id="kod" data-src="sketch.js"></div>
 <script src="sketch.js"></script>
-<script>
-  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
-  document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
-</script>
+<script src="../../ortak/ornek.js"></script>
 </body>
 </html>

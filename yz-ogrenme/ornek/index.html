@@ -23,12 +23,9 @@
 <div class="about"><b>Bu sayfa ne işe yarar?</b> Sunumdaki “tam kod” slaytının çalışan hâli: slaytlardan bağımsız, tek dosyalık bir p5.js programı. Burada oynayın, kodu kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editöründe</a> değiştirin ya da kendi projenize başlangıç olarak alın.</div>
 <main></main>
 <p>Aşağıdaki kodun tamamı bu sayfada çalışıyor. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın ve değiştirin:
-GAMMA’yı 0.3 yapın (miyop ajan), adım cezasını 0 ya da −0.5 yapın, EPSILON’u 0 yapın (hiç keşif yok). <button id="copy">📋 Kodu kopyala</button> <a href="sketch.js" download>⬇ sketch.js</a></p>
-<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
+GAMMA’yı 0.3 yapın (miyop ajan), adım cezasını 0 ya da −0.5 yapın, EPSILON’u 0 yapın (hiç keşif yok).</p>
+<div id="kod" data-src="sketch.js"></div>
 <script src="sketch.js"></script>
-<script>
-  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
-  document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
-</script>
+<script src="../../ortak/ornek.js"></script>
 </body>
 </html>
