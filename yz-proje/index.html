@@ -194,13 +194,13 @@
 <section data-sec="proje">
   <h2>Altı proje şablonu</h2>
   <table class="sum-t" style="font-size:15px">
-    <tr><th>şablon</th><th>YZ’nin rolü</th><th>kullanılan haftalar</th></tr>
-    <tr><td>🥷 <b>Gizlilik</b></td><td>Devriye, şüphe, arama, kovalama; ses ve ışık</td><td>Y2/Y3, Y8, Y11, Y17</td></tr>
-    <tr><td>🏰 <b>Kule savunma</b></td><td>Akış alanıyla binlerce birim, dalga yönetmeni, formasyonlar</td><td>Y7, Y8, Y10, Y15, Y17, Y18</td></tr>
-    <tr><td>🏎️ <b>Yarış</b></td><td>Yol takibi, sollama, lastik bant; bonus: nöroevrim ya da ML-Agents sürücü</td><td>Y7, Y13, Y17</td></tr>
-    <tr><td>⚔️ <b>Mini RTS / taktik</b></td><td>Etki haritası, siper seçimi, GOAP/HTN komutan, grup hareketi</td><td>Y5, Y10, Y12, Y18</td></tr>
-    <tr><td>🗝️ <b>Roguelike</b></td><td>Prosedürel zindan, utility düşmanlar, dinamik zorluk</td><td>Y4, Y15, Y17 (+Y6 boss)</td></tr>
-    <tr><td>💬 <b>Konuşan yol arkadaşı</b></td><td>LLM diyalog + davranış ağacı + algılama; denetim hattı</td><td>Y3, Y11, Y14</td></tr>
+    <tr><th>şablon</th><th>YZ’nin rolü</th><th>kullanılan haftalar</th><th>esinlenilecek oyunlar</th></tr>
+    <tr><td>🥷 <b>Gizlilik</b></td><td>Devriye, şüphe, arama, kovalama; ses ve ışık</td><td>Y2/Y3, Y8, Y11, Y17</td><td style="color:var(--ink-2)">Mark of the Ninja, Metal Gear Solid</td></tr>
+    <tr><td>🏰 <b>Kule savunma</b></td><td>Akış alanıyla binlerce birim, dalga yönetmeni, formasyonlar</td><td>Y7, Y8, Y10, Y15, Y17, Y18</td><td style="color:var(--ink-2)">Kingdom Rush, Bloons TD</td></tr>
+    <tr><td>🏎️ <b>Yarış</b></td><td>Yol takibi, sollama, lastik bant; bonus: nöroevrim ya da ML-Agents sürücü</td><td>Y7, Y13, Y17</td><td style="color:var(--ink-2)">Mario Kart, Forza (Drivatar)</td></tr>
+    <tr><td>⚔️ <b>Mini RTS / taktik</b></td><td>Etki haritası, siper seçimi, GOAP/HTN komutan, grup hareketi</td><td>Y5, Y10, Y12, Y18</td><td style="color:var(--ink-2)">StarCraft, XCOM</td></tr>
+    <tr><td>🗝️ <b>Roguelike</b></td><td>Prosedürel zindan, utility düşmanlar, dinamik zorluk</td><td>Y4, Y15, Y17 (+Y6 boss)</td><td style="color:var(--ink-2)">Spelunky, Hades</td></tr>
+    <tr><td>💬 <b>Konuşan yol arkadaşı</b></td><td>LLM diyalog + davranış ağacı + algılama; denetim hattı</td><td>Y3, Y11, Y14</td><td style="color:var(--ink-2)">The Last of Us (Ellie), Suck Up!</td></tr>
   </table>
   <p class="mini" style="margin-top:6px">Kendi fikriniz de olabilir: koşul, en az <b>üç</b> farklı haftanın tekniğinin aynı oyunda birlikte çalışması ve en az birinin “derin” uygulanması (kendi yazdığınız, ayarladığınız, ölçtüğünüz).</p>
 </section>
@@ -229,6 +229,19 @@
       Her haftanın sonunda <b>oynanabilir</b> bir sürüm olsun.</div>
   </div>
 </section>
+
+<section data-sec="tasarım">
+  <h2>🎬 Ara: az ama iyi YZ</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/1xWg54mdQos" title="Less is More: Designing Awesome AI for Games" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Less is More: Designing Awesome AI for Games</b><br><span class="mini">GDC · 24 dk 56 sn · <a href="https://www.youtube.com/watch?v=1xWg54mdQos" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Proje kapsamını seçmeden önce izlenecek konuşma: oyuncunun fark etmeyeceği karmaşıklığa zaman harcamamak, birkaç davranışı çok okunur yapmak. “En az / hedef / bonus” tablosunun tasarımcı gözüyle savunması.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Konuşmacı hangi YZ özelliklerini “oyuncu fark etmiyor” diye kesiyor? Kendi proje şablonunuzda kesebileceğiniz bir özellik var mı? Hangi davranışı oyuncuya daha okunur gösterebilirsiniz?</div>
+    </div>
+  </div>
+</section>
+
 
 <section class="level" data-background-gradient="linear-gradient(135deg, #2a0d3a 0%, #1b1036 100%)">
   <div class="lv">LEVEL 3</div>
@@ -291,30 +304,33 @@
   <div class="tabs short">
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
-// JavaScript: saf karar fonksiyonu — p5.js'e, çizime, zamana bağlı değil
+// Saf karar fonksiyonu: p5.js'e, çizime, zamana bağlı değil
 function decide(bb) {
   if (bb.sees && bb.awareness >= 1) return "kovala";
   if (bb.awareness >= 0.4 || bb.heardNoise) return "incele";
   return "devriye";
 }
 
-// En basit birim testi: beklenen ile çıkan aynı mı? (editor.p5js.org konsolunda çalışır)
-function test(ad, cikan, beklenen) {
-  console.log((cikan === beklenen ? "✅ " : "❌ ") + ad + (cikan === beklenen ? "" : " → çıkan: " + cikan + ", beklenen: " + beklenen));
+// Test tablosu: [durum, görüyor mu, farkındalık, ses, beklenen]
+const CASES = [
+  ["görüyor ve emin",          true,  1.2, false, "kovala"],
+  ["görüyor ama emin değil",   true,  0.6, false, "incele"],
+  ["ses duydu",                false, 0,   true,  "incele"],
+  ["hiçbir şey yok",           false, 0,   false, "devriye"],
+  ["görmüyor ama çok şüpheli", false, 1.3, false, "incele"],  // kovala DEĞİL
+];
+
+// editor.p5js.org konsolunda çalışır: her satır ✅ ya da ❌ yazar
+for (const [ad, sees, awareness, heardNoise, beklenen] of CASES) {
+  const cikan = decide({ sees, awareness, heardNoise });
+  console.log(cikan === beklenen ? "✅" : "❌", ad, "→", cikan);
 }
-
-test("görüyor ve emin → kovala",     decide({ sees: true,  awareness: 1.2, heardNoise: false }), "kovala");
-test("görüyor ama emin değil → incele", decide({ sees: true,  awareness: 0.6, heardNoise: false }), "incele");
-test("ses duydu → incele",            decide({ sees: false, awareness: 0,   heardNoise: true  }), "incele");
-test("hiçbir şey yok → devriye",      decide({ sees: false, awareness: 0,   heardNoise: false }), "devriye");
-test("görmüyor ama çok şüpheli → incele (kovala DEĞİL)", decide({ sees: false, awareness: 1.3, heardNoise: false }), "incele");
-
-// Neden işe yarar? Karar hatasını bulmak için oyunu açıp muhafızın önüne yürümeniz gerekmez:
-// beş satır, bir saniyede çalışır. Karar fonksiyonunu her değiştirdiğinizde tekrar çalıştırın.
+// Hatayı bulmak için oyunu açıp muhafızın önüne yürümeniz gerekmez:
+// beş durum, bir saniyede. Karar fonksiyonunu her değiştirince yeniden çalıştırın.
 </script></code></pre>
     </div>
         <div class="tab" data-label="C# (Unity)">
-<pre><code class="language-csharp" data-trim data-line-numbers="2-8|11-18"><script type="text/template">
+<pre><code class="language-csharp" data-trim data-line-numbers="2-8|11-22"><script type="text/template">
 // Saf fonksiyon: Unity’ye bağımlı değil → EditMode testinde saniyeler içinde çalışır
 public static class GuardBrain {
     public static GuardState Decide(in Blackboard bb) {
@@ -326,10 +342,14 @@ public static class GuardBrain {
 
 // Tests/EditMode/GuardBrainTests.cs  (Unity Test Framework / NUnit)
 public class GuardBrainTests {
-    [Test] public void SeesAndAware_Chases() =>
-        Assert.AreEqual(GuardState.Chase, GuardBrain.Decide(new Blackboard { Sees = true, Awareness = 1.2f }));
-    [Test] public void HeardNoise_Investigates() =>
-        Assert.AreEqual(GuardState.Investigate, GuardBrain.Decide(new Blackboard { HeardNoise = true }));
+    [Test] public void SeesAndAware_Chases() {
+        var bb = new Blackboard { Sees = true, Awareness = 1.2f };
+        Assert.AreEqual(GuardState.Chase, GuardBrain.Decide(bb));
+    }
+    [Test] public void HeardNoise_Investigates() {
+        var bb = new Blackboard { HeardNoise = true };
+        Assert.AreEqual(GuardState.Investigate, GuardBrain.Decide(bb));
+    }
     [Test] public void NothingHappening_Patrols() =>
         Assert.AreEqual(GuardState.Patrol, GuardBrain.Decide(new Blackboard()));
 }

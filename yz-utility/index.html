@@ -712,10 +712,10 @@ for a in actions:
 </section>
 
 <section data-sec="kod">
-  <h2>Etken, eylem, beyin</h2>
+  <h2>Etken, eylem, beyin (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="C# (Unity)">
-<pre><code class="language-csharp" data-trim data-line-numbers="6-12|14-27|28-32"><script type="text/template">
+<pre><code class="language-csharp" data-trim data-line-numbers="6-12|14-16"><script type="text/template">
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -732,21 +732,6 @@ public class UtilityAction {
     public string name;
     public List<Consideration> considerations = new();
     public Func<Npc, Status> run;
-
-    public float Score(Npc npc) {
-        float total = 1f;
-        foreach (var c in considerations) {
-            total *= c.Score(npc);
-            if (total == 0f) return 0f;              // veto: gerisini hesaplama
-        }
-        return Compensate(total, considerations.Count);
-    }
-    static float Compensate(float s, int n) {
-        if (n < 2) return s;
-        float mod = 1f - 1f / n;
-        return s + (1f - s) * mod * s;
-    }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript (p5.js)">
@@ -766,22 +751,6 @@ const actions = [
       npc => curves.inverse(norm(npc.dist, 0, 50)),
       npc => 0.3 + 0.7 * norm(npc.hp, 0, 100),
     ] },
-  { name: "Kaç",
-    considerations: [
-      npc => 1 - curves.logistic(norm(npc.hp, 0, 100), 0.25),
-      npc => norm(npc.enemies, 0, 5),
-    ] },
-];
-
-function scoreAction(a, npc) {
-  let total = 1;
-  for (const c of a.considerations) {
-    total *= c(npc);
-    if (total === 0) return 0;
-  }
-  const n = a.considerations.length, mod = 1 - 1 / n;
-  return n < 2 ? total : total + (1 - total) * mod * total;
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -805,7 +774,54 @@ actions = {
         lambda n: norm(n.enemies, 0, 5),
     ],
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
 
+<section data-sec="kod">
+  <h2>Etken, eylem, beyin (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-10|11-14" data-ln-start-from="18"><script type="text/template">
+    public float Score(Npc npc) {
+        float total = 1f;
+        foreach (var c in considerations) {
+            total *= c.Score(npc);
+            if (total == 0f) return 0f;              // veto: gerisini hesaplama
+        }
+        return Compensate(total, considerations.Count);
+    }
+    static float Compensate(float s, int n) {
+        if (n < 2) return s;
+        float mod = 1f - 1f / n;
+        return s + (1f - s) * mod * s;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="16"><script type="text/template">
+  { name: "Kaç",
+    considerations: [
+      npc => 1 - curves.logistic(norm(npc.hp, 0, 100), 0.25),
+      npc => norm(npc.enemies, 0, 5),
+    ] },
+];
+
+function scoreAction(a, npc) {
+  let total = 1;
+  for (const c of a.considerations) {
+    total *= c(npc);
+    if (total === 0) return 0;
+  }
+  const n = a.considerations.length, mod = 1 - 1 / n;
+  return n < 2 ? total : total + (1 - total) * mod * total;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="21"><script type="text/template">
 def score(considerations, npc):
     total = 1.0
     for c in considerations:

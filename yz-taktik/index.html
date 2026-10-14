@@ -493,7 +493,7 @@ def find_best(agent, threat, candidates, covered_fn,
 </section>
 
 <section data-sec="kod">
-  <h2>Etki haritası</h2>
+  <h2>Etki haritası (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -513,18 +513,6 @@ class InfluenceMap {
       }
     }
   }
-  control(i) { return this.blue[i] - this.red[i]; }      // > 0 mavi baskın, < 0 kırmızı
-  tension(i) { return min(this.blue[i], this.red[i]); }  // iki taraf da güçlü: çatışma bölgesi
-  weakestEnemyCell() {                                   // mavinin ulaşabildiği, kırmızının en zayıf olduğu hücre
-    let best = -1, bestScore = Infinity;
-    for (let i = 0; i < this.blue.length; i++) {
-      if (this.blue[i] <= 0.15) continue;
-      const s = this.red[i] - 0.3 * this.blue[i];
-      if (s < bestScore) { bestScore = s; best = i; }
-    }
-    return best;                                          // x = best % w, y = floor(best / w)
-  }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -565,6 +553,38 @@ public void Stamp(float[,] map, Vector2Int c, float strength, int radiusCells) {
         if (d <= 1f) map[y, x] += strength * (1f - d);
     }
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Etki haritası (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
+  control(i) { return this.blue[i] - this.red[i]; }      // > 0 mavi baskın, < 0 kırmızı
+  tension(i) { return min(this.blue[i], this.red[i]); }  // iki taraf da güçlü: çatışma bölgesi
+  weakestEnemyCell() {                                   // mavinin ulaşabildiği, kırmızının en zayıf olduğu hücre
+    let best = -1, bestScore = Infinity;
+    for (let i = 0; i < this.blue.length; i++) {
+      if (this.blue[i] <= 0.15) continue;
+      const s = this.red[i] - 0.3 * this.blue[i];
+      if (s < bestScore) { bestScore = s; best = i; }
+    }
+    return best;                                          // x = best % w, y = floor(best / w)
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

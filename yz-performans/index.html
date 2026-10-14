@@ -488,10 +488,10 @@
 </section>
 
 <section data-sec="kod">
-  <h2>Zaman dilimli YZ zamanlayıcısı ve ölçüm</h2>
+  <h2>Zaman dilimli YZ zamanlayıcısı ve ölçüm (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="C# (Unity)">
-<pre><code class="language-csharp" data-trim data-line-numbers="12|16-27"><script type="text/template">
+<pre><code class="language-csharp" data-trim data-line-numbers="12"><script type="text/template">
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
@@ -506,20 +506,6 @@ public class AIScheduler : MonoBehaviour {
     static readonly ProfilerMarker s_Think = new("AI.Think");  // profilleyicide ayrı satır
 
     public void Register(IAIAgent a) => agents.Add(a);
-
-    void Update() {
-        if (agents.Count == 0) return;
-        sw.Restart();
-        int done = 0;
-        using (s_Think.Auto()) {
-            while (done < agents.Count && sw.Elapsed.TotalMilliseconds < budgetMs) {
-                agents[next].Think();                          // algılama + karar + istekler
-                next = (next + 1) % agents.Count;              // sırayla: açlık yok
-                done++;
-            }
-        }
-    }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -549,6 +535,39 @@ function draw() {
   fill(aiMs > 4 ? 'red' : 'black');
   text(`YZ: ${aiMs.toFixed(2)} ms  FPS: ${frameRate().toFixed(0)}`, 10, 20);
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Zaman dilimli YZ zamanlayıcısı ve ölçüm (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-12" data-ln-start-from="16"><script type="text/template">
+    void Update() {
+        if (agents.Count == 0) return;
+        sw.Restart();
+        int done = 0;
+        using (s_Think.Auto()) {
+            while (done < agents.Count && sw.Elapsed.TotalMilliseconds < budgetMs) {
+                agents[next].Think();                          // algılama + karar + istekler
+                next = (next + 1) % agents.Count;              // sırayla: açlık yok
+                done++;
+            }
+        }
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

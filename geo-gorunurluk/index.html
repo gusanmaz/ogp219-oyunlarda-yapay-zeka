@@ -344,7 +344,7 @@ def column_height(dist, ray_angle, player_angle, screen_h):
 </section>
 
 <section data-sec="alan">
-  <h2>Kod: gölge dökümü</h2>
+  <h2>Kod: gölge dökümü (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -364,6 +364,16 @@ function gorusAlani(px, py, R, duvarMi, gorunur) {
       const dy = -uzak;
       for (let dx = -uzak; dx <= 0; dx++) {
         const X = px + dx * xx + dy * xy, Y = py + dx * yx + dy * yy;       // dilimden haritaya
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="alan">
+  <h2>Kod: gölge dökümü (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
         const solEgim = (dx - 0.5) / (dy + 0.5), sagEgim = (dx + 0.5) / (dy - 0.5);
         if (bas < sagEgim) continue;  // henüz aydınlık aralığa girmedik
         if (son > solEgim) break;     // aydınlık aralığı geçtik

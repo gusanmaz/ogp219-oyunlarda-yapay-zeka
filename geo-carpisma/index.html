@@ -392,7 +392,7 @@ function circleBoxOverlap(c, box) {
 </section>
 
 <section data-sec="SAT">
-  <h2>Kod: ayıran eksen teoremi</h2>
+  <h2>Kod: ayıran eksen teoremi (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -409,20 +409,6 @@ function sat(A, B) {
     for (let i = 0; i < P.length; i++) {
       const a = P[i], b = P[(i + 1) % P.length];
       const u = Math.hypot(b.x - a.x, b.y - a.y);
-      const n = { x: -(b.y - a.y) / u, y: (b.x - a.x) / u };          // kenarın dikmesi (birim)
-      const [a0, a1] = golge(A, n), [b0, b1] = golge(B, n);
-      const ortusme = min(a1, b1) - max(a0, b0);
-      if (ortusme <= 0) return null;               // AYIRAN EKSEN bulundu: çakışmıyorlar, hemen çık
-      if (ortusme < enAz) { enAz = ortusme; eksen = n; }
-    }
-  }
-  // Hiçbir eksende boşluk yok → çakışıyorlar. En kısa çıkış: en az örtüşen eksen boyunca.
-  const ax = ortalama(A), bx = ortalama(B);
-  if ((ax.x - bx.x) * eksen.x + (ax.y - bx.y) * eksen.y < 0) eksen = { x: -eksen.x, y: -eksen.y };  // A'yı B'den uzağa it
-  return { x: eksen.x * enAz, y: eksen.y * enAz };                                                  // A'ya eklenecek itme vektörü
-}
-
-function ortalama(P) { let x = 0, y = 0; for (const p of P) { x += p.x; y += p.y; } return { x: x / P.length, y: y / P.length }; }
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -451,6 +437,35 @@ def sat(A, B):                                   # None: ayrık; (dx, dy): A'yı
     if (ca[0] - cb[0]) * eksen[0] + (ca[1] - cb[1]) * eksen[1] < 0:
         eksen = (-eksen[0], -eksen[1])
     return (eksen[0] * en_az, eksen[1] * en_az)
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="SAT">
+  <h2>Kod: ayıran eksen teoremi (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="14"><script type="text/template">
+      const n = { x: -(b.y - a.y) / u, y: (b.x - a.x) / u };          // kenarın dikmesi (birim)
+      const [a0, a1] = golge(A, n), [b0, b1] = golge(B, n);
+      const ortusme = min(a1, b1) - max(a0, b0);
+      if (ortusme <= 0) return null;               // AYIRAN EKSEN bulundu: çakışmıyorlar, hemen çık
+      if (ortusme < enAz) { enAz = ortusme; eksen = n; }
+    }
+  }
+  // Hiçbir eksende boşluk yok → çakışıyorlar. En kısa çıkış: en az örtüşen eksen boyunca.
+  const ax = ortalama(A), bx = ortalama(B);
+  if ((ax.x - bx.x) * eksen.x + (ax.y - bx.y) * eksen.y < 0) eksen = { x: -eksen.x, y: -eksen.y };  // A'yı B'den uzağa it
+  return { x: eksen.x * enAz, y: eksen.y * enAz };                                                  // A'ya eklenecek itme vektörü
+}
+
+function ortalama(P) { let x = 0, y = 0; for (const p of P) { x += p.x; y += p.y; } return { x: x / P.length, y: y / P.length }; }
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -538,7 +553,7 @@ def overlap(a_min, a_max, b_min, b_max):
 </section>
 
 <section data-sec="çözüm">
-  <h2>Kod: platform karakteri, eksen eksen</h2>
+  <h2>Kod: platform karakteri, eksen eksen (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -556,7 +571,16 @@ function hareket(o, duvarlar, dt) {
   const adim = max(1, ceil(max(abs(dx), abs(dy)) / 4));
   dx /= adim; dy /= adim;
   o.yerde = false;
+</script></code></pre>
+    </div>
+  </div>
+</section>
 
+<section data-sec="çözüm">
+  <h2>Kod: platform karakteri, eksen eksen (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="16"><script type="text/template">
   for (let i = 0; i < adim; i++) {
     o.x += dx;                                     // 1) yalnızca x
     let d = carpan(o, duvarlar);

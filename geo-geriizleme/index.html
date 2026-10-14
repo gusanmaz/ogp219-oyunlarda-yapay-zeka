@@ -103,7 +103,7 @@
 </section>
 
 <section data-sec="kalıp">
-  <h2>Kod: geri izlemenin iskeleti</h2>
+  <h2>Kod: geri izlemenin iskeleti (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -148,19 +148,6 @@ def yerlestir(vezirler, n):
                 return True
             vezirler.pop()                                 # GERİ AL
     return False
-
-def count_queens(n, vezirler=None):
-    """BÜTÜN çözümleri say: bulunca durma, saymaya devam et."""
-    vezirler = vezirler or []
-    if len(vezirler) == n:
-        return 1
-    toplam = 0
-    for sutun in range(n):
-        if guvenli_mi(vezirler, len(vezirler), sutun):
-            toplam += count_queens(n, vezirler + [sutun])  # kopyayla: geri almaya gerek yok
-    return toplam
-
-print(count_queens(8))                                     # 92
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -183,6 +170,38 @@ static bool Yerlestir(List<int> vezirler, int n) {
     }
     return false;
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kalıp">
+  <h2>Kod: geri izlemenin iskeleti (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
+def count_queens(n, vezirler=None):
+    """BÜTÜN çözümleri say: bulunca durma, saymaya devam et."""
+    vezirler = vezirler or []
+    if len(vezirler) == n:
+        return 1
+    toplam = 0
+    for sutun in range(n):
+        if guvenli_mi(vezirler, len(vezirler), sutun):
+            toplam += count_queens(n, vezirler + [sutun])  # kopyayla: geri almaya gerek yok
+    return toplam
+
+print(count_queens(8))                                     # 92
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -260,7 +279,7 @@ def count_queens(n):
 </section>
 
 <section data-sec="çanta">
-  <h2>Kod: “buraya sığar mı?” ve otomatik yerleştirme</h2>
+  <h2>Kod: “buraya sığar mı?” ve otomatik yerleştirme (1/2)</h2>
   <div class="tabs">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -282,25 +301,6 @@ function doldur(izgara, w, h, x, y, deger) {
 function yerlestir(esyalar, i, izgara) {
   if (i === esyalar.length) return true;                  // TABAN: hepsi yerleşti
   const e = esyalar[i];
-  const yonler = e.w === e.h ? [[e.w, e.h]] : [[e.w, e.h], [e.h, e.w]];    // yatık, sonra 90° dönmüş
-  for (const [w, h] of yonler)
-    for (let y = 0; y < YUK; y++)
-      for (let x = 0; x < GEN; x++) {
-        if (!sigarMi(izgara, w, h, x, y)) continue;       // BUDA
-        doldur(izgara, w, h, x, y, i);                    // SEÇ
-        if (yerlestir(esyalar, i + 1, izgara)) { e.x = x; e.y = y; e.w = w; e.h = h; return true; }   // DENE
-        doldur(izgara, w, h, x, y, -1);                   // GERİ AL
-      }
-  return false;
-}
-
-function otomatikYerlestir(esyalar) {
-  const alan = esyalar.reduce((t, e) => t + e.w * e.h, 0);
-  if (alan > GEN * YUK) return false;             // en ucuz budama: toplam alan sığmıyorsa hiç deneme
-  esyalar.sort((a, b) => b.w * b.h - a.w * a.h);  // büyükten küçüğe: zor olanı önce koy
-  const izgara = Array.from({ length: YUK }, () => Array(GEN).fill(-1));
-  return yerlestir(esyalar, 0, izgara);
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -321,22 +321,6 @@ def yerlestir(esyalar, i, izgara, sonuc):
     if i == len(esyalar):
         return True
     w0, h0 = esyalar[i]
-    for w, h in ([(w0, h0)] if w0 == h0 else [(w0, h0), (h0, w0)]):
-        for y in range(YUK):
-            for x in range(GEN):
-                if sigar_mi(izgara, w, h, x, y):
-                    doldur(izgara, w, h, x, y, i)   # SEÇ
-                    if yerlestir(esyalar, i + 1, izgara, sonuc):
-                        sonuc[i] = (x, y, w, h)
-                        return True
-                    doldur(izgara, w, h, x, y, -1)  # GERİ AL
-    return False
-
-esyalar = sorted([(6, 2), (5, 2), (2, 2), (2, 2), (1, 2), (1, 2), (2, 1), (2, 1), (1, 1), (1, 1)],
-                 key=lambda e: -e[0] * e[1])        # büyükten küçüğe
-izgara = [[-1] * GEN for _ in range(YUK)]
-sonuc = {}
-print(yerlestir(esyalar, 0, izgara, sonuc), sonuc)
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -361,6 +345,60 @@ bool Yerlestir(List<Esya> esyalar, int i) {
     return false;
 }
 // Asset Store'da hazır ızgara envanter paketleri var; "auto-sort" özelliği olanlar tam bunu yapar.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="çanta">
+  <h2>Kod: “buraya sığar mı?” ve otomatik yerleştirme (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="19"><script type="text/template">
+  const yonler = e.w === e.h ? [[e.w, e.h]] : [[e.w, e.h], [e.h, e.w]];    // yatık, sonra 90° dönmüş
+  for (const [w, h] of yonler)
+    for (let y = 0; y < YUK; y++)
+      for (let x = 0; x < GEN; x++) {
+        if (!sigarMi(izgara, w, h, x, y)) continue;       // BUDA
+        doldur(izgara, w, h, x, y, i);                    // SEÇ
+        if (yerlestir(esyalar, i + 1, izgara)) { e.x = x; e.y = y; e.w = w; e.h = h; return true; }   // DENE
+        doldur(izgara, w, h, x, y, -1);                   // GERİ AL
+      }
+  return false;
+}
+
+function otomatikYerlestir(esyalar) {
+  const alan = esyalar.reduce((t, e) => t + e.w * e.h, 0);
+  if (alan > GEN * YUK) return false;             // en ucuz budama: toplam alan sığmıyorsa hiç deneme
+  esyalar.sort((a, b) => b.w * b.h - a.w * a.h);  // büyükten küçüğe: zor olanı önce koy
+  const izgara = Array.from({ length: YUK }, () => Array(GEN).fill(-1));
+  return yerlestir(esyalar, 0, izgara);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
+    for w, h in ([(w0, h0)] if w0 == h0 else [(w0, h0), (h0, w0)]):
+        for y in range(YUK):
+            for x in range(GEN):
+                if sigar_mi(izgara, w, h, x, y):
+                    doldur(izgara, w, h, x, y, i)   # SEÇ
+                    if yerlestir(esyalar, i + 1, izgara, sonuc):
+                        sonuc[i] = (x, y, w, h)
+                        return True
+                    doldur(izgara, w, h, x, y, -1)  # GERİ AL
+    return False
+
+esyalar = sorted([(6, 2), (5, 2), (2, 2), (2, 2), (1, 2), (1, 2), (2, 1), (2, 1), (1, 1), (1, 1)],
+                 key=lambda e: -e[0] * e[1])        # büyükten küçüğe
+izgara = [[-1] * GEN for _ in range(YUK)]
+sonuc = {}
+print(yerlestir(esyalar, 0, izgara, sonuc), sonuc)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -433,7 +471,7 @@ function fits(grid, w, h, x, y) {
 </section>
 
 <section data-sec="kısıt">
-  <h2>Kod: sudoku çözücü ve “tek çözümlü mü?”</h2>
+  <h2>Kod: sudoku çözücü ve “tek çözümlü mü?” (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -452,21 +490,6 @@ function siradakiHucre(tahta) {
   for (let i = 0; i < 81; i++) {
     if (tahta[i] !== 0) continue;
     const n = adaylar(tahta, i).length;
-    if (n < enAz) { enAz = n; enIyi = i; }
-  }
-  return enIyi;
-}
-
-function coz(tahta) {
-  const i = siradakiHucre(tahta);
-  if (i === -1) return true;                // TABAN: boş hücre kalmadı
-  for (const rakam of adaylar(tahta, i)) {  // aday yoksa döngü hiç dönmez → false (çıkmaz)
-    tahta[i] = rakam;                       // SEÇ
-    if (coz(tahta)) return true;            // DENE
-    tahta[i] = 0;                           // GERİ AL
-  }
-  return false;
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -518,6 +541,41 @@ void Say(int[] t, ref int sayac) {
         if (sayac >= 2) return;                      // ikinciyi bulduk: yeter
     }
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kısıt">
+  <h2>Kod: sudoku çözücü ve “tek çözümlü mü?” (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="16"><script type="text/template">
+    if (n < enAz) { enAz = n; enIyi = i; }
+  }
+  return enIyi;
+}
+
+function coz(tahta) {
+  const i = siradakiHucre(tahta);
+  if (i === -1) return true;                // TABAN: boş hücre kalmadı
+  for (const rakam of adaylar(tahta, i)) {  // aday yoksa döngü hiç dönmez → false (çıkmaz)
+    tahta[i] = rakam;                       // SEÇ
+    if (coz(tahta)) return true;            // DENE
+    tahta[i] = 0;                           // GERİ AL
+  }
+  return false;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -614,7 +672,7 @@ def candidates(grid, r, c):
 </section>
 
 <section data-sec="durum">
-  <h2>Kod: hamle, geri al, çözücü</h2>
+  <h2>Kod: hamle, geri al, çözücü (1/2)</h2>
   <div class="tabs">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -635,26 +693,6 @@ function hamleYap(seviye, durum, yon) {            // yeni durum ya da null (ham
 let gecmis = [];
 function oyna(yon) { const y = hamleYap(seviye, durum, yon); if (y) { gecmis.push(durum); durum = y; } }
 function geriAl()  { if (gecmis.length) durum = gecmis.pop(); }
-
-// --- Çözücü: durum uzayında genişlik öncelikli arama (en kısa çözüm) ---
-function coz(seviye, baslangic) {
-  const anahtar = d => d.oyuncu + '|' + d.kutular.join(',');
-  const gorulen = new Map([[anahtar(baslangic), null]]);      // durum → (önceki durum, hamle)
-  const kuyruk = [baslangic];
-  for (let bas = 0; bas < kuyruk.length; bas++) {
-    const d = kuyruk[bas];
-    if (d.kutular.every(k => seviye.hedef.includes(k))) return yoluCikar(gorulen, d);
-    for (const yon of 'wasd') {
-      const y = hamleYap(seviye, d, yon);
-      if (!y) continue;
-      if (y.itilen !== undefined && koseMi(seviye, y.itilen)) continue;     // BUDA: kutu köşeye girdi → çıkmaz
-      const a = anahtar(y);
-      if (gorulen.has(a)) continue;                                         // bu duruma daha önce geldik
-      gorulen.set(a, [anahtar(d), yon]); kuyruk.push(y);
-    }
-  }
-  return null;                                                              // çözüm yok
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -701,6 +739,45 @@ void Update() {
 }
 // Durum küçükse (ızgara + birkaç konum) kopyalamak en basit ve en sağlam yoldur.
 // Büyükse "komut" kalıbı: her hamle kendi tersini bilir (Yap / GeriAl).
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="durum">
+  <h2>Kod: hamle, geri al, çözücü (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="19"><script type="text/template">
+// --- Çözücü: durum uzayında genişlik öncelikli arama (en kısa çözüm) ---
+function coz(seviye, baslangic) {
+  const anahtar = d => d.oyuncu + '|' + d.kutular.join(',');
+  const gorulen = new Map([[anahtar(baslangic), null]]);      // durum → (önceki durum, hamle)
+  const kuyruk = [baslangic];
+  for (let bas = 0; bas < kuyruk.length; bas++) {
+    const d = kuyruk[bas];
+    if (d.kutular.every(k => seviye.hedef.includes(k))) return yoluCikar(gorulen, d);
+    for (const yon of 'wasd') {
+      const y = hamleYap(seviye, d, yon);
+      if (!y) continue;
+      if (y.itilen !== undefined && koseMi(seviye, y.itilen)) continue;     // BUDA: kutu köşeye girdi → çıkmaz
+      const a = anahtar(y);
+      if (gorulen.has(a)) continue;                                         // bu duruma daha önce geldik
+      gorulen.set(a, [anahtar(d), yon]); kuyruk.push(y);
+    }
+  }
+  return null;                                                              // çözüm yok
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

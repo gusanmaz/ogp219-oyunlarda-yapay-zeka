@@ -671,11 +671,10 @@ function learn(s, a, r, s2, done, alpha = 0.5, gamma = 0.9) {
 </section>
 
 <section data-sec="kod">
-  <h2>Unity ML-Agents: bir ajan sınıfı</h2>
-  <div class="cols c64">
-  <div class="tabs short">
+  <h2>Unity ML-Agents: bir ajan sınıfı (1/2)</h2>
+  <div class="tabs">
     <div class="tab" data-label="C# (Unity)">
-<pre><code class="language-csharp" data-trim data-line-numbers="11-14|16-21|23-28|30-33"><script type="text/template">
+<pre><code class="language-csharp" data-trim data-line-numbers="11-14"><script type="text/template">
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
@@ -690,7 +689,16 @@ public class RollerAgent : Agent {
         if (transform.localPosition.y < 0) { rb.linearVelocity = Vector3.zero; transform.localPosition = new Vector3(0, 0.5f, 0); }
         target.localPosition = new Vector3(Random.value * 8 - 4, 0.5f, Random.value * 8 - 4);
     }
+</script></code></pre>
+    </div>
+  </div>
+</section>
 
+<section data-sec="kod">
+  <h2>Unity ML-Agents: bir ajan sınıfı (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-6|8-13|15-18" data-ln-start-from="16"><script type="text/template">
     public override void CollectObservations(VectorSensor sensor) {  // ajanın gördükleri: 8 sayı
         sensor.AddObservation(target.localPosition);
         sensor.AddObservation(transform.localPosition);
@@ -713,8 +721,12 @@ public class RollerAgent : Agent {
 </script></code></pre>
     </div>
   </div>
-    <div>
-      <div class="box low"><span class="bt">Eğitim yapılandırması (YAML)</span><pre style="font-size:12px;margin:0"><code class="language-yaml">behaviors:
+</section>
+
+<section data-sec="kod">
+  <h2>Unity ML-Agents: eğitim yapılandırması ve komut</h2>
+  <div class="cols">
+<div class="box low"><span class="bt">Eğitim yapılandırması (YAML)</span><pre style="font-size:12px;margin:0"><code class="language-yaml">behaviors:
   RollerBall:            # Behavior Name ile aynı
     trainer_type: ppo
     hyperparameters:
@@ -728,7 +740,6 @@ public class RollerAgent : Agent {
       extrinsic: { gamma: 0.99, strength: 1.0 }
     max_steps: 500000</code></pre></div>
       <div class="box game"><span class="bt">Komut</span><code style="font-size:13px">mlagents-learn config.yaml --run-id=Roller1</code> → Unity’de ▶. Bittiğinde <code>results/Roller1/RollerBall.onnx</code> dosyasını Behavior Parameters → Model alanına sürükleyin.</div>
-    </div>
   </div>
 </section>
 

@@ -510,7 +510,7 @@ slots = [to_world(leader.pos, leader.heading, wedge_offset(i, 30)) for i in rang
 </section>
 
 <section data-sec="kod">
-  <h2>Sahne yöneticisi: saldırı izinleri</h2>
+  <h2>Sahne yöneticisi: saldırı izinleri (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -577,7 +577,26 @@ class StageManager:
     def request(self, enemy):
         if enemy not in self.queue:
             self.queue.append(enemy)
+</script></code></pre>
+    </div>
+  </div>
+</section>
 
+<section data-sec="kod">
+  <h2>Sahne yöneticisi: saldırı izinleri (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="11"><script type="text/template">
     def update(self):
         waiting = []
         for e in self.queue:

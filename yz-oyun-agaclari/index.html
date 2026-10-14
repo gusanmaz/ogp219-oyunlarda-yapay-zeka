@@ -591,10 +591,10 @@
 </section>
 
 <section data-sec="kod">
-  <h2>Minimax + alfa-beta (negamax biçimi)</h2>
+  <h2>Minimax + alfa-beta (negamax biçimi) (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="C# (Unity)">
-<pre><code class="language-csharp" data-trim data-line-numbers="1-8|11-15|16-24"><script type="text/template">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-8"><script type="text/template">
 public interface IGame {
     List<int> Moves();               // yapılabilir hamleler (iyi olanlar önce!)
     void Apply(int move);
@@ -605,23 +605,6 @@ public interface IGame {
 }
 
 public static class Search {
-    // Sıradaki oyuncu açısından konumun değeri
-    public static int Negamax(IGame g, int depth, int alpha, int beta) {
-        int me = g.Current;
-        if (g.IsOver(out int w)) return w == 0 ? 0 : (w == me ? 100000 + depth : -100000 - depth);
-        if (depth == 0) return g.Evaluate(me);
-        int best = int.MinValue + 1;
-        foreach (int m in g.Moves()) {
-            g.Apply(m);
-            int v = -Negamax(g, depth - 1, -beta, -alpha);   // rakibin değeri, işaret çevrilmiş
-            g.Undo(m);
-            if (v > best) best = v;
-            if (v > alpha) alpha = v;
-            if (alpha >= beta) break;                       // ✂ budama
-        }
-        return best;
-    }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript (p5.js)">
@@ -640,19 +623,6 @@ function negamax(game, depth, alpha, beta) {
     alpha = Math.max(alpha, v);
     if (alpha >= beta) break;             // ✂
   }
-  return best;
-}
-
-function bestMove(game, depth) {
-  let best = null, bestV = -Infinity;
-  for (const m of game.moves()) {
-    game.apply(m);
-    const v = -negamax(game, depth - 1, -Infinity, Infinity);
-    game.undo(m);
-    if (v > bestV) { bestV = v; best = m; }
-  }
-  return best;
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -678,11 +648,60 @@ def negamax(game, depth, alpha=-math.inf, beta=math.inf):
 </script></code></pre>
     </div>
   </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Minimax + alfa-beta (negamax biçimi) (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-5|6-14" data-ln-start-from="11"><script type="text/template">
+    // Sıradaki oyuncu açısından konumun değeri
+    public static int Negamax(IGame g, int depth, int alpha, int beta) {
+        int me = g.Current;
+        if (g.IsOver(out int w)) return w == 0 ? 0 : (w == me ? 100000 + depth : -100000 - depth);
+        if (depth == 0) return g.Evaluate(me);
+        int best = int.MinValue + 1;
+        foreach (int m in g.Moves()) {
+            g.Apply(m);
+            int v = -Negamax(g, depth - 1, -beta, -alpha);   // rakibin değeri, işaret çevrilmiş
+            g.Undo(m);
+            if (v > best) best = v;
+            if (v > alpha) alpha = v;
+            if (alpha >= beta) break;                       // ✂ budama
+        }
+        return best;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="15"><script type="text/template">
+  return best;
+}
+
+function bestMove(game, depth) {
+  let best = null, bestV = -Infinity;
+  for (const m of game.moves()) {
+    game.apply(m);
+    const v = -negamax(game, depth - 1, -Infinity, Infinity);
+    game.undo(m);
+    if (v > bestV) { bestV = v; best = m; }
+  }
+  return best;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+  </div>
   <p class="mini">“100000 + depth”: kazanç ne kadar <b>yakınsa</b> o kadar iyi (kalan derinlik büyük). Böylece YZ kazanabilecekken oyunu uzatmaz.</p>
 </section>
 
 <section data-sec="kod">
-  <h2>MCTS (UCT) — 40 satır</h2>
+  <h2>MCTS (UCT): 40 satırlık kodun tamamı (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -704,6 +723,36 @@ function mcts(game, iterations, c = 1.41) {
       node = parent.kids.reduce((a, b) => (ucb(b) > ucb(a) ? b : a));
       g.apply(node.move);
     }
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="9-11|12-16"><script type="text/template">
+import math, random
+
+class Node:
+    def __init__(self, move=None, parent=None, player=None):
+        self.move, self.parent, self.player = move, parent, player  # player: bu hamleyi yapan
+        self.kids, self.N, self.W = None, 0, 0.0
+
+def mcts(game, iterations, c=1.41):
+    root = Node(player=3 - game.current)
+    for _ in range(iterations):
+        g, node = game.copy(), root
+        # 1) Seçim: çocukları açılmış düğümlerde UCB1’i en büyük olana in
+        while node.kids and g.winner() is None:
+            node = max(node.kids, key=lambda k: math.inf if k.N == 0 else
+                       k.W / k.N + c * math.sqrt(math.log(node.N) / k.N))
+            g.apply(node.move)
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>MCTS (UCT): 40 satırlık kodun tamamı (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="19"><script type="text/template">
     // 2) Genişletme
     if (node.kids === null && g.winner() === null) {
       node.kids = g.moves().map(m => new Node(m, node, g.current));
@@ -724,23 +773,7 @@ function mcts(game, iterations, c = 1.41) {
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
-<pre><code class="language-python" data-trim data-line-numbers="9-11|12-16|17-21|22-25|26-31"><script type="text/template">
-import math, random
-
-class Node:
-    def __init__(self, move=None, parent=None, player=None):
-        self.move, self.parent, self.player = move, parent, player  # player: bu hamleyi yapan
-        self.kids, self.N, self.W = None, 0, 0.0
-
-def mcts(game, iterations, c=1.41):
-    root = Node(player=3 - game.current)
-    for _ in range(iterations):
-        g, node = game.copy(), root
-        # 1) Seçim: çocukları açılmış düğümlerde UCB1’i en büyük olana in
-        while node.kids and g.winner() is None:
-            node = max(node.kids, key=lambda k: math.inf if k.N == 0 else
-                       k.W / k.N + c * math.sqrt(math.log(node.N) / k.N))
-            g.apply(node.move)
+<pre><code class="language-python" data-trim data-line-numbers="1-5|6-9|10-15" data-ln-start-from="17"><script type="text/template">
         # 2) Genişletme
         if node.kids is None and g.winner() is None:
             node.kids = [Node(m, node, g.current) for m in g.moves()]

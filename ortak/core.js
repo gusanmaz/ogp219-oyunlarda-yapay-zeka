@@ -555,13 +555,25 @@
       const room = k.closest('.katex-display') ? cw : br.right - parseFloat(cs.paddingRight) * sc - kr.left;
       if (kr.width > room + 1) t.style.fontSize = Math.max(55, Math.floor(room / kr.width * 97)) + '%';
     });
-    // Kod bloğu yatayda taşıyorsa (yorumlar sağda kesiliyorsa) yazıyı sığana kadar küçült; %72'nin altına inmez.
-    const codeFit = sl => sl.querySelectorAll('pre code').forEach(c => {
+    // Kod bloğu yatayda taşıyorsa (yorumlar sağda kesiliyorsa) ya da dikeyde kutusuna sığmayıp kaydırma çubuğuna
+    // düşüyorsa (alttaki satırlar görünmüyorsa) yazıyı sığana kadar küçült. Yatayda %72'nin, dikeyde %62'nin altına inmez.
+    // Adım adım vurgulu kodda (data-line-numbers="1-4|10-17") reveal her adım için kodun bir kopyasını üst üste koyar;
+    // yalnızca ilkini ölçüp aynı boyutu kopyalara da veririz.
+    const codeFit = sl => { codeFit1(sl); sl.querySelectorAll('pre').forEach(p => { const cs = p.querySelectorAll(':scope > code'); for (let i = 1; i < cs.length; i++) { cs[i].style.fontSize = cs[0].style.fontSize; cs[i].style.maxHeight = cs[0].style.maxHeight; } }); };
+    const codeFit1 = sl => sl.querySelectorAll('pre > code:first-of-type').forEach(c => {
       if (!c.clientWidth) return;
-      c.style.fontSize = '';
-      if (c.scrollWidth <= c.clientWidth + 2) return;
+      c.style.fontSize = ''; c.style.maxHeight = '';
+      // dikeyde sığmıyorsa önce slaydın altındaki boş yeri kullan (kutu uzasın), kalanı yazı küçülterek çöz
+      if (c.scrollHeight > c.clientHeight + 4) {
+        const z = parseFloat((c.closest('[data-gz]') || {}).style?.zoom) || 1, free = (690 - bottomR(sl)) / z;
+        if (free > 8) c.style.maxHeight = Math.min(c.scrollHeight + 2, c.clientHeight + free) + 'px';
+      }
+      const wideBy = c.scrollWidth > c.clientWidth + 2, tallBy = c.scrollHeight > c.clientHeight + 4;
+      if (!wideBy && !tallBy) return;
       const px = parseFloat(getComputedStyle(c).fontSize), pad = 30;
-      const f = Math.max(0.72, (c.clientWidth - pad) / (c.scrollWidth - pad) * 0.985);
+      let f = 1;
+      if (wideBy) f = Math.min(f, Math.max(0.72, (c.clientWidth - pad) / (c.scrollWidth - pad) * 0.985));
+      if (tallBy) f = Math.min(f, Math.max(0.62, (c.clientHeight - 26) / (c.scrollHeight - 26) * 0.98));
       c.style.fontSize = (px * f).toFixed(2) + 'px';
     });
     // içeriğin gerçek alt kenarı (mutlak konumlu ve gizli öğeler hariç)

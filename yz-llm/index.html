@@ -499,10 +499,10 @@
 </section>
 
 <section data-sec="kod">
-  <h2>Claude API ile NPC eylemi (araç çağrısı)</h2>
+  <h2>Claude API ile NPC eylemi (araç çağrısı) (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="Python">
-<pre><code class="language-python" data-trim data-line-numbers="4-17|19-28|29-32"><script type="text/template">
+<pre><code class="language-python" data-trim data-line-numbers="4-17"><script type="text/template">
 import anthropic                       # pip install anthropic
 client = anthropic.Anthropic()         # ANTHROPIC_API_KEY ortam değişkeninden
 
@@ -521,7 +521,16 @@ NPC_TOOL = {
         "additionalProperties": False,
     },
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
 
+<section data-sec="kod">
+  <h2>Claude API ile NPC eylemi (araç çağrısı) (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="1-9|10-13" data-ln-start-from="20"><script type="text/template">
 def npc_cevap(sistem_istemi, gecmis, oyuncu_sozu):
     resp = client.messages.create(
         model="claude-haiku-5-5",      # en hızlı ve en ucuz güncel model

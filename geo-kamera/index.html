@@ -86,7 +86,7 @@
 </section>
 
 <section data-sec="dönüşüm">
-  <h2>Kod: dünya ↔ ekran</h2>
+  <h2>Kod: dünya ↔ ekran (1/2)</h2>
   <div class="tabs">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -108,24 +108,6 @@ function draw() {
   background(20);
   // p5.js aynı üç adımı sizin yerinize uygular (sıra önemli: en son yazılan en önce uygulanır):
   push();
-  translate(width / 2, height / 2);  // 3) ekranın ortasına taşı
-  scale(kamera.zoom);                // 2) ölçekle
-  translate(-kamera.x, -kamera.y);   // 1) kamerayı çıkar
-  dunyayiCiz();                      //    … her şeyi DÜNYA koordinatıyla çizin
-  pop();
-  arayuzuCiz();                              // can çubuğu, puan: pop()'tan sonra, EKRAN koordinatıyla
-}
-
-function mousePressed() {
-  const d = ekrandanDunyaya(mouseX, mouseY); // tıklanan DÜNYA noktası
-  birimeEmirVer(d.x, d.y);
-}
-
-// Görünmeyeni çizme: kameranın dünyada gördüğü dikdörtgen
-function gorunenAlan() {
-  const yw = width / 2 / kamera.zoom, yh = height / 2 / kamera.zoom;
-  return { sol: kamera.x - yw, sag: kamera.x + yw, ust: kamera.y - yh, alt: kamera.y + yh };
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -160,6 +142,44 @@ void LateUpdate() {
     transform.position = new Vector3(hedef.position.x, hedef.position.y, -10f);
 }
 // Arayüz (Canvas → Screen Space) kameradan etkilenmez: p5'teki "pop()'tan sonra çiz"in karşılığı.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="dönüşüm">
+  <h2>Kod: dünya ↔ ekran (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="19"><script type="text/template">
+  translate(width / 2, height / 2);  // 3) ekranın ortasına taşı
+  scale(kamera.zoom);                // 2) ölçekle
+  translate(-kamera.x, -kamera.y);   // 1) kamerayı çıkar
+  dunyayiCiz();                      //    … her şeyi DÜNYA koordinatıyla çizin
+  pop();
+  arayuzuCiz();                              // can çubuğu, puan: pop()'tan sonra, EKRAN koordinatıyla
+}
+
+function mousePressed() {
+  const d = ekrandanDunyaya(mouseX, mouseY); // tıklanan DÜNYA noktası
+  birimeEmirVer(d.x, d.y);
+}
+
+// Görünmeyeni çizme: kameranın dünyada gördüğü dikdörtgen
+function gorunenAlan() {
+  const yw = width / 2 / kamera.zoom, yh = height / 2 / kamera.zoom;
+  return { sol: kamera.x - yw, sag: kamera.x + yw, ust: kamera.y - yh, alt: kamera.y + yh };
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -235,7 +255,7 @@ function screenToWorld(sx, camX, zoom, screenW) {
 </section>
 
 <section data-sec="takip">
-  <h2>Kod: beş kurallı takip kamerası</h2>
+  <h2>Kod: beş kurallı takip kamerası (1/2)</h2>
   <div class="tabs">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -253,21 +273,6 @@ function kamerayiGuncelle(o, dt) {             // o: oyuncu { x, y, vx, yon, yer
   // 2) KAMERA PENCERESİ: odak, kameranın ±60 piksel çevresindeyse kıpırdama; kenarı iterse kay
   if (odakX > hx + 60)      hx = odakX - 60;
   else if (odakX < hx - 60) hx = odakX + 60;
-
-  // 3) PLATFORMA OTURMA: dikeyde yalnızca karakter bir yere bastığında (ya da çok uzaklaştığında) izle
-  if (o.yerde)                 zemin = o.y;
-  else if (o.y > zemin + 90)   zemin = o.y - 90;   // uzun düşüş: aşağıyı göster
-  else if (o.y < zemin - 170)  zemin = o.y + 170;  // çok yükseldi
-  hy = zemin - 50;                                 // karakter ekranın biraz altında dursun
-
-  // 4) YUMUŞATMA: hedefe ışınlanma, yaklaş
-  kamera.x = yaklas(kamera.x, hx, 0.06, dt);
-  kamera.y = yaklas(kamera.y, hy, 0.14, dt);
-
-  // 5) SEVİYE SINIRLARI: kamera seviyenin dışını göstermesin
-  kamera.x = constrain(kamera.x, width / 2,  SEVIYE_W - width / 2);
-  kamera.y = constrain(kamera.y, height / 2, SEVIYE_H - height / 2);
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -306,6 +311,40 @@ void LateUpdate() {
     if (karakter.Yerde) zeminY = karakter.transform.position.y;
     odak.position = new Vector3(karakter.transform.position.x, zeminY, 0);   // Cinemachine bunu izler
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="takip">
+  <h2>Kod: beş kurallı takip kamerası (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="16"><script type="text/template">
+  // 3) PLATFORMA OTURMA: dikeyde yalnızca karakter bir yere bastığında (ya da çok uzaklaştığında) izle
+  if (o.yerde)                 zemin = o.y;
+  else if (o.y > zemin + 90)   zemin = o.y - 90;   // uzun düşüş: aşağıyı göster
+  else if (o.y < zemin - 170)  zemin = o.y + 170;  // çok yükseldi
+  hy = zemin - 50;                                 // karakter ekranın biraz altında dursun
+
+  // 4) YUMUŞATMA: hedefe ışınlanma, yaklaş
+  kamera.x = yaklas(kamera.x, hx, 0.06, dt);
+  kamera.y = yaklas(kamera.y, hy, 0.14, dt);
+
+  // 5) SEVİYE SINIRLARI: kamera seviyenin dışını göstermesin
+  kamera.x = constrain(kamera.x, width / 2,  SEVIYE_W - width / 2);
+  kamera.y = constrain(kamera.y, height / 2, SEVIYE_H - height / 2);
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -415,7 +454,7 @@ function clampCamera(camX, viewW, levelW) {
 </section>
 
 <section data-sec="sarsıntı">
-  <h2>Kod: travma tabanlı sarsıntı</h2>
+  <h2>Kod: travma tabanlı sarsıntı (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -432,22 +471,6 @@ function sarsintiyiUygula(dt) {
   travma = max(0, travma - SONME * dt);  // doğrusal sönme
   const s = travma * travma;             // sarsıntı = travmanın KARESİ
   const t = millis() / 1000 * 22;        // gürültüde ne kadar hızlı gezelim? (22 ≈ saniyede ~10 salınım)
-
-  // noise(): yumuşak, sürekli gürültü (Y15). 0..1 döndürür; −1..+1'e çeviriyoruz.
-  const kx = EN_BUYUK_KAYMA * s * (noise(t) * 2 - 1);
-  const ky = EN_BUYUK_KAYMA * s * (noise(t + 100) * 2 - 1);          // farklı ofset: x ve y bağımsız
-  const kd = EN_BUYUK_DONME * s * (noise(t + 200) * 2 - 1);
-
-  translate(width / 2 + kx, height / 2 + ky);  // sarsıntı EKRANA eklenir …
-  rotate(kd);
-  translate(-kamera.x, -kamera.y);             // … kamera.x / kamera.y hiç değişmez
-}
-
-function draw() {
-  background(20);
-  push(); sarsintiyiUygula(deltaTime / 1000); dunyayiCiz(); pop();
-  arayuzuCiz();                                // arayüz sarsılmaz (okunabilir kalsın)
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -485,6 +508,41 @@ void LateUpdate() {
     kameraCocugu.localRotation = Quaternion.Euler(0, 0, donme);
 }
 // Ayarlar menüsüne "ekran sarsıntısı: %0–100" sürgüsü koyun: s'i onunla çarpın.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="sarsıntı">
+  <h2>Kod: travma tabanlı sarsıntı (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="15"><script type="text/template">
+  // noise(): yumuşak, sürekli gürültü (Y15). 0..1 döndürür; −1..+1'e çeviriyoruz.
+  const kx = EN_BUYUK_KAYMA * s * (noise(t) * 2 - 1);
+  const ky = EN_BUYUK_KAYMA * s * (noise(t + 100) * 2 - 1);          // farklı ofset: x ve y bağımsız
+  const kd = EN_BUYUK_DONME * s * (noise(t + 200) * 2 - 1);
+
+  translate(width / 2 + kx, height / 2 + ky);  // sarsıntı EKRANA eklenir …
+  rotate(kd);
+  translate(-kamera.x, -kamera.y);             // … kamera.x / kamera.y hiç değişmez
+}
+
+function draw() {
+  background(20);
+  push(); sarsintiyiUygula(deltaTime / 1000); dunyayiCiz(); pop();
+  arayuzuCiz();                                // arayüz sarsılmaz (okunabilir kalsın)
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

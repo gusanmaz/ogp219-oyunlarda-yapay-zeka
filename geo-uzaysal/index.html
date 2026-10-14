@@ -132,7 +132,7 @@
 </section>
 
 <section data-sec="ızgara">
-  <h2>Kod: uzaysal hash ızgarası</h2>
+  <h2>Kod: uzaysal hash ızgarası (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -149,23 +149,6 @@ class Izgara {
     if (!this.hucreler.has(k)) this.hucreler.set(k, []);
     this.hucreler.get(k).push(nesne);
   }
-
-  yakindakiler(x, y, r) {                              // (x, y) çevresinde r yarıçapındaki ADAYLAR
-    const sonuc = [];
-    for (let cx = floor((x - r) / this.s); cx <= floor((x + r) / this.s); cx++)
-      for (let cy = floor((y - r) / this.s); cy <= floor((y + r) / this.s); cy++) {
-        const liste = this.hucreler.get(cx + ',' + cy);
-        if (liste) for (const n of liste) sonuc.push(n);
-      }
-    return sonuc;                                      // aday = "belki yakın"; kesin test çağıranın işi
-  }
-}
-
-// Kullanım (her kare):
-//   izgara.temizle();  for (const t of toplar) izgara.ekle(t);
-//   for (const t of toplar)
-//     for (const u of izgara.yakindakiler(t.x, t.y, 2 * R))
-//       if (u !== t && dist(t.x, t.y, u.x, u.y) < 2 * R) carpistir(t, u);
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -206,6 +189,42 @@ public class SpatialGrid<T> {
     }
 }
 // Hazırı: Physics2D.OverlapCircleNonAlloc(...) motorun kendi yapısını (dinamik ağaç) kullanır.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="ızgara">
+  <h2>Kod: uzaysal hash ızgarası (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="15"><script type="text/template">
+  yakindakiler(x, y, r) {                              // (x, y) çevresinde r yarıçapındaki ADAYLAR
+    const sonuc = [];
+    for (let cx = floor((x - r) / this.s); cx <= floor((x + r) / this.s); cx++)
+      for (let cy = floor((y - r) / this.s); cy <= floor((y + r) / this.s); cy++) {
+        const liste = this.hucreler.get(cx + ',' + cy);
+        if (liste) for (const n of liste) sonuc.push(n);
+      }
+    return sonuc;                                      // aday = "belki yakın"; kesin test çağıranın işi
+  }
+}
+
+// Kullanım (her kare):
+//   izgara.temizle();  for (const t of toplar) izgara.ekle(t);
+//   for (const t of toplar)
+//     for (const u of izgara.yakindakiler(t.x, t.y, 2 * R))
+//       if (u !== t && dist(t.x, t.y, u.x, u.y) < 2 * R) carpistir(t, u);
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -377,7 +396,7 @@ def candidates(grid, size, x, y, r):
 </section>
 
 <section data-sec="dörtlü">
-  <h2>Kod: dörtlü ağaç</h2>
+  <h2>Kod: dörtlü ağaç (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -397,6 +416,16 @@ class DortluAgac {
     }
     return this.cocuklar.some(c => c.ekle(p));
   }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="dörtlü">
+  <h2>Kod: dörtlü ağaç (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
   bol() {
     const hw = this.w / 2, hh = this.h / 2, k = this.kapasite, d = this.derinlik + 1;
     this.cocuklar = [new DortluAgac(this.x, this.y, hw, hh, k, d), new DortluAgac(this.x + hw, this.y, hw, hh, k, d),
@@ -476,7 +505,7 @@ def quadrant(px, py, cx, cy):
 </section>
 
 <section data-sec="bvh">
-  <h2>Kod: BVH kurma ve ışın</h2>
+  <h2>Kod: BVH kurma ve ışın (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -495,6 +524,16 @@ function bvhKur(nesneler) {
 // Işın (o + t·d, 0 ≤ t ≤ 1) kutuya giriyor mu? Giriyorsa giriş t'si, yoksa null  ("dilim" testi)
 function isinKutu(o, d, x0, y0, x1, y1) {
   let t0 = 0, t1 = 1;
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="bvh">
+  <h2>Kod: BVH kurma ve ışın (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="16"><script type="text/template">
   for (const [oo, dd, a, b] of [[o.x, d.x, x0, x1], [o.y, d.y, y0, y1]]) {
     if (abs(dd) < 1e-9) { if (oo < a || oo > b) return null; continue; }
     let ta = (a - oo) / dd, tb = (b - oo) / dd; if (ta > tb) [ta, tb] = [tb, ta];

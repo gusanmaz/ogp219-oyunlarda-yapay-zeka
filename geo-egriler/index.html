@@ -741,7 +741,7 @@ def bezier(p0, p1, p2, p3, t):
 </section>
 
 <section data-sec="yol">
-  <h2>Kod: Catmull–Rom yolu ve yay uzunluğu tablosu</h2>
+  <h2>Kod: Catmull–Rom yolu ve yay uzunluğu tablosu (1/2)</h2>
   <div class="tabs">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -760,24 +760,6 @@ function yolNoktasi(noktalar, u) {
   return { x: catmull(al(-1).x, al(0).x, al(1).x, al(2).x, t),
            y: catmull(al(-1).y, al(0).y, al(1).y, al(2).y, t) };
 }
-
-// Yay uzunluğu tablosu: eğriyi küçük doğrulara böl, uzunlukları biriktir (bir kez, yol değişince)
-function tabloKur(noktalar, ornek = 24) {
-  const tablo = [0]; let onceki = yolNoktasi(noktalar, 0);
-  for (let k = 1; k <= noktalar.length * ornek; k++) {
-    const p = yolNoktasi(noktalar, k / ornek);
-    tablo.push(tablo[k - 1] + dist(p.x, p.y, onceki.x, onceki.y)); onceki = p;
-  }
-  return tablo;                                              // tablo[k] = baştan k. örneğe kadar yol
-}
-
-// "Yolun s'inci pikseli hangi u?"  → sıralı tabloda ikili arama + iki satır arasında lerp
-function mesafedenU(tablo, s, ornek = 24) {
-  let alt = 0, ust = tablo.length - 1;
-  while (ust - alt > 1) { const orta = (alt + ust) >> 1; if (tablo[orta] <= s) alt = orta; else ust = orta; }
-  return (alt + (s - tablo[alt]) / (tablo[ust] - tablo[alt])) / ornek;
-}
-// Her kare:  yol += hiz * dt;   const p = yolNoktasi(noktalar, mesafedenU(tablo, yol % tablo.at(-1)));
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -825,6 +807,43 @@ void Update() {
 }
 // Daha da kolayı: nesneye SplineAnimate bileşeni ekleyin (sabit hız, döngü, yumuşatma seçenekleriyle).
 // Godot:  Path2D + PathFollow2D;   path_follow.progress += hiz * delta    ("progress" piksel cinsinden yol)
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="yol">
+  <h2>Kod: Catmull–Rom yolu ve yay uzunluğu tablosu (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
+// Yay uzunluğu tablosu: eğriyi küçük doğrulara böl, uzunlukları biriktir (bir kez, yol değişince)
+function tabloKur(noktalar, ornek = 24) {
+  const tablo = [0]; let onceki = yolNoktasi(noktalar, 0);
+  for (let k = 1; k <= noktalar.length * ornek; k++) {
+    const p = yolNoktasi(noktalar, k / ornek);
+    tablo.push(tablo[k - 1] + dist(p.x, p.y, onceki.x, onceki.y)); onceki = p;
+  }
+  return tablo;                                              // tablo[k] = baştan k. örneğe kadar yol
+}
+
+// "Yolun s'inci pikseli hangi u?"  → sıralı tabloda ikili arama + iki satır arasında lerp
+function mesafedenU(tablo, s, ornek = 24) {
+  let alt = 0, ust = tablo.length - 1;
+  while (ust - alt > 1) { const orta = (alt + ust) >> 1; if (tablo[orta] <= s) alt = orta; else ust = orta; }
+  return (alt + (s - tablo[alt]) / (tablo[ust] - tablo[alt])) / ornek;
+}
+// Her kare:  yol += hiz * dt;   const p = yolNoktasi(noktalar, mesafedenU(tablo, yol % tablo.at(-1)));
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

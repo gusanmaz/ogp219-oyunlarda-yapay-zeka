@@ -370,7 +370,7 @@ function neighbors(map, r, c) {
 </section>
 
 <section data-sec="DFS">
-  <h2>DFS — kod</h2>
+  <h2>DFS — kod (1/2)</h2>
   <div class="tabs ">
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers="1-6|8-13|15-24"><script type="text/template">
@@ -413,24 +413,6 @@ class DepthFirstPaths
         marked = new bool[G.V]; edgeTo = new int[G.V]; this.s = s;
         Dfs(G, s);
     }
-
-    void Dfs(Graph G, int v)
-    {
-        marked[v] = true;
-        foreach (int w in G.Adj[v])
-            if (!marked[w]) { edgeTo[w] = v; Dfs(G, w); }
-    }
-
-    public List<int> PathTo(int v)
-    {
-        if (!marked[v]) return null;
-        var path = new List<int>();
-        for (int x = v; x != s; x = edgeTo[x]) path.Add(x);
-        path.Add(s);
-        path.Reverse();
-        return path;
-    }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript">
@@ -455,6 +437,43 @@ function depthFirstPaths(G, s) {
   }
   return { marked, pathTo };
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="DFS">
+  <h2>DFS — kod (2/2)</h2>
+  <div class="tabs ">
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C#">
+<pre><code class="language-csharp" data-trim data-line-numbers data-ln-start-from="13"><script type="text/template">
+    void Dfs(Graph G, int v)
+    {
+        marked[v] = true;
+        foreach (int w in G.Adj[v])
+            if (!marked[w]) { edgeTo[w] = v; Dfs(G, w); }
+    }
+
+    public List<int> PathTo(int v)
+    {
+        if (!marked[v]) return null;
+        var path = new List<int>();
+        for (int x = v; x != s; x = edgeTo[x]) path.Add(x);
+        path.Add(s);
+        path.Reverse();
+        return path;
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

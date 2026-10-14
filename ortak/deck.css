@@ -175,6 +175,7 @@ html, body, .reveal-viewport { background: var(--bg); color: var(--ink); }
 .hljs-meta { color: var(--tk-com); }
 .zoom-btn { position: absolute; top: 8px; right: 8px; z-index: 5; font-size: 16px; line-height: 1; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--rule); background: var(--card); color: var(--ink); cursor: pointer; opacity: .55; transition: opacity .15s, transform .15s; }
 .zoom-btn:hover { opacity: 1; transform: scale(1.1); }
+.reveal pre.has-zoom > code { padding-right: 46px; }   /* 🔍 düğmesi ilk satırın sonunu örtmesin */
 
 /* kod büyüteci (modal) */
 .cz-modal { position: fixed; inset: 0; z-index: 1000; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(4px); display: none; flex-direction: column; outline: none; }

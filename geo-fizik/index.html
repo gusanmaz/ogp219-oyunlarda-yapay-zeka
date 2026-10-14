@@ -443,7 +443,7 @@ function fixedSteps(biriken, kare, DT) {
 </section>
 
 <section data-sec="zıplama">
-  <h2>Kod: tasarımcı dostu zıplama</h2>
+  <h2>Kod: tasarımcı dostu zıplama (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -462,21 +462,6 @@ function keyPressed() {
 function ziplamaAdimi(o, dt) {            // her fizik adımında
   cakal  = o.yerde ? CAKAL : cakal - dt;  // yerdeyken dolu; ayrılınca azalır
   tampon -= dt;
-
-  if (tampon > 0 && cakal > 0) {  // "zıplamak istiyor" VE "zıplayabilir" → ZIPLA
-    o.vy = -V0;                   // (p5'te yukarı = eksi y)
-    tampon = 0; cakal = 0; o.zipliyor = true;
-  }
-
-  if (o.zipliyor && o.vy < 0 && !keyIsDown(87)) {  // yükselirken tuş bırakıldı (87 = W)
-    o.vy *= 0.5;                                   // yükselişi kes: alçak zıplama
-    o.zipliyor = false;
-  }
-
-  const g = o.vy > 0 ? G * DUSUS : G;  // düşerken yerçekimi daha güçlü
-  o.vy += g * dt;                      // yarı-örtük Euler
-  o.y  += o.vy * dt;
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -516,6 +501,40 @@ void FixedUpdate() {
     hiz.y -= g * (hiz.y < 0 ? dususCarpani : 1f) * dt;
     govde.MovePosition(govde.position + hiz * dt);
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="zıplama">
+  <h2>Kod: tasarımcı dostu zıplama (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
+  if (tampon > 0 && cakal > 0) {  // "zıplamak istiyor" VE "zıplayabilir" → ZIPLA
+    o.vy = -V0;                   // (p5'te yukarı = eksi y)
+    tampon = 0; cakal = 0; o.zipliyor = true;
+  }
+
+  if (o.zipliyor && o.vy < 0 && !keyIsDown(87)) {  // yükselirken tuş bırakıldı (87 = W)
+    o.vy *= 0.5;                                   // yükselişi kes: alçak zıplama
+    o.zipliyor = false;
+  }
+
+  const g = o.vy > 0 ? G * DUSUS : G;  // düşerken yerçekimi daha güçlü
+  o.vy += g * dt;                      // yarı-örtük Euler
+  o.y  += o.vy * dt;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -626,7 +645,7 @@ function jumpParams(h, t) {
 </section>
 
 <section data-sec="verlet">
-  <h2>Kod: Verlet adımı ve uzaklık kısıtı</h2>
+  <h2>Kod: Verlet adımı ve uzaklık kısıtı (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -643,21 +662,6 @@ function verletAdimi(noktalar, baglar, dt) {
     p.x += vx;                               // aynı yolu bir daha git
     p.y += vy + YERCEKIMI * dt * dt;         // + ivmenin katkısı (a · dt²)
   }
-
-  // 2) Kısıtlar: her bağı sırayla düzelt; birkaç kez tekrarla (gevşetme)
-  for (let k = 0; k < TEKRAR; k++) {
-    for (const bag of baglar) {
-      const p = noktalar[bag.a], q = noktalar[bag.b];
-      const dx = q.x - p.x, dy = q.y - p.y;
-      const d = Math.hypot(dx, dy);
-      const oran = (d - bag.boy) / d;                  // boyun yüzde kaçı fazla (ya da eksik)?
-      const pPay = p.civili ? 0 : q.civili ? 1 : 0.5;  // çivili nokta kıpırdamaz
-      const qPay = q.civili ? 0 : p.civili ? 1 : 0.5;
-      p.x += dx * oran * pPay;  p.y += dy * oran * pPay;  // p, q'ya doğru
-      q.x -= dx * oran * qPay;  q.y -= dy * oran * qPay;  // q, p'ye doğru
-    }
-  }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -692,6 +696,40 @@ print(satisfy([0, 0], [3, 4], 3))   # ([0.6, 0.8], [2.4, 3.2])
 void LateUpdate() {
     for (int i = 0; i < noktalar.Length; i++) cizgi.SetPosition(i, noktalar[i].konum);
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="verlet">
+  <h2>Kod: Verlet adımı ve uzaklık kısıtı (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="15"><script type="text/template">
+  // 2) Kısıtlar: her bağı sırayla düzelt; birkaç kez tekrarla (gevşetme)
+  for (let k = 0; k < TEKRAR; k++) {
+    for (const bag of baglar) {
+      const p = noktalar[bag.a], q = noktalar[bag.b];
+      const dx = q.x - p.x, dy = q.y - p.y;
+      const d = Math.hypot(dx, dy);
+      const oran = (d - bag.boy) / d;                  // boyun yüzde kaçı fazla (ya da eksik)?
+      const pPay = p.civili ? 0 : q.civili ? 1 : 0.5;  // çivili nokta kıpırdamaz
+      const qPay = q.civili ? 0 : p.civili ? 1 : 0.5;
+      p.x += dx * oran * pPay;  p.y += dy * oran * pPay;  // p, q'ya doğru
+      q.x -= dx * oran * qPay;  q.y -= dy * oran * qPay;  // q, p'ye doğru
+    }
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

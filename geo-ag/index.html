@@ -295,7 +295,7 @@ function interpolate(t0, x0, t1, x1, t) {
 </section>
 
 <section data-sec="tahmin">
-  <h2>Kod: tahmin ve uzlaştırma</h2>
+  <h2>Kod: tahmin ve uzlaştırma (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -316,20 +316,6 @@ function istemciKaresi(dt) {
   girdiUygula(ben, girdi);  // 2) TAHMİN: cevabı beklemeden kendinde uygula
   bekleyen.push(girdi);     // 3) sakla: sunucu onaylayana kadar
 }
-
-function sunucudanDurumGeldi(mesaj) {         // mesaj: { x, sonIslenen }
-  ben.x = mesaj.x;                                           // 1) sunucu haklı: onun durumuna dön
-  bekleyen = bekleyen.filter(g => g.sira > mesaj.sonIslenen); // 2) onayladıklarını at
-  for (const g of bekleyen) girdiUygula(ben, g);             // 3) UZLAŞTIRMA: kalanları yeniden uygula
-}
-
-// SUNUCU ----------------------------------------------------------------
-function sunucuGirdiAldi(oyuncu, girdi) {
-  if (Math.abs(girdi.yon) > 1 || girdi.dt > 0.1) return;     // istemciye GÜVENME: girdiyi doğrula
-  girdiUygula(oyuncu.durum, girdi);
-  oyuncu.sonIslenen = girdi.sira;
-}
-// saniyede N kez:  herkeseGonder({ x: oyuncu.durum.x, sonIslenen: oyuncu.sonIslenen })
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -362,6 +348,39 @@ print(reconcile(11, 1, [(1, 1), (2, 1)]))      # (12, [(2, 1)])  → ekranda yin
 [Reconcile] void Uzlastir(DurumVerisi sunucuDurumu, Channel k = Channel.Unreliable) {
     transform.position = sunucuDurumu.konum;      // sunucunun durumuna dön; kütüphane bekleyen girdileri yeniden oynatır
 }
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="tahmin">
+  <h2>Kod: tahmin ve uzlaştırma (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="19"><script type="text/template">
+function sunucudanDurumGeldi(mesaj) {         // mesaj: { x, sonIslenen }
+  ben.x = mesaj.x;                                           // 1) sunucu haklı: onun durumuna dön
+  bekleyen = bekleyen.filter(g => g.sira > mesaj.sonIslenen); // 2) onayladıklarını at
+  for (const g of bekleyen) girdiUygula(ben, g);             // 3) UZLAŞTIRMA: kalanları yeniden uygula
+}
+
+// SUNUCU ----------------------------------------------------------------
+function sunucuGirdiAldi(oyuncu, girdi) {
+  if (Math.abs(girdi.yon) > 1 || girdi.dt > 0.1) return;     // istemciye GÜVENME: girdiyi doğrula
+  girdiUygula(oyuncu.durum, girdi);
+  oyuncu.sonIslenen = girdi.sira;
+}
+// saniyede N kez:  herkeseGonder({ x: oyuncu.durum.x, sonIslenen: oyuncu.sonIslenen })
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -465,7 +484,7 @@ function reconcile(sunucuX, sonIslenen, bekleyen) {
 </section>
 
 <section data-sec="telafi">
-  <h2>Kod: konum kaydı ve geri sarma</h2>
+  <h2>Kod: konum kaydı ve geri sarma (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -483,19 +502,6 @@ function geriSar(kayit, an) {
     const a = kayit[i - 1], b = kayit[i];
     if (an <= b.t) { const f = (an - a.t) / (b.t - a.t); return { x: lerp(a.x, b.x, f), y: lerp(a.y, b.y, f) }; }
   }
-  return kayit[kayit.length - 1];
-}
-
-// Atış mesajı sunucuya vardı: nişancı tetiğe bastığında ekranında NE görüyordu?
-function atisGeldi(nisanci, atis, simdi) {
-  const gorulenAn = simdi - nisanci.gecikme - ARA_DEGERLEME_TAMPONU;   // gidiş gecikmesi + görüntünün geçmişte olması
-  for (const hedef of oyuncular) {
-    if (hedef === nisanci) continue;
-    const eski = geriSar(hedef.kayit, gorulenAn);                           // hedefi o ana geri sar
-    if (isinDaireyiKesiyorMu(atis.nereden, atis.yon, eski, hedef.yaricap))  // G3'teki ışın testi
-      hasarVer(hedef, atis.hasar);
-  }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -526,6 +532,39 @@ print(rewind(kayit, simdi - gecikme - tampon))         # 1.05 anı → 110  (rak
 // Elle: her FixedUpdate'te sunucuda
 kayit.Enqueue((Time.fixedTimeAsDouble, transform.position));
 while (kayit.Peek().t < Time.fixedTimeAsDouble - 1.0) kayit.Dequeue();
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="telafi">
+  <h2>Kod: konum kaydı ve geri sarma (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="15"><script type="text/template">
+  return kayit[kayit.length - 1];
+}
+
+// Atış mesajı sunucuya vardı: nişancı tetiğe bastığında ekranında NE görüyordu?
+function atisGeldi(nisanci, atis, simdi) {
+  const gorulenAn = simdi - nisanci.gecikme - ARA_DEGERLEME_TAMPONU;   // gidiş gecikmesi + görüntünün geçmişte olması
+  for (const hedef of oyuncular) {
+    if (hedef === nisanci) continue;
+    const eski = geriSar(hedef.kayit, gorulenAn);                           // hedefi o ana geri sar
+    if (isinDaireyiKesiyorMu(atis.nereden, atis.yon, eski, hedef.yaricap))  // G3'teki ışın testi
+      hasarVer(hedef, atis.hasar);
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -598,7 +637,7 @@ def rewind(kayit, an):
 </section>
 
 <section data-sec="eşzamanlı">
-  <h2>Kod: geri sarma döngüsü ve eşzamansızlık denetimi</h2>
+  <h2>Kod: geri sarma döngüsü ve eşzamansızlık denetimi (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -616,20 +655,6 @@ function oyunKaresi() {
   agaGonder({ kare, girdi: yerel[kare] });
 
   // 1) Yeni gelen gerçek girdilerle "kesin" durumu ilerlet
-  while (uzak[kesinKare] !== undefined) {
-    kesin = adim(kesin, yerel[kesinKare], uzak[kesinKare]);
-    kesinKare++;
-  }
-  // 2) Kesin durumdan bugüne kadar olan kareleri TAHMİNLE yeniden simüle et
-  const varsayim = kesinKare > 0 ? uzak[kesinKare - 1] : BOS;      // "son yaptığını sürdürüyor"
-  let d = kopyala(kesin);
-  for (let k = kesinKare; k <= kare; k++) { d = adim(d, yerel[k], varsayim); tahmin[k] = varsayim; }
-
-  ciz(d);                            // ekrana gelen: yerel girdi anında, uzak girdi tahminle
-  kare++;
-}
-// Tahmin tuttuysa 2. adım aynı sonucu verir (görünür değişiklik yok).
-// Tutmadıysa rakip bir anda doğru yere "düzelir": geri sarma budur.
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -665,6 +690,40 @@ print(saglama([180, 540, 100, 100]))             # iki makine bu sayıyı her N 
 
 // Deterministik olmak için: float yerine sabit noktalı sayı (Quantum: FP), Time.deltaTime yerine sabit kare,
 // UnityEngine.Random yerine tohumu paylaşılan kendi üreteciniz, Dictionary gezme sırasına güvenmemek.
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="eşzamanlı">
+  <h2>Kod: geri sarma döngüsü ve eşzamansızlık denetimi (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="15"><script type="text/template">
+  while (uzak[kesinKare] !== undefined) {
+    kesin = adim(kesin, yerel[kesinKare], uzak[kesinKare]);
+    kesinKare++;
+  }
+  // 2) Kesin durumdan bugüne kadar olan kareleri TAHMİNLE yeniden simüle et
+  const varsayim = kesinKare > 0 ? uzak[kesinKare - 1] : BOS;      // "son yaptığını sürdürüyor"
+  let d = kopyala(kesin);
+  for (let k = kesinKare; k <= kare; k++) { d = adim(d, yerel[k], varsayim); tahmin[k] = varsayim; }
+
+  ciz(d);                            // ekrana gelen: yerel girdi anında, uzak girdi tahminle
+  kare++;
+}
+// Tahmin tuttuysa 2. adım aynı sonucu verir (görünür değişiklik yok).
+// Tutmadıysa rakip bir anda doğru yere "düzelir": geri sarma budur.
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

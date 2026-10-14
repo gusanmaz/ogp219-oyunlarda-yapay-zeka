@@ -297,7 +297,7 @@
 </section>
 
 <section data-sec="kod">
-  <h2>Yol 1: enum + switch</h2>
+  <h2>Yol 1: enum + switch (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
@@ -321,29 +321,6 @@ public class Guard : MonoBehaviour
                 if (SeesPlayer()) next = GuardState.Chase;  // GEÇİŞLER
                 else if (heardNoise) next = GuardState.Suspicious;
                 break;
-            case GuardState.Chase:
-                MoveTo(player.position);
-                if (!SeesPlayer()) next = GuardState.Suspicious;
-                else if (DistToPlayer() < 2f) next = GuardState.Attack;
-                break;
-            case GuardState.Suspicious:
-                MoveTo(noisePos);                           // ses / son görülen yer
-                if (SeesPlayer()) next = GuardState.Chase;
-                else if (timeInState > 4f) next = GuardState.Patrol;
-                break;
-            case GuardState.Attack:
-                Shoot();
-                if (!SeesPlayer()) next = GuardState.Suspicious;
-                else if (DistToPlayer() > 3f) next = GuardState.Chase;   // histerezis: 2'de gir, 3'te çık
-                break;
-            case GuardState.Flee:
-                MoveAwayFrom(player.position); Heal();
-                if (hp > 70) next = GuardState.Patrol;
-                break;
-        }
-        if (next != state) { state = next; timeInState = 0; }
-    }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript (p5.js)">
@@ -366,24 +343,6 @@ class Guard {
         if (!this.seesPlayer()) next = "SUSPICIOUS";
         else if (this.distToPlayer() < 60) next = "ATTACK";
         break;
-      case "SUSPICIOUS":
-        this.moveTo(this.noisePos, dt);                     // ses / son görülen yer
-        if (this.seesPlayer()) next = "CHASE";
-        else if (this.timeInState > 4) next = "PATROL";
-        break;
-      case "ATTACK":
-        this.shoot(dt);
-        if (!this.seesPlayer()) next = "SUSPICIOUS";
-        else if (this.distToPlayer() > 90) next = "CHASE";  // histerezis: 60'ta gir, 90'da çık
-        break;
-      case "FLEE":
-        this.moveAwayFrom(player.pos, dt); this.heal(dt);
-        if (this.hp > 70) next = "PATROL";
-        break;
-    }
-    if (next !== this.state) { this.state = next; this.timeInState = 0; }
-  }
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -411,6 +370,65 @@ class Guard:
                 nxt = "SUSPICIOUS"
             elif self.dist_to_player() < 60:
                 nxt = "ATTACK"
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Yol 1: enum + switch (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers data-ln-start-from="21"><script type="text/template">
+            case GuardState.Chase:
+                MoveTo(player.position);
+                if (!SeesPlayer()) next = GuardState.Suspicious;
+                else if (DistToPlayer() < 2f) next = GuardState.Attack;
+                break;
+            case GuardState.Suspicious:
+                MoveTo(noisePos);                           // ses / son görülen yer
+                if (SeesPlayer()) next = GuardState.Chase;
+                else if (timeInState > 4f) next = GuardState.Patrol;
+                break;
+            case GuardState.Attack:
+                Shoot();
+                if (!SeesPlayer()) next = GuardState.Suspicious;
+                else if (DistToPlayer() > 3f) next = GuardState.Chase;   // histerezis: 2'de gir, 3'te çık
+                break;
+            case GuardState.Flee:
+                MoveAwayFrom(player.position); Heal();
+                if (hp > 70) next = GuardState.Patrol;
+                break;
+        }
+        if (next != state) { state = next; timeInState = 0; }
+    }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="19"><script type="text/template">
+      case "SUSPICIOUS":
+        this.moveTo(this.noisePos, dt);                     // ses / son görülen yer
+        if (this.seesPlayer()) next = "CHASE";
+        else if (this.timeInState > 4) next = "PATROL";
+        break;
+      case "ATTACK":
+        this.shoot(dt);
+        if (!this.seesPlayer()) next = "SUSPICIOUS";
+        else if (this.distToPlayer() > 90) next = "CHASE";  // histerezis: 60'ta gir, 90'da çık
+        break;
+      case "FLEE":
+        this.moveAwayFrom(player.pos, dt); this.heal(dt);
+        if (this.hp > 70) next = "PATROL";
+        break;
+    }
+    if (next !== this.state) { this.state = next; this.timeInState = 0; }
+  }
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="24"><script type="text/template">
         elif self.state == "SUSPICIOUS":
             self.move_to(self.noise_pos, dt)  # ses / son görülen yer
             if self.sees_player():
@@ -577,7 +595,7 @@ class ChaseState:
 </section>
 
 <section data-sec="kod">
-  <h2>Yol 3: geçiş tablosu (veri güdümlü)</h2>
+  <h2>Yol 3: geçiş tablosu (veri güdümlü) (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
@@ -594,20 +612,6 @@ List<Transition> table = new List<Transition> {
     new Transition("Patrol",  "Suspicious", g => g.heardNoise),
     new Transition("Suspicious", "Chase",  g => g.SeesPlayer()),
     new Transition("Suspicious", "Patrol", g => g.timeInState > 4f),
-    new Transition("Chase",   "Suspicious", g => !g.SeesPlayer()),
-    new Transition("Chase",   "Attack", g => g.DistToPlayer() < 2f),
-    new Transition("Attack",  "Suspicious", g => !g.SeesPlayer()),
-    new Transition("Attack",  "Chase",  g => g.DistToPlayer() > 3f),
-    new Transition("Flee",    "Patrol", g => g.hp > 70),
-};
-
-string Step(string state, Guard g)
-{
-    foreach (var t in table)             // sırayla: ilk uyan kazanır
-        if ((t.from == state || (t.from == "*" && state != t.to)) && t.condition(g))
-            return t.to;
-    return state;
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="JavaScript (p5.js)">
@@ -655,6 +659,40 @@ def step(state, g):
         if from_ok and cond(g):
             return to
     return state
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Yol 3: geçiş tablosu (veri güdümlü) (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers data-ln-start-from="14"><script type="text/template">
+    new Transition("Chase",   "Suspicious", g => !g.SeesPlayer()),
+    new Transition("Chase",   "Attack", g => g.DistToPlayer() < 2f),
+    new Transition("Attack",  "Suspicious", g => !g.SeesPlayer()),
+    new Transition("Attack",  "Chase",  g => g.DistToPlayer() > 3f),
+    new Transition("Flee",    "Patrol", g => g.hp > 70),
+};
+
+string Step(string state, Guard g)
+{
+    foreach (var t in table)             // sırayla: ilk uyan kazanır
+        if ((t.from == state || (t.from == "*" && state != t.to)) && t.condition(g))
+            return t.to;
+    return state;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>

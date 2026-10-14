@@ -544,7 +544,7 @@ def apply(s, eff):
 </section>
 
 <section data-sec="kod">
-  <h2>Planlayıcı: A* (ya da sezgisiz hâli Dijkstra)</h2>
+  <h2>Planlayıcı: A* (ya da sezgisiz hâli Dijkstra) (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -561,20 +561,6 @@ function plan(start, goal, actions) {
     let bi = 0;                                                  // f'si en küçük olanı çek
     for (let i = 1; i < open.length; i++) if (open[i].f < open[bi].f) bi = i;
     const { g, s, path } = open.splice(bi, 1)[0];
-    if (satisfies(s, goal)) return { path, cost: g };            // eylem adları ve toplam maliyet
-    for (const a of actions) {
-      if (!satisfies(s, a.pre)) continue;
-      const s2 = applyEff(s, a.eff), g2 = g + a.cost;
-      if (g2 < (best[key(s2)] ?? Infinity)) {
-        best[key(s2)] = g2;
-        open.push({ f: g2 + h(s2), g: g2, s: s2, path: [...path, a.name] });
-      }
-    }
-  }
-  return null;                                                   // plan yok
-}
-// plan({}, { targetDead: true }, actions)
-// → { path: ["Cephane al", "Şarjör tak", "Kapıdan geç", "Ateş et"], cost: 4 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
@@ -630,6 +616,40 @@ public static List<GoapAction> Plan(Dictionary<string, bool> start,
 }
 // Node: (durum, g, ebeveyn, eylem); Path(): ebeveynleri izleyip eylemleri ters sırayla döndürür
 // Key(s): doğru olan anahtarların sıralı birleşimi, ör. "hasAmmo,inB"
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Planlayıcı: A* (ya da sezgisiz hâli Dijkstra) (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="14"><script type="text/template">
+    if (satisfies(s, goal)) return { path, cost: g };            // eylem adları ve toplam maliyet
+    for (const a of actions) {
+      if (!satisfies(s, a.pre)) continue;
+      const s2 = applyEff(s, a.eff), g2 = g + a.cost;
+      if (g2 < (best[key(s2)] ?? Infinity)) {
+        best[key(s2)] = g2;
+        open.push({ f: g2 + h(s2), g: g2, s: s2, path: [...path, a.name] });
+      }
+    }
+  }
+  return null;                                                   // plan yok
+}
+// plan({}, { targetDead: true }, actions)
+// → { path: ["Cephane al", "Şarjör tak", "Kapıdan geç", "Ateş et"], cost: 4 }
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
@@ -878,7 +898,7 @@ def plan_cost(start, goal, actions):
 </section>
 
 <section data-sec="HTN">
-  <h2>HTN planlayıcının kalbi (Python)</h2>
+  <h2>HTN planlayıcının kalbi (Python) (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
 <pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
@@ -898,6 +918,35 @@ const primitives = {
   ChooseBridge: [s => true, {}], NavigateToBridge: [s => true, {}], CheckBridge: [s => true, {}],
 };
 function decompose(tasks, s, plan = []) {
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers="2-15"><script type="text/template">
+# Alan: bileşik görev → [(koşul, [alt görevler]), ...] · ilkel görev → (koşul, etki)
+methods = {
+    "BeTrunkThumper": [(lambda s: s["sees_enemy"], ["AttackEnemy"]),
+                       (lambda s: True,            ["Patrol"])],
+    "AttackEnemy":    [(lambda s: s["has_trunk"],  ["NavigateToEnemy", "DoTrunkSlam"]),
+                       (lambda s: True,            ["FindTree", "UprootTrunk", "NavigateToEnemy", "DoTrunkSlam"])],
+    "Patrol":         [(lambda s: True,            ["ChooseBridge", "NavigateToBridge", "CheckBridge"])],
+}
+primitives = {
+    "NavigateToEnemy": (lambda s: s["path_to_enemy"], {}),
+    "DoTrunkSlam":     (lambda s: s["has_trunk"],     {"has_trunk": False}),
+    "FindTree":        (lambda s: s["tree_nearby"],   {}),
+    "UprootTrunk":     (lambda s: True,               {"has_trunk": True}),
+    "ChooseBridge": (lambda s: True, {}), "NavigateToBridge": (lambda s: True, {}), "CheckBridge": (lambda s: True, {}),
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="HTN">
+  <h2>HTN planlayıcının kalbi (Python) (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-ekjs="1" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
   if (tasks.length === 0) return plan;             // bitti
   const [task, ...rest] = tasks;
   if (primitives[task]) {
@@ -917,23 +966,7 @@ function decompose(tasks, s, plan = []) {
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
-<pre><code class="language-python" data-trim data-line-numbers="2-15|17-23|24-29"><script type="text/template">
-# Alan: bileşik görev → [(koşul, [alt görevler]), ...] · ilkel görev → (koşul, etki)
-methods = {
-    "BeTrunkThumper": [(lambda s: s["sees_enemy"], ["AttackEnemy"]),
-                       (lambda s: True,            ["Patrol"])],
-    "AttackEnemy":    [(lambda s: s["has_trunk"],  ["NavigateToEnemy", "DoTrunkSlam"]),
-                       (lambda s: True,            ["FindTree", "UprootTrunk", "NavigateToEnemy", "DoTrunkSlam"])],
-    "Patrol":         [(lambda s: True,            ["ChooseBridge", "NavigateToBridge", "CheckBridge"])],
-}
-primitives = {
-    "NavigateToEnemy": (lambda s: s["path_to_enemy"], {}),
-    "DoTrunkSlam":     (lambda s: s["has_trunk"],     {"has_trunk": False}),
-    "FindTree":        (lambda s: s["tree_nearby"],   {}),
-    "UprootTrunk":     (lambda s: True,               {"has_trunk": True}),
-    "ChooseBridge": (lambda s: True, {}), "NavigateToBridge": (lambda s: True, {}), "CheckBridge": (lambda s: True, {}),
-}
-
+<pre><code class="language-python" data-trim data-line-numbers="1-7|8-13" data-ln-start-from="17"><script type="text/template">
 def decompose(tasks, s, plan=()):
     if not tasks:
         return list(plan)                 # bitti

@@ -631,10 +631,10 @@ def arrive(self, target, slow_radius):
 </section>
 
 <section data-sec="kod">
-  <h2>Vehicle sınıfı</h2>
+  <h2>Vehicle sınıfı (1/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="JavaScript (p5.js)">
-<pre><code class="language-javascript" data-trim data-line-numbers="9|10-13|14-20|21-25"><script type="text/template">
+<pre><code class="language-javascript" data-trim data-line-numbers="9|10-13|14-20"><script type="text/template">
 class Vehicle {
   constructor(x, y) {
     this.pos = createVector(x, y);
@@ -655,24 +655,6 @@ class Vehicle {
     desired.setMag(speed);
     return p5.Vector.sub(desired, this.vel).limit(this.maxForce);
   }
-  update() {
-    this.vel.add(this.acc).limit(this.maxSpeed);
-    this.pos.add(this.vel);
-    this.acc.mult(0);   // kuvvetler her kare sıfırlanır
-  }
-  show() {
-    push(); translate(this.pos.x, this.pos.y); rotate(this.vel.heading());
-    triangle(12, 0, -8, -6, -8, 6); pop();
-  }
-}
-
-let v;
-function setup() { createCanvas(640, 360); v = new Vehicle(100, 100); }
-function draw() {
-  background(30);
-  v.applyForce(v.arrive(createVector(mouseX, mouseY)));
-  v.update(); v.show();
-}
 </script></code></pre>
     </div>
     <div class="tab" data-label="C# (Unity)">
@@ -727,6 +709,44 @@ class Vehicle:
         if self.vel.length() > self.max_speed:
             self.vel.scale_to_length(self.max_speed)
         self.pos += self.vel * dt
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="kod">
+  <h2>Vehicle sınıfı (2/2)</h2>
+  <div class="tabs short">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers="1-5" data-ln-start-from="21"><script type="text/template">
+  update() {
+    this.vel.add(this.acc).limit(this.maxSpeed);
+    this.pos.add(this.vel);
+    this.acc.mult(0);   // kuvvetler her kare sıfırlanır
+  }
+  show() {
+    push(); translate(this.pos.x, this.pos.y); rotate(this.vel.heading());
+    triangle(12, 0, -8, -6, -8, 6); pop();
+  }
+}
+
+let v;
+function setup() { createCanvas(640, 360); v = new Vehicle(100, 100); }
+function draw() {
+  background(30);
+  v.applyForce(v.arrive(createVector(mouseX, mouseY)));
+  v.update(); v.show();
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="C# (Unity)">
+<pre><code class="language-csharp" data-trim data-line-numbers><script type="text/template">
+// (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
 </script></code></pre>
     </div>
   </div>
