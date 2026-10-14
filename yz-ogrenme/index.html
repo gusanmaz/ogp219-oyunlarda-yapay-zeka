@@ -236,6 +236,13 @@
   </div>
 </section>
 
+<section data-sec="önce sayılarla">
+  <h2>Elle Q-learning: fare, koridor, peynir 🐭🧀</h2>
+  <p style="font-size:.76em;margin:.1em 0 .2em">Beş karelik bir koridor; peynir en sağda ve <b>+10</b> ödül veriyor. Her kare tek bir sayı tutar: “buradan sağa gitmek <b>ne kadar iyi</b>?” Başta hepsi 0. Fare her adımda bu sayıyı şu kuralla düzeltir: <b>yeni = eski + α · (ödül + γ · sonraki karenin değeri − eski)</b>. α (öğrenme hızı): yeni bilgiye ne kadar güveneyim? γ (indirim): gelecekteki ödül bugün ne kadar eder?</p>
+  <div class="demo" data-demo="qhand"></div>
+  <aside class="notes">Bir önceki slayttaki Bellman güncellemesinin sayılarla izlenişi; ızgara demosundan önce mutlaka oynatın. Standart senaryoda (α = 0,5, γ = 0,9) değerler tur tur şöyle gelişir: 1. tur sonunda 4. kare 5; 2. tur sonunda 3. kare 2,25, 4. kare 7,5; 5. tur sonunda 1. kareye de değer ulaşmıştır. Vurgu: ödül yalnızca en sonda verildiği hâlde, “sonraki karenin değeri” terimi sayesinde bilgi her turda bir kare geriye yayılır. Kısa görüşlü senaryoda (γ = 0) yalnızca 4. kare öğrenir. α = 1 senaryosunda değerler 10, 9, 8,1, 7,29 olarak oturur (her kare bir sonrakinin 0,9 katı).</aside>
+</section>
+
 <section data-sec="Q-learning">
   <h2>Canlı: Q-learning ızgarası 🧠</h2>
   <div class="demo" data-demo="qgrid"></div>

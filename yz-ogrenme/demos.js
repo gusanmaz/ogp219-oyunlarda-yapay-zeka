@@ -42,6 +42,51 @@
   SL.GridEnv = GridEnv;
   const MAP1 = ['..........', '.S..#.....', '....#..LL.', '....#....G', '.LL....#..', '.......#..'];
 
+  /* ================= elle Q-learning: 5 karelik koridor =================
+     Fare hep sağa yürür; peynir en sağda (+10). Her adımda tek bir Q değeri güncellenir ve formül sayılarla yazılır. */
+  D.qhand = function (root) {
+    const N = 5, R = 10, EP = 5, f2 = x => (Math.round(x * 100) / 100).toFixed(2).replace('.', ',').replace(/,00$/, '').replace(/(,\d)0$/, '$1');
+    const SC = [
+      ['🐭 Standart (α = 0,5 · γ = 0,9)', 0.5, 0.9, 'Fare peynire beş kez yürüyecek. Her varışta bilgi bir kare geriye sızar.', 'İlk turda yalnızca peynirin yanındaki kare bir şey öğrendi. Her yeni turda değer <b>bir kare daha geriye</b> yayıldı: Q-learning ödülü, ona götüren yol boyunca geriye taşır.'],
+      ['🙈 Kısa görüşlü (γ = 0)', 0.5, 0, 'γ = 0: fare yalnızca hemen alacağı ödüle bakıyor.', 'Peynirin yanındaki kare dışında hiçbir kare değer kazanmadı: γ = 0 iken “sonraki karenin değeri” hiç hesaba katılmaz ve bilgi geriye yayılamaz.'],
+      ['⚡ Tek seferde (α = 1)', 1, 0.9, 'α = 1: her yeni bilgi eskisinin tamamen üzerine yazılır.', 'Değerler daha hızlı oturdu (10, 9, 8,1…). Bu ortam hiç değişmediği için sorun yok; ödülün şansa bağlı olduğu ortamlarda α = 1 her yeni sonuca aşırı güvenir ve değerler zıplar.']];
+    let F = [], moralTxt = '';
+    const build = (al, ga) => {
+      const Q = new Array(N).fill(0); F = [{ Q: Q.slice(), pos: 0, ep: 1, note: 'Başlangıç: fare hiçbir şey bilmiyor; bütün değerler 0. ▶ Oynat ya da İleri ▶| ile adım adım ilerleyin.' }];
+      for (let ep = 1; ep <= EP; ep++) for (let p = 0; p < N - 1; p++) {
+        const r = p + 1 === N - 1 ? R : 0, nxt = p + 1 === N - 1 ? 0 : Q[p + 1], old = Q[p];
+        Q[p] = old + al * (r + ga * nxt - old);
+        F.push({ Q: Q.slice(), pos: p + 1, ep, ch: p, note: `<b>${ep}. tur, ${p + 1}. kareden sağa:</b> ödül ${r}, sonraki karenin değeri ${f2(nxt)}. Yeni değer = ${f2(old)} + ${f2(al)}·(${r} + ${f2(ga)}·${f2(nxt)} − ${f2(old)}) = <b>${f2(Q[p])}</b>${Math.abs(Q[p] - old) < 1e-9 ? ' (değişmedi)' : ''}` });
+      }
+    };
+    const diag = el('div'), note = el('div', { class: 'sv-note ah-note' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
+    const draw = (f, pl) => {
+      const t = T(), C = 200; let s = '';
+      for (let i = 0; i < N; i++) {
+        const x = 20 + i * C, q = f.Q[i], ch = f.ch === i, goal = i === N - 1;
+        s += `<rect x="${x}" y="20" width="${C - 12}" height="150" rx="12" fill="${goal ? (t.dark ? '#3a3210' : '#fff3c4') : t.card}" stroke="${ch ? t.red : f.pos === i ? t.amber : t.rule}" stroke-width="${ch ? 5 : f.pos === i ? 4 : 1.5}"/>`;
+        s += `<text x="${x + 14}" y="44" font-size="15" fill="${t.muted}">${goal ? 'peynir' : (i + 1) + '. kare'}</text>`;
+        if (goal) s += `<text x="${x + C / 2 - 6}" y="120" text-anchor="middle" font-size="56">🧀</text>`;
+        else {
+          s += `<rect x="${x + 16}" y="${140 - q * 8}" width="${C - 44}" height="${q * 8}" rx="4" fill="${t.green}" opacity=".35"/>`;
+          s += `<text x="${x + C / 2 - 6}" y="112" text-anchor="middle" font-size="34" font-weight="900" font-family="JetBrains Mono" fill="${ch ? t.red : q > 0 ? t.ink : t.muted}">${f2(q)}</text><text x="${x + C / 2 - 6}" y="160" text-anchor="middle" font-size="14" fill="${t.muted}">“sağa git”in değeri</text>`;
+        }
+        if (f.pos === i) s += `<text x="${x + C - 40}" y="60" text-anchor="middle" font-size="34">🐭</text>`;
+      }
+      diag.innerHTML = `<svg viewBox="0 0 ${N * C + 28} 190" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
+      note.innerHTML = f.note;
+      moral.innerHTML = pl.done && moralTxt ? '💡 ' + moralTxt : `tur ${f.ep} / ${EP}`;
+    };
+    const fp = new SL.FramePlayer(draw, { speed: 1.5 });
+    const load = (i, play) => { build(SC[i][1], SC[i][2]); story.innerHTML = '📖 ' + SC[i][3]; moralTxt = SC[i][4]; fp.load(F); if (play) fp.play(); };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, diag, SL.transport(fp, { min: 0.4, max: 8 }), note, moral);
+    bs[0].classList.add('primary'); load(0, false);
+    SL.onTheme(() => fp.render());
+    return { stop: () => fp.pause() };
+  };
+
   D.qgrid = function (root) {
     const env = GridEnv(MAP1), N = env.W * env.H;
     const W = 720, H = 300, cs = 46, ox = 10, oy = 8;
