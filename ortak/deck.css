@@ -887,3 +887,4 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 /* dairesel tampon yan paneli: yazılar okunur boyda (önceden çok küçüktü) */
 .ring-side { font-size: 18px; line-height: 1.4; } .ring-side .mini { font-size: 16px; } .ring-side .sv-note { font-size: 17px; }
 .ring-side .ll-chip { font-size: 17px; } .ring-side .combo-row { font-size: 16px; } .ring-side code { font-size: 15px; }
+.sum-t.iz-t th, .sum-t.iz-t td { padding: 4px 7px; line-height: 1.25; }
