@@ -244,5 +244,81 @@
     show: t => `t = ${t} sn`,
     hint: t => `Bir tur 7 + 20 = 27 sn. t % 27 = ${Math.round((t % 27) * 100) / 100}; bu 7’den küçükse DAGIL.`
   };
+
+})();
+
+(function () {
+  'use strict';
+  const { el, btn } = SL;
+  const D = window.DEMOS, T = () => SL.theme();
+  /* ================= ajan döngüsü, adım adım: algıla → düşün → davran =================
+     Dört senaryo; her “▶ Sonraki adım” döngünün bir aşamasını çalıştırır ve günlüğe düz cümleyle yazar. */
+  D.agentloop = function (root) {
+    const W = 720, H = 400, G0 = [150, 270], RANGE = 260, WALL = [400, 160, 400, 340];
+    const PH = [['ALGILA', 'blue', 'görüş, ses'], ['DÜŞÜN', 'amber', 'kurallar'], ['DAVRAN', 'green', 'hareket']];
+    const SC = [
+      { ad: '😴 Sessiz gece', P: [650, 130], story: 'Oyuncu haritanın öbür ucunda; nöbetçi devriyede.',
+        steps: [
+          ['l-no', 'Görüyor mu? Oyuncu 519 birim uzakta, görüş menzili 260 → <b>hayır</b>. Ses var mı? <b>Yok</b>.'],
+          ['', 'Kural listesi: “oyuncuyu görüyorsam kovala” ✗ · “ses duyduysam bak” ✗ · <b>“hiçbiri değilse devriye”</b> ✓'],
+          ['l-ok', 'Devriye yolunda bir adım yürü (aşağı doğru).']],
+        G: [150, 330], bub: '', moral: 'Çoğu karede döngü sıkıcıdır: “bir şey yok, devam”. Ama oyun saniyede 30–60 kez yine de sorar; çünkü bir sonraki karede cevap değişebilir.' },
+      { ad: '👀 Önümde', P: [330, 215], story: 'Oyuncu duvarın bu tarafında, nöbetçinin baktığı yönde.',
+        steps: [
+          ['l-ok', 'Görüyor mu? Uzaklık 188 ≤ 260, oyuncu önünde, arada duvar yok → <b>evet, görüyor</b>.'],
+          ['', 'Kural listesi yukarıdan aşağı: <b>“oyuncuyu görüyorsam kovala”</b> ✓ → gerisine bakılmaz.'],
+          ['l-ok', 'Oyuncuya doğru koş, “!” göster, alarm sesi çal.']],
+        G: [250, 235], bub: '!', snd: 'alert', moral: 'Aynı kural listesi, farklı algı → farklı davranış. “Zekâ” dediğimiz şeyin büyük kısmı DÜŞÜN kutusundaki birkaç kural.' },
+      { ad: '🧱 Duvar arkasında, vazo kırıldı', P: [520, 250], noise: true, story: 'Oyuncu duvarın arkasına saklandı ama bir vazoyu devirdi: çatırtı!',
+        steps: [
+          ['l-no', 'Görüyor mu? Uzaklık 371 &gt; 260 ve arada duvar var → <b>hayır</b>.'],
+          ['l-ok', 'Duyuyor mu? Çatırtının duyulma yarıçapı 420, uzaklık 371 → <b>evet</b>. Ama yalnızca <b>sesin geldiği yer</b> biliniyor, oyuncunun kendisi değil.'],
+          ['', 'Kural listesi: “görüyorsam kovala” ✗ · <b>“ses duyduysam oraya gidip bak”</b> ✓'],
+          ['l-ok', 'Sesin geldiği yöne, duvarın ucuna doğru yürü; başının üstünde “?” çıksın.']],
+        G: [300, 300], bub: '?', moral: 'Bekçi <b>bilmiyor</b>, merak ediyor. Oyuncu da “beni duydu, kaçmalıyım” diye düşünür; gerilim buradan doğar. Sınırlı algı, inandırıcı davranış.' },
+      { ad: '😈 Hileci bekçi', P: [520, 250], cheat: true, story: 'Aynı yer, bu kez hiç ses yok. Ama bu bekçinin “algısı” oyunun belleğini doğrudan okuyor.',
+        steps: [
+          ['l-no', 'Görüyor mu? Duvar umurunda değil: oyuncunun konumu (520, 250) doğrudan bellekten okundu → <b>“evet”</b>.'],
+          ['', 'Kural listesi: <b>“oyuncuyu görüyorsam kovala”</b> ✓'],
+          ['l-ok', 'Duvarın etrafından dolaşıp tam oyuncunun saklandığı yere koş.']],
+        G: [380, 360], bub: '!', snd: 'alert', moral: 'Teknik olarak “daha zeki” ama oyuncu “beni duvarın arkasından nasıl gördü? <b>Hile!</b>” der. Isınma sorusundaki mükemmel düşman budur. Bu yüzden oyunlarda algı <b>bilerek</b> sınırlandırılır.' }];
+    let cur = 0, k = 0;
+    const diag = el('div'), log = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
+    const phaseOf = (sc, i) => (i < 0 ? -1 : sc.steps.length === 4 ? [0, 0, 1, 2][i] : i);
+    const draw = () => {
+      const t = T(), sc = SC[cur], ph = phaseOf(sc, k - 1), acted = k >= sc.steps.length, G = acted ? sc.G : G0, P = sc.P;
+      let s = `<rect x="0" y="0" width="${W}" height="${H}" rx="10" fill="${t.card}" stroke="${t.rule}"/>`;
+      PH.forEach((p, i) => {
+        const x = 30 + i * 230, on = i === ph;
+        s += `<rect x="${x}" y="14" width="200" height="56" rx="10" fill="${on ? t[p[1]] : t.card}" fill-opacity="${on ? 0.2 : 1}" stroke="${t[p[1]]}" stroke-width="${on ? 4 : 2}"/>`;
+        s += `<text x="${x + 100}" y="40" text-anchor="middle" font-size="19" font-weight="800" fill="${t.ink}">${i + 1} · ${p[0]}</text><text x="${x + 100}" y="60" text-anchor="middle" font-size="13" fill="${t.muted}">${p[2]}</text>`;
+        if (i < 2) s += `<text x="${x + 215}" y="48" text-anchor="middle" font-size="22" fill="${t.muted}">→</text>`;
+      });
+      s += `<text x="${W / 2}" y="90" text-anchor="middle" font-size="13" fill="${t.muted}">3’ten sonra döngü bir sonraki karede yeniden 1’den başlar</text>`;
+      s += `<line x1="${WALL[0]}" y1="${WALL[1]}" x2="${WALL[2]}" y2="${WALL[3]}" stroke="${t.ink}" stroke-width="12" stroke-linecap="round"/><text x="${WALL[0] + 12}" y="${WALL[1] + 4}" font-size="14" fill="${t.muted}">duvar</text>`;
+      if (!acted) s += `<path d="M${G0[0]},${G0[1]} L${G0[0] + RANGE * Math.cos(0.6)},${G0[1] - RANGE * Math.sin(0.6)} A${RANGE},${RANGE} 0 0 1 ${G0[0] + RANGE * Math.cos(0.6)},${G0[1] + RANGE * Math.sin(0.6)} Z" fill="${t.amber}" opacity=".13"/>`;
+      if (ph === 0 || (k > 0 && !acted)) {
+        if (sc.noise) for (let r = 60; r <= 180; r += 60) s += `<circle cx="${P[0]}" cy="${P[1]}" r="${r}" fill="none" stroke="${t.amber}" stroke-width="2.5" opacity="${1 - r / 220}"/>`;
+        const col = sc.cheat ? t.purple : (sc.ad.startsWith('👀') ? t.green : t.red);
+        s += `<line x1="${G0[0]}" y1="${G0[1]}" x2="${P[0]}" y2="${P[1]}" stroke="${col}" stroke-width="3" stroke-dasharray="${sc.ad.startsWith('👀') ? '' : '8 6'}"/>`;
+        if (sc.cheat) s += `<text x="${(G0[0] + P[0]) / 2}" y="${(G0[1] + P[1]) / 2 - 12}" text-anchor="middle" font-size="14" font-weight="700" fill="${t.purple}">bellekten okuma: duvar yok sayılıyor</text>`;
+      }
+      if (acted) s += `<line x1="${G0[0]}" y1="${G0[1]}" x2="${G[0]}" y2="${G[1]}" stroke="${t.green}" stroke-width="3" stroke-dasharray="3 6"/>`;
+      s += `<text x="${G[0]}" y="${G[1] + 14}" text-anchor="middle" font-size="38">💂</text>`;
+      if (acted && sc.bub) s += `<circle cx="${G[0] + 26}" cy="${G[1] - 34}" r="16" fill="${sc.bub === '!' ? t.red : t.amber}"/><text x="${G[0] + 26}" y="${G[1] - 27}" text-anchor="middle" font-size="20" font-weight="900" fill="#fff">${sc.bub}</text>`;
+      s += `<text x="${P[0]}" y="${P[1] + 12}" text-anchor="middle" font-size="34">${sc.noise ? '🥷' : '🧍'}</text>`;
+      if (sc.noise) s += `<text x="${P[0] + 30}" y="${P[1] + 34}" font-size="24">🏺</text>`;
+      diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
+      log.innerHTML = sc.steps.slice(0, k).map((st, i) => `<div class="${st[0]}${i === k - 1 ? ' now' : ''}"><span style="color:var(--${PH[phaseOf(sc, i)][1]})">${phaseOf(sc, i) + 1}</span><b>${PH[phaseOf(sc, i)][0]}:</b> ${st[1]}</div>`).join('') || '<div class="hint"><span>·</span>“▶ Sonraki adım”a basın. Basmadan önce tahmin edin: bekçi ne yapacak?</div>';
+      moral.innerHTML = acted ? '💡 ' + sc.moral : '';
+      next.disabled = acted;
+    };
+    const next = btn('▶ Sonraki adım', () => { const sc = SC[cur]; if (k < sc.steps.length) { k++; if (k === sc.steps.length && sc.snd && SL.sfx) { try { SL.sfx(sc.snd); } catch (e) {} } draw(); } });
+    const bs = SC.map((sc, i) => { const b = btn(sc.ad, () => { cur = i; k = 0; bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); story.innerHTML = '📖 ' + sc.story; draw(); }); return b; });
+    next.classList.add('primary');
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap al' }, diag, el('div', {}, el('div', { class: 'sv-controls' }, next, btn('↺ Baştan', () => { k = 0; draw(); })), log, moral)));
+    bs[0].classList.add('primary'); story.innerHTML = '📖 ' + SC[0].story; draw(); SL.onTheme(draw);
+  };
 })();
 /* EK:BİTİŞ */

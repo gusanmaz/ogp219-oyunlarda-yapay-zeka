@@ -160,6 +160,20 @@
 </section>
 
 <section data-sec="ajan">
+  <h2>Önce günlük hayattan: üç “ajan” 🏠</h2>
+  <p style="font-size:.84em;margin:.1em 0 .5em">Terimleri bir kenara bırakalım. Aşağıdaki üç şeyin ortak noktası ne? Her biri <b>çevresine bakıyor</b>, <b>bir karar veriyor</b> ve <b>bir şey yapıyor</b>; sonra aynı şeyi baştan tekrarlıyor.</p>
+  <table class="sum-t" style="font-size:.8em">
+    <tr><th></th><th>👀 neye bakıyor?</th><th>🤔 nasıl karar veriyor?</th><th>✋ ne yapıyor?</th></tr>
+    <tr><td><b>🌡️ Kombi termostatı</b></td><td>oda sıcaklığı</td><td>“20 °C’nin altındaysa ısıt”</td><td>kombiyi açar ya da kapatır</td></tr>
+    <tr><td><b>🧹 Robot süpürge</b></td><td>tampon sensörü, toz sensörü</td><td>“çarptıysam dön; toz çoksa yavaşla”</td><td>tekerlekleri döndürür</td></tr>
+    <tr><td><b>🚶 Siz, karşıdan karşıya geçerken</b></td><td>ışık, gelen araba</td><td>“yeşilse ve araba yoksa geç”</td><td>yürürsünüz</td></tr>
+    <tr><td><b>💂 Oyundaki nöbetçi</b></td><td>görüş konisi, sesler</td><td>“oyuncuyu görürsem kovala”</td><td>yürür, koşar, ateş eder</td></tr>
+  </table>
+  <p style="font-size:.8em;margin-top:.6em">Bu üç adımlık tekrara <b>ajan döngüsü</b> denir: <b>algıla → düşün → davran</b>. Döngüyü kuran şeye de <b>ajan</b>. Oyunda ajanların çoğu NPC’dir (oyuncunun yönetmediği karakter). Dikkat: termostat “akıllı” değildir ama yine de bir ajandır; ajan olmak için zeki olmak gerekmiyor.</p>
+  <aside class="notes">Sınıfa sorun: termostat ajan mı? Evet: algılar (sıcaklık), karar verir (eşik), davranır (kombi). Zekâ şart değil. Sonraki slayt aynı fikrin resmi tanımı ve şeması; ondan sonraki demo nöbetçiyi adım adım çalıştırıyor.</aside>
+</section>
+
+<section data-sec="ajan">
   <h2>Ajan döngüsü <span class="en">sense–think–act</span></h2>
   <div class="cols c64">
     <svg viewBox="0 0 640 300" style="width:100%" font-family="Source Sans 3">
@@ -184,6 +198,15 @@
     </div>
   </div>
 </section>
+
+<section data-sec="ajan">
+  <h2>Döngüyü elle çalıştıralım: nöbetçi 💂</h2>
+  <p style="font-size:.76em;margin:.1em 0 .2em">Bir senaryo seçin; “▶ Sonraki adım” döngünün bir aşamasını çalıştırır. Basmadan önce tahmin edin. Dört senaryoda <b>aynı kural listesi</b> var; değişen yalnızca nöbetçinin algıladığı şey.</p>
+  <div class="demo" data-demo="agentloop"></div>
+  <div class="demo-help" data-title="ℹ️ Nasıl okunur?"><ul><li><b>Üstteki üç kutu</b>: döngünün aşamaları; o anki aşama renkli ve kalın çerçeveli.</li><li><b>Sarı dilim</b>: nöbetçinin görüş konisi (menzil 260). <b>Kalın siyah çizgi</b>: duvar.</li><li><b>Çizgi</b> nöbetçiden oyuncuya: yeşil düz = görüyor, kırmızı kesikli = göremiyor, mor = hile (bellekten okuma). Turuncu halkalar = ses.</li><li><b>Sağdaki günlük</b>: her aşamada nöbetçinin “kafasından geçen”. Son adımda nöbetçi yer değiştirir ve başında “!” ya da “?” çıkar.</li></ul><p>Kural listesi (DÜŞÜN): yukarıdan aşağı bakılır, ilk uyan uygulanır. 1) oyuncuyu görüyorsam kovala, 2) ses duyduysam oraya gidip bak, 3) hiçbiri değilse devriye.</p></div>
+  <aside class="notes">Cevaplar: Sessiz gece → algı boş, kural 3, devriye. Önümde → gördü, kural 1, kovala (!). Duvar arkasında, vazo kırıldı → görmedi ama duydu, kural 2, sesin yönüne yürür (?). Hileci bekçi → bellekten okudu, kural 1, duvarın arkasındaki oyuncuya koşar: oyuncu bunu hile olarak algılar. Isınma sorusundaki “mükemmel düşman”a bağlayın: algıyı sınırlamak tasarım kararıdır.</aside>
+</section>
+
 
 <section data-sec="ajan">
   <h2>Oyunlarda YZ’nin işleri</h2>
@@ -225,6 +248,7 @@
         <tr><td style="color:#34e0ff">Inky</td><td>Kimagure (kaprisli)</td><td>Blinky ile birlikte kıskaç</td></tr>
         <tr><td style="color:#ffb347">Clyde</td><td>Otoboke (aptalı oynayan)</td><td>yaklaşınca kaçar</td></tr>
       </table>
+      <figure style="margin:.4em 0 0;text-align:center"><img src="../yz-fsm/gorsel/pacman.png" alt="Pac-Man ekran görüntüsü" style="height:190px;max-width:100%;object-fit:contain;image-rendering:pixelated;border-radius:10px;border:1px solid var(--rule)"><figcaption style="font-size:.62em;line-height:1.3;color:var(--muted)">Pac-Man (1980): dört renkli hayalet, aynı labirent · Görsel: Bandai Namco, Wikimedia Commons, CC BY 3.0</figcaption></figure>
     </div>
     <div class="box story"><span class="bt">Tek bir hareket kuralı</span>Her hayalet bir <b>hedef kare</b> seçer. Her kavşakta, gidebileceği yönlerden hedefe <b>kuş uçuşu en yakın</b> olanı seçer. Geri dönemez. Eşitlikte sıra: yukarı, sol, aşağı, sağ.
       <p class="mini">Bütün “kişilik” farkı sadece hedef karenin nasıl seçildiğinde! Kaynak: Jamey Pittman, “The Pac-Man Dossier”. 🎬 Kısa ve güzel bir özet: <a href="https://www.youtube.com/watch?v=hzhtrjkBXXw" target="_blank" rel="noopener">Pac-Man’s Ghosts Were Never a Team</a> (Seeded).</p></div>
@@ -378,6 +402,18 @@ def clyde_target(clyde, pac, corner):
 </section>
 
 <section data-sec="Pac-Man">
+  <h2>🎬 Ara: dört hayaletin beyni, kare kare</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/ataGotQ7ir8" title="Pac-Man Ghost AI Explained" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Pac-Man Ghost AI Explained</b><br><span class="mini">Retro Game Mechanics Explained · 19 dk 34 sn · <a href="https://www.youtube.com/watch?v=ataGotQ7ir8" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önce kodunu yazdığımız hedef kare kurallarının orijinal oyundaki hâli: dağıl/kovala zamanlayıcısı, kavşakta yön seçimi ve Pinky’nin “yukarı” taşması, hepsi oyunun kendi ekranında çizilerek.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda Blinky’nin “Elroy” hızlanması ne zaman başlıyor? Inky’nin hedef karesini bulmak için hangi iki noktayı kullanıyor? Pinky’nin hatası videoda nasıl gösteriliyor; bizim demodaki “1980 taşma hatası” kutusuyla aynı mı?</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="Pac-Man">
   <div class="quiz" data-answer="B">
     <div class="qhead">Quiz 2 · Pac-Man</div>
     <div class="q">Pac-Man hayaletlerinin “kişilikleri” teknik olarak nereden geliyor?</div>
@@ -409,6 +445,7 @@ def clyde_target(clyde, pac, corner):
         <tr><td>güçlü düşman</td><td><b>%43</b></td><td>%57</td></tr>
       </table>
       <p class="mini">Oyuncular uzun yaşayan düşmanı daha uzun izledi → davranışını fark etti → “akıllı” dedi.</p>
+      <figure style="margin:.4em 0 0;text-align:center"><img src="../yz-davranis-agaclari/gorsel/halo2.jpg" alt="Halo 2 ekran görüntüsü" style="height:170px;max-width:100%;object-fit:contain;border-radius:10px;border:1px solid var(--rule)"><figcaption style="font-size:.62em;line-height:1.3;color:var(--muted)">Halo serisi: canı yüksek Elite’ler “zeki” bulundu · Görsel: Bungie/Microsoft, Wikipedia (eğitim amaçlı adil kullanım)</figcaption></figure>
     </div>
     <div class="box game"><span class="bt">Grunt’lar kaçıyor!</span>Elite (lider) ölünce küçük Grunt’ların kaçması planlanmıştı. Test oyuncuları <b>fark etmedi</b>. Bungie ipuçlarını abarttıkça abarttı: sonunda her Grunt, kollarını havaya kaldırıp çığlık atarak ve çoğu zaman “Lider öldü, kaç!” diye bağırarak kaçtı.
       <p class="mini">Ders: davranışı <b>oyuncuya göstermek</b>, davranışı yazmak kadar önemli.</p></div>
@@ -432,7 +469,8 @@ def clyde_target(clyde, pac, corner):
         <li><b>Kafa çevirme</b>: iki düşmana bir saniye bakıp sonra birine saldırmak “tarttı” izlenimi verir (Steve Rabin)</li>
         <li><b>Düşünce baloncukları</b>: The Sims’in ihtiyaç ikonları</li>
         <li><b>Şaşkın ikonu</b>: Creatures (1996), fikrini değiştiren yaratığın başına “?” koyardı — kararsızlık hata değil “bilinçli” görünsün diye</li>
-      </ul></div>
+      </ul>
+      <figure style="margin:.4em 0 0;text-align:center"><img src="../yz-goap/gorsel/fear.jpg" alt="F.E.A.R. ekran görüntüsü" style="height:170px;max-width:100%;object-fit:contain;border-radius:10px;border:1px solid var(--rule)"><figcaption style="font-size:.62em;line-height:1.3;color:var(--muted)">F.E.A.R. (2005): birbirine seslenen askerler · Görsel: Monolith, Wikipedia (eğitim amaçlı adil kullanım)</figcaption></figure></div>
   </div>
 </section>
 
@@ -448,6 +486,18 @@ def clyde_target(clyde, pac, corner):
       <p class="mini">Tek bir bariz hata, saatlerce kurulan yanılsamayı yıkar. Oyun YZ’sinde ilk iş: <b>aptalca görünmemek</b>.</p></div>
     <div class="box story"><span class="bt">📜 “Liquid AI” (1997)</span>EA, Madden NFL 98’in YZ’sini “sıvı gibi akan” <i>Liquid AI</i> diye tanıttı. Rakip NFL GameDay 98’in ekibi bir dergi röportajında alay etti: “Liquid AI, GameDay’i görünce EA’nın bacağından aşağı akan şeydir.” 😅
       <p class="mini">Beklenti yönetimi önemli: YZ’yi övüp teslim edemezseniz geri teper. (Steve Rabin, Game AI Pro 3, 1. bölüm)</p></div>
+  </div>
+</section>
+
+<section data-sec="yanılsama">
+  <h2>🎬 Ara: iyi bir oyun YZ’si neye benzer?</h2>
+  <div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/9bbhJi0NBkk" title="What Makes Good AI?" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>What Makes Good AI?</b><br><span class="mini">Game Maker’s Toolkit (Mark Brown) · 15 dk 42 sn · <a href="https://www.youtube.com/watch?v=9bbhJi0NBkk" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Halo ve F.E.A.R. örneklerinin geniş hâli: düşmanın niyetini oyuncuya okutmak, tahmin edilebilir ama şaşırtabilir olmak, “yapay aptallık” ve oyuncuya adil davranmak. Bölümün ana fikri tek videoda.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Video “iyi YZ” için hangi ilkeleri sayıyor? Bunlardan hangisi Halo’daki kaçan Grunt’larla, hangisi F.E.A.R.’ın konuşan askerleriyle örtüşüyor? Hangisi az önceki “hileci bekçi” senaryosuna karşı bir kural?</div>
+    </div>
   </div>
 </section>
 
@@ -513,7 +563,8 @@ def clyde_target(clyde, pac, corner):
   <h2>YZ yönetmeni: oyunun temposunu yöneten YZ</h2>
   <div class="cols">
     <div class="box game"><span class="bt">Left 4 Dead (Valve, 2008)</span>Michael Booth’un <b>AI Director</b>’ı her oyuncu için bir “duygusal yoğunluk” değeri tutar: hasar aldıkça, yakında zombi öldükçe artar. Yoğunluk zirveye çıkınca yönetmen bir süre <b>dinlenme</b> verir (yeni sürü göndermez); düşünce yeniden gerilimi yükseltir. Zombilerin, eşyaların ve hatta müziğin nerede/ne zaman çıkacağı her oyunda farklıdır.
-      <p class="mini">Korku filmlerindeki “gerilim–rahatlama” dalgası. Kaynak: Booth, “The AI Systems of Left 4 Dead” (2009).</p></div>
+      <p class="mini">Korku filmlerindeki “gerilim–rahatlama” dalgası. Kaynak: Booth, “The AI Systems of Left 4 Dead” (2009).</p>
+      <figure style="margin:.4em 0 0;text-align:center"><img src="../yz-zorluk/gorsel/l4d.jpg" alt="Left 4 Dead ekran görüntüsü" style="height:160px;max-width:100%;object-fit:contain;border-radius:10px;border:1px solid var(--rule)"><figcaption style="font-size:.62em;line-height:1.3;color:var(--muted)">Left 4 Dead (2008): dalgaların zamanını yönetmen seçer · Görsel: Valve, Wikipedia (eğitim amaçlı adil kullanım)</figcaption></figure></div>
     <div class="box game"><span class="bt">Alien: Isolation (2014)</span>“İki beyin”: <b>yönetmen</b> YZ oyuncunun yerini hep bilir ve bir <b>tehdit göstergesi</b> <span class="en">menace gauge</span> tutar. Gösterge çok yükselince uzaylıyı uzaklaştırır, çok düşünce oyuncunun bölgesine “ipucu” verir. Uzaylının kendi YZ’si ise oyuncunun yerini <b>bilmez</b>: duyar, görür, arar.
       <p class="mini">Hile ile adalet arasındaki ince çizgi: yönetmen bilir ama av (uzaylı) bilmez.</p></div>
   </div>
@@ -524,6 +575,7 @@ def clyde_target(clyde, pac, corner):
   <div class="cols c64">
     <div style="font-size:.86em">
       <p><b>Efsane:</b> İlk Civilization’da (1991) Gandi’nin saldırganlık değeri 1’di. Demokrasiye geçen liderin saldırganlığı 2 azalıyordu. 1 − 2 = −1… ama değer <b>8 bitlik işaretsiz</b> sayıda (0–255) tutulduğundan <b>255</b>’e “taştı” ve barışçı Gandi nükleer silah delisi oldu.</p>
+      <svg viewBox="0 0 560 175" style="width:100%;margin-top:.3em" font-family="Source Sans 3"><defs><marker id="gw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--red)"/></marker></defs><rect x="20" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="49" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">252</text><rect x="86" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="115" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">253</text><rect x="152" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="181" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">254</text><rect x="218" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--red)" stroke-width="3"/><text x="247" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">255</text><rect x="284" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="313" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">0</text><rect x="350" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--red)" stroke-width="3"/><text x="379" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">1</text><rect x="416" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="445" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">2</text><rect x="482" y="58" width="58" height="44" rx="7" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="511" y="87" text-anchor="middle" font-size="20" font-weight="700" style="fill:var(--ink)">3</text><line x1="280" y1="50" x2="280" y2="110" style="stroke:var(--muted)" stroke-dasharray="4 4"/><text x="279" y="170" text-anchor="middle" font-size="13" style="fill:var(--muted)">0’ın altı yok: sayı başa (255’e) sarar</text><path d="M372,56 C360,24 330,24 318,54" fill="none" style="stroke:var(--red)" stroke-width="2.5" marker-end="url(#gw)"/><text x="345" y="20" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--red)">−1</text><path d="M308,104 C298,136 262,136 252,106" fill="none" style="stroke:var(--red)" stroke-width="2.5" marker-end="url(#gw)"/><text x="280" y="150" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--red)">−1</text><text x="20" y="40" font-size="14" style="fill:var(--ink-2)">8 bitlik işaretsiz sayı: 1 − 2 = ?</text><text x="560" y="40" text-anchor="end" font-size="14" font-weight="700" style="fill:var(--red)">1 → 0 → 255 (“en saldırgan”)</text></svg>
       <p class="fragment"><b>Gerçek:</b> Bu hikâye 2012 civarında internette yayıldı. 2020’de Sid Meier anı kitabında böyle bir hatanın ilk oyunda <b>imkânsız</b> olduğunu söyledi. Civilization V’in (2010) tasarımcıları ise Gandi’nin nükleer silah eğilimini <b>bilerek</b> en üst düzeye ayarlamıştı — bir şaka olarak. Sonraki oyunlarda da göndermeler var.</p>
     </div>
     <div class="box low fragment"><span class="bt">⚙️ Neden yine de iyi bir ders?</span>Efsane yanlış ama anlattığı hata <b>çok gerçek</b>: işaretsiz bir sayıdan büyük bir sayı çıkarınca “sarar” <span class="en">wrap around</span>. Arama Algoritmaları sunumundaki ikili arama taşması (<code>(lo + hi) / 2</code>) ile aynı aile.
