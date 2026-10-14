@@ -124,10 +124,10 @@
       box.innerHTML = '';
       if (kind === 'dekorator') {
         let c1, n1, a1, q1; const t1 = q1 = B.seq('', n1 = B.not('', c1 = B.cond('oyuncu görünüyor?', 'x')), a1 = B.act('devriye gez', 'x'));
-        let c2, d2, a2, q2; const t2 = q2 = B.seq('', c2 = B.cond('mesafe < 20?', 'x'), d2 = B.dec('8 sn', '⏱', a2 = B.act('el bombası at', 'x')));
+        let c2, d2, a2, q2; const t2 = q2 = B.seq('', c2 = B.cond('mesafe < 20?', 'x'), d2 = B.dec('8 sn', '⏱️', a2 = B.act('el bombası at', 'x')));
         let d3, a3; const t3 = d3 = B.dec('mermi bitene dek', '🔁', a3 = B.act('ateş et', 'x'));
         box.append(panel('Inverter (!): cevabı ters çevirir', t1, { [c1.id]: 'FAILURE', [n1.id]: 'SUCCESS', [a1.id]: 'RUNNING', [q1.id]: 'RUNNING' }, { W: 330, H: 250, cap: 'oyuncu görünmüyor (✗) → ! onu ✓ yapar → devriye çalışır' }),
-          panel('Cooldown (⏱): yakın zamanda çalıştıysa kapalı', t2, { [c2.id]: 'SUCCESS', [d2.id]: 'FAILURE', [q2.id]: 'FAILURE' }, { W: 330, H: 250, cap: 'son bomba 3 sn önce: ⏱ 8 sn dolmadı → ✗, el bombası atılmaz' }),
+          panel('Cooldown (⏱️): yakın zamanda çalıştıysa kapalı', t2, { [c2.id]: 'SUCCESS', [d2.id]: 'FAILURE', [q2.id]: 'FAILURE' }, { W: 330, H: 250, cap: 'son bomba 3 sn önce: ⏱️ 8 sn dolmadı → ✗, el bombası atılmaz' }),
           panel('Repeat (🔁): çocuğu tekrar tekrar çalıştırır', t3, { [a3.id]: 'RUNNING', [d3.id]: 'RUNNING' }, { W: 330, H: 250, cap: 'ateş et her bitişte yeniden başlar; mermi bitince 🔁 durur' }));
       } else if (kind === 'paralel') {
         let p, a, b; const t = p = B.par('Parallel', a = B.act('hedefe yürü', 'x'), b = B.act('etrafı tara', 'x'));
