@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Üçgenleme ve Voronoi</title>
+<meta name="description" content="Hesaplamalı geometrinin oyunlardaki uygulamaları: kulak kesme ile çokgen üçgenleme, Delaunay üçgenlemesi (boş çember kuralı, Bowyer–Watson), Voronoi diyagramı ve harita üretimi, Lloyd gevşetmesi, Poisson disk örneklemesi ve Delaunay + MST ile zindan koridorları.">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('deck-theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Press+Start+2P&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="../ortak/deck.css">
+</head>
+<body>
+<button class="theme-toggle" id="themeBtn" title="Açık / koyu tema (T tuşu)">🌙</button>
+<div class="help-chip">T: tema · Z: kodu büyüt · S: konuşmacı notları · F: tam ekran · Esc: genel bakış · <a href="../" style="color:inherit">⌂ ders haritası</a></div>
+
+<div class="reveal"><div class="slides">
+
+<section class="level" data-background-gradient="radial-gradient(circle at 70% 20%, #0d2a24 0%, #141a28 55%, #07060f 100%)">
+  <div class="title-badge" style="margin-top:34px">OYUN GEOMETRİSİ VE FİZİĞİ · G10</div>
+  <div class="ttl" style="font-size:64px">Üçgenleme ve Voronoi</div>
+  <div class="sub"><i>Çokgeni üçgenlere bölmek, Delaunay üçgenlemesi, Voronoi diyagramı, noktaları düzgün serpiştirmek ve bir zindanın koridorlarını kurmak</i> — “bu noktaları nasıl birbirine bağlarım, haritayı nasıl bölerim?”</div>
+  <div class="hp">PRESS ▶ TO START</div>
+  <div class="demo title-bars" data-demo="titlegeo10"></div>
+  <aside class="notes">Kayan noktalar ve her birinin “en yakın olduğu” renkli bölge: canlı bir Voronoi diyagramı.</aside>
+</section>
+
+<section>
+  <h2>Bu derste oyunun haritası 🗺️</h2>
+<div class="cols c64">
+<div><ol style="font-size:.8em"><li><b>Neden üçgen?</b> — ekran kartı ve navmesh yalnızca üçgen tanır; çokgeni “kulak kesme” ile üçgenlere bölmek</li><li><b>Delaunay üçgenlemesi</b> — aynı noktaların en “dolgun” üçgenlemesi; boş çember kuralı; Bowyer–Watson</li><li><b>Voronoi diyagramı</b> — “en yakın kim?” sorusunun haritası; Delaunay’ın ikizi; harita ve bölge üretimi</li><li><b>Düzgün serpiştirmek</b> — Lloyd gevşetmesi ve Poisson disk: rastgele ama kümelenmeyen noktalar</li><li><b>Zindan koridorları</b> — odalar → Delaunay → en küçük yayılan ağaç → birkaç döngü</li><li><b>Her adımda</b> — günlük hayattan bir örnek → elle hesap → adım adım demo → kod (JavaScript / Python) → oyunlarda</li></ol></div>
+<div><div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span><p>bir oda zeminini üçgenlere bölebilecek, rastgele noktalardan dolgun bir üçgen ağı ve bölge haritası çıkarabilecek, ağaçları ya da kampları kümelenmeden serpiştirebilecek ve bir roguelike zindanının koridorlarını kurabileceksiniz.</p></div></div>
+</div>
+</section>
+
+<section>
+<div class="box ask" style="font-size:1em"><span class="bt">🤔 ISINMA: HARİTA KENDİNİ NASIL BÖLER?</span>
+<p>Bir strateji oyunu için haritaya rastgele 20 köy serpiştirdiniz. Şimdi iki şey lazım: (1) her köyün çevresindeki toprak, yani ülkenin bölgeleri; (2) köyleri birbirine bağlayan, birbirini kesmeyen yollar. Elle çizmek yok: her yeni haritada otomatik olmalı. Nasıl?</p>
+<ul style="font-size:.9em"><li><span class="fragment">“Her toprak parçası <b>en yakın</b> köye ait olsun” dersek bölgeler kendiliğinden çıkar. Bu bölgelere <b>Voronoi</b> diyagramı denir.</span></li><li><span class="fragment">İki köyün bölgeleri birbirine değiyorsa aralarına yol yap. Bu yollar hiç kesişmez ve dolgun üçgenler oluşturur: <b>Delaunay</b> üçgenlemesi.</span></li><li><span class="fragment">İkisi aynı bilginin iki yüzü: birini bulan öbürünü de bulmuş olur.</span></li><li><span class="fragment">Bu sunum bu iki yapıyı, onlara giden yolu (çokgeni üçgenlere bölmek) ve oyunlardaki kullanımlarını adım adım kuruyor.</span></li></ul></div>
+</section>
+
+<section>
+  <h2>🎯 Bu konu için bilmeniz gerekenler</h2>
+  <p class="mini">Yeşil = gerekli · kesikli = faydalı ama şart değil. Tıklayınca ilgili sunuma gider.</p>
+  <div class="prereq"><a class="" href="../geo-temeller/">G1 · Geometri Temelleri (çapraz çarpım, yön testi)</a><a class="" href="../mst/">En Küçük Yayılan Ağaç (Kruskal)</a><a class="" href="../union-find/">Union-Find</a></div>
+  <div class="prereq"><a class="opt" href="../geo-uzaysal/">G2 · Uzaysal Bölümleme (ızgara)</a><a class="opt" href="../yz-navmesh/">Y9 · Navmesh</a><a class="opt" href="../yz-pcg/">Y15 · Prosedürel Üretim</a></div>
+  <div class="box story" style="margin-top:10px"><span class="bt">Neden?</span>Bu sunumdaki her test G1’deki <b>çapraz çarpımın işaretine</b> dayanıyor: “nokta doğrunun solunda mı?”, “üçgen saat yönünde mi?”. Zindan bölümünde MST sunumundaki Kruskal’ı ve Union-Find’ı hazır kullanacağız.</div>
+  <div class="box game" style="margin-top:10px"><span class="bt">🧰 Kodlamadan korkuyorsanız</span>Tek yeni formül “üç noktadan geçen çemberin merkezi”; onu da hazır formül olarak alıp elle bir kez sınayacağız. Gerisi toplama, çarpma ve karşılaştırma.</div>
+</section>
+
+<section>
+  <h2>Mini sözlük</h2>
+<table class="gloss" style="font-size:16px"><tr><td>triangulation</td><td>üçgenleme</td><td>Bir alanı ya da nokta kümesini, kenarları kesişmeyen üçgenlere bölmek</td></tr><tr><td>ear clipping</td><td>kulak kesme</td><td>Çokgenden içi boş, dışbükey köşeli üçgenleri (kulakları) tek tek kesip atma</td></tr><tr><td>reflex / convex vertex</td><td>içbükey / dışbükey köşe</td><td>İç açısı 180°’den büyük / küçük olan köşe</td></tr><tr><td>circumcircle</td><td>çevrel çember</td><td>Bir üçgenin üç köşesinden geçen çember</td></tr><tr><td>Delaunay triangulation</td><td>Delaunay üçgenlemesi</td><td>Hiçbir üçgenin çevrel çemberinin içinde başka nokta olmayan üçgenleme</td></tr><tr><td>edge flip</td><td>kenar çevirme</td><td>İki üçgenin ortak kenarını öbür köşegenle değiştirme</td></tr><tr><td>Voronoi diagram · site</td><td>Voronoi diyagramı · merkez</td><td>Düzlemi “en yakın merkez”e göre bölgelere ayırma · bölgelerin sahibi olan noktalar</td></tr><tr><td>perpendicular bisector</td><td>dik açıortay</td><td>İki noktaya eşit uzaklıktaki noktaların doğrusu</td></tr><tr><td>Lloyd relaxation</td><td>Lloyd gevşetmesi</td><td>Her noktayı kendi Voronoi bölgesinin ortasına taşıyıp tekrarlama</td></tr><tr><td>Poisson disk sampling</td><td>Poisson disk örneklemesi</td><td>Hiçbir ikisi belli bir uzaklıktan yakın olmayan rastgele noktalar üretme</td></tr></table>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 0</div><div class="ttl">Neden üçgen?</div><div class="sub">kulak kesme</div></div>
+</section>
+
+<section data-sec="üçgen">
+  <h2>Önce günlük hayattan: L biçimli bir odanın zeminini kesmek ✂️</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.86em"><span class="bt">🏠 Kâğıttan bir oda</span><svg viewBox="0 0 440 230" style="width:100%;max-height:260px" font-family="Source Sans 3"><defs><marker id="cz-ok1" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs><polygon points="280.4,134.0 416.8,134.0 416.8,220.8" style="fill:var(--blue);stroke:var(--ink-2)" fill-opacity=".22" stroke-width="1.5"/><polygon points="280.4,134.0 416.8,220.8 69.6,220.8" style="fill:var(--green);stroke:var(--ink-2)" fill-opacity=".22" stroke-width="1.5"/><polygon points="280.4,134.0 69.6,220.8 69.6,47.2" style="fill:var(--amber);stroke:var(--ink-2)" fill-opacity=".22" stroke-width="1.5"/><polygon points="69.6,47.2 280.4,47.2 280.4,134.0" style="fill:var(--purple);stroke:var(--ink-2)" fill-opacity=".22" stroke-width="1.5"/><polygon points="69.6,47.2 280.4,47.2 280.4,134.0 416.8,134.0 416.8,220.8 69.6,220.8" style="fill:none;stroke:var(--ink)" stroke-width="3.5" stroke-linejoin="round"/><circle cx="69.6" cy="47.2" r="5" style="fill:var(--ink)"/><text x="57.599999999999994" y="38.2" text-anchor="middle" font-size="16" font-weight="800" style="fill:var(--ink)">1</text><circle cx="280.4" cy="47.2" r="5" style="fill:var(--ink)"/><text x="293.4" y="38.2" text-anchor="middle" font-size="16" font-weight="800" style="fill:var(--ink)">2</text><circle cx="280.4" cy="134.0" r="7" style="fill:var(--red)"/><text x="293.4" y="125.0" text-anchor="middle" font-size="16" font-weight="800" style="fill:var(--red)">3</text><circle cx="416.8" cy="134.0" r="5" style="fill:var(--ink)"/><text x="429.8" y="125.0" text-anchor="middle" font-size="16" font-weight="800" style="fill:var(--ink)">4</text><circle cx="416.8" cy="220.8" r="5" style="fill:var(--ink)"/><text x="429.8" y="211.8" text-anchor="middle" font-size="16" font-weight="800" style="fill:var(--ink)">5</text><circle cx="69.6" cy="220.8" r="5" style="fill:var(--ink)"/><text x="57.599999999999994" y="211.8" text-anchor="middle" font-size="16" font-weight="800" style="fill:var(--ink)">6</text><text x="270.4" y="156.0" text-anchor="end" font-size="13" font-weight="800" style="fill:var(--red)">iç köşe: kulak olamaz</text></svg><p>Elinizde L biçimli bir odanın kâğıttan planı ve bir makas var. Görev: planı yalnızca <b>düz kesiklerle</b> üçgenlere bölmek.</p><ul style="font-size:.95em"><li>Bir köşeyi iki komşusuyla birleştiren düz bir kesik atın: kopan parça bir üçgen.</li><li>L’nin <b>içe dönük köşesinden</b> (3) kesik atarsanız makas odanın dışına çıkar: olmaz.</li><li>Kopan üçgenin içinde başka köşe kalırsa da olmaz.</li><li>Kestikçe plan bir köşe küçülür: 6 köşe → 4 üçgen.</li></ul></div></div>
+<div><div class="box info" style="font-size:.82em"><span class="bt">Oyunda bunu kim istiyor?</span><ul style="font-size:.9em"><li><b>Ekran kartı</b> yalnızca üçgen çizer. Bir sprite’ın çokgen çarpışma şekli, bir harita bölgesi, bir yazı tipindeki harf: hepsi çizilmeden önce üçgenlere bölünür.</li><li><b>Navmesh</b> (Y9): yürünebilir alan çokgenlerden kurulur, A* üçgenlerin (ya da dışbükey çokgenlerin) üstünde arar.</li><li><b>Fizik motorları</b> içbükey şekilleri dışbükey parçalara böler; çarpışma testleri (G3) dışbükey şekilde çalışır.</li></ul><p>Makasla yaptığımız işin adı <b>kulak kesme</b>; kopan her üçgen bir “kulak”.</p></div></div>
+</div>
+</section>
+
+<section data-sec="üçgen">
+  <h2>Fikir: kulağı bul, kes, tekrarla</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li><b>Kulak</b>: art arda üç köşe (önceki, şimdiki, sonraki) öyle ki (1) şimdiki köşe <b>dışbükey</b> (iç açısı 180°’den küçük) ve (2) bu üç köşenin üçgeninin <b>içinde başka köşe yok</b>.</li><li>Dışbükey mi? G1’deki çapraz çarpım: köşeler saat yönünün tersine sıralıysa <code>cross(önceki, şimdiki, sonraki) &gt; 0</code>.</li><li>İçinde köşe var mı? Kalan her köşe için “üçgenin içinde mi?” testi (üç çapraz çarpımın hepsi ≥ 0).</li><li>Kulaksa: üçgeni kaydet, şimdiki köşeyi listeden sil. Değilse: sonraki köşeye geç.</li><li>Üç köşe kalınca son üçgen. n köşeli çokgen her zaman <b>n − 2</b> üçgen verir.</li></ul><p class="mini">Her çokgende en az iki kulak vardır (iki kulak teoremi, 1975); bu yüzden yöntem hiç takılmaz. Basit hâli n² zamanlıdır; oyunlardaki çokgenler için fazlasıyla hızlı.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle izleme: L biçimli oda, köşe 3’ten başla</span><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">sıra</th><th style="text-align:left;">bakılan köşe</th><th style="text-align:left;">dışbükey?</th><th style="text-align:left;">içi boş?</th><th style="text-align:left;">sonuç</th></tr><tr><td style="text-align:left;">1</td><td style="text-align:left;">3 (2–3–4)</td><td style="text-align:left;">✗ iç köşe</td><td style="text-align:left;">—</td><td style="text-align:left;">geç</td></tr><tr><td style="text-align:left;">2</td><td style="text-align:left;">4 (3–4–5)</td><td style="text-align:left;">✓</td><td style="text-align:left;">✓</td><td style="text-align:left;"><b>kes</b> → üçgen 3-4-5</td></tr><tr><td style="text-align:left;">3</td><td style="text-align:left;">5 (3–5–6)</td><td style="text-align:left;">✓</td><td style="text-align:left;">✓</td><td style="text-align:left;"><b>kes</b> → üçgen 3-5-6</td></tr><tr><td style="text-align:left;">4</td><td style="text-align:left;">6 (3–6–1)</td><td style="text-align:left;">✓</td><td style="text-align:left;">✓</td><td style="text-align:left;"><b>kes</b> → üçgen 3-6-1</td></tr><tr><td style="text-align:left;">5</td><td style="text-align:left;">kalan 1–2–3</td><td style="text-align:left;"></td><td style="text-align:left;"></td><td style="text-align:left;">son üçgen</td></tr></table><p>6 köşe → 4 üçgen = 6 − 2. İç köşe (3) asla kulak olamadı; ama ötekiler kesildikçe onun açısı da küçüldü ve sonunda son üçgenin bir parçası oldu.</p></div></div>
+</div>
+</section>
+
+<section data-sec="demo">
+<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Kalın siyah çizgi</b>: çokgenin kendisi. <b>Mavi kesikli çizgi</b>: henüz kesilmemiş kısım.</li><li><b>Renkli üçgenler</b>: kesilen kulaklar.</li><li><b>Yeşil üçgen</b>: az önce bulunan kulak. <b>Kırmızı üçgen</b>: sınanıp reddedilen köşe; sağdaki günlük nedenini yazar (iç köşe mi, içinde başka köşe mi?).</li><li>Gri numaralar: artık listede olmayan (kesilip atılan) köşeler. Tarama bilerek bir iç köşeden başlıyor ki reddedilen köşeleri de görelim.</li></ol></div>
+</section>
+
+<section data-sec="üçgen">
+  <h2>Canlı: kulak kesme ✂️</h2>
+<div class="demo" data-demo="ear"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>“L biçimli oda”da adım adım ilerleyin; sonucu önceki slayttaki tabloyla karşılaştırın.</li><li>“U biçimli oda”yı seçin: 3 ve 4 iç köşe olduğu için reddediliyor. 8. köşe ise dışbükey olduğu hâlde reddediliyor: günlükte nedeni ne? Kırmızı üçgenin içinde hangi köşe kalıyor?</li><li>“Yıldız”da 10 köşe var: kaç üçgen çıkacağını önceden söyleyin. İlk bakılan içe dönük köşe (2) reddediliyor; bir uç kesildikten sonra komşu iç köşeler neden kulak olabiliyor?</li><li>Her çokgende sonunda kaç üçgen çıktı? Köşe sayısıyla ilişkisi ne?</li></ol></div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?"><ol style="font-size:.9em"><li><b>Kalın siyah çizgi</b>: çokgenin kendisi. <b>Mavi kesikli çizgi</b>: henüz kesilmemiş kısım.</li><li><b>Renkli üçgenler</b>: kesilen kulaklar.</li><li><b>Yeşil üçgen</b>: az önce bulunan kulak. <b>Kırmızı üçgen</b>: sınanıp reddedilen köşe; sağdaki günlük nedenini yazar (iç köşe mi, içinde başka köşe mi?).</li><li>Gri numaralar: artık listede olmayan (kesilip atılan) köşeler. Tarama bilerek bir iç köşeden başlıyor ki reddedilen köşeleri de görelim.</li></ol></div><!--/dh-->
+</section>
+
+<section data-sec="üçgen">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>“L biçimli oda”da adım adım ilerleyin; sonucu önceki slayttaki tabloyla karşılaştırın.</li><li>“U biçimli oda”yı seçin: 3 ve 4 iç köşe olduğu için reddediliyor. 8. köşe ise dışbükey olduğu hâlde reddediliyor: günlükte nedeni ne? Kırmızı üçgenin içinde hangi köşe kalıyor?</li><li>“Yıldız”da 10 köşe var: kaç üçgen çıkacağını önceden söyleyin. İlk bakılan içe dönük köşe (2) reddediliyor; bir uç kesildikten sonra komşu iç köşeler neden kulak olabiliyor?</li><li>Her çokgende sonunda kaç üçgen çıktı? Köşe sayısıyla ilişkisi ne?</li></ol></div>
+</section>
+
+<section data-sec="başka gözle" data-baglanti="1">
+  <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
+  <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
+  <div class="lnks"><a class="lnk" href="https://mapbox.github.io/delaunator/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Delaunator</div><div class="lnk-s">Mapbox</div><div class="lnk-w">Delaunay üçgenlemesi ve Voronoi diyagramının nasıl kurulduğunu gösteren etkileşimli sayfa.</div></a><a class="lnk" href="https://www.redblobgames.com/x/2022-voronoi-maps-tutorial/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Voronoi maps tutorial</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Rastgele noktalardan Voronoi bölgelerine, oradan kara-deniz haritasına adım adım; her adımın kodu ve çizimi yan yana.</div></a><a class="lnk" href="http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/" target="_blank" rel="noopener"><div class="lnk-t">🔴 Polygonal Map Generation for Games</div><div class="lnk-s">Amit Patel</div><div class="lnk-w">Voronoi hücreleriyle ada, nehir, biyom üreten ünlü yazı; çizimleri ve demosuyla.</div></a><a class="lnk" href="https://www.jasondavies.com/lloyd/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Lloyd’s Relaxation</div><div class="lnk-s">Jason Davies</div><div class="lnk-w">Lloyd gevşetmesini canlı izleyin: noktalar her adımda kendi Voronoi hücresinin ortasına kayar.</div></a><a class="lnk" href="https://bost.ocks.org/mike/algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🔗 Visualizing Algorithms</div><div class="lnk-s">Mike Bostock</div><div class="lnk-w">Poisson disk örneklemesi dahil birkaç algoritmanın çok güzel hareketli anlatımı; rastgele ve Poisson dağılımı yan yana.</div></a></div>
+  <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
+</section>
+
+<section data-sec="üçgen">
+  <h2>Kod: kulak kesme</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Kulak kesme: kendini kesmeyen bir çokgeni üçgenlere böler.
+// pts: [[x, y], ...] saat yönünün TERSİ sırayla (y yukarı). Dönen: [[a, b, c], ...] köşe numaraları.
+function cross(o, a, b) { return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); }
+function icinde(p, a, b, c) { return cross(a, b, p) >= 0 && cross(b, c, p) >= 0 && cross(c, a, p) >= 0; }
+
+function kulakKes(pts) {
+  const kalan = pts.map((_, i) => i), ucgenler = [];
+  let i = 0, bosuna = 0;
+  while (kalan.length > 3 && bosuna < kalan.length) {
+    const n = kalan.length;
+    const a = kalan[(i + n - 1) % n], b = kalan[i % n], c = kalan[(i + 1) % n];
+    const disbukey = cross(pts[a], pts[b], pts[c]) > 0;             // iç açı 180°'den küçük mü?
+    const bos = kalan.every(j => j === a || j === b || j === c ||
+                                 !icinde(pts[j], pts[a], pts[b], pts[c]));
+    if (disbukey && bos) {                                          // kulak: kes
+      ucgenler.push([a, b, c]);
+      kalan.splice(i % n, 1);
+      bosuna = 0;
+    } else { i++; bosuna++; }                                       // sonraki köşeye bak
+  }
+  if (kalan.length === 3) ucgenler.push(kalan);
+  return ucgenler;
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Kulak kesme: kendini kesmeyen bir çokgeni üçgenlere böler.
+# pts: [(x, y), ...] saat yönünün TERSİ sırayla (y yukarı). Dönen: [(a, b, c), ...] köşe numaraları.
+def cross(o, a, b):
+    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+def icinde(p, a, b, c):
+    return cross(a, b, p) >= 0 and cross(b, c, p) >= 0 and cross(c, a, p) >= 0
+
+def kulak_kes(pts):
+    kalan, ucgenler = list(range(len(pts))), []
+    i = bosuna = 0
+    while len(kalan) > 3 and bosuna < len(kalan):
+        n = len(kalan)
+        a, b, c = kalan[(i - 1) % n], kalan[i % n], kalan[(i + 1) % n]
+        disbukey = cross(pts[a], pts[b], pts[c]) > 0          # iç açı 180°'den küçük mü?
+        bos = all(j in (a, b, c) or not icinde(pts[j], pts[a], pts[b], pts[c]) for j in kalan)
+        if disbukey and bos:                                   # kulak: kes
+            ucgenler.append((a, b, c))
+            kalan.pop(i % n)
+            bosuna = 0
+        else:                                                  # sonraki köşeye bak
+            i += 1; bosuna += 1
+    if len(kalan) == 3:
+        ucgenler.append(tuple(kalan))
+    return ucgenler
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="üçgen">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:18px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>cross(...) &gt; 0</code></td><td style="text-align:left;">şimdiki köşe dışbükey</td><td style="text-align:left;">köşeler saat yönünün tersine sıralı; içbükey köşede işaret döner</td></tr><tr><td style="text-align:left;"><code>icinde(p, a, b, c)</code></td><td style="text-align:left;">p üçgenin içinde mi (ya da kenarında)</td><td style="text-align:left;">üç kenarın hepsinin solunda olmak = içeride olmak (G1)</td></tr><tr><td style="text-align:left;"><code>kalan.splice(i % n, 1)</code></td><td style="text-align:left;">kesilen kulağın ucunu listeden sil</td><td style="text-align:left;">çokgen bir köşe küçülür; komşular artık birbirine bağlı</td></tr><tr><td style="text-align:left;"><code>bosuna</code> sayacı</td><td style="text-align:left;">üst üste kaç köşe reddedildi</td><td style="text-align:left;">bütün köşeler reddedilirse çokgen bozuk (kendini kesiyor ya da ters sıralı): sonsuz döngüye girme</td></tr><tr><td style="text-align:left;"><code>i % n</code></td><td style="text-align:left;">listenin sonuna gelince başa dön</td><td style="text-align:left;">çokgen bir halka: son köşenin sonraki komşusu ilk köşe</td></tr></table>
+</section>
+
+<section data-sec="üçgen">
+  <h2>Oyunlarda: motorlar ve kütüphaneler</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li><b>Godot</b>: <code>Geometry2D.triangulate_polygon()</code> kulak kesme; <code>Polygon2D</code> ve çarpışma çokgenleri bununla çizilir.</li><li><b>three.js</b>: <code>ShapeUtils.triangulateShape</code>, Mapbox’ın <b>earcut</b> kütüphanesini kullanır (delikli çokgenler, binlerce köşe; haritalar ve yazılar).</li><li><b>Unity</b>: <code>PolygonCollider2D</code> ve <code>SpriteShape</code> içbükey şekilleri parçalara ayırır.</li><li><b>Recast</b> (Unreal ve pek çok oyunun navmesh kütüphanesi): yürünebilir alanı önce çokgenlere, sonra ayrıntı ağı için üçgenlere böler.</li></ul></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Pratikte dikkat</span><ul style="font-size:.9em"><li>Köşelerin <b>sırası</b>: saat yönünde verilirse bütün köşeler “içbükey” görünür. Önce alanın işaretine bakın (G1, ayakkabı bağı) ve gerekirse ters çevirin.</li><li><b>Delikli</b> çokgen (ortasında sütun olan oda): deliği ince bir “köprü” kenarıyla dış sınıra bağlayıp tek çokgene çevirmek gerekir (earcut bunu yapar).</li><li><b>Kendini kesen</b> çokgen üçgenlenemez; çizim aracında engelleyin.</li><li>Kulak kesme <b>ince</b> üçgenler üretebilir. Görüntü için sorun değil; navmesh ve arazi için sorun: sonraki bölüm.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="üçgen">
+  <h2>🎬 Ara: kulak kesme, çizimlerle</h2>
+<div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/QAdfkylpYwc" title="Polygon Triangulation [1] – Overview of Ear Clipping" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Polygon Triangulation [1] – Overview of Ear Clipping</b><br><span class="mini">Two-Bit Coding · 14 dk 10 sn · <a href="https://www.youtube.com/watch?v=QAdfkylpYwc" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önce elle yaptığımız işin yavaş ve çizimli anlatımı: dışbükey/içbükey köşe, “içinde nokta var mı?” testi ve neden her zaman bir kulak bulunduğu. İkinci bölümde (Kaynaklar) aynı algoritmanın kodu yazılıyor.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda “kulak” nasıl tanımlanıyor; bizim iki koşulumuzla aynı mı? Köşeler ters sırada verilirse ne oluyor? n köşeden neden tam n − 2 üçgen çıkıyor?</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="üçgen">
+  <div class="quiz" data-karildi="1" data-answer="A">
+    <div class="qhead">Quiz 1 · kulak kesme</div>
+    <div class="q">Bir seviye editöründe 12 köşeli bir oda çizdiniz ve kulak kesme ile üçgenlediniz. Kaç üçgen çıkar?</div>
+    <div class="opts"><button data-opt="A">10</button><button data-opt="B">12</button><button data-opt="C">11</button><button data-opt="D">Odanın biçimine göre değişir</button></div>
+    <div class="explain">n köşeli basit bir çokgen her zaman n − 2 üçgen verir: her kesik bir köşeyi ve bir üçgeni götürür; son üç köşe son üçgeni oluşturur. 12 − 2 = 10. Biçim yalnızca hangi üçgenlerin çıkacağını değiştirir, sayısını değil.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 1</div><div class="ttl">Delaunay üçgenlemesi</div><div class="sub">boş çember kuralı</div></div>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>Problem: aynı noktalar, çok sayıda üçgenleme</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Noktalardan ağ</span><ul style="font-size:.92em"><li>Bir arazinin yükseklik ölçümleri (rastgele dağılmış noktalar), bir haritadaki köyler, zindandaki odaların merkezleri: elimizde <b>çokgen değil, noktalar</b> var.</li><li>Onları kenarları kesişmeyen üçgenlerle birbirine bağlamak istiyoruz: arazi ağı, yol ağı, “kim kimin komşusu?”</li><li>Ama aynı noktalar pek çok farklı biçimde üçgenlenebilir. Dört nokta için bile iki seçenek var: hangi köşegeni çizeceğiz?</li></ul></div></div>
+<div><div class="box warn" style="font-size:.8em"><span class="bt">İnce üçgen neden kötü?</span><ul style="font-size:.92em"><li><b>Arazi:</b> uzun ince üçgenler yükseklikte sivri “bıçak sırtları” ve gölgelemede çizgiler bırakır.</li><li><b>Navmesh:</b> ince üçgenin ortasından geçen yol zikzak çizer; karakter duvara sürtünür.</li><li><b>Komşuluk:</b> ince üçgen birbirinden uzak iki noktayı “komşu” yapar; köyler arasına saçma yollar çekilir.</li><li><b>Sayısal hata:</b> çok dar açılı üçgenlerde kayan nokta hataları büyür.</li></ul><p>Hedef: üçgenleri olabildiğince <b>dolgun</b> (eşkenara yakın) yapmak; yani <b>en dar açıyı en büyük</b> tutmak.</p></div></div>
+</div>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>Çizimle: aynı dört nokta, iki köşegen</h2>
+<svg viewBox="0 0 940 430" style="width:100%;max-height:440px" font-family="Source Sans 3"><defs><marker id="cz-ok2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs><rect x="20" y="10" width="440" height="410" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="34" y="36" text-anchor="start" font-size="17" font-weight="800" style="fill:var(--muted)">AC köşegeni: ABC ve ACD</text><text x="240.0" y="406" text-anchor="middle" font-size="21" font-weight="800" style="fill:var(--red)">en dar açı 26,6° ✗</text><polygon points="129,282.7 245,340.7 361,282.7" style="stroke:var(--red);fill:var(--red)" fill-opacity="0.12" stroke-width="2.5" stroke-linejoin="round" /><polygon points="129,282.7 361,282.7 245,224.7" style="stroke:var(--blue);fill:var(--blue)" fill-opacity="0.1" stroke-width="2.5" stroke-linejoin="round" /><circle cx="245" cy="195.7" r="145" style="stroke:var(--red);fill:none" fill-opacity="1" stroke-width="2" stroke-dasharray="7 5"/><circle cx="245" cy="195.7" r="4" style="fill:var(--red)"/><text x="253" y="191.7" text-anchor="start" font-size="13"  style="fill:var(--red)">merkez (4, 5), r = 5</text><text x="245" y="120.3" text-anchor="middle" font-size="14" font-weight="800" style="fill:var(--red)">D çemberin içinde ✗</text><circle cx="129" cy="282.7" r="6" style="fill:var(--ink)"/><text x="129" y="270.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">A (0, 2)</text><circle cx="245" cy="340.7" r="6" style="fill:var(--ink)"/><text x="245" y="362.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">B (4, 0)</text><circle cx="361" cy="282.7" r="6" style="fill:var(--ink)"/><text x="361" y="270.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">C (8, 2)</text><circle cx="245" cy="224.7" r="6" style="fill:var(--ink)"/><text x="245" y="212.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">D (4, 4)</text><rect x="490" y="10" width="440" height="410" rx="12" style="fill:var(--card);stroke:var(--rule)" stroke-width="1.5"/><text x="504" y="36" text-anchor="start" font-size="17" font-weight="800" style="fill:var(--muted)">BD köşegeni: ABD ve BCD</text><text x="710.0" y="406" text-anchor="middle" font-size="21" font-weight="800" style="fill:var(--green)">en dar açı 53,1° ✓</text><polygon points="599,282.7 715,340.7 715,224.7" style="stroke:var(--green);fill:var(--green)" fill-opacity="0.14" stroke-width="2.5" stroke-linejoin="round" /><polygon points="715,340.7 831,282.7 715,224.7" style="stroke:var(--blue);fill:var(--blue)" fill-opacity="0.1" stroke-width="2.5" stroke-linejoin="round" /><circle cx="671.5" cy="282.7" r="72.5" style="stroke:var(--green);fill:none" fill-opacity="1" stroke-width="2" stroke-dasharray="7 5"/><circle cx="671.5" cy="282.7" r="4" style="fill:var(--green)"/><text x="625.1" y="337.8" text-anchor="middle" font-size="13"  style="fill:var(--green)">merkez (2,5; 2), r = 2,5</text><text x="831" y="310.7" text-anchor="end" font-size="14" font-weight="800" style="fill:var(--green)">C dışarıda ✓</text><circle cx="599" cy="282.7" r="6" style="fill:var(--ink)"/><text x="599" y="270.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">A (0, 2)</text><circle cx="715" cy="340.7" r="6" style="fill:var(--ink)"/><text x="715" y="362.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">B (4, 0)</text><circle cx="831" cy="282.7" r="6" style="fill:var(--ink)"/><text x="831" y="270.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">C (8, 2)</text><circle cx="715" cy="224.7" r="6" style="fill:var(--ink)"/><text x="715" y="212.7" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--ink)">D (4, 4)</text></svg><p style="font-size:.8em;margin:.3em 0 0">Solda AC köşegeni: ABC üçgeninin açıları 26,6°, 126,9°, 26,6°; ince. Bu üçgenin çevrel çemberi (merkez (4, 5), yarıçap 5) dördüncü noktayı, D’yi <b>içine alıyor</b>. Sağda BD köşegeni: ABD’nin açıları 53,1°, 63,4°, 63,4°; dolgun. Çevrel çemberi C’yi dışarıda bırakıyor. Kural: <b>çember başka bir noktayı içine alıyorsa köşegeni çevir</b>.</p>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>Fikir: boş çember kuralı ve kenar çevirme</h2>
+<div class="cols c46">
+<div><ul style="font-size:.82em"><li><b>Delaunay üçgenlemesi</b>: hiçbir üçgenin çevrel çemberinin <b>içinde</b> başka nokta bulunmayan üçgenleme. (Boris Delaunay, 1934.)</li><li>Aynı noktaların bütün üçgenlemeleri içinde <b>en dar açıyı en büyük</b> yapan budur: dolgun üçgenler kendiliğinden gelir.</li><li><b>Kenar çevirme:</b> bir köşegenin iki yanındaki üçgenlerden birinin çemberi karşıdaki noktayı içine alıyorsa köşegeni öbürüyle değiştir. Çevrilecek kenar kalmayınca üçgenleme Delaunay’dır.</li><li>Çemberin merkezi formülle bulunur (bir sonraki laboratuvarda yazacaksınız); “içinde mi?” sorusu merkeze uzaklığın kareyle karşılaştırılmasıdır.</li></ul><p class="mini">Noktaların dördü aynı çemberin üstündeyse (kare gibi) iki köşegen de geçerlidir: Delaunay tek değildir. Kodlarda bu eşitlik durumu için küçük bir tolerans bırakılır.</p></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Elle hesap: A(0, 2), B(4, 0), C(8, 2), D(4, 4)</span><table class="sum-t" style="font-size:19px"><tr><th style="text-align:left;">soru</th><th style="text-align:left;">hesap</th><th style="text-align:left;">sonuç</th></tr><tr><td style="text-align:left;">ABC’nin çember merkezi</td><td style="text-align:left;">A ile B’ye eşit uzak, x = 4: 16 + (y − 2)² = y²</td><td style="text-align:left;"><b>(4, 5)</b>, r = 5</td></tr><tr><td style="text-align:left;">D çemberin içinde mi?</td><td style="text-align:left;">|D − (4, 5)| = 1</td><td style="text-align:left;">1 &lt; 5 → <b>içinde ✗</b></td></tr><tr><td style="text-align:left;">ABD’nin çember merkezi</td><td style="text-align:left;">B ile D’ye eşit uzak, y = 2: x² = (x − 4)² + 4</td><td style="text-align:left;"><b>(2,5; 2)</b>, r = 2,5</td></tr><tr><td style="text-align:left;">C çemberin içinde mi?</td><td style="text-align:left;">|C − (2,5; 2)| = 5,5</td><td style="text-align:left;">5,5 &gt; 2,5 → <b>dışarıda ✓</b></td></tr><tr><td style="text-align:left;">en dar açı</td><td style="text-align:left;">ABC: 26,6° · ABD: 53,1°</td><td style="text-align:left;">çevirme dar açıyı <b>iki katına</b> çıkardı</td></tr></table></div></div>
+</div>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>Fikir: Bowyer–Watson, noktaları tek tek ekleyerek</h2>
+<div class="cols c64">
+<div><ul style="font-size:.82em"><li>Bütün noktaları içine alan <b>dev bir üçgenle</b> başla.</li><li>Noktaları birer birer ekle. Her yeni nokta için:</li><li>① Çevrel çemberi yeni noktayı <b>içine alan</b> bütün üçgenleri bul: bunlar artık geçersiz (“kötü” üçgenler).</li><li>② Onları sil. Geriye bir <b>oyuk</b> kalır; oyuğun sınırı, yalnızca tek bir kötü üçgende geçen kenarlardır.</li><li>③ Oyuğun her sınır kenarını yeni noktaya bağla: yelpaze gibi yeni üçgenler.</li><li>Bütün noktalar eklenince dev üçgenin köşelerine değen üçgenleri at.</li></ul></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">Neden doğru?</span><p>Kötü üçgenler tam olarak yeni noktanın “boş çember” kuralını bozduğu üçgenlerdir. Onları silip yeni noktaya bağlayınca oluşan üçgenlerin çemberleri yine boştur. Her adımın sonunda üçgenleme Delaunay kalır.</p><ul style="font-size:.9em"><li>Basit hâli: her eklemede bütün üçgenlere bakılır → n² civarı. 1.000 nokta için yeterince hızlı.</li><li>Hızlı kütüphaneler (Mapbox <b>delaunator</b>, <b>d3-delaunay</b>) başka bir yöntemle (süpürme) 100.000 noktayı saniyenin onda birinde üçgenler.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="demo">
+<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li><b>Turuncu büyük nokta</b>: az önce eklenen nokta. Gri noktalar henüz eklenmemiş.</li><li><b>1. adım (kırmızı)</b>: çevrel çemberi yeni noktayı içine alan üçgenler ve çemberleri (kesikli). Bunlar silinecek.</li><li><b>2. adım (yeşil)</b>: oyuğun kenarlarından yeni noktaya çekilen yeni üçgenler.</li><li>Sağdaki günlük her adımı yazar ve o anki <b>en dar açıyı</b> gösterir.</li><li>Alana tıklarsanız yeni bir nokta eklenir ve onun adımları gösterilir. “Rastgele 12 nokta” baştan başlar.</li></ol></div>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>Canlı: Bowyer–Watson adım adım 🔺</h2>
+<div class="demo" data-demo="delaunay"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>İlk üç noktayı ekleyin: neden kırmızı üçgen yok? (Hepsi görünmeyen dev üçgeni bölüyor.)</li><li>5. nokta eklenirken kaç üçgen bozuluyor? Kesikli çemberlerin hepsinin turuncu noktayı içine aldığını görün.</li><li>Bütün noktalar eklenince mavi çemberlere bakın: içinde nokta olan tek bir çember bulabiliyor musunuz?</li><li>Mevcut bir üçgenin çemberinin içine tıklayın: o üçgen bozuluyor mu? Çemberin dışına tıklayın: kaç üçgen bozuldu?</li></ol></div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?"><ol style="font-size:.9em"><li><b>Turuncu büyük nokta</b>: az önce eklenen nokta. Gri noktalar henüz eklenmemiş.</li><li><b>1. adım (kırmızı)</b>: çevrel çemberi yeni noktayı içine alan üçgenler ve çemberleri (kesikli). Bunlar silinecek.</li><li><b>2. adım (yeşil)</b>: oyuğun kenarlarından yeni noktaya çekilen yeni üçgenler.</li><li>Sağdaki günlük her adımı yazar ve o anki <b>en dar açıyı</b> gösterir.</li><li>Alana tıklarsanız yeni bir nokta eklenir ve onun adımları gösterilir. “Rastgele 12 nokta” baştan başlar.</li></ol></div><!--/dh-->
+</section>
+
+<section data-sec="Delaunay">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>İlk üç noktayı ekleyin: neden kırmızı üçgen yok? (Hepsi görünmeyen dev üçgeni bölüyor.)</li><li>5. nokta eklenirken kaç üçgen bozuluyor? Kesikli çemberlerin hepsinin turuncu noktayı içine aldığını görün.</li><li>Bütün noktalar eklenince mavi çemberlere bakın: içinde nokta olan tek bir çember bulabiliyor musunuz?</li><li>Mevcut bir üçgenin çemberinin içine tıklayın: o üçgen bozuluyor mu? Çemberin dışına tıklayın: kaç üçgen bozuldu?</li></ol></div>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>Kod: Bowyer–Watson (1/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Bowyer–Watson: noktaları teker teker ekleyerek Delaunay üçgenlemesi kurar.
+function cevrel(a, b, c) {                       // çevrel çemberin merkezi ve yarıçapının karesi
+  const d = 2 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+  const a2 = a.x * a.x + a.y * a.y, b2 = b.x * b.x + b.y * b.y, c2 = c.x * c.x + c.y * c.y;
+  const x = (a2 * (b.y - c.y) + b2 * (c.y - a.y) + c2 * (a.y - b.y)) / d;
+  const y = (a2 * (c.x - b.x) + b2 * (a.x - c.x) + c2 * (b.x - a.x)) / d;
+  return { x, y, r2: (a.x - x) ** 2 + (a.y - y) ** 2 };
+}
+
+function delaunay(noktalar) {
+  const M = 1e5, P = [{ x: -M, y: -M }, { x: 2 * M, y: -M }, { x: -M, y: 2 * M }, ...noktalar];
+  const yap = (i, j, k) => ({ v: [i, j, k], c: cevrel(P[i], P[j], P[k]) });
+  let ucgenler = [yap(0, 1, 2)];                       // her şeyi içine alan dev üçgen
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# Bowyer–Watson: noktaları teker teker ekleyerek Delaunay üçgenlemesi kurar.
+def cevrel(a, b, c):                     # çevrel çemberin merkezi ve yarıçapının karesi
+    d = 2 * (a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1]))
+    a2, b2, c2 = a[0]**2 + a[1]**2, b[0]**2 + b[1]**2, c[0]**2 + c[1]**2
+    x = (a2 * (b[1] - c[1]) + b2 * (c[1] - a[1]) + c2 * (a[1] - b[1])) / d
+    y = (a2 * (c[0] - b[0]) + b2 * (a[0] - c[0]) + c2 * (b[0] - a[0])) / d
+    return x, y, (a[0] - x)**2 + (a[1] - y)**2
+
+def delaunay(noktalar):
+    M = 1e5
+    P = [(-M, -M), (2 * M, -M), (-M, 2 * M)] + list(noktalar)
+    yap = lambda i, j, k: ((i, j, k), cevrel(P[i], P[j], P[k]))
+    ucgenler = [yap(0, 1, 2)]                         # her şeyi içine alan dev üçgen
+    for n in range(3, len(P)):
+        px, py = P[n]
+        kotu = [t for t in ucgenler if (px - t[1][0])**2 + (py - t[1][1])**2 < t[1][2]]
+        kenarlar = []                                 # oyuğun sınırı
+        for (v, _) in kotu:
+            for e in range(3):
+                a, b = v[e], v[(e + 1) % 3]
+                if (b, a) in kenarlar: kenarlar.remove((b, a))
+                elif (a, b) in kenarlar: kenarlar.remove((a, b))
+                else: kenarlar.append((a, b))
+        ucgenler = [t for t in ucgenler if t not in kotu] + [yap(a, b, n) for a, b in kenarlar]
+    return [tuple(i - 3 for i in v) for v, _ in ucgenler if min(v) >= 3]
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>Kod: Bowyer–Watson (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="14"><script type="text/template">
+  for (let n = 3; n < P.length; n++) {
+    const p = P[n];
+    const kotu = ucgenler.filter(t => (p.x - t.c.x) ** 2 + (p.y - t.c.y) ** 2 < t.c.r2);
+    const kenarlar = [];                               // oyuğun sınırı: tek bir kötü üçgende geçenler
+    for (const t of kotu) for (let e = 0; e < 3; e++) {
+      const a = t.v[e], b = t.v[(e + 1) % 3];
+      const k = kenarlar.findIndex(([u, w]) => (u === b && w === a) || (u === a && w === b));
+      if (k >= 0) kenarlar.splice(k, 1); else kenarlar.push([a, b]);
+    }
+    ucgenler = ucgenler.filter(t => !kotu.includes(t))
+                       .concat(kenarlar.map(([a, b]) => yap(a, b, n)));
+  }
+  return ucgenler.filter(t => t.v.every(i => i >= 3))  // dev üçgene değenleri at
+                 .map(t => t.v.map(i => i - 3));
+}
+</script></code></pre>
+    </div>
+    <div class="tab" data-label="Python">
+<pre><code class="language-python" data-trim data-line-numbers><script type="text/template">
+# (bu sekmenin kodu önceki slaytta bitti)
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>🎒 Kodu okuyalım</h2>
+<table class="sum-t" style="font-size:18px"><tr><th style="text-align:left;">ifade</th><th style="text-align:left;">ne demek</th><th style="text-align:left;">neden böyle</th></tr><tr><td style="text-align:left;"><code>M = 1e5</code> dev üçgen</td><td style="text-align:left;">bütün noktaları içine alacak kadar büyük bir başlangıç</td><td style="text-align:left;">ilk nokta eklenirken de bölünecek bir üçgen olsun</td></tr><tr><td style="text-align:left;"><code>(p − merkez)² &lt; r²</code></td><td style="text-align:left;">p çemberin içinde</td><td style="text-align:left;">karekök almadan karşılaştır (Y0); eşitlik (tam çemberin üstü) içeride sayılmaz</td></tr><tr><td style="text-align:left;"><code>kenarlar.splice</code></td><td style="text-align:left;">iki kötü üçgende geçen kenarı sil</td><td style="text-align:left;">iki kötü üçgenin ortak kenarı oyuğun <b>içinde</b> kalır; sınırda değildir</td></tr><tr><td style="text-align:left;"><code>yap(a, b, n)</code></td><td style="text-align:left;">sınır kenarı + yeni nokta = yeni üçgen</td><td style="text-align:left;">oyuk, yeni noktanın çevresinde yelpaze gibi dolar</td></tr><tr><td style="text-align:left;"><code>every(i =&gt; i &gt;= 3)</code></td><td style="text-align:left;">dev üçgenin köşelerine değeni at</td><td style="text-align:left;">ilk üç indeks dev üçgenin; gerçek noktalar 3’ten başlıyor</td></tr></table>
+</section>
+
+<section data-sec="Delaunay">
+  <h2>🎬 Ara: Delaunay, üç dakikada</h2>
+<div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/GctAunEuHt4" title="Delaunay Triangulation" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Delaunay Triangulation</b><br><span class="mini">SCIco · 3 dk 24 sn · <a href="https://www.youtube.com/watch?v=GctAunEuHt4" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Boş çember kuralının ve kenar çevirmenin hareketli bir özeti. Kısa olduğu için derste izleyip “hangi slaytta görmüştük?” diye eşleştirebilirsiniz.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda kenar ne zaman çevriliyor? Gösterilen ince üçgen ile bizim eşkenar dörtgendeki ABC üçgeni arasında ne ortak? Delaunay’ın en dar açıyla ilişkisi videoda nasıl anlatılıyor?</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="Delaunay">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 2 · Delaunay</div>
+    <div class="q">Bowyer–Watson ile bir nokta eklediniz. Yeni noktanın hemen yanındaki ABC üçgeninin çevrel çemberi yeni noktayı içine alıyor, ama yeni nokta ABC’nin içinde değil. Ne olur?</div>
+    <div class="opts"><button data-opt="A">ABC olduğu gibi kalır; yalnızca noktanın içine düştüğü üçgen bölünür</button><button data-opt="B">ABC de silinir; oyuğun parçası olur ve yeniden üçgenlenir</button><button data-opt="C">Algoritma hata verir</button><button data-opt="D">ABC’nin kenarlarından biri çevrilir ama üçgen kalır</button></div>
+    <div class="explain">Ölçüt “nokta üçgenin içinde mi?” değil, “nokta üçgenin <b>çevrel çemberinin</b> içinde mi?”. Çember içindeyse boş çember kuralı bozulmuştur; üçgen kötüdür ve silinir. Sık yapılan hata yalnızca noktanın içine düştüğü üçgeni bölmek: sonuç bir üçgenlemedir ama Delaunay değildir.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 2</div><div class="ttl">Voronoi diyagramı</div><div class="sub">“en yakın kim?” sorusunun haritası</div></div>
+</section>
+
+<section data-sec="Voronoi">
+  <h2>Önce günlük hayattan: en yakın eczane, en yakın kuyu 🚰</h2>
+<div class="cols c64">
+<div><div style="font-size:.84em"><p>Şehirde altı nöbetçi eczane var. Her mahalle en yakın eczaneye gider. Haritayı “bu mahalle hangi eczaneye gider?” diye boyarsanız şehir kendiliğinden <b>bölgelere</b> ayrılır. İki bölgenin sınırında oturan biri iki eczaneye <b>eşit</b> uzaklıktadır.</p><figure style="margin:.2em 0;text-align:center"><img src="gorsel/snow.jpg" alt="John Snow’un 1854 kolera haritası" style="height:210px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--rule)"><figcaption style="font-size:.78em;line-height:1.3"><b>1854, Londra.</b> John Snow kolera ölümlerini (siyah çubuklar) haritaya işledi; neredeyse hepsi Broad Street pompasına en yakın evlerdeydi. Pompanın kolu söküldü, salgın söndü: Voronoi diyagramının en ünlü örneği.<br><span style="color:var(--muted)">Görsel: John Snow (1854), Wikimedia Commons, kamu malı</span></figcaption></figure><p>Matematikteki adı: <b>Voronoi diyagramı</b> (Georgy Voronoi, 1908). Her bölgenin sahibi olan noktaya <b>merkez</b> denir.</p></div></div>
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Oyunda aynı soru</span><ul style="font-size:.9em"><li><b>Bölge ve etki:</b> “Bu toprak hangi kaleye ait?” Strateji oyunlarının sınırları, bir RTS’de hangi üssün hangi kaynağa yakın olduğu (Y12 etki haritaları).</li><li><b>Harita üretimi:</b> rastgele noktalar → Voronoi bölgeleri → her bölge bir arazi parçası: deniz, kara, dağ, biyom.</li><li><b>En yakın tesis:</b> “En yakın sağlık kutusu / doğma noktası hangisi?” sorusunu her kare hesaplamak yerine haritayı önceden bölmek.</li><li><b>Kırılma efektleri:</b> camı ya da kayayı Voronoi hücrelerine bölüp parçaları ayrı ayrı uçurmak (Blender ve Houdini’nin kırılma araçları).</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="Voronoi">
+  <h2>Çizimle: üç kuyu, üç bölge</h2>
+<div class="cols c46">
+<div><svg viewBox="0 0 440 420" style="width:100%;max-height:430px" font-family="Source Sans 3"><defs><marker id="cz-ok3" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs><line x1="60" y1="384" x2="60" y2="20" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="112" y1="384" x2="112" y2="20" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="164" y1="384" x2="164" y2="20" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="216" y1="384" x2="216" y2="20" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="268" y1="384" x2="268" y2="20" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="320" y1="384" x2="320" y2="20" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="372" y1="384" x2="372" y2="20" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="60" y1="384" x2="372" y2="384" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="60" y1="332" x2="372" y2="332" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="60" y1="280" x2="372" y2="280" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="60" y1="228" x2="372" y2="228" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="60" y1="176" x2="372" y2="176" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="60" y1="124" x2="372" y2="124" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><line x1="60" y1="72" x2="372" y2="72" style="stroke:var(--rule)" stroke-width="1" stroke-linecap="round"  /><polygon points="60,384 216,384 216,228 60,228" style="stroke:var(--blue);fill:var(--blue)" fill-opacity="0.1" stroke-width="0" stroke-linejoin="round" /><polygon points="216,384 424,384 424,20 216,228" style="stroke:var(--red);fill:var(--red)" fill-opacity="0.1" stroke-width="0" stroke-linejoin="round" /><polygon points="60,228 216,228 424,20 60,20" style="stroke:var(--green);fill:var(--green)" fill-opacity="0.1" stroke-width="0" stroke-linejoin="round" /><line x1="216" y1="384" x2="216" y2="228" style="stroke:var(--ink)" stroke-width="3" stroke-linecap="round"  /><line x1="60" y1="228" x2="216" y2="228" style="stroke:var(--ink)" stroke-width="3" stroke-linecap="round"  /><line x1="216" y1="228" x2="372" y2="72" style="stroke:var(--ink)" stroke-width="3" stroke-linecap="round"  /><circle cx="216" cy="228" r="8" style="fill:var(--purple)"/><text x="226" y="220" text-anchor="start" font-size="15" font-weight="800" style="fill:var(--purple)">köşe (2, 2)</text><text x="226" y="240" text-anchor="start" font-size="13"  style="fill:var(--purple)">üçüne de √8 ≈ 2,83</text><circle cx="112" cy="332" r="9" style="fill:var(--blue)"/><text x="112" y="356" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--blue)">A (0, 0)</text><circle cx="320" cy="332" r="9" style="fill:var(--red)"/><text x="320" y="356" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--red)">B (4, 0)</text><circle cx="112" cy="124" r="9" style="fill:var(--green)"/><text x="112" y="148" text-anchor="middle" font-size="15" font-weight="800" style="fill:var(--green)">C (0, 4)</text><circle cx="164" cy="176" r="6" style="fill:var(--ink)"/><text x="174" y="180" text-anchor="start" font-size="14" font-weight="800" style="fill:var(--ink)">(1, 3) → C</text><text x="216" y="402" text-anchor="middle" font-size="13"  style="fill:var(--ink)">x = 2</text><text x="54" y="232" text-anchor="end" font-size="13"  style="fill:var(--ink)">y = 2</text><text x="378" y="72" text-anchor="start" font-size="13"  style="fill:var(--ink)">y = x</text></svg></div>
+<div><div style="font-size:.82em"><p>Kuyular A(0, 0), B(4, 0) ve C(0, 4)’te.</p><ul style="font-size:.95em"><li>A ile B’ye eşit uzak noktalar: aralarındaki parçanın <b>dik açıortayı</b>, x = 2.</li><li>A ile C arası: y = 2. B ile C arası: y = x.</li><li>Üç sınır tek noktada buluşur: (2, 2). Bu nokta üç kuyuya da eşit uzaktır (√8 ≈ 2,83): yani <b>ABC üçgeninin çevrel çemberinin merkezi</b>.</li><li>(1, 3) noktası: A’ya √10 ≈ 3,16, C’ye √2 ≈ 1,41 → C’nin bölgesinde.</li></ul><p><b>İkizlik:</b> Voronoi köşeleri = Delaunay üçgenlerinin çember merkezleri; iki bölge komşuysa merkezleri arasında bir Delaunay kenarı vardır. Birini bulan öbürünü de bulmuş olur.</p></div></div>
+</div>
+</section>
+
+<section data-sec="demo">
+<div class="box ask" style="font-size:1em"><span class="bt">🧭 DEMOYU OKUMA KILAVUZU (bir sonraki slayt)</span><ol style="font-size:.9em"><li>Her rengi bir kuyunun (simge) <b>bölgesi</b>: o renkteki her nokta en yakın o kuyuya.</li><li><b>Koyu noktalı çizgiler</b>: bölge sınırları. Sınırdaki her nokta iki kuyuya eşit uzak.</li><li><b>Fare</b> = siz. Kalın çizgi en yakın kuyuya, kesikli çizgi ikinci en yakına. Günlükte iki uzaklık ve aralarındaki fark yazar.</li><li>Kuyuları <b>sürükleyebilirsiniz</b>.</li><li>“Delaunay’i üstüne çiz”: kesikli çizgiler Delaunay kenarları, kırmızı noktalar Voronoi köşeleri.</li></ol></div>
+</section>
+
+<section data-sec="Voronoi">
+  <h2>Canlı: en yakın kuyu 🗺️</h2>
+<div class="demo" data-demo="voronoi"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>Fareyi bir sınırın üstüne getirin: “fark” kaç oluyor?</li><li>Bir kuyuyu öbürlerinin ortasına sürükleyin: komşu bölgeler nasıl küçülüyor? Bir kuyuyu kenara sürükleyin: bölgesi neden sonsuza (çerçevenin dışına) taşıyor?</li><li>“Delaunay’i üstüne çiz”i açın: her kesikli kenar iki komşu bölgenin merkezlerini bağlıyor mu? Kırmızı noktalar bölge köşelerine mi düşüyor?</li><li>Uzaklığı “ızgarada yürüme”ye çevirin: sınırlar neden kırıldı? Bir ızgara oyununda hangisi doğru cevaptır?</li></ol></div><!--/dh-->
+  <div class="demo-help" data-auto="1" data-title="🧭 Ekranda ne var?"><ol style="font-size:.9em"><li>Her rengi bir kuyunun (simge) <b>bölgesi</b>: o renkteki her nokta en yakın o kuyuya.</li><li><b>Koyu noktalı çizgiler</b>: bölge sınırları. Sınırdaki her nokta iki kuyuya eşit uzak.</li><li><b>Fare</b> = siz. Kalın çizgi en yakın kuyuya, kesikli çizgi ikinci en yakına. Günlükte iki uzaklık ve aralarındaki fark yazar.</li><li>Kuyuları <b>sürükleyebilirsiniz</b>.</li><li>“Delaunay’i üstüne çiz”: kesikli çizgiler Delaunay kenarları, kırmızı noktalar Voronoi köşeleri.</li></ol></div><!--/dh-->
+</section>
+
+<section data-sec="Voronoi">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>Fareyi bir sınırın üstüne getirin: “fark” kaç oluyor?</li><li>Bir kuyuyu öbürlerinin ortasına sürükleyin: komşu bölgeler nasıl küçülüyor? Bir kuyuyu kenara sürükleyin: bölgesi neden sonsuza (çerçevenin dışına) taşıyor?</li><li>“Delaunay’i üstüne çiz”i açın: her kesikli kenar iki komşu bölgenin merkezlerini bağlıyor mu? Kırmızı noktalar bölge köşelerine mi düşüyor?</li><li>Uzaklığı “ızgarada yürüme”ye çevirin: sınırlar neden kırıldı? Bir ızgara oyununda hangisi doğru cevaptır?</li></ol></div>
+</section>
+
+<section data-sec="Voronoi">
+  <h2>Kod: Voronoi’nin en kısa hâli</h2>
+<div class="cols c64">
+<div>  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Voronoi, en basit hâliyle: her piksel en yakın noktanın rengini alır (p5.js)
+let noktalar = [];
+
+function setup() {
+  createCanvas(400, 300); pixelDensity(1); noLoop();
+  for (let i = 0; i < 12; i++) noktalar.push(yeniNokta(random(width), random(height)));
+}
+function yeniNokta(x, y) { return { x, y, renk: color(random(255), random(255), random(255)) }; }
+
+function draw() {
+  loadPixels();
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+    let enYakin = 0, enAz = Infinity;
+    for (let i = 0; i < noktalar.length; i++) {
+      const d = (x - noktalar[i].x) ** 2 + (y - noktalar[i].y) ** 2;   // karekök gerekmez
+      if (d < enAz) { enAz = d; enYakin = i; }
+    }
+    const k = noktalar[enYakin].renk, j = 4 * (y * width + x);
+    pixels[j] = red(k); pixels[j + 1] = green(k); pixels[j + 2] = blue(k); pixels[j + 3] = 255;
+  }
+  updatePixels();
+  for (const n of noktalar) circle(n.x, n.y, 6);
+}
+function mousePressed() { noktalar.push(yeniNokta(mouseX, mouseY)); redraw(); }
+</script></code></pre>
+    </div>
+  </div></div>
+<div><div style="font-size:.8em"><ul style="font-size:.95em"><li>Her piksel için bütün merkezlere bak, en yakınının rengini al. Hepsi bu.</li><li><b>Maliyet</b>: piksel × merkez = 400 · 300 · 12 = 1,44 milyon uzaklık. Tek seferlik bir harita için yeter; her karede değil.</li><li>Karekök almıyoruz: en yakını bulmak için uzaklığın karesini karşılaştırmak yeter (Y0).</li><li>“Gerçek” Voronoi (kenarlar ve köşeler hâlinde) için iki yol: Delaunay’ı kurup her üçgenin çember merkezini komşu üçgeninkiyle birleştirmek (ikizlik) ya da Fortune’un süpürme algoritması.</li><li>Ekran kartında: her merkez için bir koni çizip derinlik testine “en yakını” buldurmak; binlerce merkez bir karede.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="Voronoi">
+  <h2>Oyunlarda: Voronoi’den harita</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🗺️ Amit Patel: Polygonal Map Generation (2010)</span><ul style="font-size:.88em"><li>Rastgele noktalar → <b>Lloyd gevşetmesiyle</b> düzgünleştirme (sonraki bölüm) → Voronoi bölgeleri.</li><li>Kenardan uzaklığa ve gürültüye göre her bölge kara ya da deniz.</li><li>Yükseklik kıyıdan uzaklaştıkça artar; nehirler Delaunay kenarları boyunca yokuş aşağı akar.</li><li>Nem ve yükseklikten biyom: çöl, orman, tundra. Bölgeler arası komşuluk, yol ve nehir ağını kendiliğinden verir.</li><li>Red Blob Games’te etkileşimli anlatımı ve 2022’deki adım adım Voronoi harita eğitimi var (Kaynaklar).</li></ul></div></div>
+<div><div class="box info" style="font-size:.8em"><span class="bt">Başka kullanımlar</span><ul style="font-size:.9em"><li><b>Etki haritası</b> (Y12): her birim bir merkez; düşman ile dostun bölgeleri arasındaki sınır cephe hattıdır.</li><li><b>Bölge kontrolü</b>: bir parti oyununda “boyanan alan” ya da bir strateji oyununda kalelerin topraklarını hesaplamak.</li><li><b>Kırılma</b>: çarpma noktasının çevresine sık, uzağına seyrek merkezler serpip Voronoi hücrelerini parça olarak ayırmak; cam ve kaya kırılmaları gerçekçi görünür.</li><li><b>Doku</b>: “hücresel gürültü” (Worley gürültüsü) her pikselin en yakın merkeze uzaklığıdır; taş döşeme, deri, su yansıması dokuları.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="Voronoi">
+  <h2>🎬 Ara: Voronoi ile harita üretimi</h2>
+<div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/3G5d8ob_Lfo" title="Voronoi Diagrams and Procedural Map Generation" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Voronoi Diagrams and Procedural Map Generation</b><br><span class="mini">MAN OF EERIE LETTERS · 15 dk 36 sn · <a href="https://www.youtube.com/watch?v=3G5d8ob_Lfo" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Voronoi bölgelerinden bir oyun haritasına giden yol: noktaları serpiştirmek, bölgeleri kara ve denize ayırmak, yükseklik ve biyom vermek. Amit Patel’in yazısındaki adımların görsel anlatımı.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda noktalar neden tamamen rastgele bırakılmıyor? Kıyı çizgisi nasıl belirleniyor? Delaunay kenarları haritada neye dönüşüyor?</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 3</div><div class="ttl">Düzgün serpiştirmek</div><div class="sub">Lloyd gevşetmesi ve Poisson disk</div></div>
+</section>
+
+<section data-sec="serpiştirme">
+  <h2>Problem ve fikir: rastgele noktalar kümelenir</h2>
+<div class="cols c64">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Tamamen rastgele = kötü dağılım</span><ul style="font-size:.9em"><li><code>random()</code> ile 100 ağaç dikin: bazıları iç içe geçer, bazı yerler çıplak kalır. Göz bunu hemen “yapay” bulur.</li><li>Voronoi haritasında küçücük ve dev bölgeler yan yana çıkar; bir ülke bir köy, öbürü bir kıta olur.</li><li>Düzenli ızgara da kötü: ağaçlar asker gibi dizilir, yine yapay görünür.</li><li>İstenen: <b>rastgele görünen ama kümelenmeyen</b> noktalar. Doğada da böyledir: ağaçlar birbirinin ışığını keser, aralarında kendiliğinden boşluk kalır.</li></ul></div></div>
+<div><div class="box info" style="font-size:.8em"><span class="bt">İki çözüm</span><ul style="font-size:.9em"><li><b>Lloyd gevşetmesi:</b> rastgele başla; her noktayı kendi Voronoi bölgesinin <b>ağırlık merkezine</b> taşı; tekrarla. Kalabalık yerdeki noktalar küçük bölgelerinden dışarı itilir, boş yerlere yayılır. 2–3 adım yeter.</li><li><b>Poisson disk (Bridson, 2007):</b> baştan kural koy: “hiçbir iki nokta r’den yakın olmasın.” Mevcut bir noktanın çevresindeki r … 2r halkasına aday at; kurala uyuyorsa kabul et. Kontrol için G2’deki <b>ızgara</b>: hücre boyu r / √2, her hücrede en fazla bir nokta; yalnızca çevredeki 5 × 5 hücreye bakılır.</li><li>Lloyd’un bölgeleri daha eşit boyludur (harita için); Poisson disk daha hızlıdır ve uzaklık garantisi verir (ağaç, taş, düşman kampı için).</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="serpiştirme">
+  <h2>Canlı: Lloyd gevşetmesi 🌀</h2>
+<div class="demo" data-demo="lloyd"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>“1 Lloyd adımı”na birkaç kez basın; kırmızı çizgiler (noktanın gittiği yol) her adımda kısalıyor mu?</li><li>Günlükteki “en yakın iki nokta arası” her adımda nasıl değişiyor?</li><li>10 adımdan sonra bölgelerin boyları birbirine yaklaştı mı? Noktalar düzenli bir ızgaraya dönüştü mü?</li></ol></div><!--/dh-->
+</section>
+
+<section data-sec="serpiştirme">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>“1 Lloyd adımı”na birkaç kez basın; kırmızı çizgiler (noktanın gittiği yol) her adımda kısalıyor mu?</li><li>Günlükteki “en yakın iki nokta arası” her adımda nasıl değişiyor?</li><li>10 adımdan sonra bölgelerin boyları birbirine yaklaştı mı? Noktalar düzenli bir ızgaraya dönüştü mü?</li></ol></div>
+</section>
+
+<section data-sec="serpiştirme">
+  <h2>Canlı: Poisson disk ile orman 🌲</h2>
+<div class="demo" data-demo="poisson"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>“Tamamen rastgele”yi seçin: 46’dan yakın kaç ağaç çifti var?</li><li>“Poisson disk”e dönüp adım adım ilerleyin: turuncu halka, aktif noktanın aday attığı bölge. Yeşil çizgi kabul edilen aday.</li><li>“Sonuna kadar”: kaç ağaç dikildi, 46’dan yakın çift kaldı mı? Boş kalan büyük bir delik var mı?</li><li>Rastgele 120 ağaç vs Poisson diskteki sayı: hangisi “daha dolu” görünüyor? Neden?</li></ol></div><!--/dh-->
+</section>
+
+<section data-sec="serpiştirme">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>“Tamamen rastgele”yi seçin: 46’dan yakın kaç ağaç çifti var?</li><li>“Poisson disk”e dönüp adım adım ilerleyin: turuncu halka, aktif noktanın aday attığı bölge. Yeşil çizgi kabul edilen aday.</li><li>“Sonuna kadar”: kaç ağaç dikildi, 46’dan yakın çift kaldı mı? Boş kalan büyük bir delik var mı?</li><li>Rastgele 120 ağaç vs Poisson diskteki sayı: hangisi “daha dolu” görünüyor? Neden?</li></ol></div>
+</section>
+
+<section data-sec="serpiştirme">
+  <h2>Kod: Poisson disk (Bridson) (1/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Poisson disk (Bridson 2007): hiçbir iki nokta r’den yakın olmasın, arada büyük boşluk da kalmasın.
+function poisson(W, H, r, k = 30) {
+  const hucre = r / Math.SQRT2, gw = Math.ceil(W / hucre), gh = Math.ceil(H / hucre);
+  const izgara = new Array(gw * gh).fill(-1), noktalar = [], aktif = [];
+  const ekle = p => { noktalar.push(p); aktif.push(p);
+    izgara[Math.floor(p.y / hucre) * gw + Math.floor(p.x / hucre)] = noktalar.length - 1; };
+  const uygun = p => {                               // yalnızca çevredeki 5 × 5 hücreye bak
+    if (p.x < 0 || p.y < 0 || p.x >= W || p.y >= H) return false;
+    const gx = Math.floor(p.x / hucre), gy = Math.floor(p.y / hucre);
+    for (let y = Math.max(0, gy - 2); y <= Math.min(gh - 1, gy + 2); y++)
+      for (let x = Math.max(0, gx - 2); x <= Math.min(gw - 1, gx + 2); x++) {
+        const j = izgara[y * gw + x];
+        if (j >= 0 && Math.hypot(noktalar[j].x - p.x, noktalar[j].y - p.y) < r) return false;
+      }
+    return true;
+  };
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="serpiştirme">
+  <h2>Kod: Poisson disk (Bridson) (2/2)</h2>
+  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers data-ln-start-from="17"><script type="text/template">
+  ekle({ x: Math.random() * W, y: Math.random() * H });
+  while (aktif.length) {
+    const i = Math.floor(Math.random() * aktif.length), m = aktif[i];
+    let buldu = false;
+    for (let t = 0; t < k && !buldu; t++) {          // r … 2r halkasına aday at
+      const a = Math.random() * 2 * Math.PI, d = r * (1 + Math.random());
+      const p = { x: m.x + d * Math.cos(a), y: m.y + d * Math.sin(a) };
+      if (uygun(p)) { ekle(p); buldu = true; }
+    }
+    if (!buldu) aktif.splice(i, 1);                   // k aday da olmadı: bu nokta emekli
+  }
+  return noktalar;
+}
+</script></code></pre>
+    </div>
+  </div>
+</section>
+
+<section data-sec="serpiştirme">
+  <h2>🎬 Ara: nesneleri doğal serpiştirmek</h2>
+<div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/7WcmyxyFO7o" title="[Unity] Procedural Object Placement (E01: Poisson Disc Sampling)" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>[Unity] Procedural Object Placement (E01: Poisson Disc Sampling)</b><br><span class="mini">Sebastian Lague · 18 dk 34 sn · <a href="https://www.youtube.com/watch?v=7WcmyxyFO7o" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önceki algoritmanın Unity’de sıfırdan yazılışı: halkaya aday atmak, ızgarayla komşu aramak, aktif liste. Sebastian Lague’ın her adımı çizerek anlatan üslubu bu konu için çok uygun.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Izgara hücresinin boyu neden r / √2 seçiliyor? Bir hücrede neden en fazla bir nokta olabiliyor? Videodaki “aday sayısı” (k) büyüyünce sonuç nasıl değişiyor?</div>
+    </div>
+  </div>
+</section>
+
+<section data-sec="serpiştirme">
+  <div class="quiz" data-karildi="1" data-answer="B">
+    <div class="qhead">Quiz 3 · serpiştirme</div>
+    <div class="q">Açık dünya oyununuzda ağaçlar r = 4 metre aralıkla Poisson disk ile dikiliyor. Kontrol ızgarasının hücre boyu neden r / √2 ≈ 2,83 metre?</div>
+    <div class="opts"><button data-opt="A">Hücre küçük olsun ki daha çok ağaç sığsın</button><button data-opt="B">Hücrenin köşegeni r olsun: aynı hücreye iki ağaç düşemez, her hücrede en fazla bir ağaç olur</button><button data-opt="C">Daire alanına en yakın kare böyle çıkar</button><button data-opt="D">Ağaçların gövde çapı bu kadardır</button></div>
+    <div class="explain">Kenarı r / √2 olan karenin köşegeni tam r’dir. Aynı hücredeki iki nokta arası en çok köşegen kadar olabilir, yani r’den kısa: kural bunu yasakladığı için her hücrede en fazla bir nokta bulunur. Böylece ızgara basit bir dizi olur ve komşu kontrolü yalnızca çevredeki 5 × 5 hücreye bakar.</div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 4</div><div class="ttl">Zindan koridorları</div><div class="sub">Delaunay + en küçük yayılan ağaç</div></div>
+</section>
+
+<section data-sec="zindan">
+  <h2>Problem ve fikir: odaları nasıl bağlamalı?</h2>
+<div class="cols c64">
+<div><div class="box game" style="font-size:.8em"><span class="bt">🎮 Roguelike zindanı</span><ul style="font-size:.9em"><li>Odalar rastgele yerleşti. Şimdi koridorlar: her odaya ulaşılabilmeli, koridorlar birbirini kesmemeli, uzak odalar arasına saçma uzun koridor çekilmemeli.</li><li>Ama zindan tek bir uzun zincir de olmamalı: oyuncu hep geri dönmek zorunda kalır, keşif sıkıcılaşır. Biraz <b>döngü</b> (kestirme) iyidir.</li><li><b>Herkesi herkese bağlamak</b>: n oda için n(n−1)/2 koridor; kesişen, iç içe geçen bir yumak.</li></ul></div></div>
+<div><div class="box info" style="font-size:.78em"><span class="bt">Beş aşama (TinyKeep, 2013)</span><table class="sum-t" style="font-size:18px"><tr><th style="text-align:left;">aşama</th><th style="text-align:left;">ne yapar</th><th style="text-align:left;">hangi sunum?</th></tr><tr><td style="text-align:left;">1 · odalar</td><td style="text-align:left;">rastgele yerleştir, çakışanları at</td><td style="text-align:left;">G3 (AABB)</td></tr><tr><td style="text-align:left;">2 · Delaunay</td><td style="text-align:left;">oda merkezlerini üçgenle: kim kimin doğal komşusu?</td><td style="text-align:left;">bu sunum</td></tr><tr><td style="text-align:left;">3 · MST</td><td style="text-align:left;">Delaunay kenarlarından en kısa toplamla herkesi bağla</td><td style="text-align:left;">MST (Kruskal), Union-Find</td></tr><tr><td style="text-align:left;">4 · döngü</td><td style="text-align:left;">ağaçta olmayan kenarların ~%15’ini geri ekle</td><td style="text-align:left;">—</td></tr><tr><td style="text-align:left;">5 · koridor</td><td style="text-align:left;">her kenarı L biçimli bir koridora çevir</td><td style="text-align:left;">—</td></tr></table><p>Neden önce Delaunay? MST’yi bütün n² çift üzerinde de kurabilirdik; ama Delaunay yalnızca ~3n kenar verir (çok daha hızlı) ve MST her zaman Delaunay kenarlarının içindedir: hiçbir şey kaybetmeyiz.</p></div></div>
+</div>
+</section>
+
+<section data-sec="zindan">
+  <h2>Canlı: beş aşamada zindan 🏰</h2>
+<div class="demo" data-demo="dungeon"></div>
+  <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?"><ol style="font-size:.9em"><li>Aşamaları tek tek ilerleyin. 3. aşamada (MST) kenar sayısı oda sayısından kaç eksik? Neden?</li><li>4. aşamada geri eklenen turuncu kenarlar hangi odalar arasında bir kestirme açtı?</li><li>“Yeni zindan”a birkaç kez basın: Delaunay kenarları hiç birbirini kesiyor mu? Çok uzak iki oda arasında kenar var mı?</li><li>Geri ekleme oranı %0 olsaydı ve %100 olsaydı zindanda dolaşmak nasıl olurdu?</li></ol></div><!--/dh-->
+</section>
+
+<section data-sec="zindan">
+<div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li>Aşamaları tek tek ilerleyin. 3. aşamada (MST) kenar sayısı oda sayısından kaç eksik? Neden?</li><li>4. aşamada geri eklenen turuncu kenarlar hangi odalar arasında bir kestirme açtı?</li><li>“Yeni zindan”a birkaç kez basın: Delaunay kenarları hiç birbirini kesiyor mu? Çok uzak iki oda arasında kenar var mı?</li><li>Geri ekleme oranı %0 olsaydı ve %100 olsaydı zindanda dolaşmak nasıl olurdu?</li></ol></div>
+</section>
+
+<section data-sec="zindan">
+  <h2>Kod: zindanı bağlamak</h2>
+<div class="cols c64">
+<div>  <div class="tabs">
+    <div class="tab" data-label="JavaScript (p5.js)">
+<pre><code class="language-javascript" data-trim data-line-numbers><script type="text/template">
+// Zindan: odalar → Delaunay → en küçük yayılan ağaç → birkaç kenar geri → koridor
+function zindan(odalar, geriOrani = 0.15) {
+  const m = odalar.map(o => ({ x: o.x + o.w / 2, y: o.y + o.h / 2 }));        // oda merkezleri
+  const kenar = new Map();                                                  // tekrarsız kenar listesi
+  for (const [a, b, c] of delaunay(m))
+    for (const [u, v] of [[a, b], [b, c], [c, a]])
+      kenar.set(Math.min(u, v) + ',' + Math.max(u, v), [Math.min(u, v), Math.max(u, v)]);
+  const boy = ([u, v]) => Math.hypot(m[u].x - m[v].x, m[u].y - m[v].y);
+  const sirali = [...kenar.values()].sort((p, q) => boy(p) - boy(q));
+  const ebeveyn = m.map((_, i) => i);                                       // Union-Find sunumu
+  const kok = i => (ebeveyn[i] === i ? i : (ebeveyn[i] = kok(ebeveyn[i])));
+  const agac = [], artan = [];
+  for (const e of sirali) {                                                 // Kruskal (MST sunumu)
+    const ru = kok(e[0]), rv = kok(e[1]);
+    if (ru !== rv) { ebeveyn[ru] = rv; agac.push(e); } else artan.push(e);
+  }
+  const geri = artan.filter(() => Math.random() < geriOrani);               // biraz döngü olsun
+  return agac.concat(geri);                                                 // her kenar bir koridor
+}
+</script></code></pre>
+    </div>
+  </div></div>
+<div><div style="font-size:.8em"><ul style="font-size:.95em"><li><code>delaunay()</code> az önceki Bowyer–Watson; <code>kok()</code> Union-Find sunumundaki yol sıkıştırmalı bulma.</li><li>Kruskal: kenarları kısadan uzuna sırala; iki ucu farklı kümedeyse ağaca al, aynı kümedeyse “artan” listesine koy.</li><li>Artan kenarların bir kısmı geri eklenir: döngü ve kestirmeler.</li><li>Koridoru çizmek ayrı iş: L biçimli (önce yatay, sonra dikey) ya da A* ile (Y8) engellerin etrafından.</li></ul></div></div>
+</div>
+</section>
+
+<section data-sec="zindan">
+  <h2>🎬 Ara: Delaunay ve MST ile 3B zindan</h2>
+<div class="cols c64">
+    <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000"><iframe data-src="https://www.youtube-nocookie.com/embed/rBY2Dzej03A" title="Procedurally Generated 3D Dungeons" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+    <div style="font-size:.86em">
+      <p><b>Procedurally Generated 3D Dungeons</b><br><span class="mini">Vazgriz · 9 dk 42 sn · <a href="https://www.youtube.com/watch?v=rBY2Dzej03A" target="_blank" rel="noopener">YouTube’da aç</a></span></p>
+      <p>Az önceki beş aşamanın üç boyutlu hâli: odalar, Delaunay (bu kez dört yüzlülerle), en küçük yayılan ağaç, geri eklenen kenarlar ve koridorlar için A*. TinyKeep yönteminin oyun geliştirici gözüyle uygulanışı.</p>
+      <div class="box ask"><span class="bt">🤔 İzlerken</span>Videoda geri eklenen kenar oranı kaç? 3B’de koridorlar merdivenleri nasıl çözüyor? Bizim demodaki L biçimli koridorların yerine ne kullanılıyor?</div>
+    </div>
+  </div>
+</section>
+
+<section class="level" data-background-gradient="linear-gradient(135deg, #0d2a3a 0%, #1b1036 100%)">
+  <div class="vcenter center"><div class="lv">LEVEL 5</div><div class="ttl">Hepsi bir arada</div><div class="sub">laboratuvarlar, araçlar, kapanış</div></div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🌱 Isınma kodu: çevrel çemberin merkezi</h2>
+  <div class="ailab" data-lab="circum" data-lang="js">
+<textarea>
+// a, b, c: [x, y] dizileri. Üç noktadan geçen çemberin merkezini [x, y] olarak döndür.
+function cevrelMerkez(a, b, c) {
+  const d = (a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1]));   // TODO: bir çarpan eksik
+  const a2 = a[0] * a[0] + a[1] * a[1], b2 = b[0] * b[0] + b[1] * b[1], c2 = c[0] * c[0] + c[1] * c[1];
+  const x = (a2 * (b[1] - c[1]) + b2 * (c[1] - a[1]) + c2 * (a[1] - b[1])) / d;
+  const y = (a2 * (c[0] - b[0]) + b2 * (a[0] - c[0]) + c2 * (b[0] - a[0])) / d;
+  return [x, y];
+}
+</textarea>
+    <div class="lab-tasks">Başlangıç kodu merkezi iki kat uzağa koyuyor: <code>d</code>’nin başındaki <b>2</b> çarpanı unutulmuş. Önce elle sınayın: A(0, 0), B(4, 0), C(0, 4) için merkez (2, 2) olmalı (“Çizimle: üç kuyu” slaytı). Düzeltince testlerin hepsi geçmeli.</div>
+  </div>
+</section>
+
+<section data-sec="laboratuvar">
+  <h2>🐍 Laboratuvar: nokta çemberin içinde mi?</h2>
+  <div class="ailab" data-lab="incircle" data-lang="python">
+<textarea>
+# a, b, c, d: [x, y] listeleri. d, ABC üçgeninin çevrel çemberinin İÇİNDE mi? (Tam çemberin üstündeyse False.)
+def cevrel_merkez(a, b, c):
+    d = 2 * (a[0] * (b[1] - c[1]) + b[0] * (c[1] - a[1]) + c[0] * (a[1] - b[1]))
+    a2, b2, c2 = a[0]**2 + a[1]**2, b[0]**2 + b[1]**2, c[0]**2 + c[1]**2
+    x = (a2 * (b[1] - c[1]) + b2 * (c[1] - a[1]) + c2 * (a[1] - b[1])) / d
+    y = (a2 * (c[0] - b[0]) + b2 * (a[0] - c[0]) + c2 * (b[0] - a[0])) / d
+    return x, y
+
+def cemberin_icinde(a, b, c, d):
+    mx, my = cevrel_merkez(a, b, c)
+    # TODO: yarıçapın karesi (a’nın merkeze uzaklığının karesi) ile d’nin merkeze uzaklığının karesini karşılaştır
+    return False
+</textarea>
+    <div class="lab-tasks">Bowyer–Watson’ın kalbi bu fonksiyon: “kötü üçgen” tam olarak <code>cemberin_icinde(...)</code> True dönen üçgendir. Karekök almadan kareleri karşılaştırın; eşitlikte (nokta tam çemberin üstünde) False dönün. Eşkenar dörtgen örneğiyle sınayın: A(0, 2), B(4, 0), C(8, 2) ve D(4, 4) → True.</div>
+  </div>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🧰 Motorlarda ve kütüphanelerde</h2>
+<table class="gloss" style="font-size:16px">
+<tr><td><b>Godot</b></td><td><code>Geometry2D.triangulate_polygon</code> (kulak kesme) · <code>Geometry2D.triangulate_delaunay</code> · <code>Geometry2D.convex_hull</code></td><td>2B çokgen ve nokta işlerinin hepsi hazır; navmesh için NavigationServer</td></tr>
+<tr><td><b>JavaScript</b></td><td><b>delaunator</b> (Mapbox; çok hızlı Delaunay) · <b>d3-delaunay</b> (Delaunay + Voronoi) · <b>earcut</b> (delikli çokgen üçgenleme)</td><td>p5.js projelerinde doğrudan kullanılabilir</td></tr>
+<tr><td><b>Python</b></td><td><code>scipy.spatial.Delaunay</code>, <code>scipy.spatial.Voronoi</code> · <b>shapely</b> (çokgen işlemleri)</td><td>Harita üreticisi prototipi için ideal</td></tr>
+<tr><td><b>C++ / Unity</b></td><td><b>CGAL</b> (kapsamlı hesaplamalı geometri) · Unity için açık kaynak Delaunay/Voronoi paketleri · Recast (navmesh)</td><td>Hazır kütüphane varken kendi Delaunay’ınızı yalnızca öğrenmek için yazın</td></tr>
+<tr><td><b>Kırılma</b></td><td>Blender “Cell Fracture”, Houdini Voronoi Fracture</td><td>Parçaları önceden kesip oyunda fizik nesnesi olarak kullanmak</td></tr>
+</table>
+<p class="mini">Pratik kural: önce hata ayıklama çizimini yapın (üçgenler, çemberler, bölgeler). Bu sunumdaki demoların hepsi ilk gün yalnızca o çizimlerdi.</p>
+</section>
+
+<section data-sec="araçlar">
+  <h2>🤖 Bu konuyu bir YZ kod asistanıyla yazarken</h2>
+<div class="cols c64">
+<div><div class="box warn" style="font-size:.8em"><span class="bt">Sık yapılan hatalar — kontrol edin</span><ul style="font-size:.9em"><li>Köşelerin <b>sırası</b> ters: kulak kesme hiç kulak bulamaz.</li><li>Bowyer–Watson’da yalnızca noktanın <b>içine düştüğü</b> üçgeni bölmek (çember yerine üçgen testi): sonuç Delaunay olmaz.</li><li>Ortak kenarı yalnızca bir yönde aramak: iç kenarlar oyukta kalır, üçgenler üst üste biner.</li><li>Dev üçgen yeterince büyük değil: kenardaki üçgenler eksik çıkar.</li><li>Dört nokta aynı çember üstündeyken eşitlik hatası; ya da üç nokta aynı doğrudayken sıfıra bölme.</li><li>Voronoi’yi her kare yeniden hesaplamak.</li></ul></div></div>
+<div><div class="box info" style="font-size:.8em"><span class="bt">İyi bir istek (prompt) örneği</span><p>“p5.js, kütüphane yok. (1) <code>delaunay(noktalar)</code>: Bowyer–Watson; dev başlangıç üçgeni; kötü üçgen = çevrel çemberi yeni noktayı (eşitlik hariç) içine alan; oyuk sınırı = tek bir kötü üçgende geçen kenarlar (iki yön de kontrol edilecek). (2) Hata ayıklama çizimi: her üçgenin çevrel çemberi ince çizgiyle. (3) Test: rastgele 200 nokta için hiçbir çemberin içinde nokta kalmadığını sayan bir fonksiyon. (4) Delaunay’dan Voronoi kenarları: komşu üçgenlerin çember merkezlerini birleştir.”</p><p class="mini">Neden iyi: algoritmanın adı, kenar durumları ve <b>kendini sınayan</b> bir test isteniyor.</p></div></div>
+</div>
+</section>
+
+<section data-sec="tartışma">
+  <h2>💬 Tartışma soruları</h2>
+<div class="box ask" style="font-size:.95em"><span class="bt">Yanınızdakiyle 2 dakika konuşun, sonra sınıfça tartışalım</span><ol><li class="fragment">Bir strateji oyununda ülke sınırlarını Voronoi ile çizdiniz. Oyuncular “sınırlar dümdüz, yapay görünüyor” diyor. Ne yapabilirsiniz? (İpucu: kenarları gürültüyle kıvırmak, nehirleri ve dağları sınır yapmak.)</li><li class="fragment">Zindan üretirken geri eklenen kenar oranı oyunun türüne göre değişmeli mi? Korku oyunu, aksiyon roguelike’ı ve keşif oyunu için ne seçerdiniz?</li><li class="fragment">Lloyd gevşetmesi noktaları “fazla düzgün” yapabilir. Kaç adımda durmalı? Bir harita için “doğal” görünmeyi nasıl ölçersiniz?</li><li class="fragment">Ormana Poisson disk ile ağaç dikerken farklı boylardaki ağaçlar için tek bir r yeter mi? Büyük ağaç ile küçük çalı arasındaki uzaklık ne olmalı?</li><li class="fragment">Bir Voronoi kırılmasında parça sayısı ve dağılımı çarpmanın şiddetine göre nasıl ayarlanmalı? Oyuncu “her cam aynı kırılıyor” derse?</li></ol></div>
+</section>
+
+<section data-sec="proje">
+  <h2>🚀 Proje ve araştırma önerileri</h2>
+<ol style="font-size:.8em"><li><b class="c-green">[kolay]</b> <b>Bölge haritası</b> — Örnek sayfadaki kodu genişletin: 30 köy, Voronoi bölgeleri, her bölgeyi köyün rengine boyayın; fareyle tıklanan bölgenin komşularını (Delaunay kenarları) vurgulayın.</li><li><b class="c-green">[kolay]</b> <b>Orman serpiştirici</b> — Poisson disk ile üç katman: büyük ağaçlar (r = 60), küçük ağaçlar (r = 30, büyüklere 40’tan yakın değil), çalılar. Sonucu tamamen rastgele dağılımla yan yana gösterin.</li><li><b class="c-amber">[orta]</b> <b>Zindan üreticisi</b> — Demodaki beş aşamayı oynanabilir hâle getirin: koridorları A* ile (Y8) engel etrafından çizin, başlangıç ve çıkış odasını en uzak iki oda seçin (BFS), geri ekleme oranı için sürgü.</li><li><b class="c-amber">[orta]</b> <b>Delikli oda üçgenleme</b> — Kulak kesmeyi delikli çokgene genişletin: deliği en yakın dış köşeye bir “köprü” ile bağlayıp tek çokgene çevirin. Ortasında sütun olan bir odayla sınayın.</li><li><b class="c-red">[zor]</b> <b>Polygonal Map Generation</b> — Amit Patel’in yazısını adım adım uygulayın: Lloyd, Voronoi, kara/deniz, yükseklik, nehirler, biyomlar. Her adımı ayrı bir düğmeyle gösterin.</li><li><b class="c-purple">[araştırma]</b> <b>Kırılma</b> — Bir dikdörtgeni çarpma noktasının çevresinde sıklaşan Voronoi hücrelerine bölün ve parçaları basit bir fizikle (G5) uçurun. Merkez sayısı ve dağılımının görünüşe etkisini karşılaştırın.</li></ol>
+</section>
+
+<section data-sec="özet">
+  <h2>Neler öğrendik? 🎒</h2>
+<ul style="font-size:.82em"><li><b>Kulak kesme:</b> dışbükey ve içi boş köşeyi bul, kes, tekrarla. n köşe → n − 2 üçgen. Köşe sırasına dikkat.</li><li><b>Delaunay:</b> hiçbir çevrel çemberin içinde başka nokta yok. En dar açıyı en büyük tutar: dolgun üçgenler, mantıklı komşuluk.</li><li><b>Bowyer–Watson:</b> dev üçgenle başla; her yeni nokta için çemberi onu içine alan üçgenleri sil, oyuğu yeni noktaya bağla.</li><li><b>Voronoi:</b> her yer en yakın merkeze ait. Sınırlar dik açıortaylar, köşeler Delaunay üçgenlerinin çember merkezleri.</li><li><b>Düzgün serpiştirme:</b> Lloyd (bölgenin ortasına taşı, tekrarla) ya da Poisson disk (r’den yakın olmasın; ızgarayla hızlı).</li><li><b>Zindan:</b> odalar → Delaunay → MST → birkaç kenar geri → koridor.</li><li><b>Sonraki:</b> Bölüm 7: oyunlarda yapay zekâ. İlk sunum Hazırlık: vektörler, oyun döngüsü ve karar veren karakterler.</li></ul>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: videolar 🎬</h2>
+<div class="vids">
+<a class="vid" href="https://www.youtube.com/watch?v=QAdfkylpYwc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/QAdfkylpYwc/hqdefault.jpg" alt=""><span><b>Polygon Triangulation [1] – Overview of Ear Clipping</b><br>Two-Bit Coding</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=hTJFcHutls8" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/hTJFcHutls8/hqdefault.jpg" alt=""><span><b>Polygon Triangulation [2] – Ear Clipping Implementation in Code</b><br>Two-Bit Coding</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=2x4ioToqe_c" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/2x4ioToqe_c/hqdefault.jpg" alt=""><span><b>Every Polygon can be Triangulated Into Exactly n-2 Triangles</b><br>Think Twice</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=GctAunEuHt4" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/GctAunEuHt4/hqdefault.jpg" alt=""><span><b>Delaunay Triangulation</b><br>SCIco</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=3G5d8ob_Lfo" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/3G5d8ob_Lfo/hqdefault.jpg" alt=""><span><b>Voronoi Diagrams and Procedural Map Generation</b><br>MAN OF EERIE LETTERS</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=Bxdt6T_1qgc" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/Bxdt6T_1qgc/hqdefault.jpg" alt=""><span><b>Coding Challenge 181: Weighted Voronoi Stippling</b><br>The Coding Train</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=7WcmyxyFO7o" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/7WcmyxyFO7o/hqdefault.jpg" alt=""><span><b>Procedural Object Placement (Poisson Disc Sampling)</b><br>Sebastian Lague</span></a>
+<a class="vid" href="https://www.youtube.com/watch?v=rBY2Dzej03A" target="_blank" rel="noopener"><img src="https://i.ytimg.com/vi/rBY2Dzej03A/hqdefault.jpg" alt=""><span><b>Procedurally Generated 3D Dungeons</b><br>Vazgriz</span></a>
+</div>
+</section>
+
+<section data-sec="kaynaklar">
+  <h2>Kaynaklar: yazılar, kütüphaneler ve belgeler 📚</h2>
+<ul style="font-size:.78em"><li>Amit Patel (Red Blob Games): <a href="http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/" target="_blank" rel="noopener">Polygonal Map Generation for Games</a> (2010) · <a href="https://www.redblobgames.com/x/2022-voronoi-maps-tutorial/" target="_blank" rel="noopener">Voronoi maps tutorial</a> (2022)</li><li>Mapbox: <a href="https://github.com/mapbox/delaunator" target="_blank" rel="noopener">delaunator</a> (hızlı Delaunay) · <a href="https://github.com/mapbox/earcut" target="_blank" rel="noopener">earcut</a> (kulak kesme) · d3: <a href="https://github.com/d3/d3-delaunay" target="_blank" rel="noopener">d3-delaunay</a></li><li>Godot belgeleri: <a href="https://docs.godotengine.org/en/stable/classes/class_geometry2d.html" target="_blank" rel="noopener">Geometry2D</a> — triangulate_polygon, triangulate_delaunay</li><li>Robert Bridson: <a href="https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf" target="_blank" rel="noopener">Fast Poisson Disk Sampling in Arbitrary Dimensions</a> (SIGGRAPH 2007, tek sayfa)</li><li>A. Adonaac: <a href="https://www.gamedeveloper.com/programming/procedural-dungeon-generation-algorithm" target="_blank" rel="noopener">Procedural Dungeon Generation Algorithm</a> — TinyKeep yönteminin adım adım anlatımı</li><li>de Berg, Cheong, van Kreveld, Overmars: <i>Computational Geometry: Algorithms and Applications</i> — üçgenleme, Delaunay ve Voronoi bölümleri (Fortune’un algoritması dahil)</li></ul>
+</section>
+
+<section class="level" data-background-gradient="radial-gradient(circle at 50% 40%, #0d3a3a 0%, #0c1c24 60%, #07060f 100%)">
+  <div class="vcenter center">
+    <div class="lv">NEXT LEVEL ▶</div>
+    <div class="ttl" style="font-size:60px">Oyunlarda Yapay Zekâ: Hazırlık</div>
+    <div class="sub">Bölüm 7 başlıyor: vektörler, oyun döngüsü ve karar veren karakterler</div>
+    <a class="hp" style="align-self:center;border-bottom:2px solid #7ad7ff" href="../yz-hazirlik/">SONRAKİ SUNUM ▶</a>
+  </div>
+</section>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="../ortak/core.js"></script>
+<script src="../ortak/yardim.js"></script>
+<script src="../ortak/oyunai.js"></script>
+<script src="demos.js"></script>
+<script>SL.boot();</script>
+</body>
+</html>
