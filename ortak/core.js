@@ -444,7 +444,8 @@
       if (SL.HELP) document.querySelectorAll('.demo[data-demo], .sortviz, .ufviz, .bstviz').forEach(r => {
         if (r.dataset.helpDone) return; r.dataset.helpDone = 1;
         const cls = ['sortviz', 'ufviz', 'bstviz'].find(c => r.classList.contains(c));
-        const keys = cls ? [cls + ':' + (r.dataset.alg || ''), cls] : ['demo:' + r.dataset.demo];
+        const deck = location.pathname.split('/').filter(Boolean).filter(x => !x.endsWith('.html')).slice(-1)[0] || '';
+        const keys = cls ? [cls + ':' + (r.dataset.alg || ''), cls] : ['demo:' + deck + ':' + r.dataset.demo, 'demo:' + r.dataset.demo];   // önce sunuma özgü anahtar
         const pick = f => { for (const k of keys) if (SL.HELP[k] && SL.HELP[k][f]) return SL.HELP[k][f]; return null; };
         let at = r; while (at.nextElementSibling && at.nextElementSibling.classList.contains('demo-help')) at = at.nextElementSibling;
         const have = [...r.parentNode.querySelectorAll(':scope > .demo-help')].map(x => x.dataset.title || '');
