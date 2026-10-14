@@ -15,7 +15,9 @@
   const cond = (name, key) => mk('cond', name, { key });
   const act = (name, action) => mk('act', name, { action });
   const not = (name, kid) => mk('not', name, { kids: [kid] });
-  SL.BT = { sel, seq, cond, act, not };
+  const dec = (name, icon, kid) => mk('dec', name, { icon, kids: [kid] });
+  const par = (name, ...kids) => mk('par', name, { kids });
+  SL.BT = { sel, seq, cond, act, not, dec, par };
 
   function tick(n, s, ctx, trace) {
     let r;
@@ -97,7 +99,11 @@
     edges(tree);
     const nodes = n => {
       const [xi, d] = L.pos[n.id], x = X(xi), y = Y(d), st = statuses[n.id], col = colOf(st, t), fill = st ? col : t.card, ink = st ? (st === 'RUNNING' ? '#111' : '#fff') : t.ink;
-      if (n.type === 'sel' || n.type === 'seq') { s += `<rect x="${x - 22}" y="${y - 16}" width="44" height="32" rx="6" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="900" fill="${ink}">${n.type === 'sel' ? '?' : '→'}</text><text x="${x}" y="${y - 22}" text-anchor="middle" font-size="12" font-weight="700" fill="${t.muted}">${n.name}</text>`; }
+      if (o.badges && o.badges[n.id]) s += `<circle cx="${x - 30}" cy="${y - 20}" r="11" fill="${t.ink}"/><text x="${x - 30}" y="${y - 16}" text-anchor="middle" font-size="12" font-weight="800" fill="${t.card}">${o.badges[n.id]}</text>`;
+      if (o.notes && o.notes[n.id]) s += `<text x="${x}" y="${y + 34}" text-anchor="middle" font-size="12" fill="${t['ink-2']}">${o.notes[n.id]}</text>`;
+      if (n.type === 'par') { s += `<rect x="${x - 22}" y="${y - 16}" width="44" height="32" rx="6" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="900" fill="${ink}">⇉</text><text x="${x}" y="${y - 22}" text-anchor="middle" font-size="12" font-weight="700" fill="${t.muted}">${n.name}</text>`; }
+      else if (n.type === 'dec') { s += `<polygon points="${x},${y - 18} ${x + 24},${y} ${x},${y + 18} ${x - 24},${y}" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${ink}">${n.icon || '◇'}</text><text x="${x + 30}" y="${y + 4}" font-size="12" font-weight="700" fill="${t.muted}">${n.name}</text>`; }
+      else if (n.type === 'sel' || n.type === 'seq') { s += `<rect x="${x - 22}" y="${y - 16}" width="44" height="32" rx="6" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="900" fill="${ink}">${n.type === 'sel' ? '?' : '→'}</text><text x="${x}" y="${y - 22}" text-anchor="middle" font-size="12" font-weight="700" fill="${t.muted}">${n.name}</text>`; }
       else if (n.type === 'not') { s += `<polygon points="${x},${y - 18} ${x + 20},${y} ${x},${y + 18} ${x - 20},${y}" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${ink}">!</text>`; }
       else { const w = Math.max(70, n.name.length * 7 + 14); const r = n.type === 'cond' ? 16 : 6; s += `<rect x="${x - w / 2}" y="${y - 16}" width="${w}" height="32" rx="${r}" fill="${fill}" stroke="${st ? col : n.type === 'cond' ? t.blue : t.purple}" stroke-width="2.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="12" font-weight="700" fill="${ink}">${n.name}</text>`; }
       (n.kids || []).forEach(nodes);
@@ -109,6 +115,40 @@
   const LEGEND_HTML = '<div class="bt-legend"><span style="--c:var(--green)">başarılı (SUCCESS)</span><span style="--c:var(--red)">başarısız (FAILURE)</span><span style="--c:var(--amber)">çalışıyor (RUNNING)</span><span style="--c:var(--rule)">bu tick’te ziyaret edilmedi</span><span>? = selector · → = sequence · yuvarlak = koşul · köşeli = eylem</span></div>';
   const legend = (extra = '') => { const d = el('div'); d.innerHTML = LEGEND_HTML.replace('<span style="--c:var(--rule)">', extra + '<span style="--c:var(--rule)">'); return d.firstChild; };
 
+
+  /* ---------- sunumdaki “Çizimle” slaytları: aynı gösterimle sabit ağaç resimleri ---------- */
+  D.btfig = function (root) {
+    const B = SL.BT, kind = root.dataset.fig, box = el('div', { class: 'btfig' });
+    const panel = (title, tree, st, o = {}) => { const d = el('div', { class: 'btfig-p' }); d.innerHTML = `<div class="btfig-t">${title}</div>` + treeSVG(tree, st, Object.assign({ W: o.W || 420, H: o.H || 230 }, o)) + (o.cap ? `<div class="btfig-c">${o.cap}</div>` : ''); return d; };
+    const draw = () => {
+      box.innerHTML = '';
+      if (kind === 'dekorator') {
+        let c1, n1, a1, q1; const t1 = q1 = B.seq('', n1 = B.not('', c1 = B.cond('oyuncu görünüyor?', 'x')), a1 = B.act('devriye gez', 'x'));
+        let c2, d2, a2, q2; const t2 = q2 = B.seq('', c2 = B.cond('mesafe < 20?', 'x'), d2 = B.dec('8 sn', '⏱', a2 = B.act('el bombası at', 'x')));
+        let d3, a3; const t3 = d3 = B.dec('mermi bitene dek', '🔁', a3 = B.act('ateş et', 'x'));
+        box.append(panel('Inverter (!): cevabı ters çevirir', t1, { [c1.id]: 'FAILURE', [n1.id]: 'SUCCESS', [a1.id]: 'RUNNING', [q1.id]: 'RUNNING' }, { W: 330, H: 250, cap: 'oyuncu görünmüyor (✗) → ! onu ✓ yapar → devriye çalışır' }),
+          panel('Cooldown (⏱): yakın zamanda çalıştıysa kapalı', t2, { [c2.id]: 'SUCCESS', [d2.id]: 'FAILURE', [q2.id]: 'FAILURE' }, { W: 330, H: 250, cap: 'son bomba 3 sn önce: ⏱ 8 sn dolmadı → ✗, el bombası atılmaz' }),
+          panel('Repeat (🔁): çocuğu tekrar tekrar çalıştırır', t3, { [a3.id]: 'RUNNING', [d3.id]: 'RUNNING' }, { W: 330, H: 250, cap: 'ateş et her bitişte yeniden başlar; mermi bitince 🔁 durur' }));
+      } else if (kind === 'paralel') {
+        let p, a, b; const t = p = B.par('Parallel', a = B.act('hedefe yürü', 'x'), b = B.act('etrafı tara', 'x'));
+        let s1, c1, e1; const u = s1 = B.seq('', c1 = B.cond('mermim var mı?', 'x'), e1 = B.act('ateş et', 'x'));
+        box.append(panel('Parallel (⇉): çocukların hepsi aynı karede', t, { [p.id]: 'RUNNING', [a.id]: 'RUNNING', [b.id]: 'RUNNING' }, { cap: 'yürürken bir yandan tarar; kural: “biri bitince ben de bittim”' }),
+          panel('Yaprak türleri', u, { [c1.id]: 'SUCCESS', [e1.id]: 'RUNNING', [s1.id]: 'RUNNING' }, { cap: 'mavi yuvarlak = koşul (anında ✓/✗) · mor köşeli = eylem (birkaç kare ⏳)' }));
+      } else if (kind === 'tick') {
+        let r, q1, c1, a1, q2, c2, a2, a3;
+        const t = r = B.sel('kök', q1 = B.seq('', c1 = B.cond('canım az mı?', 'x'), a1 = B.act('kaç', 'x')), q2 = B.seq('', c2 = B.cond('oyuncuyu görüyor mu?', 'x'), a2 = B.act('kovala', 'x')), a3 = B.act('devriye', 'x'));
+        box.append(panel('Bir tick: kökten başla, soldan sağa, derinlik öncelikli', t, { [r.id]: 'RUNNING', [q1.id]: 'FAILURE', [c1.id]: 'FAILURE', [q2.id]: 'RUNNING', [c2.id]: 'SUCCESS', [a2.id]: 'RUNNING' },
+          { W: 1060, H: 250, badges: { [r.id]: 1, [q1.id]: 2, [c1.id]: 3, [q2.id]: 4, [c2.id]: 5, [a2.id]: 6 }, notes: { [a1.id]: 'atlandı', [a3.id]: 'sorulmadı' }, cap: '① kök → ② ilk sequence → ③ “canım az mı?” ✗ → sequence ✗, selector sonraki çocuğa → ④ ikinci sequence → ⑤ “görüyor mu?” ✓ → ⑥ “kovala” ⏳: bu karenin işi kovalamak; “devriye”ye hiç bakılmadı' }));
+      } else if (kind === 'running') {
+        const mkT = () => { let q, a, b, c; const t = q = B.seq('', a = B.act('nişan al', 'x'), b = B.act('ateş et', 'x'), c = B.act('şarjör değiştir', 'x')); return { t, q, a, b, c }; };
+        const R = mkT(), M = mkT();
+        box.append(panel('Reaktif: her tick baştan', R.t, { [R.q.id]: 'RUNNING', [R.a.id]: 'RUNNING' }, { W: 520, cap: '“nişan al” geçen tick bitmişti ama yine baştan çalışıyor: koşullar tazelenir, ama iş tekrar edilir' }),
+          panel('Hafızalı: kaldığı yerden', M.t, { [M.q.id]: 'RUNNING', [M.a.id]: 'SUCCESS', [M.b.id]: 'RUNNING' }, { W: 520, notes: { [M.a.id]: 'hatırlandı' }, cap: '“nişan al” hatırlanıyor, sıra “ateş et”te: verimli, ama arada hedef kaybolduysa fark edilmez' }));
+      }
+      box.append(legend());
+    };
+    root.append(box); draw(); SL.onTheme(draw);
+  };
   /* ---------- canlı: davranış ağaçlı nöbetçi ---------- */
   D.btguard = function (root) {
     const tree = makeGuardTree();

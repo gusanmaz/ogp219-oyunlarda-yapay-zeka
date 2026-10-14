@@ -229,6 +229,12 @@
   <p class="mini">Ağaç hep aynı; değişen yalnızca <b>dünya</b>. Beş senaryoyu sırayla deneyin ve her birinde ağacın hangi dalda durduğunu <b>önce tahmin edin</b>. Renkler: <span class="c-green"><b>yeşil</b></span> = denendi, oldu · <span class="c-red"><b>kırmızı</b></span> = denendi, olmadı · <b>gri</b> = sıra ona hiç gelmedi.</p>
 </section>
 
+<section data-sec="düğüm türleri" class="no-grow">
+  <h2>Çizimle: üç dekoratör, üç küçük ağaç</h2>
+  <div class="demo" data-demo="btfig" data-fig="dekorator"></div>
+  <p style="font-size:.78em;margin:.4em 0 0">Dekoratör (eşkenar dörtgen) tek bir çocuğun üstüne oturur ve onun cevabını değiştirir ya da ne zaman çalışacağını belirler. Renkler bu tick’teki cevaplar. Sonraki slayt bütün dekoratörleri tablo hâlinde veriyor.</p>
+</section>
+
 <section data-sec="düğüm türleri">
   <h2>Dekoratörler: tek çocuğu “süsleyen” düğümler</h2>
   <table class="sum-t" style="font-size:18px">
@@ -241,6 +247,12 @@
     <tr><td><b>Koşullu dekoratör</b> (Unreal)</td><td>Koşul doğruysa dalı aç; değişirse dalı iptal et</td><td>“HasLineOfSight?” anahtarı doğruysa kovala</td></tr>
   </table>
   <p class="mini">Bunların hepsi Unity Behavior’da hazır düğüm olarak var: Inverter, Cooldown, Repeat, Time Out, Succeeder, ayrıca Abort/Restart koşulları.</p>
+</section>
+
+<section data-sec="düğüm türleri" class="no-grow">
+  <h2>Çizimle: paralel düğüm ve iki tür yaprak</h2>
+  <div class="demo" data-demo="btfig" data-fig="paralel"></div>
+  <p style="font-size:.78em;margin:.4em 0 0">Solda iki eylem aynı karede çalışıyor: karakter hem yürüyor hem etrafı tarıyor. Sağda yaprakların iki türü: koşul bir soru sorar ve hemen cevap verir; eylem dünyayı değiştirir ve çoğu zaman birkaç kare sürer.</p>
 </section>
 
 <section data-sec="düğüm türleri">
@@ -276,6 +288,12 @@
   <div class="ttl">Tick: ağaç nasıl düşünür</div>
   <div class="sub">kökten yaprağa, soldan sağa, her karede</div>
   <ul class="agenda"><li class="done">FSM’den ağaca</li><li class="done">düğüm türleri</li><li class="on">tick: ağaç nasıl düşünür</li><li class="">kod: kendi BT motorumuz</li><li class="">kara tahta, hafıza, olaylar</li><li class="">tuzaklar ve melezler</li><li class="">gerçek oyunlarda</li><li class="">kütüphaneler ve entegrasyon</li></ul>
+</section>
+
+<section data-sec="tick" class="no-grow">
+  <h2>Çizimle: bir tick, altı adımda</h2>
+  <div class="demo" data-demo="btfig" data-fig="tick"></div>
+  <p style="font-size:.78em;margin:.4em 0 0">Numaralar ziyaret sırası. Kök sol çocuktan başlar; “canım az mı?” hayır deyince o sequence başarısız olur ve selector bir sonraki çocuğu dener. “Görüyor mu?” evet dediği için “kovala” çalışır ve tick burada biter: sağdaki “devriye” hiç sorulmaz. Sonraki karede her şey kökten yeniden.</p>
 </section>
 
 <section data-sec="tick">
@@ -889,6 +907,12 @@ if bb["last_seen"] is not None: ...  # koşul okur
       </ul>
       <p class="mini">Bellek hilesi: ~100 NPC × ~60 davranış × 32 bayt ≈ 192 KB yerine, yalnızca <b>çalışan yolun</b> (4 seviye) hafızasını tutarak ≈ 25 KB. Xbox’ın sınırlı belleğinde fark büyüktü.</p></div>
   </div>
+</section>
+
+<section data-sec="kara tahta" class="no-grow">
+  <h2>Çizimle: ikinci tick’te sequence nereden başlar?</h2>
+  <div class="demo" data-demo="btfig" data-fig="running"></div>
+  <p style="font-size:.78em;margin:.4em 0 0">Önceki tick’te “nişan al” bitti ve sıra “ateş et”e geldi. Solda reaktif sequence: her tick baştan, “nişan al” yeniden çalışıyor. Sağda hafızalı sequence: “nişan al”ı hatırlıyor, doğrudan “ateş et”ten devam ediyor. Hangisinin doğru olduğu duruma bağlı: sonraki slayt.</p>
 </section>
 
 <section data-sec="kara tahta">
