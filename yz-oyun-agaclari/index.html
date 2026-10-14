@@ -133,6 +133,13 @@
   </div>
 </section>
 
+<section data-sec="oyun ağacı" class="no-grow">
+  <h2>Çizimle: ağaçlar kaç basamaklı?</h2>
+  <svg viewBox="0 0 1180 370" style="width:100%" font-family="Source Sans 3"><text x="200" y="24" font-size="15" style="fill:var(--muted)">çubuk boyu = sayının kaç basamaklı olduğu (10 üzeri kaç)</text><text x="188" y="62" text-anchor="end" font-size="19" font-weight="700" style="fill:var(--ink)">XOX</text><rect x="200" y="44" width="24" height="28" rx="5" style="fill:var(--green)" opacity=".8"/><text x="234" y="64" font-size="16" style="fill:var(--ink-2)">255.168 oyun  <tspan style="fill:var(--muted)">(≈ 10⁵)</tspan></text><text x="188" y="112" text-anchor="end" font-size="19" font-weight="700" style="fill:var(--ink)">Dört Bir Arada</text><rect x="200" y="94" width="57" height="28" rx="5" style="fill:var(--green)" opacity=".8"/><text x="267" y="114" font-size="16" style="fill:var(--ink-2)">4,5 × 10¹² konum  <tspan style="fill:var(--muted)">(≈ 10¹³)</tspan></text><text x="188" y="162" text-anchor="end" font-size="19" font-weight="700" style="fill:var(--ink)">Dama</text><rect x="200" y="144" width="93" height="28" rx="5" style="fill:var(--green)" opacity=".8"/><text x="303" y="164" font-size="16" style="fill:var(--ink-2)">5 × 10²⁰ konum  <tspan style="fill:var(--muted)">(≈ 10²¹)</tspan></text><text x="188" y="212" text-anchor="end" font-size="19" font-weight="700" style="fill:var(--ink)">Satranç</text><rect x="200" y="194" width="540" height="28" rx="5" style="fill:var(--red)" opacity=".8"/><text x="750" y="214" font-size="16" style="fill:var(--ink-2)">10¹²⁰ oyun  </text><text x="188" y="262" text-anchor="end" font-size="19" font-weight="700" style="fill:var(--ink)">Go (19×19)</text><rect x="200" y="244" width="765" height="28" rx="5" style="fill:var(--red)" opacity=".8"/><text x="975" y="264" font-size="16" style="fill:var(--ink-2)">10¹⁷⁰ konum  </text><line x1="560.0" y1="36" x2="560.0" y2="294" style="stroke:var(--purple)" stroke-width="2.5" stroke-dasharray="7 6"/><text x="560.0" y="314" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--purple)">evrendeki atom sayısı ≈ 10⁸⁰</text><text x="200" y="342" font-size="15" style="fill:var(--green)">yeşil: çözülmüş (sonuç kesin biliniyor)</text><text x="630" y="342" font-size="15" style="fill:var(--red)">kırmızı: çözülmemiş</text></svg>
+  <p style="font-size:.8em;margin:.3em 0 0">Bir sayının büyüklüğünü basamak sayısıyla çizdik; yine de satranç çubuğu evrendeki atomların çok ötesine taşıyor. XOX’tan Go’ya her adımda yalnızca birkaç kat değil, <b>onlarca basamak</b> büyüyor. Bu yüzden büyük oyunlarda ağacın tamamına hiçbir zaman bakılamaz: budama, sınırlı derinlik ya da örnekleme şart.</p>
+</section>
+
+
 <section data-sec="oyun ağacı">
   <div class="quiz" data-karildi="1" data-answer="C">
     <div class="qhead">Quiz 1 · oyun ağacı</div>
@@ -918,6 +925,7 @@ def ucb1(w, n, N, c):
     <div class="box story"><span class="bt">Turochamp</span>Alan Turing ve David Champernowne 1948’de bir satranç programının kurallarını tasarladı: <b>Turochamp</b>. O dönemin hiçbir bilgisayarı onu çalıştıramıyordu. Turing 1952 yazında programı <b>elle, adım adım</b> “çalıştırarak” Alick Glennie’ye karşı oynadı ve kaybetti. Kayıtlara geçen ilk bilgisayar satranç oyunu, bilgisayarsız oynandı.</div>
     <div class="box game"><span class="bt">Shannon 1950</span>Claude Shannon “Programming a Computer for Playing Chess” makalesinde minimax’ı, değerlendirme fonksiyonunu (taş değerleri) ve iki stratejiyi tanımladı: <b>A</b> = her hamleye belli derinliğe kadar bak (kaba kuvvet), <b>B</b> = sadece umut vadeden hamlelere derin bak (seçici). Olası satranç oyunu sayısı için verdiği ~10¹²⁰ tahmini bugün “Shannon sayısı” olarak bilinir.</div>
   </div>
+  <div style="display:flex;gap:28px;justify-content:center;margin:6px 0"><figure style="margin:0 0 6px;text-align:center"><img src="gorsel/turing.jpg" alt="Alan Turing, 16 yaşında" style="height:150px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--rule)"><figcaption style="font-size:.6em;line-height:1.3;color:var(--muted)">Alan Turing (16 yaşında) · kamu malı, Wikimedia Commons</figcaption></figure><figure style="margin:0 0 6px;text-align:center"><img src="gorsel/shannon.jpg" alt="Claude Shannon" style="height:150px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--rule)"><figcaption style="font-size:.6em;line-height:1.3;color:var(--muted)">Claude Shannon · Konrad Jacobs, CC BY-SA 2.0 de</figcaption></figure></div>
   <p class="mini">70 yıldır satranç motorlarının iskeleti Shannon’ın makalesindeki şemadır; değişen arama hızı, budama ve değerlendirme fonksiyonunun kalitesi.</p>
 </section>
 
@@ -933,6 +941,7 @@ def ucb1(w, n, N, c):
       </ul>
     </div>
     <div>
+      <figure style="margin:0 0 6px;text-align:center"><img src="gorsel/deepblue.jpg" alt="Deep Blue dolabı, Computer History Museum" style="height:190px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--rule)"><figcaption style="font-size:.6em;line-height:1.3;color:var(--muted)">Deep Blue’nun iki dolabından biri (Computer History Museum) · James the photographer, CC BY 2.0</figcaption></figure>
       <div class="box warn"><span class="bt">⚠️ Efsane mi, gerçek mi?</span>Hata iddiası Deep Blue ekibinden Murray Campbell’a dayandırılır; Wikipedia da “iddia edilen” (allegedly) der. Kasparov’un maçı bu yüzden kaybettiği ise tartışmalı: sonraki analizler daha çok Kasparov’un alışılmadık hatalarına işaret eder. Bunu kesin bir gerçek olarak değil, güzel bir uyarı olarak anlatın.</div>
       <div class="box story"><span class="bt">💡 Ders</span>Oyuncular, YZ’nin anlamadıkları hamlelerine <b>derin bir anlam yükler</b> (Y1: zekâ yanılsaması). Bir hata, dâhice görünebilir.</div>
     </div>
@@ -951,6 +960,19 @@ def ucb1(w, n, N, c):
       </ul>
     </div>
     <div class="box story"><span class="bt">💡 Ders</span>“Oyunu çözmek” = her konumun kusursuz oyundaki sonucunu bilmek. XOX ve Dört Bir Arada çözüldü; dama 18 yıllık hesaplamayla çözüldü; satranç ve Go’nun çözülmesi bugünkü bilgisayarlarla mümkün görünmüyor. Bu yüzden onlarda <b>sezgisel</b> (değerlendirme, örnekleme) yöntemlere muhtacız.</div>
+  </div>
+</section>
+
+<section data-sec="tarih" class="no-grow">
+  <h2>📸 Lee Sedol – AlphaGo, 2. oyun (2016)</h2>
+  <div class="cols c46">
+    <figure style="margin:0;text-align:center"><img src="gorsel/alphago-oyun2.jpg" alt="Lee Sedol – AlphaGo 2. oyunun kaydı" style="height:470px;max-width:100%;object-fit:contain;border-radius:10px;border:1px solid var(--rule)"><figcaption style="font-size:.6em;color:var(--muted)">Oyun kaydı: Wesalius, Wikimedia Commons, CC BY-SA 4.0</figcaption></figure>
+    <div style="font-size:.84em">
+      <p>Bütün oyunun kaydı: taşların üstündeki sayı hamle sırası. AlphaGo siyah, Lee Sedol beyaz.</p>
+      <p>Sağ tarafta, <b>O10</b> noktasındaki <b>siyah 37</b>: beşinci sıraya yapılan bir “omuz vuruşu”. Go’da yüzyıllardır “beşinci sırada omuz vuruşu yapılmaz” diye öğretilir; yorumcular önce hata sandı.</p>
+      <p>Yüzlerce hamle sonra bu taşın sağ taraftaki savaşı AlphaGo lehine çevirdiği anlaşıldı. AlphaGo’nun kendi tahmini: bir insanın bu hamleyi oynama olasılığı yaklaşık on binde bir.</p>
+      <p>Sonraki slayt hikâyenin geri kalanı ve arkasındaki teknik: MCTS + sinir ağları.</p>
+    </div>
   </div>
 </section>
 
