@@ -903,3 +903,5 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .oy-vid-kutu .ovk-alt { color: #ddd; font: 15px/1.4 'Source Sans 3', sans-serif; margin-top: 8px; }
 .oy-vid-kutu .ovk-alt a { color: #9cf; }
 .cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.dh-bar.in-h2 .dh-panel, .dh-bar.in-tr .dh-panel { width: 620px; }   /* çubuk yalnızca düğme kadar geniş: yüzde genişlik paneli daraltıyordu */
+.hale text:not([fill="#fff"]):not([fill="#111"]) { stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; paint-order: stroke; }   /* üstünden çizgi geçen etiketler okunur kalsın */

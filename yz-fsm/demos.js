@@ -30,17 +30,18 @@
     const RW = cfg.rw || 150, RH = 62;
     const draw = () => {
       const t = T(), S = cfg.states;
-      let g = `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="15" markerHeight="15" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
+      let g = `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="19" markerHeight="19" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
       const lab = [];
       const clip = (px, py, qx, qy) => { const ux = qx - px, uy = qy - py, k = Math.min((RW / 2 + 6) / Math.abs(ux || 1e-9), (RH / 2 + 6) / Math.abs(uy || 1e-9)); return [px + ux * k, py + uy * k]; };
-      cfg.edges.forEach(([a, b, ev, bow = 0, lt = 0.5]) => {
+      cfg.edges.forEach(([a, b, ev, bow = 0, lt = 0.5, dis = 0]) => {   // dis: etiketi eğrinin dışına (bükülme yönüne) kaydır
         const [x1, y1] = S[a], [x2, y2] = S[b], dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
         const cx = (x1 + x2) / 2 + nx * bow, cy = (y1 + y2) / 2 + ny * bow;
         const [sx, sy] = clip(x1, y1, cx, cy), [ex, ey] = clip(x2, y2, cx, cy);
         const hot = lastEdge && lastEdge[0] === a && lastEdge[1] === b, fromCur = a === cur;
-        g += `<path d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" fill="none" stroke="${hot ? t.red : fromCur ? t['ink-2'] : t.rule}" stroke-width="${hot ? 5 : fromCur ? 2.6 : 1.8}" marker-end="url(#${mid})"/>`;
+        g += `<path d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" fill="none" stroke="${hot ? t.red : fromCur ? t['ink-2'] : t.muted}" stroke-opacity="${hot || fromCur ? 1 : 0.75}" stroke-width="${hot ? 5 : fromCur ? 2.8 : 2.2}" marker-end="url(#${mid})"/>`;
         const q = lt, bx = (1 - q) * (1 - q) * sx + 2 * q * (1 - q) * cx + q * q * ex, by = (1 - q) * (1 - q) * sy + 2 * q * (1 - q) * cy + q * q * ey;
-        lab.push([bx, by, cfg.events[ev][0], hot, fromCur]);
+        const sg = Math.sign(bow) || 1;
+        lab.push([bx + nx * sg * dis, by + ny * sg * dis, cfg.events[ev][0], hot, fromCur]);
       });
       if (cfg.any) { const [ev, to, text, ax, ay] = cfg.any, [x2, y2] = S[to], hot = lastEdge && lastEdge[0] === '*'; const [ex, ey] = clip(x2, y2, ax, ay); g += `<path d="M${ax},${ay} L${ex},${ey}" fill="none" stroke="${hot ? t.red : t['ink-2']}" stroke-width="${hot ? 5 : 2.2}" stroke-dasharray="7 5" marker-end="url(#${mid})"/><text x="${ax}" y="${ay - 10}" text-anchor="middle" font-size="16" font-weight="700" fill="${hot ? t.red : t['ink-2']}">${text}</text>`; }
       lab.forEach(([x, y, tx, hot, fc]) => { const w = tx.length * 8.8 + 18; g += `<rect x="${x - w / 2}" y="${y - 14}" width="${w}" height="27" rx="13" fill="${t.bg || t.card}" stroke="${hot ? t.red : fc ? t['ink-2'] : t.rule}" stroke-width="${hot ? 2.5 : 1.2}"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="16.5" font-weight="${hot || fc ? 700 : 500}" fill="${hot ? t.red : fc ? t.ink : t.muted}">${tx}</text>`; });
@@ -96,7 +97,7 @@
     return fsmStory(root, {
       W: 860, H: 400, rw: 164, start: 'DEV',
       states: { SUP: [100, 130, '❓', 'ŞÜPHE', 'amber', 'sesin geldiği yere gidip etrafa bakıyor.'], DEV: [100, 350, '🚶', 'DEVRİYE', 'blue', 'yol noktaları arasında sakin sakin yürüyor.'], KOV: [430, 130, '🏃', 'KOVALA', 'red', 'oyuncuya doğru koşuyor.'], SAL: [760, 130, '🔫', 'SALDIR', 'purple', 'durmuş, nişan alıp ateş ediyor.'], KAC: [760, 350, '💨', 'KAÇ', 'green', 'oyuncudan uzaklaşıp iyileşiyor.'] },
-      edges: [['DEV', 'SUP', 'ses', -62, 0.38], ['SUP', 'DEV', 'sure', -62, 0.38], ['DEV', 'KOV', 'gor', 0, 0.55], ['SUP', 'KOV', 'gor', -44], ['KOV', 'SUP', 'kayip', -44], ['KOV', 'SAL', 'yakin', -44], ['SAL', 'KOV', 'uzak', -44], ['SAL', 'SUP', 'kayip', 170, 0.5], ['KAC', 'DEV', 'iyi', 0, 0.5]],
+      edges: [['DEV', 'SUP', 'ses', -62, 0.38], ['SUP', 'DEV', 'sure', -62, 0.38], ['DEV', 'KOV', 'gor', 0, 0.55], ['SUP', 'KOV', 'gor', -44, 0.5, 21], ['KOV', 'SUP', 'kayip', -44, 0.5, 21], ['KOV', 'SAL', 'yakin', -44, 0.5, 21], ['SAL', 'KOV', 'uzak', -44, 0.5, 21], ['SAL', 'SUP', 'kayip', 170, 0.5], ['KAC', 'DEV', 'iyi', 0, 0.5]],
       any: ['can', 'KAC', 'her durumdan: canı azaldı', 560, 245],
       events: { ses: ['ses duydu', '🔊 ses duydu'], gor: ['oyuncuyu gördü', '👁️ oyuncuyu gördü'], kayip: ['gözden kaybetti', '🙈 gözden kaybetti'], yakin: ['yaklaştı', '📏 yaklaştı (< 60)'], uzak: ['uzaklaştı', '↔ uzaklaştı (> 90)'], sure: ['4 sn geçti', '⏱️ 4 sn geçti'], can: ['canı azaldı', '💔 canı azaldı (< 30)'], iyi: ['iyileşti', '💚 iyileşti (> 70)'] },
       none: (st, ev) => ({ DEV: { kayip: 'Zaten kimseyi görmüyordu.', yakin: 'Görmediği birine yaklaşmış sayılmaz.', sure: 'Devriyenin süresi yok.' }, SUP: { ses: 'Zaten araştırıyor.' }, KOV: { ses: 'Oyuncuyu görüyor; sese bakmaz.', gor: 'Zaten görüyor.', sure: 'Kovalamanın süresi yok.' }, SAL: { ses: 'Ateş ederken sese bakmaz.', yakin: 'Zaten menzilde.' }, KAC: { ses: 'Kaçarken sesle ilgilenmez.', gor: 'Görse de kaçmaya devam eder.', can: 'Zaten kaçıyor.' } }[st][ev] || 'Bu durumdan bu olayla çıkan ok yok.'),

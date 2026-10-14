@@ -33,10 +33,11 @@
       let min = null; cross.forEach(e => { if (!min || e.wt < min.wt) min = e; });
       if (min) es[min.id] = 'mst';
       gv.render({ ns, es });
-      right.innerHTML = cross.length ? `<div class="mini">Kesişen kenarlar <span class="en">crossing edges</span> (${cross.length}):</div><div class="g-adj">${cross.slice().sort((a, b) => a.wt - b.wt).map(e => `<div class="${e === min ? 'on' : ''}">${e.v}–${e.w} &nbsp; ${fmtW(e.wt)}${e === min ? ' ← en hafif: MST’de!' : ''}</div>`).join('')}</div>` : '<div class="mini">Bütün düğümler aynı tarafta: kesme yok. Birkaç düğüme tıklayın.</div>';
+      right.innerHTML = cross.length ? `<div class="mini">Kesişen kenarlar (${cross.length}), hafiften ağıra:</div><div class="g-adj">${cross.slice().sort((a, b) => a.wt - b.wt).map(e => `<div class="${e === min ? 'on' : ''}">${e.v}–${e.w} &nbsp; ${fmtW(e.wt)}${e === min ? ' ✔' : ''}</div>`).join('')}</div><div class="mini" style="margin-top:6px">✔ en hafif kesişen kenar: <b>MST’de</b> (grafikte yeşil)</div>` : '<div class="mini">Bütün düğümler aynı tarafta: kesme yok. Birkaç düğüme tıklayın.</div>';
     };
     gv.click = v => { side[v] = !side[v]; draw(); };
-    root.append(el('div', { class: 'sv-controls' }, el('span', { class: 'mini' }, 'Düğümlere tıklayarak iki gruba ayırın (kırmızı / beyaz). Kesikli = kesişen kenar, yeşil = en hafif kesişen kenar.'), btn('🎲 Rastgele kesme', () => { for (let v = 0; v < G.V; v++) side[v] = Math.random() < 0.5; draw(); })), el('div', { class: 'gv-row' }, left, right));
+    root.append(el('div', { class: 'sv-controls' }, btn('🎲 Rastgele kesme', () => { for (let v = 0; v < G.V; v++) side[v] = Math.random() < 0.5; draw(); }),
+      el('span', { class: 'mini' }, 'ya da düğümlere tıklayıp iki gruba ayırın (kırmızı / beyaz). Turuncu kesikli = kesişen kenar, yeşil = en hafif kesişen kenar.')), el('div', { class: 'gv-row' }, left, right));
     draw();
   };
 

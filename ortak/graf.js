@@ -97,14 +97,16 @@
       // ağırlık etiketleri: bütün çizgilerden SONRA çizilir; başka etiketle ya da düğümle çakışmayan ilk yere konur
       const placed = [];
       const wide = pend.some(q => String(q.e.wt).length > 6) ? 110 : 33;
-      const clash = (x, y) => placed.some(p => Math.abs(p[0] - x) < wide && Math.abs(p[1] - y) < 21) || G.pos.some(p => Math.abs(p[0] - x) < r + 15 && Math.abs(p[1] - y) < r + 10);
+      const clash = (x, y) => placed.some(p => Math.abs(p[0] - x) < wide && Math.abs(p[1] - y) < 24) || G.pos.some(p => Math.abs(p[0] - x) < r + 15 && Math.abs(p[1] - y) < r + 10);
       const order = this.labelSlots || (this.labelSlots = new Map());
       pend.forEach(({ e, st, at }) => {
         let q = order.get(e.id);
         if (q == null) { q = [0.5, 0.42, 0.58, 0.34, 0.66, 0.27, 0.73, 0.2, 0.8].find(c => !clash(...at(c))); if (q == null) q = 0.5; order.set(e.id, q); }
         const [mx, my] = at(q); placed.push([mx, my]);
         const lab = typeof e.wt === 'number' ? (Number.isInteger(e.wt) ? e.wt : e.wt.toFixed(2).replace(/^0/, '')) : e.wt;
-        const lw = Math.max(30, String(lab).length * 7.6 + 10); s += `<rect x="${mx - lw / 2}" y="${my - 10}" width="${lw}" height="19" rx="5" fill="${t.card}" stroke="${st ? ecol(st) : t.rule}" opacity="${st === 'dim' ? 0.4 : 1}"/><text x="${mx}" y="${my + 5}" text-anchor="middle" font-size="12" font-weight="700" font-family="JetBrains Mono" fill="${t.ink}" opacity="${st === 'dim' ? 0.4 : 1}">${lab}</text>`;
+        // dolu “hap”: kenar durumunun renginde (yoksa koyu gri); sayfa arka planından ve çizgiden ayrılsın
+        const pf = st && st !== 'dim' ? ecol(st) : t['ink-2'], pt = st === 'cur' || st === 'check' ? '#111' : (st && st !== 'dim' ? '#fff' : t.card);
+        const lw = Math.max(32, String(lab).length * 8.6 + 14); s += `<rect x="${mx - lw / 2}" y="${my - 11.5}" width="${lw}" height="23" rx="11.5" fill="${pf}" stroke="${t.card}" stroke-width="2" opacity="${st === 'dim' ? 0.4 : 1}"/><text x="${mx}" y="${my + 5}" text-anchor="middle" font-size="14" font-weight="700" font-family="JetBrains Mono" fill="${pt}" opacity="${st === 'dim' ? 0.4 : 1}">${lab}</text>`;
       });
       for (let v = 0; v < G.V; v++) {
         const [x, y] = G.pos[v], st = ns[v] || '';

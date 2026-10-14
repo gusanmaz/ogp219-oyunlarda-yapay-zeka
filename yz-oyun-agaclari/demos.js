@@ -108,7 +108,7 @@
       if (n.leaf !== undefined) s += `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
       else s += isMax ? `<polygon points="${x},${y - 22} ${x + 24},${y + 16} ${x - 24},${y + 16}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>` : `<polygon points="${x},${y + 22} ${x + 24},${y - 16} ${x - 24},${y - 16}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
       s += `<text x="${x}" y="${y + (n.leaf !== undefined ? 6 : isMax ? 10 : 2)}" text-anchor="middle" font-size="15" font-weight="800" fill="${cur ? '#111' : t.ink}">${txt}</text>`;
-      if (f.ab && S && S.a !== undefined && n.leaf === undefined && S.state === 'visit') s += `<text x="${x}" y="${y + (isMax ? 34 : -26)}" text-anchor="middle" font-size="11" fill="${t.purple}" font-family="JetBrains Mono">α=${fmt(S.a)} β=${fmt(S.b)}</text>`;
+      if (f.ab && S && S.a !== undefined && n.leaf === undefined && S.state === 'visit') s += `<text x="${x}" y="${y + (isMax ? 34 : -26)}" text-anchor="middle" font-size="12" fill="${t.purple}" stroke="${t.bg}" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-weight="700" font-family="JetBrains Mono">α=${fmt(S.a)} β=${fmt(S.b)}</text>`;
       (n.kids || []).forEach(nodes);
     };
     nodes(tree);

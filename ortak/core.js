@@ -465,8 +465,10 @@
         const tr = !bar && host.querySelector('.sv-transport');
         if (tr) { bar = document.createElement('div'); bar.className = 'dh-bar in-tr'; tr.appendChild(bar); }
         const sec = host.closest('section'), h2 = sec && sec.querySelector(':scope > h2');
+        // aynı demonun ikinci düğmesi: başlık satırında bu demoya açılmış çubuk varsa ona eklensin (ayrı satır açmasın)
+        if (!bar && sec) { const hb = sec.querySelector(':scope > .dh-bar.in-h2'); if (hb && hb.dataset.host === String([...sec.querySelectorAll('.demo, .sortviz, .ufviz, .bstviz')].indexOf(host))) bar = hb; }
         if (!bar && h2 && h2.textContent.trim().length <= 44 && !sec.querySelector(':scope > .dh-bar.in-h2')) {   // kısa başlıkta düğmeler başlık satırının sağına
-          bar = document.createElement('div'); bar.className = 'dh-bar in-h2'; sec.appendChild(bar);
+          bar = document.createElement('div'); bar.className = 'dh-bar in-h2'; bar.dataset.host = String([...sec.querySelectorAll('.demo, .sortviz, .ufviz, .bstviz')].indexOf(host)); sec.appendChild(bar);
         }
         if (!bar) {
           bar = document.createElement('div'); bar.className = 'dh-bar';
