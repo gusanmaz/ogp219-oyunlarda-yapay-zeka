@@ -618,6 +618,11 @@ function heapsort(a) {
 </section>
 
 <section data-sec="heapsort">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>2 * k + 1</code></td><td>k’nin sol çocuğu (0 tabanlı)</td><td>1 tabanlıda 2k idi; dizinin başından bir kaydık</td></tr><tr><td><code>if (j + 1 &lt; n &amp;&amp; a[j] &lt; a[j + 1]) j++</code></td><td>iki çocuğun büyüğünü seç</td><td>ebeveyn büyük çocuktan küçükse onunla yer değiştirir</td></tr><tr><td>kurma döngüsü <code>n / 2 − 1</code>’den geriye</td><td>yaprak olmayan her düğümü batır</td><td>yapraklar zaten tek başına yığın; kurma ~2N karşılaştırma</td></tr><tr><td><code>[a[0], a[n]] = [a[n], a[0]]</code></td><td>en büyüğü (kökü) sona taşı</td><td>sondaki bölge sıralı büyür</td></tr><tr><td><code>sink(a, 0, n)</code></td><td>yığını bir kısalt ve kökü onar</td><td>toplam ~2N lg N karşılaştırma, ek bellek yok</td></tr></table>
+</section>
+
+<section data-sec="heapsort">
   <h2>Çubuklarla heapsort</h2>
   <div class="sortviz" data-alg="heap" data-n="40" data-speed="25" data-controls="n,input" data-h="280"></div>
   <p class="mini">Önce yığın kurma: dizi “testere dişi” gibi görünür (büyükler başta). Sonra en büyük çubuklar tek tek sona gider.</p>

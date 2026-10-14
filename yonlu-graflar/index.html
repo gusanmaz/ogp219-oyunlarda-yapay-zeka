@@ -370,6 +370,11 @@ function topologicalOrder(G) {
 </section>
 
 <section data-sec="topolojik sıralama">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>post.push(v)</code> döngüden <b>sonra</b></td><td>v’nin bütün torunları bitti, şimdi v bitti</td><td>bir görev ancak ondan sonra gelecek her şey listeye girdikten sonra eklenir</td></tr><tr><td><code>post.reverse()</code></td><td>sonsırayı ters çevir</td><td>en son biten (hiçbir şeyin ön koşulu olmayan değil, en “temel” olan) başa gelir: ön koşullar önce</td></tr><tr><td>dış döngü <code>for v …</code></td><td>her işaretsiz düğümden yeni bir DFS</td><td>graf tek parça olmayabilir; hiçbir görev atlanmasın</td></tr><tr><td><code>marked</code></td><td>bu görev zaten sıraya kondu</td><td>her düğüm bir kez: toplam iş ~V + E</td></tr><tr><td>döngü kontrolü yok</td><td>bu kod grafın DAG olduğunu varsayar</td><td>döngü varsa çıktı anlamsızdır: önce sonraki slayttaki döngü testi</td></tr></table>
+</section>
+
+<section data-sec="topolojik sıralama">
   <h2>Alternatif: Kahn algoritması (giriş derecesiyle)</h2>
   <div class="cols">
     <ol style="font-size:.9em">
@@ -506,6 +511,11 @@ function hasCycle(G) {
     </div>
   </div>
   </div>
+</section>
+
+<section data-sec="döngü tespiti">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>onStack[v] = true</code> (gri)</td><td>v şu an açık: DFS’in içindeyiz</td><td>yığındaki düğümler kökten v’ye giden yol üzerindedir</td></tr><tr><td><code>if (onStack[w]) return true</code></td><td>yoldaki bir düğüme geri ok</td><td>yol + bu ok = döngü; bulundu</td></tr><tr><td><code>onStack[v] = false</code> (siyah)</td><td>v ve altındakiler bitti</td><td>sonradan v’ye ok gelmesi döngü değildir, yalnızca başka bir yoldan ulaşmaktır</td></tr><tr><td><code>marked</code> ve <code>onStack</code> ayrı</td><td>“bir kez gezildi” ile “şu an yolda” farklı şeyler</td><td>tek dizi kullanılırsa çapraz oklar yanlışlıkla döngü sayılır</td></tr><tr><td><code>&amp;&amp; dfs(w)</code></td><td>alt aramada döngü bulunduysa hemen dön</td><td>ilk döngüde dur; bütün grafı gezmeye gerek yok</td></tr></table>
 </section>
 
 <section data-sec="laboratuvar">

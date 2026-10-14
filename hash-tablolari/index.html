@@ -391,6 +391,11 @@ function get(key) {
 </section>
 
 <section data-sec="ayrı zincirleme">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>hashStr(key, M)</code></td><td>anahtar → kova numarası (0 … M − 1)</td><td>aynı anahtar hep aynı kovaya düşer</td></tr><tr><td><code>for (x = table[i]; …)</code></td><td>kovadaki zinciri baştan sona gez</td><td>zincir ortalama N / M uzunlukta</td></tr><tr><td><code>x.val = val; return</code></td><td>anahtar varsa değeri güncelle</td><td>aynı anahtar iki kez eklenmez</td></tr><tr><td><code>new Node(key, val, table[i])</code></td><td>zincirin başına ekle</td><td>başa eklemek sabit iş; sona gitmeye gerek yok</td></tr><tr><td><code>M = 97</code></td><td>asal sayı</td><td>hash’in yüksek bitleri kalana da yansır; çakışmalar daha düzgün dağılır</td></tr></table>
+</section>
+
+<section data-sec="ayrı zincirleme">
   <h2>Analiz: zincirler ne kadar uzun?</h2>
   <div class="cols">
     <div class="box prop"><span class="bt">Önerme</span>Düzgün hash varsayımıyla, N anahtar ve M kovalı bir tabloda bir zincirdeki anahtar sayısı <b>N/M</b>’ye çok yakın olur (çok yüksek olasılıkla).
@@ -528,6 +533,11 @@ function get(key) {
     </div>
   </div>
   </div>
+</section>
+
+<section data-sec="doğrusal yoklama">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>keys</code> ve <code>vals</code></td><td>iki paralel dizi, zincir yok</td><td>hepsi tek dizide: önbellek dostu</td></tr><tr><td><code>while (keys[i] !== null)</code></td><td>boş hücre bulana kadar ilerle</td><td>yol üstünde anahtar bulunursa güncelle</td></tr><tr><td><code>i = (i + 1) % M</code></td><td>bir sağa, sonda başa sar</td><td>dairesel tampondaki fikrin aynısı</td></tr><tr><td><code>get</code>’te boş hücre</td><td>“yok” demek</td><td>anahtar olsaydı bu boşluktan önce dururdu</td></tr><tr><td>dikkat</td><td>doluluk ½’yi geçmemeli</td><td>kümeler uzar; tablo büyütülüp yeniden hash’lenir. Silme de özen ister (boşluk aramayı yarıda keser)</td></tr></table>
 </section>
 
 <section data-sec="doğrusal yoklama">

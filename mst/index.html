@@ -443,6 +443,11 @@ function prim(V, adj) {                         // adj[v] = [[w, ağırlık], ..
 </section>
 
 <section data-sec="Prim">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>visit(v)</code></td><td>v’yi ağaca al, kesişen kenarlarını kuyruğa ekle</td><td>ağaçtan dışarı çıkan her kenar aday</td></tr><tr><td><code>pq.pop()</code></td><td>en hafif aday kenar</td><td>kesme özelliği: ağaç ile geri kalan arasındaki en hafif kenar MST’dedir</td></tr><tr><td><code>if (marked[v] &amp;&amp; marked[w]) continue</code></td><td>iki ucu da ağaçta: bayat kenar</td><td>sonradan iki ucu da eklenmiş kenar artık kesmeyi geçmiyor; atla (tembel Prim)</td></tr><tr><td><code>visit(marked[w] ? v : w)</code></td><td>ağaçta olmayan ucu ekle</td><td>kenarın hangi ucunun yeni olduğunu bilmiyoruz</td></tr><tr><td>maliyet</td><td>~E log E</td><td>her kenar kuyruğa en çok bir kez girer ve çıkar</td></tr></table>
+</section>
+
+<section data-sec="Prim">
   <h2>Prim mi, Kruskal mı?</h2>
   <table class="sum-t" style="font-size:20px">
     <tr><th>algoritma</th><th>fikir</th><th>yardımcı yapı</th><th>süre</th></tr>

@@ -300,6 +300,11 @@ class QuickFind {
 </section>
 
 <section data-sec="quick-find">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>id[i]</code></td><td>i’nin grup numarası</td><td>aynı gruptakiler aynı numarayı taşır</td></tr><tr><td><code>connected</code></td><td>iki numarayı karşılaştır</td><td>tek adım: sorgu çok hızlı</td></tr><tr><td><code>for (i …) if (id[i] === pid)</code></td><td>p’nin grubundaki herkesi q’nun grubuna taşı</td><td>her birleştirme bütün diziyi tarar: ~N iş; N birleştirme ~N²</td></tr><tr><td><code>pid</code> ve <code>qid</code> önceden okunur</td><td>döngü sırasında <code>id[p]</code> değişir</td><td>döngüde <code>id[p]</code> kullanılırsa yarıda yanlış gruba geçilir (klasik hata)</td></tr><tr><td><code>count--</code></td><td>grup sayısı bir azaldı</td><td>“kaç ada kaldı?” sorusunun cevabı</td></tr></table>
+</section>
+
+<section data-sec="quick-find">
   <div class="quiz" data-answer="D">
     <div class="qhead">Quiz 2 · quick-find</div>
     <div class="q">1 milyon nesne ve 1 milyon union işlemi. Quick-find kabaca kaç dizi erişimi yapar?</div>
@@ -440,6 +445,11 @@ class QuickUnion {
 </section>
 
 <section data-sec="quick-union">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>id[i]</code></td><td>i’nin ebeveyni (kök kendini gösterir)</td><td>grup bir ağaçtır; kimlik kökün numarası</td></tr><tr><td><code>find</code> döngüsü</td><td>köke kadar ebeveyn ebeveyn çık</td><td>maliyet = ağacın yüksekliği</td></tr><tr><td><code>id[i] = j</code></td><td>bir kökü öbür köke bağla</td><td>birleştirme tek atama; ama kötü sırada ağaç zincire döner</td></tr><tr><td><code>if (i === j) return</code></td><td>zaten aynı ağaçta</td><td>aynı kökü kendine bağlamak döngü yaratırdı</td></tr><tr><td>en kötü durum</td><td>~N yükseklik</td><td>sonraki iyileştirme: küçüğü büyüğün altına (ağırlıklı)</td></tr></table>
+</section>
+
+<section data-sec="quick-union">
   <div class="quiz" data-answer="C">
     <div class="qhead">Quiz 3 · quick-union</div>
     <div class="q">Quick-union’da <code>union(0,1)</code>, <code>union(0,2)</code>, …, <code>union(0,N−1)</code> sırasıyla yapılırsa ağacın yüksekliği ne olur?</div>
@@ -552,6 +562,11 @@ union(p, q) {
 </script></code></pre>
     </div>
   </div>
+</section>
+
+<section data-sec="ağırlıklı">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>sz[i]</code></td><td>i köküne bağlı ağaçtaki düğüm sayısı</td><td>yalnızca köklerin sz’si anlamlı</td></tr><tr><td><code>if (sz[i] &lt; sz[j])</code></td><td>küçük ağacı büyüğün altına bağla</td><td>küçük ağaçtaki her düğümün derinliği 1 artar ama ağaç en az iki katına çıkar</td></tr><tr><td><code>sz[j] += sz[i]</code></td><td>birleşen ağacın boyunu güncelle</td><td>sonraki birleşmelerde doğru karşılaştırma için</td></tr><tr><td>sonuç</td><td>yükseklik en çok lg N</td><td>bir düğüm en çok lg N kez “iki katı büyük” bir ağaca katılabilir</td></tr></table>
 </section>
 
 <section data-sec="ağırlıklı · matematik">
@@ -671,6 +686,11 @@ find(p) {
 </script></code></pre>
     </div>
   </div>
+</section>
+
+<section data-sec="yol sıkıştırma">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>id[p] = id[id[p]]</code></td><td>p’yi dedesine bağla</td><td>her find yolu yarıya indirir (yarılama)</td></tr><tr><td>tek satır ek</td><td>ağırlıklı union’a eklenir</td><td>find çağrıldıkça ağaçlar kendiliğinden düzleşir</td></tr><tr><td>sonuç</td><td>pratikte sabit iş</td><td>lg* N ≤ 5: evrendeki atom sayısı kadar eleman için bile</td></tr><tr><td>tam sıkıştırma (alternatif)</td><td>yoldaki herkesi doğrudan köke bağla</td><td>ikinci bir geçiş gerekir; yarılama tek geçişte neredeyse aynı etkiyi verir</td></tr></table>
 </section>
 
 <section data-sec="yol sıkıştırma · matematik">
@@ -799,6 +819,11 @@ function makeMaze(cols, rows) {
     </div>
   </div>
   <p class="mini">🎒 2B ızgarayı tek boyuta indirmek: hücre (x, y) → <code>y * cols + x</code>. Union–find nesneleri 0…N−1 diye numaralanmış ister.</p>
+</section>
+
+<section data-sec="uygulamalar · oyunda">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>c = y * cols + x</code></td><td>iki boyutlu hücreyi tek numaraya çevir</td><td>union-find düz numaralarla çalışır</td></tr><tr><td><code>walls.push([c, c + 1])</code>, <code>[c, c + cols]</code></td><td>her hücrenin sağ ve alt duvarı</td><td>her iç duvar bir kez listelenir</td></tr><tr><td><code>shuffle(walls)</code></td><td>duvarları rastgele sıraya koy</td><td>her çalıştırmada farklı labirent</td></tr><tr><td><code>if (!uf.connected(a, b))</code></td><td>iki taraf henüz bağlı değilse duvarı yık</td><td>bağlıysa yıkmak döngü yaratırdı: tek çözümlü labirent</td></tr><tr><td>sonuç</td><td>tam hücre − 1 geçit</td><td>bir yayılan ağaç: her hücreye ulaşılır, iki hücre arasında tek yol (rastgele Kruskal)</td></tr></table>
 </section>
 
 <section data-sec="uygulamalar">

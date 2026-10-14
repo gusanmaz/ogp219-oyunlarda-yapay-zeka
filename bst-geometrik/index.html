@@ -199,6 +199,11 @@ function rangeCount(a, lo, hi) {
 </section>
 
 <section data-sec="1B aralık arama">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>rank(a, key)</code></td><td>key’den küçük kaç eleman var?</td><td>ikili arama; bulamazsa <code>lo</code> tam ekleneceği yer</td></tr><tr><td><code>rank(a, hi) − rank(a, lo)</code></td><td>[lo, hi) aralığındakiler</td><td>iki arama: ~2 lg N, aralık ne kadar büyük olursa olsun</td></tr><tr><td><code>if (a[r] === hi) count++</code></td><td>hi dizideyse onu da say</td><td>aralık iki ucu da kapalı: [lo, hi]</td></tr><tr><td>kullanım</td><td>“bu x aralığında kaç birim var?”</td><td>saymak için birimleri tek tek gezmek gerekmez</td></tr></table>
+</section>
+
+<section data-sec="1B aralık arama">
   <h2>BST’de aralık arama: kamera penceresi</h2>
   <div class="bstviz" data-type="num" data-keys="640 300 980 140 450 820 1150 60 220 380 560 720 900 1060 1240" data-ops="range,rank" data-sizes data-default="400 1000" data-h="320" data-hint="Düşmanların x konumları. Kamera [400, 1000] aralığını görüyor: Aralık’a basın. Hangi alt ağaçlara HİÇ girilmediğine dikkat!"></div>
   <aside class="notes">Algoritma: x düğümünde: lo &lt; x.key ise sola in; aralıktaysa x’i raporla; x.key &lt; hi ise sağa in. Aralığın dışında kalan alt ağaçlara girilmez. Süre: R + lg N (dengeli ağaçta).</aside>
@@ -493,6 +498,11 @@ function insert(x, p, vertical = true) {
 </section>
 
 <section data-sec="kd-ağaçları">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>vertical</code></td><td>bu düğüm dikey çizgiyle mi bölüyor?</td><td>seviyeler sırayla x’e ve y’ye göre böler</td></tr><tr><td><code>p.x &lt; x.p.x</code></td><td>dikey çizginin solunda mı?</td><td>x seviyesinde BST karşılaştırması x’e göre</td></tr><tr><td><code>p.y &lt; x.p.y</code></td><td>yatay çizginin altında mı?</td><td>y seviyesinde y’ye göre</td></tr><tr><td><code>!vertical</code></td><td>çocuğa inerken yönü değiştir</td><td>her seviye alanı bir öncekinin dik yönünde böler</td></tr><tr><td><code>new KdNode(p, vertical)</code></td><td>boş yere yeni düğüm</td><td>sıradan BST eklemesinin aynısı; yalnızca karşılaştırılan koordinat değişiyor</td></tr></table>
+</section>
+
+<section data-sec="kd-ağaçları">
   <h2>2d-ağacında aralık arama</h2>
   <div class="cols c64">
     <div style="font-size:.9em">
@@ -642,6 +652,11 @@ console.log(found.length + " birim seçildi");
     </div>
   </div>
   <p class="mini">🎒 <code>found</code> listesi her özyinelemeli çağrıya <b>aynı liste</b> (referans) olarak verilir: hepsi aynı listeye ekler. Sonuçları toplamanın en basit yolu.</p>
+</section>
+
+<section data-sec="kd-ağaçları">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>x.rect</code></td><td>bu düğümün alt ağacının kapladığı dikdörtgen</td><td>düğümle birlikte saklanır</td></tr><tr><td><code>if (!x.rect.intersects(q)) return</code></td><td>sorgu bu bölgeye hiç değmiyor</td><td>bütün alt ağacı atla: budamanın kendisi</td></tr><tr><td><code>q.contains(x.p)</code></td><td>düğümün noktası sorgu kutusunda mı?</td><td>yalnızca içerdekiler sonuca eklenir</td></tr><tr><td>iki yönde özyineleme</td><td>sorgu iki yana da değebilir</td><td>BST’deki aralık aramasının iki boyutlu hâli</td></tr><tr><td>maliyet</td><td>tipik: R + log N</td><td>R bulunan nokta sayısı; seçim kutusu küçükse çok hızlı</td></tr></table>
 </section>
 
 <section data-sec="kd-ağaçları">
@@ -958,6 +973,11 @@ function search(x, lo, hi) {
 </script></code></pre>
     </div>
   </div>
+</section>
+
+<section data-sec="aralık arama ağaçları">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>aLo ≤ bHi &amp;&amp; bLo ≤ aHi</code></td><td>iki aralık kesişiyor mu?</td><td>kesişmemek için biri öbürünün tamamen solunda olmalı; ikisi de değilse kesişir</td></tr><tr><td><code>x.left.max</code></td><td>sol alt ağaçtaki en büyük bitiş</td><td>her düğümde saklanır (artırılmış ağaç)</td></tr><tr><td><code>x.left.max &lt; lo</code> ise sağa</td><td>soldaki her aralık sorgu başlamadan bitiyor</td><td>sol alt ağaçta kesişen aralık olamaz</td></tr><tr><td>aksi hâlde sola</td><td>solda kesişen varsa bulunur</td><td>sola inip bulamazsak sağda da yoktur: solda bitişi lo’dan büyük bir aralık var ama sorguyla kesişmiyorsa sorgu bittikten sonra başlıyor demektir; ağaç başlangıca göre sıralı olduğu için sağdakiler ondan da geç başlar, onlar da kesişmez</td></tr><tr><td>maliyet</td><td>~lg N (dengeli ağaçta)</td><td>tek bir kökten yaprağa yol</td></tr></table>
 </section>
 
 <section data-sec="aralık arama ağaçları">

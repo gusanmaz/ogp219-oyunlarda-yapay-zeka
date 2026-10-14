@@ -163,6 +163,11 @@ function relax(v, w, weight, distTo, edgeTo) {
   <p class="mini">🎒 Sonsuz (∞) neden işe yarar? ∞ + 5 = ∞ ve her sayı ∞’dan küçük → ilk bulunan yol her zaman kabul edilir. Tam sayı dizilerde ∞ yoksa çok büyük bir sayı (ör. <code>int.MaxValue / 2</code> — taşmasın diye yarısı!) kullanılır.</p>
 </section>
 
+<section data-sec="temeller">
+  <h2>🎒 Kodu okuyalım</h2>
+  <table class="sum-t" style="font-size:18px"><tr><th>ifade</th><th>ne demek</th><th>neden böyle</th></tr><tr><td><code>distTo[v] + weight &lt; distTo[w]</code></td><td>v’ye kadar + v→w kenarı, w’nin bilinen en iyisinden kısa mı?</td><td>“daha kısa bir yol buldum mu?” sorusunun tamamı bu satır</td></tr><tr><td><code>distTo[w] = …</code></td><td>w’nin en iyi bilinen uzaklığını güncelle</td><td>bu değer yalnızca küçülebilir; büyümez</td></tr><tr><td><code>edgeTo[w] = v</code></td><td>w’ye artık v’den geliniyor</td><td>yolu geri izlemek için; eski kayıt silinir</td></tr><tr><td>başlangıç değerleri</td><td><code>distTo[s] = 0</code>, ötekiler <code>Infinity</code></td><td>Infinity + ağırlık hâlâ Infinity: henüz ulaşılmamış düğüm hiçbir şeyi gevşetemez</td></tr><tr><td><code>return true</code></td><td>bir şey değişti</td><td>Dijkstra bu cevaba göre öncelik kuyruğunu günceller</td></tr></table>
+</section>
+
 
 <section data-sec="başka gözle" data-baglanti="1">
   <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
