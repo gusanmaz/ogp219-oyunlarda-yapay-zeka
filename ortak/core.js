@@ -626,3 +626,24 @@
     });
   };
 })();
+
+/* 🎮 Oyun kartlarındaki “▶ video”: sunumdan çıkmadan, slaytın üstünde açılan bir oynatıcı (araclar/oyunref.py).
+   Ctrl/⌘ ile tıklanırsa bağlantı her zamanki gibi yeni sekmede açılır. */
+(function () {
+  let kutu = null;
+  const kapat = () => { if (kutu) { kutu.remove(); kutu = null; } };
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a.oy-vid');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault(); kapat();
+    kutu = document.createElement('div');
+    kutu.className = 'oy-vid-kutu';
+    kutu.innerHTML = '<div class="ovk-ic"><button class="ovk-x" title="Kapat (Esc)">✕</button>' +
+      '<iframe src="https://www.youtube-nocookie.com/embed/' + a.dataset.yt + '?autoplay=1" title="' + (a.title || 'video').replace(/"/g, '&quot;') +
+      '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>' +
+      '<div class="ovk-alt">' + (a.title || '') + ' · <a href="' + a.href + '" target="_blank" rel="noopener">YouTube’da aç ↗</a></div></div>';
+    kutu.addEventListener('click', ev => { if (ev.target === kutu || ev.target.classList.contains('ovk-x')) kapat(); });
+    document.body.appendChild(kutu);
+  });
+  document.addEventListener('keydown', e => { if (kutu && e.key === 'Escape') { e.stopPropagation(); kapat(); } }, true);
+})();

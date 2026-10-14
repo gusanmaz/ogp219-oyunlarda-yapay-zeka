@@ -888,3 +888,18 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 .ring-side { font-size: 18px; line-height: 1.4; } .ring-side .mini { font-size: 16px; } .ring-side .sv-note { font-size: 17px; }
 .ring-side .ll-chip { font-size: 17px; } .ring-side .combo-row { font-size: 16px; } .ring-side code { font-size: 15px; }
 .sum-t.iz-t th, .sum-t.iz-t td { padding: 4px 7px; line-height: 1.25; }
+/* 🎮 Bu sunumdaki oyunlar (araclar/oyunref.py) */
+.oyun-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.oyun-kart { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 9px 12px; font-size: 17px; line-height: 1.3; }
+.oyun-kart .ok-bas b { font-size: 18px; }
+.oyun-kart .ok-bas span { color: var(--muted); font-size: 14px; white-space: nowrap; }
+.oyun-kart .ok-oz { margin: 4px 0 6px; color: var(--ink-2, var(--ink)); }
+.oyun-kart .ok-bag { font-size: 15px; }
+.oyun-kart .ok-bag a { white-space: nowrap; }
+.oy-vid-kutu { position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, .72); display: flex; align-items: center; justify-content: center; }
+.oy-vid-kutu .ovk-ic { position: relative; width: min(88vw, 150vh); }
+.oy-vid-kutu iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; background: #000; display: block; }
+.oy-vid-kutu .ovk-x { position: absolute; top: -40px; right: 0; background: none; border: 0; color: #fff; font-size: 26px; cursor: pointer; }
+.oy-vid-kutu .ovk-alt { color: #ddd; font: 15px/1.4 'Source Sans 3', sans-serif; margin-top: 8px; }
+.oy-vid-kutu .ovk-alt a { color: #9cf; }
+.cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
