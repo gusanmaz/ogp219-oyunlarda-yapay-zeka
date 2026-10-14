@@ -37,6 +37,45 @@
   const LEVELS = [[0.3, 'habersiz', 'blue', ''], [0.7, 'şüpheli', 'amber', '?'], [1.0, 'arıyor', 'amber', '??'], [9, 'ALARM', 'red', '!']];
   const levelOf = a => LEVELS.findIndex(l => a < l[0] || l[0] === 9);
 
+  /* ================= üç kontrol, sırayla: mesafe → açı → ışın =================
+     Nöbetçi sabit; oyuncu senaryo düğmeleriyle ya da tıklayarak yerleştirilir. Her kontrol sayılarıyla yazılır. */
+  D.threechecks = function (root) {
+    const G = [190, 210], R = 300, HALF = 45, WALL = [[430, 60], [430, 250]], W = 720, H = 400;
+    const SC = [
+      ['🏔️ Çok uzakta', [640, 330], 'Oyuncu nöbetçinin önünde ama çok uzakta.', 'İlk (en ucuz) kontrol “hayır” dedi; açıya ve pahalı ışın testine <b>hiç bakılmadı</b>. Yüzlerce NPC’li bir oyunda testlerin çoğu burada biter.'],
+      ['🔙 Arkasında', [90, 150], 'Oyuncu çok yakın ama nöbetçinin arkasında.', 'Mesafe tuttu, açı tutmadı. Işın testi yine yapılmadı.'],
+      ['🧱 Duvarın ardında', [480, 180], 'Oyuncu yakın ve nöbetçinin baktığı yönde; ama arada duvar var.', 'İlk iki ucuz kontrol geçti; bu yüzden pahalı ışın testi yapıldı ve duvarı buldu. Üç kontrol de gerekliydi.'],
+      ['👁 Görüş hattında', [400, 300], 'Oyuncu yakın, önde ve arada engel yok.', 'Üç kontrol de “evet”: görüldü. Dikkat: bu evet/hayır cevabı bir sonraki slayttaki sorunun kaynağı; 1 milimetre uzaklaşınca “görülmedi” olur.']];
+    let P = SC[2][1].slice(), moralTxt = SC[2][3];
+    const diag = el('div'), log = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
+    const cross = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const f1 = x => (Math.round(x * 10) / 10).toFixed(1).replace('.', ',');
+    const draw = () => {
+      const t = T(), dx = P[0] - G[0], dy = P[1] - G[1], d = Math.hypot(dx, dy), ang = Math.abs(Math.atan2(dy, dx)) * 180 / Math.PI, dot = dx / d;
+      const okD = d <= R, okA = ang <= HALF, blocked = cross(G, P, WALL[0]) * cross(G, P, WALL[1]) < 0 && cross(WALL[0], WALL[1], G) * cross(WALL[0], WALL[1], P) < 0;
+      const seen = okD && okA && !blocked, rad = HALF * Math.PI / 180;
+      let s = `<rect x="0" y="0" width="${W}" height="${H}" rx="10" fill="${t.card}" stroke="${t.rule}"/>`;
+      s += `<circle cx="${G[0]}" cy="${G[1]}" r="${R}" fill="none" stroke="${okD ? t.green : t.red}" stroke-width="2" stroke-dasharray="8 7" clip-path="inset(0)"/>`;
+      s += `<path d="M${G[0]},${G[1]} L${G[0] + R * Math.cos(rad)},${G[1] - R * Math.sin(rad)} A${R},${R} 0 0 1 ${G[0] + R * Math.cos(rad)},${G[1] + R * Math.sin(rad)} Z" fill="${seen ? t.red : t.amber}" opacity=".22"/>`;
+      s += `<line x1="${WALL[0][0]}" y1="${WALL[0][1]}" x2="${WALL[1][0]}" y2="${WALL[1][1]}" stroke="${t.ink}" stroke-width="12" stroke-linecap="round"/><text x="${WALL[0][0] + 14}" y="${WALL[0][1] + 6}" font-size="15" fill="${t.muted}">duvar</text>`;
+      if (okD && okA) s += `<line x1="${G[0]}" y1="${G[1]}" x2="${P[0]}" y2="${P[1]}" stroke="${blocked ? t.red : t.green}" stroke-width="3.5" stroke-dasharray="${blocked ? '7 6' : ''}"/>`;
+      s += `<text x="${G[0]}" y="${G[1] + 14}" text-anchor="middle" font-size="38">💂</text><text x="${G[0]}" y="${G[1] + 44}" text-anchor="middle" font-size="14" fill="${t.muted}">nöbetçi (sağa bakıyor)</text>`;
+      s += `<text x="${P[0]}" y="${P[1] + 12}" text-anchor="middle" font-size="34">${seen ? '😱' : '🥷'}</text>`;
+      diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;cursor:crosshair" font-family="Source Sans 3">${s}</svg>`;
+      const row = (ok, tx) => `<div class="${ok ? 'l-ok' : 'l-no'}"><span>${ok ? '✓' : '✗'}</span>${tx}</div>`, skip = tx => `<div class="hint"><span>·</span>${tx}</div>`;
+      log.innerHTML = row(okD, `<b>1 · Mesafe</b> (en ucuz): uzaklık ${Math.round(d)} ${okD ? '≤' : '&gt;'} menzil ${R}`) +
+        (okD ? row(okA, `<b>2 · Açı</b> (ucuz): bakış yönüyle açı ${Math.round(ang)}° ${okA ? '≤' : '&gt;'} ${HALF}° <small>(nokta çarpım ${f1(dot)} ${okA ? '≥' : '&lt;'} cos 45° = 0,7)</small>`) : skip('2 · Açı: bakılmadı')) +
+        (okD && okA ? row(!blocked, `<b>3 · Işın</b> (pahalı): arada duvar ${blocked ? 'var' : 'yok'}`) : skip('3 · Işın: bakılmadı (pahalı test atlandı)')) +
+        `<div class="now"><span></span><b>${seen ? 'GÖRÜLDÜ 😱' : 'görülmedi'}</b></div>`;
+      moral.innerHTML = moralTxt ? '💡 ' + moralTxt : '';
+    };
+    diag.addEventListener('click', e => { const svg = diag.querySelector('svg'), b = svg.getBoundingClientRect(); P = [(e.clientX - b.left) / b.width * W, (e.clientY - b.top) / b.height * H]; bs.forEach(x => x.classList.remove('primary')); story.innerHTML = '📖 Kendi denemeniz: alana tıklayarak oyuncuyu istediğiniz yere koyun.'; moralTxt = ''; draw(); });
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { P = sc[1].slice(); bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); story.innerHTML = '📖 ' + sc[2]; moralTxt = sc[3]; draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap doors' }, diag, el('div', {}, log, moral)));
+    bs[2].classList.add('primary'); story.innerHTML = '📖 ' + SC[2][2]; draw(); SL.onTheme(draw);
+  };
+
   D.vision = function (root) {
     const W = 720, H = 380;
     const cfg = { model: 'zones', light: true, crouch: false, rise: 1.2, decay: 0.2, showZones: true };
