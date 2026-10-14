@@ -33,6 +33,65 @@
   /* ---------- tek ajan: davranış seçici, vektörler görünür ---------- */
   const OBST = [{ x: 330, y: 150, r: 42 }, { x: 470, y: 260, r: 34 }, { x: 230, y: 290, r: 30 }];
   const PATH = [V.v(70, 300), V.v(220, 90), V.v(420, 120), V.v(560, 300), V.v(680, 110)];
+  /* ================= elle seek: kare kare, sayılarla =================
+     Her karede: istenen = hedef yönü × azami hız · direksiyon = istenen − hız (azami kuvvetle kırpılır) · hız += direksiyon · konum += hız */
+  D.seekhand = function (root) {
+    const MS = 1.5, N = 24, f1 = x => (Math.round(x * 10) / 10).toFixed(1).replace('.', ',').replace('-0,0', '0,0').replace('-', '−');
+    const SC = [
+      ['🎯 Hedef tam önde', [3, 6], [1.5, 0], [21, 6], 0.25, 'Karakter zaten hedefe doğru tam hızla gidiyor.', 'İstenen hız ile şimdiki hız aynı: fark (direksiyon) sıfır. Düzeltilecek bir şey yoksa kuvvet de yok.'],
+      ['↗️ Hedef yanda', [3, 9], [1.5, 0], [17, 2], 0.25, 'Karakter sağa gidiyor; hedef sağ üstte.', 'Her karede küçük bir düzeltme: hız oku yavaş yavaş hedefe döndü ve iz <b>kavisli</b> çıktı. Kavisi biz çizmedik; kırpılmış kuvvetten kendiliğinden doğdu.'],
+      ['↩️ Hedef arkada', [9, 7], [1.5, 0], [2, 4], 0.25, 'Karakter sağa gidiyor; hedef arkasında, sol üstte.', 'Önce yavaşladı, sonra geri döndü: bir araba gibi, olduğu yerde dönemedi. Dönüş birkaç kare sürdü.'],
+      ['👻 Sınırsız kuvvet', [3, 9], [1.5, 0], [17, 2], 99, 'Aynı “hedef yanda” durumu, ama azami kuvvet sınırsız (Pac-Man hayaleti).', 'İlk karede hız doğrudan istenen hıza eşitlendi: köşeli, anında dönüş. Kuvveti kırpmazsak steering, Y0’daki “hedefe düz git”e döner.'],
+      ['🚛 Ağır kamyon', [3, 9], [1.5, 0], [17, 2], 0.07, 'Aynı durum, azami kuvvet çok küçük.', 'Dönüş çok geniş; hedefin yanından geçip geri dönmesi gerekebilir. Azami kuvvet karakterin “ağırlığını” belirleyen tek sayıdır.']];
+    let F = [], tgt = [0, 0], moralTxt = '';
+    const build = i => {
+      const [, p0, v0, t0, mf] = SC[i]; let p = p0.slice(), v = v0.slice(); tgt = t0; F = [];
+      const trail = [p.slice()];
+      for (let k = 0; k <= N; k++) {
+        const dx = tgt[0] - p[0], dy = tgt[1] - p[1], d = Math.hypot(dx, dy) || 1e-9;
+        const des = [dx / d * MS, dy / d * MS]; let st = [des[0] - v[0], des[1] - v[1]]; const raw = Math.hypot(st[0], st[1]);
+        const clipped = raw > mf; if (clipped) st = [st[0] / raw * mf, st[1] / raw * mf];
+        F.push({ k, p: p.slice(), v: v.slice(), des, st, raw, clipped, mf, d, trail: trail.map(x => x.slice()), arrived: d < MS });
+        if (d < MS) break;
+        v = [v[0] + st[0], v[1] + st[1]]; const sp = Math.hypot(v[0], v[1]); if (sp > MS) v = [v[0] / sp * MS, v[1] / sp * MS];
+        p = [p[0] + v[0], p[1] + v[1]]; trail.push(p.slice());
+      }
+    };
+    const diag = el('div'), tbl = el('div', { class: 'sh-tbl' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
+    const draw = (f, pl) => {
+      const t = T(), S = 34, X = x => x * S, Y = y => y * S, A = 5.5;
+      let g = `<defs>${[['v', t.blue], ['d', t.green], ['s', t.red]].map(([n, c]) => `<marker id="sh-${n}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="13" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`).join('')}</defs>`;
+      for (let x = 0; x <= 24; x += 2) g += `<line x1="${X(x)}" y1="0" x2="${X(x)}" y2="${Y(11)}" stroke="${t.rule}" stroke-width="1"/>`;
+      for (let y = 0; y <= 11; y += 2) g += `<line x1="0" y1="${Y(y)}" x2="${X(24)}" y2="${Y(y)}" stroke="${t.rule}" stroke-width="1"/>`;
+      g += `<polyline points="${f.trail.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" fill="none" stroke="${t.muted}" stroke-width="2.5" stroke-dasharray="3 6" stroke-linecap="round"/>`;
+      f.trail.forEach(p => (g += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3.5" fill="${t.muted}"/>`));
+      g += `<text x="${X(tgt[0])}" y="${Y(tgt[1]) + 10}" text-anchor="middle" font-size="30">🎯</text>`;
+      const arrow = (v, c, id, w) => { const L = Math.hypot(v[0], v[1]); if (L < 0.02) return ''; return `<line x1="${X(f.p[0])}" y1="${Y(f.p[1])}" x2="${X(f.p[0] + v[0] * A / MS)}" y2="${Y(f.p[1] + v[1] * A / MS)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round" marker-end="url(#sh-${id})"/>`; };
+      g += arrow(f.des, t.green, 'd', 4) + arrow(f.v, t.blue, 'v', 5);
+      // direksiyon: hız okunun ucundan istenen okun ucuna doğru (kırpılmış)
+      const hx = f.p[0] + f.v[0] * A / MS, hy = f.p[1] + f.v[1] * A / MS;
+      if (Math.hypot(f.st[0], f.st[1]) > 0.02) g += `<line x1="${X(hx)}" y1="${Y(hy)}" x2="${X(hx + f.st[0] * A / MS)}" y2="${Y(hy + f.st[1] * A / MS)}" stroke="${t.red}" stroke-width="5" stroke-linecap="round" marker-end="url(#sh-s)"/>`;
+      g += `<circle cx="${X(f.p[0])}" cy="${Y(f.p[1])}" r="11" fill="${t.amber}" stroke="${t.ink}" stroke-width="2.5"/>`;
+      diag.innerHTML = `<svg viewBox="0 0 ${X(24)} ${Y(11)}" style="width:100%;border:1px solid ${t.rule};border-radius:10px;background:${t.card}" font-family="Source Sans 3">${g}</svg>`;
+      const vec = v => `(${f1(v[0])}, ${f1(v[1])})`;
+      tbl.innerHTML = `<div class="sh-k">kare ${f.k}</div>` +
+        `<div><i style="background:${t.amber}"></i><b>konum</b> ${vec(f.p)} · hedefe uzaklık ${f1(f.d)}</div>` +
+        `<div><i style="background:${t.blue}"></i><b>şimdiki hız</b> ${vec(f.v)}</div>` +
+        `<div><i style="background:${t.green}"></i><b>istenen hız</b> ${vec(f.des)} <span>= hedef yönü × azami hız (${f1(MS)})</span></div>` +
+        `<div><i style="background:${t.red}"></i><b>direksiyon</b> ${vec(f.st)} <span>= istenen − şimdiki${f.clipped ? `; boyu ${f1(f.raw)} idi, azami kuvvete (${f.mf < 1 ? String(f.mf).replace('.', ',') : '∞'}) kırpıldı` : f.raw < 0.02 ? '; fark yok' : ''}</span></div>` +
+        `<div class="sh-next">${f.arrived ? '🎯 Hedefe vardı.' : 'Sonraki kare: hız += direksiyon, konum += hız.'}</div>`;
+      moral.innerHTML = pl.done && moralTxt ? '💡 ' + moralTxt : '';
+    };
+    const fp = new SL.FramePlayer(draw, { speed: 2 });
+    const load = (i, play) => { build(i); story.innerHTML = '📖 ' + SC[i][5]; moralTxt = SC[i][6]; fp.load(F); if (play) fp.play(); };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap sh' }, diag, el('div', {}, tbl, moral)), SL.transport(fp, { min: 0.5, max: 8 }));
+    bs[1].classList.add('primary'); load(1, false);
+    SL.onTheme(() => fp.render());
+    return { stop: () => fp.pause() };
+  };
+
   D.steer = function (root) {
     const W = 720, H = 380;
     const pathMode = root.dataset.mode === 'path';   // yol izleme slaytı: keskin köşeleri dönebilsin diye daha yavaş ve daha çevik başlar

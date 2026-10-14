@@ -216,6 +216,13 @@ p += v * dt
   <ul class="agenda"><li class="done">hareket katmanları</li><li class="on">seek ve flee</li><li class="">arrive, pursue, wander</li><li class="">engeller ve yollar</li><li class="">boids ve sürüler</li><li class="">birleştirmek: context steering</li><li class="">kod ve laboratuvarlar</li><li class="">oyunlarda ve kütüphanelerde</li></ul>
 </section>
 
+<section data-sec="önce sayılarla">
+  <h2>Elle seek: kare kare, sayılarla 🎯</h2>
+  <p style="font-size:.76em;margin:.1em 0 .2em">Formülün tamamı üç satır: <b>istenen hız</b> = hedefe doğru, azami hızla (yeşil). <b>Direksiyon</b> = istenen − şimdiki hız (kırmızı), ama boyu azami kuvveti geçemez. Sonra <b>hız += direksiyon</b>, <b>konum += hız</b>. “İleri ▶|” ile kare kare ilerleyin ve mavi okun (şimdiki hız) yeşile nasıl yaklaştığını izleyin.</p>
+  <div class="demo" data-demo="seekhand"></div>
+  <aside class="notes">Önceki slayttaki “direksiyon = istenen − mevcut” formülünün sayılarla izlenişi. Azami hız 1,5 birim/kare. Senaryolar: Hedef tam önde → direksiyon (0, 0): düzeltilecek bir şey yok. Hedef yanda → her karede 0,25’lik düzeltme; iz kavisli. Hedef arkada → önce yavaşlar, sonra döner. Sınırsız kuvvet → ilk karede hız = istenen hız: köşeli dönüş (Pac-Man hayaleti). Ağır kamyon → azami kuvvet 0,07: çok geniş dönüş. Vurgu: beş senaryoda formül aynı; değişen yalnızca başlangıç ve “azami kuvvet” sayısı. Kırmızı ok mavi okun ucundan çizilir: “hız okunu yeşile doğru bu kadar it”.</aside>
+</section>
+
 <section data-sec="seek">
   <h2>Seek ve flee</h2>
   <div class="cols">
