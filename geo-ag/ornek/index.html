@@ -13,17 +13,21 @@
   pre { background: #1e1f2b; color: #e6e6f0; padding: 16px; border-radius: 10px; overflow: auto; font: 13px/1.5 "JetBrains Mono", ui-monospace, monospace; tab-size: 2; }
   button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>pre code.hljs { padding: 0; background: transparent; font: inherit; } .about { background: #eef3ff; border-left: 5px solid #3567d6; border-radius: 8px; padding: 8px 14px; font-size: 15px; margin: 10px 0; }</style>
 </head>
 <body>
 <h1>Tek sayfada sahte ağ: tahmin, uzlaştırma, ara değerleme (p5.js)</h1>
 <div class="mini"><a href="../">← sunuma dön</a> · <kbd>A</kbd>/<kbd>D</kbd> yürü · <kbd>+</kbd>/<kbd>-</kbd> gecikme · <kbd>1</kbd> tahmin · <kbd>2</kbd> uzlaştırma · <kbd>3</kbd> ara değerleme</div>
+<div class="about"><b>Bu sayfa ne işe yarar?</b> Sunumdaki “tam kod” slaytının çalışan hâli: slaytlardan bağımsız, tek dosyalık bir p5.js programı. Burada oynayın, kodu kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editöründe</a> değiştirin ya da kendi projenize başlangıç olarak alın.</div>
 <main></main>
 <p>Aşağıdaki yaklaşık 80 satırın tamamı bu sayfada çalışıyor (önce tuvale tıklayın). Gerçek bir ağ yok: sunucu ve istemci aynı sayfada, aralarındaki her mesaj bir kuyrukta <code>GECIKME</code> kadar bekletiliyor. Üstteki şerit sunucunun bildiği gerçek, alttaki sizin ekranınız. <kbd>1</kbd> ile tahmini kapatın: yeşil kutu tuşa geç tepki verir. <kbd>2</kbd> ile uzlaştırmayı kapatın: kutu yürürken geri geri çekilir (sıçrama sayacı artar). <kbd>3</kbd> ile ara değerlemeyi kapatın: kırmızı rakip saniyede 10 kare zıplar. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editörüne</a> yapıştırabilirsiniz.</p>
 <p><button id="copy">📋 Kodu kopyala</button></p>
-<pre id="src">yükleniyor…</pre>
+<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
 <script src="sketch.js"></script>
 <script>
-  fetch('sketch.js').then(r => r.text()).then(t => { document.getElementById('src').textContent = t; });
+  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
   document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
 </script>
 </body>

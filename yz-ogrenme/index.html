@@ -201,6 +201,13 @@
   </div>
 </section>
 
+<section data-sec="başka gözle" data-baglanti="1">
+  <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
+  <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
+  <div class="lnks"><a class="lnk" href="https://natureofcode.com/genetic-algorithms/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Evolutionary Computing</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Genetik algoritmanın adımları (uygunluk, seçim, çaprazlama, mutasyon) p5.js örnekleriyle.</div></a><a class="lnk" href="https://natureofcode.com/neuroevolution/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Neuroevolution</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Evrimleşen arabalar demosunun fikri: sinir ağının ağırlıklarını evrimle bulmak, p5.js ile.</div></a><a class="lnk" href="https://playground.tensorflow.org/" target="_blank" rel="noopener"><div class="lnk-t">🔗 TensorFlow Playground</div><div class="lnk-s">Google</div><div class="lnk-w">Tarayıcıda küçük bir sinir ağı eğitin; nöron ve katman ekleyip karar sınırının nasıl değiştiğini izleyin.</div></a><a class="lnk" href="https://cs.stanford.edu/people/karpathy/convnetjs/demo/rldemo.html" target="_blank" rel="noopener"><div class="lnk-t">🔗 Deep Q-Learning demo</div><div class="lnk-s">Andrej Karpathy</div><div class="lnk-w">Gözleri olan bir ajanın tarayıcıda Q-learning ile yiyecek toplamayı öğrenmesi.</div></a></div>
+  <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
+</section>
+
 <section class="level" data-background-gradient="linear-gradient(135deg, #0d1b3d 0%, #1b1036 100%)">
   <div class="lv">LEVEL 2</div>
   <div class="ttl">Q-learning</div>
@@ -214,7 +221,7 @@
     <div>
       <p style="font-size:.84em"><b>Q(s, a)</b> = “<i>s</i> durumundayken <i>a</i> eylemini yapıp sonra hep en iyi şekilde oynarsam toplam ne kazanırım?” Bir tabloda her (durum, eylem) çifti için bir sayı tutarız. Başta hepsi 0.</p>
       <p style="font-size:.84em">Her adımdan sonra (s, a, r, s′) deneyimiyle tek bir hücreyi düzeltiriz:</p>
-      $$Q(s,a) \leftarrow Q(s,a) + \alpha\big[\, \underbrace{r + \gamma \max_{a'} Q(s',a')}_{\text{hedef}} - Q(s,a)\,\big]$$
+      $$\begin{aligned}Q(s,a) &\leftarrow Q(s,a) + \alpha\,\big[\,\text{hedef} - Q(s,a)\,\big]\\ \text{hedef} &= r + \gamma \max_{a'} Q(s',a')\end{aligned}$$
       <ul style="font-size:.8em">
         <li><b>hedef</b>: aldığım ödül + gittiğim yerin en iyi geleceği (indirimli).</li>
         <li><b>hedef − Q</b>: ne kadar yanılmışım? (zamansal fark hatası)</li>

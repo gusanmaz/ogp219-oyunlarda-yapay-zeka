@@ -124,6 +124,13 @@
 <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> en üstteki sarı top sunucudaki gerçek; altındaki üç top aynı paketleri üç farklı yöntemle gösteren istemciler. Uçan küçük kareler yoldaki paketler. Alttaki grafik son 4 saniye: sarı kesikli = gerçek.</li><li><b>Kırmızı (ham):</b> grafikte merdiven. Paket hızını 4’e indirin: basamaklar büyür (yeşil de takılır: 150 ms’lik tampon artık bir paket aralığından kısa). 60’a çıkarın: neredeyse pürüzsüz, ama bant genişliği 15 katı.</li><li><b>Yeşil (ara değerleme):</b> sarı eğrinin <b>sağa kaymış</b> kopyası: aynı biçim, biraz geç. Kayma = gecikme + tampon.</li><li><b>Mor (dış değerleme):</b> düz giderken sarının tam üstünde (güncel!); dönüş anlarında sivri <b>taşmalar</b>. Gecikmeyi 250 ms yapın: taşmalar büyür.</li><li>Kaybı <b>%20</b> yapın. Tampon 150 ms iken yeşil hâlâ pürüzsüz. Tamponu <b>40</b>’a indirin (bir paket aralığından az): “⚠ tampon boş” uyarısı ve takılmalar.</li><li>Alttaki ortalama hatalara bakın: en “hatalı” görünen yeşil, en rahat izlenendir. Doğruluk ile akıcılık aynı şey değil.</li></ol></div>
 </section>
 
+<section data-sec="başka gözle" data-baglanti="1">
+  <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
+  <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
+  <div class="lnks"><a class="lnk" href="https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking" target="_blank" rel="noopener"><div class="lnk-t">🎯 Source Multiplayer Networking</div><div class="lnk-s">Valve Developer Wiki</div><div class="lnk-w">Ara değerleme, tahmin ve gecikme telafisinin Counter-Strike ve Half-Life’ta nasıl yapıldığını anlatan resmî belge.</div></a><a class="lnk" href="https://developer.valvesoftware.com/wiki/Lag_Compensation" target="_blank" rel="noopener"><div class="lnk-t">🎯 Lag Compensation</div><div class="lnk-s">Valve Developer Wiki</div><div class="lnk-w">Sunucunun atışı nişancının gördüğü ana geri sarması; formül ve ekran görüntüleriyle.</div></a><a class="lnk" href="https://gafferongames.com/post/networked_physics_2004/" target="_blank" rel="noopener"><div class="lnk-t">🕹 Networked Physics</div><div class="lnk-s">Glenn Fiedler (Gaffer on Games)</div><div class="lnk-w">İstemci tahmini ve uzlaştırmanın fizik oyunlarında nasıl yapıldığı.</div></a></div>
+  <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
+</section>
+
 <section data-sec="ara değerleme">
   <h2>Kod: anlık görüntü tamponu ve ara değerleme</h2>
   <div class="tabs short">

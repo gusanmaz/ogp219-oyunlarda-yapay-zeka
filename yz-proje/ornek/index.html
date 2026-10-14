@@ -13,16 +13,20 @@
   pre { background: #1e1f2b; color: #e6e6f0; padding: 16px; border-radius: 10px; overflow: auto; font: 13px/1.5 "JetBrains Mono", ui-monospace, monospace; tab-size: 2; }
   button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>pre code.hljs { padding: 0; background: transparent; font: inherit; } .about { background: #eef3ff; border-left: 5px solid #3567d6; border-radius: 8px; padding: 8px 14px; font-size: 15px; margin: 10px 0; }</style>
 </head>
 <body>
 <h1>Gizlilik mini oyunu: bütün katmanlar tek dosyada (p5.js)</h1>
 <div class="mini"><a href="../">← sunuma dön</a> · <b>Tıkla</b> = oraya yürü · <kbd>X</kbd> = farenin olduğu yere taş at (3 hak) · <kbd>R</kbd> = baştan · 5 altını topla, çıkışa ulaş</div>
+<div class="about"><b>Bu sayfa ne işe yarar?</b> Sunumdaki “tam kod” slaytının çalışan hâli: slaytlardan bağımsız, tek dosyalık bir p5.js programı. Burada oynayın, kodu kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editöründe</a> değiştirin ya da kendi projenize başlangıç olarak alın.</div>
 <main></main>
 <p>Aşağıdaki yaklaşık 200 satırın tamamı bu sayfada çalışıyor: A* (Y8), görüş konisi ve görüş hattı (Y11), farkındalık ve kara tahta (Y3), üç durumlu karar (Y2) ve ses. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın. Deneyin: <code>kararVer</code>’i değiştirin (sesi duyunca kaçan muhafız?), <code>GORUS</code> ve <code>YARIM_ACI</code> ile zorluğu ayarlayın, dördüncü bir muhafız ekleyin, yakalandıkça görüşü kısaltan bir yönetmen (Y17) yazın. <button id="copy">📋 Kodu kopyala</button> <a href="sketch.js" download>⬇ sketch.js</a></p>
-<pre id="src">yükleniyor…</pre>
+<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
 <script src="sketch.js"></script>
 <script>
-  fetch('sketch.js').then(r => r.text()).then(t => { document.getElementById('src').textContent = t; });
+  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
   document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
 </script>
 </body>

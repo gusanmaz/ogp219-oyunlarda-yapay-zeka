@@ -99,6 +99,13 @@
 <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span><ol style="font-size:.9em"><li><b>Ekranı okuyun:</b> ortada sarı güneş; kesikli çember gerçek yörünge. Üç gezegen aynı yerden aynı hızla başlar: <b class="c-red">kırmızı</b> açık Euler, <b class="c-green">yeşil</b> yarı-örtük Euler, <b class="c-blue">mavi</b> Verlet (4. bölümde). Sağda her birinin toplam enerjisi ve başlangıca göre yüzde farkı.</li><li><b>dt = 0,05</b> (başlangıç): kırmızı her turda biraz daha dışarı açılıyor. Enerjisi sürekli artı yönde büyüyor.</li><li><b>dt = 0,005</b>: üçü de çembere yapışık görünür; ama kırmızının yüzdesi yine yavaş yavaş artar. Hata küçüldü, <b>yönü</b> değişmedi.</li><li><b>dt = 0,2</b>: kırmızı birkaç turda “uçtu gitti”. Yeşil ve mavi köşeli ama kapalı bir yörüngede kalır; yüzdeleri artı-eksi salınır.</li><li>Soru: yeşil ile kırmızının kodları arasında kaç satır fark var? (Sıfır. Aynı iki satır, ters sırada.)</li></ol></div>
 </section>
 
+<section data-sec="başka gözle" data-baglanti="1">
+  <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
+  <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
+  <div class="lnks"><a class="lnk" href="https://gafferongames.com/post/fix_your_timestep/" target="_blank" rel="noopener"><div class="lnk-t">🕹 Fix Your Timestep!</div><div class="lnk-s">Glenn Fiedler (Gaffer on Games)</div><div class="lnk-w">Biriktiricili sabit zaman adımının klasik yazısı; oyun fiziği yazan herkesin okuduğu metin.</div></a><a class="lnk" href="https://gafferongames.com/post/integration_basics/" target="_blank" rel="noopener"><div class="lnk-t">🕹 Integration Basics</div><div class="lnk-s">Glenn Fiedler (Gaffer on Games)</div><div class="lnk-w">Euler ve yarı-örtük Euler farkını yay örneğiyle anlatır.</div></a><a class="lnk" href="https://natureofcode.com/forces/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Forces</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Konum, hız, ivme ve kuvvet; Euler adımının p5.js ile sezgisel anlatımı.</div></a><a class="lnk" href="https://natureofcode.com/physics-libraries/" target="_blank" rel="noopener"><div class="lnk-t">🌿 Physics Libraries</div><div class="lnk-s">The Nature of Code (Daniel Shiffman)</div><div class="lnk-w">Hazır fizik motorlarıyla (Matter.js) çalışmak; kısıtlar ve yaylar.</div></a></div>
+  <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
+</section>
+
 <section data-sec="euler">
   <h2>Kod: bir hareket adımı</h2>
   <div class="tabs short">

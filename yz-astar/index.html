@@ -172,6 +172,22 @@
 <section data-sec="algoritmalar">
   <h2>Yarış: aynı harita, dört algoritma 🏁</h2>
   <div class="demo" data-demo="compare4"></div>
+  <div class="demo-help" data-title="ℹ️ Ekranda ne var, düğmeler ne yapar?"><ul>
+    <li>Dört küçük harita <b>aynı haritadır</b>; her birinde başka bir algoritma çalışıyor: BFS, Dijkstra, Greedy best-first ve A*.</li>
+    <li><b>B</b> başlangıç, <b>H</b> hedef, koyu kareler duvar. Renkli kareler, algoritmanın o ana kadar <b>baktığı</b> (genişlettiği) kareler; kalın çizgi bulunan yol.</li>
+    <li>Her haritanın altında: kaç kareye bakıldığı ve bulunan yolun maliyeti. Az kare = hızlı; düşük maliyet = kısa yol.</li>
+    <li><b>⏮ Geri ▶ Oynat İleri ⏭</b>: aramayı baştan, adım adım ya da sona kadar oynatır. <b>Hız</b> kaydırıcısı saniyede kaç karenin açılacağı.</li>
+    <li>Herhangi bir haritada fareyle <b>duvar çizin</b> ya da B/H’yi <b>sürükleyin</b>: dördü yeni haritada yeniden yarışır.</li>
+  </ul></div>
+  <div class="demo-help" data-title="🧠 Her algoritma hangi adımları izliyor?"><p>Dördü de aynı döngüyü çalıştırır; tek fark <b>bir sonraki kareyi neye göre seçtikleri</b>:</p><ol>
+    <li>Başlangıcı “bakılacaklar” listesine koy.</li>
+    <li>Listeden bir kare <b>seç</b> (aşağıya bakın) ve onu “bakıldı” diye işaretle.</li>
+    <li>Seçilen kare hedefse dur: geldiğin kareleri geriye izleyerek yolu çıkar.</li>
+    <li>Değilse komşularını listeye ekle (daha kısa bir yoldan geldiysen eski kaydı güncelle) ve 2. adıma dön.</li></ol>
+    <ul><li><b>BFS:</b> listeye en önce gireni seçer (kuyruk). Adım maliyetini bilmez; her yöne eşit yayılır.</li>
+    <li><b>Dijkstra:</b> başlangıçtan uzaklığı (g) en küçük olanı seçer. Bataklık gibi pahalı kareleri hesaba katar; yine her yöne yayılır.</li>
+    <li><b>Greedy:</b> hedefe kuş uçuşu uzaklığı (h) en küçük olanı seçer. Hedefe koşar ama yol uzun ya da dolambaçlı olabilir.</li>
+    <li><b>A*:</b> f = g + h en küçük olanı seçer. Hem hedefe yönelir hem en kısa yolu garanti eder (h hedefe olan gerçek uzaklığı aşmadıkça).</li></ul></div>
 </section>
 
 <section data-sec="algoritmalar">
@@ -184,6 +200,13 @@
       <li>Renkler: mavi → kırmızı, başlangıçtan uzaklık (g). Sarı = açık liste (keşfedilmiş, sırada bekliyor).</li>
     </ol>
   </div>
+</section>
+
+<section data-sec="başka gözle" data-baglanti="1">
+  <h2>🔗 Başka gözle: etkileşimli anlatımlar ve yazılar</h2>
+  <p style="font-size:.74em;margin:.1em 0 .4em">Aynı konuyu başka bir anlatımla, kendi elinizle oynayarak görmek çok işe yarar. Kartlar yeni sekmede açılır; çoğu İngilizce ama görsel ve etkileşimli.</p>
+  <div class="lnks"><a class="lnk" href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Introduction to the A* Algorithm</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">BFS, Dijkstra ve A*’ı aynı harita üzerinde, sürüklenebilir duvarlarla anlatan klasik etkileşimli yazı. Bu dersin yol bulma bölümünün en iyi tamamlayıcısı.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/grids/graphs.html" target="_blank" rel="noopener"><div class="lnk-t">🟥 Grids and Graphs</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Izgaranın bir graf olduğunu ve komşuların nasıl bulunduğunu çizimlerle anlatır.</div></a><a class="lnk" href="https://www.redblobgames.com/pathfinding/tower-defense/" target="_blank" rel="noopener"><div class="lnk-t">🟥 Flow Field Pathfinding (kule savunması)</div><div class="lnk-s">Red Blob Games (Amit Patel)</div><div class="lnk-w">Tek bir BFS ile bütün düşmanlara yol bulmak: haritaya tıklayıp hedefi değiştirin, oklar anında güncellenir.</div></a><a class="lnk" href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener"><div class="lnk-t">🔗 PathFinding.js</div><div class="lnk-s">Xueqiao Xu</div><div class="lnk-w">A*, Dijkstra, BFS ve Jump Point Search’ü aynı ızgarada yarıştırın; duvarları fareyle çizin.</div></a></div>
+  <aside class="notes">Derste birini açıp birkaç dakika birlikte oynayın; öbürlerini ödev ya da kendi kendine çalışma olarak önerin.</aside>
 </section>
 
 <section data-sec="algoritmalar">
@@ -208,22 +231,24 @@
 </section>
 
 <section data-sec="sezgiler">
-  <h2>Hangi sezgi, hangi ızgara?</h2>
-  <div class="cols">
-    <table class="sum-t" style="font-size:18px">
-      <tr><th>sezgi</th><th>formül (dx, dy = kare farkları)</th><th>ne zaman?</th></tr>
-      <tr><td><b>Manhattan</b></td><td><code>dx + dy</code></td><td>4 yönlü hareket</td></tr>
-      <tr><td><b>Octile</b></td><td><code>max + (√2 − 1)·min</code></td><td>8 yönlü, çapraz = √2</td></tr>
-      <tr><td><b>Chebyshev</b></td><td><code>max(dx, dy)</code></td><td>8 yönlü, çapraz = 1 (satranç şahı)</td></tr>
-      <tr><td><b>Öklid</b></td><td><code>√(dx² + dy²)</code></td><td>her açıda hareket (navmesh)</td></tr>
-    </table>
-    <div>
-      <div class="box story"><span class="bt">Kabul edilebilir (admissible)</span>h, gerçek kalan maliyeti <b>asla aşmamalı</b>. Öyleyse A* en kısa yolu bulur. Öklid her zaman güvenlidir ama ızgarada “fazla iyimser” olduğu için gereğinden çok düğüm açar.</div>
-      <div class="box warn"><span class="bt">⚠️ Yanlış sezgi</span>8 yönlü ızgarada Manhattan, çapraz adımları 2 sayar: tahmin <b>abartılı</b> → yol en kısa olmayabilir. 4 yönlü ızgarada Öklid: doğru ama yavaş.</div>
-      <p class="mini">Amit Patel’in (Red Blob Games) ipucu: “En iyi sezgi, hareket kurallarınızın tam mesafesidir.”</p>
+  <h2>Sezgi (h) nedir, hangisi seçilmeli?</h2>
+  <p style="font-size:.74em;margin:.1em 0 .2em"><b>h</b>, bir kareden hedefe “daha ne kadar yol kaldı?” sorusuna verilen <b>tahmindir</b>; A* bunu yolu henüz bilmeden, her kare için hesaplar. Tahminin iyisi, gerçek kalan yola <b>eşit</b> olanıdır. Gerçekten <b>az</b> tahmin etmek güvenlidir ama A* gereğinden çok kareye bakar; <b>fazla</b> tahmin etmek A*’ı hızlandırır ama bulduğu yol en kısa olmayabilir.</p>
+  <div class="cols c46">
+    <div><svg viewBox="0 0 330 200" style="width:100%;max-height:200px" font-family="Source Sans 3"><rect x="30" y="40" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="76" y="40" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="122" y="40" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="168" y="40" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="214" y="40" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="30" y="86" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="76" y="86" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="122" y="86" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="168" y="86" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="214" y="86" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="30" y="132" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="76" y="132" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="122" y="132" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="168" y="132" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><rect x="214" y="132" width="43" height="43" rx="5" style="fill:var(--card);stroke:var(--rule)"/><polyline points="51.5,153.5 97.5,107.5 143.5,61.5 235.5,61.5" style="fill:none;stroke:var(--green)" stroke-width="4"/><polyline points="51.5,153.5 235.5,153.5 235.5,61.5" style="fill:none;stroke:var(--amber)" stroke-width="4" stroke-dasharray="7 5"/><line x1="51.5" y1="153.5" x2="235.5" y2="61.5" style="stroke:var(--purple)" stroke-width="2.5" stroke-dasharray="3 5"/><circle cx="51.5" cy="153.5" r="13" style="fill:var(--blue)"/><text x="51.5" y="159.5" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">S</text><circle cx="235.5" cy="61.5" r="13" style="fill:var(--red)"/><text x="235.5" y="67.5" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">H</text><text x="165" y="22" text-anchor="middle" font-size="14" style="fill:var(--ink-2)">S’den H’ye: 4 sütun sağa, 2 satır yukarı</text></svg>
+      <p style="font-size:.62em;margin:.1em 0 0;line-height:1.35"><span style="color:var(--green)"><b>yeşil</b></span>: 8 yönde gerçek en kısa yol = 2 çapraz + 2 düz = 2·1,41 + 2 = <b>4,83</b><br><span style="color:var(--amber)"><b>turuncu</b></span>: yalnızca 4 yönde gerçek en kısa yol = 4 + 2 = <b>6</b><br><span style="color:var(--purple)"><b>mor</b></span>: kuş uçuşu = √(4² + 2²) = 4,47</p>
     </div>
+    <table class="sum-t" style="font-size:17px">
+      <tr><th>sezgi</th><th>formül</th><th>bu örnekte h</th><th>8 yönlü ızgarada<br><small>(gerçek 4,83)</small></th><th>4 yönlü ızgarada<br><small>(gerçek 6)</small></th></tr>
+      <tr><td><b>Manhattan</b></td><td><code>dx + dy</code></td><td>6</td><td class="c-red">fazla ✗<br><small>yol yanlış olabilir</small></td><td class="c-green">tam ✓</td></tr>
+      <tr><td><b>Octile</b></td><td><code>max + 0,41·min</code></td><td>4,83</td><td class="c-green">tam ✓</td><td>az<br><small>doğru, biraz yavaş</small></td></tr>
+      <tr><td><b>Chebyshev</b></td><td><code>max(dx, dy)</code></td><td>4</td><td>az<br><small>(çapraz da 1 sayılıyorsa tam)</small></td><td>az</td></tr>
+      <tr><td><b>Öklid</b></td><td><code>√(dx² + dy²)</code></td><td>4,47</td><td>az</td><td>az<br><small>doğru ama en yavaşı</small></td></tr>
+    </table>
   </div>
+  <div class="box story" style="margin-top:4px;font-size:.66em"><span class="bt">Kural</span>Hiçbir zaman gerçeği aşmayan bir sezgiye <b>kabul edilebilir</b> (admissible) denir; A* onunla en kısa yolu garanti eder. En iyisi, hareket kurallarınızın gerçek mesafesidir: 4 yönde Manhattan, 8 yönde octile, serbest harekette (navmesh) Öklid. Amit Patel’in <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">A* yazısındaki</a> etkileşimli örnekte sezgiyi değiştirip farkı görebilirsiniz.</div>
+  
 </section>
+
 
 <section data-sec="sezgiler">
   <h2>Ağırlıklı A*: biraz hata, çok hız</h2>
@@ -243,6 +268,20 @@
 <section data-sec="sezgiler">
   <h2>Canlı: A* laboratuvarı 🧭</h2>
   <div class="demo" data-demo="astar"></div>
+  <div class="demo-help" data-title="ℹ️ Düğmeler ve araçlar"><ul>
+    <li><b>Fırça menüsü:</b> 🧱 duvar çizer, 🟩 bataklık çizer (geçmek 5 kat pahalı), 🧽 siler. Haritaya tıklayıp sürükleyin.</li>
+    <li><b>B</b> ve <b>H</b>’yi sürükleyerek başlangıcı ve hedefi taşıyın.</li>
+    <li><b>Sezgi menüsü:</b> h’nin nasıl hesaplanacağı (Manhattan, octile, Öklid, 0 = Dijkstra).</li>
+    <li><b>A* ağırlığı w:</b> f = g + w·h. w = 1 klasik A*; w büyüdükçe daha az kareye bakar ama yol biraz uzayabilir.</li>
+    <li><b>Çapraz</b> kutusu: 8 yönlü hareket. <b>g değerleri</b> kutusu: her kareye başlangıçtan uzaklığı yazar.</li>
+    <li><b>▶ Aramayı oynat:</b> aramayı adım adım canlandırır; alttaki sayaçlar bakılan kare sayısı ve yol maliyeti.</li></ul></div>
+  <div class="demo-help" data-title="🧠 A* adım adım"><ol>
+    <li>Açık listeye başlangıcı koy: g = 0, f = h.</li>
+    <li>Açık listeden <b>f’si en küçük</b> kareyi çıkar (renkli kareler bunlar).</li>
+    <li>Hedefse bitti; ebeveyn oklarını geriye izle.</li>
+    <li>Değilse her komşu için yeni g = g(şimdiki) + adım maliyeti (düz 1, çapraz 1,41, bataklık ×5). Komşu ilk kez görülüyorsa ya da bu g daha küçükse: g’yi yaz, ebeveynini şimdiki kare yap, f = g + w·h ile açık listeye koy.</li>
+    <li>2. adıma dön. Açık liste boşalırsa hedefe yol yok.</li></ol>
+    <p>Elle izlemesi için iki slayt önceki “Elle A*” demosuna bakın.</p></div>
 </section>
 
 <section data-sec="sezgiler">

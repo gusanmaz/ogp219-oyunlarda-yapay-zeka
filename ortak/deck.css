@@ -850,3 +850,23 @@ code, .CodeMirror pre { font-variant-ligatures: none; font-feature-settings: "li
 
 .ev-side { font-size: 17px; } .ev-big { font-size: 24px; font-weight: 800; margin-bottom: 6px; } .ev-big span { color: var(--blue); }
 .ev-h { display: grid; grid-template-columns: 26px 1fr 70px; align-items: center; gap: 6px; font: 15px "JetBrains Mono", monospace; margin: 3px 0; } .ev-h i { display: block; height: 12px; background: var(--green); border-radius: 6px; }
+.lnks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; } .lnks:has(> .lnk:nth-child(5)) { grid-template-columns: repeat(3, 1fr); }
+.lnk { display: block; background: var(--card); border: 1.5px solid var(--rule) !important; border-radius: 12px; padding: 16px 18px; color: var(--ink) !important; text-decoration: none !important; box-shadow: var(--shadow); }
+.lnk:hover { border-color: var(--blue) !important; } .lnk-t { font-size: 22px; font-weight: 800; color: var(--blue); line-height: 1.25; } .lnk-s { font-size: 15px; color: var(--muted); margin: 3px 0 8px; } .lnk-w { font-size: 18px; line-height: 1.4; color: var(--ink-2); } .lnks:has(> .lnk:nth-child(5)) .lnk-w { font-size: 16px; }
+
+.demo-help { display: none; }
+.dh-bar { position: relative; display: flex; justify-content: flex-end; gap: 8px; margin: -6px 0 4px; z-index: 20; }
+.dh-btn { font-size: 15px !important; padding: 4px 12px !important; }
+.dh-panel { position: absolute; right: 0; top: 38px; width: min(620px, 96%); max-height: 520px; overflow: auto; background: var(--card); border: 2.5px solid var(--blue); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.25); padding: 12px 20px 14px; font-size: 18px; line-height: 1.42; text-align: left; }
+.dh-panel .dh-h { font-size: 21px; font-weight: 800; margin: 0 26px 6px 0; color: var(--blue); } .dh-panel ol, .dh-panel ul { margin: 4px 0 4px 1.1em; padding: 0; } .dh-panel li { margin: 4px 0; }
+.dh-x { position: absolute; right: 10px; top: 8px; border: none; background: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+
+/* okunurluk: kutu ve paneller içinde ferah satır aralığı */
+.box { line-height: 1.42; } .box li { margin: .22em 0; } .box p { margin: .35em 0; }
+/* yardım düğmeleri demonun sağ üst köşesine biner; yer kaplamaz */
+.dh-bar { height: 0; margin: 0; } .dh-bar > .dh-btn:first-child { margin-left: auto; }
+.dh-bar { justify-content: flex-end; align-items: flex-start; } .dh-bar .dh-btn { position: relative; top: 2px; }
+
+.tight .box { line-height: 1.28; } .tight .box li { margin: .08em 0; } .tight .box p { margin: .2em 0; }
+
+.rad { white-space: nowrap; } .rad > span { display: inline-block; border-top: .07em solid currentColor; line-height: 1.02; padding: .06em .1em 0 .08em; margin-left: -.04em; }

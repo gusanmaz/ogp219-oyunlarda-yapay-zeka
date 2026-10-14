@@ -440,6 +440,22 @@
       document.querySelectorAll('.tabs').forEach(r => SL.Tabs(r));
       document.querySelectorAll('.quiz').forEach(r => SL.Quiz(r));
       registry.forEach(([sel, f]) => document.querySelectorAll(sel).forEach(r => make(r, f)));
+      // Açılır yardım panelleri: bir demonun hemen ardından gelen <div class="demo-help" data-title="…">…</div> öğeleri
+      // demonun sağ üstüne birer düğme olur; tıklayınca demonun üstünde bir panel açılır (ekran kalabalıklaşmaz).
+      document.querySelectorAll('.demo-help').forEach(h => {
+        if (h.dataset.done) return; h.dataset.done = 1;
+        let host = h.previousElementSibling; while (host && host.classList.contains('demo-help')) host = host.previousElementSibling;
+        if (!host) return;
+        let bar = host.previousElementSibling && host.previousElementSibling.classList.contains('dh-bar') ? host.previousElementSibling : null;
+        if (!bar) { bar = document.createElement('div'); bar.className = 'dh-bar'; host.parentNode.insertBefore(bar, host); }
+        const wrap = document.createElement('div'); wrap.className = 'dh-panel'; wrap.hidden = true;
+        wrap.innerHTML = `<button class="dh-x" title="Kapat">✕</button><div class="dh-h">${h.dataset.title || 'Açıklama'}</div>` + h.innerHTML;
+        bar.appendChild(wrap);
+        const b = document.createElement('button'); b.className = 'btn dh-btn'; b.textContent = h.dataset.title || 'ℹ️ Açıklama';
+        b.onclick = e => { e.stopPropagation(); const open = wrap.hidden; bar.querySelectorAll('.dh-panel').forEach(x => (x.hidden = true)); bar.querySelectorAll('.dh-btn').forEach(x => x.classList.remove('primary')); wrap.hidden = !open; if (open) b.classList.add('primary'); };
+        wrap.querySelector('.dh-x').onclick = e => { e.stopPropagation(); wrap.hidden = true; b.classList.remove('primary'); };
+        bar.insertBefore(b, bar.querySelector('.dh-panel'));
+      });
       Reveal.sync(); // sonradan eklenen fragment'ler (iz tablosu satırları) için
       activate(Reveal.getCurrentSlide());
     }
@@ -451,11 +467,12 @@
     // Emniyet: içerik 720 piksellik slayt alanına sığmazsa (farklı çözünürlük/yazı tipi, büyüyen demo çıktısı) slaydı küçült
     const fit = () => {
       const sl = Reveal.getCurrentSlide(); if (!sl || sl.classList.contains('level')) return;
-      sl.style.zoom = ''; codeFit(sl);
+      sl.style.zoom = ''; sl.classList.remove('tight'); radFix(sl); codeFit(sl); mathFit(sl);
+      if (bottomR(sl) > 652) sl.classList.add('tight');   // önce kutuların satır aralığını daralt
       const h = sl.scrollHeight, room = 700;
       const used0 = bottom(sl);
       if (h > room + 4 && used0 > room - 40) { sl.style.zoom = Math.max(0.6, room / h).toFixed(3); return; }
-      grow(sl); growText(sl);
+      grow(sl); growText(sl); mathFit(sl);
     };
     // zoom uygulanmış öğelerde offsetHeight yanıltır; ekrandaki dikdörtgenden ölç
     const bottomR = sl => { const r0 = sl.getBoundingClientRect(), sc = r0.width / sl.offsetWidth || 1; let b = 0; for (const c of sl.children) { if (!c.offsetHeight || getComputedStyle(c).position === 'absolute') continue; b = Math.max(b, (c.getBoundingClientRect().bottom - r0.top) / sc); } return b; };
@@ -477,6 +494,31 @@
       }
       kids.forEach(c => { c.style.zoom = ''; delete c.dataset.gz; }); codeFit(sl);
     };
+    // Düz metindeki √(…) ve √N yazımlarını üstü çizgili köke çevir (kod, formül, svg, canvas hariç).
+    const RAD1 = /√\(((?:[^()]|\([^()]*\))*)\)/g, RAD2 = /√([0-9A-Za-zπ]+(?:[.,][0-9]+)?)/g;
+    const radFix = root => {
+      const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => (n.nodeValue.includes('√') && !n.parentElement.closest('pre, code, script, style, svg, canvas, .katex, .rad, textarea, .CodeMirror') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+      const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+      // demo çıktılarında ondalık nokta → virgül (23.9 → 23,9); binlik ayırıcıya (1.000) ve kod/sürüm metinlerine dokunmaz
+      const w2 = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => (/\d\.\d/.test(n.nodeValue) && n.parentElement.closest('.demo, .sv-counters, .sv-note, .btd-log, .btd-moral, .ah-open, .sh-tbl, .ev-side, .lf-info') && !n.parentElement.closest('pre, code, script, style, .katex, textarea, .CodeMirror, kbd') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+      const dn = []; while (w2.nextNode()) dn.push(w2.currentNode);
+      dn.forEach(n => { const v = n.nodeValue.replace(/(^|[^\w.,])(\d+)\.(\d{1,2})(?![\d.])/g, '$1$2,$3'); if (v !== n.nodeValue) n.nodeValue = v; });
+      nodes.forEach(n => {
+        const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        const html = esc(n.nodeValue).replace(RAD1, (m, x) => `<span class="rad">√<span>${x}</span></span>`).replace(RAD2, (m, x) => `<span class="rad">√<span>${x}</span></span>`);
+        if (html === esc(n.nodeValue)) return;
+        const t = document.createElement('span'); t.innerHTML = html; n.replaceWith(...t.childNodes);
+      });
+    };
+    // Formül (KaTeX) sütununa sığmıyorsa yazı boyutunu sığana kadar küçült (en az %60).
+    const mathFit = sl => sl.querySelectorAll('.katex').forEach(k => {
+      if (k.parentElement.closest('.katex')) return;
+      const t = k.closest('.katex-display') || k; t.style.fontSize = '';
+      const box = (k.closest('.katex-display') || k).parentElement.closest('p, div, li, td, th'); if (!box || !box.clientWidth) return;
+      const br = box.getBoundingClientRect(), kr = k.getBoundingClientRect(), cs = getComputedStyle(box);
+      const room = br.right - parseFloat(cs.paddingRight) * (br.width / box.offsetWidth || 1) - kr.left;
+      if (kr.width > room + 1) t.style.fontSize = Math.max(55, Math.floor(room / kr.width * 97)) + '%';
+    });
     // Kod bloğu yatayda taşıyorsa (yorumlar sağda kesiliyorsa) yazıyı sığana kadar küçült; %72'nin altına inmez.
     const codeFit = sl => sl.querySelectorAll('pre code').forEach(c => {
       if (!c.clientWidth) return;

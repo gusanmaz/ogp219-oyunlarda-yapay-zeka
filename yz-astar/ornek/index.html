@@ -13,17 +13,21 @@
   pre { background: #1e1f2b; color: #e6e6f0; padding: 16px; border-radius: 10px; overflow: auto; font: 13px/1.5 "JetBrains Mono", ui-monospace, monospace; tab-size: 2; }
   button { font: inherit; padding: 6px 14px; border-radius: 8px; border: 1px solid #bbb; background: #fff; cursor: pointer; }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>pre code.hljs { padding: 0; background: transparent; font: inherit; } .about { background: #eef3ff; border-left: 5px solid #3567d6; border-radius: 8px; padding: 8px 14px; font-size: 15px; margin: 10px 0; }</style>
 </head>
 <body>
 <h1>A* ile yol bulma (p5.js)</h1>
 <div class="mini"><a href="../">← sunuma dön</a> · Fare = hedef · tıkla/sürükle = duvar çiz · <kbd>D</kbd> = çapraz · <kbd>H</kbd> = sezgi aç/kapa (kapalı = Dijkstra)</div>
+<div class="about"><b>Bu sayfa ne işe yarar?</b> Sunumdaki “tam kod” slaytının çalışan hâli: slaytlardan bağımsız, tek dosyalık bir p5.js programı. Burada oynayın, kodu kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">p5.js editöründe</a> değiştirin ya da kendi projenize başlangıç olarak alın.</div>
 <main></main>
 <p>Aşağıdaki kodun tamamı bu sayfada çalışıyor. Kopyalayıp <a href="https://editor.p5js.org/" target="_blank" rel="noopener">editor.p5js.org</a>’a yapıştırın ve değiştirin:
 H’ye basıp bakılan kare sayısını karşılaştırın, bataklık (pahalı kare) ekleyin, sezgiyi 3 ile çarpın. <button id="copy">📋 Kodu kopyala</button> <a href="sketch.js" download>⬇ sketch.js</a></p>
-<pre id="src">yükleniyor…</pre>
+<pre><code id="src" class="language-javascript">yükleniyor…</code></pre>
 <script src="sketch.js"></script>
 <script>
-  fetch('sketch.js').then(r => r.text()).then(t => { document.getElementById('src').textContent = t; });
+  fetch('sketch.js').then(r => r.text()).then(t => { const c = document.getElementById('src'); c.textContent = t; if (window.hljs) hljs.highlightElement(c); });
   document.getElementById('copy').onclick = e => navigator.clipboard.writeText(document.getElementById('src').textContent).then(() => { e.target.textContent = '✅ Kopyalandı'; });
 </script>
 </body>
