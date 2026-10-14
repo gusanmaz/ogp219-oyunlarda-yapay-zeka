@@ -27,6 +27,43 @@
   }
   SL.makePerlin = makePerlin;
   const BIOMES = [[-1, '#2a5d9f', 'derin su'], [0, '#3f86c9', 'sığ su'], [0.04, '#e6d49a', 'kum'], [0.22, '#6fb35a', 'çimen'], [0.42, '#3c7f3a', 'orman'], [0.58, '#8a7f74', 'kaya'], [0.72, '#f2f2f2', 'kar']];
+  /* ================= elle gürültü: rastgele sayılardan dağa (1 boyut) =================
+     Katman k: 2^k+1 rastgele kontrol noktası, arası yumuşak (smoothstep) doldurulur; genliği her katta yarıya iner. */
+  D.noisehand = function (root) {
+    const mul = a => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    let seed = 7, mode = 0;
+    const SC = [
+      ['📺 Her sütun rastgele', 'Her sütunun yüksekliği bağımsız bir rastgele sayı.', 'Televizyon karıncası gibi: komşu sütunların birbiriyle ilgisi yok. Arazi olması için <b>yakın yerlerin benzer</b> olması gerekir.'],
+      ['⛰️ 5 rastgele tepe, arası yumuşak', 'Yalnızca 5 noktaya rastgele yükseklik ver; aralarını yumuşak bir eğriyle doldur.', 'Artık komşu sütunlar benzer: yumuşak tepeler çıktı. Ama fazla düzgün; gerçek dağda küçük girinti çıkıntılar da olur.'],
+      ['➕ Üstüne ince bir kat', 'İkinci bir kat ekle: iki kat sık (9 nokta), yarı boyda. İkisini topla.', 'Büyük biçim aynı kaldı, üstüne orta boy tümsekler geldi. Her yeni kata <b>oktav</b> denir.'],
+      ['🏔️ Dört kat (oktav)', 'Dört kat: 5, 9, 17, 33 nokta; boyları 1, ½, ¼, ⅛.', 'Büyük dağlar + tepeler + kayalar + çakıl: doğal görünen arazi. Perlin gürültüsü ve Minecraft’ın dünyası bu fikrin 2 ve 3 boyutlu hâlidir.']];
+    const c = el('canvas'), W = 1100, H = 300, ctx = SL.setupCanvas(c, W, H), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' }), sd = el('b', {}, '7');
+    const sm = t => t * t * (3 - 2 * t);
+    const layer = (k, rnd) => { const n = (4 << k) + 1, pts = Array.from({ length: n }, rnd); return x => { const u = x * (n - 1), i = Math.min(n - 2, Math.floor(u)), f = u - i; return pts[i] + (pts[i + 1] - pts[i]) * sm(f); }; };
+    const draw = () => {
+      const t = T(), rnd = mul(seed * 9973 + 11), cols = 220;
+      ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
+      const nl = mode === 0 ? 0 : mode === 1 ? 1 : mode === 2 ? 2 : 4, Ls = Array.from({ length: nl }, (_, k) => layer(k, rnd)), white = Array.from({ length: cols }, mul(seed * 31 + 5));
+      const amp = k => 1 / (1 << k), tot = nl ? Ls.reduce((a, _, k) => a + amp(k), 0) : 1;
+      const val = x => (nl ? Ls.reduce((a, f, k) => a + f(x) * amp(k), 0) / tot : white[Math.min(cols - 1, Math.floor(x * cols))]);
+      // toplam: dolu siluet
+      ctx.beginPath(); ctx.moveTo(0, H);
+      for (let i = 0; i <= cols; i++) { const x = i / cols; ctx.lineTo(x * W, H - 20 - val(Math.min(x, 0.9999)) * (H - 60)); }
+      ctx.lineTo(W, H); ctx.closePath(); ctx.fillStyle = t.green; ctx.globalAlpha = 0.45; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = t.green; ctx.lineWidth = 2.5; ctx.stroke();
+      // katmanlar: ince çizgiler ve kontrol noktaları
+      const LC = [t.blue, t.amber, t.purple, t.red];
+      Ls.forEach((f, k) => { ctx.strokeStyle = LC[k]; ctx.lineWidth = 1.6; ctx.beginPath(); for (let i = 0; i <= cols; i++) { const x = Math.min(i / cols, 0.9999), y = H - 20 - f(x) * amp(k) * (H - 60) / tot; i ? ctx.lineTo(i / cols * W, y) : ctx.moveTo(0, y); } ctx.stroke(); if (k < 2) { const n = (4 << k) + 1; ctx.fillStyle = LC[k]; for (let j = 0; j < n; j++) { const x = j / (n - 1); ctx.beginPath(); ctx.arc(x * W, H - 20 - f(Math.min(x, 0.9999)) * amp(k) * (H - 60) / tot, 5, 0, 7); ctx.fill(); } } });
+      ctx.font = '600 15px "Source Sans 3"'; ctx.textAlign = 'left';
+      Ls.forEach((_, k) => { ctx.fillStyle = LC[k]; ctx.fillText(`${k + 1}. kat: ${(4 << k) + 1} nokta, boy ${['1', '½', '¼', '⅛'][k]}`, 12, 22 + k * 20); });
+      ctx.fillStyle = t.green; ctx.textAlign = 'right'; ctx.fillText(nl > 1 ? 'yeşil: katların toplamı' : 'yeşil: arazi', W - 12, 22);
+      story.innerHTML = '📖 ' + SC[mode][1]; moral.innerHTML = '💡 ' + SC[mode][2]; sd.textContent = seed;
+    };
+    const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { mode = i; bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } }); return b; });
+    root.setAttribute('data-prevent-swipe', '');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, c, el('div', { class: 'sv-controls' }, el('span', {}, 'tohum (seed): ', sd), btn('🎲 Yeni tohum', () => { seed = 1 + Math.floor(Math.random() * 999); draw(); }), btn('↺ Tohum 7’ye dön', () => { seed = 7; draw(); }), el('span', { class: 'btd-own' }, 'Aynı tohum her zaman aynı araziyi verir.')), moral);
+    bs[0].classList.add('primary'); draw(); SL.onTheme(draw);
+  };
+
   D.noise = function (root) {
     const W = 720, H = 300, cell = 4, GW = W / cell, GH = 230 / cell;
     const c = { seed: 7, scale: 60, oct: 5, pers: 0.5, lac: 2, water: -0.1, view: 'biome' };
