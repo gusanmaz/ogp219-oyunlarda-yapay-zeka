@@ -156,9 +156,10 @@
     const tree = makeGuardTree();
     const diag = el('div', { class: 'gv-side' }), info = el('div', { class: 'sv-counters' });
     let last = {};
+    const sayac = c => Object.entries({ 'can az': c.lowHp, 'görüyor': c.sees, 'yakın': c.close, 'iz var': c.clue }).map(([k, v]) => `<span class="cnt">${k}: <b class="${v ? 'c-green' : 'c-red'}">${v ? 'evet' : 'hayır'}</b></span>`).join('');
     const brain = makeBrain(tree, (trace, c) => {
       last = Object.fromEntries(trace);
-      info.innerHTML = Object.entries({ 'can az': c.lowHp, 'görüyor': c.sees, 'yakın': c.close, 'iz var': c.clue }).map(([k, v]) => `<span class="cnt">${k}: <b class="${v ? 'c-green' : 'c-red'}">${v ? 'evet' : 'hayır'}</b></span>`).join('');
+      info.innerHTML = sayac(c);
     });
     // iki görünüm: "ağaç" (alan küçülür, altta tam genişlikte ağaç) ve "liste" (alan büyük, sağda girintili liste)
     let view = 'tree';
@@ -174,9 +175,38 @@
     };
     const toggle = btn('', () => { view = view === 'tree' ? 'list' : 'tree'; apply(); });
     root.setAttribute('data-prevent-swipe', '');
+    const tasima = sim.world.controls(), oynat = tasima.querySelector('button');
+    const satir = el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas, info), diag, hint), alt = el('div', {}, treeBox);
     root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'), toggle, el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses · X = ateş · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
-      el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas, info), diag, hint), sim.world.controls(), treeBox);
+      satir, tasima, alt);
     apply();
+    // Kaymaz: iki görünümün (ağaç / liste) büyüğü kadar yer; liste her düğümde her durum yazısıyla ölçülür
+    // her durum yazısı (SÜRÜYOR / BAŞARISIZ / BAŞARILI) ayrı ayrı denenir; en uzunu satır kırdırabilir
+    const durumlar = Object.keys(STXT).map(d => { const h = {}; (function w(n) { h[n.id] = d; (n.kids || []).forEach(w); })(tree); return h; });
+    const yerAyir = () => {
+      if (!root.clientWidth) return;
+      const eskiV = view, eskiD = diag.innerHTML, eskiT = treeBox.innerHTML, eskiI = info.innerHTML;
+      info.innerHTML = sayac({});   // sayaçlar ilk karede henüz boş olabilir: en uzun hâliyle (hepsi "hayır") ölç
+      satir.style.minHeight = ''; alt.style.minHeight = '';
+      // ▶ Oynat / ⏸ Durdur yazısı değişince arkadaki düğmeler yana kaymasın: düğme iki yazının genişi kadar
+      if (oynat) { const y = oynat.textContent; oynat.style.minWidth = ''; let w = 0; for (const t of ['▶ Oynat', '⏸ Durdur']) { oynat.textContent = t; w = Math.max(w, oynat.getBoundingClientRect().width); } oynat.textContent = y; oynat.style.minWidth = Math.ceil(w) + 'px'; }
+      let hS = 0, hA = 0;
+      for (const v of ['list', 'tree']) {
+        view = v; apply();
+        for (const hepsi of durumlar) {
+          if (v === 'list') diag.innerHTML = treeOutline(tree, hepsi); else treeBox.innerHTML = treeSVG(tree, hepsi, { H: 200 });
+          hS = Math.max(hS, satir.getBoundingClientRect().height); hA = Math.max(hA, alt.getBoundingClientRect().height);
+        }
+      }
+      view = eskiV; apply(); diag.innerHTML = eskiD; treeBox.innerHTML = eskiT; info.innerHTML = eskiI;
+      satir.style.minHeight = Math.ceil(hS) + 'px'; alt.style.minHeight = Math.ceil(hA) + 'px';
+    };
+    let sonW = 0;
+    const izle = () => { const w = root.clientWidth; if (w && w !== sonW) { sonW = w; yerAyir(); } };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(izle)).observe(root);
+    window.addEventListener('resize', izle); setTimeout(izle, 0);
+    // yazı tipi ölçüm sırasında yükleniyor olabilir (ölçülen metin yeni bir yazı tipi ister): her yükleme bitince yeniden ölç
+    if (document.fonts) { if (document.fonts.ready) document.fonts.ready.then(() => { sonW = 0; izle(); }); if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { sonW = 0; izle(); }); }
     sim.world.reset();
     return { start: () => sim.world.start(), stop: () => sim.world.stop() };
   };
@@ -245,12 +275,19 @@
     };
     const story = el('div', { class: 'btd-story' }), diag = el('div', { class: 'bt-diag' }), log = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
     let trace = [], cur = 0;
+    // günlük ve ders cümlesi: verilen iz ve adım için HTML (yer ayırma ölçümünde de kullanılır)
+    const logHTML = (tr, k) => { const part = tr.slice(0, k); return part.length ? part.map(([id, r], i) => `<div class="${r === 'SUCCESS' ? 'l-ok' : 'l-no'}${i === k - 1 ? ' now' : ''}"><span>${r === 'SUCCESS' ? '✓' : '✗'}</span>${say(byId[id], r)}</div>`).join('') : '<div class="hint">▶ Oynat’a basın: ağaç yukarıdan aşağı, soldan sağa adım adım gezilecek.</div>'; };
+    const moralHTML = (tr, k, st) => {
+      if (k !== tr.length) return '';
+      const visited = new Set(tr.map(x => x[0])), skipped = Object.values(byId).filter(n => !visited.has(n.id) && (n.type === 'cond' || n.type === 'act')).length;
+      return '💡 ' + (o.moral ? o.moral(st, skipped, tr[tr.length - 1][1] === 'SUCCESS') : (skipped ? `Gri kalan <b>${skipped}</b> yaprağa sıra hiç gelmedi.` : 'Hiç gri düğüm yok: her şey denendi.'));
+    };
     const draw = k => {
       const part = trace.slice(0, k);
       diag.innerHTML = treeSVG(tree, Object.fromEntries(part), { W: o.W || 800, H: o.H || 250 });
-      log.innerHTML = part.length ? part.map(([id, r], i) => `<div class="${r === 'SUCCESS' ? 'l-ok' : 'l-no'}${i === k - 1 ? ' now' : ''}"><span>${r === 'SUCCESS' ? '✓' : '✗'}</span>${say(byId[id], r)}</div>`).join('') : '<div class="hint">▶ Oynat’a basın: ağaç yukarıdan aşağı, soldan sağa adım adım gezilecek.</div>';
-      const done = k === trace.length, visited = new Set(trace.map(x => x[0])), skipped = Object.values(byId).filter(n => !visited.has(n.id) && (n.type === 'cond' || n.type === 'act')).length;
-      moral.innerHTML = !done ? '' : '💡 ' + (o.moral ? o.moral(s, skipped, trace[trace.length - 1][1] === 'SUCCESS') : (skipped ? `Gri kalan <b>${skipped}</b> yaprağa sıra hiç gelmedi.` : 'Hiç gri düğüm yok: her şey denendi.'));
+      log.innerHTML = logHTML(trace, k);
+      const done = k === trace.length;
+      moral.innerHTML = moralHTML(trace, k, s);
       if (k > 0 && k !== cur && SL.sfx) { const r = trace[k - 1][1] === 'SUCCESS'; try { SL.sfx(done ? (r ? 'alert' : 'lose') : r ? 'waka' : 'tak'); } catch (e) {} }
       cur = k;
     };
@@ -264,10 +301,43 @@
     };
     const scBtns = o.SC.map(([name, st, txt]) => { const b = btn(name, () => { Object.assign(s, st); scBtns.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(txt, true); }); return b; });
     keys.forEach(k => { boxes[k] = el('input', { type: 'checkbox', onchange: e => { s[k] = e.target.checked; scBtns.forEach(x => x.classList.remove('primary')); load(null, true); } }); });
+    // oynatıcı ve kutucuklar ayrı satırlarda; hız yazısının genişliği sabit (değer değişince satır kırılıp kaymasın)
+    const tasima = SL.transport(fp, { min: 0.4, max: 6 }), hizYazi = tasima.querySelector('.ctl .mini');
+    if (hizYazi) Object.assign(hizYazi.style, { display: 'inline-block', minWidth: '6.5em', fontVariantNumeric: 'tabular-nums' });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...scBtns), story,
       el('div', { class: 'btd-wrap' }, el('div', {}, diag, o.simple ? (() => { const d = el('div', { class: 'bt-legend' }); d.innerHTML = '<span style="--c:var(--green)">denendi, oldu</span><span style="--c:var(--red)">denendi, olmadı</span><span style="--c:var(--rule)">sıra ona hiç gelmedi</span>'; return d; })() : legend()), el('div', {}, log, moral)),
-      el('div', { class: 'sv-controls' }, SL.transport(fp, { min: 0.4, max: 6 }), el('span', { class: 'btd-own' }, 'Kendi senaryonuz: ', ...keys.map(k => el('label', { class: 'ctl' }, boxes[k], ' ' + o.NAMES[k])))));
+      el('div', { class: 'sv-controls' }, tasima), el('div', { class: 'sv-controls' }, el('span', { class: 'btd-own' }, 'Kendi senaryonuz: ', ...keys.map(k => el('label', { class: 'ctl' }, boxes[k], ' ' + o.NAMES[k])))));
+    // Kaymaz: günlük + ders sütununa ve hikâye satırına, bütün dünya durumlarının (hazır senaryolar ve kutucukların
+    // 2^n birleşimi) bütün adımlarındaki EN UZUN içerik kadar yer ayır; gerçek sütunun genişliği ve biçemleriyle ölçülür.
+    const sutun = log.parentElement;
+    const yerAyir = () => {
+      const w = sutun.clientWidth; if (!w) return;
+      if (getComputedStyle(sutun).position === 'static') sutun.style.position = 'relative';
+      const olc = el('div', { style: `position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:${w}px` });
+      const l2 = el('div', { class: 'btd-log' }), m2 = el('div', { class: 'btd-moral' }); olc.append(l2, m2); sutun.append(olc);
+      let hL = 0, hM = 0;
+      for (let b = 0; b < (1 << keys.length); b++) {
+        const st = {}; keys.forEach((kk, i) => { st[kk] = !!(b & (1 << i)); });
+        const tr = []; tick(tree, st, { action: null }, tr);
+        for (let k = 0; k <= tr.length; k++) { l2.innerHTML = logHTML(tr, k); m2.innerHTML = moralHTML(tr, k, st); hL = Math.max(hL, l2.getBoundingClientRect().height); hM = Math.max(hM, m2.getBoundingClientRect().height); }
+      }
+      olc.remove(); log.style.minHeight = Math.ceil(hL) + 'px'; moral.style.minHeight = Math.ceil(hM) + 'px';
+      const sw = story.clientWidth; if (sw) {
+        const kap = story.parentElement; if (getComputedStyle(kap).position === 'static') kap.style.position = 'relative';
+        const o2 = el('div', { class: 'btd-story', style: `position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:${sw}px` }); kap.append(o2);
+        const metinler = o.SC.map(x => x[2]);
+        for (let b = 0; b < (1 << keys.length); b++) metinler.push('Kendi senaryonuz: ' + keys.map((kk, i) => ((b & (1 << i)) ? '✔ ' : '✘ ') + o.NAMES[kk]).join(' · '));
+        let h2 = 0; for (const t of metinler) { o2.innerHTML = '📖 ' + t; h2 = Math.max(h2, o2.getBoundingClientRect().height); }
+        o2.remove(); story.style.minHeight = Math.ceil(h2) + 'px';
+      }
+    };
+    let sonW = 0;
+    const izle = () => { const w = sutun.clientWidth + story.clientWidth * 1000; if (sutun.clientWidth && w !== sonW) { sonW = w; yerAyir(); } };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(izle)).observe(root);
+    window.addEventListener('resize', izle); setTimeout(izle, 0);
+    // yazı tipi ölçüm sırasında yükleniyor olabilir (ölçülen metin yeni bir yazı tipi ister): her yükleme bitince yeniden ölç
+    if (document.fonts) { if (document.fonts.ready) document.fonts.ready.then(() => { sonW = 0; izle(); }); if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { sonW = 0; izle(); }); }
     const st = o.start || 0; scBtns[st].classList.add('primary'); load(o.SC[st][2], false);
     SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
