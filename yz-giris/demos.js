@@ -285,6 +285,26 @@
     let cur = 0, k = 0;
     const diag = el('div'), log = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
     const phaseOf = (sc, i) => (i < 0 ? -1 : sc.steps.length === 4 ? [0, 0, 1, 2][i] : i);
+    const logHTML = (sc, n) => sc.steps.slice(0, n).map((st, i) => `<div class="${st[0]}${i === n - 1 ? ' now' : ''}"><span style="color:var(--${PH[phaseOf(sc, i)][1]})">${phaseOf(sc, i) + 1}</span><b>${PH[phaseOf(sc, i)][0]}:</b> ${st[1]}</div>`).join('') || '<div class="hint"><span>·</span>“▶ Sonraki adım”a basın. Basmadan önce tahmin edin: bekçi ne yapacak?</div>';
+    // Kaymaz ama boşluksuz: günlük + ders cümlesi için, bütün senaryoların en uzun hâli kadar yer ayrılır (gizli bir
+    // ölçüm kutusunda bir kez çizilip ölçülür; genişlik değişince yeniden). Tahmini sabit yükseklik yok.
+    const yerAyir = () => {
+      const w = alan.clientWidth; if (!w) return;
+      // ölçüm kopyası günlüğün kendi sütununda: aynı biçemler (sunumda da kitapta da) geçerli olsun
+      const olc = el('div', { style: `position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:${w}px` });
+      const l2 = el('div', { class: 'btd-log' }), m2 = el('div', { class: 'btd-moral' }); olc.append(l2, m2);
+      const sutun = alan.parentElement; if (getComputedStyle(sutun).position === 'static') sutun.style.position = 'relative'; sutun.append(olc);
+      let enCok = 0;
+      for (const sc of SC) for (let n = 0; n <= sc.steps.length; n++) { l2.innerHTML = logHTML(sc, n); m2.innerHTML = n === sc.steps.length ? '💡 ' + sc.moral : ''; enCok = Math.max(enCok, olc.getBoundingClientRect().height); }
+      olc.remove(); alan.style.minHeight = Math.ceil(enCok) + 'px';
+      // hikâye satırı da (senaryoya göre bir ya da iki satır): en uzununa yer ayır
+      const sw = story.clientWidth; if (sw) {
+        const o2 = el('div', { class: 'btd-story', style: `position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:${sw}px` });
+        const kap = story.parentElement; if (getComputedStyle(kap).position === 'static') kap.style.position = 'relative'; kap.append(o2);
+        let h2 = 0; for (const sc of SC) { o2.innerHTML = '📖 ' + sc.story; h2 = Math.max(h2, o2.getBoundingClientRect().height); }
+        o2.remove(); story.style.minHeight = Math.ceil(h2) + 'px';
+      }
+    };
     const draw = () => {
       const t = T(), sc = SC[cur], ph = phaseOf(sc, k - 1), acted = k >= sc.steps.length, G = acted ? sc.G : G0, P = sc.P;
       let s = `<rect x="0" y="0" width="${W}" height="${H}" rx="10" fill="${t.card}" stroke="${t.rule}"/>`;
@@ -310,7 +330,7 @@
       s += `<text x="${P[0]}" y="${P[1] + 12}" text-anchor="middle" font-size="34">${sc.noise ? '🥷' : '🧍'}</text>`;
       if (sc.noise) s += `<text x="${P[0] + 30}" y="${P[1] + 34}" font-size="24">🏺</text>`;
       diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
-      log.innerHTML = sc.steps.slice(0, k).map((st, i) => `<div class="${st[0]}${i === k - 1 ? ' now' : ''}"><span style="color:var(--${PH[phaseOf(sc, i)][1]})">${phaseOf(sc, i) + 1}</span><b>${PH[phaseOf(sc, i)][0]}:</b> ${st[1]}</div>`).join('') || '<div class="hint"><span>·</span>“▶ Sonraki adım”a basın. Basmadan önce tahmin edin: bekçi ne yapacak?</div>';
+      log.innerHTML = logHTML(sc, k);
       moral.innerHTML = acted ? '💡 ' + sc.moral : '';
       next.disabled = acted;
     };
@@ -318,7 +338,14 @@
     const bs = SC.map((sc, i) => { const b = btn(sc.ad, () => { cur = i; k = 0; bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); story.innerHTML = '📖 ' + sc.story; draw(); }); return b; });
     next.classList.add('primary');
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap al' }, diag, el('div', {}, el('div', { class: 'sv-controls' }, next, btn('↺ Baştan', () => { k = 0; draw(); })), log, moral)));
+    const alan = el('div', {}, log, moral);
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap al' }, diag, el('div', {}, el('div', { class: 'sv-controls' }, next, btn('↺ Baştan', () => { k = 0; draw(); })), alan)));
+    // yer ayırmayı genişlik her değiştiğinde (ilk görünüş, pencere, yazı tipleri yüklenince) yinele
+    let sonW = 0;
+    const izle = () => { const w = alan.clientWidth; if (w && w !== sonW) { sonW = w; yerAyir(); } };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(izle)).observe(root);
+    window.addEventListener('resize', izle); setTimeout(izle, 0);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { sonW = 0; izle(); });
     bs[0].classList.add('primary'); story.innerHTML = '📖 ' + SC[0].story; draw(); SL.onTheme(draw);
   };
 })();
