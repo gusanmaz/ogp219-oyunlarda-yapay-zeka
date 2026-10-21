@@ -253,9 +253,10 @@
     const view = el('div', { class: 'cols' });
     const draw = () => {
       view.innerHTML = `<div><div class="mini" style="font-size:15px"><b>Yığınlı FSM</b> (en üstteki = şu anki durum):</div><div class="pd-stack">${stack.slice().reverse().map((s, i) => `<div class="${i === 0 ? 'top' : ''}">${s}</div>`).join('')}</div></div>` +
-        `<div><div class="mini" style="font-size:15px"><b>Düz FSM</b> (tek değişken):</div><div class="pd-stack"><div class="top">${plain}</div></div><div class="mini" style="margin-top:8px;font-size:14px;line-height:1.35">${log.slice(-3).map(l => `<div>${l}</div>`).join('')}</div></div>`;
+        `<div><div class="mini" style="font-size:15px"><b>Düz FSM</b> (tek değişken):</div><div class="pd-stack"><div class="top">${plain}</div></div><div class="mini" style="margin-top:8px;font-size:14px;line-height:1.35">${[0, 1, 2].map(k => `<div>${log[log.length - 3 + k] || '&nbsp;'}</div>`).join('')}</div></div>`;
     };
-    const ev = (name, fn) => btn(name, () => { fn(); draw(); });
+    // günlük: son 3 satır, yeri baştan ayrılır (boş satırlar &nbsp;); dizi de 3'te tutulur, kutu büyümez
+    const ev = (name, fn) => btn(name, () => { fn(); log = log.slice(-3); draw(); });
     root.append(el('div', { class: 'sv-controls' },
       ev('📞 Telefon çaldı', () => { stack.push('TELEFONDA'); plain = 'TELEFONDA'; log.push('Telefon: düz FSM önceki durumu unuttu!'); }),
       ev('🔫 Silah sesi', () => { stack.push('ALARM'); plain = 'ALARM'; log.push('Alarm üste eklendi'); }),
