@@ -190,7 +190,7 @@
   <div class="demo" data-demo="bandit"></div>
   <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
     <ol style="font-size:.9em">
-      <li>ε = 0 (hiç keşif yok) ile 1000 çekin. Ajan ilk “şanslı” makineye takılıp kalabilir: tahminleri çoğu makine için hiç güncellenmez. Gerçeği gösterip kontrol edin.</li>
+      <li>ε = 0 (hiç keşif yok) ile 1000 çekin. Ajan ilk denediği makineye (🎰 1) takılır: tahminler eşitken ilki seçilir, öbür makinelerin tahmini hiç güncellenmez. Gerçeği gösterip kontrol edin.</li>
       <li>ε = 1 (hep keşif): bütün tahminler doğru çıkar, ama ödül hep ortalamada kalır, pişmanlık büyür.</li>
       <li>ε = 0,1 civarı: hem iyi makineyi bulur hem de çoğunlukla onu çeker. “Yeni makineler” ile birkaç kez deneyin.</li>
       <li>Oyundaki karşılığı: hep aynı taktiği deneyen YZ hiçbir zaman daha iyisini bulamaz; hep rastgele oynayan ise bildiğini kullanamaz. Y6’daki MCTS’nin UCB formülü de aynı ikilemi çözüyordu.</li>
@@ -201,7 +201,7 @@
 <section data-sec="RL">
   <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
     <ol style="font-size:.9em">
-      <li>ε = 0 (hiç keşif yok) ile 1000 çekin. Ajan ilk “şanslı” makineye takılıp kalabilir: tahminleri çoğu makine için hiç güncellenmez. Gerçeği gösterip kontrol edin.</li>
+      <li>ε = 0 (hiç keşif yok) ile 1000 çekin. Ajan ilk denediği makineye (🎰 1) takılır: tahminler eşitken ilki seçilir, öbür makinelerin tahmini hiç güncellenmez. Gerçeği gösterip kontrol edin.</li>
       <li>ε = 1 (hep keşif): bütün tahminler doğru çıkar, ama ödül hep ortalamada kalır, pişmanlık büyür.</li>
       <li>ε = 0,1 civarı: hem iyi makineyi bulur hem de çoğunlukla onu çeker. “Yeni makineler” ile birkaç kez deneyin.</li>
       <li>Oyundaki karşılığı: hep aynı taktiği deneyen YZ hiçbir zaman daha iyisini bulamaz; hep rastgele oynayan ise bildiğini kullanamaz. Y6’daki MCTS’nin UCB formülü de aynı ikilemi çözüyordu.</li>
@@ -267,7 +267,7 @@
       <li>“1 adım”a 10–15 kez basın: alttaki satır her Bellman güncellemesini sayılarla gösteriyor. Ajan hazineyi bulana kadar neredeyse hiçbir şey öğrenmez (seyrek ödül!).</li>
       <li>“100 bölüm eğit”: her hücrenin dört üçgeni o yöndeki Q değeri (yeşil = iyi, kırmızı = kötü). Oklar hazineye doğru “akıyor” mu? Lavın yanındaki hücrelerde lava bakan üçgenler kırmızı.</li>
       <li>γ’yı 0,3’e düşürüp “unut” + 100 bölüm: uzak hücrelerin değeri neredeyse sıfır; ajan “miyop” olur.</li>
-      <li>Adım cezasını 0 yapın: ajan acele etmez, dolambaçlı yollar da “iyi” görünür. −0,5 yapın: lava atlamak, uzun yol yürümekten “ucuz” hâle gelebilir!</li>
+      <li>Adım cezasını 0 yapın: ajan acele etmez, dolambaçlı yollar da “iyi” görünür. −3 yapıp “unut” + 100 bölüm: S’den çıkan oklar lava gidiyor; üç adımda lava atlamak, hazineye kadar yürümekten “ucuz” hâle geldi!</li>
       <li>Hücrelere tıklayarak duvar ve lav ekleyin, eğitimi sürdürün: yeni haritaya uyum sağlıyor mu?</li>
     </ol>
   </div><!--/dh-->
@@ -279,7 +279,7 @@
       <li>“1 adım”a 10–15 kez basın: alttaki satır her Bellman güncellemesini sayılarla gösteriyor. Ajan hazineyi bulana kadar neredeyse hiçbir şey öğrenmez (seyrek ödül!).</li>
       <li>“100 bölüm eğit”: her hücrenin dört üçgeni o yöndeki Q değeri (yeşil = iyi, kırmızı = kötü). Oklar hazineye doğru “akıyor” mu? Lavın yanındaki hücrelerde lava bakan üçgenler kırmızı.</li>
       <li>γ’yı 0,3’e düşürüp “unut” + 100 bölüm: uzak hücrelerin değeri neredeyse sıfır; ajan “miyop” olur.</li>
-      <li>Adım cezasını 0 yapın: ajan acele etmez, dolambaçlı yollar da “iyi” görünür. −0,5 yapın: lava atlamak, uzun yol yürümekten “ucuz” hâle gelebilir!</li>
+      <li>Adım cezasını 0 yapın: ajan acele etmez, dolambaçlı yollar da “iyi” görünür. −3 yapıp “unut” + 100 bölüm: S’den çıkan oklar lava gidiyor; üç adımda lava atlamak, hazineye kadar yürümekten “ucuz” hâle geldi!</li>
       <li>Hücrelere tıklayarak duvar ve lav ekleyin, eğitimi sürdürün: yeni haritaya uyum sağlıyor mu?</li>
     </ol>
   </div>
@@ -398,7 +398,7 @@
     <div>
       <ol style="font-size:.84em">
         <li><b>Sonucu ödüllendirin, yöntemi değil</b>: “bitiş çizgisi” iyi, “hedef vurma” riskli. Ara ödüller (shaping) öğrenmeyi hızlandırır ama hile kapısıdır.</li>
-        <li><b>Küçük adım cezası</b>: “acele et”. Çok büyükse ajan “kendini öldürmeyi” seçebilir (ızgara demosunda adım cezası −0,5!).</li>
+        <li><b>Küçük adım cezası</b>: “acele et”. Çok büyükse ajan “kendini öldürmeyi” seçebilir (ızgara demosunda adım cezası −3!).</li>
         <li><b>Ödülü ölçekli tutun</b>: ±1 civarı. ML-Agents belgeleri de büyük ödülleri dengesiz bulur.</li>
         <li><b>Gerçek oyunu izleyin</b>: getiri grafiği yükseliyor diye ajan doğru şeyi öğrenmiş değildir. Mutlaka <b>oynarken izleyin</b>.</li>
         <li><b>Müfredat</b> (curriculum): önce kolay görev, sonra zor. <b>Kendi kendine oynama</b>: rakip de öğrendikçe zorlaşır.</li>
@@ -816,7 +816,7 @@ function step() {
       <ul>
         <li><code>EPSILON = 0</code>: hiç keşif yok. Öğrenebiliyor mu?</li>
         <li><code>GAMMA = 0.3</code>: “miyop” ajan — uzak kareler neden boş kalıyor?</li>
-        <li>Adım cezasını <code>-0.1</code>’den <code>-2</code>’ye çekin: ajan lava atlamayı mı seçiyor?</li>
+        <li>Adım cezasını <code>-0.1</code>’den <code>-3</code>’e çekin: ajan lava atlamayı mı seçiyor?</li>
         <li>Eğitim bittikten sonra yola tıklayıp duvar koyun: yeni yolu buluyor mu?</li>
       </ul>
     </div>

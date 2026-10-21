@@ -131,7 +131,8 @@
       const avg = rets.slice(-20); SL.drawLabel(ctx, `son 20 ort.: ${avg.length ? (avg.reduce((a, b) => a + b, 0) / avg.length).toFixed(2) : '—'}`, px, oy + 176, t.muted, { size: 11, align: 'left' });
       SL.drawLabel(ctx, 'yeşil = iyi, kırmızı = kötü', px, oy + 206, t.muted, { size: 10, align: 'left' });
       SL.drawLabel(ctx, 'ok = açgözlü (en iyi) eylem', px, oy + 222, t.muted, { size: 10, align: 'left' });
-      SL.drawLabel(ctx, 'tık = duvar/lav/boş', px, oy + 238, t.muted, { size: 10, align: 'left' });
+      SL.drawLabel(ctx, 'üçgen = o yöne gitmenin Q değeri', px, oy + 238, t.muted, { size: 10, align: 'left' });
+      SL.drawLabel(ctx, 'tık = duvar/lav/boş', px, oy + 254, t.muted, { size: 10, align: 'left' });
       if (last) {
         const f = v => v.toFixed(2);
         info.innerHTML = `Son güncelleme: Q(s, ${ARW[last.a]}) ← ${f(last.old)} + α·(r + γ·max Q(s′) − ${f(last.old)}) = ${f(last.old)} + ${cfg.alpha}·(${f(last.r)} + ${cfg.gamma}·${f(last.mx)} − ${f(last.old)}) = <b>${f(last.nw)}</b>${last.done ? ' (bölüm bitti: max Q(s′) = 0)' : ''}`;
@@ -150,7 +151,7 @@
       slider('α öğrenme hızı', 0.05, 1, cfg.alpha, 0.05, v => { cfg.alpha = v; }),
       slider('γ indirim', 0, 0.99, cfg.gamma, 0.01, v => { cfg.gamma = v; }),
       slider('ε keşif', 0, 1, cfg.eps, 0.05, v => { cfg.eps = v; }),
-      slider('adım cezası', -1, 0, env.stepR, 0.05, v => { env.stepR = v; })),
+      slider('adım cezası', -3, 0, env.stepR, 0.05, v => { env.stepR = v; })),
       el('div', { class: 'sv-controls' },
         btn('1 adım', () => { stop(); stepOnce(); draw(); }), playBtn,
         btn('10 bölüm eğit', () => { stop(); runEpisodes(10); draw(); }), btn('100 bölüm eğit', () => { stop(); runEpisodes(100); draw(); }),
@@ -168,7 +169,7 @@
     const newGame = () => { p = Array.from({ length: K }, () => 0.15 + Math.random() * 0.7); est = Array(K).fill(0); cnt = Array(K).fill(0); total = 0; pulls = 0; hist = []; opt = 0; };
     newGame();
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
-    const pull = (k) => { if (k == null) k = Math.random() < eps ? Math.floor(Math.random() * K) : argmax(est); const r = Math.random() < p[k] ? 1 : 0; cnt[k]++; est[k] += (r - est[k]) / cnt[k]; total += r; pulls++; opt += Math.max(...p); hist.push(total / pulls); return [k, r]; };
+    const pull = (k) => { if (k == null) k = Math.random() < eps ? Math.floor(Math.random() * K) : argmax(est); const r = Math.random() < p[k] ? 1 : 0; cnt[k]++; est[k] += (r - est[k]) / cnt[k]; total += r; pulls++; opt += Math.max(...p) - p[k]; hist.push(total / pulls); return [k, r]; };
     let lastPull = null;
     const draw = () => {
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
@@ -186,8 +187,8 @@
       }
       lineChart(ctx, 470, 20, 230, 150, hist.slice(-300), t.green, t, 'çekiş başına ortalama ödül');
       SL.drawLabel(ctx, `toplam ödül ${total} / ${pulls} çekiş`, 585, 186, t.ink, { size: 11 });
-      SL.drawLabel(ctx, `pişmanlık ≈ ${(opt - total).toFixed(1)}`, 585, 202, t.red, { size: 11 });
-      info.innerHTML = `Mavi: ajanın tahmini (ortalama ödül), sarı: gerçek olasılık. ε = ${eps}: her çekişte %${Math.round(eps * 100)} rastgele makine (keşif), kalan zamanda en iyi görünen (sömürü). <b>Pişmanlık</b> = hep en iyi makineyi çekseydik beklenen ödül − aldığımız.`;
+      SL.drawLabel(ctx, `pişmanlık ≈ ${opt.toFixed(1)}`, 585, 202, t.red, { size: 11 });
+      info.innerHTML = `Mavi: ajanın tahmini (ortalama ödül), sarı: gerçek olasılık. ε = ${eps}: her çekişte %${Math.round(eps * 100)} rastgele makine (keşif), kalan zamanda en iyi görünen (sömürü). <b>Pişmanlık</b> = hep en iyi makineyi çekseydik beklenen ödül − çektiğimiz makinelerin beklenen ödülü (hiç eksiye düşmez).`;
     };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
@@ -311,7 +312,7 @@
         F.push({ g, pop: pop.slice(), sc, par, phase: 'seç', hist: hist.slice(), note: `<b>${g}. nesil · seç:</b> en uzağa atan iki mancınık: ${pop[par[0]]}° (${sc[par[0]]} m) ve ${pop[par[1]]}° (${sc[par[1]]} m). Öbürleri elenir.` });
         const a = pop[par[0]], b = pop[par[1]], kids = [a, b];
         while (kids.length < 8) kids.push(Math.max(1, Math.min(89, Math.round((a + b) / 2 + gauss() * sig))));
-        if (g < 6) F.push({ g, pop: kids.slice(), sc: kids.map(range), phase: 'çoğal', kidsFrom: [a, b], hist: hist.slice(), note: `<b>${g}. nesil · çoğal:</b> iki ebeveyn aynen kalır; 6 çocuk = ortalamaları (${String((a + b) / 2).replace('.', ',')}°) ${sig ? `± en çok ~${sig * 2}° rastgele sapma (mutasyon)` : '(mutasyon yok)'}.` });
+        if (g < 6) F.push({ g, pop: kids.slice(), sc: kids.map(range), phase: 'çoğal', kidsFrom: [a, b], hist: hist.slice(), note: `<b>${g}. nesil · çoğal:</b> iki ebeveyn aynen kalır; 6 çocuk = ortalamaları (${String((a + b) / 2).replace('.', ',')}°) ${sig ? `+ rastgele sapma (mutasyon; çoğu ±${sig * 2}° içinde, arada daha büyüğü de çıkar)` : '(mutasyon yok)'}.` });
         pop = kids;
       }
       F[F.length - 1].final = true;
@@ -342,7 +343,7 @@
 
   D.neuro = function (root) {
     const W = 720, H = 340, POP = 30;
-    let gen = 1, cars, genes, best = [], timer = null, sigma = 0.3, fast = 1, tframe = 0, bestEver = null;
+    let gen = 1, cars, genes, best = [], timer = null, sigma = 0.3, fast = 8, tframe = 0, bestEver = null;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const startP = TRK[0], startH = V.angle(V.sub(TRK[1], TRK[0]));
     const spawn = () => { cars = genes.map(g => ({ g, p: V.copy(startP), h: startH, v: 0, alive: true, prog: 0, last: 0, best: 0, idle: 0 })); tframe = 0; };

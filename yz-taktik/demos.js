@@ -162,7 +162,7 @@
     const W = 720, H = 380, cs = 20, GW = W / cs, GH = H / cs;
     // uzun duvarın altı tehdidin görüşünden saklı: en kısa yol açıktan, taktik yol duvarın gölgesinden
     const WALLS = [{ x: 120, y: 220, w: 480, h: 24 }, { x: 240, y: 70, w: 26, h: 60 }, { x: 470, y: 100, w: 60, h: 26 }, { x: 330, y: 300, w: 60, h: 26 }];
-    let threat = V.v(360, 30), start = V.v(40, 110), goal = V.v(680, 150), cfg = { danger: 30 }, drag = null;
+    let threat = V.v(360, 30), start = V.v(40, 110), goal = V.v(680, 150), cfg = { danger: 10 }, drag = null;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const blocked = i => { const c = V.v((i % GW + 0.5) * cs, (Math.floor(i / GW) + 0.5) * cs); return WALLS.some(r => c.x > r.x && c.x < r.x + r.w && c.y > r.y && c.y < r.y + r.h); };
     const visible = i => { const c = V.v((i % GW + 0.5) * cs, (Math.floor(i / GW) + 0.5) * cs); return V.dist(c, threat) < 420 && !WALLS.some(r => segRect(c, threat, r)); };
@@ -194,14 +194,14 @@
       line(a.path, t.muted, [6, 5]); line(b.path, t.green);
       ctx.fillStyle = t.red; ctx.beginPath(); ctx.arc(threat.x, threat.y, 11, 0, 7); ctx.fill(); SL.drawLabel(ctx, 'tehdit (sürükle)', threat.x, threat.y + (threat.y < 50 ? 24 : -20), t.red, { size: 11 });
       ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(start.x, start.y, 9, 0, 7); ctx.fill(); ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(goal.x, goal.y, 9, 0, 7); ctx.fill();
-      info.innerHTML = `Kesikli gri: en kısa yol — <b>${a.exposed}</b> hücre tehdidin görüşünde, ${a.path.length} adım. Yeşil: taktik yol (görünen hücre maliyeti ×${(1 + cfg.danger / 10).toFixed(1)}) — <b>${b.exposed}</b> hücre görünür, ${b.path.length} adım.`;
+      info.innerHTML = `Kesikli gri: en kısa yol — <b>${a.exposed}</b> hücre tehdidin görüşünde, ${a.path.length} adım. Yeşil: taktik yol (görünen hücre maliyeti ×${(1 + cfg.danger / 10).toFixed(1).replace(".", ",")}) — <b>${b.exposed}</b> hücre görünür, ${b.path.length} adım.`;
     };
     const pos = e => { const r = C.getBoundingClientRect(); return V.v(((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height); };
     C.addEventListener('mousedown', e => { const p = pos(e); drag = V.dist(p, threat) < 18 ? 't' : V.dist(p, start) < 18 ? 's' : V.dist(p, goal) < 18 ? 'g' : null; });
     C.addEventListener('mousemove', e => { if (!drag) return; const p = pos(e); if (drag === 't') threat = p; else if (drag === 's') start = p; else goal = p; draw(); });
     window.addEventListener('mouseup', () => { drag = null; });
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, slider('tehlike maliyeti', 0, 80, cfg.danger, 5, v => { cfg.danger = v; draw(); }), el('span', { class: 'mini' }, 'Kırmızımsı hücreler tehdidin görüşünde. Tehdidi, başlangıcı (mavi) ve hedefi (yeşil) sürükleyin.')), C, info);
+    root.append(el('div', { class: 'sv-controls' }, slider('tehlike maliyeti', 0, 20, cfg.danger, 1, v => { cfg.danger = v; draw(); }), el('span', { class: 'mini' }, 'Kırmızımsı hücreler tehdidin görüşünde. Tehdidi, başlangıcı (mavi) ve hedefi (yeşil) sürükleyin.')), C, info);
     draw(); SL.onTheme(draw);
   };
 
@@ -227,7 +227,8 @@
         if (best) { ctx.strokeStyle = th.green; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(best.x, best.y, 10, 0, 7); ctx.stroke(); ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(agent.x, agent.y); ctx.lineTo(best.x, best.y); ctx.stroke(); ctx.setLineDash([]); }
         ctx.fillStyle = th.blue; ctx.beginPath(); ctx.arc(agent.x, agent.y, 9, 0, 7); ctx.fill();
         ctx.fillStyle = th.red; ctx.beginPath(); ctx.arc(threat.x, threat.y, 9, 0, 7); ctx.fill();
-      }
+      },
+      reset() { t = 0; threat = V.v(510, 150); best = null; }   // ↺ Baştan: tehdit yörüngesinin başına döner
     });
     box.append(w.canvas, w.controls({ speed: false })); w.reset();
     return {

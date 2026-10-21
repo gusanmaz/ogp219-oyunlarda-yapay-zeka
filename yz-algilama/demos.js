@@ -90,7 +90,7 @@
       let c = MODELS[cfg.model].cert(f, l, d, ang);
       const blocked = WALLS.some(r => segRect(G.p, P, r));
       if (blocked) c = 0;
-      const dark = cfg.light && SHADOW.some(r => inRect(P, r));
+      const dark = cfg.light && cfg.model !== 'bool' && SHADOW.some(r => inRect(P, r));   // evet/hayır konide ışık ve çömelme yok
       if (c > 0 && cfg.model !== 'bool') { if (dark) c *= 0.3; if (cfg.crouch) c *= 0.6; }
       return { c, blocked, dark };
     };
@@ -114,14 +114,14 @@
       },
       render(ctx, w, t) {
         ctx.fillStyle = t.dark ? '#1a1d28' : '#eef0f4'; ctx.fillRect(0, 0, W, H);
-        if (cfg.light) SHADOW.forEach(r => { ctx.fillStyle = t.dark ? 'rgba(0,0,0,0.55)' : 'rgba(20,24,40,0.35)'; ctx.fillRect(r.x, r.y, r.w, r.h); });
+        if (cfg.light && cfg.model !== 'bool') SHADOW.forEach(r => { ctx.fillStyle = t.dark ? 'rgba(0,0,0,0.55)' : 'rgba(20,24,40,0.35)'; ctx.fillRect(r.x, r.y, r.w, r.h); });
         // görüş bölgelerini örnekleyerek çiz
         if (cfg.showZones) { const fwd = V.fromAngle(G.h); for (let y = 0; y < H; y += 8) for (let x = 0; x < W; x += 8) { const P = V.v(x + 4, y + 4), to = V.sub(P, G.p), d = V.len(to); if (d > 340) continue; const f = V.dot(to, fwd), l = V.cross(fwd, to), ang = Math.acos(SL.clamp(f / (d || 1), -1, 1)); const c = MODELS[cfg.model].cert(f, l, d, ang); if (c <= 0 || WALLS.some(r => segRect(G.p, P, r))) continue; ctx.fillStyle = c >= 1 ? 'rgba(255,92,122,0.22)' : c >= 0.5 ? 'rgba(245,165,36,0.18)' : 'rgba(79,140,255,0.16)'; ctx.fillRect(x, y, 8, 8); } }
         WALLS.forEach(r => { ctx.fillStyle = t.dark ? '#4a4f63' : '#3d4255'; ctx.fillRect(r.x, r.y, r.w, r.h); });
         ctx.strokeStyle = t.rule; ctx.setLineDash([4, 6]); ctx.beginPath(); PATROL.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
         if (lkp && levelOf(aw) >= 1) { ctx.globalAlpha = 0.6; ctx.strokeStyle = t.red; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(lkp.x, lkp.y, 11, 0, 7); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; SL.drawLabel(ctx, 'son bilinen konum', lkp.x, lkp.y + 22, t.red, { size: 10 }); }
         const P = w.mouse.inside ? w.mouse : V.v(500, 60);
-        ctx.fillStyle = t.green; ctx.globalAlpha = info.dark ? 0.5 : 1; ctx.beginPath(); ctx.arc(P.x, P.y, cfg.crouch ? 7 : 10, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.fillStyle = t.green; ctx.globalAlpha = info.dark ? 0.5 : 1; ctx.beginPath(); ctx.arc(P.x, P.y, cfg.crouch && cfg.model !== 'bool' ? 7 : 10, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
         const lv = levelOf(aw), L = LEVELS[lv];
         SL.drawAgent(ctx, G.p, G.h, t[L[2]], 14);
         if (L[3]) SL.drawLabel(ctx, L[3], G.p.x, G.p.y - 28, t[L[2]], { size: 16 });
@@ -131,12 +131,15 @@
       }
     });
     const cb = (lab, key) => el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg[key] = e.target.checked; } }); x.checked = cfg[key]; return x; })(), ' ' + lab);
+    const cbLight = cb('ışık/gölge', 'light'), cbCrouch = cb('çömel', 'crouch');
+    // evet/hayır koni ışığı ve çömelmeyi hesaba katmaz: iki kutu yerinde kalır ama soluk ve devre dışı
+    const syncModel = () => { const off = cfg.model === 'bool'; [cbLight, cbCrouch].forEach(l => { l.querySelector('input').disabled = off; l.style.opacity = off ? '0.45' : ''; l.title = off ? 'Evet/hayır koni ışığı ve çömelmeyi hesaba katmaz: yalnızca “görüş bölgeleri” modelinde çalışır.' : ''; }); };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Görüş modeli: ', select({ zones: MODELS.zones.ad, bool: MODELS.bool.ad }, cfg.model, v => { cfg.model = v; })),
-      cb('ışık/gölge', 'light'), cb('çömel', 'crouch'), cb('bölgeleri göster', 'showZones')),
+      el('label', { class: 'ctl' }, 'Görüş modeli: ', select({ zones: MODELS.zones.ad, bool: MODELS.bool.ad }, cfg.model, v => { cfg.model = v; syncModel(); w.draw(); })),
+      cbLight, cbCrouch, cb('bölgeleri göster', 'showZones')),
       el('div', { class: 'sv-controls' }, slider('fark etme süresi (sn)', 0.3, 4, cfg.rise, 0.1, v => { cfg.rise = v; }), slider('unutma hızı (/sn)', 0.05, 1, cfg.decay, 0.05, v => { cfg.decay = v; }), el('span', { class: 'mini' }, 'Fare = oyuncu')),
-      el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, w.canvas), el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:17px;line-height:1.35"><span class="bt">Ekranda ne var?</span><ul><li><b>Ok</b> = muhafız; kesikli çizgi devriye yolu. <b>Yeşil daire</b> = oyuncu (fare).</li><li><span class="c-red"><b>Kırmızı bölge</b></span>: tam önü, “tatlı nokta” → kesinlik <b>1</b></li><li><span class="c-amber"><b>Turuncu</b></span>: ana görüş → <b>0,5</b> · <span class="c-blue"><b>mavi</b></span>: çevre/arka yakın → <b>0,25</b></li><li><b>Gri dikdörtgenler</b> = gölge (kesinlik ×0,3). Koyu çubuklar duvar.</li><li>Üstteki yazı: o anki <b>kesinlik</b> ve biriken <b>farkındalık</b> (0–1).</li><li>Farkındalık doldukça: habersiz → <b>?</b> şüpheli → <b>??</b> arıyor → <b>!</b> alarm.</li></ul></div>' })),
+      el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, w.canvas), el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:17px;line-height:1.35"><span class="bt">Ekranda ne var?</span><ul><li><b>Ok</b> = muhafız; kesikli çizgi devriye yolu. <b>Yeşil daire</b> = oyuncu (fare).</li><li><span class="c-red"><b>Kırmızı bölge</b></span>: tam önü, “tatlı nokta” → kesinlik <b>1</b></li><li><span class="c-amber"><b>Turuncu</b></span>: ana görüş → <b>0,5</b> · <span class="c-blue"><b>mavi</b></span>: çevre → <b>0,25</b>, arka çok yakın → <b>0,35</b></li><li><b>Gri dikdörtgenler</b> = gölge (kesinlik ×0,3; evet/hayır konide yok). Koyu çubuklar duvar.</li><li>Üstteki yazı: o anki <b>kesinlik</b> ve biriken <b>farkındalık</b> (0–1).</li><li>Farkındalık doldukça: habersiz → <b>?</b> şüpheli → <b>??</b> arıyor → <b>!</b> alarm.</li></ul></div>' })),
       w.controls());
     w.reset();
     return { start: () => w.start(), stop: () => w.stop() };
@@ -162,7 +165,7 @@
     const emit = (p, loud) => {
       noises.push({ p: V.copy(p), r: 0, max: loud });
       const h = hearDist(p);
-      if (h.d <= loud) { heard = { p: V.copy(p), via: h.via, d: h.d, t: 3 }; mem.unshift({ p: V.copy(p), age: 0, conf: 1 - h.d / loud }); mem.length = Math.min(mem.length, 5); }
+      if (h.d <= loud) { heard = { p: V.copy(p), via: h.via, d: h.d, loud, t: 3 }; mem.unshift({ p: V.copy(p), age: 0, conf: 1 - h.d / loud }); mem.length = Math.min(mem.length, 5); }
     };
     const w = new SL.World({
       W, H, reset,
@@ -186,7 +189,7 @@
         if (heard) { ctx.strokeStyle = t.red; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(heard.p.x, heard.p.y); if (heard.via) ctx.lineTo(heard.via.x, heard.via.y); ctx.lineTo(G.p.x, G.p.y); ctx.stroke(); ctx.setLineDash([]); }
         SL.drawAgent(ctx, G.p, G.h, heard ? t.amber : t.blue, 14); if (heard) SL.drawLabel(ctx, '?', G.p.x, G.p.y - 26, t.amber, { size: 16 });
         if (w.mouse.inside) { ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(w.mouse.x, w.mouse.y, 8, 0, 7); ctx.fill(); }
-        SL.drawLabel(ctx, heard ? `duydu: ses mesafesi ${Math.round(heard.d)} ≤ ${cfg.loud}` : 'tıkla = gürültü · fareyi hızlı gezdir = koşma sesi', 250, 16, t.ink, { size: 12 });
+        SL.drawLabel(ctx, heard ? `duydu: ses mesafesi ${Math.round(heard.d)} ≤ ${Math.round(heard.loud)}` : 'tıkla = gürültü · fareyi hızlı gezdir = koşma sesi', 250, 16, t.ink, { size: 12 });
       }
     });
     root.setAttribute('data-prevent-swipe', '');

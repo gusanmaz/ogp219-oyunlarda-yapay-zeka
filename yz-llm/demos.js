@@ -73,7 +73,7 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
   const words = s => s.toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(w)).map(w => w.slice(0, 4));   // kaba kök: ilk 4 harf
   SL.LLM_words = words;
   D.memory = function (root) {
-    const cfg = { wRec: 1, wImp: 1, wRel: 1, k: 3, now: 25, decay: 0.9 };
+    const cfg = { wRec: 1, wImp: 1, wRel: 2, k: 4, now: 25, decay: 0.9 };
     let q = QUERIES[0];
     const table = el('div', {}), prompt = el('pre', { class: 'mem-prompt' }), info = el('div', { class: 'sv-note' });
     const inp = el('input', { type: 'text', class: 'mem-q', value: q, oninput: e => { q = e.target.value; draw(); } });
@@ -129,19 +129,23 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
   D.pipeline = function (root) {
     let key = 'ok', questDone = false;
     const view = el('div', { class: 'pl-grid' }), info = el('div', { class: 'sv-note' });
+    const qcb = el('input', { type: 'checkbox', onchange: e => { questDone = e.target.checked; draw(); } });
+    const qlab = el('label', { class: 'ctl' }, qcb, ' oyun durumu: kurt görevi tamamlandı');
     const draw = () => {
       const sc = SCEN[key], r = pipeline(sc.raw, { questDone });
+      const off = key !== 'inject' && key !== 'honest';   // 1–4. senaryolarda "ver" eylemi yok: bayrak sonucu değiştirmez
+      qcb.disabled = off; qlab.style.opacity = off ? '0.45' : ''; qlab.title = off ? 'Bu senaryoda ödül (“ver”) eylemi yok: görev bayrağı yalnızca 5. ve 6. senaryoda sonucu değiştirir.' : '';
       const fallback = r.ok ? '' : `<div class="pl-fb">↩️ Yedek davranış: NPC el yazımı bir cümle söyler (“${key === 'inject' || key === 'honest' ? 'Önce kurtların işini bitir, sonra konuşuruz.' : 'Hmm, ne dediğini anlamadım yolcu.'}”) ve hata kaydedilir.</div>`;
       view.innerHTML = `<div><div class="pl-h">🧑 Oyuncu</div><div class="pl-box">${esc(sc.player)}</div><div class="pl-h">🤖 LLM ham çıktısı</div><pre class="pl-raw">${esc(sc.raw)}</pre></div>
         <div><div class="pl-h">🛡️ Oyunun denetim hattı</div>${r.st.map(([n, ok, msg]) => `<div class="pl-step ${ok ? 'pl-ok' : 'pl-bad'}"><b>${ok ? '✅' : '⛔'} ${n}</b> — ${esc(msg)}</div>`).join('')}
         ${r.ok ? `<div class="pl-step pl-ok"><b>💬 NPC:</b> “${esc(r.obj.söz || '')}”</div>` : fallback}</div>`;
       info.innerHTML = key === 'inject' ? 'Bu, <b>Where Winds Meet</b> (2025) oyuncularının kullandığı türden bir istem enjeksiyonu: parantez içinde “sistem notu” yazınca model görevin bittiğine inandı. Savunma modelin içinde değil, <b>oyunun kuralında</b>: ödülü sadece oyun durumu verebilir.'
         : key === 'honest' ? 'Aynı çıktı! Fark, oyun durumunda: “görev bayrağı”nı açıp kapatarak deneyin. Model “ver” diyebilir; vermek oyunun kararıdır.'
-        : 'Model metin üretir; oyun ise sadece <b>izinli eylemleri</b>, <b>doğrulanmış alanlarla</b> uygular. Her aşama başarısız olabilir; her başarısızlığın bir yedek davranışı olmalı.';
+        : 'Model metin üretir; oyun ise sadece <b>izinli eylemleri</b>, <b>doğrulanmış alanlarla</b> uygular. Her aşama başarısız olabilir; her başarısızlığın bir yedek davranışı olmalı. (Görev bayrağı yalnızca ödül isteyen 5. ve 6. senaryoda işe yarar.)';
     };
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Senaryo: ', select({ ok: '1) düzgün JSON', prose: '2) sohbet + JSON', broken: '3) bozuk JSON', halluc: '4) uydurma eylem', inject: '5) istem enjeksiyonu', honest: '6) dürüst talep' }, key, v => { key = v; draw(); })),
-      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { questDone = e.target.checked; draw(); } }); return x; })(), ' oyun durumu: kurt görevi tamamlandı')), view, info);
+      qlab), view, info);
     draw();
   };
 
@@ -149,16 +153,23 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
   D.costcalc = function (root) {
     const c = { inTok: 1500, outTok: 80, tps: 80, ttft: 0.4, pin: 1, pout: 5, lines: 120, players: 10000 };
     const out = el('div', { class: 'cc-out' });
+    const nf = (x, d) => x.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });   // hep Türkçe: virgül ondalık, nokta binlik
     const draw = () => {
       const wait = c.ttft + c.outTok / c.tps;
       const perLine = (c.inTok * c.pin + c.outTok * c.pout) / 1e6;
       const perPlayerHour = perLine * c.lines, monthly = perPlayerHour * c.players * 20;
-      out.innerHTML = `<div class="cc-big ${wait > 2 ? 'c-red' : wait > 1 ? 'c-amber' : 'c-green'}">⏱️ cevap süresi ≈ <b>${wait.toFixed(2)} sn</b></div>
-        <div class="cc-big">💵 bir replik ≈ <b>$${perLine.toFixed(5)}</b> · oyuncu-saat ≈ <b>$${perPlayerHour.toFixed(3)}</b></div>
-        <div class="cc-big">📅 ${c.players.toLocaleString('tr')} oyuncu × ayda 20 saat ≈ <b>$${Math.round(monthly).toLocaleString('tr')}</b> / ay</div>
+      out.innerHTML = `<div class="cc-big ${wait > 2 ? 'c-red' : wait > 1 ? 'c-amber' : 'c-green'}">⏱️ cevap süresi ≈ <b>${nf(wait, 2)} sn</b></div>
+        <div class="cc-big">💵 bir replik ≈ <b>$${nf(perLine, 5)}</b> · oyuncu-saat ≈ <b>$${nf(perPlayerHour, 3)}</b></div>
+        <div class="cc-big">📅 ${nf(c.players, 0)} oyuncu × ayda 20 saat ≈ <b>$${nf(Math.round(monthly), 0)}</b> / ay</div>
         <p class="mini">${wait > 2 ? 'İnsan sohbetinde 2 sn’den uzun sessizlik “takıldı mı?” hissi verir: akış (streaming), kısa yanıt, “hmm…” animasyonu ya da daha küçük model.' : 'Kabul edilebilir. Akışla ilk kelime daha da erken gelir.'} Uzun sistem istemi her replikte tekrar faturalanır: istem önbelleği (prompt caching) ve kısa bağlam bu yüzden önemli. Cihaz üzerinde çalışan küçük modelde (inZOI, PUBG Ally) para maliyeti sıfırdır ama oyuncunun GPU’su paylaşılır.</p>`;
     };
-    const S = (lab, a, b, k, st) => slider(lab, a, b, c[k], st, v => { c[k] = v; draw(); });
+    const S = (lab, a, b, k, st) => {
+      const f = v => v.toLocaleString('tr-TR'), l = slider(lab, a, b, c[k], st, v => { c[k] = v; draw(); }, f);
+      // değer kutusu en uzun değere göre baştan boylanır: kaydırıcı oynarken yanındakiler kaymaz
+      const n = Math.max(...[a, b, a + st, b - st].map(v => f(Math.round(v * 100) / 100).length));
+      Object.assign(l.querySelector('b').style, { display: 'inline-block', minWidth: n + 'ch', fontVariantNumeric: 'tabular-nums' });
+      return l;
+    };
     root.append(el('div', { class: 'sv-controls' }, S('girdi token', 200, 8000, 'inTok', 100), S('çıktı token', 10, 400, 'outTok', 10), S('hız (token/sn)', 10, 200, 'tps', 10), S('ilk token (sn)', 0.1, 3, 'ttft', 0.1)),
       el('div', { class: 'sv-controls' }, S('$ / 1M girdi', 0, 15, 'pin', 0.25), S('$ / 1M çıktı', 0, 75, 'pout', 0.5), S('saatte replik', 10, 600, 'lines', 10), S('oyuncu sayısı', 100, 100000, 'players', 100)), out);
     draw();

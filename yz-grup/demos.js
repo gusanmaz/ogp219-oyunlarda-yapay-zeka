@@ -75,7 +75,7 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Biçim: ', select({ wedge: 'kama (V)', line: 'hat', column: 'sütun', box: 'kare', circle: 'çember' }, cfg.shape, v => { cfg.shape = v; })),
-      el('label', { class: 'ctl' }, 'Slot ataması: ', select({ nearest: 'en yakın (açgözlü)', fixed: 'sabit sıra' }, cfg.assign, v => { cfg.assign = v; })),
+      el('label', { class: 'ctl' }, 'Yuva ataması: ', select({ nearest: 'en yakın (açgözlü)', fixed: 'sabit sıra' }, cfg.assign, v => { cfg.assign = v; })),
       slider('üye', 2, 16, cfg.n, 1, v => { cfg.n = v; }), slider('aralık', 20, 60, cfg.s, 2, v => { cfg.s = v; })),
       el('div', { class: 'sv-controls' }, cb('lider geride kalanı bekler', 'wait'), cb('ortada dar geçitli duvar', 'wall'), el('span', { class: 'mini' }, 'Tıkla = yeni hedef (lider oraya gider).')),
       w.canvas, w.controls());
@@ -89,7 +89,7 @@
     const cfg = { mode: 'belgian', gridCap: 12, atkCap: 10 };
     const TYPES = { soldier: { ad: 'asker', w: 4, col: 'blue', attacks: [['hamle', 5], ['kılıç', 3]], r: 11 }, troll: { ad: 'trol', w: 8, col: 'purple', attacks: [['hücum', 6], ['sopa', 4]], r: 17 } };
     let E = [], gridUsed = 0, atkUsed = 0, dmg = 0, time = 0, log = [];
-    const reset = () => { E = []; const add = (type, k) => E.push({ type, p: V.add(P, V.fromAngle(k, 200)), state: 'wait', slot: null, t: SL.rand(0, 1), atk: null, flash: 0 }); [0.2, 1.1, 2.0, 2.9, 3.8, 4.7].forEach((k, i) => add(i % 3 === 2 ? 'troll' : 'soldier', k)); gridUsed = 0; atkUsed = 0; dmg = 0; time = 0; log = []; };
+    const reset = () => { E = []; const add = (type, k) => E.push({ type, p: V.add(P, V.fromAngle(k, 165)), state: 'wait', slot: null, t: SL.rand(0, 1), atk: null, flash: 0 }); [0.2, 1.1, 2.0, 2.9, 3.8, 4.7].forEach((k, i) => add(i % 3 === 2 ? 'troll' : 'soldier', k)); gridUsed = 0; atkUsed = 0; dmg = 0; time = 0; log = []; };
     reset();
     const L = m => { log.unshift(`${time.toFixed(1)} sn: ${m}`); log.length = Math.min(log.length, 5); };
     const w = new SL.World({
@@ -134,12 +134,16 @@
         SL.drawLabel(ctx, `oyuncuya dakikada hasar ≈ ${Math.round(dps)}`, 120, 16, t.ink, { size: 12 });
         if (cfg.mode === 'belgian') SL.drawLabel(ctx, `ızgara ${gridUsed}/${cfg.gridCap} · saldırı ${atkUsed}/${cfg.atkCap}`, 600, 16, t.ink, { size: 12 });
         log.forEach((l, i) => SL.drawLabel(ctx, l, 712, 290 + i * 16, t.muted, { size: 10, align: 'right' }));
+        SL.drawLabel(ctx, 'adın yanındaki sayı = ızgarada kapladığı yer (ağırlık)', 8, 370, t.muted, { size: 10, align: 'left' });
       }
     });
+    const capSl = [slider('ızgara kapasitesi (zorluk)', 4, 24, cfg.gridCap, 4, v => { cfg.gridCap = v; }), slider('saldırı kapasitesi', 4, 20, cfg.atkCap, 1, v => { cfg.atkCap = v; })];
+    // kapasiteler yalnızca Belçika YZ'de kullanılır: öbür kiplerde kaydırıcılar yerinde kalır ama soluk ve devre dışı
+    const syncMode = () => { const off = cfg.mode !== 'belgian'; capSl.forEach(l => { l.querySelector('input').disabled = off; l.style.opacity = off ? '0.45' : ''; l.title = off ? 'Kapasiteler yalnızca “Belçika YZ” sisteminde kullanılır.' : ''; }); };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Sistem: ', select({ belgian: 'Belçika YZ (ızgara + saldırı kapasitesi)', kungfu: 'kung-fu çemberi (tek tek)', all: 'yönetim yok (herkes saldırır)' }, cfg.mode, v => { cfg.mode = v; w.reset(); })),
-      slider('ızgara kapasitesi (zorluk)', 4, 24, cfg.gridCap, 4, v => { cfg.gridCap = v; }), slider('saldırı kapasitesi', 3, 20, cfg.atkCap, 1, v => { cfg.atkCap = v; })),
+      el('label', { class: 'ctl' }, 'Sistem: ', select({ belgian: 'Belçika YZ (ızgara + saldırı kapasitesi)', kungfu: 'kung-fu çemberi (tek tek)', all: 'yönetim yok (herkes saldırır)' }, cfg.mode, v => { cfg.mode = v; syncMode(); w.reset(); })),
+      ...capSl),
       w.canvas, w.controls());
     w.reset();
     return { start: () => w.start(), stop: () => w.stop() };
