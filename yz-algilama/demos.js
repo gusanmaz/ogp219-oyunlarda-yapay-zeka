@@ -45,7 +45,7 @@
       ['🏔️ Çok uzakta', [640, 330], 'Oyuncu nöbetçinin önünde ama çok uzakta.', 'İlk (en ucuz) kontrol “hayır” dedi; açıya ve pahalı ışın testine <b>hiç bakılmadı</b>. Yüzlerce NPC’li bir oyunda testlerin çoğu burada biter.'],
       ['🔙 Arkasında', [90, 150], 'Oyuncu çok yakın ama nöbetçinin arkasında.', 'Mesafe tuttu, açı tutmadı. Işın testi yine yapılmadı.'],
       ['🧱 Duvarın ardında', [480, 180], 'Oyuncu yakın ve nöbetçinin baktığı yönde; ama arada duvar var.', 'İlk iki ucuz kontrol geçti; bu yüzden pahalı ışın testi yapıldı ve duvarı buldu. Üç kontrol de gerekliydi.'],
-      ['👁️ Görüş hattında', [400, 300], 'Oyuncu yakın, önde ve arada engel yok.', 'Üç kontrol de “evet”: görüldü. Dikkat: bu evet/hayır cevabı bir sonraki slayttaki sorunun kaynağı; 1 milimetre uzaklaşınca “görülmedi” olur.']];
+      ['👁️ Görüş hattında', [400, 300], 'Oyuncu yakın, önde ve arada engel yok.', 'Üç kontrol de “evet”: görüldü. Dikkat: bu evet/hayır cevabının bir sorunu var; 1 milimetre uzaklaşınca “görülmedi” olur.']];
     let P = SC[2][1].slice(), moralTxt = SC[2][3];
     const diag = el('div'), log = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
     const cross = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
@@ -59,12 +59,12 @@
       s += `<path d="M${G[0]},${G[1]} L${G[0] + R * Math.cos(rad)},${G[1] - R * Math.sin(rad)} A${R},${R} 0 0 1 ${G[0] + R * Math.cos(rad)},${G[1] + R * Math.sin(rad)} Z" fill="${seen ? t.red : t.amber}" opacity=".22"/>`;
       s += `<line x1="${WALL[0][0]}" y1="${WALL[0][1]}" x2="${WALL[1][0]}" y2="${WALL[1][1]}" stroke="${t.ink}" stroke-width="12" stroke-linecap="round"/><text x="${WALL[0][0] + 14}" y="${WALL[0][1] + 6}" font-size="15" fill="${t.muted}">duvar</text>`;
       if (okD && okA) s += `<line x1="${G[0]}" y1="${G[1]}" x2="${P[0]}" y2="${P[1]}" stroke="${blocked ? t.red : t.green}" stroke-width="3.5" stroke-dasharray="${blocked ? '7 6' : ''}"/>`;
-      s += `<text x="${G[0]}" y="${G[1] + 14}" text-anchor="middle" font-size="38">💂</text><text x="${G[0]}" y="${G[1] + 44}" text-anchor="middle" font-size="14" fill="${t.muted}">nöbetçi (sağa bakıyor)</text>`;
+      s += `<text x="${G[0]}" y="${G[1] + 14}" text-anchor="middle" font-size="38">💂</text><text x="${G[0] - 26}" y="${G[1] + 5}" text-anchor="end" font-size="14" fill="${t.muted}">nöbetçi (sağa bakıyor)</text>`;
       s += `<text x="${P[0]}" y="${P[1] + 12}" text-anchor="middle" font-size="34">${seen ? '😱' : '🥷'}</text>`;
       diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;cursor:crosshair" font-family="Source Sans 3">${s}</svg>`;
       const row = (ok, tx) => `<div class="${ok ? 'l-ok' : 'l-no'}"><span>${ok ? '✓' : '✗'}</span>${tx}</div>`, skip = tx => `<div class="hint"><span>·</span>${tx}</div>`;
-      log.innerHTML = row(okD, `<b>1 · Mesafe</b> (en ucuz): uzaklık ${Math.round(d)} ${okD ? '≤' : '&gt;'} menzil ${R}`) +
-        (okD ? row(okA, `<b>2 · Açı</b> (ucuz): bakış yönüyle açı ${Math.round(ang)}° ${okA ? '≤' : '&gt;'} ${HALF}° <small>(nokta çarpım ${f1(dot)} ${okA ? '≥' : '&lt;'} cos 45° = 0,7)</small>`) : skip('2 · Açı: bakılmadı')) +
+      log.innerHTML = row(okD, `<b>1 · Mesafe</b> (en ucuz): uzaklık ${Math.abs(d - R) < 1 ? f1(d) : Math.round(d)} ${okD ? '≤' : '&gt;'} menzil ${R}`) +
+        (okD ? row(okA, `<b>2 · Açı</b> (ucuz): bakış yönüyle açı ${Math.abs(ang - HALF) < 1 ? f1(ang) : Math.round(ang)}° ${okA ? '≤' : '&gt;'} ${HALF}° <small>(nokta çarpım ${Math.abs(dot - 0.7071) < 0.05 ? (Math.round(dot * 1000) / 1000).toFixed(3).replace('.', ',') : f1(dot)} ${okA ? '≥' : '&lt;'} cos 45° ≈ 0,707)</small>`) : skip('2 · Açı: bakılmadı')) +
         (okD && okA ? row(!blocked, `<b>3 · Işın</b> (pahalı): arada duvar ${blocked ? 'var' : 'yok'}`) : skip('3 · Işın: bakılmadı (pahalı test atlandı)')) +
         `<div class="now"><span></span><b>${seen ? 'GÖRÜLDÜ 😱' : 'görülmedi'}</b></div>`;
       moral.innerHTML = moralTxt ? '💡 ' + moralTxt : '';
@@ -73,6 +73,10 @@
     const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { P = sc[1].slice(); bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); story.innerHTML = '📖 ' + sc[2]; moralTxt = sc[3]; draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } }); return b; });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap doors' }, diag, el('div', {}, log, moral)));
+    // senaryo değişince öykü ve ders kutuları boy değiştirmesin: en uzun metne göre yer ayır
+    const enUzun = (e, metinler) => { if (!e.isConnected || !e.clientWidth) return; const eski = e.innerHTML; e.style.minHeight = ''; let m = 0; for (const t of metinler) { e.innerHTML = t; m = Math.max(m, e.offsetHeight); } e.innerHTML = eski; e.style.minHeight = m + 'px'; };
+    const sabitle = () => { enUzun(story, SC.map(sc => '📖 ' + sc[2])); enUzun(moral, SC.map(sc => (sc[3] ? '💡 ' + sc[3] : ''))); };
+    requestAnimationFrame(sabitle); window.addEventListener('resize', sabitle);
     bs[2].classList.add('primary'); story.innerHTML = '📖 ' + SC[2][2]; draw(); SL.onTheme(draw);
   };
 
@@ -217,12 +221,17 @@
     const draw = () => {
       const th = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = th.card; ctx.fillRect(0, 0, W, H);
       ctx.strokeStyle = th.rule; ctx.beginPath(); ctx.moveTo(40, 20); ctx.lineTo(40, 220); ctx.lineTo(700, 220); ctx.stroke();
+      // önizleme: kaydırıcıların verdiği zarf (2 sn basılı tutulursa), silik kesikli çizgi
+      const X = s => 40 + s * (660 / 12), Y = v => 220 - v * 180, tut = 2;
+      ctx.save(); ctx.strokeStyle = th.muted; ctx.globalAlpha = 0.7; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath();
+      ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(P.a), Y(P.peak)); ctx.lineTo(X(P.a + P.d), Y(P.s)); ctx.lineTo(X(Math.max(tut, P.a + P.d)), Y(P.s)); ctx.lineTo(X(Math.max(tut, P.a + P.d) + P.r), Y(0)); ctx.stroke(); ctx.restore();
+      ctx.fillStyle = th.muted; ctx.font = '11px "JetBrains Mono"'; ctx.textAlign = 'left'; ctx.fillText('kesikli: 2 sn basılı tutunca beklenen zarf', 48, 238); ctx.textAlign = 'right'; ctx.fillText('zaman (son 12 sn) →', 700, 238); ctx.textAlign = 'left';
       ctx.strokeStyle = th.blue; ctx.lineWidth = 3; ctx.beginPath(); hist.forEach((v, i) => { const x = 40 + i * (660 / 360), y = 220 - v * 180; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
       SL.drawLabel(ctx, `algı değeri ${val.toFixed(2)} · ${phase}`, 160, 14, th.ink, { size: 12 });
       ctx.fillStyle = th.muted; ctx.font = '11px "JetBrains Mono"'; ctx.fillText('1', 28, 44); ctx.fillText('0', 28, 222);
     };
     const loop = () => { if (!running) return; step(1 / 30); draw(); timer = setTimeout(loop, 33); };
-    const press = () => { if (on) return; on = true; tOn = t; };
+    const press = () => { if (on) return; on = true; tOn = t - (P.peak > 0 ? Math.min(1, val / P.peak) * P.a : 0); };   // söndürürken yeniden basınca bulunduğu değerden devam
     const release = () => { if (!on) return; on = false; tOff = t; relFrom = val; };
     const hold = btn('👁️ uyaran (basılı tutun)', () => {}, 'primary');
     hold.addEventListener('mousedown', press); hold.addEventListener('mouseup', release); hold.addEventListener('mouseleave', release);
