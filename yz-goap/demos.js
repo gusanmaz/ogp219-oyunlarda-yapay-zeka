@@ -8,7 +8,7 @@
   /* ================= alan (domain): F.E.A.R. tarzı asker =================
      durum = { anahtar: bool } · ön koşul = istenen değerler · etki = atanan değerler
      Belirtilmeyen anahtar = false. */
-  const FACTS = { inB: 'sağ odada', hasAmmo: 'yedek şarjör var', loaded: 'silah dolu', targetDead: 'hedef etkisiz', doorStuck: '🧠 kapı açılmıyor', kickFailed: '🧠 tekme işe yaramadı', armoryEmpty: '🧠 cephanelik boş' };
+  const FACTS = { inB: 'B odasında', hasAmmo: 'yedek şarjör var', loaded: 'silah dolu', targetDead: 'hedef etkisiz', doorStuck: '🧠 kapı açılmıyor', kickFailed: '🧠 tekme işe yaramadı', armoryEmpty: '🧠 cephanelik boş' };
   const ACTIONS = [
     { name: 'Cephane al', pre: { inB: false, armoryEmpty: false }, eff: { hasAmmo: true }, cost: 1 },
     { name: 'Şarjör tak', pre: { hasAmmo: true }, eff: { loaded: true, hasAmmo: false }, cost: 1 },
@@ -190,7 +190,7 @@
           if (st.t < (DUR[a.name] || 1)) return;
           if (!sat(st.s, a.pre)) { log(`⚠️ “${a.name}”: ön koşul artık tutmuyor → yeniden planla`); st.replans++; st.phase = 'plan'; return; }
           const f = fails(a);
-          if (f) { const m = Object.assign({}, f); delete m.msg; st.s = apply(st.s, m); st.failed = true; st.flash = 0.8; log(`💥 “${a.name}” başarısız: ${f.msg} Hafızaya yazıldı → yeniden planla`); st.replans++; st.phase = 'plan'; return; }
+          if (f) { const m = Object.assign({}, f); delete m.msg; st.s = apply(st.s, m); st.failed = true; st.flash = 0.8; log(`💥 “${a.name}” başarısız: ${f.msg} Belleğe yazıldı → yeniden planla`); st.replans++; st.phase = 'plan'; return; }
           st.s = apply(st.s, a.eff);
           if (a.name === 'Kapıdan geç' || a.name === 'Kapıyı tekmele') st.pos = V.v(400, 120);
           if (a.name === 'Pencereden atla') st.pos = V.v(405, 300);
@@ -232,7 +232,7 @@
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { env.holdDoor = e.target.checked; } }); return cb; })(), ' 🚪 kapıyı bedeninle tut'),
       el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { env.emptyArmory = e.target.checked; } }); return cb; })(), ' 📭 cephanelik boş'),
-      el('span', { class: 'mini' }, 'Kutuları seçip ↺ Baştan’a basın. Asker başarısızlıkları hafızasına yazar ve yeniden plan yapar.')),
+      el('span', { class: 'mini' }, 'Kutuları seçip ↺ Baştan’a basın. Asker başarısızlıkları çalışma belleğine yazar ve yeniden plan yapar.')),
       el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, (sol.world.canvas.style.width = '640px', sol.world.canvas)), side), sol.world.controls());
     sol.world.reset();
     return { start: () => sol.world.start(), stop: () => sol.world.stop() };
@@ -308,7 +308,7 @@
       { label: 'aksi hâlde', cond: () => true, subtasks: ['Patrol'] }] },
     AttackEnemy: { name: 'AttackEnemy', type: 'compound', methods: [
       { label: 'elinde kütük varsa', cond: s => s.hasTrunk, subtasks: ['NavigateToEnemy', 'DoTrunkSlam'] },
-      { label: 'kütük yoksa', cond: () => true, subtasks: ['FindTree', 'UprootTrunk', 'NavigateToEnemy', 'DoTrunkSlam'] }] },
+      { label: 'aksi hâlde (ağaç sök)', cond: () => true, subtasks: ['FindTree', 'UprootTrunk', 'NavigateToEnemy', 'DoTrunkSlam'] }] },
     Patrol: { name: 'Patrol', type: 'compound', methods: [
       { label: 'her zaman', cond: () => true, subtasks: ['ChooseBridge', 'NavigateToBridge', 'CheckBridge'] }] },
     NavigateToEnemy: P('NavigateToEnemy', s => s.pathToEnemy, null, 'düşmana yol var'),

@@ -23,9 +23,9 @@
     return best;
   }
   D.ttt = function (root) {
-    let b = Array(9).fill(null), over = null, ab = true, mistake = 0, aiFirst = false, thinking = null;   // thinking: YZ'nin bekleyen hamlesi (zamanlayıcı)
+    let b = Array(9).fill(null), over = null, ab = true, mistake = 0, aiFirst = false, thinking = null, lastPos = null;   // thinking: YZ'nin bekleyen hamlesi (zamanlayıcı)
     const grid = el('div', { class: 'ttt' }), info = el('div', { class: 'sv-note' }), stats = el('div', { class: 'sv-counters' });
-    const cells = [...Array(9)].map((_, i) => { const c = el('button', { class: 'ttt-c', onclick: () => human(i) }); grid.append(c); return c; });
+    const cells = [...Array(9)].map((_, i) => { const c = el('button', { class: 'ttt-c', 'aria-label': 'kare ' + (i + 1), onclick: () => human(i) }); grid.append(c); return c; });
     const analyze = () => {
       const vals = Array(9).fill(null), cnt = { n: 0 };
       if (!over) for (let i = 0; i < 9; i++) if (!b[i]) { b[i] = 'O'; vals[i] = tMinimax(b, 'X', 1, ab, -Infinity, Infinity, cnt); b[i] = null; }
@@ -41,17 +41,20 @@
       const free = b.map((x, i) => (x ? -1 : i)).filter(i => i >= 0);
       if (Math.random() < mistake) pick = free[Math.floor(Math.random() * free.length)];
       else { const mx = Math.max(...free.map(i => an.vals[i])); const bests = free.filter(i => an.vals[i] === mx); pick = bests[Math.floor(Math.random() * bests.length)]; }
-      stats.innerHTML = `<span class="cnt">YZ bu hamlede <b>${an.n.toLocaleString('tr-TR')}</b> düğüm inceledi</span><span class="cnt">alfa-beta: <b>${ab ? 'açık' : 'kapalı'}</b></span>`;
+      lastPos = b.slice(); showStats(an.n);
       b[pick] = 'O'; over = tWin(b);
       draw(null); setTimeout(() => { if (!over) draw(analyze()); end(); }, 10);
     };
+    // sayaç: YZ'nin son hamlesinde incelenen düğüm; alfa-beta kutusu değişince aynı konum yeniden sayılır (anında karşılaştırma)
+    const showStats = n => { stats.innerHTML = `<span class="cnt">YZ bu hamlede <b style="display:inline-block;min-width:4em;text-align:right;font-variant-numeric:tabular-nums">${n == null ? '—' : n.toLocaleString('tr-TR')}</b> düğüm inceledi</span><span class="cnt">alfa-beta: <b style="display:inline-block;min-width:3.4em">${ab ? 'açık' : 'kapalı'}</b></span>`; };
+    const recount = () => { if (!lastPos) { showStats(null); return; } const cur = b, o = over; b = lastPos.slice(); over = null; const n = analyze().n; b = cur; over = o; showStats(n); };
     const end = () => { info.textContent = over === 'O' ? '🤖 YZ kazandı.' : over === 'X' ? '🎉 Kazandınız! (YZ hata payı açık olmalı…)' : over === 'D' ? '🤝 Berabere — kusursuz iki oyuncu arasında XOX her zaman berabere biter.' : 'Sıra sizde (X). Boş karelerdeki sayılar: YZ oraya oynasaydı oyunun minimax değeri (+ = YZ kazanır, − = siz kazanırsınız, 0 = berabere).'; };
     const human = i => { if (over || b[i] || thinking) return; b[i] = 'X'; over = tWin(b); draw(null); end(); if (!over) { info.textContent = '🤖 YZ düşünüyor…'; thinking = setTimeout(aiMove, 150); } };   // YZ oynayana kadar ikinci tıklama yok sayılır
-    const reset = () => { clearTimeout(thinking); thinking = null; b = Array(9).fill(null); over = null; stats.innerHTML = ''; draw(null); end(); if (aiFirst) thinking = setTimeout(aiMove, 150); else draw(analyze()); };
+    const reset = () => { clearTimeout(thinking); thinking = null; b = Array(9).fill(null); over = null; lastPos = null; showStats(null); draw(null); end(); if (aiFirst) thinking = setTimeout(aiMove, 150); else draw(analyze()); };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'gv-row' }, grid, el('div', { class: 'gv-side' },
       el('div', { class: 'sv-controls' }, btn('↺ Yeni oyun', reset, 'primary'),
-        el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { ab = e.target.checked; } }); x.checked = true; return x; })(), ' alfa-beta budaması'),
+        el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { ab = e.target.checked; recount(); } }); x.checked = true; return x; })(), ' alfa-beta budaması'),
         el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { aiFirst = e.target.checked; reset(); } }); return x; })(), ' YZ başlasın')),
       slider('YZ hata payı (rastgele hamle olasılığı)', 0, 0.6, 0, 0.05, v => { mistake = v; }, v => '%' + Math.round(v * 100)),
       stats, info)));
@@ -123,7 +126,8 @@
     const rnd = () => { const r = () => Math.floor(Math.random() * 20); spec = [0, 1, 2].map(() => [0, 1].map(() => [r(), r()])); build(); };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { useAB = e.target.checked; build(); } }); x.checked = useAB; return x; })(), ' alfa-beta budaması'),
+      // minimax slaydında (data-ab="0") α, β henüz anlatılmadı: budama kutusu yalnızca alfa-beta slaydında
+      root.dataset.ab === '0' ? null : el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { useAB = e.target.checked; build(); } }); x.checked = useAB; return x; })(), ' alfa-beta budaması'),
       btn('🚪 Üç kapı örneği', () => { spec = AIMA; build(); }), btn('🎲 Rastgele 3 katlı ağaç', rnd)), diag, SL.transport(fp, { min: 0.5, max: 8 }), note);
     build(); SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
@@ -397,18 +401,21 @@
     };
     const human = c => { if (over || thinking || c < 0 || c >= C || b[c]) return; const r = C4.drop(b, c, 1); last = [r, c]; overlay = null; show(); if (!finish(r, c, 1)) aiMove(); };
     const reset = () => { clearTimeout(aiTimer); thinking = false; b = C4.empty(); over = 0; last = null; overlay = null; stats.innerHTML = ''; show(); status('Sıra sizde: kırmızı taşınızı bırakmak için bir sütuna tıklayın.'); if (cfg.aiStarts) aiMove(); };
+    // seçili YZ'ye ait olmayan ayarlar soluk ve pasif (gizlenmez: düzen kaymasın)
+    const abDepth = slider('alfa-beta derinliği', 1, 7, cfg.depth, 1, v => { cfg.depth = v; }),
+      mctsIters = slider('MCTS simülasyon sayısı', 100, 20000, cfg.iters, 100, v => { cfg.iters = v; }),
+      abOrder = el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.order = e.target.checked; } }); x.checked = true; return x; })(), ' hamle sıralaması (önce orta sütun)');
+    const syncCtl = () => [[abDepth, cfg.ai === 'ab'], [abOrder, cfg.ai === 'ab'], [mctsIters, cfg.ai === 'mcts']].forEach(([lb, on]) => { lb.style.opacity = on ? '' : '0.4'; lb.querySelector('input').disabled = !on; });
     const ctl = el('div', { class: 'ctl-col' },
       btn('↺ Yeni oyun', reset, 'primary'),
-      el('label', { class: 'ctl' }, 'YZ: ', select({ ab: 'alfa-beta (minimax)', mcts: 'Monte Carlo ağaç araması' }, cfg.ai, v => { cfg.ai = v; })),
-      slider('alfa-beta derinliği', 1, 7, cfg.depth, 1, v => { cfg.depth = v; }),
-      slider('MCTS simülasyon sayısı', 100, 20000, cfg.iters, 100, v => { cfg.iters = v; }),
-      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.order = e.target.checked; } }); x.checked = true; return x; })(), ' hamle sıralaması (önce orta sütun)'),
+      el('label', { class: 'ctl' }, 'YZ: ', select({ ab: 'alfa-beta (minimax)', mcts: 'Monte Carlo ağaç araması' }, cfg.ai, v => { cfg.ai = v; syncCtl(); })),
+      abDepth, mctsIters, abOrder,
       el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.aiStarts = e.target.checked; } }); return x; })(), ' YZ başlasın (yeni oyunda)'),
       info, stats);
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'gv-row' }, el('div', { style: 'flex:none;width:470px' }, board.canvas), el('div', { class: 'gv-side' }, ctl)));
     SL.onTheme(show);
-    reset();
+    syncCtl(); reset();
   };
 
   /* ---------- simlab: değerlendirme fonksiyonunu sen yaz ---------- */

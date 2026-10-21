@@ -178,7 +178,7 @@
       <li><b>BFS</b> ve <b>Dijkstra</b> neredeyse bütün haritayı renklendiriyor (genişletilen düğüm sayısına bakın). <b>A*</b> hedefe doğru “uzanıyor”.</li>
       <li>U’nun ağzını bir duvarla kapatın: Greedy artık daha iyi mi, daha kötü mü?</li>
       <li>B’yi U’nun içine taşıyın. Hangi algoritma en az düğümle buluyor?</li>
-      <li>Renkler: mavi → kırmızı, başlangıçtan uzaklık (g). Sarı = açık liste (keşfedilmiş, sırada bekliyor).</li>
+      <li>Renkler: mavi → yeşil → turuncu, başlangıçtan uzaklık (g). Sarı = açık liste (keşfedilmiş, sırada bekliyor).</li>
     </ol>
   </div><!--/dh-->
   <div class="demo-help" data-title="ℹ️ Ekranda ne var, düğmeler ne yapar?"><ul>
@@ -206,7 +206,7 @@
       <li><b>BFS</b> ve <b>Dijkstra</b> neredeyse bütün haritayı renklendiriyor (genişletilen düğüm sayısına bakın). <b>A*</b> hedefe doğru “uzanıyor”.</li>
       <li>U’nun ağzını bir duvarla kapatın: Greedy artık daha iyi mi, daha kötü mü?</li>
       <li>B’yi U’nun içine taşıyın. Hangi algoritma en az düğümle buluyor?</li>
-      <li>Renkler: mavi → kırmızı, başlangıçtan uzaklık (g). Sarı = açık liste (keşfedilmiş, sırada bekliyor).</li>
+      <li>Renkler: mavi → yeşil → turuncu, başlangıçtan uzaklık (g). Sarı = açık liste (keşfedilmiş, sırada bekliyor).</li>
     </ol>
   </div>
 </section>
@@ -294,10 +294,10 @@
   <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
     <ol style="font-size:.88em">
       <li><b>Çizim</b>: ızgaraya tıklayıp sürükleyin (duvar). Fırçayı “bataklık” yapın. B ve H’yi sürükleyin: arama anında yenilenir.</li>
-      <li>“Bataklık” hazır haritası: <b>BFS</b> bataklıktan geçiyor (maliyeti bilmiyor), <b>A*</b> üstteki dar yoldan dolaşıyor. Yol maliyetlerini karşılaştırın.</li>
+      <li>“Çapraz”ı kapatıp “Bataklık” hazır haritasını seçin: <b>BFS</b> bataklıktan geçiyor (maliyeti bilmiyor), <b>A*</b> üstteki dar yoldan dolaşıyor. Yol maliyetlerini karşılaştırın.</li>
       <li>Sezgiyi “sıfır” yapın: A* = Dijkstra. Genişletilen düğüm sayısı kaç kat arttı?</li>
       <li>Ağırlık w = 3: düğüm sayısı düşüyor; yol maliyeti değişti mi? “Labirent”te dene: ağırlık orada işe yarıyor mu?</li>
-      <li>8 yön açıkken sezgiyi “Manhattan” yapın: yol maliyeti octile ile aynı mı? (Abartılı sezgi.)</li>
+      <li>8 yön açıkken sezgiyi “Manhattan” yapın: yol maliyeti octile ile aynı mı? (Abartılı sezgi: garanti kalkar ama hazır haritalarda fark nadir. Abartının bedelini görmek için “Bataklık”ta w = 3: 29,80 → 48,00.)</li>
       <li>“g değerleri”ni açıp adım adım oynatın: her karede başlangıçtan gerçek uzaklık yazıyor.</li>
       <li>🔗 Bu konunun en iyi etkileşimli anlatımı: <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">Red Blob Games — Introduction to A*</a> (sayfadaki her şekil oynanabilir). Onlarca algoritmayı yan yana denemek için: <a href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener">PathFinding.js görselleştirici</a>.</li>
     </ol>
@@ -322,10 +322,10 @@
   <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
     <ol style="font-size:.88em">
       <li><b>Çizim</b>: ızgaraya tıklayıp sürükleyin (duvar). Fırçayı “bataklık” yapın. B ve H’yi sürükleyin: arama anında yenilenir.</li>
-      <li>“Bataklık” hazır haritası: <b>BFS</b> bataklıktan geçiyor (maliyeti bilmiyor), <b>A*</b> üstteki dar yoldan dolaşıyor. Yol maliyetlerini karşılaştırın.</li>
+      <li>“Çapraz”ı kapatıp “Bataklık” hazır haritasını seçin: <b>BFS</b> bataklıktan geçiyor (maliyeti bilmiyor), <b>A*</b> üstteki dar yoldan dolaşıyor. Yol maliyetlerini karşılaştırın.</li>
       <li>Sezgiyi “sıfır” yapın: A* = Dijkstra. Genişletilen düğüm sayısı kaç kat arttı?</li>
       <li>Ağırlık w = 3: düğüm sayısı düşüyor; yol maliyeti değişti mi? “Labirent”te dene: ağırlık orada işe yarıyor mu?</li>
-      <li>8 yön açıkken sezgiyi “Manhattan” yapın: yol maliyeti octile ile aynı mı? (Abartılı sezgi.)</li>
+      <li>8 yön açıkken sezgiyi “Manhattan” yapın: yol maliyeti octile ile aynı mı? (Abartılı sezgi: garanti kalkar ama hazır haritalarda fark nadir. Abartının bedelini görmek için “Bataklık”ta w = 3: 29,80 → 48,00.)</li>
       <li>“g değerleri”ni açıp adım adım oynatın: her karede başlangıçtan gerçek uzaklık yazıyor.</li>
       <li>🔗 Bu konunun en iyi etkileşimli anlatımı: <a href="https://www.redblobgames.com/pathfinding/a-star/introduction.html" target="_blank" rel="noopener">Red Blob Games — Introduction to A*</a> (sayfadaki her şekil oynanabilir). Onlarca algoritmayı yan yana denemek için: <a href="https://qiao.github.io/PathFinding.js/visual/" target="_blank" rel="noopener">PathFinding.js görselleştirici</a>.</li>
     </ol>
@@ -653,7 +653,7 @@ def heuristics(dx, dy):
 <section data-sec="oyunlar">
   <h2>Izgara yolu çirkindir: yumuşatma</h2>
   <div class="demo" data-demo="smooth"></div>
-  <p class="mini"><b>Kırmızı</b>: A*’ın ızgara yolu (45° basamaklı). <b>Mor</b>: “ip germe” (string pulling): görüş hattı olan en uzak noktaya düz git. Sarı ajan yolu steering ile izler (Y7). <b>Renkli kareler</b> A*’ın baktığı yerler: mavi = başlangıca yakın, yeşil = uzak; açık sarı = sırada bekleyen; beyaz = hiç bakılmadı.</p>
+  <p class="mini"><b>Kırmızı</b>: A*’ın ızgara yolu (45° basamaklı). <b>Mor</b>: “ip germe” (string pulling): görüş hattı olan en uzak noktaya düz git. Sarı ajan yolu steering ile izler (Y7). <b>Renkli kareler</b> A*’ın baktığı yerler: mavi = başlangıca yakın, yeşil → turuncu = uzak; açık sarı = sırada bekleyen; beyaz = hiç bakılmadı.</p>
 </section>
 
 <section data-sec="oyunlar">

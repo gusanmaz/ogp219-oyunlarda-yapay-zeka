@@ -103,7 +103,7 @@
         if (!route.length) route.push(...pts); else route.push(...pts.slice(1));
       });
       let len = 0; for (let k = 1; k < route.length; k++) len += V.dist(route[k - 1], route[k]);
-      wp = 1; info = `çokgen koridoru: ${corridor.length} çokgen · A* ${r.expanded} düğüm genişletti · yol uzunluğu ${Math.round(len)}`;
+      wp = 1; info = `çokgen koridoru: ${corridor.length} çokgen · A* ${r.expanded} düğüm genişletti · yol uzunluğu ${Math.round(len)} px`;
     };
     const w = new SL.World({
       W, H,
@@ -127,7 +127,7 @@
         if (route.length) { ctx.strokeStyle = cfg.mode === 'funnel' ? t.purple : t.red; ctx.lineWidth = 3; ctx.beginPath(); route.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke(); route.forEach(p => { ctx.fillStyle = ctx.strokeStyle; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 7); ctx.fill(); }); }
         ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(goal.x, goal.y, 8, 0, 7); ctx.fill();
         ctx.fillStyle = t.amber; ctx.beginPath(); ctx.arc(agent.x, agent.y, 10, 0, 7); ctx.fill();
-        SL.drawLabel(ctx, info, 360, 372, t.ink, { size: 11 });
+        SL.drawLabel(ctx, info, 360, 370, t.ink, { size: 14 });
       }
     });
     const cb = (lab, key, f) => el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg[key] = e.target.checked; if (f) f(); } }); x.checked = cfg[key]; return x; })(), ' ' + lab);
@@ -221,8 +221,12 @@
       note.innerHTML = NOTES[step] + (step >= 3 ? ` <b>${r.rects.length}</b> çokgen.` : '');
     };
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, ...[0, 1, 2, 3].map(s => btn(['1 geometri', '2 rasterleştir', '3 aşındır', '4 çokgenler'][s], () => { step = s; draw(); }, s === 3 ? 'primary' : '')), slider('ajan yarıçapı (hücre)', 0, 6, radius, 1, v => { radius = v; draw(); })), C, note);
-    draw(); SL.onTheme(draw);
+    // vurgulu düğme = gösterilen adım; yarıçap yalnızca 3–4. adımlarda etkili (1–2'de soluk ve pasif)
+    const stepBtns = [0, 1, 2, 3].map(s => btn(['1 geometri', '2 rasterleştir', '3 aşındır', '4 çokgenler'][s], () => { step = s; sync(); draw(); }, s === step ? 'primary' : ''));
+    const rad = slider('ajan yarıçapı (hücre)', 0, 6, radius, 1, v => { radius = v; draw(); });
+    const sync = () => { stepBtns.forEach((b, s) => b.classList.toggle('primary', s === step)); rad.style.opacity = step >= 2 ? '' : '0.4'; rad.querySelector('input').disabled = step < 2; };
+    root.append(el('div', { class: 'sv-controls' }, ...stepBtns, rad), C, note);
+    sync(); draw(); SL.onTheme(draw);
   };
 
   /* ---------- simlab: nokta hangi çokgende? ---------- */

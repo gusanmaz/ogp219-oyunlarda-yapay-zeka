@@ -385,7 +385,7 @@ def arrive(self, target, slow_radius):
       <li><b>Pursue</b>: mor bot sekerek dolaşıyor. Ajan botun <b>önüne</b> (tahmini konuma) koşuyor mu? Mor kesikli çizgi tahmin.</li>
       <li><b>Evade</b>: ajan botun gelecekteki konumundan kaçıyor; bot ona doğru gelirken erkenden kenara çekiliyor.</li>
       <li><b>Wander</b>: turuncu çember ve üstündeki nokta. Ajan sarhoş gibi değil, keşif yapan bir hayvan gibi gezmeli.</li>
-      <li>Hepsinde azami kuvveti düşürün: tahmin doğru olsa bile hantal bir ajan yakalayamıyor. <b>Zorluk ayarı</b> için güzel bir düğme!</li>
+      <li><b>Pursue</b>’da azami kuvveti 40’a düşürün: tahmin doğru olsa bile hantal ajan botu yakalayamıyor. <b>Zorluk ayarı</b> için güzel bir düğme!</li>
     </ol>
   </div><!--/dh-->
 </section>
@@ -397,7 +397,7 @@ def arrive(self, target, slow_radius):
       <li><b>Pursue</b>: mor bot sekerek dolaşıyor. Ajan botun <b>önüne</b> (tahmini konuma) koşuyor mu? Mor kesikli çizgi tahmin.</li>
       <li><b>Evade</b>: ajan botun gelecekteki konumundan kaçıyor; bot ona doğru gelirken erkenden kenara çekiliyor.</li>
       <li><b>Wander</b>: turuncu çember ve üstündeki nokta. Ajan sarhoş gibi değil, keşif yapan bir hayvan gibi gezmeli.</li>
-      <li>Hepsinde azami kuvveti düşürün: tahmin doğru olsa bile hantal bir ajan yakalayamıyor. <b>Zorluk ayarı</b> için güzel bir düğme!</li>
+      <li><b>Pursue</b>’da azami kuvveti 40’a düşürün: tahmin doğru olsa bile hantal ajan botu yakalayamıyor. <b>Zorluk ayarı</b> için güzel bir düğme!</li>
     </ol>
   </div>
 </section>
@@ -477,7 +477,7 @@ def arrive(self, target, slow_radius):
 <section data-sec="boids">
   <h2>Üç kural</h2>
   <div class="cols3">
-    <div class="box story"><span class="bt">↔ Ayrılma (separation)</span>Komşularına <b>çok yaklaşma</b>. Her yakın komşudan uzağa doğru, yakınlığıyla orantılı bir itme: <code>(ben − komşu) / d²</code>.</div>
+    <div class="box story"><span class="bt">↔ Ayrılma (separation)</span>Komşularına <b>çok yaklaşma</b>. Her yakın komşudan uzağa doğru, yakınlığıyla orantılı bir itme: <code>(ben − komşu) / d²</code>. Yalnızca <b>kişisel alan</b>daki (demoda 25 px) komşular iter.</div>
     <div class="box game"><span class="bt">⇉ Hizalanma (alignment)</span>Komşularınla <b>aynı yöne</b> uç. Komşuların ortalama hızını istenen hız yap.</div>
     <div class="box low"><span class="bt">◎ Bütünleşme (cohesion)</span>Sürüden <b>kopma</b>. Komşuların ortalama konumuna doğru seek.</div>
   </div>

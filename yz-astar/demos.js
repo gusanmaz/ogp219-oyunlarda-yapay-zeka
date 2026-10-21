@@ -80,7 +80,7 @@
           else if (res.openedAt[i] >= 0 && res.openedAt[i] <= k && (o.algo !== 'bfs')) fill = t.dark ? '#5a4a1a' : '#ffe9b3';
         }
         ctx.fillStyle = fill; ctx.fillRect(x, y, cell, cell);
-        if (o.nums && res && res.closedAt[i] >= 0 && res.closedAt[i] <= k && cell >= 30) { ctx.fillStyle = t.dark ? '#fff' : '#111'; ctx.font = '9px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(res.gS[i].toFixed(1), x + cell / 2, y + cell / 2 + 3); }
+        if (o.nums && res && res.closedAt[i] >= 0 && res.closedAt[i] <= k && cell >= 26) { ctx.fillStyle = t.dark ? '#fff' : '#111'; ctx.font = '9px "JetBrains Mono"'; ctx.textAlign = 'center'; ctx.fillText(res.gS[i].toFixed(1), x + cell / 2, y + cell / 2 + 3); }
       }
       ctx.strokeStyle = t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1;
       for (let x = 0; x <= G.W; x++) { ctx.beginPath(); ctx.moveTo(x * cell, 0); ctx.lineTo(x * cell, H); ctx.stroke(); }
@@ -198,6 +198,7 @@
         el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.diag = e.target.checked; run(true); } }); x.checked = true; return x; })(), ' çapraz')),
       el('div', { class: 'sv-controls' },
         el('label', { class: 'ctl' }, 'Fırça: ', select({ wall: '🧱 duvar', swamp: '🟩 bataklık (maliyet 5)', erase: '🧽 sil' }, G.brush, v => { G.brush = v; })),
+        el('span', { class: 'ctl' }, 'Hazır harita:'),
         ...Object.entries({ u: 'U engel', empty: 'boş', swamp: 'bataklık', maze: 'labirent' }).map(([k, lab]) => btn(lab, () => { Object.assign(G, PRESETS[k](GW, GH)); run(true); })),
         el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.nums = e.target.checked; fp.render(); } }); return x; })(), ' g değerleri'),
         btn('▶ Aramayı oynat', () => run(true), 'primary')),
@@ -218,7 +219,7 @@
     const run = () => { results = algos.map(([a]) => search(G, G.s, G.g, { algo: a, diag: true })); const n = Math.max(...results.map(r => r.expanded)); const F = []; for (let k = 0; k <= n + 1; k += 2) F.push({ k }); fp.load(F); fp.play(); };
     views.forEach(v => attachEditor(v, G, run));
     root.setAttribute('data-prevent-swipe', '');
-    const legend = el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:.8em"><span class="bt">Nasıl okunur?</span><ul><li><b>B</b> başlangıç, <b>H</b> hedef, koyu kareler duvar.</li><li><b>Renkli kareler</b> = algoritmanın <b>baktığı</b> (genişlettiği) yerler. Mavi: başlangıca yakın → kırmızı: uzak.</li><li><b>Sarı kenar</b> = sırada bekleyenler (açık liste).</li><li><b>Kırmızı çizgi</b> = bulunan yol.</li><li>Alttaki sayılar: kaç kareye bakıldı (<b>az = hızlı</b>) ve yolun maliyeti (<b>az = kısa</b>).</li></ul><p style="margin:.4em 0 0"><b>Soru:</b> hangisi hem az kareye bakıyor hem en kısa yolu buluyor?</p></div>' });
+    const legend = el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:.8em"><span class="bt">Nasıl okunur?</span><ul><li><b>B</b> başlangıç, <b>H</b> hedef, koyu kareler duvar.</li><li><b>Renkli kareler</b> = algoritmanın <b>baktığı</b> (genişlettiği) yerler. Mavi: başlangıca yakın → yeşil → turuncu: uzak.</li><li><b>Sarı kenar</b> = sırada bekleyenler (açık liste).</li><li><b>Kırmızı çizgi</b> = bulunan yol.</li><li>Alttaki sayılar: kaç kareye bakıldı (<b>az = hızlı</b>) ve yolun maliyeti (<b>az = kısa</b>).</li></ul><p style="margin:.4em 0 0"><b>Soru:</b> hangisi hem az kareye bakıyor hem en kısa yolu buluyor?</p></div>' });
     root.append(el('div', { class: 'gv-row' }, grid, legend), SL.transport(fp, { min: 5, max: 300, unit: 'kare/sn' }), el('div', { style: 'font-size:16px' }, 'Herhangi bir ızgarada duvar çizin ya da B/H’yi sürükleyin: dördü aynı haritada yeniden yarışır.'));
     run(); SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };

@@ -371,7 +371,7 @@
     </div>
     <div class="box game" style="margin:0"><span class="bt">Üstteki kutucuklar: “dünya nasıl başlasın?”</span>
       <ul>
-        <li><b>silah dolu · yedek şarjör var · sağ odada</b>: askerin başlangıç durumu.</li>
+        <li><b>silah dolu · yedek şarjör var · B odasında</b>: askerin başlangıç durumu.</li>
         <li><b>🧠 ile başlayanlar</b>: askerin <i>hafızası</i> — daha önce denedi ve olmadı (kapı açılmıyor, tekme işe yaramadı, cephanelik boş).</li>
         <li><b>sezgiyi kapat</b>: h = 0. Aynı plan bulunur ama daha çok kutu açılır.</li>
       </ul>
@@ -389,7 +389,7 @@
       <li>“🧠 kapı açılmıyor” kutusunu işaretleyin: plan kapı yerine <b>tekmeyi</b> kullanıyor. İkinci 🧠 kutusunu da işaretleyin: <b>pencere</b>.</li>
       <li>“🧠 cephanelik boş”: silah doldurulamıyor; tek yol <b>Yumruk</b> (7). Ama dikkat: yumruk her zaman mümkündü, sadece pahalıydı!</li>
       <li>“sezgiyi kapat”: kaç düğüm genişletildiğini karşılaştırın. Küçük problemde fark az; büyük alanlarda çok önemli.</li>
-      <li>“silah dolu” + “sağ odada”: tek adımlık plan. Planlayıcı gereksiz eylem eklemez.</li>
+      <li>“silah dolu” + “B odasında”: tek adımlık plan. Planlayıcı gereksiz eylem eklemez.</li>
     </ol>
   </div><!--/dh-->
 </section>
@@ -401,7 +401,7 @@
       <li>“🧠 kapı açılmıyor” kutusunu işaretleyin: plan kapı yerine <b>tekmeyi</b> kullanıyor. İkinci 🧠 kutusunu da işaretleyin: <b>pencere</b>.</li>
       <li>“🧠 cephanelik boş”: silah doldurulamıyor; tek yol <b>Yumruk</b> (7). Ama dikkat: yumruk her zaman mümkündü, sadece pahalıydı!</li>
       <li>“sezgiyi kapat”: kaç düğüm genişletildiğini karşılaştırın. Küçük problemde fark az; büyük alanlarda çok önemli.</li>
-      <li>“silah dolu” + “sağ odada”: tek adımlık plan. Planlayıcı gereksiz eylem eklemez.</li>
+      <li>“silah dolu” + “B odasında”: tek adımlık plan. Planlayıcı gereksiz eylem eklemez.</li>
     </ol>
   </div>
 </section>
@@ -447,7 +447,7 @@
       <li>“🚪 kapıyı bedeninle tut” → ↺ Baştan. Asker kapıyı açmayı deniyor, <b>başarısız</b> oluyor, “kapı açılmıyor” bilgisini <b>çalışma belleğine</b> yazıyor ve yeniden planlıyor: <b>tekme</b>. O da olmayınca <b>pencere</b>. Orkin’in GDC’de anlattığı sahnenin aynısı.</li>
       <li>“📭 cephanelik boş” → ↺ Baştan: cephane alamayınca plan yumruğa dönüyor.</li>
       <li>İkisini birden işaretleyin. Kaç kez yeniden planlıyor? Toplam süre ne kadar uzadı?</li>
-      <li>Günlükte her planın maliyetine bakın: her başarısızlıktan sonra plan biraz <b>daha pahalı</b> ama hâlâ <b>mümkün olan en ucuz</b>.</li>
+      <li>Günlükte her planın maliyetine bakın: yazan, <b>kalan</b> adımların maliyeti (kapı: 4 → 4 → 6). Çoktan yapılan cephane + şarjör (2) eklenince plan her başarısızlıkta <b>pahalanıyor</b> (4 → 6 → 8), ama her yeni plan o andan <b>mümkün olan en ucuz</b> plan.</li>
     </ol>
   </div>
   <p class="mini">Önemli tasarım ayrıntısı: başarısızlık bilgisi bir “gerçek” olarak dünya durumuna yazılıyor (🧠). Eylemlerin ön koşulları da bu gerçeklere bakıyor. Böylece planlayıcı aynı hatayı tekrar etmiyor.</p>
@@ -889,9 +889,9 @@ def plan_cost(start, goal, actions):
 <section data-sec="HTN">
   <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
     <ol style="font-size:.9em">
-      <li>Varsayılan: trol düşmanı görüyor ama elinde kütük yok. “kütük yoksa” yöntemi seçiliyor; <b>Ağacı sök</b> görevi planlama sırasındaki dünya durumunu “elinde kütük var” yapıyor ve sonraki <b>Kütükle vur</b> bu sayede uygulanabiliyor.</li>
+      <li>Varsayılan: trol düşmanı görüyor ama elinde kütük yok. İkinci yöntem, “aksi hâlde (ağaç sök)”, seçiliyor; <b>Ağacı sök</b> görevi planlama sırasındaki dünya durumunu “elinde kütük var” yapıyor ve sonraki <b>Kütükle vur</b> bu sayede uygulanabiliyor.</li>
       <li>“yakında ağaç var”ı kapatın: <b>Ağaç bul</b> başarısız → geri izleme → saldırı yöntemi kalmadı → kök görev bir sonraki yönteme, <b>Devriye</b>’ye geçiyor.</li>
-      <li>“düşmana yol var”ı kapatın: iki saldırı yöntemi de “Düşmana git”te tıkanıyor. Kaç adım boşa gitti?</li>
+      <li>“elinde kütük var”ı açıp “düşmana yol var”ı kapatın: iki saldırı yöntemi de “Düşmana git”te tıkanıyor. Kaç adım boşa gitti?</li>
       <li>“düşmanı görüyor”u kapatın: ilk yöntem hiç denenmiyor.</li>
     </ol>
   </div>

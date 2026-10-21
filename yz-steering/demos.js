@@ -25,7 +25,7 @@
     a.v = V.limit(V.add(a.v, V.mul(force, dt)), a.maxSpeed);
     a.p = V.add(a.p, V.mul(a.v, dt));
     if (wrap) { if (a.p.x < 0) a.p.x += W; if (a.p.x > W) a.p.x -= W; if (a.p.y < 0) a.p.y += H; if (a.p.y > H) a.p.y -= H; }
-    else { a.p.x = SL.clamp(a.p.x, 8, W - 8); a.p.y = SL.clamp(a.p.y, 8, H - 8); }
+    else { const cx = SL.clamp(a.p.x, 8, W - 8), cy = SL.clamp(a.p.y, 8, H - 8); if (cx !== a.p.x) a.v.x = 0; if (cy !== a.p.y) a.v.y = 0; a.p.x = cx; a.p.y = cy; }   // duvar: o yöndeki hız sıfırlanır (hız etiketi gerçeği göstersin)
     if (V.len(a.v) > 2) a.h = V.angle(a.v);
   };
   SL.STEER = { B, steerTo, integrate };
@@ -97,7 +97,7 @@
     const pathMode = root.dataset.mode === 'path';   // yol izleme slaytı: keskin köşeleri dönebilsin diye daha yavaş ve daha çevik başlar
     const cfg = { mode: root.dataset.mode || 'seek', maxSpeed: pathMode ? 130 : 180, maxForce: pathMode ? 420 : 260, vecs: true, obst: false, slow: 120 };
     let a, bot, wanderTh = 0, trail = [], info = {};
-    const reset = () => { a = cfg.mode === 'path' ? { p: V.copy(PATH[0]), v: V.setLen(V.sub(PATH[1], PATH[0]), 60), maxSpeed: cfg.maxSpeed, maxForce: cfg.maxForce, h: 0 } : { p: V.v(120, 190), v: V.v(60, 0), maxSpeed: cfg.maxSpeed, maxForce: cfg.maxForce, h: 0 }; bot = { p: V.v(560, 120), v: V.v(-90, 40), t: 0 }; trail = []; wanderTh = 0; };
+    const reset = () => { a = cfg.mode === 'path' ? { p: V.copy(PATH[0]), v: V.setLen(V.sub(PATH[1], PATH[0]), 60), maxSpeed: cfg.maxSpeed, maxForce: cfg.maxForce, h: 0 } : { p: V.v(120, 190), v: V.v(0, -150), maxSpeed: cfg.maxSpeed, maxForce: cfg.maxForce, h: 0 }; bot = { p: V.v(560, 120), v: V.v(-90, 40), t: 0 }; trail = []; wanderTh = 0; };
     reset();
     const avoid = () => {   // ileri bakan “anten”: en yakın engele çarpacaksa yana it
       const ahead = V.add(a.p, V.mul(V.norm(a.v), 90 * (V.len(a.v) / a.maxSpeed) + 20));
@@ -163,9 +163,21 @@
         if (cfg.obst && info.ahead) { ctx.strokeStyle = info.hit ? t.red : t.muted; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(a.p.x, a.p.y); ctx.lineTo(info.ahead.x, info.ahead.y); ctx.stroke(); ctx.setLineDash([]); }
         SL.drawAgent(ctx, a.p, a.h || 0, t.blue, 13);
         if (cfg.vecs && info.des) {
-          SL.drawArrow(ctx, a.p, V.mul(a.v, 0.5), t.blue, { label: 'hız', w: 2.5 });
-          SL.drawArrow(ctx, a.p, V.mul(info.des, 0.5), t.green, { label: 'istenen', w: 2.5, dash: [6, 4] });
-          SL.drawArrow(ctx, V.add(a.p, V.mul(a.v, 0.5)), V.mul(info.force, 0.25), t.red, { label: 'direksiyon', w: 3 });
+          // etiketler okun ucunun ötesinde; oklar aynı doğrultudayken etiketler üst üste binmesin diye çakışan alt satıra iner
+          const placed = [];
+          const arrowL = (from, vec, col, lab, o) => {
+            SL.drawArrow(ctx, from, vec, col, o);
+            const L = V.len(vec); if (L < 1) return;
+            const u = V.mul(vec, 1 / L), to = V.add(from, vec), align = u.x > 0.35 ? 'left' : u.x < -0.35 ? 'right' : 'center';
+            ctx.save(); ctx.font = '700 12px "JetBrains Mono"'; const wd = ctx.measureText(lab).width + 10; ctx.restore();
+            const x = to.x + u.x * 20, x0 = align === 'left' ? x - 5 : align === 'right' ? x - wd + 5 : x - wd / 2;
+            let y = to.y + u.y * 20 + (align === 'center' ? (u.y > 0 ? 8 : -8) : 0);
+            for (let k = 0; k < 4 && placed.some(q => x0 < q[2] && q[0] < x0 + wd && y - 9 < q[3] && q[1] < y + 9); k++) y += 19;
+            placed.push([x0, y - 9, x0 + wd, y + 9]); SL.drawLabel(ctx, lab, x, y, col, { align });
+          };
+          arrowL(a.p, V.mul(a.v, 0.5), t.blue, 'hız', { w: 2.5 });
+          arrowL(a.p, V.mul(info.des, 0.5), t.green, 'istenen', { w: 2.5, dash: [6, 4] });
+          arrowL(V.add(a.p, V.mul(a.v, 0.5)), V.mul(info.force, 0.25), t.red, 'direksiyon', { w: 3 });
         }
         SL.drawLabel(ctx, `hız ${Math.round(V.len(a.v))} / ${cfg.maxSpeed}`, 70, 16, t.muted, { size: 11 });
       }
@@ -199,6 +211,7 @@
   D.boids = function (root) {
     const W = 720, H = 380;
     const cfg = { n: 120, sep: 1.6, ali: 1.0, coh: 0.9, r: 55, grid: true, predator: true, showR: true };
+    const SEP_R = 25;   // kişisel alan (px)
     let boids = [], checks = 0;
     const mk = () => ({ p: V.v(SL.rand(0, W), SL.rand(0, H)), v: V.fromAngle(SL.rand(0, 7), 90), maxSpeed: 140, maxForce: 300, h: 0 });
     const reset = () => { boids = Array.from({ length: cfg.n }, mk); };
@@ -216,11 +229,14 @@
           for (const o of near(b)) {
             if (o === b) continue; checks++;
             const d = V.dist(b.p, o.p); if (d > cfg.r || d < 1e-6) continue;
-            k++; sep = V.add(sep, V.mul(V.sub(b.p, o.p), 1 / (d * d))); ali = V.add(ali, o.v); coh = V.add(coh, o.p);
+            k++; ali = V.add(ali, o.v); coh = V.add(coh, o.p);
+            // ayrılma yalnızca kişisel alandaki (SEP_R) komşulardan: görüş yarıçapının tamamından itilen boidler
+            // ekrana eşit aralıklarla yayılır, sürü oluşmaz (Reynolds/Shiffman'da da ayrılma yarıçapı görüşten küçüktür)
+            if (d < Math.min(SEP_R, cfg.r)) sep = V.add(sep, V.mul(V.sub(b.p, o.p), 1 / (d * d)));
           }
           let f = V.v();
           if (k) {
-            f = V.add(f, V.mul(steerTo(b, V.setLen(sep, b.maxSpeed)), cfg.sep));
+            if (sep.x || sep.y) f = V.add(f, V.mul(steerTo(b, V.setLen(sep, b.maxSpeed)), cfg.sep));
             f = V.add(f, V.mul(steerTo(b, V.setLen(ali, b.maxSpeed)), cfg.ali));
             f = V.add(f, V.mul(steerTo(b, B.seek(b, V.mul(coh, 1 / k))), cfg.coh));
           }
