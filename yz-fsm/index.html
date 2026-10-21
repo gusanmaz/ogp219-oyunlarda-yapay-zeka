@@ -819,7 +819,7 @@ def next_state(state, s):
             return "KOVALA"
     return state
 </textarea>
-    <div class="lab-tasks">Geçiş tablosunun tamamını Python’la yazın. İpucu: önce “can &lt; 30 ve durum KAC değilse → KAC” kuralı; sonra her durum için bir <code>if/elif</code> bloğu. Eşikler: saldırıya giriş &lt; 60, saldırıdan çıkış &gt; 90, şüphe süresi 4 sn, iyileşme &gt; 70.</div>
+    <div class="lab-tasks">Geçiş tablosunun tamamını Python’la yazın. İpucu: önce “can &lt; 30 ve durum KAC değilse → KAC” kuralı; sonra her durum için bir <code>if/elif</code> bloğu. Eşikler: saldırıya giriş &lt; 60, saldırıdan çıkış &gt; 90, şüphe süresi &gt; 4 sn, iyileşme &gt; 70.</div>
   </div>
 </section>
 
@@ -833,7 +833,7 @@ def next_state(state, s):
 <section data-sec="sorunlar">
   <h2>Titreme <span class="en">oscillation / flicker</span></h2>
   <div class="demo" data-demo="guardfsm" data-memory="0"></div>
-  <p class="mini">Bu kopyada saldırıya giriş ve çıkış eşiği <b>aynı</b> (60) ve oyuncu (bot) nöbetçi yaklaştıkça yavaşça geri çekiliyor. Nöbetçi tam eşikte KOVALA ↔ SALDIR arasında saniyede defalarca gidip geliyor: “son 5 sn’de geçiş” sayacına ve diyagramdaki oka bakın. <b>Histerezis</b> kutusunu açın: çıkış eşiği 90 olur, titreme anında biter. İkinci kaynak: “algı hafızası” kapalıyken fareyle bir duvar köşesinin tam kenarında durun (KOVALA ↔ ŞÜPHE).</p>
+  <p class="mini">Bu kopyada saldırıya giriş ve çıkış eşiği <b>aynı</b> (60) ve oyuncu (bot) nöbetçi yaklaştıkça yavaşça geri çekiliyor. Nöbetçi tam eşikte KOVALA ↔ SALDIR arasında saniyede defalarca gidip geliyor: “son 5 sn’de geçiş” sayacına ve diyagramdaki oka bakın. <b>Histerezis</b> kutusunu açın: çıkış eşiği 90 olur, titreme anında biter. İkinci kaynak: “algı hafızası” kapalıyken fareyle bir duvarın kenarından saniyede iki kez bir görünüp bir saklanın: nöbetçi KOVALA ↔ ŞÜPHE arasında gidip geliyor. Hafızayı açın: saklandığınızda 1,2 sn “görüyor: hafızadan” sayıyor, titreme bitiyor.</p>
 </section>
 
 <section data-sec="sorunlar">

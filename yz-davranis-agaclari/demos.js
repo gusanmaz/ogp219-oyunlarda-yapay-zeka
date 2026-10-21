@@ -92,7 +92,9 @@
     return `<div class="bt-path"><b>bu tick:</b> ${out.join(' ')}</div>`;
   }
   function treeSVG(tree, statuses, o = {}) {
-    const t = T(), L = layout(tree), W = o.W || 1160, H = o.H || 300, mx = 70;
+    const t = T(), L = layout(tree), W = o.W || 1160, H = o.H || 300;
+    const leaves = []; (function lw(n) { if (!n.kids || !n.kids.length) leaves.push(n); else n.kids.forEach(lw); })(tree);
+    const half = n => (n.type === 'cond' || n.type === 'act' ? Math.max(70, n.name.length * 7 + 14) / 2 : 24) + 6, mx = Math.max(70, half(leaves[0]), half(leaves[leaves.length - 1]));   // kenardaki yaprak etiketi tuvale yapışmasın
     const X = i => mx + (L.leaves > 1 ? (i * (W - 2 * mx)) / (L.leaves - 1) : (W - 2 * mx) / 2), Y = d => 34 + (d * (H - 70)) / Math.max(1, L.depth);
     let s = '';
     const edges = n => (n.kids || []).forEach(k => { const [x1, d1] = L.pos[n.id], [x2, d2] = L.pos[k.id], on = statuses[k.id]; s += `<line x1="${X(x1)}" y1="${Y(d1) + 16}" x2="${X(x2)}" y2="${Y(d2) - 16}" stroke="${on ? colOf(on, t) : t.rule}" stroke-width="${on ? 3 : 1.5}"/>`; edges(k); });
@@ -186,7 +188,7 @@
     const diag = el('div', { class: 'bt-diag' }), note = el('div', { class: 'sv-note tree-note' });
     const NAMES = { lowHp: 'canım az', sees: 'oyuncuyu görüyorum', close: 'yakın', clue: 'iz var' };
     const DESC = { sel: 'Selector: çocuklarını soldan dener; biri BAŞARISIZ değilse durur', seq: 'Sequence: çocuklarını soldan çalıştırır; biri BAŞARILI değilse durur', cond: 'Koşul', act: 'Eylem', not: 'Ters çevirici' };
-    const build = () => {
+    const build = at => {   // at = 'end': algı kutusu değişince sonucu hemen göster (▶ ile baştan izlenebilir)
       const ctx = { action: null };
       // ziyaret sırasını “giriş” anlarıyla birlikte kaydetmek için ikinci bir yürüyüş
       const order = [];
@@ -217,10 +219,10 @@
       });
       F.push({ st: Object.assign({}, st), note: `<b>Sonuç:</b> nöbetçi bu karede <b>${SL.GUARD_NAMES[ctx.action] || ctx.action}</b> yapıyor. Renkli yol = verilen karar; gri düğümlere hiç bakılmadı. Sonraki karede her şey <b>yeniden kökten</b> sorulur — algı değiştiyse cevap da değişir.` });
       F.forEach((f, q) => { f.note = `<span style="opacity:.6">Adım ${q}/${F.length - 1} ·</span> ` + f.note; });
-      fp.load(F);
+      fp.load(F, at);
     };
     const fp = new SL.FramePlayer(f => { diag.innerHTML = treeSVG(tree, f.st, { H: 250 }); note.innerHTML = f.note; }, { speed: 1 });
-    const boxes = Object.keys(senses).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { senses[k] = e.target.checked; build(); } }); cb.checked = senses[k]; return cb; })(), ' ' + NAMES[k]));
+    const boxes = Object.keys(senses).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { senses[k] = e.target.checked; build('end'); } }); cb.checked = senses[k]; return cb; })(), ' ' + NAMES[k]));
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, el('b', null, 'Algı: '), ...boxes), diag, legend('<span style="--c:var(--blue)">şu an değerlendiriliyor</span>'), SL.transport(fp, { min: 0.5, max: 8 }), note);
     build(); SL.onTheme(() => fp.render());
@@ -346,7 +348,7 @@
         ['🧱 Anahtar yok, kapı çelik', { open: false, key: false, weak: false }, 'Kapı kilitli, anahtar yok, kapı çelik. Elde hiçbir çare kalmadı.'],
         ['🤔 Anahtar var, kapı da çürük', { open: false, key: true, weak: true }, 'İki çare birden var: anahtar cepte, kapı da çürük. Hangisini seçer?']],
       win: '<b>Kök BAŞARILI:</b> bir plan tuttu, karakter odada 🎉', fail: '<b>Kök BAŞARISIZ:</b> üç plan da tutmadı. Üstteki düğüm başka bir şey denemeli (pencere?).',
-      moral: (s, skip, ok) => !ok ? 'Hiç gri düğüm yok: ağaç her çareyi denedi, hiçbiri tutmadı.' : (s.key && s.weak && !s.open ? 'Anahtar varken kapıyı tekmelemedi: “Anahtarla” planı solda, yani <b>daha öncelikli</b>.' : `Gri kalan <b>${skip}</b> yaprak hiç çalışmadı: daha öncelikli bir plan tutunca selector durur.`)
+      moral: (s, skip, ok) => !ok ? `Üç plan da denendi, hiçbiri tutmadı. Gri kalan <b>${skip}</b> yaprak, ilk adımı tutmayan planların sonraki adımları.` : (s.key && s.weak && !s.open ? 'Anahtar varken kapıyı tekmelemedi: “Anahtarla” planı solda, yani <b>daha öncelikli</b>.' : `Gri kalan <b>${skip}</b> yaprak hiç çalışmadı: daha öncelikli bir plan tutunca selector durur.`)
     });
   };
 

@@ -88,7 +88,7 @@
       intro: 'Kedinin üç hâli var ve aynı anda yalnızca birindedir. Oklar “ne olursa hangi hâle geçer”i söyler.',
       SC: [
         ['☀️ Sıradan bir gün', 'Sabah olur, mama gelir, kedi oynar, yorulur, uyur.', ['sabah', 'mama', 'yorul'], 'Üç olay, üç geçiş: kedi başladığı duruma döndü.'],
-        ['🧶 Aynı olay, farklı tepki', 'İp üç kez sallanacak: kedi uyurken, açken ve oynarken. Tepkisi aynı mı?', ['ip', 'yorul', 'sabah', 'ip', 'mama', 'ip'], 'Aynı olay (“ip sallandı”) üç durumda üç farklı sonuç verdi. Tepkiyi belirleyen olay değil, <b>olay + o anki durum</b>.'],
+        ['🧶 Aynı olay, farklı tepki', 'İp üç kez sallanacak: kedi uyurken, açken ve oynarken. Tepkisi aynı mı?', ['ip', 'yorul', 'sabah', 'ip', 'mama', 'ip'], 'Aynı olay (“ip sallandı”) üç durumda üç ayrı tepki aldı: uyuyan kedi oyuna kalktı, aç kedi umursamadı, oynayan kedi zaten oynuyordu. Tepkiyi belirleyen olay değil, <b>olay + o anki durum</b>.'],
         ['🍗 Yanlış zamanda mama', 'Kedi uyurken mama veriyoruz. Sonra sabah oluyor.', ['mama', 'sabah', 'mama'], 'Uyurken verilen mama “kayboldu”: FSM yalnızca o anki durumdan çıkan oklara bakar.']]
     }, 'fsa1');
   };
@@ -99,7 +99,7 @@
       states: { SUP: [100, 130, '❓', 'ŞÜPHE', 'amber', 'sesin geldiği yere gidip etrafa bakıyor.'], DEV: [100, 350, '🚶', 'DEVRİYE', 'blue', 'yol noktaları arasında sakin sakin yürüyor.'], KOV: [430, 130, '🏃', 'KOVALA', 'red', 'oyuncuya doğru koşuyor.'], SAL: [760, 130, '🔫', 'SALDIR', 'purple', 'durmuş, nişan alıp ateş ediyor.'], KAC: [760, 350, '💨', 'KAÇ', 'green', 'oyuncudan uzaklaşıp iyileşiyor.'] },
       edges: [['DEV', 'SUP', 'ses', -62, 0.38], ['SUP', 'DEV', 'sure', -62, 0.38], ['DEV', 'KOV', 'gor', 0, 0.55], ['SUP', 'KOV', 'gor', -44, 0.5, 21], ['KOV', 'SUP', 'kayip', -44, 0.5, 21], ['KOV', 'SAL', 'yakin', -44, 0.5, 21], ['SAL', 'KOV', 'uzak', -44, 0.5, 21], ['SAL', 'SUP', 'kayip', 170, 0.5], ['KAC', 'DEV', 'iyi', 0, 0.5]],
       any: ['can', 'KAC', 'her durumdan: canı azaldı', 560, 245],
-      events: { ses: ['ses duydu', '🔊 ses duydu'], gor: ['oyuncuyu gördü', '👁️ oyuncuyu gördü'], kayip: ['gözden kaybetti', '🙈 gözden kaybetti'], yakin: ['yaklaştı', '📏 yaklaştı (< 60)'], uzak: ['uzaklaştı', '↔ uzaklaştı (> 90)'], sure: ['4 sn geçti', '⏱️ 4 sn geçti'], can: ['canı azaldı', '💔 canı azaldı (< 30)'], iyi: ['iyileşti', '💚 iyileşti (> 70)'] },
+      events: { ses: ['ses duydu', '🔊 ses duydu'], gor: ['oyuncuyu gördü', '👁️ oyuncuyu gördü'], kayip: ['gözden kaybetti', '🙈 gözden kaybetti'], yakin: ['yaklaştı', '📏 yaklaştı (mesafe < 60)'], uzak: ['uzaklaştı', '↔ uzaklaştı (mesafe > 90)'], sure: ['4 sn geçti', '⏱️ 4 sn geçti'], can: ['canı azaldı', '💔 canı azaldı (can < 30)'], iyi: ['iyileşti', '💚 iyileşti (can > 70)'] },
       none: (st, ev) => ({ DEV: { kayip: 'Zaten kimseyi görmüyordu.', yakin: 'Görmediği birine yaklaşmış sayılmaz.', sure: 'Devriyenin süresi yok.' }, SUP: { ses: 'Zaten araştırıyor.' }, KOV: { ses: 'Oyuncuyu görüyor; sese bakmaz.', gor: 'Zaten görüyor.', sure: 'Kovalamanın süresi yok.' }, SAL: { ses: 'Ateş ederken sese bakmaz.', yakin: 'Zaten menzilde.' }, KAC: { ses: 'Kaçarken sesle ilgilenmez.', gor: 'Görse de kaçmaya devam eder.', can: 'Zaten kaçıyor.' } }[st][ev] || 'Bu durumdan bu olayla çıkan ok yok.'),
       intro: 'Canlı demodan önce nöbetçiyi elle yönetelim: olayları siz verin, hangi oku izlediğini görün. Kırmızı ok = az önce kullanılan geçiş.',
       SC: [
@@ -113,17 +113,17 @@
 
   /* ---------- FSM diyagramı (SVG) ---------- */
   const NODES = { DEVRIYE: [90, 60], SUPHE: [90, 215], KOVALA: [280, 135], SALDIR: [440, 60], KAC: [300, 290] };
-  const EDGES = [['DEVRIYE', 'KOVALA', 'görüyor'], ['DEVRIYE', 'SUPHE', 'ses'], ['SUPHE', 'KOVALA', 'görüyor'], ['SUPHE', 'DEVRIYE', '4 sn'], ['KOVALA', 'SUPHE', 'kaybetti'], ['KOVALA', 'SALDIR', '< 60'], ['SALDIR', 'KOVALA', '> 90'], ['KAC', 'DEVRIYE', 'can > 70', [[248, 296], [15, 300], [10, 95], [42, 72]]]];
+  const EDGES = [['DEVRIYE', 'KOVALA', 'görüyor'], ['DEVRIYE', 'SUPHE', 'ses'], ['SUPHE', 'KOVALA', 'görüyor'], ['SUPHE', 'DEVRIYE', '4 sn'], ['KOVALA', 'SUPHE', 'kaybetti'], ['KOVALA', 'SALDIR', '< 60'], ['SALDIR', 'KOVALA', '> 90'], ['KAC', 'DEVRIYE', 'can > 70', [[248, 296], [15, 300], [10, 95], [42, 72]], [32, 270]], ['SALDIR', 'SUPHE', 'kaybetti', [[440, 84], [440, 228], [270, 232], [143, 229]], [395, 205]]];
   function fsmSVG(active, flash, exitDist = 90, mid = 'fa') {   // mid: bu diyagrama özel ok ucu kimliği (aynı kimlik iki slaytta olursa gizli olan seçilir, ok uçları kaybolur)
     const t = T(), col = COLS(t);
     let s = `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
-    EDGES.forEach(([a, b, lab0, curve]) => {
+    EDGES.forEach(([a, b, lab0, curve, lp]) => {
       const lab = lab0 === '> 90' ? '> ' + exitDist : lab0;
       if (curve) {   // eğri ok (diğer okların arasından geçmesin)
         const on = flash && flash[0] === a && flash[1] === b, [p0, c1, c2, p1] = curve;
         s += `<path d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p1[0]},${p1[1]}" fill="none" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#${mid})"/>`;
         const lw = lab.length * 6.4 + 10;
-        s += `<rect x="${32 - lw / 2}" y="${262}" width="${lw}" height="16" rx="4" fill="${t.card}" opacity=".92"/><text x="32" y="274" text-anchor="middle" font-size="11" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${lab}</text>`;
+        s += `<rect x="${lp[0] - lw / 2}" y="${lp[1] - 8}" width="${lw}" height="16" rx="4" fill="${t.card}" opacity=".92"/><text x="${lp[0]}" y="${lp[1] + 4}" text-anchor="middle" font-size="11" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${lab}</text>`;
         return;
       }
       const [x1, y1] = NODES[a], [x2, y2] = NODES[b], dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
@@ -134,7 +134,9 @@
       const lx = (sx + ex) / 2 + px * 2.2, ly = (sy + ey) / 2 + py * 2.2, lw = lab.length * 6.4 + 10;
       s += `<rect x="${lx - lw / 2}" y="${ly - 10}" width="${lw}" height="16" rx="4" fill="${t.card}" opacity=".92"/><text x="${lx}" y="${ly + 2}" text-anchor="middle" font-size="11" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${lab}</text>`;
     });
-    s += `<text x="470" y="300" text-anchor="middle" font-size="12" font-weight="700" fill="${t.green}">her durumdan:</text><text x="470" y="316" text-anchor="middle" font-size="12" font-weight="700" fill="${t.green}">can &lt; 30 → KAÇ</text>`;
+    const kacOn = flash && flash[1] === 'KAC', kc = kacOn ? t.red : t.green;   // "her durumdan" girişi: KAÇ'a geçişte bu ok kırmızı
+    s += `<path d="M424,302 L353,294" fill="none" stroke="${kacOn ? t.red : t['ink-2']}" stroke-width="${kacOn ? 4 : 1.8}" stroke-dasharray="6 4" marker-end="url(#${mid})"/>`;
+    s += `<text x="470" y="300" text-anchor="middle" font-size="12" font-weight="700" fill="${kc}">her durumdan:</text><text x="470" y="316" text-anchor="middle" font-size="12" font-weight="700" fill="${kc}">can &lt; 30 → KAÇ</text>`;
     Object.entries(NODES).forEach(([k, [x, y]]) => {
       const on = k === active;
       s += `<rect x="${x - 50}" y="${y - 22}" width="100" height="44" rx="22" fill="${on ? col[k] : t.card}" stroke="${col[k]}" stroke-width="${on ? 4 : 2.5}"/><text x="${x}" y="${y + 6}" text-anchor="middle" font-size="15" font-weight="700" fill="${on ? '#fff' : t.ink}">${NAMES[k]}</text>`;
@@ -161,7 +163,8 @@
     const sim = SL.makeGuardArena({ decide: (state, s) => refNext(state, s, hyst ? 90 : 60), bot: flicker ? bot : null, onReset: () => { bp = V.v(380, 70); }, memory: root.dataset.memory != null ? root.dataset.memory === '1' : true, onDraw: st => {
       diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null, hyst ? 90 : 60, mid);
       const s = st.sense || {};
-      info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b>${s.dist}</b></span><span class="cnt">görüyor <b>${s.seesPlayer ? 'evet' : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('') || '<i>henüz geçiş yok</i>'}</div>`;
+      const fx = n => `style="display:inline-block;min-width:${n}ch;font-variant-numeric:tabular-nums"`;   // sabit genişlik: sayaçlar yerinden oynamasın
+      info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b ${fx(3)}>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b ${fx(3)}>${s.dist}</b></span><span class="cnt">görüyor <b ${fx(9)}>${s.seesPlayer ? (st.rawSees ? 'evet' : 'hafızadan') : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b ${fx(2)} class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('') || '<i>henüz geçiş yok</i>'}</div>`;
     } });
     const diag = el('div', { class: 'fsm-diag' }), info = el('div');
     const check = (label, on, fn) => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => fn(e.target.checked) }); cb.checked = on; return cb; })(), ' ' + label);
@@ -205,7 +208,7 @@
     root.append(el('div', { class: 'sv-controls' },
       ev('📞 Telefon çaldı', () => { stack.push('TELEFONDA'); plain = 'TELEFONDA'; log.push('Telefon: düz FSM önceki durumu unuttu!'); }),
       ev('🔫 Silah sesi', () => { stack.push('ALARM'); plain = 'ALARM'; log.push('Alarm üste eklendi'); }),
-      ev('✔ Bitti / tehlike geçti (pop)', () => { if (stack.length > 1) stack.pop(); plain = '??? (nereye dönmeli?)'; log.push('Yığın: bir öncekine dön. Düz FSM: bilmiyor.'); }),
+      ev('✔ Bitti / tehlike geçti (pop)', () => { if (stack.length > 1) { stack.pop(); plain = '??? (nereye dönmeli?)'; log.push('Yığın: bir öncekine dön. Düz FSM: bilmiyor.'); } else log.push('Yığında tek durum var: dönülecek önceki durum yok, hiçbir şey değişmedi.'); }),
       ev('↺', () => { stack = ['DEVRİYE']; plain = 'DEVRİYE'; log = []; })), view);
     draw();
   };
@@ -241,7 +244,7 @@
       const states = ['DEVRIYE', 'SUPHE', 'KOVALA', 'SALDIR', 'KAC'], cs = [];
       const base = { sees_player: false, dist: 200, hp: 100, heard_noise: false, time_in_state: 0 };
       states.forEach(st => { cs.push([st, Object.assign({}, base)]); cs.push([st, Object.assign({}, base, { sees_player: true })]); cs.push([st, Object.assign({}, base, { sees_player: true, dist: 40 })]); cs.push([st, Object.assign({}, base, { sees_player: true, dist: 75 })]); cs.push([st, Object.assign({}, base, { hp: 20 })]); cs.push([st, Object.assign({}, base, { heard_noise: true })]); cs.push([st, Object.assign({}, base, { time_in_state: 5 })]); cs.push([st, Object.assign({}, base, { hp: 80 })]); });
-      for (let i = 0; i < 25; i++) cs.push([states[Math.floor(Math.random() * 5)], { sees_player: Math.random() < 0.5, dist: Math.floor(Math.random() * 300), hp: Math.floor(Math.random() * 100), heard_noise: Math.random() < 0.4, time_in_state: Math.floor(Math.random() * 8) }]);
+      for (let i = 0; i < 25; i++) cs.push([states[Math.floor(Math.random() * 5)], { sees_player: Math.random() < 0.5, dist: Math.floor(Math.random() * 300), hp: Math.floor(Math.random() * 100), heard_noise: Math.random() < 0.4, time_in_state: Math.floor(Math.random() * 8) + 0.5 }]);   // tam 4 sn üretme: “4 sn geçti” hem > 4 hem >= 4 ile doğru okunabilir
       return cs;
     },
     show: (st, s) => `durum ${st}, algı ${JSON.stringify(s)}`,

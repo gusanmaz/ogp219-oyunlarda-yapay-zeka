@@ -48,7 +48,7 @@
       let html = '';
       const vs = v => `(${f1(v.x)}, ${f1(v.y)})`;
       if (mode === 'add') {
-        const s = V.add(A, B); arr(O, pa, t.blue, 'a'); arr(pa, toPx(s), t.green, 'b', { dash: [6, 4] }); arr(O, pb, t.green, 'b'); arr(O, toPx(s), t.purple, 'a + b');
+        const s = V.add(A, B); arr(O, pa, t.blue, 'a'); arr(pa, toPx(s), t.green, '', { dash: [6, 4] });   // kesikli kopya etiketsiz: “b” bir kez yazılsın, “a + b” ile üst üste binmesin arr(O, pb, t.green, 'b'); arr(O, toPx(s), t.purple, 'a + b');
         html = `<p><b class="c-blue">a</b> = ${vs(A)}<br><b class="c-green">b</b> = ${vs(B)}<br><b style="color:var(--purple)">a + b</b> = ${vs(s)}</p><p class="mini">Uç uca ekle: önce a kadar git, sonra b kadar. 🎮 konum = konum + hız</p>`;
       } else if (mode === 'sub') {
         const d = V.sub(B, A); arr(O, pa, t.blue, 'a (ben)'); arr(O, pb, t.green, 'b (hedef)'); arr(pa, pb, t.red, 'b − a');
@@ -56,13 +56,13 @@
       } else if (mode === 'norm') {
         const n = V.norm(A); ctx.save(); ctx.strokeStyle = t.muted; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(O.x, O.y, S, 0, 7); ctx.stroke(); ctx.restore();
         arr(O, pa, t.blue, 'a'); arr(O, toPx(n), t.amber, 'â', { w: 5 });
-        html = `<p>|a| = <b>${f2(V.len(A))}</b></p><p>â = a / |a| = <b>${vs(n)}</b> (uzunluğu 1)</p><p class="mini">Birim vektör <span class="en">normalized</span>: sadece YÖN, büyüklük yok. 🎮 yön × hız = hareket</p>`;
+        html = `<p>|a| = <b>${f2(V.len(A))}</b></p><p>${V.len(A) < 1e-9 ? 'â <b>tanımsız</b>: sıfır vektörün yönü yok' : `â = a / |a| = <b>${vs(n)}</b> (uzunluğu 1)`}</p><p class="mini">Birim vektör <span class="en">normalized</span>: sadece YÖN, büyüklük yok. 🎮 yön × hız = hareket</p>`;
       } else if (mode === 'dot') {
-        const d = V.dot(A, B), cos = d / (V.len(A) * V.len(B) || 1), ang = (Math.acos(SL.clamp(cos, -1, 1)) * 180) / Math.PI;
+        const d = V.dot(A, B), cos = d / (V.len(A) * V.len(B) || 1), ang = (Math.acos(SL.clamp(cos, -1, 1)) * 180) / Math.PI, zero = V.len(A) < 1e-9 || V.len(B) < 1e-9;
         const proj = V.mul(V.norm(A), d / (V.len(A) || 1));
         arr(O, pa, t.blue, 'a'); arr(O, pb, t.green, 'b');
         ctx.save(); ctx.strokeStyle = t.amber; ctx.lineWidth = 6; ctx.globalAlpha = 0.7; const pp = toPx(proj); ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(pp.x, pp.y); ctx.stroke(); ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(pb.x, pb.y); ctx.lineTo(pp.x, pp.y); ctx.stroke(); ctx.restore();
-        html = `<p>a · b = ${pf(A.x)}·${pf(B.x)} + ${pf(A.y)}·${pf(B.y)} = <b>${f2(d)}</b></p><p>Aradaki açı: <b>${f1(ang)}°</b> (cos = ${f2(cos)})</p><p><b class="${d > 0 ? 'c-green' : d < 0 ? 'c-red' : ''}">${d > 0 ? 'Pozitif: aynı yöne bakıyorlar (önümde)' : d < 0 ? 'Negatif: zıt yönlerde (arkamda)' : 'Sıfır: dik (tam yanımda)'}</b></p><p class="mini">Sarı = b’nin a üzerindeki gölgesi (izdüşüm).</p>`;
+        html = `<p>a · b = ${pf(A.x)}·${pf(B.x)} + ${pf(A.y)}·${pf(B.y)} = <b>${f2(d)}</b></p><p>Aradaki açı: ${zero ? '<b>tanımsız</b> (sıfır vektör)' : `<b>${f1(ang)}°</b> (cos = ${f2(cos)})`}</p><p><b class="${d > 0 ? 'c-green' : d < 0 ? 'c-red' : ''}">${zero ? 'Sıfır vektör: yönü yok, önde/arkada sorusu anlamsız' : d > 0 ? 'Pozitif: aynı yöne bakıyorlar (önümde)' : d < 0 ? 'Negatif: zıt yönlerde (arkamda)' : 'Sıfır: dik (tam yanımda)'}</b></p><p class="mini">Sarı = b’nin a üzerindeki gölgesi (izdüşüm).</p>`;
       } else {
         const cr = V.cross(A, B); arr(O, pa, t.blue, 'a (bakış)'); arr(O, pb, t.green, 'b (hedef)');
         html = `<p>a × b = ${pf(A.x)}·${pf(B.y)} − ${pf(A.y)}·${pf(B.x)} = <b>${f2(cr)}</b></p><p><b>${cr > 0 ? 'Pozitif → b, a’nın SAĞINDA (ekran koordinatında y aşağı)' : cr < 0 ? 'Negatif → b, a’nın SOLUNDA' : 'Sıfır → aynı doğru üzerinde'}</b></p><p class="mini">2B çapraz çarpım tek bir sayı verir: işareti “sola mı sağa mı dönmeliyim?” sorusunun cevabı. (Unity’de y yukarı olduğu için işaretler ters!)</p>`;
@@ -95,10 +95,11 @@
         const cr = V.cross(fwd, dir);
         SL.drawCone(ctx, guard, heading, (fov * Math.PI) / 180, range, seen ? t.red : t.amber, seen ? 0.25 : 0.14);
         SL.drawArrow(ctx, guard, V.mul(fwd, 80), t.blue, { label: 'ileri (forward)', w: 3 });
-        SL.drawArrow(ctx, guard, V.mul(dir, Math.min(d, 260)), seen ? t.red : t.muted, { label: 'hedefe yön', w: 2, dash: [6, 4] });
+        const aL = Math.max(0, Math.min(d - 14, 260));   // ok oyuncunun önünde biter; etiket her zaman oyuncu noktasının 20 px ötesinde (nokta etiketi örtmesin)
+        SL.drawArrow(ctx, guard, V.mul(dir, aL), seen ? t.red : t.muted, { label: 'hedefe yön', w: 2, dash: [6, 4], labelGap: d - aL + 20 });
         SL.drawAgent(ctx, guard, heading, t.purple, 15, { label: 'NÖBETÇİ' });
-        ctx.fillStyle = seen ? t.red : t.green; ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 7); ctx.fill(); SL.drawLabel(ctx, seen ? '!! GÖRÜLDÜ' : 'oyuncu', p.x, p.y - 20, seen ? t.red : t.green);
-        info.innerHTML = `<span class="cnt">forward · yön = <b>${f2(dot)}</b></span><span class="cnt">cos(FOV/2) = <b>${f2(cosHalf)}</b></span><span class="cnt">açı içinde mi? <b class="${inAng ? 'c-green' : 'c-red'}">${inAng ? 'evet' : 'hayır'}</b></span><span class="cnt">mesafe <b>${Math.round(d)}</b> ≤ ${range}? <b class="${inRange ? 'c-green' : 'c-red'}">${inRange ? 'evet' : 'hayır'}</b></span><span class="cnt">çapraz çarpım: hedef <b>${cr > 0 ? 'sağda' : 'solda'}</b></span>`;
+        ctx.fillStyle = seen ? t.red : t.green; ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, 7); ctx.fill(); SL.drawLabel(ctx, seen ? '!! GÖRÜLDÜ' : 'oyuncu', p.x, dir.y < -0.5 ? p.y + 24 : p.y - 20, seen ? t.red : t.green);   // ok yukarı bakıyorsa “hedefe yön” üstte: oyuncu etiketi alta
+        info.innerHTML = `<span class="cnt">nokta çarpım ileri · yön = <b>${f2(dot)}</b></span><span class="cnt">cos(FOV/2) = <b>${f2(cosHalf)}</b></span><span class="cnt">açı içinde mi? <b class="${inAng ? 'c-green' : 'c-red'}">${inAng ? 'evet' : 'hayır'}</b></span><span class="cnt">mesafe <b>${Math.round(d)}</b> ≤ ${range}? <b class="${inRange ? 'c-green' : 'c-red'}">${inRange ? 'evet' : 'hayır'}</b></span><span class="cnt">çapraz çarpım: hedef <b>${cr > 0 ? 'sağda' : 'solda'}</b></span>`;
       }
     });
     return SL.worldDemo(root, w, el('div', { class: 'sv-controls' }, slider('Görüş açısı (FOV°)', 10, 360, fov, 5, v => { fov = v; }), slider('Menzil', 50, 500, range, 10, v => { range = v; }),
@@ -133,7 +134,7 @@
     const upd = () => { code.textContent = useDt ? 'x += hız * deltaTime;   // piksel/SANİYE × saniye = piksel  ✔' : 'x += 2.5;   // her KAREDE 2.5 piksel → hızlı bilgisayar daha hızlı koşar ✘'; };
     upd();
     return SL.worldDemo(root, w, el('div', { class: 'sv-controls' }, slider('Bilgisayar A FPS', 10, 60, fpsA, 5, v => { fpsA = v; w.reset(); }), slider('Bilgisayar B FPS', 60, 240, fpsB, 10, v => { fpsB = v; w.reset(); }),
-      el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { useDt = e.target.checked; upd(); w.reset(); } }); return cb; })(), ' deltaTime kullan')), code);
+      el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { useDt = e.target.checked; upd(); w.reset(); } }); return cb; })(), ' deltaTime kullan')), code, { secs: true });
   };
 
   /* ---------- lerp ile yumuşatma: kare hızına bağlı mı? ---------- */
@@ -157,7 +158,7 @@
     });
     const upd = () => { code.textContent = useExp ? `x = lerp(x, hedef, 1 - exp(-${(k * 60).toFixed(1)} * dt));  // hepsi aynı hızda ✔` : `x = lerp(x, hedef, ${k});  // HER KAREDE %${Math.round(k * 100)} yaklaş → yüksek FPS daha hızlı ✘`; };
     upd();
-    return SL.worldDemo(root, w, el('div', { class: 'sv-controls' }, slider('k', 0.02, 0.3, k, 0.01, v => { k = v; upd(); }), el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { useExp = e.target.checked; upd(); w.reset(); } }); return cb; })(), ' kare hızından bağımsız formül')), code);
+    return SL.worldDemo(root, w, el('div', { class: 'sv-controls' }, slider('k (yaklaşma oranı)', 0.02, 0.3, k, 0.01, v => { k = v; upd(); }), el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { useExp = e.target.checked; upd(); w.reset(); } }); return cb; })(), ' kare hızından bağımsız formül')), code, { secs: true });
   };
 
   /* ---------- simlab: hedefe doğru hareket ---------- */

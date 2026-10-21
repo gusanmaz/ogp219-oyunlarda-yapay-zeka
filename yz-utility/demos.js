@@ -64,7 +64,7 @@
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
       ctx.strokeStyle = t.rule; ctx.lineWidth = 1; ctx.font = '12px "JetBrains Mono"'; ctx.fillStyle = t.muted; ctx.textAlign = 'center';
       for (let i = 0; i <= 10; i++) { const v = i / 10; ctx.beginPath(); ctx.moveTo(X(v), Y(0)); ctx.lineTo(X(v), Y(1)); ctx.stroke(); ctx.beginPath(); ctx.moveTo(X(0), Y(v)); ctx.lineTo(X(1), Y(v)); ctx.stroke(); if (i % 2 === 0) { ctx.fillText(v.toFixed(1), X(v), Y(0) + 16); ctx.textAlign = 'right'; ctx.fillText(v.toFixed(1), X(0) - 6, Y(v) + 4); ctx.textAlign = 'center'; } }
-      ctx.fillStyle = t['ink-2']; ctx.font = '700 13px "Source Sans 3"'; ctx.fillText('girdi x (normalleştirilmiş)', X(0.5), H - 6);
+      ctx.fillStyle = t['ink-2']; ctx.font = '700 13px "Source Sans 3"'; ctx.fillText(st.xlab || 'girdi x (normalleştirilmiş)', X(0.5), H - 6);
       ctx.save(); ctx.translate(13, Y(0.5)); ctx.rotate(-Math.PI / 2); ctx.fillText('puan y', 0, 0); ctx.restore();
       ctx.strokeStyle = t.blue; ctx.lineWidth = 3; ctx.beginPath();
       for (let i = 0; i <= 200; i++) { const x = i / 200, y = evalCurve(st.type, x, st.p, st.inv); i ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y)); }
@@ -84,12 +84,13 @@
     const ctl = el('div', { class: 'ctl-col' });
     const build = () => {
       ctl.innerHTML = '';
-      ctl.append(el('label', { class: 'ctl' }, 'Eğri: ', select({ linear: CURVES.linear.ad, power: CURVES.power.ad, logistic: CURVES.logistic.ad, piecewise: CURVES.piecewise.ad }, st.type, v => { st.type = v; build(); draw(); })));
+      // tür değişince c: doğrusal/üslüde 0 (y = x, y = x²), lojistikte orta nokta 0,5
+      ctl.append(el('label', { class: 'ctl' }, 'Eğri: ', select({ linear: CURVES.linear.ad, power: CURVES.power.ad, logistic: CURVES.logistic.ad, piecewise: CURVES.piecewise.ad }, st.type, v => { st.type = v; st.xlab = null; st.p.c = v === 'logistic' ? 0.5 : 0; build(); draw(); })));
       const P = st.p, sl = (lab, key, a, b, s) => ctl.append(slider(lab, a, b, P[key], s, v => { P[key] = v; draw(); }));
       if (st.type !== 'piecewise') { sl('eğim m', 'm', -2, 2, 0.1); if (st.type === 'power') sl('üs k', 'k', 0.25, 6, 0.25); sl('x kaydırma c', 'c', -0.5, 1, 0.05); sl('y kaydırma b', 'b', -0.5, 0.5, 0.05); }
       ctl.append(el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { st.inv = e.target.checked; draw(); } }); cb.checked = st.inv; return cb; })(), ' ters çevir (1 − y)'));
       ctl.append(slider('girdi x', 0, 1, st.x, 0.01, v => { st.x = v; draw(); }));
-      const presets = { 'Açlık (Sims tarzı)': () => { st.type = 'piecewise'; st.inv = false; st.p.pts = [[0, 1], [0.15, 0.95], [0.4, 0.4], [0.6, 0.08], [1, 0]]; }, 'Mesafe: yakın iyi': () => { st.type = 'power'; st.inv = true; Object.assign(st.p, { m: 1, k: 0.5, c: 0, b: 0 }); }, 'Can az → kaç': () => { st.type = 'logistic'; st.inv = true; Object.assign(st.p, { m: 1.5, c: 0.3, b: 0 }); }, 'Mermi: biraz yeter': () => { st.type = 'power'; st.inv = false; Object.assign(st.p, { m: 1, k: 0.35, c: 0, b: 0 }); } };
+      const presets = { 'Açlık (Sims tarzı)': () => { st.type = 'piecewise'; st.inv = false; st.xlab = 'girdi x: açlık göstergesinin doluluğu (0 = aç, 1 = tok)'; st.p.pts = [[0, 1], [0.15, 0.95], [0.4, 0.4], [0.6, 0.08], [1, 0]]; }, 'Mesafe: yakın iyi': () => { st.type = 'power'; st.inv = true; st.xlab = 'girdi x: mesafe (0 = dibinde, 1 = en uzak)'; Object.assign(st.p, { m: 1, k: 0.5, c: 0, b: 0 }); }, 'Can az → kaç': () => { st.type = 'logistic'; st.inv = true; st.xlab = 'girdi x: can (0 = ölü, 1 = tam)'; Object.assign(st.p, { m: 1.5, c: 0.3, b: 0 }); }, 'Mermi: biraz yeter': () => { st.type = 'power'; st.inv = false; st.xlab = 'girdi x: mermi (0 = boş, 1 = dolu şarjör)'; Object.assign(st.p, { m: 1, k: 0.35, c: 0, b: 0 }); } };
       ctl.append(el('div', { class: 'sv-controls' }, el('b', null, 'Hazır: '), ...Object.entries(presets).map(([k, f]) => btn(k, () => { f(); build(); draw(); }))));
     };
     build();
@@ -254,6 +255,8 @@
         }
         const a = mod.score({ hunger: 80, energy: 80, fun: 80, bladder: 80, social: 80 }, { hunger: 70 }, 200), b = mod.score({ hunger: 20, energy: 80, fun: 80, bladder: 80, social: 80 }, { hunger: 70 }, 200);
         if (!(b > a)) return { ok: false, msg: '❌ Açlık 20 iken “Yemek ye”nin puanı, açlık 80 iken olduğundan büyük olmalı.' };
+        const a70 = mod.score({ hunger: 70, energy: 80, fun: 80, bladder: 80, social: 80 }, { hunger: 70 }, 200);   // “biraz acıkmış”: çok açın dörtte birinden az olmalı (doğrusal eğri 0,38 verir)
+        if (!(a70 < 0.25 * b)) return { ok: false, msg: `❌ Senaryolar tuttu ama aciliyet hâlâ doğrusal gibi: açlık 70 (biraz acıkmış) iken “Yemek ye” puanı, açlık 20’deki puanın %${Math.round((100 * a70) / b)} kadarı. Dörtte birinden (%25) az olmalı ki Sim biraz acıkınca koşmasın: üslü (u * u * u) ya da parçalı bir eğri deneyin.` };
         const n = mod.score({ hunger: 30, energy: 80, fun: 80, bladder: 80, social: 80 }, { hunger: 70 }, 50), fr = mod.score({ hunger: 30, energy: 80, fun: 80, bladder: 80, social: 80 }, { hunger: 70 }, 500);
         return { ok: true, msg: '✅ 5/5 senaryo ve tutarlılık testi geçti.' + (n > fr ? ' Mesafe de hesaba katılıyor 👍' : ' (İpucu: uzak nesnelerin puanını biraz düşürmeyi deneyin.)') + ' Simülasyonda kriz sayısını izleyin.' };
       }

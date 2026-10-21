@@ -103,7 +103,7 @@
   <h2>Önce kendi akşamınız: dört seçenek, dört ihtiyaç 🌙</h2>
   <p style="font-size:.76em;margin:.1em 0 .2em">Her seçeneğe o anki ihtiyaçlarınıza göre <b>0 ile 1 arasında bir puan</b> verin ve en yüksek puanlıyı seçin: Utility AI’ın tamamı bu. Senaryoları sırayla deneyin; her birinde <b>önce tahmin edin</b>, sonra en alttaki “evet/hayır kuralları olsaydı” ile karşılaştırın.</p>
   <div class="demo" data-demo="evening"></div>
-  <aside class="notes">Isınmadaki “akşam 9” sorusunun oynanabilir hâli; terim kullanmadan fikri kurar. Sonuçlar: Sıradan akşam → Dizi (0,72). Sınav yarın → Ders (0,57), dizi 0,04’e düşer. Sınav yarın ama bittiniz → Uyu (0,90), ders 0,10 (çarpımın vetosu). Biraz aç, çok yorgun → puanlama “Uyu” (0,95), evet/hayır kuralları “Ye” der: iki yöntemin ayrıştığı senaryo. Kararsız → Yemek = Uyu = 0,60: atalet bölümünün motivasyonu. Öğrenciler kaydırıcılarla kendi akşamlarını kurabilir. Formüllerin (çarpım, 1 − x) neden böyle seçildiğini sorun: “sınav yakınsa dizi keyfi kaçar”, “yorgunsan kafan almaz”.</aside>
+  <aside class="notes">Isınmadaki “akşam 9” sorusunun oynanabilir hâli; terim kullanmadan fikri kurar. Sonuçlar: Sıradan akşam → Dizi (0,72). Sınav yarın → Ders (0,57), dizi 0,04’e düşer. Sınav yarın ama bittiniz → Uyu (0,90), ders 0,09 (çarpımın vetosu). Biraz aç, çok yorgun → puanlama “Uyu” (0,95), evet/hayır kuralları “Ye” der: iki yöntemin ayrıştığı senaryo. Kararsız → Yemek = Uyu = 0,60: atalet bölümünün motivasyonu. Öğrenciler kaydırıcılarla kendi akşamlarını kurabilir. Formüllerin (çarpım, 1 − x) neden böyle seçildiğini sorun: “sınav yakınsa dizi keyfi kaçar”, “yorgunsan kafan almaz”.</aside>
 </section>
 
 <section data-sec="neden puan?">
@@ -371,7 +371,7 @@ def compensate(score, n):
   <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
     <ol style="font-size:.9em">
       <li>Mermiyi 0 yapın: “Ateş et”in kırmızı etkeni bütün eylemi veto ediyor; “Şarjör değiştir” öne çıkıyor. Düşmanı 5 m’ye getirin: şarjör değiştirmek artık riskli (düşman uzak etkeni düştü).</li>
-      <li>Canı yavaş yavaş azaltın: önce “İyileş”, sonra çok düşük canda “Kaç” kazanıyor. Hiçbir yerde “eşik” yazmadık!</li>
+      <li>Canı yavaş yavaş azaltın: “Ateş et” sönüyor; can ≈ 15’te kısa bir “Siper al”dan sonra “Kaç” kazanıyor. Düşmanı 30 m’ye uzaklaştırıp yeniden deneyin: bu kez can ≈ 43’te “İyileş” kazanıyor (düşman uzakken iyileşmek güvenli). Hiçbir yerde “eşik” yazmadık!</li>
       <li>Medkit kutusunu kaldırın: “İyileş” sıfırlanıyor. Kutu, tasarımcının “bu eylem şu an mümkün mü?” sorusunu etken olarak sormasıdır.</li>
       <li>Telafi faktörünü kapatın: 3 etkenli eylemlerin puanı düşüyor, 2 etkenliler kazançlı çıkıyor. Kazanan değişti mi?</li>
     </ol>
@@ -382,7 +382,7 @@ def compensate(score, n):
   <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
     <ol style="font-size:.9em">
       <li>Mermiyi 0 yapın: “Ateş et”in kırmızı etkeni bütün eylemi veto ediyor; “Şarjör değiştir” öne çıkıyor. Düşmanı 5 m’ye getirin: şarjör değiştirmek artık riskli (düşman uzak etkeni düştü).</li>
-      <li>Canı yavaş yavaş azaltın: önce “İyileş”, sonra çok düşük canda “Kaç” kazanıyor. Hiçbir yerde “eşik” yazmadık!</li>
+      <li>Canı yavaş yavaş azaltın: “Ateş et” sönüyor; can ≈ 15’te kısa bir “Siper al”dan sonra “Kaç” kazanıyor. Düşmanı 30 m’ye uzaklaştırıp yeniden deneyin: bu kez can ≈ 43’te “İyileş” kazanıyor (düşman uzakken iyileşmek güvenli). Hiçbir yerde “eşik” yazmadık!</li>
       <li>Medkit kutusunu kaldırın: “İyileş” sıfırlanıyor. Kutu, tasarımcının “bu eylem şu an mümkün mü?” sorusunu etken olarak sormasıdır.</li>
       <li>Telafi faktörünü kapatın: 3 etkenli eylemlerin puanı düşüyor, 2 etkenliler kazançlı çıkıyor. Kazanan değişti mi?</li>
     </ol>
@@ -622,7 +622,7 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
       <li>Bir süre izleyin: Sim hangi sırayla ihtiyaçlarını gideriyor? Sağdaki puan çubukları her an güncelleniyor; yeşil olan seçilen.</li>
       <li>🎡 Joy Booth ekleyin. Sim’in kabinde ne kadar vakit geçirdiğine ve <b>kriz</b> sayısına bakın (ihtiyaçlardan biri sıfıra düştü). Reklamın yalan olması ortalama mutluluğu nasıl etkiliyor?</li>
       <li>Atalet: “her kare karar (atalet yok)” + seçim: “ağırlıklı rastgele (hepsi)”. Sim odanın ortasında kararsızca titriyor mu? “Fikir değiştirme” sayacı ne oldu?</li>
-      <li>“Mesafe zayıflatması”nı kapatın: Sim uzaktaki nesneler için gereksiz yere odayı arşınlıyor mu?</li>
+      <li>“Mesafe zayıflatması”nı kapatın: puan çubuklarındaki sayılar büyüyor, en çok uzaktaki nesnelerde (<code>1 + mesafe/600</code> bölmesi kalktı). Bu odada kazanan pek değişmiyor: bir ihtiyaç baskınken mesafe kararı çevirmez; zayıflatma, iki seçenek başa baş olduğunda Sim’i yakındakine yöneltir.</li>
       <li>Bir nesneye tıklayın: oyuncu emri (The Sims’te tıklayıp eylem seçmek). 2 sn sonra Sim yine kendi kararlarına döner.</li>
     </ol>
   </div><!--/dh-->
@@ -634,7 +634,7 @@ def weighted_random(opts):          # opts: [(eylem, puan), ...]
       <li>Bir süre izleyin: Sim hangi sırayla ihtiyaçlarını gideriyor? Sağdaki puan çubukları her an güncelleniyor; yeşil olan seçilen.</li>
       <li>🎡 Joy Booth ekleyin. Sim’in kabinde ne kadar vakit geçirdiğine ve <b>kriz</b> sayısına bakın (ihtiyaçlardan biri sıfıra düştü). Reklamın yalan olması ortalama mutluluğu nasıl etkiliyor?</li>
       <li>Atalet: “her kare karar (atalet yok)” + seçim: “ağırlıklı rastgele (hepsi)”. Sim odanın ortasında kararsızca titriyor mu? “Fikir değiştirme” sayacı ne oldu?</li>
-      <li>“Mesafe zayıflatması”nı kapatın: Sim uzaktaki nesneler için gereksiz yere odayı arşınlıyor mu?</li>
+      <li>“Mesafe zayıflatması”nı kapatın: puan çubuklarındaki sayılar büyüyor, en çok uzaktaki nesnelerde (<code>1 + mesafe/600</code> bölmesi kalktı). Bu odada kazanan pek değişmiyor: bir ihtiyaç baskınken mesafe kararı çevirmez; zayıflatma, iki seçenek başa baş olduğunda Sim’i yakındakine yöneltir.</li>
       <li>Bir nesneye tıklayın: oyuncu emri (The Sims’te tıklayıp eylem seçmek). 2 sn sonra Sim yine kendi kararlarına döner.</li>
     </ol>
   </div>

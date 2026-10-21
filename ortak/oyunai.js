@@ -119,9 +119,11 @@
       const play = btn(this.playing ? '⏸ Durdur' : '▶ Oynat', () => { this.playing = !this.playing; sync(); });
       const sync = () => { play.textContent = this.playing ? '⏸ Durdur' : '▶ Oynat'; };
       this.syncBtn = sync;
+      // o.secs: adım düğmelerini “kare” yerine süreyle adlandır (konusu kare hızı olan demolarda “kare” iki anlama gelmesin)
+      const st1 = o.secs ? ['İleri ▶| 1/60 sn', 'Simülasyonu 1/60 sn ilerlet'] : ['İleri ▶| 1 kare', 'Bir kare ilerlet'], st10 = o.secs ? ['▶▶ 10/60 sn', 'Simülasyonu 10/60 sn ilerlet'] : ['▶▶ 10 kare', '10 kare ilerlet'];
       const bar = el('div', { class: 'sv-transport' }, play,
-        el('button', { class: 'btn', title: 'Bir kare ilerlet', onclick: () => { this.playing = false; sync(); this.tick(); this.draw(); } }, 'İleri ▶| 1 kare'),
-        el('button', { class: 'btn', title: '10 kare ilerlet', onclick: () => { this.playing = false; sync(); for (let i = 0; i < 10; i++) this.tick(); this.draw(); } }, '▶▶ 10 kare'),
+        el('button', { class: 'btn', title: st1[1], onclick: () => { this.playing = false; sync(); this.tick(); this.draw(); } }, st1[0]),
+        el('button', { class: 'btn', title: st10[1], onclick: () => { this.playing = false; sync(); for (let i = 0; i < 10; i++) this.tick(); this.draw(); } }, st10[0]),
         el('button', { class: 'btn', title: 'Baştan başlat', onclick: () => this.reset() }, '↺ Baştan'));
       if (o.speed !== false) bar.append(slider('Hız ×', 0.25, 4, this.speed, 0.25, v => { this.speed = v; }));
       return bar;
@@ -256,7 +258,7 @@ def _run(fname, cases):
     const W = 720, H = 380;   // dünya koordinatları sabit (devriye noktaları buna göre); o.displayW yalnızca ekrandaki genişlik
     let decide = o.decide;
     const st = {};
-    const resetState = () => Object.assign(st, { g: V.v(80, 70), heading: 0, state: 'DEVRIYE', tIn: 0, wp: 1, hp: 100, noise: null, heard: false, lastSeen: -99, flash: null, flashT: 0, log: [], switches: [], shotT: 0, muzzle: 0, botT: 0, lastMouse: null, memory: o.memory !== false });
+    const resetState = () => Object.assign(st, { g: V.v(80, 70), heading: 0, state: 'DEVRIYE', tIn: 0, wp: 1, hp: 100, noise: null, heard: false, lastSeen: -99, seenPos: null, flash: null, flashT: 0, log: [], switches: [], shotT: 0, muzzle: 0, botT: 0, lastMouse: null, memory: o.memory !== false });
     resetState();
     const move = (dir, sp, dt) => {
       const try1 = d => { const before = V.copy(st.g), n = V.add(st.g, V.mul(d, sp * dt)); if (!inWall(V.v(n.x, st.g.y))) st.g.x = n.x; if (!inWall(V.v(st.g.x, n.y))) st.g.y = n.y; st.g.x = SL.clamp(st.g.x, 15, W - 15); st.g.y = SL.clamp(st.g.y, 15, H - 15); return V.dist(before, st.g); };
@@ -275,8 +277,9 @@ def _run(fname, cases):
         // ALGILA
         const to = V.sub(p, st.g), d = V.len(to), fwd = V.fromAngle(st.heading);
         const raw = d < 260 && V.dot(fwd, V.norm(to)) > Math.cos((55 * Math.PI) / 180) && !WALLS.some(r => segRect(st.g, p, r));
-        if (raw) st.lastSeen = w.time;
+        if (raw) { st.lastSeen = w.time; st.seenPos = V.copy(p); }   // görüldüğü son an ve yer (hafıza bunu tutar)
         const sees = raw || (st.memory && w.time - st.lastSeen < 1.2 && d < 340);
+        st.rawSees = raw;   // gözle mi görüyor, yoksa yalnızca hafızadan mı (sayaçlar için)
         const sense = { seesPlayer: sees, dist: Math.round(d), hp: Math.round(st.hp), heardNoise: st.heard, timeInState: Math.round(st.tIn * 10) / 10 };
         st.sense = sense;
         // DÜŞÜN
@@ -286,7 +289,7 @@ def _run(fname, cases):
           st.flash = [st.state, next]; st.flashT = 1;
           st.log.unshift(`${w.time.toFixed(1)} sn: ${GNAMES[st.state]} → ${GNAMES[next]}`); st.log.length = Math.min(st.log.length, 6);
           st.switches.push(w.time);
-          if (next === 'SUPHE' && st.state !== 'DEVRIYE') { st.noise = V.copy(p); }   // son görülen yer
+          if (next === 'SUPHE' && st.state !== 'DEVRIYE' && st.seenPos) { st.noise = V.copy(st.seenPos); }   // son GÖRÜLEN yer (oyuncunun şimdiki yeri değil: hile olurdu)
           if (next === 'KOVALA' && (st.state === 'DEVRIYE' || st.state === 'SUPHE')) { st.bang = '!'; st.bangT = 0.9; SL.sfx('alert'); }   // "!" — fark edildin
           else if (next === 'SUPHE') { st.bang = '?'; st.bangT = 0.9; }
           st.state = next; st.tIn = 0; st.heard = false;
@@ -331,10 +334,10 @@ def _run(fname, cases):
   };
 
   /* ---------------- demo kaydı: world tabanlı demolar için kısayol ---------------- */
-  SL.worldDemo = function (root, world, top, bottom) {
+  SL.worldDemo = function (root, world, top, bottom, ctl) {
     root.setAttribute('data-prevent-swipe', '');
     if (top) root.append(top);
-    root.append(world.canvas, world.controls());
+    root.append(world.canvas, world.controls(ctl));
     if (bottom) root.append(bottom);
     world.reset();
     return { start: () => world.start(), stop: () => world.stop() };

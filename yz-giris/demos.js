@@ -196,8 +196,8 @@
         const p = w.player || V.v(590, 280);
         ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(p.x, p.y, 12, 0, 7); ctx.fill();
         SL.drawLabel(ctx, w.mouse.inside ? 'sen' : 'bot (fareyi getirin)', p.x, p.y + 24, t.green, { size: 11 });
-        const pct = st.shots ? Math.round((100 * st.hits) / st.shots) : 0;
-        info.innerHTML = `<span class="cnt">atış <b>${st.shots}</b></span><span class="cnt">isabet <b>${st.hits}</b></span><span class="cnt">isabet oranı <b class="${pct > 60 ? 'c-red' : pct < 25 ? 'c-green' : ''}">%${pct}</b></span><span class="cnt">${pct > 70 ? '😡 “haksızlık!”' : pct < 15 ? '😴 “çok kolay”' : '😀 “zorlu ama adil”'}</span>`;
+        const pct = st.shots ? Math.round((100 * st.hits) / st.shots) : 0, few = st.shots < 5;   // birkaç atışla oran yargısı verme
+        info.innerHTML = `<span class="cnt">atış <b>${st.shots}</b></span><span class="cnt">isabet <b>${st.hits}</b></span><span class="cnt">isabet oranı <b class="${few ? '' : pct > 60 ? 'c-red' : pct < 25 ? 'c-green' : ''}">${few ? '–' : '%' + pct}</b></span><span class="cnt">${few ? '⏳ henüz yargı yok (5 atış bekleniyor)' : pct > 70 ? '😡 “haksızlık!”' : pct < 15 ? '😴 “çok kolay”' : '😀 “zorlu ama adil”'}</span>`;
       }
     });
     function segHitsRect(a, b, r) { for (let k = 0; k <= 20; k++) { const p = V.lerp(a, b, k / 20); if (p.x > r.x && p.x < r.x + r.w && p.y > r.y && p.y < r.y + r.h) return true; } return false; }
@@ -288,6 +288,8 @@
     const draw = () => {
       const t = T(), sc = SC[cur], ph = phaseOf(sc, k - 1), acted = k >= sc.steps.length, G = acted ? sc.G : G0, P = sc.P;
       let s = `<rect x="0" y="0" width="${W}" height="${H}" rx="10" fill="${t.card}" stroke="${t.rule}"/>`;
+      // ses halkaları (en dıştaki = duyulma yarıçapı 420: nöbetçi, 371, içinde kalır); kutuların altında kalsın diye önce çizilir
+      if (sc.noise && (ph === 0 || (k > 0 && !acted))) for (let r = 105; r <= 420; r += 105) s += `<circle cx="${P[0]}" cy="${P[1]}" r="${r}" fill="none" stroke="${t.amber}" stroke-width="2.5" opacity="${1.15 - r / 480}"/>`;
       PH.forEach((p, i) => {
         const x = 30 + i * 230, on = i === ph;
         s += `<rect x="${x}" y="14" width="200" height="56" rx="10" fill="${on ? t[p[1]] : t.card}" fill-opacity="${on ? 0.2 : 1}" stroke="${t[p[1]]}" stroke-width="${on ? 4 : 2}"/>`;
@@ -298,7 +300,6 @@
       s += `<line x1="${WALL[0]}" y1="${WALL[1]}" x2="${WALL[2]}" y2="${WALL[3]}" stroke="${t.ink}" stroke-width="12" stroke-linecap="round"/><text x="${WALL[0] + 12}" y="${WALL[1] + 4}" font-size="14" fill="${t.muted}">duvar</text>`;
       if (!acted) s += `<path d="M${G0[0]},${G0[1]} L${G0[0] + RANGE * Math.cos(0.6)},${G0[1] - RANGE * Math.sin(0.6)} A${RANGE},${RANGE} 0 0 1 ${G0[0] + RANGE * Math.cos(0.6)},${G0[1] + RANGE * Math.sin(0.6)} Z" fill="${t.amber}" opacity=".13"/>`;
       if (ph === 0 || (k > 0 && !acted)) {
-        if (sc.noise) for (let r = 60; r <= 180; r += 60) s += `<circle cx="${P[0]}" cy="${P[1]}" r="${r}" fill="none" stroke="${t.amber}" stroke-width="2.5" opacity="${1 - r / 220}"/>`;
         const col = sc.cheat ? t.purple : (sc.ad.startsWith('👀') ? t.green : t.red);
         s += `<line x1="${G0[0]}" y1="${G0[1]}" x2="${P[0]}" y2="${P[1]}" stroke="${col}" stroke-width="3" stroke-dasharray="${sc.ad.startsWith('👀') ? '' : '8 6'}"/>`;
         if (sc.cheat) s += `<text x="${(G0[0] + P[0]) / 2}" y="${(G0[1] + P[1]) / 2 - 12}" text-anchor="middle" font-size="14" font-weight="700" fill="${t.purple}">bellekten okuma: duvar yok sayılıyor</text>`;
