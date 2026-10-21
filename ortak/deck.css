@@ -223,6 +223,7 @@ html, body, .reveal-viewport { background: var(--bg); color: var(--ink); }
 .cm-s-lab .cm-builtin, .cm-s-lab .cm-atom { color: var(--tk-ty); }
 .cm-s-lab .cm-variable-2, .cm-s-lab .cm-property { color: var(--code-ink); }
 .cm-s-lab .CodeMirror-matchingbracket { color: var(--green) !important; }
+.cm-s-lab .lab-errline { background: rgba(229, 20, 0, 0.14); box-shadow: inset 3px 0 0 #e51400; }
 
 /* ---------- demolar ---------- */
 .demo { font-size: 18px; }

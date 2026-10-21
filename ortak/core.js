@@ -179,6 +179,7 @@
     return f;
   };
   SL.jsErrorText = function (e) {
+    SL._sonHata = { e, t: Date.now() };   // laboratuvar editörü hatalı satırı vurgulasın (labShell setMsg)
     if (e instanceof RangeError && /call stack/i.test(e.message)) return 'Yığın taşması (stack overflow): özyineleme çok derin ya da hiç bitmiyor!';
     return e.message;
   };
@@ -232,9 +233,33 @@
     const run = () => shell.onRun && shell.onRun();
     const cm = window.CodeMirror(edHost, {
       value: original, mode: lang === 'python' ? 'python' : 'javascript', lineNumbers: true, lineWrapping: true,
-      indentUnit: lang === 'python' ? 4 : 2, tabSize: 4, theme: 'lab', viewportMargin: Infinity,
+      indentUnit: lang === 'python' ? 4 : 2, tabSize: 4, theme: 'lab', viewportMargin: Infinity, matchBrackets: true,
       extraKeys: { 'Ctrl-Enter': run, 'Cmd-Enter': run, Tab: c => c.replaceSelection(' '.repeat(c.getOption('indentUnit'))) }
     });
+    // eşleşen parantez: CodeMirror'ın matchBrackets eklentisi yüklüyse açık; değilse aynı sürümden bir kez yüklenir
+    if (!('matchBrackets' in window.CodeMirror.defaults)) {
+      SL._mbYukle = SL._mbYukle || new Promise(res => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/' + window.CodeMirror.version + '/addon/edit/matchbrackets.min.js';
+        s.onload = s.onerror = res; document.head.append(s);
+      });
+      // (seçenek kurulumda zaten true: eklenti sonradan gelince etkinleşsin diye önce kapatıp açılır)
+      SL._mbYukle.then(() => { if ('matchBrackets' in window.CodeMirror.defaults) { cm.setOption('matchBrackets', false); cm.setOption('matchBrackets', true); } });
+    }
+    // hata satırı vurgusu: JS çalışma hatasının satırı (SL.jsErrorText'e verilen hatanın yığınından); kod değişince kalkar
+    let hataSatir = null;
+    const hataVurgu = (hata) => {
+      const son = SL._sonHata; SL._sonHata = null;
+      const yeni = hata && lang !== 'python' && son && Date.now() - son.t < 200 && son.e && son.e.stack;
+      if (hata && !yeni) return;   // aynı hatanın ikinci mesajı (yeni bilgi yok): var olan vurgu kalsın
+      if (hataSatir != null) { cm.removeLineClass(hataSatir, 'background', 'lab-errline'); hataSatir = null; }
+      if (!hata) return;
+      // new Function('print', '__g', …, '"use strict";\n' + kod): kodun 1. satırı yığında 4. satır
+      const m = /<anonymous>:(\d+):\d+/.exec(son.e.stack) || / > Function:(\d+):\d+/.exec(son.e.stack);
+      const n = m ? +m[1] - 3 : 0;
+      if (n >= 1 && n <= cm.lineCount()) { hataSatir = n - 1; cm.addLineClass(hataSatir, 'background', 'lab-errline'); }
+    };
+    cm.on('change', () => hataVurgu(false));
     const applyFont = () => { cm.getWrapperElement().style.fontSize = fontSize + 'px'; cm.refresh(); };
     plus.onclick = () => { fontSize = Math.min(44, fontSize + 2); applyFont(); };
     minus.onclick = () => { fontSize = Math.max(11, fontSize - 2); applyFont(); };
@@ -264,7 +289,7 @@
       cm, right, msg, out, run,
       print: (...args) => { out.textContent += args.map(x => (typeof x === 'object' ? JSON.stringify(x) : String(x))).join(' ') + '\n'; out.style.display = 'block'; },
       clearOut: () => { out.textContent = ''; out.style.display = 'none'; },
-      setMsg: (cls, html) => { msg.className = 'lab-msg ' + (cls || ''); msg.innerHTML = html; },
+      setMsg: (cls, html) => { msg.className = 'lab-msg ' + (cls || ''); msg.innerHTML = html; hataVurgu(cls === 'err'); },
       refresh: () => cm.refresh()
     });
     return shell;
