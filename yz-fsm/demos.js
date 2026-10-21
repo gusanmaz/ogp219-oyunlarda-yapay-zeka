@@ -27,6 +27,7 @@
   function fsmStory(root, cfg, mid) {
     let cur = cfg.start, lastEdge = null, log = [], timer = null;
     const diag = el('div'), logEl = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), now = el('div', { class: 'fs-now' });
+    logEl.style.cssText = 'height:11.2em;overflow-y:auto;overscroll-behavior:contain';   // en az 6 satırlık sabit yer: günlük uzayınca altındaki düğmeler kaymaz, içi kendi içinde kayar
     const RW = cfg.rw || 150, RH = 62;
     const draw = () => {
       const t = T(), S = cfg.states;
@@ -54,6 +55,7 @@
       now.innerHTML = `Şu an: <b style="color:${t[st[4]]}">${st[2]} ${st[3]}</b> — ${st[5]}`;
       const rows = log.slice(-6);
       logEl.innerHTML = rows.length ? rows.map(([ok, tx], i) => `<div class="${ok ? 'l-ok' : ''}${i === rows.length - 1 ? ' now' : ''}"><span>${ok ? '→' : '·'}</span>${tx}</div>`).join('') : '<div class="hint">Bir senaryo seçin ya da olay düğmelerine kendiniz basın.</div>';
+      logEl.scrollTop = logEl.scrollHeight;   // son satır görünür kalsın
     };
     const fire = ev => {
       const S = cfg.states, evName = cfg.events[ev][0];

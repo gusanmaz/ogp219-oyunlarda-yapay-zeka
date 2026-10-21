@@ -339,7 +339,7 @@ class Guard {
         else if (this.heardNoise) next = "SUSPICIOUS";
         break;
       case "CHASE":
-        this.moveTo(player.pos, dt);
+        this.moveTo(player.pos, dt); if (this.seesPlayer()) this.noisePos = player.pos.copy();   // son görülen yer
         if (!this.seesPlayer()) next = "SUSPICIOUS";
         else if (this.distToPlayer() < 60) next = "ATTACK";
         break;
@@ -366,6 +366,8 @@ class Guard:
                 nxt = "SUSPICIOUS"
         elif self.state == "CHASE":
             self.move_to(player_pos, dt)
+            if self.sees_player():
+                self.noise_pos = player_pos  # son görülen yer
             if not self.sees_player():
                 nxt = "SUSPICIOUS"
             elif self.dist_to_player() < 60:
@@ -381,7 +383,7 @@ class Guard:
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers data-ln-start-from="21"><script type="text/template">
             case GuardState.Chase:
-                MoveTo(player.position);
+                MoveTo(player.position); if (SeesPlayer()) noisePos = player.position;   // son görülen yer
                 if (!SeesPlayer()) next = GuardState.Suspicious;
                 else if (DistToPlayer() < 2f) next = GuardState.Attack;
                 break;
@@ -428,7 +430,7 @@ class Guard:
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
-<pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="24"><script type="text/template">
+<pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="26"><script type="text/template">
         elif self.state == "SUSPICIOUS":
             self.move_to(self.noise_pos, dt)  # ses / son görülen yer
             if self.sees_player():
@@ -1424,7 +1426,7 @@ print(g.state)                   # kovala
 
 <section data-sec="kaynaklar">
   <h2>📄 Akademik okumalar</h2>
-  <div class="paper"><b>Harel 1987</b> · <a href="https://www.wisdom.weizmann.ac.il/~harel/SCANNED.PAPERS/Statecharts.pdf" target="_blank" rel="noopener">Statecharts: A Visual Formalism for Complex Systems</a> <i>(Science of Computer Programming 8(3))</i><br>Hiyerarşi, paralellik ve geçmiş: HFSM’nin akademik temeli.</div><div class="paper"><b>Anguelov, Humphreys, Mark 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter04_Behavior_Selection_Algorithms.pdf" target="_blank" rel="noopener">Behavior Selection Algorithms</a> <i>(Game AI Pro, Bölüm 4)</i><br>FSM, HFSM, BT, utility, GOAP, HTN karşılaştırması; gece bekçisi örneği.</div><div class="paper"><b>Lim 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter12_A_Reusable_Light-Weight_Finite-State_Machine.pdf" target="_blank" rel="noopener">A Reusable, Light-Weight Finite-State Machine</a> <i>(Game AI Pro 3, Bölüm 12)</i><br>Üretimde kullanılan, veri güdümlü hafif bir FSM tasarımı.</div><div class="paper"><b>Shirakami vd. 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter11_A_Character_Decision-Making_System_for_FINAL_FANTASY_XV_by_Combining_Behavior_Trees_and_State_Machines.pdf" target="_blank" rel="noopener">A Character Decision-Making System for FINAL FANTASY XV by Combining Behavior Trees and State Machines</a> <i>(Game AI Pro 3, Bölüm 11)</i><br>AAA bir oyunda FSM ile davranış ağaçlarının birlikte kullanımı.</div>
+  <div class="paper"><b>Harel 1987</b> · <a href="https://www.wisdom.weizmann.ac.il/~harel/SCANNED.PAPERS/Statecharts.pdf" target="_blank" rel="noopener">Statecharts: A Visual Formalism for Complex Systems</a> <i>(Science of Computer Programming 8(3))</i><br>Hiyerarşi, paralellik ve geçmiş: HFSM’nin akademik temeli.</div><div class="paper"><b>Dawe, Gargolinski, Dicken, Humphreys &amp; Mark 2013</b> · <a href="http://www.gameaipro.com/GameAIPro/GameAIPro_Chapter04_Behavior_Selection_Algorithms.pdf" target="_blank" rel="noopener">Behavior Selection Algorithms</a> <i>(Game AI Pro, Bölüm 4)</i><br>FSM, HFSM, BT, utility, GOAP, HTN karşılaştırması; gece bekçisi örneği.</div><div class="paper"><b>Graham 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter12_A_Reusable_Light-Weight_Finite-State_Machine.pdf" target="_blank" rel="noopener">A Reusable, Light-Weight Finite-State Machine</a> <i>(Game AI Pro 3, Bölüm 12)</i><br>Üretimde kullanılan, veri güdümlü hafif bir FSM tasarımı.</div><div class="paper"><b>Miyake vd. 2017</b> · <a href="http://www.gameaipro.com/GameAIPro3/GameAIPro3_Chapter11_A_Character_Decision-Making_System_for_FINAL_FANTASY_XV_by_Combining_Behavior_Trees_and_State_Machines.pdf" target="_blank" rel="noopener">A Character Decision-Making System for FINAL FANTASY XV by Combining Behavior Trees and State Machines</a> <i>(Game AI Pro 3, Bölüm 11)</i><br>AAA bir oyunda FSM ile davranış ağaçlarının birlikte kullanımı.</div>
 </section>
 
 <section data-sec="kaynaklar">

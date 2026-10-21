@@ -9,6 +9,7 @@ const FOV = 110, RANGE = 260;                                            // gör
 
 let guard, player;
 let noise = null;          // son duyulan sesin (ya da oyuncunun son görüldüğü yerin) konumu
+let lastSeen = null;       // oyuncunun en son GÖRÜLDÜĞÜ yer (görüldüğü her karede güncellenir)
 let heardNoise = false;    // "az önce ses duydum" bayrağı
 
 function setup() {
@@ -24,7 +25,7 @@ function draw() {
   const s = sense();                                                     // 1) ALGILA
   const next = nextState(guard.state, s);                                // 2) DÜŞÜN
   if (next !== guard.state) {
-    if (next === "SUPHE" && guard.state !== "DEVRIYE") noise = player.copy();   // gözden kaybetti: son görülen yer
+    if (next === "SUPHE" && guard.state !== "DEVRIYE" && lastSeen) noise = lastSeen.copy();   // gözden kaybetti: son GÖRÜLEN yer (oyuncunun şimdiki yeri olsaydı hile olurdu)
     guard.state = next;
     guard.timeInState = 0;                                               // duruma yeni girdik
     heardNoise = false;
@@ -41,7 +42,9 @@ function sense() {
   const forward = p5.Vector.fromAngle(guard.heading);
   const inCone = d > 0 && forward.dot(toPlayer.copy().normalize()) > cos(radians(FOV / 2));
   const blocked = WALLS.some(w => segmentHitsRect(guard.pos, player, w));
-  return { seesPlayer: d < RANGE && inCone && !blocked, dist: d, hp: guard.hp, heardNoise: heardNoise, timeInState: guard.timeInState };
+  const sees = d < RANGE && inCone && !blocked;
+  if (sees) lastSeen = player.copy();                                    // gördüğü her karede son görülen yeri güncelle
+  return { seesPlayer: sees, dist: d, hp: guard.hp, heardNoise: heardNoise, timeInState: guard.timeInState };
 }
 
 /* ---------- 2) DÜŞÜN: geçiş tablosu (sunumdaki tablonun aynısı) ---------- */
