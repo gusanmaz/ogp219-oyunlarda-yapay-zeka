@@ -294,9 +294,14 @@
       const olc = el('div', { style: `position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:${w}px` });
       const l2 = el('div', { class: 'btd-log' }), m2 = el('div', { class: 'btd-moral' }); olc.append(l2, m2);
       const sutun = alan.parentElement; if (getComputedStyle(sutun).position === 'static') sutun.style.position = 'relative'; sutun.append(olc);
-      let enCok = 0;
-      for (const sc of SC) for (let n = 0; n <= sc.steps.length; n++) { l2.innerHTML = logHTML(sc, n); m2.innerHTML = n === sc.steps.length ? '💡 ' + sc.moral : ''; enCok = Math.max(enCok, olc.getBoundingClientRect().height); }
-      olc.remove(); alan.style.minHeight = Math.ceil(enCok) + 'px';
+      // günlük ve ders cümlesi AYRI ayrı: toplamına yer ayırmak yetmez, günlük kısalınca (Baştan) ders cümlesi yukarı kayar
+      let hl = 0, hm = 0;
+      for (const sc of SC) for (let n = 0; n <= sc.steps.length; n++) {
+        l2.innerHTML = logHTML(sc, n); m2.innerHTML = n === sc.steps.length ? '💡 ' + sc.moral : '';
+        hl = Math.max(hl, l2.getBoundingClientRect().height); hm = Math.max(hm, m2.getBoundingClientRect().height);
+      }
+      olc.remove(); log.style.minHeight = Math.ceil(hl) + 'px'; moral.style.minHeight = Math.ceil(hm) + 'px';
+      alan.style.minHeight = '';
       // hikâye satırı da (senaryoya göre bir ya da iki satır): en uzununa yer ayır
       const sw = story.clientWidth; if (sw) {
         const o2 = el('div', { class: 'btd-story', style: `position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:${sw}px` });
