@@ -41,7 +41,7 @@
       ['🎯 Hedef tam önde', [3, 6], [1.5, 0], [21, 6], 0.25, 'Karakter zaten hedefe doğru tam hızla gidiyor.', 'İstenen hız ile şimdiki hız aynı: fark (direksiyon) sıfır. Düzeltilecek bir şey yoksa kuvvet de yok.'],
       ['↗️ Hedef yanda', [3, 9], [1.5, 0], [17, 2], 0.25, 'Karakter sağa gidiyor; hedef sağ üstte.', 'Her karede küçük bir düzeltme: hız oku yavaş yavaş hedefe döndü ve iz <b>kavisli</b> çıktı. Kavisi biz çizmedik; kırpılmış kuvvetten kendiliğinden doğdu.'],
       ['↩️ Hedef arkada', [9, 7], [1.5, 0], [2, 4], 0.25, 'Karakter sağa gidiyor; hedef arkasında, sol üstte.', 'Önce yavaşladı, sonra geri döndü: bir araba gibi, olduğu yerde dönemedi. Dönüş birkaç kare sürdü.'],
-      ['👻 Sınırsız kuvvet', [3, 9], [1.5, 0], [17, 2], 99, 'Aynı “hedef yanda” durumu, ama azami kuvvet sınırsız (Pac-Man hayaleti).', 'İlk karede hız doğrudan istenen hıza eşitlendi: köşeli, anında dönüş. Kuvveti kırpmazsak steering, Y0’daki “hedefe düz git”e döner.'],
+      ['👻 Sınırsız kuvvet', [3, 9], [1.5, 0], [17, 2], 99, 'Aynı “hedef yanda” durumu, ama azami kuvvet sınırsız (Pac-Man hayaleti).', 'İlk karede hız doğrudan istenen hıza eşitlendi: köşeli, anında dönüş. Kuvveti kırpmazsak steering kinematik harekete, yani “hedefe düz git”e döner.'],
       ['🚛 Ağır kamyon', [3, 9], [1.5, 0], [17, 2], 0.07, 'Aynı durum, azami kuvvet çok küçük.', 'Dönüş çok geniş; hedefin yanından geçip geri dönmesi gerekebilir. Azami kuvvet karakterin “ağırlığını” belirleyen tek sayıdır.']];
     let F = [], tgt = [0, 0], moralTxt = '';
     const build = i => {
@@ -65,7 +65,7 @@
       for (let y = 0; y <= 11; y += 2) g += `<line x1="0" y1="${Y(y)}" x2="${X(24)}" y2="${Y(y)}" stroke="${t.rule}" stroke-width="1"/>`;
       g += `<polyline points="${f.trail.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" fill="none" stroke="${t.muted}" stroke-width="2.5" stroke-dasharray="3 6" stroke-linecap="round"/>`;
       f.trail.forEach(p => (g += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3.5" fill="${t.muted}"/>`));
-      g += `<text x="${X(tgt[0])}" y="${Y(tgt[1]) + 10}" text-anchor="middle" font-size="30">🎯</text>`;
+      g += `<circle cx="${X(tgt[0])}" cy="${Y(tgt[1])}" r="13" fill="${t.red}"/><circle cx="${X(tgt[0])}" cy="${Y(tgt[1])}" r="8" fill="${t.card}"/><circle cx="${X(tgt[0])}" cy="${Y(tgt[1])}" r="4" fill="${t.red}"/>`;
       const arrow = (v, c, id, w) => { const L = Math.hypot(v[0], v[1]); if (L < 0.02) return ''; return `<line x1="${X(f.p[0])}" y1="${Y(f.p[1])}" x2="${X(f.p[0] + v[0] * A / MS)}" y2="${Y(f.p[1] + v[1] * A / MS)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round" marker-end="url(#sh-${id})"/>`; };
       g += arrow(f.des, t.green, 'd', 4) + arrow(f.v, t.blue, 'v', 5);
       // direksiyon: hız okunun ucundan istenen okun ucuna doğru (kırpılmış)
@@ -73,17 +73,33 @@
       if (Math.hypot(f.st[0], f.st[1]) > 0.02) g += `<line x1="${X(hx)}" y1="${Y(hy)}" x2="${X(hx + f.st[0] * A / MS)}" y2="${Y(hy + f.st[1] * A / MS)}" stroke="${t.red}" stroke-width="5" stroke-linecap="round" marker-end="url(#sh-s)"/>`;
       g += `<circle cx="${X(f.p[0])}" cy="${Y(f.p[1])}" r="11" fill="${t.amber}" stroke="${t.ink}" stroke-width="2.5"/>`;
       diag.innerHTML = `<svg viewBox="0 0 ${X(24)} ${Y(11)}" style="width:100%;border:1px solid ${t.rule};border-radius:10px;background:${t.card}" font-family="Source Sans 3">${g}</svg>`;
+      tbl.innerHTML = tblHtml(f, t);
+      [...moral.children].forEach((c, i) => (c.style.visibility = pl.done && i === cur ? 'visible' : 'hidden'));
+    };
+    // tablo kutusu bütün senaryoların bütün karelerindeki en uzun içerik kadar yer ayırır (alttaki ders kaymasın)
+    const tblHtml = (f, t) => {
       const vec = v => `(${f1(v[0])}, ${f1(v[1])})`;
-      tbl.innerHTML = `<div class="sh-k">kare ${f.k}</div>` +
+      return `<div class="sh-k">kare ${f.k}</div>` +
         `<div><i style="background:${t.amber}"></i><b>konum</b> ${vec(f.p)} · hedefe uzaklık ${f1(f.d)}</div>` +
         `<div><i style="background:${t.blue}"></i><b>şimdiki hız</b> ${vec(f.v)}</div>` +
         `<div><i style="background:${t.green}"></i><b>istenen hız</b> ${vec(f.des)} <span>= hedef yönü × azami hız (${f1(MS)})</span></div>` +
         `<div><i style="background:${t.red}"></i><b>direksiyon</b> ${vec(f.st)} <span>= istenen − şimdiki${f.clipped ? `; boyu ${f1(f.raw)} idi, azami kuvvete (${f.mf < 1 ? String(f.mf).replace('.', ',') : '∞'}) kırpıldı` : f.raw < 0.02 ? '; fark yok' : ''}</span></div>` +
         `<div class="sh-next">${f.arrived ? '🎯 Hedefe vardı.' : 'Sonraki kare: hız += direksiyon, konum += hız.'}</div>`;
-      moral.innerHTML = pl.done && moralTxt ? '💡 ' + moralTxt : '';
     };
+    let olculenGen = -1;
+    const tabloBoyu = () => {
+      const g = tbl.clientWidth; if (!g || g === olculenGen) return; olculenGen = g;
+      const t = T(), eski = tbl.innerHTML; let enBuyuk = 0;
+      tbl.style.minHeight = '';
+      SC.forEach((sc, i) => { build(i); F.forEach(f => { tbl.innerHTML = tblHtml(f, t); enBuyuk = Math.max(enBuyuk, tbl.offsetHeight); }); });
+      build(cur); tbl.innerHTML = eski; tbl.style.minHeight = enBuyuk + 'px';
+    };
+    if (window.ResizeObserver) new ResizeObserver(tabloBoyu).observe(root);
     const fp = new SL.FramePlayer(draw, { speed: 2 });
-    const load = (i, play) => { build(i); story.innerHTML = '📖 ' + SC[i][5]; moralTxt = SC[i][6]; fp.load(F); if (play) fp.play(); };
+    let cur = 1;
+    story.style.display = moral.style.display = 'grid';
+    SC.forEach(sc => { story.append(el('div', { style: 'grid-area:1/1' })); moral.append(el('div', { style: 'grid-area:1/1' })); story.lastChild.innerHTML = '📖 ' + sc[5]; moral.lastChild.innerHTML = '💡 ' + sc[6]; });
+    const load = (i, play) => { build(i); cur = i; [...story.children].forEach((c, k) => (c.style.visibility = k === i ? 'visible' : 'hidden')); moralTxt = SC[i][6]; fp.load(F); if (play) fp.play(); };
     const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap sh' }, diag, el('div', {}, tbl, moral)), SL.transport(fp, { min: 0.5, max: 8 }));
@@ -151,12 +167,15 @@
         if (w.frame % 3 === 0) { trail.push(V.copy(a.p)); if (trail.length > 140) trail.shift(); }
       },
       render(ctx, w, t) {
+        // mor etiketlerin yeri: bot tahmin noktasına yakınken iki yazı üst üste binmesin (tahmin etiketi yana kaçar)
+        const morYer = () => { const b = [SL.clamp(bot.p.x, 44, W - 44), SL.clamp(bot.p.y + 20, 12, H - 12)]; if (!info.fut) return { b }; const f = [SL.clamp(info.fut.x, 52, W - 52), SL.clamp(info.fut.y - 14, 12, H - 12)];
+          if (Math.abs(f[0] - b[0]) < 100 && Math.abs(f[1] - b[1]) < 20) f[1] = b[1] + 22 <= H - 12 ? b[1] + 22 : b[1] - 44; return { b, f }; };
         if (cfg.mode === 'path') { ctx.strokeStyle = t.rule; ctx.lineWidth = 36; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); PATH.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke(); ctx.strokeStyle = t.muted; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]); ctx.stroke(); ctx.setLineDash([]); }
         if (cfg.obst) OBST.forEach(o => { ctx.fillStyle = info.hit === o ? t.red : t.dark ? '#3a3f55' : '#9aa0b4'; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, 7); ctx.fill(); });
         ctx.fillStyle = t.muted; trail.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 7); ctx.fill(); });
         if (info.slow && info.target) { ctx.strokeStyle = t.amber; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(info.target.x, info.target.y, info.slow, 0, 7); ctx.stroke(); ctx.setLineDash([]); SL.drawLabel(ctx, 'yavaşlama yarıçapı', info.target.x, info.target.y - info.slow - 10, t.amber, { size: 11 }); }
         if (info.panic && info.target) { ctx.strokeStyle = t.red; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(info.target.x, info.target.y, info.panic, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
-        if (cfg.mode === 'pursue' || cfg.mode === 'evade') { ctx.fillStyle = t.purple; ctx.beginPath(); ctx.arc(bot.p.x, bot.p.y, 10, 0, 7); ctx.fill(); SL.drawLabel(ctx, 'hedef (bot)', bot.p.x, bot.p.y + 20, t.purple, { size: 11 }); if (info.fut) { ctx.strokeStyle = t.purple; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(bot.p.x, bot.p.y); ctx.lineTo(info.fut.x, info.fut.y); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(info.fut.x, info.fut.y, 6, 0, 7); ctx.stroke(); SL.drawLabel(ctx, 'tahmini konum', info.fut.x, info.fut.y - 14, t.purple, { size: 11 }); } }
+        if (cfg.mode === 'pursue' || cfg.mode === 'evade') { ctx.fillStyle = t.purple; ctx.beginPath(); ctx.arc(bot.p.x, bot.p.y, 10, 0, 7); ctx.fill(); SL.drawLabel(ctx, 'hedef (bot)', ...morYer().b, t.purple, { size: 11 }); if (info.fut) { ctx.strokeStyle = t.purple; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(bot.p.x, bot.p.y); ctx.lineTo(info.fut.x, info.fut.y); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(info.fut.x, info.fut.y, 6, 0, 7); ctx.stroke(); SL.drawLabel(ctx, 'tahmini konum', ...morYer().f, t.purple, { size: 11 }); } }
         else if (info.target && cfg.mode !== 'path') { ctx.fillStyle = t.red; ctx.beginPath(); ctx.arc(info.target.x, info.target.y, 7, 0, 7); ctx.fill(); }
         if (cfg.mode === 'wander' && info.wc) { ctx.strokeStyle = t.amber; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(info.wc.x, info.wc.y, 35, 0, 7); ctx.stroke(); ctx.fillStyle = t.amber; ctx.beginPath(); ctx.arc(info.wt.x, info.wt.y, 5, 0, 7); ctx.fill(); }
         if (cfg.mode === 'path' && info.proj) { ctx.fillStyle = t.purple; ctx.beginPath(); ctx.arc(info.fut.x, info.fut.y, 4, 0, 7); ctx.fill(); ctx.strokeStyle = t.purple; ctx.beginPath(); ctx.moveTo(info.fut.x, info.fut.y); ctx.lineTo(info.proj.x, info.proj.y); ctx.stroke(); ctx.fillStyle = t.red; ctx.beginPath(); ctx.arc(info.target.x, info.target.y, 5, 0, 7); ctx.fill(); }
@@ -165,21 +184,27 @@
         if (cfg.vecs && info.des) {
           // etiketler okun ucunun ötesinde; oklar aynı doğrultudayken etiketler üst üste binmesin diye çakışan alt satıra iner
           const placed = [];
+          { ctx.save(); ctx.font = '700 11px "JetBrains Mono"'; const wd = ctx.measureText(`hız 000 / ${cfg.maxSpeed} · kuvvet 000 / ${cfg.maxForce}`).width + 8; ctx.restore(); placed.push([6, 7, 6 + wd, 25]); }
+          const ayir = (lab, x, y, size) => { ctx.save(); ctx.font = `700 ${size}px "JetBrains Mono"`; const wd = ctx.measureText(lab).width + 10; ctx.restore(); placed.push([x - wd / 2, y - 9, x + wd / 2, y + 9]); };
+          if (info.fut && (cfg.mode === 'pursue' || cfg.mode === 'evade')) { ayir('tahmini konum', ...morYer().f, 11); ayir('hedef (bot)', ...morYer().b, 11); }
+          if (info.slow && info.target) ayir('yavaşlama yarıçapı', info.target.x, info.target.y - info.slow - 10, 11);
           const arrowL = (from, vec, col, lab, o) => {
             SL.drawArrow(ctx, from, vec, col, o);
             const L = V.len(vec); if (L < 1) return;
             const u = V.mul(vec, 1 / L), to = V.add(from, vec), align = u.x > 0.35 ? 'left' : u.x < -0.35 ? 'right' : 'center';
             ctx.save(); ctx.font = '700 12px "JetBrains Mono"'; const wd = ctx.measureText(lab).width + 10; ctx.restore();
-            const x = to.x + u.x * 20, x0 = align === 'left' ? x - 5 : align === 'right' ? x - wd + 5 : x - wd / 2;
-            let y = to.y + u.y * 20 + (align === 'center' ? (u.y > 0 ? 8 : -8) : 0);
-            for (let k = 0; k < 4 && placed.some(q => x0 < q[2] && q[0] < x0 + wd && y - 9 < q[3] && q[1] < y + 9); k++) y += 19;
+            let x = to.x + u.x * 20, x0 = align === 'left' ? x - 5 : align === 'right' ? x - wd + 5 : x - wd / 2;
+            const kay = Math.max(4 - x0, 0) + Math.min(W - 4 - (x0 + wd), 0); x += kay; x0 += kay;   // tuvalin içinde kalsın
+            let y = SL.clamp(to.y + u.y * 20 + (align === 'center' ? (u.y > 0 ? 8 : -8) : 0), 12, H - 12);
+            const yon = y > H - 60 ? -19 : 19;   // altta yer yoksa yukarı kaç
+            for (let k = 0; k < 4 && placed.some(q => x0 < q[2] && q[0] < x0 + wd && y - 9 < q[3] && q[1] < y + 9); k++) y = SL.clamp(y + yon, 12, H - 12);
             placed.push([x0, y - 9, x0 + wd, y + 9]); SL.drawLabel(ctx, lab, x, y, col, { align });
           };
           arrowL(a.p, V.mul(a.v, 0.5), t.blue, 'hız', { w: 2.5 });
           arrowL(a.p, V.mul(info.des, 0.5), t.green, 'istenen', { w: 2.5, dash: [6, 4] });
           arrowL(V.add(a.p, V.mul(a.v, 0.5)), V.mul(info.force, 0.25), t.red, 'direksiyon', { w: 3 });
         }
-        SL.drawLabel(ctx, `hız ${Math.round(V.len(a.v))} / ${cfg.maxSpeed}`, 70, 16, t.muted, { size: 11 });
+        SL.drawLabel(ctx, `hız ${Math.round(V.len(a.v))} / ${cfg.maxSpeed} · kuvvet ${Math.round(info.force ? V.len(info.force) : 0)} / ${cfg.maxForce}`, 10, 16, t.muted, { size: 11, align: 'left' });
       }
     });
     const modes = { seek: 'Seek (ara)', flee: 'Flee (kaç)', arrive: 'Arrive (yavaşlayarak var)', pursue: 'Pursue (önünü kes)', evade: 'Evade (tahminle kaç)', wander: 'Wander (dolaş)', path: 'Path following (yol izle)' };
@@ -195,12 +220,13 @@
     const side = el('div', { class: 'gv-side' });
     const drawSide = () => { side.innerHTML = `<div class="box story"><span class="bt">${modes[cfg.mode]}</span><code style="font-size:15px">${DESC[cfg.mode][0]}</code><p style="font-size:18px;line-height:1.35;margin:.5em 0 0">${DESC[cfg.mode][1]}</p></div><div style="font-size:16px;margin-top:10px;line-height:1.5"><b>Oklar:</b> 🔵 mevcut hız · 🟢 istenen hız · 🔴 direksiyon = istenen − hız (azami kuvvetle kırpılır)<br><b>Noktalı iz:</b> ajanın son birkaç saniyede geçtiği yol.</div>`; };
     root.setAttribute('data-prevent-swipe', '');
+    const ciz = () => { if (!w.playing) w.draw(); };   // duraklatılmışken de denetimin etkisi hemen görünsün
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Davranış: ', select(modes, cfg.mode, v => { const was = cfg.mode; cfg.mode = v; trail = []; drawSide(); if (v === 'path' || was === 'path') reset(); })),
-      slider('azami hız', 40, 320, cfg.maxSpeed, 10, v => { cfg.maxSpeed = v; }),
-      slider('azami kuvvet', 40, 800, cfg.maxForce, 20, v => { cfg.maxForce = v; }),
-      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.vecs = e.target.checked; } }); x.checked = true; return x; })(), ' vektörler'),
-      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.obst = e.target.checked; } }); x.checked = cfg.obst; return x; })(), ' engeller + kaçınma')),
+      el('label', { class: 'ctl' }, 'Davranış: ', select(modes, cfg.mode, v => { const was = cfg.mode; cfg.mode = v; trail = []; drawSide(); if (v === 'path' || was === 'path') reset(); ciz(); })),
+      slider('azami hız', 40, 320, cfg.maxSpeed, 10, v => { cfg.maxSpeed = v; ciz(); }),
+      slider('azami kuvvet', 40, 800, cfg.maxForce, 20, v => { cfg.maxForce = v; ciz(); }),
+      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.vecs = e.target.checked; ciz(); } }); x.checked = true; return x; })(), ' vektörler'),
+      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.obst = e.target.checked; ciz(); } }); x.checked = cfg.obst; return x; })(), ' engeller + kaçınma')),
       el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, w.canvas), side), w.controls());
     w.canvas.style.width = '760px'; drawSide();
     w.reset();
