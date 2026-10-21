@@ -347,6 +347,13 @@ html, body, .reveal-viewport { background: var(--bg); color: var(--ink); }
 /* tema düğmesi */
 .theme-toggle { position: fixed; top: 12px; right: 14px; z-index: 50; font-size: 20px; width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--rule); background: var(--card); cursor: pointer; box-shadow: var(--shadow); }
 .theme-toggle:hover { transform: scale(1.08); }
+/* 🔊/🔇 (yalnızca ses kullanan destelerde; oyunai.js kurar): tema düğmesiyle aynı boy ve biçem, sol üst köşede. Sağ üstte
+   tema düğmesinin yanı uzun başlıklara ve başlık satırındaki yardım düğmelerine biniyordu (1280×720'de 7 destede 42 slayt);
+   sol üst yalnızca kapak slaytının rozetiyle çakışır, orada gizlenir (M tuşu yine çalışır). İkon değişince yeri ve boyu sabit. */
+.ses-toggle { position: fixed; top: 12px; left: 14px; z-index: 50; font-size: 19px; width: 42px; height: 42px; padding: 0; line-height: 1; text-align: center; border-radius: 50%; border: 1.5px solid var(--rule); background: var(--card); cursor: pointer; box-shadow: var(--shadow); }
+.ses-toggle:hover { transform: scale(1.08); }
+.ses-toggle[aria-pressed="true"] { opacity: .85; }
+.ses-toggle.kapakta { visibility: hidden; }
 .help-chip { position: fixed; bottom: 10px; left: 14px; z-index: 50; font: 12px "JetBrains Mono"; color: var(--muted); opacity: .7; }
 
 /* fragment vurgusu */
@@ -354,7 +361,7 @@ html, body, .reveal-viewport { background: var(--bg); color: var(--ink); }
 .reveal .fragment.pop { transform: scale(.8); } .reveal .fragment.pop.visible { transform: none; transition: all .3s cubic-bezier(.3,1.6,.6,1); }
 
 /* yazdırma (PDF) */
-@media print { .theme-toggle, .help-chip, .zoom-btn { display: none !important; } }
+@media print { .theme-toggle, .ses-toggle, .help-chip, .zoom-btn { display: none !important; } }
 
 /* düzeltmeler */
 .reveal sup { vertical-align: super; font-size: .65em; } .reveal sub { vertical-align: sub; font-size: .65em; }

@@ -35,9 +35,104 @@
   SL.clamp = (x, a, b) => Math.max(a, Math.min(b, x));
   SL.angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
 
+  /* ---------------- ses: ortak sessize alma tercihi ve görünürlük ----------------
+     Tercih bütün sunumlarda ve Kare Kare kitaplarında aynı anahtarda: localStorage["kk-ses-kapali"] ("1" = kapalı).
+     Gizli pencerede localStorage okunamayabilir: o zaman tercih yalnızca bu sayfada (bellekte) tutulur. Sekmeler arası
+     "storage" olayıyla eşitlenir. Ses yalnızca sayfa görünürken çıkar; kitap köprüsü SL.sesIzni ile "demo görünüyor mu"
+     koşulunu ekler. Sayfadaki BÜTÜN Web Audio bağlamları (SL.sfx'inki ve demoların kendi bağlamları) bu kurala uyar:
+     sessizken ya da görünmezken askıya alınır, resume() isteği izin gelene kadar bekletilir. */
+  const SES_ANAHTAR = 'kk-ses-kapali';
+  let sesBellek = false;
+  try { sesBellek = localStorage.getItem(SES_ANAHTAR) === '1'; } catch (e) { /* gizli pencere */ }
+  const sesDinleyenler = new Set();
+  SL.sesKapali = () => sesBellek;
+  SL.sesAyarla = function (kapali) {
+    kapali = !!kapali; sesBellek = kapali;
+    try { localStorage.setItem(SES_ANAHTAR, kapali ? '1' : '0'); } catch (e) { /* yalnızca bu sayfada */ }
+    sesDegisti();
+  };
+  SL.onSes = fn => sesDinleyenler.add(fn);
+  const sesDegisti = () => { SL.sesUygula(); sesDinleyenler.forEach(f => { try { f(SL.sesKapali()); } catch (e) {} }); };
+  SL.sesDegisti = sesDegisti;
+  window.addEventListener('storage', e => { if (e.key === SES_ANAHTAR) { sesBellek = e.newValue === '1'; sesDegisti(); } });
+  document.addEventListener('visibilitychange', () => SL.sesUygula());
+  // şu an ses çıkabilir mi: açık, sayfa görünür ve (tanımlıysa) SL.sesIzni() false değil
+  SL.sesAcik = function () {
+    if (SL.sesKapali() || document.visibilityState !== 'visible') return false;
+    if (typeof SL.sesIzni === 'function') { try { if (SL.sesIzni() === false) return false; } catch (e) {} }
+    return true;
+  };
+  // sayfadaki Web Audio bağlamlarını kayda al (destination'a ilk erişimde ya da resume() çağrısında)
+  const baglamlar = new Set();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const sesYut = p => { if (p && p.catch) p.catch(() => {}); };
+  let asilResume = null, asilSuspend = null;
+  if (AC && !AC.__kkSes) {
+    AC.__kkSes = true;
+    asilResume = AC.prototype.resume; asilSuspend = AC.prototype.suspend;
+    const kaydet = c => { if (c instanceof AC && !baglamlar.has(c)) { baglamlar.add(c); bagUygula(c); } };
+    const B = (window.BaseAudioContext || AC).prototype;
+    const d = Object.getOwnPropertyDescriptor(B, 'destination') || Object.getOwnPropertyDescriptor(AC.prototype, 'destination');
+    if (d && d.get) Object.defineProperty(B, 'destination', { configurable: true, enumerable: d.enumerable, get() { kaydet(this); return d.get.call(this); } });
+    AC.prototype.resume = function () { kaydet(this); if (!SL.sesAcik()) { this.__kkIste = true; return Promise.resolve(); } return asilResume.call(this); };
+    AC.prototype.suspend = function () { this.__kkIste = false; return asilSuspend.call(this); };
+  }
+  function bagUygula(c) {
+    try {
+      if (!SL.sesAcik()) { if (c.state === 'running') { c.__kkIste = true; sesYut(asilSuspend.call(c)); } }
+      else if (c.__kkIste && c.state === 'suspended') { c.__kkIste = false; sesYut(asilResume.call(c)); }
+    } catch (e) { /* kapanmış bağlam */ }
+  }
+  SL.sesUygula = () => { if (asilResume) baglamlar.forEach(bagUygula); };
+
+  /* Sunumun sol üst köşesindeki 🔊/🔇 düğmesi ve M kısayolu: yalnızca ses kullanan destelerde (demolarından biri SL.sfx,
+     makeGuardArena ya da kendi AudioContext'ini kullanıyorsa). Kitap köprüsünde SL.boot çağrılmaz; düğme orada yok. */
+  const SES_RE = /\bsfx\b|\bmakeGuardArena\b|AudioContext/;
+  let sesMetni = false;   // demos.js'in metninde ses bulundu (yardımcı fonksiyonlardaki çağrılar için)
+  const sesliDeste = () => SL.sesKullanildi || sesMetni || !!SL.sesMakeGuard || [window.DEMOS, SL.SIMLABS].some(o => o && Object.values(o).some(f => typeof f === 'function' && SES_RE.test(String(f))));
+  const asilBoot = SL.boot;
+  if (asilBoot) SL.boot = function () {
+    const r = asilBoot.apply(this, arguments);
+    const tema = document.getElementById('themeBtn');
+    if (!tema || !window.Reveal) return r;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'ses-toggle'; b.id = 'sesBtn'; b.hidden = true;
+    const esitle = () => {
+      const k = SL.sesKapali();
+      b.textContent = k ? '🔇' : '🔊';
+      b.setAttribute('aria-pressed', String(k));
+      b.setAttribute('aria-label', k ? 'Sesi aç' : 'Sesi kapat');
+      b.title = (k ? 'Sesi aç' : 'Sesi kapat') + ' (M tuşu)';
+    };
+    const degistir = () => SL.sesAyarla(!SL.sesKapali());
+    b.addEventListener('click', e => { e.stopPropagation(); degistir(); b.blur(); });
+    tema.after(b);
+    esitle();
+    let acildi = false;
+    const goster = () => {
+      if (acildi || !sesliDeste()) return;
+      acildi = true; b.hidden = false;
+      Reveal.addKeyBinding({ keyCode: 77, key: 'M', description: 'Sesi kapat / aç' }, degistir);
+    };
+    SL.onSes(() => { esitle(); goster(); });
+    goster();
+    // kapak slaytında (sol üstte rozet var) gizli; yer değiştirmez
+    const kapak = () => { const sl = Reveal.getCurrentSlide && Reveal.getCurrentSlide(); b.classList.toggle('kapakta', !!(sl && sl.querySelector('.title-badge'))); };
+    Reveal.on('ready', kapak); Reveal.on('slidechanged', kapak); kapak();
+    // demos.js'te yardımcı fonksiyonların içinde kalan ses çağrıları: dosyanın metnine bak (http(s) üzerinden)
+    if (!acildi && /^https?:$/.test(location.protocol) && window.fetch) {
+      const s = [...document.scripts].find(x => /(^|\/)demos\.js(\?|$)/.test(x.getAttribute('src') || ''));
+      if (s) fetch(s.src).then(x => x.text()).then(t => { if (SES_RE.test(t)) { sesMetni = true; goster(); } }).catch(() => {});
+    }
+    return r;
+  };
+
   /* ---------------- küçük ses efektleri (Web Audio; ilk kullanıcı hareketinde açılır) ---------------- */
   let actx = null;
+  SL.sesKullanildi = false;   // bu sayfada ses çalmaya çalışan bir demo oldu mu (sunum köşesindeki 🔊 düğmesi için)
   SL.sfx = function (kind) {
+    if (!SL.sesKullanildi) { SL.sesKullanildi = true; sesDegisti(); }
+    if (!SL.sesAcik()) return;   // sessiz, sekme gizli ya da (kitapta) demo görünmüyor: hiç bağlam açma
     try {
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
       if (actx.state === 'suspended') actx.resume();
@@ -255,6 +350,7 @@ def _run(fname, cases):
   };
   const inWall = p => WALLS.some(r => p.x > r.x - 8 && p.x < r.x + r.w + 8 && p.y > r.y - 8 && p.y < r.y + r.h + 8);
   SL.makeGuardArena = function (o = {}) {
+    if (!SL.sesMakeGuard) { SL.sesMakeGuard = true; if (SL.sesDegisti) SL.sesDegisti(); }   // nöbetçi arenası ses çalar (tak, !, ateş)
     const W = 720, H = 380;   // dünya koordinatları sabit (devriye noktaları buna göre); o.displayW yalnızca ekrandaki genişlik
     let decide = o.decide;
     const st = {};
