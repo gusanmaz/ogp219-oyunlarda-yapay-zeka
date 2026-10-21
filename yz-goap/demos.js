@@ -92,11 +92,34 @@
     };
     const set = i => { Object.keys(W).forEach(k => (w[k] = !!SC[i][1][k])); Object.keys(W).forEach(k => (boxes[k].checked = w[k])); story.innerHTML = '📖 ' + SC[i][2]; moralTxt = SC[i][3]; draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } };
     const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); set(i); }); return b; });
-    Object.keys(W).forEach(k => { boxes[k] = el('input', { type: 'checkbox', onchange: e => { w[k] = e.target.checked; bs.forEach(x => x.classList.remove('primary')); story.innerHTML = '📖 Kendi dünyanız: kutucukları değiştirin, plan hemen yeniden kurulur.'; moralTxt = ''; draw(); } }); });
+    const KENDI = '📖 Kendi dünyanız: kutucukları değiştirin, plan hemen yeniden kurulur.';
+    Object.keys(W).forEach(k => { boxes[k] = el('input', { type: 'checkbox', onchange: e => { w[k] = e.target.checked; bs.forEach(x => x.classList.remove('primary')); story.innerHTML = KENDI; moralTxt = ''; draw(); } }); });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, cards, planEl, el('div', { class: 'btd-wrap al' }, why, el('div', {}, moral, el('div', { class: 'btd-own', style: 'margin-top:8px' }, 'Dünyayı kendiniz değiştirin: ', ...Object.keys(W).map(k => el('label', { class: 'ctl' }, boxes[k], ' ' + W[k]))))));
     bs[0].classList.add('primary'); set(0);
     SL.onTheme(draw);
+    // Kaymaz: anlatı, kartlar, plan, gerekçe ve ders kutusu her senaryoda ve her kutucuk birleşiminde (16) en uzun hâli kadar
+    // yer ayırır; böylece senaryo değişince alttaki kutucuklar yerinden oynamaz
+    const parcalar = [story, cards, planEl, why, moral];
+    const yerAyir = () => {
+      if (!root.clientWidth) return;
+      const eskiW = Object.assign({}, w), eskiS = story.innerHTML, eskiM = moralTxt, h = parcalar.map(() => 0);
+      parcalar.forEach(p => (p.style.minHeight = ''));
+      const olc = () => { draw(); parcalar.forEach((p, j) => (h[j] = Math.max(h[j], p.getBoundingClientRect().height))); };
+      SC.forEach(sc => { Object.keys(W).forEach(k => (w[k] = !!sc[1][k])); story.innerHTML = '📖 ' + sc[2]; moralTxt = sc[3]; olc(); });
+      story.innerHTML = KENDI; moralTxt = '';
+      for (let m = 0; m < 16; m++) { Object.keys(W).forEach((k, j) => (w[k] = !!((m >> j) & 1))); olc(); }
+      Object.assign(w, eskiW); story.innerHTML = eskiS; moralTxt = eskiM; draw();
+      parcalar.forEach((p, j) => {   // ölçülen yükseklik kenar kutusu; content-box'ta dolgu ve çerçeve düşülür
+        const c = getComputedStyle(p), ek = c.boxSizing === 'border-box' ? 0 : ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((t, x) => t + (parseFloat(c[x]) || 0), 0);
+        p.style.minHeight = Math.ceil(h[j] - ek) + 'px';
+      });
+    };
+    let sonW = 0;
+    const izle = () => { const wd = root.clientWidth; if (wd && wd !== sonW) { sonW = wd; yerAyir(); } };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(izle)).observe(root);
+    window.addEventListener('resize', izle); setTimeout(izle, 0);
+    if (document.fonts) { if (document.fonts.ready) document.fonts.ready.then(() => { sonW = 0; izle(); }); if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { sonW = 0; izle(); }); }
   };
 
   /* ---------- arama ağacını çiz ---------- */
