@@ -17,13 +17,14 @@
       const p = sig((skill - diff) * 1.2), win = r() < p ? 1 : 0;
       recent.push(win); if (recent.length > 5) recent.shift();
       hist.push({ skill, diff, p, win });
-      skill += opts.learn * (0.4 + 0.6 * (1 - Math.abs(p - 0.5) * 2)) * 0.06;   // en çok “dengeli” maçlarda öğrenir
+      skill = Math.min(10, skill + opts.learn * (0.4 + 0.6 * (1 - Math.abs(p - 0.5) * 2)) * 0.06);   // en çok “dengeli” maçlarda öğrenir (eksen 0–10)
       diff = policy(diff, recent.slice(), i);
       diff = clamp(diff, 0, 10);
     }
     return hist;
   }
   SL.DDA_simulate = simulate;
+  const P_LO = 0.35, P_HI = 0.9;   // akış: kazanma olasılığı %35–90 (altı kaygı, üstü sıkıntı); kanal, bant ve çubuklar aynı tanımı kullanır
   const POLICIES = {
     fixed: () => d => d,
     steps: () => (d, rec, i) => (i > 0 && i % 30 === 0 ? d + 1.5 : d),
@@ -37,35 +38,39 @@
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
       const pol = c.policy === 'dda' ? POLICIES.dda(c.target) : POLICIES[c.policy]();
       const h = simulate(pol, { seed: c.seed, learn: c.learn, skill0: c.skill0, d0: 3, n: 120 });
-      // sol: beceri–zorluk düzlemi ve akış kanalı
+      // sol: beceri–zorluk düzlemi ve akış kanalı. Tek “akış” tanımı: P_LO ≤ p ≤ P_HI; p = σ(1,2·(beceri − zorluk)) olduğundan
+      // kanalın kenarları: zorluk = beceri + A (üstü kaygı) ve zorluk = beceri − B (altı sıkıntı)
+      const A = Math.log(1 / P_LO - 1) / 1.2, B = Math.log(1 / (1 - P_HI) - 1) / 1.2;
       const ox = 40, oy = 20, S = 270, X = v => ox + v / 10 * S, Y = v => oy + S - v / 10 * S;
-      ctx.fillStyle = t.dark ? 'rgba(255,92,122,0.12)' : 'rgba(255,92,122,0.12)'; ctx.beginPath(); ctx.moveTo(X(0), Y(1.5)); ctx.lineTo(X(8.5), Y(10)); ctx.lineTo(X(0), Y(10)); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = t.dark ? 'rgba(79,140,255,0.12)' : 'rgba(79,140,255,0.12)'; ctx.beginPath(); ctx.moveTo(X(1.5), Y(0)); ctx.lineTo(X(10), Y(8.5)); ctx.lineTo(X(10), Y(0)); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = t.dark ? 'rgba(46,170,90,0.16)' : 'rgba(46,170,90,0.14)'; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(1.5), Y(0)); ctx.lineTo(X(10), Y(8.5)); ctx.lineTo(X(10), Y(10)); ctx.lineTo(X(8.5), Y(10)); ctx.lineTo(X(0), Y(1.5)); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = t.dark ? 'rgba(255,92,122,0.12)' : 'rgba(255,92,122,0.12)'; ctx.beginPath(); ctx.moveTo(X(0), Y(A)); ctx.lineTo(X(10 - A), Y(10)); ctx.lineTo(X(0), Y(10)); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = t.dark ? 'rgba(79,140,255,0.12)' : 'rgba(79,140,255,0.12)'; ctx.beginPath(); ctx.moveTo(X(B), Y(0)); ctx.lineTo(X(10), Y(10 - B)); ctx.lineTo(X(10), Y(0)); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = t.dark ? 'rgba(46,170,90,0.16)' : 'rgba(46,170,90,0.14)'; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(B), Y(0)); ctx.lineTo(X(10), Y(10 - B)); ctx.lineTo(X(10), Y(10)); ctx.lineTo(X(10 - A), Y(10)); ctx.lineTo(X(0), Y(A)); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = t.rule; ctx.strokeRect(X(0), Y(10), S, S);
-      SL.drawLabel(ctx, 'KAYGI (çok zor)', X(2.2), Y(8.6), t.red, { size: 11 }); SL.drawLabel(ctx, 'SIKINTI (çok kolay)', X(7.8), Y(1.4), t.blue, { size: 11 }); SL.drawLabel(ctx, 'AKIŞ', X(6.2), Y(6.6), t.green, { size: 12 });
+      SL.drawLabel(ctx, 'KAYGI (çok zor)', X(2.2), Y(8.6), t.red, { size: 11 }); SL.drawLabel(ctx, 'SIKINTI (çok kolay)', X(7.8), Y(1.4), t.blue, { size: 11 }); SL.drawLabel(ctx, 'AKIŞ', X(6.5), Y(5.85), t.green, { size: 12 });
       SL.drawLabel(ctx, 'beceri →', X(5), Y(0) + 14, t.muted, { size: 10, bg: false }); ctx.save(); ctx.translate(X(0) - 16, Y(5)); ctx.rotate(-Math.PI / 2); SL.drawLabel(ctx, 'zorluk →', 0, 0, t.muted, { size: 10, bg: false }); ctx.restore();
       ctx.strokeStyle = t.ink; ctx.lineWidth = 2; ctx.beginPath(); h.forEach((s, i) => { const x = X(s.skill), y = Y(s.diff); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
       const last = h[h.length - 1]; ctx.fillStyle = t.amber; ctx.beginPath(); ctx.arc(X(last.skill), Y(last.diff), 6, 0, 7); ctx.fill();
       // sağ: zamanla kazanma olasılığı
       const px = 360, pw = 340, py = 30, ph = 120;
       ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)'; ctx.fillRect(px, py, pw, ph);
-      ctx.fillStyle = t.dark ? 'rgba(46,170,90,0.18)' : 'rgba(46,170,90,0.16)'; ctx.fillRect(px, py + ph * (1 - 0.8), pw, ph * 0.3);
+      ctx.fillStyle = t.dark ? 'rgba(46,170,90,0.18)' : 'rgba(46,170,90,0.16)'; ctx.fillRect(px, py + ph * (1 - P_HI), pw, ph * (P_HI - P_LO));
       ctx.strokeStyle = t.purple; ctx.lineWidth = 2; ctx.beginPath(); h.forEach((s, i) => { const x = px + (i / (h.length - 1)) * pw, y = py + ph * (1 - s.p); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
       h.forEach((s, i) => { ctx.fillStyle = s.win ? t.green : t.red; ctx.fillRect(px + (i / h.length) * pw, py + ph + 6, pw / h.length - 0.5, 8); });
-      SL.drawLabel(ctx, 'mor: kazanma olasılığı · yeşil: %50–80 · şerit: kazandı/kaybetti', px, py - 10, t.muted, { size: 10, align: 'left' });
-      const anx = h.filter(s => s.p < 0.35).length, bor = h.filter(s => s.p > 0.9).length, flow = h.length - anx - bor;
+      SL.drawLabel(ctx, 'mor: kazanma olasılığı · yeşil bant: akış (%35–90)', px, py - 10, t.muted, { size: 10, align: 'left' });
+      const anx = h.filter(s => s.p < P_LO).length, bor = h.filter(s => s.p > P_HI).length, flow = h.length - anx - bor;
       const sx = px, sy = 200;
       [['akışta', flow, t.green], ['kaygıda (p < 0,35)', anx, t.red], ['sıkıntıda (p > 0,9)', bor, t.blue]].forEach(([n, v, col], i) => { ctx.fillStyle = col; ctx.fillRect(sx, sy + i * 30, (v / h.length) * 170, 20); SL.drawLabel(ctx, `${n}: %${Math.round(v / h.length * 100)}`, sx + 178, sy + i * 30 + 10, t.ink, { size: 11, align: 'left', bg: false }); });
       SL.drawLabel(ctx, `son beceri ${last.skill.toFixed(1)} · son zorluk ${last.diff.toFixed(1)} · galibiyet %${Math.round(h.reduce((a, s) => a + s.win, 0) / h.length * 100)}`, sx, sy + 100, t.ink, { size: 11, align: 'left' });
       info.innerHTML = { fixed: 'Sabit zorluk: oyuncu öğrendikçe oyun kolaylaşır; çizgi sağa kayıp <b>sıkıntı</b> bölgesine girer. Yavaş öğrenen bir oyuncu ise kaygıda takılır.', steps: 'Basamaklı zorluk (tasarımcının seviye eğrisi): her 30 karşılaşmada bir zorluk artar. Ortalama oyuncu için iyi; hızlı ya da yavaş öğrenenler için değil.', dda: `Dinamik zorluk: son 5 sonucun kazanma oranı hedefin (%${Math.round(c.target * 100)}) üstündeyse zorluk artar, altındaysa azalır. Çizgi akış kanalının içinde kalmaya çalışır.` }[c.policy];
     };
+    const targetS = slider('DDA hedef galibiyet', 0.3, 0.95, c.target, 0.05, v => { c.target = v; draw(); });
+    const syncTarget = () => { const off = c.policy !== 'dda'; targetS.querySelector('input').disabled = off; targetS.style.opacity = off ? '0.45' : ''; targetS.title = off ? 'Yalnızca dinamik (DDA) politikada kullanılır.' : ''; };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Zorluk politikası: ', select({ fixed: 'sabit', steps: 'basamaklı (elle eğri)', dda: 'dinamik (DDA)' }, c.policy, v => { c.policy = v; draw(); })),
+      el('label', { class: 'ctl' }, 'Zorluk politikası: ', select({ fixed: 'sabit', steps: 'basamaklı (elle eğri)', dda: 'dinamik (DDA)' }, c.policy, v => { c.policy = v; syncTarget(); draw(); })),
       slider('öğrenme hızı', 0, 3, c.learn, 0.25, v => { c.learn = v; draw(); }), slider('başlangıç becerisi', 0, 6, c.skill0, 0.5, v => { c.skill0 = v; draw(); }),
-      slider('DDA hedef galibiyet', 0.3, 0.95, c.target, 0.05, v => { c.target = v; draw(); }), btn('🎲 başka oyuncu', () => { c.seed++; draw(); })), C, info);
-    draw(); SL.onTheme(draw);
+      targetS, btn('🎲 başka oyuncu', () => { c.seed++; draw(); })), C, info);
+    syncTarget(); draw(); SL.onTheme(draw);
   };
 
   /* ================= Left 4 Dead tarzı YZ Yönetmeni ================= */
@@ -103,7 +108,7 @@
       SL.drawLabel(ctx, '— oyuncunun “duygusal yoğunluğu”', ox, 14, th.red, { size: 11, align: 'left' }); SL.drawLabel(ctx, '— aktif düşman sayısı', ox + 250, 14, th.blue, { size: 11, align: 'left' });
       SL.drawLabel(ctx, 'Yönetmen durumu: ' + NAMES[phase], W / 2, oy + oh + 26, col[phase], { size: 13 });
       Object.entries(NAMES).forEach(([k, n], i) => { ctx.fillStyle = col[k]; ctx.fillRect(ox + i * 175, H - 30, 12, 12); SL.drawLabel(ctx, n.split(' (')[0], ox + 16 + i * 175, H - 24, th.ink, { size: 10, align: 'left', bg: false }); });
-      info.innerHTML = 'Valve’in Left 4 Dead “YZ Yönetmeni” mantığı: yoğunluk; hasar alınca, yakında düşman ölünce artar, ortada düşman yoksa azalır. Yoğunluk zirveyi geçince yönetmen birkaç saniye daha bastırır, sonra düşman göndermeyi keser, çatışmanın doğal olarak bitmesini bekler ve oyunculara nefes aldırır. Sonuç: <b>gerilim–rahatlama dalgası</b>.';
+      info.innerHTML = 'Valve’in Left 4 Dead “YZ Yönetmeni” mantığı: yoğunluk; hasar alınca, yakında düşman ölünce artar, ortada düşman yoksa azalır. Yoğunluk zirveyi geçince yönetmen birkaç saniye daha bastırır, sonra düşman göndermeyi keser, çatışmanın doğal olarak bitmesini bekler ve oyunculara nefes aldırır. Sonuç: <b>gerilim–rahatlama dalgası</b>. Oyun zamanı 6× hızlı akar: 12 oyun saniyesi ekranda 2 saniye sürer.';
     };
     const run = () => { if (timer) return; timer = setInterval(() => { for (let k = 0; k < 3; k++) step(0.1); draw(); }, 50); };
     const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
@@ -111,7 +116,7 @@
     root.append(el('div', { class: 'sv-controls' },
       btn('▶ / ⏸', () => (timer ? stop() : run())), btn('💥 pusu! (+0,3)', () => { I = clamp(I + 0.3, 0, 1); draw(); }), btn('↺ baştan', () => { I = 0; phase = 'build'; tPhase = 0; enemies = 0; hist = []; r = RNG(7); draw(); }),
       slider('oyuncu becerisi', 0, 1, c.skill, 0.1, v => { c.skill = v; }), slider('zirve eşiği', 0.4, 1, c.peak, 0.05, v => { c.peak = v; }),
-      slider('dinlenme (sn)', 2, 40, c.relax, 1, v => { c.relax = v; })), C, info);
+      slider('dinlenme (oyun sn)', 2, 40, c.relax, 1, v => { c.relax = v; })), C, info);
     draw(); SL.onTheme(draw);
     return { start: run, stop };
   };

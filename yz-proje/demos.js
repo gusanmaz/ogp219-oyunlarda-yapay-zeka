@@ -52,7 +52,7 @@
       st.player = center(1, 1); st.ppath = []; st.coins = []; st.exit = null;
       MAP.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === 'C') st.coins.push([x, y]); if (ch === 'E') st.exit = [x, y]; }));
       st.guards = PATROLS.map((pts, i) => ({ id: i, p: center(...pts[0]), dir: V.v(1, 0), patrol: pts, wp: 1, path: [], bb: { state: 'devriye', awareness: 0, sees: false, heardNoise: false, lastKnown: null, timeSinceSeen: 99, searchT: 0, noiseFlag: false } }));
-      st.caught = 0; st.collected = 0; st.won = false; st.noise = null; st.t = 0; st.stones = 3; st.mouse = null; st.vision = 170; st.dirLog = []; st.aiMs = 0; st.stats = { nodes: 0, paths: 0 }; st.statsHist = [];
+      st.caught = 0; st.collected = 0; st.won = false; st.noise = null; st.t = 0; st.stones = 3; st.mouse = null; st.vision = 170; st.calm = 0; st.dirLog = []; st.aiMs = 0; st.stats = { nodes: 0, paths: 0 }; st.statsHist = [];
     };
     reset();
     st.reset = reset;
@@ -73,7 +73,7 @@
       if (st.ppath.length) { const tgt = st.ppath[0], to = V.sub(tgt, st.player), d = V.len(to); if (d < 3) st.ppath.shift(); else st.player = V.add(st.player, V.mul(V.norm(to), Math.min(105 * dt, d))); }
       const [pcx, pcy] = cellOf(st.player);
       const ci = st.coins.findIndex(([x, y]) => x === pcx && y === pcy);
-      if (ci >= 0) { st.coins.splice(ci, 1); st.collected++; if (st.sound) SL.sfx('waka'); if (st.layers.hearing) st.noise = { p: V.copy(st.player), r: 170, t: 0 }; }
+      if (ci >= 0) { st.coins.splice(ci, 1); st.collected++; if (st.sound) SL.sfx('waka'); st.noise = { p: V.copy(st.player), r: 170, t: 0 }; }
       if (!st.coins.length && pcx === st.exit[0] && pcy === st.exit[1]) { st.won = true; if (st.sound) { SL.sfx('alert'); setTimeout(() => SL.sfx('alert'), 160); } }
       if (st.noise) { st.noise.t += dt; if (st.noise.t > 0.6) st.noise = null; }
       // muhafızlar: ALGILA → HATIRLA (kara tahta) → KARAR VER → DAVRAN
@@ -83,8 +83,8 @@
         bb.sees = inCone;
         if (inCone) { bb.awareness = Math.min(1.5, bb.awareness + dt * (1.6 - d / st.vision)); bb.lastKnown = cellOf(st.player); bb.timeSinceSeen = 0; }
         else { bb.timeSinceSeen += dt; const floor = bb.lastKnown && bb.awareness >= 0.4 ? 0.4 : 0; bb.awareness = Math.max(floor, bb.awareness - dt * 0.12); }   // şüphelendiyse, son görülen yeri araştırmadan unutmaz
-        if (!st.layers.memory && !inCone) { bb.lastKnown = null; bb.awareness = Math.min(bb.awareness, 0.39); }
-        if (st.noise && st.noise.t < dt * 1.5 && V.dist(st.noise.p, g.p) < st.noise.r) { bb.noiseFlag = true; bb.lastKnown = cellOf(st.noise.p); bb.searchT = 0; if (bb.state === 'incele') g.goal = null; }
+        if (!st.layers.memory && !inCone && !bb.noiseFlag) { bb.lastKnown = null; bb.awareness = Math.min(bb.awareness, 0.39); }
+        if (st.layers.hearing && st.noise && st.noise.t < dt * 1.5 && V.dist(st.noise.p, g.p) < st.noise.r) { bb.noiseFlag = true; bb.lastKnown = cellOf(st.noise.p); bb.searchT = 0; if (bb.state === 'incele') g.goal = null; }
         bb.heardNoise = bb.noiseFlag;   // kara tahtada kalır: muhafız oraya gidip bakana kadar “ses duydum”
         let next; try { next = st.decide({ sees: bb.sees, awareness: Math.round(bb.awareness * 100) / 100, heardNoise: bb.heardNoise, timeSinceSeen: Math.round(bb.timeSinceSeen * 10) / 10, hasLastKnown: !!bb.lastKnown }); } catch (e) { next = 'hata'; if (opts.onError) opts.onError(e); }
         if (!['devriye', 'incele', 'kovala'].includes(next)) { next = bb.state; if (opts.onBad) opts.onBad(next); }
@@ -98,10 +98,11 @@
           const pc = cellOf(st.player); if (!g.goal || Math.abs(g.goal[0] - pc[0]) + Math.abs(g.goal[1] - pc[1]) > 0 || !g.path.length) guardGoTo(g, pc);
           follow(g, 100, dt);
         }
-        if (V.dist(g.p, st.player) < 14) { st.caught++; st.player = center(1, 1); st.ppath = []; if (st.sound) SL.sfx('lose'); st.guards.forEach(h => { h.bb.awareness = 0; h.bb.lastKnown = null; h.bb.noiseFlag = false; h.bb.state = 'devriye'; h.path = []; h.goal = null; }); if (st.layers.director) { st.vision = Math.max(110, st.vision - 20); st.dirLog.unshift(`${st.t.toFixed(0)} sn: yakalandın → görüş ${st.vision}`); } }
+        if (V.dist(g.p, st.player) < 14) { st.caught++; st.player = center(1, 1); st.ppath = []; if (st.sound) SL.sfx('lose'); st.guards.forEach(h => { h.bb.awareness = 0; h.bb.lastKnown = null; h.bb.noiseFlag = false; h.bb.state = 'devriye'; h.path = []; h.goal = null; }); st.calm = 0; if (st.layers.director) { st.vision = Math.max(110, st.vision - 20); st.dirLog.unshift(`${st.t.toFixed(0)} sn: görüş ↓${st.vision}`); } }
       });
-      // YÖNETMEN (Y17): uzun süre yakalanmazsa görüş yavaşça artar
-      if (st.layers.director && Math.floor(st.t) % 15 === 0 && Math.floor(st.t - dt) % 15 !== 0 && st.t > 1 && st.vision < 220) { st.vision += 10; st.dirLog.unshift(`${st.t.toFixed(0)} sn: rahat gidiyorsun → görüş ${st.vision}`); }
+      // YÖNETMEN (Y17): 15 sn yakalanmazsa görüş yavaşça artar (yakalanınca sayaç sıfırlanır)
+      st.calm += dt;
+      if (st.calm >= 15) { st.calm = 0; if (st.layers.director && st.vision < 220) { st.vision += 10; st.dirLog.unshift(`${st.t.toFixed(0)} sn: görüş ↑${st.vision}`); } }
       st.dirLog = st.dirLog.slice(0, 3);
       st.aiMs = 0.9 * st.aiMs + 0.1 * (performance.now() - t0);
     };
@@ -139,7 +140,7 @@
       const px = GW * CS + 8;
       [`altın: ${g.collected}/5`, `taş (X): ${g.stones}`, `yakalanma: ${g.caught}`, `görüş: ${g.vision}`, `YZ: ${g.aiMs.toFixed(2)} ms`, `A* çağrısı: ${g.stats.paths}`].forEach((s, i) => SL.drawLabel(ctx, s, px, 14 + i * 16, t.ink, { size: 10, align: 'left', bg: false }));
       SL.drawLabel(ctx, 'yönetmen:', px, 112, t.muted, { size: 10, align: 'left', bg: false });
-      g.dirLog.forEach((s, i) => SL.drawLabel(ctx, s.length > 15 ? s.slice(0, 15) + '…' : s, px, 128 + i * 15, t.purple, { size: 9, align: 'left', bg: false }));
+      g.dirLog.forEach((s, i) => SL.drawLabel(ctx, s, px, 128 + i * 15, t.purple, { size: 9, align: 'left', bg: false }));
       [['devriye', t.blue], ['incele', t.amber], ['kovala', t.red]].forEach(([n, c], i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px + 5, 200 + i * 18, 5, 0, 7); ctx.fill(); SL.drawLabel(ctx, n, px + 14, 200 + i * 18, t.ink, { size: 10, align: 'left', bg: false }); });
       const gb = g.guards.map(x => `M${x.id + 1}: ${x.bb.state}, farkındalık ${x.bb.awareness.toFixed(2)}${x.bb.lastKnown ? `, son görülen (${x.bb.lastKnown})` : ''}`).join(' · ');
       info.innerHTML = `<b>Tıkla:</b> yeşil oyuncu A* ile oraya yürür. <b>X tuşu:</b> farenin olduğu yere taş at (3 hak): ses, duyan muhafızı oraya çeker. 5 altını topla, çıkışa ulaş. Altın toplamak da <b>ses</b> çıkarır. <span class="mini">Kara tahta → ${gb}</span>`;

@@ -97,7 +97,7 @@
   /* ================= 2b) DOOM usulü isabet: bütün kesişimleri bul, en küçük t'den başla ================= */
   D.raysort = function (root) {
     const W = 720, H = 330;
-    const walls = [[V.v(250, 40), V.v(250, 200)], [V.v(360, 110), V.v(360, 310)], [V.v(470, 30), V.v(560, 150)], [V.v(600, 180), V.v(640, 320)], [V.v(160, 250), V.v(330, 300)]];
+    const walls = [[V.v(250, 40), V.v(250, 200)], [V.v(360, 110), V.v(360, 200)], [V.v(470, 30), V.v(560, 150)], [V.v(600, 180), V.v(640, 320)], [V.v(160, 250), V.v(330, 300)]];
     const mons = [{ p: V.v(310, 150), r: 16, name: 'imp' }, { p: V.v(430, 215), r: 18, name: 'şeytan' }, { p: V.v(545, 240), r: 16, name: 'asker' }];
     const O = V.v(70, 190); let aim = V.v(660, 215), pierce = false;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
@@ -108,7 +108,7 @@
       walls.forEach((w, i) => { const s = V.sub(w[1], w[0]), den = V.cross(r, s); if (Math.abs(den) < 1e-9) return; const tt = V.cross(V.sub(w[0], O), s) / den, u = V.cross(V.sub(w[0], O), r) / den; if (tt >= 0 && tt <= 1 && u >= 0 && u <= 1) hits.push({ t: tt, kind: 'duvar', i }); });
       mons.forEach((m, i) => { const d = V.norm(r), L = V.len(r), mo = V.sub(O, m.p), b = V.dot(mo, d), k = V.dot(mo, mo) - m.r * m.r, disc = b * b - k; if (disc < 0) return; const dist = -b - Math.sqrt(disc); if (dist >= 0 && dist <= L) hits.push({ t: dist / L, kind: m.name, i, mon: true }); });
       hits.sort((a, b) => a.t - b.t);
-      const stopIdx = hits.findIndex(h => !h.mon || !pierce), stopT = stopIdx >= 0 ? hits[stopIdx].t : 1;
+      const firstStop = hits.findIndex(h => !h.mon || !pierce), stopIdx = firstStop >= 0 ? firstStop : hits.length, stopT = firstStop >= 0 ? hits[firstStop].t : 1;   // durduran yoksa hepsi geçildi
       walls.forEach((w, i) => { const hit = hits.find((h, k) => !h.mon && h.i === i && k <= stopIdx); ctx.strokeStyle = hit ? t.red : (t.dark ? '#8a90ad' : '#4a4f63'); ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(w[0].x, w[0].y); ctx.lineTo(w[1].x, w[1].y); ctx.stroke(); });
       mons.forEach((m, i) => { const k = hits.findIndex(h => h.mon && h.i === i), hit = k >= 0 && k <= stopIdx; ctx.fillStyle = hit ? t.red : t.purple; ctx.beginPath(); ctx.arc(m.p.x, m.p.y, m.r, 0, 7); ctx.fill(); SL.drawLabel(ctx, m.name, m.p.x, m.p.y + m.r + 11, hit ? t.red : t.muted, { size: 10 }); });
       const E = V.add(O, V.mul(r, stopT));

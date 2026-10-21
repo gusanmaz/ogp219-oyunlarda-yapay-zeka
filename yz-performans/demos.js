@@ -23,7 +23,7 @@
       A.forEach((a, i) => { const d = V.dist(a.p, player); a.lod = i === focus ? 0 : d < 80 ? 0 : d < 180 ? 1 : 2; });
       if (c.policy === 'all') A.forEach(upd);
       else if (c.policy === 'slice') { let k = 0; while (ms < c.aiBudget && k < N) { upd(A[rr % N]); rr++; k++; } }
-      else if (c.policy === 'lod') A.forEach(a => { const every = [1, 4, 15][a.lod]; if ((frame + a.p.x | 0) % every === 0) upd(a); });
+      else if (c.policy === 'lod') A.forEach((a, i) => { const every = [1, 4, 15][a.lod]; if ((frame + i) % every === 0) upd(a); });
       else if (c.policy === 'lodslice') {   // önce yakınlar (LOD 0) her kare, sonra kalan bütçe sırayla diğerlerine
         A.filter(a => a.lod === 0).forEach(upd);
         const rest = A.filter(a => a.lod > 0).sort((x, y) => x.last - y.last);
@@ -61,11 +61,13 @@
     const run = () => { if (timer) return; timer = setInterval(() => { tick(); draw(); }, 33); };
     const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
     root.setAttribute('data-prevent-swipe', '');
+    const budS = slider('YZ bütçesi (ms)', 1, 10, c.aiBudget, 0.5, v => { c.aiBudget = v; });
+    const syncBud = () => { const off = c.policy === 'all' || c.policy === 'lod'; budS.querySelector('input').disabled = off; budS.style.opacity = off ? '0.45' : ''; budS.title = off ? 'Bütçe yalnızca “zaman dilimleme” ve “LOD + bütçe” politikalarında kullanılır.' : ''; };
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Politika: ', select({ all: 'herkes her kare', slice: 'zaman dilimleme (bütçe)', lod: 'uzaklığa göre LOD', lodslice: 'LOD + bütçe (öncelikli)' }, c.policy, v => { c.policy = v; })),
-      slider('ajan sayısı', 20, 400, c.n, 10, v => { c.n = v; }), slider('YZ bütçesi (ms)', 1, 10, c.aiBudget, 0.5, v => { c.aiBudget = v; }),
+      el('label', { class: 'ctl' }, 'Politika: ', select({ all: 'herkes her kare', slice: 'zaman dilimleme (bütçe)', lod: 'uzaklığa göre LOD', lodslice: 'LOD + bütçe (öncelikli)' }, c.policy, v => { c.policy = v; syncBud(); })),
+      slider('ajan sayısı', 20, 400, c.n, 10, v => { c.n = v; }), budS,
       btn('🎯 başka ajanı takip et', () => { focus = Math.floor(Math.random() * c.n); })), C, info);
-    make(); for (let i = 0; i < 5; i++) tick(); draw(); SL.onTheme(draw);
+    make(); for (let i = 0; i < 5; i++) tick(); syncBud(); draw(); SL.onTheme(draw);
     return { start: run, stop };
   };
 
@@ -143,9 +145,9 @@
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
       const th = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = th.card; ctx.fillRect(0, 0, W, H);
-      const mx = Math.max(10, ...opsHist), gx = 20, gw = 460, gy = 20, gh = 160;
+      const mx = c.n * 1.1, gx = 20, gw = 460, gy = 20, gh = 160;   // sabit ölçek: üst kenar ≈ “her NPC her kare”; iki yöntem aynı ölçekte karşılaştırılır
       ctx.fillStyle = th.dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)'; ctx.fillRect(gx, gy, gw, gh);
-      opsHist.forEach((v, i) => { ctx.fillStyle = c.mode === 'frame' ? th.red : th.green; const hh = (v / mx) * gh; ctx.fillRect(gx + (i / 200) * gw, gy + gh - hh, gw / 200 + 0.5, hh); });
+      opsHist.forEach((v, i) => { ctx.fillStyle = c.mode === 'frame' ? th.red : th.green; const hh = Math.min(1, v / mx) * gh; ctx.fillRect(gx + (i / 200) * gw, gy + gh - hh, gw / 200 + 0.5, hh); });
       const avg = opsHist.reduce((a, b) => a + b, 0) / Math.max(1, opsHist.length);
       SL.drawLabel(ctx, `kare başına iş (ortalama): ${avg.toFixed(1)}`, gx, gy + gh + 16, th.ink, { size: 12, align: 'left' });
       // sağ: sıradaki olaylar (öncelik kuyruğu)

@@ -248,7 +248,7 @@
   <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
     <ol style="font-size:.9em">
       <li>“herkes her kare” + 400 ajan: mor YZ çubukları bütçe çizgisini aşıyor; kırmızı çubuklar pahalı yol isteklerinin sıçramaları.</li>
-      <li>“zaman dilimleme”: kare süresi sabit! Ama ajan sayısını artırınca “en bayat ajan” büyüyor; soluk noktalar uzun süredir düşünmeyen ajanlar.</li>
+      <li>“zaman dilimleme”: kare süresi sabit! Ama ajan sayısını artırınca (ve bütçeyi 1 ms’ye indirince) “en bayat ajan” büyüyor; soluk noktalar uzun süredir düşünmeyen ajanlar.</li>
       <li>“uzaklığa göre LOD”: oyuncuyu (mavi) kalabalığın ortasına sürükleyin: yakındaki herkes her kare güncelleniyor, bütçe yine aşılabiliyor.</li>
       <li>“LOD + bütçe”: yakındakiler ve takip ettiğiniz sarı ajan her kare; kalan bütçe en uzun süredir bekleyenlere. “Başka ajanı takip et” ile uzaktaki birini seçin: hâlâ her kare güncelleniyor mu?</li>
     </ol>
@@ -268,7 +268,7 @@
   <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
     <ol style="font-size:.9em">
       <li>“herkes her kare” + 400 ajan: mor YZ çubukları bütçe çizgisini aşıyor; kırmızı çubuklar pahalı yol isteklerinin sıçramaları.</li>
-      <li>“zaman dilimleme”: kare süresi sabit! Ama ajan sayısını artırınca “en bayat ajan” büyüyor; soluk noktalar uzun süredir düşünmeyen ajanlar.</li>
+      <li>“zaman dilimleme”: kare süresi sabit! Ama ajan sayısını artırınca (ve bütçeyi 1 ms’ye indirince) “en bayat ajan” büyüyor; soluk noktalar uzun süredir düşünmeyen ajanlar.</li>
       <li>“uzaklığa göre LOD”: oyuncuyu (mavi) kalabalığın ortasına sürükleyin: yakındaki herkes her kare güncelleniyor, bütçe yine aşılabiliyor.</li>
       <li>“LOD + bütçe”: yakındakiler ve takip ettiğiniz sarı ajan her kare; kalan bütçe en uzun süredir bekleyenlere. “Başka ajanı takip et” ile uzaktaki birini seçin: hâlâ her kare güncelleniyor mu?</li>
     </ol>
@@ -291,7 +291,7 @@
       <li><b>Ekranı okuyun:</b> koyu kareler duvar. Mor alan şu an aranan yolun açtığı düğümler; yeşil çizgi yeni bulunan yol (birkaç saniyede solar). Sağda kuyruk uzunluğu, ortalama bekleme ve kare başına açılan düğüm grafiği.</li>
       <li>“📨 12 NPC aynı anda yol istesin”e bir kez basın: grafik bütçe çizgisinde düz gider, yollar <b>sırayla</b> belirir. Hiçbir karede sıçrama yok.</li>
       <li>Düğmeye hızlıca 5 kez basın (60 istek): kuyruk kırmızıya döner, ortalama bekleme büyür. Kare süresi hâlâ sabit; bedeli gecikme.</li>
-      <li>Bütçeyi 1000 yapın: bekleme sıfıra yakın. Peki neden hep 1000 yapmıyoruz? (Her düğüm zaman demek: 1000 düğüm bir karenin YZ bütçesini tek başına yiyebilir.)</li>
+      <li>Bütçeyi 1000 yapın: bekleme ≈1 kareye iner (en kısası: istek bir sonraki karede işlenir). Peki neden hep 1000 yapmıyoruz? (Her düğüm zaman demek: 1000 düğüm bir karenin YZ bütçesini tek başına yiyebilir.)</li>
       <li>Bütçeyi 20 yapın: uzun bir yol birkaç kareye yayılıyor; mor alan kare kare büyüyor. Arama <b>kaldığı yerden</b> devam ediyor.</li>
     </ol>
   </div><!--/dh-->
@@ -303,7 +303,7 @@
       <li><b>Ekranı okuyun:</b> koyu kareler duvar. Mor alan şu an aranan yolun açtığı düğümler; yeşil çizgi yeni bulunan yol (birkaç saniyede solar). Sağda kuyruk uzunluğu, ortalama bekleme ve kare başına açılan düğüm grafiği.</li>
       <li>“📨 12 NPC aynı anda yol istesin”e bir kez basın: grafik bütçe çizgisinde düz gider, yollar <b>sırayla</b> belirir. Hiçbir karede sıçrama yok.</li>
       <li>Düğmeye hızlıca 5 kez basın (60 istek): kuyruk kırmızıya döner, ortalama bekleme büyür. Kare süresi hâlâ sabit; bedeli gecikme.</li>
-      <li>Bütçeyi 1000 yapın: bekleme sıfıra yakın. Peki neden hep 1000 yapmıyoruz? (Her düğüm zaman demek: 1000 düğüm bir karenin YZ bütçesini tek başına yiyebilir.)</li>
+      <li>Bütçeyi 1000 yapın: bekleme ≈1 kareye iner (en kısası: istek bir sonraki karede işlenir). Peki neden hep 1000 yapmıyoruz? (Her düğüm zaman demek: 1000 düğüm bir karenin YZ bütçesini tek başına yiyebilir.)</li>
       <li>Bütçeyi 20 yapın: uzun bir yol birkaç kareye yayılıyor; mor alan kare kare büyüyor. Arama <b>kaldığı yerden</b> devam ediyor.</li>
     </ol>
   </div>

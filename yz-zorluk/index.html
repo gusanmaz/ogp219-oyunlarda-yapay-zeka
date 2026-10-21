@@ -175,7 +175,7 @@
     <ol style="font-size:.9em">
       <li><b>Sol kare</b> akış kanalı: yatay eksen oyuncunun becerisi, dikey eksen oyunun zorluğu. Yeşil şerit <b>akış</b>, üstü kırmızı <b>kaygı</b> (oyun becerinin çok üstünde), altı mavi <b>sıkıntı</b>.</li>
       <li><b>Siyah çizgi</b> 120 karşılaşma boyunca bir oyuncunun yolculuğu; sarı nokta şu an bulunduğu yer. Oyuncu öğrendikçe çizgi sağa gider; zorluk arttıkça yukarı.</li>
-      <li><b>Sağ üst</b>: mor çizgi her karşılaşmada kazanma olasılığı (yeşil bant %50–80). Altındaki şerit: yeşil kazandı, kırmızı kaybetti.</li>
+      <li><b>Sağ üst</b>: mor çizgi her karşılaşmada kazanma olasılığı (yeşil bant %35–90 = akış; sol karedeki yeşil kanal ve sağ alttaki “akışta” çubuğu da aynı tanım). Altındaki şerit: yeşil kazandı, kırmızı kaybetti.</li>
       <li><b>Sağ alt</b> üç çubuk: oyuncu zamanının yüzde kaçını akışta, kaygıda, sıkıntıda geçirdi. Karşılaştıracağınız sayı bu.</li>
       <li>Simülasyondaki oyuncu, dengeli maçlarda daha hızlı öğrenir (çok kolay ya da çok zor karşılaşmadan az şey öğrenilir).</li>
     </ol>
@@ -197,7 +197,7 @@
     <ol style="font-size:.9em">
       <li><b>Sol kare</b> akış kanalı: yatay eksen oyuncunun becerisi, dikey eksen oyunun zorluğu. Yeşil şerit <b>akış</b>, üstü kırmızı <b>kaygı</b> (oyun becerinin çok üstünde), altı mavi <b>sıkıntı</b>.</li>
       <li><b>Siyah çizgi</b> 120 karşılaşma boyunca bir oyuncunun yolculuğu; sarı nokta şu an bulunduğu yer. Oyuncu öğrendikçe çizgi sağa gider; zorluk arttıkça yukarı.</li>
-      <li><b>Sağ üst</b>: mor çizgi her karşılaşmada kazanma olasılığı (yeşil bant %50–80). Altındaki şerit: yeşil kazandı, kırmızı kaybetti.</li>
+      <li><b>Sağ üst</b>: mor çizgi her karşılaşmada kazanma olasılığı (yeşil bant %35–90 = akış; sol karedeki yeşil kanal ve sağ alttaki “akışta” çubuğu da aynı tanım). Altındaki şerit: yeşil kazandı, kırmızı kaybetti.</li>
       <li><b>Sağ alt</b> üç çubuk: oyuncu zamanının yüzde kaçını akışta, kaygıda, sıkıntıda geçirdi. Karşılaştıracağınız sayı bu.</li>
       <li>Simülasyondaki oyuncu, dengeli maçlarda daha hızlı öğrenir (çok kolay ya da çok zor karşılaşmadan az şey öğrenilir).</li>
     </ol>
@@ -284,8 +284,8 @@
   <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
     <ol style="font-size:.9em">
       <li>Bir süre izleyin: kırmızı yoğunluk eğrisi dalgalanıyor; arka plan renkleri yönetmenin durumunu gösteriyor. Mavi çizgi: aktif düşman. Rahatlama (yeşil) sırasında mavi sıfıra iniyor.</li>
-      <li>Oyuncu becerisini 0,1’e indirin: düşmanlar yavaş temizleniyor, Peak Fade uzuyor; yönetmen savaş bitmeden dinlenmeyi başlatmıyor. 0,9: dalgalar kısa ve sık.</li>
-      <li>Rahatlama süresini 2 saniyeye indirin: dinlenme yok, sürekli gerilim; sonra 40: uzun sessizlik. Hangisi korku, hangisi aksiyon oyununa uyar?</li>
+      <li>Oyuncu becerisini 0,1’e indirin: düşmanlar yavaş temizleniyor, Peak Fade uzuyor; yönetmen savaş bitmeden dinlenmeyi başlatmıyor. 0,9: Peak Fade kısalıyor ama zirveye ulaşmak uzun sürüyor (Build Up uzuyor); dalganın toplam süresi pek değişmiyor.</li>
+      <li>“dinlenme”yi 2 saniyeye indirin (demoda oyun zamanı 6× hızlı akar): dinlenme yok, sürekli gerilim; sonra 40: uzun sessizlik. Hangisi korku, hangisi aksiyon oyununa uyar?</li>
       <li>“Pusu!” düğmesi: senaryolu bir olay yoğunluğu aniden zirveye taşırsa yönetmen otomatik olarak geri çekilir.</li>
     </ol>
   </div><!--/dh-->
@@ -295,8 +295,8 @@
   <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
     <ol style="font-size:.9em">
       <li>Bir süre izleyin: kırmızı yoğunluk eğrisi dalgalanıyor; arka plan renkleri yönetmenin durumunu gösteriyor. Mavi çizgi: aktif düşman. Rahatlama (yeşil) sırasında mavi sıfıra iniyor.</li>
-      <li>Oyuncu becerisini 0,1’e indirin: düşmanlar yavaş temizleniyor, Peak Fade uzuyor; yönetmen savaş bitmeden dinlenmeyi başlatmıyor. 0,9: dalgalar kısa ve sık.</li>
-      <li>Rahatlama süresini 2 saniyeye indirin: dinlenme yok, sürekli gerilim; sonra 40: uzun sessizlik. Hangisi korku, hangisi aksiyon oyununa uyar?</li>
+      <li>Oyuncu becerisini 0,1’e indirin: düşmanlar yavaş temizleniyor, Peak Fade uzuyor; yönetmen savaş bitmeden dinlenmeyi başlatmıyor. 0,9: Peak Fade kısalıyor ama zirveye ulaşmak uzun sürüyor (Build Up uzuyor); dalganın toplam süresi pek değişmiyor.</li>
+      <li>“dinlenme”yi 2 saniyeye indirin (demoda oyun zamanı 6× hızlı akar): dinlenme yok, sürekli gerilim; sonra 40: uzun sessizlik. Hangisi korku, hangisi aksiyon oyununa uyar?</li>
       <li>“Pusu!” düğmesi: senaryolu bir olay yoğunluğu aniden zirveye taşırsa yönetmen otomatik olarak geri çekilir.</li>
     </ol>
   </div>
@@ -347,7 +347,7 @@
     <ol style="font-size:.9em">
       <li><b>Ekranı okuyun:</b> görünüm size göre. Ortadaki kesikli çizgi sizsiniz; sağdaki arabalar önünüzde, soldakiler arkanızda. Sağdaki <code>×1.00</code> o YZ’nin hız çarpanı: kırmızı = yavaşlatılıyor, yeşil = hızlandırılıyor.</li>
       <li>“🏁 yarışı başlat”: yeşil şeridin (ölü bölge) içindeki arabanın çarpanı hep ×1.00. Yan yana yarışta hile yok.</li>
-      <li>Lastik bant gücünü 0 yapıp yeniden başlatın: hızlı YZ’ler kaybolur, yavaşlar geride kalır; yarış 10 saniyede “biter”. 1 yapın: herkes dibinizde.</li>
+      <li>Lastik bant gücünü 0 yapıp yeniden başlatın: hızlı YZ’ler uzaklaşır, yavaşlar geride kalır; yarış ≈17 saniye sürse de sonu ilk saniyelerde belli olur. 1 yapın: herkes dibinizde (sıralama değişmez ama aradaki en büyük fark yarıdan aza iner).</li>
       <li><b>🚀 Nitro</b>’ya basıp öne geçin: az önce yeşil olan çarpanlar ne oldu? Arkaya düşünce ne oluyor? Oyun sizi hem yakalıyor hem bekliyor.</li>
       <li>Ölü bölgeyi 0 yapın: yanınızdaki araba bile ayarlanıyor. Gerçek bir oyunda bunu nasıl fark ederdiniz?</li>
     </ol>
@@ -359,7 +359,7 @@
     <ol style="font-size:.9em">
       <li><b>Ekranı okuyun:</b> görünüm size göre. Ortadaki kesikli çizgi sizsiniz; sağdaki arabalar önünüzde, soldakiler arkanızda. Sağdaki <code>×1.00</code> o YZ’nin hız çarpanı: kırmızı = yavaşlatılıyor, yeşil = hızlandırılıyor.</li>
       <li>“🏁 yarışı başlat”: yeşil şeridin (ölü bölge) içindeki arabanın çarpanı hep ×1.00. Yan yana yarışta hile yok.</li>
-      <li>Lastik bant gücünü 0 yapıp yeniden başlatın: hızlı YZ’ler kaybolur, yavaşlar geride kalır; yarış 10 saniyede “biter”. 1 yapın: herkes dibinizde.</li>
+      <li>Lastik bant gücünü 0 yapıp yeniden başlatın: hızlı YZ’ler uzaklaşır, yavaşlar geride kalır; yarış ≈17 saniye sürse de sonu ilk saniyelerde belli olur. 1 yapın: herkes dibinizde (sıralama değişmez ama aradaki en büyük fark yarıdan aza iner).</li>
       <li><b>🚀 Nitro</b>’ya basıp öne geçin: az önce yeşil olan çarpanlar ne oldu? Arkaya düşünce ne oluyor? Oyun sizi hem yakalıyor hem bekliyor.</li>
       <li>Ölü bölgeyi 0 yapın: yanınızdaki araba bile ayarlanıyor. Gerçek bir oyunda bunu nasıl fark ederdiniz?</li>
     </ol>

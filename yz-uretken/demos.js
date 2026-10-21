@@ -125,7 +125,7 @@
       view.innerHTML = out.length ? out.map(n => `<span class="mk-n">${n}</span>`).join('') : '<i>“üret ve çal”a basın</i>';
       const c = counts();
       table.innerHTML = '<table class="mk-tab"><tr><th>şu nota</th><th>sonra gelenler (kaç kez)</th></tr>' + Object.keys(c).map(k => `<tr><td><b>${k}</b></td><td>${Object.entries(c[k]).sort((a, b) => b[1] - a[1]).map(([n, v]) => `${n} ×${v}`).join(' · ')}</td></tr>`).join('') + '</table>';
-      info.innerHTML = 'Model, eğitim melodilerinde hangi notadan sonra hangisinin kaç kez geldiğini biliyor (Y14’teki minicik dil modeliyle aynı fikir, kelime yerine nota). Müzik üreten büyük modeller (Suno, MusicGen, Stable Audio) ses dalgasını ya da onun sıkıştırılmış kodlarını aynı “sıradakini tahmin et” ya da difüzyon mantığıyla üretir.';
+      info.innerHTML = 'Model, eğitim melodilerinde hangi notadan sonra hangisinin kaç kez geldiğini biliyor (Y14’teki minicik dil modeliyle aynı fikir, kelime yerine nota). <b>Sıcaklık</b>: düşükse (0,2) hep en sık görülen sonraki nota seçilir, ezgi tekrara düşer; yüksekse (3) görülen seçenekler eşit şansa yaklaşır, ezgi daha şaşırtıcı olur. İkisiyle birkaç kez üretip dinleyin. Müzik üreten büyük modeller (Suno, MusicGen, Stable Audio) ses dalgasını ya da onun sıkıştırılmış kodlarını aynı “sıradakini tahmin et” ya da difüzyon mantığıyla üretir.';
     };
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Eğitim: ', select({ a: 'melodi A (Twinkle)', b: 'melodi B (Mary)', both: 'ikisi birden' }, corpus, v => { corpus = v; out = []; draw(); })),
@@ -145,7 +145,7 @@
     const draw = () => {
       const sc = ASSETS.map(([n, v]) => [n, cos(q, v), v]).sort((a, b) => b[1] - a[1]);
       list.innerHTML = sc.map(([n, s, v], i) => `<div class="em-row ${i < 2 ? 'em-top' : ''}"><span class="em-n">${n}</span><span class="lm-bar"><span style="width:${Math.max(0, s) * 100}%"></span></span><span class="em-s">${s.toFixed(2)}</span></div>`).join('');
-      info.innerHTML = `İstem vektörü: [${q.map((x, i) => AX[i] + ' ' + x.toFixed(1)).join(', ')}]. Her varlık bir vektör; benzerlik = aradaki açının kosinüsü. Gerçek sistemlerde (CLIP gibi) bu vektörleri bir model üretir ve yüzlerce boyutu vardır; görüntü üretiminde istem metni, difüzyon modeline böyle bir vektör olarak verilir.`;
+      info.innerHTML = `İstem vektörü: [${q.map((x, i) => AX[i] + ' ' + x.toFixed(1)).join(', ')}]. Her varlık bir vektör; benzerlik = aradaki açının kosinüsü (çubuk ve sayı; yeşil iki satır en yakın iki varlık). Deneyin: yalnız ateşi 1, ötekileri 0 yapın; sonra karanlık ve metali artırın. Gerçek sistemlerde (CLIP gibi) bu vektörleri bir model üretir ve yüzlerce boyutu vardır; görüntü üretiminde istem metni, difüzyon modeline böyle bir vektör olarak verilir.`;
     };
     root.append(el('div', { class: 'sv-controls' }, ...AX.map((ax, i) => slider(ax, 0, 1, q[i], 0.1, v => { q[i] = v; draw(); }))), list, info);
     draw();

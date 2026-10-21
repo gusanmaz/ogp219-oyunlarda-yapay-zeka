@@ -73,7 +73,7 @@
     const draw = () => {
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
       for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
-        const h = fbm(i * cell / c.scale, j * cell / c.scale) * 1.6 - c.water;
+        const h = fbm(i * cell / c.scale, j * cell / c.scale) * 2.6 - c.water;
         if (c.view === 'gray') { const g = Math.round(255 * Math.min(1, Math.max(0, (h + 1) / 2))); ctx.fillStyle = `rgb(${g},${g},${g})`; }
         else { let col = BIOMES[0][1]; for (const [th, cc] of BIOMES) if (h >= th) col = cc; ctx.fillStyle = col; }
         ctx.fillRect(i * cell, j * cell, cell, cell);
@@ -83,9 +83,9 @@
       ctx.strokeStyle = t.amber; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(0, row * cell); ctx.lineTo(W, row * cell); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = t.dark ? 'rgba(63,134,201,0.35)' : 'rgba(63,134,201,0.25)'; ctx.fillRect(0, y0 + hh / 2, W, hh / 2);
       ctx.strokeStyle = t.ink; ctx.lineWidth = 2; ctx.beginPath();
-      for (let x = 0; x <= W; x += 2) { const h = fbm(x / c.scale, row * cell / c.scale) * 1.6 - c.water; const y = y0 + hh / 2 - h * hh / 2; x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      for (let x = 0; x <= W; x += 2) { const h = fbm(x / c.scale, row * cell / c.scale) * 2.6 - c.water; const y = y0 + hh / 2 - Math.max(-1, Math.min(1, h)) * hh / 2; x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
       ctx.stroke(); SL.drawLabel(ctx, 'kesit (sarı çizgi) — mavi: deniz seviyesi', 8, y0 + 8, t.muted, { size: 10, align: 'left' });
-      info.innerHTML = `${c.oct} oktav: her oktav bir öncekinin ${c.lac}× frekansında ve ${c.pers}× genliğinde (fBm). Aynı tohum = aynı dünya: tohumu not edin, yeniden yazın, harita birebir geri gelir.`;
+      info.innerHTML = `${c.oct} oktav: her oktav bir öncekinin ${c.lac}× frekansında (boşluk) ve ${c.pers}× genliğinde (kalıcılık) (fBm). Renkler alçaktan yükseğe: derin su, sığ su, kum, çimen, orman, kaya (gri), kar (beyaz). Aynı tohum = aynı dünya: tohumu not edin, yeniden yazın, harita birebir geri gelir.`;
     };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
@@ -155,17 +155,20 @@
       if (extra && c.algo === 'bsp') { ctx.strokeStyle = t.amber; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); extra.leaves.forEach(L => ctx.strokeRect(L.x * cs + 0.5, L.y * cs + 0.5, L.w * cs, L.h * cs)); ctx.setLineDash([]); }
       const open = g.reduce((a, v) => a + (v ? 0 : 1), 0), lost = open - (sizes[big] || 0);
       SL.drawLabel(ctx, `açık hücre ${open} · bölge ${sizes.length} · ana bölgeye bağlı olmayan ${lost}`, W / 2, H - 9, lost ? t.red : t.green, { size: 11 });
-      info.innerHTML = { ca: `Hücresel otomat: rastgele doldur (%${Math.round(c.fill * 100)} duvar), sonra her adımda “8 komşudan en az 5’i duvarsa duvar ol” kuralı. Adım: <b>${iter}</b>. Kırmızı: ana mağaraya bağlı olmayan cepler (flood fill ile bulundu).`, bsp: 'İkili alan bölme (BSP): alanı ikiye, sonra parçaları tekrar ikiye böl (sarı kesikli çizgiler); her yaprağa bir oda koy; sırayla komşu odaları L biçimli koridorlarla bağla. Hep bağlı ve “insan yapımı” görünür.', walk: `Sarhoş yürüyüşü: ortadan başla, rastgele yönde yürü, geçtiğin yeri kaz; alanın %${Math.round(c.walk * 100)}’i açılınca dur. Hep bağlıdır (tek bir yürüyüş!), organik ve dolambaçlıdır.` }[c.algo];
+      info.innerHTML = { ca: `Hücresel otomat: rastgele doldur (%${Math.round(c.fill * 100)} duvar), sonra her adımda “8 komşudan en az 5’i duvarsa duvar ol (zaten duvarsa 4’ü yeter)” kuralı. Adım: <b>${iter}</b>. Kırmızı: ana mağaraya bağlı olmayan cepler (flood fill ile bulundu).`, bsp: 'İkili alan bölme (BSP): alanı ikiye, sonra parçaları tekrar ikiye böl (sarı kesikli çizgiler); her yaprağa bir oda koy; sırayla komşu odaları L biçimli koridorlarla bağla. Hep bağlı ve “insan yapımı” görünür.', walk: `Sarhoş yürüyüşü: ortadan başla, rastgele yönde yürü, geçtiğin yeri kaz; alanın %${Math.round(c.walk * 100)}’i açılınca dur. Hep bağlıdır (tek bir yürüyüş!), organik ve dolambaçlıdır.` }[c.algo];
     };
     const regen = () => { gen(); draw(); };
     root.setAttribute('data-prevent-swipe', '');
+    // yalnızca seçili yöntemde işe yarayan denetimler etkin; ötekiler soluk (yer değiştirmez)
+    const cbReg = el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { c.showRegions = e.target.checked; draw(); } }); x.checked = true; return x; })(), ' kopuk bölgeleri göster');
+    const slFill = slider('ilk duvar oranı', 0.3, 0.6, c.fill, 0.01, v => { c.fill = v; if (c.algo === 'ca') regen(); }), slIters = slider('otomat adımı', 0, 10, c.iters, 1, v => { c.iters = v; if (c.algo === 'ca') regen(); });
+    const slWalk = slider('kazılacak oran', 0.1, 0.6, c.walk, 0.05, v => { c.walk = v; if (c.algo === 'walk') regen(); });
+    const syncAlgo = () => [[cbReg, 'ca', 'Kopuk bölge yalnızca hücresel otomatta oluşur.'], [slFill, 'ca', 'Yalnızca hücresel otomatta kullanılır.'], [slIters, 'ca', 'Yalnızca hücresel otomatta kullanılır.'], [slWalk, 'walk', 'Yalnızca sarhoş yürüyüşünde kullanılır.']].forEach(([l, a, why]) => { const off = c.algo !== a; l.querySelector('input').disabled = off; l.style.opacity = off ? '0.45' : ''; l.title = off ? why : ''; });
     root.append(el('div', { class: 'sv-controls' },
-      el('label', { class: 'ctl' }, 'Yöntem: ', select({ ca: 'hücresel otomat (mağara)', bsp: 'BSP (oda + koridor)', walk: 'sarhoş yürüyüşü' }, c.algo, v => { c.algo = v; regen(); })),
-      seedBox(c.seed, v => { c.seed = v; regen(); }), btn('🎲', () => { c.seed = Math.floor(Math.random() * 99999); root.querySelector('.seed-in').value = c.seed; regen(); }),
-      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { c.showRegions = e.target.checked; draw(); } }); x.checked = true; return x; })(), ' kopuk bölgeleri göster')),
-      el('div', { class: 'sv-controls' }, slider('ilk duvar oranı', 0.3, 0.6, c.fill, 0.01, v => { c.fill = v; if (c.algo === 'ca') regen(); }), slider('otomat adımı', 0, 10, c.iters, 1, v => { c.iters = v; if (c.algo === 'ca') regen(); }),
-        slider('kazılacak oran', 0.1, 0.6, c.walk, 0.05, v => { c.walk = v; if (c.algo === 'walk') regen(); })), C, info);
-    regen(); SL.onTheme(draw);
+      el('label', { class: 'ctl' }, 'Yöntem: ', select({ ca: 'hücresel otomat (mağara)', bsp: 'BSP (oda + koridor)', walk: 'sarhoş yürüyüşü' }, c.algo, v => { c.algo = v; syncAlgo(); regen(); })),
+      seedBox(c.seed, v => { c.seed = v; regen(); }), btn('🎲', () => { c.seed = Math.floor(Math.random() * 99999); root.querySelector('.seed-in').value = c.seed; regen(); }), cbReg),
+      el('div', { class: 'sv-controls' }, slFill, slIters, slWalk), C, info);
+    syncAlgo(); regen(); SL.onTheme(draw);
   };
 
   /* ================= dalga fonksiyonu çöküşü (basit karo modeli) ================= */
@@ -252,10 +255,12 @@
     };
     const setKey = k => { key = k; n = LSYS[k].n; ang = LSYS[k].ang; nS.querySelector('input').value = n; nS.querySelector('b').textContent = n; aS.querySelector('input').value = ang; aS.querySelector('b').textContent = ang; draw(); };
     const nS = slider('yineleme', 1, 12, n, 1, v => { n = v; draw(); }), aS = slider('açı', 5, 120, ang, 0.5, v => { ang = v; draw(); });
+    const bOther = btn('🎲 başka ağaç', () => { seed = Math.floor(Math.random() * 9999); draw(); });
+    const syncJ = () => { bOther.disabled = !jitter; bOther.style.opacity = jitter ? '' : '0.45'; bOther.title = jitter ? '' : 'Rastgelelik 0 iken her ağaç aynı: önce rastgeleliği artırın.'; };   // rastgelelik 0 iken düğme işe yaramaz
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Sistem: ', select(Object.fromEntries(Object.entries(LSYS).map(([k, v]) => [k, v.name])), key, setKey)), nS, aS,
-      slider('rastgelelik', 0, 30, jitter, 1, v => { jitter = v; draw(); }), btn('🎲 başka ağaç', () => { seed = Math.floor(Math.random() * 9999); draw(); })), C, info);
-    draw(); SL.onTheme(draw);
+      slider('rastgelelik', 0, 30, jitter, 1, v => { jitter = v; syncJ(); draw(); }), bOther), C, info);
+    syncJ(); draw(); SL.onTheme(draw);
   };
 
   /* ================= Spelunky: 4×4 oda ızgarası ve çözüm yolu ================= */
