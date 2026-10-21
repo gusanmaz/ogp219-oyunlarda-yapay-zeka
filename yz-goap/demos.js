@@ -134,22 +134,47 @@
     const fp = new SL.FramePlayer(f => {
       diag.innerHTML = searchSVG(res, f.k, { final: f.final, H: 270 });
       note.innerHTML = f.note;
-      planBox.innerHTML = f.final ? `<b>Plan (toplam maliyet ${res.cost}):</b> ${planCards(res.plan, -1)}` : `<b>Açık liste (f = g + h sırasıyla):</b> ${f.open}`;
+      planBox.innerHTML = planHTML(res, f);
     }, { speed: 1.5 });
-    const build = () => {
-      res = plan(start, GOAL, ACTIONS, { noH });
-      const F = [{ k: 0, note: 'Başlangıç durumu: ' + chips(start) + ' · Hedef: <b>hedef etkisiz</b>', open: 'BAŞLANGIÇ' }];
+    // bir başlangıç durumunun bütün kareleri (oynatıcı da yer ölçümü de aynı listeyi kullanır)
+    const kareler = (st, nh) => {
+      const res = plan(st, GOAL, ACTIONS, { noH: nh });
+      const F = [{ k: 0, note: 'Başlangıç durumu: ' + chips(st) + ' · Hedef: <b>hedef etkisiz</b>', open: 'BAŞLANGIÇ' }];
       res.order.forEach((e, i) => {
         const nm = e.n.act ? `“${e.n.act.name}” sonrası` : 'başlangıç';
         F.push({ k: i + 1, note: e.done ? `✅ ${nm} durumu hedefi sağlıyor: arama bitti.` : `${nm} durumu genişletiliyor (g=${e.n.g}, h=${e.n.h}). Ön koşulu tutan eylemler: ${e.kids.map(k => k.act.name).join(', ') || '— yok (çıkmaz)'}.<br>Durum: ${chips(e.n.s)}`, open: (e.open || []).slice().sort((a, b) => a.g + a.h - (b.g + b.h)).map(x => `${x.act ? x.act.name : '·'} (${x.g + x.h})`).join(' · ') || '—', final: false });
       });
-      F.push({ k: res.order.length, final: true, note: res.plan ? `Toplam ${res.order.length} düğüm genişletildi. En ucuz plan yeşil yol.` : '❌ Hiçbir eylem dizisi hedefe ulaşmıyor.' });
-      fp.load(F);
+      F.push({ k: res.order.length, final: true, note: res.plan ? `Toplam ${res.order.length} düğüm genişletildi. En ucuz plan yeşil yol.<br>Planın sonunda durum: ${chips(res.goalNode.s)}` : `❌ Hiçbir eylem dizisi hedefe ulaşmıyor: ${res.order.length} düğüm genişletildi, açık liste boşaldı.` });
+      return { res, F };
+    };
+    const planHTML = (r, f) => f.final ? (r.plan ? `<b>Plan (toplam maliyet ${r.cost}):</b> ${planCards(r.plan, -1)}` : '') : `<b>Açık liste (f = g + h sırasıyla):</b> ${f.open}`;
+    const build = () => { const k = kareler(start, noH); res = k.res; fp.load(k.F); };
+    /* Kaymaz ve kaydırmasız: not ve plan satırı kareden kareye bir-üç satır arası değişir; oynatınca alttaki düğmeler
+       kaymasın, kutu sonradan büyümesin diye ikisine de BÜTÜN başlangıç seçenekleri × bütün kareler içindeki en uzun
+       içerik kadar yer ayrılır. Ölçüm gerçek sütunda, gizli kopyalarla (aynı biçemler); genişlik değişince yinelenir. */
+    let sonW = 0;
+    const yerAyir = () => {
+      const w = note.clientWidth; if (!w || w === sonW) return; sonW = w;
+      const kap = note.parentElement; if (getComputedStyle(kap).position === 'static') kap.style.position = 'relative';
+      const gizli = `position:absolute;visibility:hidden;pointer-events:none;left:0;top:0;width:${w}px`;
+      const n2 = el('div', { class: 'sv-note', style: gizli }), p2 = el('div', { class: 'gplan', style: gizli }); kap.append(n2, p2);
+      const anahtar = Object.keys(start); let hn = 0, hp = 0;
+      for (let m = 0; m < (1 << (anahtar.length + 1)); m++) {
+        const st = {}; anahtar.forEach((a, i) => { st[a] = !!(m & (1 << i)); });
+        const { res: r, F } = kareler(st, !!(m & (1 << anahtar.length)));
+        for (const f of F) { n2.innerHTML = f.note; p2.innerHTML = planHTML(r, f); hn = Math.max(hn, n2.getBoundingClientRect().height); hp = Math.max(hp, p2.getBoundingClientRect().height); }
+      }
+      n2.remove(); p2.remove();
+      note.style.minHeight = Math.ceil(hn) + 'px'; planBox.style.minHeight = Math.ceil(hp) + 'px';
     };
     const boxes = Object.keys(start).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { start[k] = e.target.checked; build(); } }); cb.checked = start[k]; return cb; })(), ' ' + FACTS[k]));
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls gfacts' }, el('b', null, 'Başlangıç: '), ...boxes, el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { noH = e.target.checked; build(); } }); return cb; })(), ' sezgiyi kapat (h = 0)')), diag, SL.transport(fp, { min: 0.5, max: 8 }), note, planBox);
     build(); SL.onTheme(() => fp.render());
+    const izle = () => requestAnimationFrame(yerAyir);
+    if (window.ResizeObserver) new ResizeObserver(izle).observe(root);
+    window.addEventListener('resize', izle); setTimeout(izle, 0);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { sonW = 0; izle(); });
     return { stop: () => fp.pause() };
   };
 
