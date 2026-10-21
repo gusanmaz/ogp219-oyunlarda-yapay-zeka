@@ -21,36 +21,80 @@
   };
   SL.guardRefNext = refNext;
 
+  /* ---------- ok geometrisi (fsmStory ve fsmSVG ortak) ----------
+     Şema kuralları (sema-etiketleri): etiket okun ÜSTÜNDE (zemini çizgiyi keser) ya da dis = 'out' ise okun dış
+     tarafında, ona bitişik; her ok bir kutudan çıkar ("her durumdan" kuralı kesik çerçeveli HER DURUM kutusundan).
+     A, B: kutu merkezleri; hw, hh: kutunun yarı genişliği/yüksekliği; bow: bükülme (normal yönünde, + / −);
+     lt: etiketin eğri üzerindeki yeri (0–1); dis: etiketi bükülme yönüne kaydır (sayı ya da 'out'); lw, lh: etiket kutusu.
+     Etiketin yeri yalnızca geometriden hesaplanır (vurgu, kalınlık yeri değiştirmez). */
+  const okYolu = (A, B, hw, hh, bow, lt, dis, lw, lh, r = 0, bosB = 3, bosS = 4) => {
+    const [x1, y1] = A, [x2, y2] = B, dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    const kx = (x1 + x2) / 2 + nx * bow, ky = (y1 + y2) / 2 + ny * bow;
+    // ok, merkezden merkeze giden eğrinin iki kutunun (yuvarlatılmış köşeli, r) DIŞINDA kalan parçası: başı kutudan
+    // bosB, ucu bosS uzakta (köşeden çıkan/giren oklarda da uç kutuya değer)
+    const P = t => [(1 - t) * (1 - t) * x1 + 2 * t * (1 - t) * kx + t * t * x2, (1 - t) * (1 - t) * y1 + 2 * t * (1 - t) * ky + t * t * y2];
+    const sdf = ([px, py], [cx, cy]) => { const qx = Math.abs(px - cx) - (hw - r), qy = Math.abs(py - cy) - (hh - r); return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r; };
+    const bul = (lo, hi, f) => { for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (f(m)) hi = m; else lo = m; } return (lo + hi) / 2; };
+    const t0 = bul(0, 0.5, t => sdf(P(t), A) >= bosB), t1 = bul(0.5, 1, t => sdf(P(t), B) < bosS);
+    // [t0, t1] parçasının kontrol noktası (kutupsal biçim): B(t0, t1)
+    const kp = (u, v) => [(1 - u) * (1 - v) * x1 + ((1 - u) * v + u * (1 - v)) * kx + u * v * x2, (1 - u) * (1 - v) * y1 + ((1 - u) * v + u * (1 - v)) * ky + u * v * y2];
+    const [sx, sy] = P(t0), [ex, ey] = P(t1), [cx, cy] = kp(t0, t1);
+    const q = lt, bx = (1 - q) * (1 - q) * sx + 2 * q * (1 - q) * cx + q * q * ex, by = (1 - q) * (1 - q) * sy + 2 * q * (1 - q) * cy + q * q * ey;
+    let ox = 0, oy = 0;
+    if (dis) {
+      const tx = 2 * (1 - q) * (cx - sx) + 2 * q * (ex - cx), ty = 2 * (1 - q) * (cy - sy) + 2 * q * (ey - cy), tl = Math.hypot(tx, ty) || 1;
+      let mx = -ty / tl, my = tx / tl;
+      if (bow && (cx - (sx + ex) / 2) * mx + (cy - (sy + ey) / 2) * my < 0) { mx = -mx; my = -my; }   // bükülme yönüne (dışa)
+      const d = dis === 'out' ? Math.abs(mx) * lw / 2 + Math.abs(my) * lh / 2 + 1 : dis;
+      ox = mx * d; oy = my * d;
+    }
+    const f = v => Math.round(v * 10) / 10;
+    return { d: `M${f(sx)},${f(sy)} Q${f(cx)},${f(cy)} ${f(ex)},${f(ey)}`, lx: f(bx + ox), ly: f(by + oy) };
+  };
+
   /* ---------- olay düğmeli hikâye FSM’si: “şu durumdayken şu olursa…” ----------
-     cfg: { W, H, states: {id: [x, y, emoji, ad, renk, neYapar]}, edges: [[a, b, olay, bow]], events: {id: [düğme, cümle]},
-            any: [olay, hedef, etiket], none: (durum, olay) => açıklama, SC: [[ad, hikâye, [olaylar]]], start } */
+     cfg: { W, H, rw, rh, states: {id: [x, y, emoji, ad, renk, neYapar]}, edges: [[a, b, olay, bow, lt, dis]],
+            events: {id: [ad, düğme]}, any: [olay, hedef, [x, y]] (kesik çerçeveli HER DURUM kutusu ve ondan çıkan ok),
+            dar: { esik, W, H, pos: {id: [x, y]}, any: [x, y], edges: {i: {bow, lt, dis}} } (dar ekran yerleşimi),
+            none: (durum, olay) => açıklama, SC: [[ad, hikâye, [olaylar], ders]], start } */
   function fsmStory(root, cfg, mid) {
-    let cur = cfg.start, lastEdge = null, log = [], timer = null;
+    let cur = cfg.start, lastEdge = null, log = [], timer = null, sonDar = null;
     const diag = el('div'), logEl = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), now = el('div', { class: 'fs-now' });
     logEl.style.cssText = 'height:11.2em;overflow-y:auto;overscroll-behavior:contain';   // en az 6 satırlık sabit yer: günlük uzayınca altındaki düğmeler kaymaz, içi kendi içinde kayar
-    const RW = cfg.rw || 150, RH = 62;
+    const RW = cfg.rw || 150, RH = cfg.rh || 62, LH = 27, labW = tx => tx.length * 8.8 + 18;
+    // dar yerleşim yalnızca genişliğe bağlı (kaymaz kural: genişlik değişince yeniden yerleşim serbest)
+    const darMi = () => !!cfg.dar && diag.clientWidth > 0 && diag.clientWidth < (cfg.dar.esik || 480);
     const draw = () => {
-      const t = T(), S = cfg.states;
+      const t = T(), dar = darMi(), DZ = dar ? cfg.dar : null;
+      sonDar = dar;
+      const S = {};
+      Object.entries(cfg.states).forEach(([id, v]) => { const p = DZ && DZ.pos && DZ.pos[id]; S[id] = p ? [p[0], p[1], ...v.slice(2)] : v; });
       let g = `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="19" markerHeight="19" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
       const lab = [];
-      const clip = (px, py, qx, qy) => { const ux = qx - px, uy = qy - py, k = Math.min((RW / 2 + 6) / Math.abs(ux || 1e-9), (RH / 2 + 6) / Math.abs(uy || 1e-9)); return [px + ux * k, py + uy * k]; };
-      cfg.edges.forEach(([a, b, ev, bow = 0, lt = 0.5, dis = 0]) => {   // dis: etiketi eğrinin dışına (bükülme yönüne) kaydır
-        const [x1, y1] = S[a], [x2, y2] = S[b], dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
-        const cx = (x1 + x2) / 2 + nx * bow, cy = (y1 + y2) / 2 + ny * bow;
-        const [sx, sy] = clip(x1, y1, cx, cy), [ex, ey] = clip(x2, y2, cx, cy);
-        const hot = lastEdge && lastEdge[0] === a && lastEdge[1] === b, fromCur = a === cur;
-        g += `<path d="M${sx},${sy} Q${cx},${cy} ${ex},${ey}" fill="none" stroke="${hot ? t.red : fromCur ? t['ink-2'] : t.muted}" stroke-opacity="${hot || fromCur ? 1 : 0.75}" stroke-width="${hot ? 5 : fromCur ? 2.8 : 2.2}" marker-end="url(#${mid})"/>`;
-        const q = lt, bx = (1 - q) * (1 - q) * sx + 2 * q * (1 - q) * cx + q * q * ex, by = (1 - q) * (1 - q) * sy + 2 * q * (1 - q) * cy + q * q * ey;
-        const sg = Math.sign(bow) || 1;
-        lab.push([bx + nx * sg * dis, by + ny * sg * dis, cfg.events[ev][0], hot, fromCur]);
+      const ok = (i, A, B, ev, bow, lt, dis, hot, fromCur) => {
+        const tx = cfg.events[ev][0], w = labW(tx), o = okYolu(A, B, RW / 2, RH / 2, bow, lt, dis, w, LH, 16);
+        g += `<path data-kenar="${i}" d="${o.d}" fill="none" stroke="${hot ? t.red : fromCur ? t['ink-2'] : t.muted}" stroke-opacity="${hot || fromCur ? 1 : 0.75}" stroke-width="${hot ? 5 : fromCur ? 2.8 : 2.2}" marker-end="url(#${mid})"/>`;
+        lab.push([i, o.lx, o.ly, tx, w, hot, fromCur]);
+      };
+      cfg.edges.forEach(([a, b, ev, bow = 0, lt = 0.5, dis = 0], i) => {
+        const de = (DZ && DZ.edges && DZ.edges[i]) || {};
+        const hot = lastEdge && lastEdge[0] === a && lastEdge[1] === b;
+        ok(i, S[a], S[b], ev, de.bow != null ? de.bow : bow, de.lt != null ? de.lt : lt, de.dis != null ? de.dis : dis, hot, a === cur);
       });
-      if (cfg.any) { const [ev, to, text, ax, ay] = cfg.any, [x2, y2] = S[to], hot = lastEdge && lastEdge[0] === '*'; const [ex, ey] = clip(x2, y2, ax, ay); g += `<path d="M${ax},${ay} L${ex},${ey}" fill="none" stroke="${hot ? t.red : t['ink-2']}" stroke-width="${hot ? 5 : 2.2}" stroke-dasharray="7 5" marker-end="url(#${mid})"/><text x="${ax}" y="${ay - 10}" text-anchor="middle" font-size="16" font-weight="700" fill="${hot ? t.red : t['ink-2']}">${text}</text>`; }
-      lab.forEach(([x, y, tx, hot, fc]) => { const w = tx.length * 8.8 + 18; g += `<rect x="${x - w / 2}" y="${y - 14}" width="${w}" height="27" rx="13" fill="${t.bg || t.card}" stroke="${hot ? t.red : fc ? t['ink-2'] : t.rule}" stroke-width="${hot ? 2.5 : 1.2}"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="16.5" font-weight="${hot || fc ? 700 : 500}" fill="${hot ? t.red : fc ? t.ink : t.muted}">${tx}</text>`; });
+      let anyKutu = '';
+      if (cfg.any) {   // "her durumdan" kuralı: kesik çerçeveli HER DURUM kutusundan hedefe giden normal bir ok
+        const [ev, to] = cfg.any, at = (DZ && DZ.any) || cfg.any[2], hot = lastEdge && lastEdge[0] === '*', fc = cur !== to;
+        ok(cfg.edges.length, at, S[to], ev, 0, 0.5, 0, hot, fc);
+        anyKutu = `<g data-etiket-degil="1"><rect x="${at[0] - RW / 2}" y="${at[1] - RH / 2}" width="${RW}" height="${RH}" rx="16" fill="${t.card}" stroke="${hot ? t.red : t['ink-2']}" stroke-width="${hot ? 3.5 : 2.4}" stroke-dasharray="9 6"/><text x="${at[0]}" y="${at[1] - 2}" text-anchor="middle" font-size="18" font-weight="800" fill="${t.ink}">HER DURUM</text><text x="${at[0]}" y="${at[1] + 18}" text-anchor="middle" font-size="14" fill="${t.muted}">hangisinde olursa</text></g>`;
+      }
+      lab.forEach(([i, x, y, tx, w, hot, fc]) => { g += `<g data-kenar-etiket="${i}"><rect x="${x - w / 2}" y="${y - LH / 2}" width="${w}" height="${LH}" rx="13" fill="${t.bg || t.card}" stroke="${hot ? t.red : fc ? t['ink-2'] : t.rule}" stroke-width="${hot ? 2.5 : 1.2}"/><text x="${x}" y="${y + 6}" text-anchor="middle" font-size="16.5" font-weight="${hot || fc ? 700 : 500}" fill="${hot ? t.red : fc ? t.ink : t.muted}">${tx}</text></g>`; });
+      g += anyKutu;
       Object.entries(S).forEach(([id, [x, y, em, nm, colKey]]) => {
         const on = id === cur, c = t[colKey];
-        g += `<rect x="${x - RW / 2}" y="${y - RH / 2}" width="${RW}" height="${RH}" rx="16" fill="${on ? c : t.card}" stroke="${c}" stroke-width="${on ? 5 : 3}"/><text x="${x - RW / 2 + 30}" y="${y + 11}" text-anchor="middle" font-size="30">${em}</text><text x="${x - RW / 2 + 56}" y="${y + 7}" text-anchor="start" font-size="19" font-weight="800" fill="${on ? '#fff' : t.ink}">${nm}</text>`;
+        g += `<g data-etiket-degil="1"><rect x="${x - RW / 2}" y="${y - RH / 2}" width="${RW}" height="${RH}" rx="16" fill="${on ? c : t.card}" stroke="${c}" stroke-width="${on ? 5 : 3}"/><text x="${x - RW / 2 + 30}" y="${y + 11}" text-anchor="middle" font-size="30">${em}</text><text x="${x - RW / 2 + 56}" y="${y + 7}" text-anchor="start" font-size="19" font-weight="800" fill="${on ? '#fff' : t.ink}">${nm}</text></g>`;
       });
-      diag.innerHTML = `<svg viewBox="0 0 ${cfg.W} ${cfg.H}" style="width:100%" font-family="Source Sans 3">${g}</svg>`;
+      const W = DZ ? DZ.W : cfg.W, H = DZ ? DZ.H : cfg.H;
+      diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${g}</svg>`;
       const st = S[cur];
       now.innerHTML = `Şu an: <b style="color:${t[st[4]]}">${st[2]} ${st[3]}</b> — ${st[5]}`;
       const rows = log.slice(-6);
@@ -77,6 +121,7 @@
       el('div', { class: 'btd-wrap fs' }, diag, el('div', {}, now, logEl)),
       el('div', { class: 'sv-controls btd-sc fs-ev' }, el('b', { class: 'fs-lab' }, 'Olay:'), ...evB));
     draw(); SL.onTheme(draw);
+    if (cfg.dar && window.ResizeObserver) new ResizeObserver(() => { if (darMi() !== sonDar) draw(); }).observe(diag);   // dar/geniş yerleşim yalnızca eşik geçilince değişir
     return { stop };
   }
   /* kedi: üç durum, dört olay */
@@ -84,7 +129,7 @@
     return fsmStory(root, {
       W: 760, H: 340, rw: 236, start: 'UYU',
       states: { UYU: [140, 60, '😴', 'UYUYOR', 'blue', 'kıvrılmış uyuyor.'], MAMA: [620, 60, '😿', 'MAMA BEKLİYOR', 'amber', 'kabın başında miyavlıyor.'], OYUN: [380, 290, '😼', 'OYNUYOR', 'green', 'evin içinde koşturuyor.'] },
-      edges: [['UYU', 'MAMA', 'sabah', 0], ['MAMA', 'OYUN', 'mama', 0], ['OYUN', 'UYU', 'yorul', -70, 0.5], ['UYU', 'OYUN', 'ip', -70, 0.5]],
+      edges: [['UYU', 'MAMA', 'sabah', 0], ['MAMA', 'OYUN', 'mama', 0], ['OYUN', 'UYU', 'yorul', -80, 0.42], ['UYU', 'OYUN', 'ip', -80, 0.42]],
       events: { sabah: ['sabah oldu', '⏰ sabah oldu'], mama: ['mama verildi', '🍗 mama verildi'], ip: ['ip sallandı', '🧶 ip sallandı'], yorul: ['yoruldu', '🥱 yoruldu'] },
       none: (st, ev) => ({ UYU: { mama: 'Uyuyan kedi mamayı fark etmez.', yorul: 'Zaten uyuyor.' }, MAMA: { sabah: 'Zaten kalkmış, mama bekliyor.', ip: 'Aç kedi oyun düşünmez!', yorul: 'Yorgun değil, aç.' }, OYUN: { sabah: 'Zaten ayakta.', mama: 'Karnı tok, oyuna devam.', ip: 'Zaten oynuyor.' } }[st][ev] || 'Bu durumdan bu olayla çıkan ok yok.'),
       intro: 'Kedinin üç hâli var ve aynı anda yalnızca birindedir. Oklar “ne olursa hangi hâle geçer”i söyler.',
@@ -97,10 +142,14 @@
   /* nöbetçi: beş durum, olaylar düğmeyle */
   D.fsmguardstory = function (root) {
     return fsmStory(root, {
-      W: 860, H: 400, rw: 164, start: 'DEV',
-      states: { SUP: [100, 130, '❓', 'ŞÜPHE', 'amber', 'sesin geldiği yere gidip etrafa bakıyor.'], DEV: [100, 350, '🚶', 'DEVRİYE', 'blue', 'yol noktaları arasında sakin sakin yürüyor.'], KOV: [430, 130, '🏃', 'KOVALA', 'red', 'oyuncuya doğru koşuyor.'], SAL: [760, 130, '🔫', 'SALDIR', 'purple', 'durmuş, nişan alıp ateş ediyor.'], KAC: [760, 350, '💨', 'KAÇ', 'green', 'oyuncudan uzaklaşıp iyileşiyor.'] },
-      edges: [['DEV', 'SUP', 'ses', -62, 0.38], ['SUP', 'DEV', 'sure', -62, 0.38], ['DEV', 'KOV', 'gor', 0, 0.55], ['SUP', 'KOV', 'gor', -44, 0.5, 21], ['KOV', 'SUP', 'kayip', -44, 0.5, 21], ['KOV', 'SAL', 'yakin', -44, 0.5, 21], ['SAL', 'KOV', 'uzak', -44, 0.5, 21], ['SAL', 'SUP', 'kayip', 170, 0.5], ['KAC', 'DEV', 'iyi', 0, 0.5]],
-      any: ['can', 'KAC', 'her durumdan: canı azaldı', 560, 245],
+      // Yerleşim (sema-etiketleri): üstte ŞÜPHE–DEVRİYE–KAÇ, altta SALDIR–KOVALA ve HER DURUM kutusu. Karşılıklı oklar
+      // (ses/4 sn, yaklaştı/uzaklaştı) ayrı bükülür, etiketleri kendi eğrilerinin üstünde; çapraz çiftin (gördü/kaybetti)
+      // etiketleri dış tarafta. Büyük yay yok; "canı azaldı" HER DURUM kutusundan çıkar. Dar ekranda iki sütun.
+      W: 900, H: 420, rw: 164, start: 'DEV',
+      states: { SUP: [110, 60, '❓', 'ŞÜPHE', 'amber', 'sesin geldiği yere gidip etrafa bakıyor.'], DEV: [450, 60, '🚶', 'DEVRİYE', 'blue', 'yol noktaları arasında sakin sakin yürüyor.'], KAC: [790, 60, '💨', 'KAÇ', 'green', 'oyuncudan uzaklaşıp iyileşiyor.'], SAL: [110, 360, '🔫', 'SALDIR', 'purple', 'durmuş, nişan alıp ateş ediyor.'], KOV: [450, 360, '🏃', 'KOVALA', 'red', 'oyuncuya doğru koşuyor.'] },
+      edges: [['DEV', 'SUP', 'ses', -44], ['SUP', 'DEV', 'sure', -44], ['DEV', 'KOV', 'gor', 0, 0.5], ['SUP', 'KOV', 'gor', -40, 0.5, 'out'], ['KOV', 'SUP', 'kayip', -40, 0.5, 'out'], ['KOV', 'SAL', 'yakin', -44], ['SAL', 'KOV', 'uzak', -44], ['SAL', 'SUP', 'kayip', 0, 0.5], ['KAC', 'DEV', 'iyi', 0]],
+      any: ['can', 'KAC', [790, 360]],
+      dar: { esik: 480, W: 560, H: 525, pos: { SUP: [120, 200], DEV: [440, 200], KAC: [440, 45], SAL: [120, 475], KOV: [440, 475] }, any: [120, 45], edges: { 0: { lt: 0.36 }, 6: { lt: 0.36 } } },
       events: { ses: ['ses duydu', '🔊 ses duydu'], gor: ['oyuncuyu gördü', '👁️ oyuncuyu gördü'], kayip: ['gözden kaybetti', '🙈 gözden kaybetti'], yakin: ['yaklaştı', '📏 yaklaştı (mesafe < 60)'], uzak: ['uzaklaştı', '↔ uzaklaştı (mesafe > 90)'], sure: ['4 sn geçti', '⏱️ 4 sn geçti'], can: ['canı azaldı', '💔 canı azaldı (can < 30)'], iyi: ['iyileşti', '💚 iyileşti (can > 70)'] },
       none: (st, ev) => ({ DEV: { kayip: 'Zaten kimseyi görmüyordu.', yakin: 'Görmediği birine yaklaşmış sayılmaz.', sure: 'Devriyenin süresi yok.' }, SUP: { ses: 'Zaten araştırıyor.' }, KOV: { ses: 'Oyuncuyu görüyor; sese bakmaz.', gor: 'Zaten görüyor.', sure: 'Kovalamanın süresi yok.' }, SAL: { ses: 'Ateş ederken sese bakmaz.', yakin: 'Zaten menzilde.' }, KAC: { ses: 'Kaçarken sesle ilgilenmez.', gor: 'Görse de kaçmaya devam eder.', can: 'Zaten kaçıyor.' } }[st][ev] || 'Bu durumdan bu olayla çıkan ok yok.'),
       intro: 'Canlı demodan önce nöbetçiyi elle yönetelim: olayları siz verin, hangi oku izlediğini görün. Kırmızı ok = az önce kullanılan geçiş.',
@@ -108,42 +157,38 @@
         ['🔊 Yanlış alarm', 'Oyuncu bir taş atar, nöbetçi sesi duyar ama kimseyi bulamaz.', ['ses', 'sure'], 'Ses → ŞÜPHE, 4 sn sonra → DEVRİYE. Oyuncu hiç görülmedi.'],
         ['🏃 Yakalandın', 'Oyuncu koridorda görülür ve kaçamaz.', ['gor', 'yakin'], 'DEVRİYE → KOVALA → SALDIR: iki olay, iki geçiş.'],
         ['🙈 Köşeyi dönüp kurtul', 'Oyuncu görülür, köşeyi dönüp saklanır.', ['gor', 'kayip', 'sure'], 'Kaybedince doğrudan devriyeye dönmedi; önce ŞÜPHE’de son görülen yere baktı. Gizlilik oyunlarındaki “neredeydi o?” anı bu durumdur.'],
-        ['💔 Yaralı nöbetçi', 'Nöbetçi saldırırken oyuncu karşılık verir.', ['gor', 'yakin', 'can', 'gor', 'iyi'], '“Canı azaldı” her durumdan KAÇ’a götürür (kesikli ok). Kaçarken oyuncuyu görse de değişmez; iyileşince devriyeye döner.'],
+        ['💔 Yaralı nöbetçi', 'Nöbetçi saldırırken oyuncu karşılık verir.', ['gor', 'yakin', 'can', 'gor', 'iyi'], '“Canı azaldı” her durumdan KAÇ’a götürür (HER DURUM kutusundan çıkan ok). Kaçarken oyuncuyu görse de değişmez; iyileşince devriyeye döner.'],
         ['🔁 Aynı olay, farklı tepki', '“Ses duydu” olayı dört farklı durumda verilecek.', ['ses', 'ses', 'gor', 'ses', 'yakin', 'ses'], 'Ses yalnızca DEVRİYE’de işe yaradı. Tepkiyi belirleyen <b>olay + o anki durum</b>.']]
     }, 'fsa2');
   };
 
-  /* ---------- FSM diyagramı (SVG) ---------- */
-  const NODES = { DEVRIYE: [90, 60], SUPHE: [90, 215], KOVALA: [280, 135], SALDIR: [440, 60], KAC: [300, 290] };
-  const EDGES = [['DEVRIYE', 'KOVALA', 'görüyor'], ['DEVRIYE', 'SUPHE', 'ses'], ['SUPHE', 'KOVALA', 'görüyor'], ['SUPHE', 'DEVRIYE', '4 sn'], ['KOVALA', 'SUPHE', 'kaybetti'], ['KOVALA', 'SALDIR', '< 60'], ['SALDIR', 'KOVALA', '> 90'], ['KAC', 'DEVRIYE', 'can > 70', [[248, 296], [15, 300], [10, 95], [42, 72]], [32, 270]], ['SALDIR', 'SUPHE', 'kaybetti', [[440, 84], [440, 228], [270, 232], [143, 229]], [395, 205]]];
+  /* ---------- FSM diyagramı (SVG) ----------
+     Aynı nöbetçi, fsmguardstory ile aynı kurallarla: büyük yay yok, karşılıklı oklar ayrı bükülür, çapraz çiftin
+     etiketleri dış tarafta ve çaprazın iki ayrı ucunda; "can < 30" kesik çerçeveli HER DURUM kutusundan çıkar.
+     Renkler, yazı boyları, düğüm biçimi ve çizgi kalınlıkları sunumun özgün biçemi; değişen yalnızca yerleşim. */
+  const GFSM = { W: 540, H: 346, nodes: { SUPHE: [58, 44], DEVRIYE: [270, 44], KAC: [482, 44], SALDIR: [58, 302], KOVALA: [270, 302] }, any: [482, 302] };
+  const GEDGES = [['DEVRIYE', 'SUPHE', 'ses', -46], ['SUPHE', 'DEVRIYE', '4 sn', -46], ['DEVRIYE', 'KOVALA', 'görüyor', 0, 0.3], ['SUPHE', 'KOVALA', 'görüyor', -36, 0.35, 'out'], ['KOVALA', 'SUPHE', 'kaybetti', -36, 0.35, 'out'], ['KOVALA', 'SALDIR', '< 60', -46], ['SALDIR', 'KOVALA', '> 90', -46], ['SALDIR', 'SUPHE', 'kaybetti', 0, 0.5], ['KAC', 'DEVRIYE', 'can > 70', 0]];
   function fsmSVG(active, flash, exitDist = 90, mid = 'fa') {   // mid: bu diyagrama özel ok ucu kimliği (aynı kimlik iki slaytta olursa gizli olan seçilir, ok uçları kaybolur)
-    const t = T(), col = COLS(t);
+    const t = T(), col = COLS(t), Y = GFSM, N = Y.nodes, NW = 100, NH = 44, LH = 16, FS = 11, lw = s => s.length * 6.4 + 10;   // sunumun özgün biçemi: düğüm 100×44, etiket 11 px
     let s = `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>`;
-    EDGES.forEach(([a, b, lab0, curve, lp]) => {
-      const lab = lab0 === '> 90' ? '> ' + exitDist : lab0;
-      if (curve) {   // eğri ok (diğer okların arasından geçmesin)
-        const on = flash && flash[0] === a && flash[1] === b, [p0, c1, c2, p1] = curve;
-        s += `<path d="M${p0[0]},${p0[1]} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p1[0]},${p1[1]}" fill="none" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#${mid})"/>`;
-        const lw = lab.length * 6.4 + 10;
-        s += `<rect x="${lp[0] - lw / 2}" y="${lp[1] - 8}" width="${lw}" height="16" rx="4" fill="${t.card}" opacity=".92"/><text x="${lp[0]}" y="${lp[1] + 4}" text-anchor="middle" font-size="11" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${lab}</text>`;
-        return;
-      }
-      const [x1, y1] = NODES[a], [x2, y2] = NODES[b], dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
-      const twin = EDGES.some(e => e[0] === b && e[1] === a), off = twin ? 9 : 0, px = -uy * off, py = ux * off;
-      const on = flash && flash[0] === a && flash[1] === b;
-      const sx = x1 + ux * 46 + px, sy = y1 + uy * 26 + py, ex = x2 - ux * 50 + px, ey = y2 - uy * 30 + py;
-      s += `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#${mid})"/>`;
-      const lx = (sx + ex) / 2 + px * 2.2, ly = (sy + ey) / 2 + py * 2.2, lw = lab.length * 6.4 + 10;
-      s += `<rect x="${lx - lw / 2}" y="${ly - 10}" width="${lw}" height="16" rx="4" fill="${t.card}" opacity=".92"/><text x="${lx}" y="${ly + 2}" text-anchor="middle" font-size="11" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${lab}</text>`;
-    });
-    const kacOn = flash && flash[1] === 'KAC', kc = kacOn ? t.red : t.green;   // "her durumdan" girişi: KAÇ'a geçişte bu ok kırmızı
-    s += `<path d="M424,302 L353,294" fill="none" stroke="${kacOn ? t.red : t['ink-2']}" stroke-width="${kacOn ? 4 : 1.8}" stroke-dasharray="6 4" marker-end="url(#${mid})"/>`;
-    s += `<text x="470" y="300" text-anchor="middle" font-size="12" font-weight="700" fill="${kc}">her durumdan:</text><text x="470" y="316" text-anchor="middle" font-size="12" font-weight="700" fill="${kc}">can &lt; 30 → KAÇ</text>`;
-    Object.entries(NODES).forEach(([k, [x, y]]) => {
+    const lab = [];
+    const ok = (i, A, B, lab0, bow, lt, dis, on) => {
+      const w = lw(lab0), o = okYolu(A, B, NW / 2, NH / 2, bow, lt, dis, w, LH, 22);
+      s += `<path data-kenar="${i}" d="${o.d}" fill="none" stroke="${on ? t.red : t['ink-2']}" stroke-width="${on ? 4 : 1.8}" marker-end="url(#${mid})"/>`;
+      lab.push([i, o.lx, o.ly, lab0, w, on]);
+    };
+    GEDGES.forEach(([a, b, lab0, bow, lt = 0.5, dis = 0], i) => ok(i, N[a], N[b], lab0 === '> 90' ? '> ' + exitDist : lab0, bow, lt, dis, !!(flash && flash[0] === a && flash[1] === b)));
+    const kacOn = !!(flash && flash[1] === 'KAC');   // "her durumdan" girişi: KAÇ'a geçişte bu ok kırmızı
+    ok(GEDGES.length, Y.any, N.KAC, 'can < 30', 0, 0.5, 0, kacOn);
+    lab.forEach(([i, x, y, tx, w, on]) => { s += `<g data-kenar-etiket="${i}"><rect x="${x - w / 2}" y="${y - LH / 2}" width="${w}" height="${LH}" rx="4" fill="${t.card}" opacity=".92"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-size="${FS}" fill="${on ? t.red : t.muted}" font-weight="${on ? 700 : 600}">${tx}</text></g>`; });
+    const [ax, ay] = Y.any;
+    s += `<g data-etiket-degil="1"><rect x="${ax - NW / 2}" y="${ay - NH / 2}" width="${NW}" height="${NH}" rx="12" fill="${t.card}" stroke="${kacOn ? t.red : t['ink-2']}" stroke-width="${kacOn ? 3 : 2}" stroke-dasharray="6 4"/><text x="${ax}" y="${ay + 5}" text-anchor="middle" font-size="13" font-weight="700" fill="${t.ink}">HER DURUM</text></g>`;
+    Object.entries(N).forEach(([k, [x, y]]) => {
       const on = k === active;
-      s += `<rect x="${x - 50}" y="${y - 22}" width="100" height="44" rx="22" fill="${on ? col[k] : t.card}" stroke="${col[k]}" stroke-width="${on ? 4 : 2.5}"/><text x="${x}" y="${y + 6}" text-anchor="middle" font-size="15" font-weight="700" fill="${on ? '#fff' : t.ink}">${NAMES[k]}</text>`;
+      s += `<g data-etiket-degil="1"><rect x="${x - NW / 2}" y="${y - NH / 2}" width="${NW}" height="${NH}" rx="22" fill="${on ? col[k] : t.card}" stroke="${col[k]}" stroke-width="${on ? 4 : 2.5}"/><text x="${x}" y="${y + 6}" text-anchor="middle" font-size="15" font-weight="700" fill="${on ? '#fff' : t.ink}">${NAMES[k]}</text></g>`;
     });
-    return `<svg viewBox="0 0 530 330" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
+    // geniş yan sütunda (titreme slaytı) çizim aşırı büyüyüp düğmeleri ve alttaki metni aşağı itmesin: en çok 520 px
+    return `<svg viewBox="0 0 ${Y.W} ${Y.H}" style="width:100%;max-width:520px;display:block;margin:0 auto" font-family="Source Sans 3">${s}</svg>`;
   }
 
   let fsmCount = 0;
@@ -166,9 +211,13 @@
       diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null, hyst ? 90 : 60, mid);
       const s = st.sense || {};
       const fx = n => `style="display:inline-block;min-width:${n}ch;font-variant-numeric:tabular-nums"`;   // sabit genişlik: sayaçlar yerinden oynamasın
-      info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b ${fx(3)}>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b ${fx(3)}>${s.dist}</b></span><span class="cnt">görüyor <b ${fx(9)}>${s.seesPlayer ? (st.rawSees ? 'evet' : 'hafızadan') : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b ${fx(2)} class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('') || '<i>henüz geçiş yok</i>'}</div>`;
+      info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b ${fx(3)}>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b ${fx(3)}>${s.dist}</b></span><span class="cnt">görüyor <b ${fx(9)}>${s.seesPlayer ? (st.rawSees ? 'evet' : 'hafızadan') : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b ${fx(2)} class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${logSatirlari(st.log)}</div>`;
     } });
-    const diag = el('div', { class: 'fsm-diag' }), info = el('div');
+    // min-height:0: çizimin boyu yalnızca genişliğe bağlı (en-boy oranı); dar yan sütunda boş 200 px ayırıp düğmeleri aşağı itmesin
+    const diag = el('div', { class: 'fsm-diag', style: 'min-height:0' }), info = el('div');
+    // Günlük: makeGuardArena son 6 geçişi tutar (en yeni üstte); burada en yeni LOGN tanesi. Yer baştan ayrılır: hep LOGN satır çizilir
+    // (boşları &nbsp;), satırlar kaymaz ve sarmaz; kutu zamanla büyümez, denetim düğmeleri aşağı itilmez.
+    const LOGN = 4, logSatirlari = log => Array.from({ length: LOGN }, (_, i) => `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${log[i] != null ? log[i] : i === 0 ? '<i>henüz geçiş yok</i>' : '&nbsp;'}</div>`).join('');
     const check = (label, on, fn) => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => fn(e.target.checked) }); cb.checked = on; return cb; })(), ' ' + label);
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'),
