@@ -99,9 +99,10 @@
   function attachEditor(view, G, onChange) {
     let mode = null, paint = 1;
     const cellAt = e => { const r = view.canvas.getBoundingClientRect(); const x = Math.floor(((e.clientX - r.left) / r.width) * G.W), y = Math.floor(((e.clientY - r.top) / r.height) * G.H); return x >= 0 && y >= 0 && x < G.W && y < G.H ? y * G.W + x : -1; };
-    view.canvas.addEventListener('mousedown', e => { const i = cellAt(e); if (i < 0) return; if (i === G.s) mode = 's'; else if (i === G.g) mode = 'g'; else { mode = 'p'; paint = G.brush === 'erase' ? 1 : G.brush === 'swamp' ? (G.cost[i] === 5 ? 1 : 5) : G.cost[i] === Infinity ? 1 : Infinity; G.cost[i] = paint; onChange(); } });
-    view.canvas.addEventListener('mousemove', e => { if (!mode) return; const i = cellAt(e); if (i < 0) return; if (mode === 's' && G.cost[i] !== Infinity && i !== G.g) { G.s = i; onChange(); } else if (mode === 'g' && G.cost[i] !== Infinity && i !== G.s) { G.g = i; onChange(); } else if (mode === 'p' && i !== G.s && i !== G.g && G.cost[i] !== paint) { G.cost[i] = paint; onChange(); } });
-    window.addEventListener('mouseup', () => { mode = null; });
+    view.canvas.style.touchAction = 'none';   // dokunmatikte de sürüklenebilsin (kaydırma tuvalin dışında)
+    view.canvas.addEventListener('pointerdown', e => { const i = cellAt(e); if (i < 0) return; view.canvas.setPointerCapture(e.pointerId); if (i === G.s) mode = 's'; else if (i === G.g) mode = 'g'; else { mode = 'p'; paint = G.brush === 'erase' ? 1 : G.brush === 'swamp' ? (G.cost[i] === 5 ? 1 : 5) : G.cost[i] === Infinity ? 1 : Infinity; G.cost[i] = paint; onChange(); } });
+    view.canvas.addEventListener('pointermove', e => { if (!mode) return; const i = cellAt(e); if (i < 0) return; if (mode === 's' && G.cost[i] !== Infinity && i !== G.g) { G.s = i; onChange(); } else if (mode === 'g' && G.cost[i] !== Infinity && i !== G.s) { G.g = i; onChange(); } else if (mode === 'p' && i !== G.s && i !== G.g && G.cost[i] !== paint) { G.cost[i] = paint; onChange(); } });
+    window.addEventListener('pointerup', () => { mode = null; }); window.addEventListener('pointercancel', () => { mode = null; });
   }
 
   /* ================= elle A*: küçük ızgarada g, h, f =================
@@ -144,7 +145,7 @@
       }
       return out;
     };
-    const diag = el('div'), note = el('div', { class: 'sv-note ah-note' }), story = el('div', { class: 'btd-story' }), openEl = el('div', { class: 'ah-open' }), moral = el('div', { class: 'btd-moral' });
+    const diag = el('div'), note = el('div', { class: 'sv-note ah-note' }), story = el('div', { class: 'btd-story' }), openEl = el('div', { class: 'ah-open' });
     const draw = f => {
       const t = T(), C = 92; let s = '';
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -153,21 +154,26 @@
         s += `<rect x="${X}" y="${Y}" width="${C - 4}" height="${C - 4}" rx="8" fill="${fill}" stroke="${op ? t.blue : t.rule}" stroke-width="${op ? 4 : 1.5}"/>`;
         if (isW) { s += `<text x="${X + C / 2 - 2}" y="${Y + C / 2 + 10}" text-anchor="middle" font-size="30">🧱</text>`; continue; }
         const ink = inPath ? '#fff' : cur ? '#111' : t.ink;
-        if (k in f.g) { const gv = f.g[k], hv = hOf(x, y); s += `<text x="${X + 8}" y="${Y + 20}" font-size="15" font-family="JetBrains Mono" fill="${ink}">g${gv}</text><text x="${X + C - 12}" y="${Y + 20}" text-anchor="end" font-size="15" font-family="JetBrains Mono" fill="${ink}">h${hv}</text><text x="${X + C / 2 - 2}" y="${Y + 62}" text-anchor="middle" font-size="30" font-weight="900" fill="${ink}">${gv + hv}</text>`; }
+        if (k in f.g) { const gv = f.g[k], hv = hOf(x, y); s += `<text x="${X + 8}" y="${Y + 23}" font-size="19" font-family="JetBrains Mono" fill="${ink}">g${gv}</text><text x="${X + C - 12}" y="${Y + 23}" text-anchor="end" font-size="19" font-family="JetBrains Mono" fill="${ink}">h${hv}</text><text x="${X + C / 2 - 2}" y="${Y + 62}" text-anchor="middle" font-size="30" font-weight="900" fill="${ink}">${gv + hv}</text>`; }
         if (x === S[0] && y === S[1]) s += `<text x="${X + C / 2 - 2}" y="${Y + C - 12}" text-anchor="middle" font-size="17">🧍</text>`;
         if (x === G[0] && y === G[1]) s += `<text x="${X + C / 2 - 2}" y="${Y + C - 12}" text-anchor="middle" font-size="17">🏁</text>`;
       }
       diag.innerHTML = `<svg viewBox="0 0 ${W * C} ${H * C}" style="width:100%;max-height:372px" font-family="Source Sans 3">${s}</svg>`;
-      note.innerHTML = f.note;
+      noteCur.innerHTML = f.done && moralTxt ? f.note + '<br>💡 ' + moralTxt : f.note;   // ders notu son adımın notunda
       const srt = f.open.slice().sort((a, b) => (f.g[K(...a)] + hOf(...a)) - (f.g[K(...b)] + hOf(...b)) || hOf(...a) - hOf(...b));
-      openEl.innerHTML = '<b>Açık liste</b> (f’ye göre sıralı; en üstteki sıradaki):' + (srt.length ? srt.slice(0, 7).map((p, i) => `<div class="${i ? '' : 'first'}">(${p[0]},${p[1]}) &nbsp; g=${f.g[K(...p)]} h=${hOf(...p)} &nbsp; <b>f=${f.g[K(...p)] + hOf(...p)}</b></div>`).join('') + (srt.length > 7 ? `<div>… ${srt.length - 7} kare daha</div>` : '') : '<div>boş</div>');
-      moral.innerHTML = f.done && moralTxt ? '💡 ' + moralTxt : '';
+      const satirlar = srt.length ? srt.slice(0, 7).map((p, i) => `<div class="${i ? '' : 'first'}">(${p[0]},${p[1]}) &nbsp; g=${f.g[K(...p)]} h=${hOf(...p)} &nbsp; <b>f=${f.g[K(...p)] + hOf(...p)}</b></div>`).concat(srt.length > 7 ? [`<div>… ${srt.length - 7} kare daha</div>`] : []) : ['<div>boş</div>'];
+      while (satirlar.length < 8) satirlar.push('<div>&nbsp;</div>');   // boy sabit: en uzun liste 8 satır
+      openEl.innerHTML = '<b>Açık liste</b> (f’ye göre sıralı; en üstteki sıradaki):' + satirlar.join('');
     };
+    // adım notunun yeri baştan en uzun nota göre ayrılır: üç senaryonun bütün notları aynı hücrede görünmez
+    const noteCur = el('div', { style: 'grid-area: 1 / 1' });
+    note.style.display = 'grid'; note.append(noteCur);
+    SC.forEach(sc => { walls = new Set(sc[1].map(p => K(...p))); run().forEach(f => note.append(el('div', { style: 'grid-area: 1 / 1; visibility: hidden', 'aria-hidden': 'true', html: f.done ? f.note + '<br>💡 ' + sc[3] : f.note }))); });
     const fp = new SL.FramePlayer(draw, { speed: 1.2 });
     const load = (i, play) => { walls = new Set(SC[i][1].map(p => K(...p))); story.innerHTML = '📖 ' + SC[i][2]; moralTxt = SC[i][3]; fp.load(run()); if (play) fp.play(); };
     const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap ah' }, diag, el('div', {}, el('div', { class: 'ah-leg' }, 'Her karede: sol üst ', el('b', {}, 'g'), ' (buraya kadar yürünen adım), sağ üst ', el('b', {}, 'h'), ' (hedefe kuş uçuşu kalan), ortada ', el('b', {}, 'f = g + h'), '. Mavi çerçeve = açık listede, gri = incelendi, turuncu = şu an incelenen.'), openEl, moral)), SL.transport(fp, { min: 0.3, max: 6 }), note);
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap ah' }, diag, el('div', {}, el('div', { class: 'ah-leg' }, 'Her karede: sol üst ', el('b', {}, 'g'), ' (buraya kadar yürünen adım), sağ üst ', el('b', {}, 'h'), ' (hedefe kuş uçuşu kalan), ortada ', el('b', {}, 'f = g + h'), '. Mavi çerçeve = açık listede, gri = incelendi, turuncu = şu an incelenen.'), openEl)), SL.transport(fp, { min: 0.3, max: 6 }), note);
     bs[1].classList.add('primary'); load(1, false);
     SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
