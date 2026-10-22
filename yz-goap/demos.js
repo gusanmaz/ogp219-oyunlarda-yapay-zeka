@@ -171,7 +171,8 @@
       return { res, F };
     };
     const planHTML = (r, f) => f.final ? (r.plan ? `<b>Plan (toplam maliyet ${r.cost}):</b> ${planCards(r.plan, -1)}` : '') : `<b>Açık liste (f = g + h sırasıyla):</b> ${f.open}`;
-    const build = () => { const k = kareler(start, noH); res = k.res; fp.load(k.F); };
+    // açılışta ilk kare; okur başlangıcı ya da sezgiyi değiştirince arama sonucu (son kare) hemen görünür, ⏮ ile baştan izlenir
+    const build = at => { const k = kareler(start, noH); res = k.res; fp.load(k.F, at); };
     /* Kaymaz ve kaydırmasız: not ve plan satırı kareden kareye bir-üç satır arası değişir; oynatınca alttaki düğmeler
        kaymasın, kutu sonradan büyümesin diye ikisine de BÜTÜN başlangıç seçenekleri × bütün kareler içindeki en uzun
        içerik kadar yer ayrılır. Ölçüm gerçek sütunda, gizli kopyalarla (aynı biçemler); genişlik değişince yinelenir. */
@@ -190,9 +191,9 @@
       n2.remove(); p2.remove();
       note.style.minHeight = Math.ceil(hn) + 'px'; planBox.style.minHeight = Math.ceil(hp) + 'px';
     };
-    const boxes = Object.keys(start).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { start[k] = e.target.checked; build(); } }); cb.checked = start[k]; return cb; })(), ' ' + FACTS[k]));
+    const boxes = Object.keys(start).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { start[k] = e.target.checked; build('end'); } }); cb.checked = start[k]; return cb; })(), ' ' + FACTS[k]));
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls gfacts' }, el('b', null, 'Başlangıç: '), ...boxes, el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { noH = e.target.checked; build(); } }); return cb; })(), ' sezgiyi kapat (h = 0)')), diag, SL.transport(fp, { min: 0.5, max: 8 }), note, planBox);
+    root.append(el('div', { class: 'sv-controls gfacts' }, el('b', null, 'Başlangıç: '), ...boxes, el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { noH = e.target.checked; build('end'); } }); return cb; })(), ' sezgiyi kapat (h = 0)')), diag, SL.transport(fp, { min: 0.5, max: 8 }), note, planBox);
     build(); SL.onTheme(() => fp.render());
     const izle = () => requestAnimationFrame(yerAyir);
     if (window.ResizeObserver) new ResizeObserver(izle).observe(root);
