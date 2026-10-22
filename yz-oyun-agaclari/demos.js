@@ -188,7 +188,7 @@
       return out;
     };
     const story = el('div', { class: 'btd-story' }), diag = el('div'), logEl = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
-    const logHtml = f => { const rows = f.log.slice(-7); return f.hint ? '<div class="hint">▶ Oynat’a basın: sandıklar soldan sağa tek tek açılacak.</div>' : rows.map(([k, tx], i) => `<div class="${k === 'no' ? 'l-no' : k === 'cut' ? 'l-no' : 'l-ok'}${i === rows.length - 1 ? ' now' : ''}"><span>${k === 'ok' ? '✓' : k === 'no' ? '✗' : k === 'cut' ? '' : k === 'win' ? '' : '·'}</span>${tx}</div>`).join(''); };
+    const logHtml = (f, son7) => { const rows = son7 ? f.log.slice(-7) : f.log; return f.hint ? '<div class="hint">▶ Oynat’a basın: sandıklar soldan sağa tek tek açılacak.</div>' : rows.map(([k, tx], i) => `<div class="${k === 'no' ? 'l-no' : k === 'cut' ? 'l-no' : 'l-ok'}${i === rows.length - 1 ? ' now' : ''}"><span>${k === 'ok' ? '✓' : k === 'no' ? '✗' : k === 'cut' ? '' : k === 'win' ? '' : '·'}</span>${tx}</div>`).join(''); };
     const moralHtml = f => (f.final ? '💡 ' + f.moral : `açılan sandık: <b>${f.opened}</b> / 9`);
     let last = 0;
     const draw = (f, pl) => {
@@ -216,20 +216,23 @@
       else g += `<text x="${W / 2}" y="320" text-anchor="middle" font-size="15.5" fill="${t.muted}">bekçi her kapıda en azı verir · mavi çerçeve = vereceği sandık${prune ? ' · ✂ = açmaya gerek kalmadı' : ''}</text>`;
       diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${g}</svg>`;
       logEl.innerHTML = logHtml(f);
+      logEl.scrollTop = logEl.scrollHeight;   // bütün satırlar günlükte; en yenisi görünür, eskiler kaydırılarak okunur
       moral.innerHTML = moralHtml(f);
       if (pl.idx !== last && pl.idx > 0 && SL.sfx) { try { SL.sfx(f.final ? 'alert' : f.cutD !== undefined ? 'shot' : 'waka'); } catch (e) {} }
       last = pl.idx;
     };
     const fp = new SL.FramePlayer(draw, { speed: 1.3 });
-    // günlük ve sonuç satırı için en uzun karenin boyunu baştan ayır (kaymaz): adımlar ilerledikçe kutu büyümesin
+    // günlük ve sonuç satırı için en uzun karenin boyunu baştan ayır (kaymaz): adımlar ilerledikçe kutu büyümesin.
+    // Günlük kutusu son 7 satırın en uzun hâli kadar SABİT yükseklikte; daha eski satırlar kutunun içinde kaydırılarak okunur.
+    logEl.style.overflowY = 'auto';
     const yerAyir = F => {
-      logEl.style.minHeight = moral.style.minHeight = '';
+      logEl.style.height = ''; logEl.style.minHeight = moral.style.minHeight = '';
       let hl = 0, hm = 0;
       const eCh = ch, hepsi = [F];
       for (const sc of SC) if (sc[1]) { ch = sc[1]; hepsi.push(frames()); }
       ch = eCh;
-      for (const G of hepsi) for (const f of G) { logEl.innerHTML = logHtml(f); moral.innerHTML = moralHtml(f); hl = Math.max(hl, logEl.offsetHeight); hm = Math.max(hm, moral.offsetHeight); }
-      if (hl) logEl.style.minHeight = hl + 'px';
+      for (const G of hepsi) for (const f of G) { logEl.innerHTML = logHtml(f, true); moral.innerHTML = moralHtml(f); hl = Math.max(hl, logEl.offsetHeight); hm = Math.max(hm, moral.offsetHeight); }
+      if (hl) { logEl.style.boxSizing = 'border-box'; logEl.style.height = hl + 'px'; }
       if (hm) moral.style.minHeight = hm + 'px';
     };
     const load = (i, play) => {
