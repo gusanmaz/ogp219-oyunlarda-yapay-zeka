@@ -95,33 +95,40 @@
     return F;
   }
   const fmt = x => (x === Infinity ? '+∞' : x === -Infinity ? '−∞' : x);
-  function abSVG(tree, f, W = 1160, H = 300) {
-    const t = T(), pos = {}; let leaf = 0, maxD = 0;
+  // dar: telefon genişliğinde kutu. Daha dar bir viewBox ve büyük düğümler (z); kat adları solda değil altta tek satır
+  function abSVG(tree, f, dar) {
+    const W = dar ? 640 : 1160, H = dar ? 350 : 300, z = dar ? 1.3 : 1, L0 = dar ? 36 : 150, R0 = dar ? 36 : 50;
+    const t = T(), pos = {}; let leaf = 0, maxD = 0, abYazi = '';
     const walk = n => { maxD = Math.max(maxD, n.d); if (!n.kids) { pos[n.id] = leaf++; return; } n.kids.forEach(walk); pos[n.id] = (pos[n.kids[0].id] + pos[n.kids[n.kids.length - 1].id]) / 2; };
     walk(tree);
-    const X = i => 60 + (i * (W - 120)) / Math.max(1, leaf - 1), Y = d => 40 + (d * (H - 90)) / Math.max(1, maxD);
+    const X = i => L0 + (i * (W - L0 - R0)) / Math.max(1, leaf - 1), Y = d => (dar ? 62 : 40) + (d * (H - (dar ? 132 : 90))) / Math.max(1, maxD);   // geniş: solda 150 birim kat yazıları
     let s = '';
-    const edges = n => (n.kids || []).forEach(k => { const pr = f.st[k.id] && f.st[k.id].state === 'pruned'; s += `<line x1="${X(pos[n.id])}" y1="${Y(n.d) + 20}" x2="${X(pos[k.id])}" y2="${Y(k.d) - 20}" stroke="${pr ? t.red : t.rule}" stroke-width="2" ${pr ? 'stroke-dasharray="5 4"' : ''}/>`; edges(k); });
+    const edges = n => (n.kids || []).forEach(k => { const pr = f.st[k.id] && f.st[k.id].state === 'pruned'; s += `<line x1="${X(pos[n.id])}" y1="${Y(n.d) + 20 * z}" x2="${X(pos[k.id])}" y2="${Y(k.d) - 20 * z}" stroke="${pr ? t.red : t.rule}" stroke-width="2" ${pr ? 'stroke-dasharray="5 4"' : ''}/>`; edges(k); });
     edges(tree);
     const nodes = n => {
       const x = X(pos[n.id]), y = Y(n.d), S = f.st[n.id], isMax = n.d % 2 === 0, cur = f.cur === n.id;
       const stroke = cur ? t.amber : S && S.state === 'pruned' ? t.red : S && S.state === 'done' ? t.green : S ? t.blue : t.rule;
       const fill = cur ? t.amber : S && S.state === 'pruned' ? (t.dark ? '#3a1820' : '#fde4e7') : t.card;
       const txt = S && S.v !== undefined && S.v !== Infinity && S.v !== -Infinity ? S.v : n.leaf !== undefined && !(S && S.state === 'pruned') ? (S ? n.leaf : '?') : S && S.state === 'pruned' ? '✂' : '';
-      if (n.leaf !== undefined) s += `<rect x="${x - 18}" y="${y - 18}" width="36" height="36" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
-      else s += isMax ? `<polygon points="${x},${y - 22} ${x + 24},${y + 16} ${x - 24},${y + 16}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>` : `<polygon points="${x},${y + 22} ${x + 24},${y - 16} ${x - 24},${y - 16}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
-      s += `<text x="${x}" y="${y + (n.leaf !== undefined ? 6 : isMax ? 10 : 2)}" text-anchor="middle" font-size="15" font-weight="800" fill="${cur ? '#111' : t.ink}">${txt}</text>`;
-      if (f.ab && S && S.a !== undefined && n.leaf === undefined && S.state === 'visit') s += `<text x="${x}" y="${y + (isMax ? 34 : -26)}" text-anchor="middle" font-size="12" fill="${t.purple}" stroke="${t.bg}" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-weight="700" font-family="JetBrains Mono">α=${fmt(S.a)} β=${fmt(S.b)}</text>`;
+      if (n.leaf !== undefined) s += `<rect x="${x - 18 * z}" y="${y - 18 * z}" width="${36 * z}" height="${36 * z}" rx="6" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
+      else s += isMax ? `<polygon points="${x},${y - 22 * z} ${x + 24 * z},${y + 16 * z} ${x - 24 * z},${y + 16 * z}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>` : `<polygon points="${x},${y + 22 * z} ${x + 24 * z},${y - 16 * z} ${x - 24 * z},${y - 16 * z}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
+      s += `<text x="${x}" y="${y + (n.leaf !== undefined ? 6 : isMax ? 10 : 2) * z}" text-anchor="middle" font-size="${15 * z}" font-weight="800" fill="${cur ? '#111' : t.ink}">${txt}</text>`;
+      if (f.ab && cur && S && S.a !== undefined && n.leaf === undefined) abYazi = `bakılan düğüm: α = ${fmt(S.a)}, β = ${fmt(S.b)}`;
       (n.kids || []).forEach(nodes);
     };
     nodes(tree);
-    s += `<text x="8" y="${Y(0) + 5}" font-size="13" fill="${t.muted}">MAX ▲ (sen)</text><text x="8" y="${Y(1) + 5}" font-size="13" fill="${t.muted}">MIN ▼ (rakip)</text>` + (maxD >= 2 ? `<text x="8" y="${Y(2) + 5}" font-size="12" fill="${t.muted}">${maxD === 2 ? 'yaprak' : 'MAX ▲'}</text>` : '') + (maxD >= 3 ? `<text x="8" y="${Y(3) + 5}" font-size="12" fill="${t.muted}">yaprak</text>` : '');
+    if (dar) s += `<text x="${W / 2}" y="${H - 12}" text-anchor="middle" font-size="${16 * z}" fill="${t.muted}">▲ MAX (sen) · ▼ MIN (rakip)${maxD >= 3 ? ' · ▲ MAX' : ''} · □ yaprak</text>`;
+    else s += `<text x="8" y="${Y(0) + 5}" font-size="13" fill="${t.muted}">MAX ▲ (sen)</text><text x="8" y="${Y(1) + 5}" font-size="13" fill="${t.muted}">MIN ▼ (rakip)</text>` + (maxD >= 2 ? `<text x="8" y="${Y(2) + 5}" font-size="12" fill="${t.muted}">${maxD === 2 ? 'yaprak' : 'MAX ▲'}</text>` : '') + (maxD >= 3 ? `<text x="8" y="${Y(3) + 5}" font-size="12" fill="${t.muted}">yaprak</text>` : '');
+    if (f.ab) s += `<text x="${W - 8}" y="${18 * z}" text-anchor="end" font-size="${13 * z}" font-weight="700" fill="${t.purple}">${abYazi || '\u00a0'}</text>`;
     return `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
   }
   D.abtree = function (root) {
     let spec = AIMA, tree = buildTree(spec), useAB = root.dataset.ab === '1';
     const diag = el('div'), note = el('div', { class: 'sv-note' });
-    const fp = new SL.FramePlayer(f => { diag.innerHTML = abSVG(tree, f); note.innerHTML = f.note; }, { speed: 1.5 });
+    const dar = () => root.clientWidth > 0 && root.clientWidth < 560;
+    const fp = new SL.FramePlayer(f => { diag.innerHTML = abSVG(tree, f, dar()); note.innerHTML = f.note; }, { speed: 1.5 });
+    let sonDar = null;   // kutu dar/geniş eşiğini geçince yeniden çiz
+    if (window.ResizeObserver) new ResizeObserver(() => { const d = dar(); if (root.clientWidth && d !== sonDar) { sonDar = d; fp.render(); } }).observe(root);
     const build = () => { tree = buildTree(spec); fp.load(abFrames(tree, useAB)); };
     const rnd = () => { const r = () => Math.floor(Math.random() * 20); spec = [0, 1, 2].map(() => [0, 1].map(() => [r(), r()])); build(); };
     root.setAttribute('data-prevent-swipe', '');
@@ -181,43 +188,60 @@
       return out;
     };
     const story = el('div', { class: 'btd-story' }), diag = el('div'), logEl = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
+    const logHtml = f => { const rows = f.log.slice(-7); return f.hint ? '<div class="hint">▶ Oynat’a basın: sandıklar soldan sağa tek tek açılacak.</div>' : rows.map(([k, tx], i) => `<div class="${k === 'no' ? 'l-no' : k === 'cut' ? 'l-no' : 'l-ok'}${i === rows.length - 1 ? ' now' : ''}"><span>${k === 'ok' ? '✓' : k === 'no' ? '✗' : k === 'cut' ? '' : k === 'win' ? '' : '·'}</span>${tx}</div>`).join(''); };
+    const moralHtml = f => (f.final ? '💡 ' + f.moral : `açılan sandık: <b>${f.opened}</b> / 9`);
     let last = 0;
     const draw = (f, pl) => {
-      const t = T(), W = 720, H = 330, DX = [125, 360, 595];
-      let g = `<text x="${W / 2}" y="30" text-anchor="middle" font-size="30">🧑</text><text x="${W / 2}" y="54" text-anchor="middle" font-size="17" font-weight="700" fill="${t.ink}">SEN: en çok altını veren kapıyı seç</text>`;
+      const dar = root.clientWidth > 0 && root.clientWidth < 560;   // telefon: alttaki açıklama iki satır, büyük yazı
+      const t = T(), W = 720, H = dar ? 362 : 330, DX = [125, 360, 595];
+      let g = `<line x1="${W / 2}" y1="40" x2="${W / 2}" y2="76" stroke="${t.rule}" stroke-width="2"/>`;
       for (let d = 0; d < 3; d++) {
         const x = DX[d], isBest = f.bestD === d && f.dv[d] !== null, done = f.dv[d] !== null, cutD = typeof f.dv[d] === 'string';
-        g += `<line x1="${W / 2}" y1="62" x2="${x}" y2="92" stroke="${f.final && isBest ? t.green : t.rule}" stroke-width="${f.final && isBest ? 5 : 2}"/>`;
+        g += `<line x1="${W / 2}" y1="76" x2="${x}" y2="92" stroke="${f.final && isBest ? t.green : t.rule}" stroke-width="${f.final && isBest ? 5 : 2}"/>`;
         g += `<rect x="${x - 46}" y="92" width="92" height="74" rx="10" fill="${t.card}" stroke="${f.final && isBest ? t.green : cutD ? t.red : done ? t.blue : t['ink-2']}" stroke-width="${f.final && isBest ? 5 : 2.5}"/>`;
         g += `<text x="${x - 20}" y="138" text-anchor="middle" font-size="34">🚪</text><text x="${x + 20}" y="126" text-anchor="middle" font-size="22" font-weight="900" fill="${t.ink}">${L[d]}</text>`;
-        g += `<text x="${x + 20}" y="152" text-anchor="middle" font-size="17" font-weight="800" fill="${cutD ? t.red : t.blue}">${done ? f.dv[d] : '?'}</text>`;
-        g += `<text x="${x}" y="186" text-anchor="middle" font-size="15" fill="${t.muted}">bekçi en azı verir${cutD ? ' (elendi ✂)' : ''}</text>`;
+        g += `<text x="${x + 20}" y="148" text-anchor="middle" font-size="17" font-weight="800" fill="${cutD ? t.red : t.blue}">${done ? f.dv[d] : '?'}</text>`;
+        g += `<line x1="${x}" y1="172" x2="${x}" y2="176" stroke="${t.rule}" stroke-width="2"/>`;
         const mn = Math.min(...ch[d]);
         for (let k = 0; k < 3; k++) {
           const cx = x + (k - 1) * 74, o = f.open[d][k], cur = f.cur && f.cur[0] === d && f.cur[1] === k, isMin = done && !cutD && ch[d][k] === mn && ch[d].indexOf(mn) === k;
-          g += `<line x1="${x}" y1="192" x2="${cx}" y2="222" stroke="${o === 2 ? t.red : t.rule}" stroke-width="2" ${o === 2 ? 'stroke-dasharray="5 4"' : ''}/>`;
+          g += `<polyline points="${x},176 ${cx},176 ${cx},222" fill="none" stroke="${o === 2 ? t.red : t.rule}" stroke-width="2" ${o === 2 ? 'stroke-dasharray="5 4"' : ''}/>`;   // dik açılı dal: komşu sandığın köşesine yaklaşmasın
           g += `<rect x="${cx - 31}" y="222" width="62" height="70" rx="8" fill="${cur ? t.amber : o === 2 ? (t.dark ? '#3a1820' : '#fde4e7') : t.card}" stroke="${isMin ? t.blue : cur ? t.amber : o === 2 ? t.red : t.rule}" stroke-width="${isMin ? 4 : 2}" opacity="${o === 2 ? 0.75 : 1}"/>`;
           g += o === 1 ? `<text x="${cx}" y="252" text-anchor="middle" font-size="22">💰</text><text x="${cx}" y="281" text-anchor="middle" font-size="21" font-weight="900" fill="${cur ? '#111' : t.ink}">${ch[d][k]}</text>`
-            : o === 2 ? `<text x="${cx}" y="254" text-anchor="middle" font-size="22">✂</text><text x="${cx}" y="280" text-anchor="middle" font-size="12" fill="${t.red}">açılmadı</text>`
-            : `<text x="${cx}" y="254" text-anchor="middle" font-size="24">📦</text><text x="${cx}" y="281" text-anchor="middle" font-size="17" font-weight="800" fill="${t.muted}">?</text>`;
+            : o === 2 ? `<text x="${cx}" y="254" text-anchor="middle" font-size="22">✂</text><text x="${cx}" y="280" text-anchor="middle" font-size="${dar ? 16 : 12}" fill="${t.red}">açılmadı</text>`
+            : `<text x="${cx}" y="265" text-anchor="middle" font-size="20" font-weight="800" fill="${t.muted}">?</text>`;
         }
       }
-      g += `<text x="${W / 2}" y="318" text-anchor="middle" font-size="15.5" fill="${t.muted}">mavi çerçeveli sandık = bekçinin o kapıda vereceği sandık${prune ? ' · ✂ = açmaya gerek kalmadı' : ''}</text>`;
+      if (dar) g += `<text x="${W / 2}" y="322" text-anchor="middle" font-size="23" fill="${t.muted}">bekçi her kapıda en azı verir</text><text x="${W / 2}" y="352" text-anchor="middle" font-size="23" fill="${t.muted}">mavi çerçeve = vereceği sandık${prune ? ' · ✂ = açılmadı' : ''}</text>`;
+      else g += `<text x="${W / 2}" y="320" text-anchor="middle" font-size="15.5" fill="${t.muted}">bekçi her kapıda en azı verir · mavi çerçeve = vereceği sandık${prune ? ' · ✂ = açmaya gerek kalmadı' : ''}</text>`;
       diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${g}</svg>`;
-      const rows = f.log.slice(-7);
-      logEl.innerHTML = f.hint ? '<div class="hint">▶ Oynat’a basın: sandıklar soldan sağa tek tek açılacak.</div>' : rows.map(([k, tx], i) => `<div class="${k === 'no' ? 'l-no' : k === 'cut' ? 'l-no' : 'l-ok'}${i === rows.length - 1 ? ' now' : ''}"><span>${k === 'ok' ? '✓' : k === 'no' ? '✗' : k === 'cut' ? '' : k === 'win' ? '' : '·'}</span>${tx}</div>`).join('');
-      moral.innerHTML = f.final ? '💡 ' + f.moral : `açılan sandık: <b>${f.opened}</b> / 9`;
+      logEl.innerHTML = logHtml(f);
+      moral.innerHTML = moralHtml(f);
       if (pl.idx !== last && pl.idx > 0 && SL.sfx) { try { SL.sfx(f.final ? 'alert' : f.cutD !== undefined ? 'shot' : 'waka'); } catch (e) {} }
       last = pl.idx;
     };
     const fp = new SL.FramePlayer(draw, { speed: 1.3 });
+    // günlük ve sonuç satırı için en uzun karenin boyunu baştan ayır (kaymaz): adımlar ilerledikçe kutu büyümesin
+    const yerAyir = F => {
+      logEl.style.minHeight = moral.style.minHeight = '';
+      let hl = 0, hm = 0;
+      const eCh = ch, hepsi = [F];
+      for (const sc of SC) if (sc[1]) { ch = sc[1]; hepsi.push(frames()); }
+      ch = eCh;
+      for (const G of hepsi) for (const f of G) { logEl.innerHTML = logHtml(f); moral.innerHTML = moralHtml(f); hl = Math.max(hl, logEl.offsetHeight); hm = Math.max(hm, moral.offsetHeight); }
+      if (hl) logEl.style.minHeight = hl + 'px';
+      if (hm) moral.style.minHeight = hm + 'px';
+    };
     const load = (i, play) => {
       if (SC[i][1]) ch = SC[i][1]; else { const r = () => 1 + Math.floor(Math.random() * 19); ch = [0, 1, 2].map(() => [r(), r(), r()]); }
-      story.innerHTML = '📖 ' + SC[i][2]; last = 0; fp.load(frames()); if (play) fp.play();
+      story.innerHTML = '📖 ' + SC[i][2]; last = 0; sonF = frames(); yerAyir(sonF); fp.load(sonF); if (play) fp.play();
     };
+    let sonF = null, gen = 0;   // genişlik değişince (görünür olunca, dar ekran) yeniden ölç
+    if (window.ResizeObserver) new ResizeObserver(() => { const w = root.clientWidth; if (sonF && w && Math.abs(w - gen) > 1) { gen = w; yerAyir(sonF); fp.render(); } }).observe(root);
     const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); load(i, true); }); return b; });
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap doors' }, diag, el('div', {}, logEl, moral)), SL.transport(fp, { min: 0.4, max: 6 }));
+    const baslik = el('div', { style: 'text-align:center;font-weight:700;font-size:17px;margin:2px 0 -4px' }, '🧑 SEN: en çok altını veren kapıyı seç');
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap doors' }, el('div', {}, baslik, diag), el('div', {}, logEl, moral)), SL.transport(fp, { min: 0.4, max: 6 }));
     bs[0].classList.add('primary'); load(0, false);
     SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
@@ -249,7 +273,7 @@
       out.push({ n: n.slice(), w: w.slice(), tot, t: NIGHTS, final: true, note: `<b>${NIGHTS} akşamın ${tot} tanesinde</b> memnun kaldı. En çok gidilen: ${NM[fav]} (${n[fav]} kez). Gerçekte en iyisi ${NM[1]} idi. ` + (mode === 'greedy' ? (fav === 1 ? 'Bu sefer şanslıydı. “Yeniden” ile birkaç kez deneyin: iyi lokanta ilk akşam kötü çıkarsa ona bir daha hiç uğramaz ve sonuç 40’ın altına düşer.' : 'İlk akşam şanssız geçen iyi lokantaya bir daha hiç uğramadı: <b>keşif yok</b>.') : mode === 'random' ? 'Hangisinin iyi olduğunu öğrendi ama bilgisini <b>kullanmadı</b>: akşamların üçte ikisi daha kötü lokantalarda geçti.' : 'Önce hepsini yokladı, sonra iyi olana yüklendi; ötekileri arada bir yeniden denedi. Her çalıştırmada sonuç birbirine yakın çıkar (çoğunlukla 68–80): <b>güvenilir</b>. MCTS her düğümde tam bunu yapar.') });
       return out;
     };
-    const cards = el('div', { class: 'bd-cards' }), note = el('div', { class: 'sv-note' }), stat = el('div', { class: 'sv-counters' }), how = el('div', { class: 'btd-story' });
+    const cards = el('div', { class: 'bd-cards', style: 'grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr))' }), note = el('div', { class: 'sv-note' }), stat = el('div', { class: 'sv-counters' }), how = el('div', { class: 'btd-story' });
     let last = 0;
     const draw = (f, pl) => {
       cards.innerHTML = [0, 1, 2].map(i => {
@@ -264,8 +288,25 @@
       last = pl.idx;
     };
     const fp = new SL.FramePlayer(draw, { speed: 6 });
-    const go = play => { how.innerHTML = '📖 ' + ST[mode][1]; last = 0; fp.load(sim()); if (play) fp.play(); };
+    // kaymaz: kartlar, not ve sayaçlar bütün kareler (üç strateji) içinde en uzun hâllerine göre baştan boylanır
+    let sonF = null, gen = 0;
+    const yerAyir = () => {
+      if (!root.clientWidth || !sonF) return;
+      for (const e of [cards, note, stat, how]) e.style.minHeight = '';
+      const h = [0, 0, 0, 0], eM = mode;
+      for (const k of Object.keys(ST)) {
+        mode = k; how.innerHTML = '📖 ' + ST[k][1];
+        const F = k === eM ? sonF : sim();
+        for (const f of [F[0], F[1], F[F.length - 2], F[F.length - 1]]) { draw(f, { idx: 0 }); [cards, note, stat, how].forEach((e, i) => { h[i] = Math.max(h[i], e.offsetHeight); }); }
+      }
+      mode = eM; how.innerHTML = '📖 ' + ST[mode][1];
+      [cards, note, stat, how].forEach((e, i) => { e.style.minHeight = h[i] + 'px'; });
+      last = 0;
+    };
+    const go = play => { how.innerHTML = '📖 ' + ST[mode][1]; last = 0; sonF = sim(); fp.load(sonF); if (!gen) { yerAyir(); fp.render(); } if (play) fp.play(); };
+    if (window.ResizeObserver) new ResizeObserver(() => { const w = root.clientWidth; if (sonF && w && Math.abs(w - gen) > 1) { gen = w; yerAyir(); fp.render(); } }).observe(root);
     const bs = Object.keys(ST).map(k => { const b = btn(ST[k][0], () => { mode = k; bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); go(true); }); if (k === mode) b.classList.add('primary'); return b; });
+    bs.forEach(x => { x.style.whiteSpace = 'normal'; x.style.maxWidth = '100%'; });   // dar kutuda uzun ad (UCB1) taşmasın, sarılsın
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs, btn('↺ Yeniden', () => go(true))), how, cards, SL.transport(fp, { min: 1, max: 40, unit: 'akşam/sn' }), note, stat);
     go(false); SL.onTheme(() => fp.render());
@@ -416,6 +457,21 @@
     root.append(el('div', { class: 'gv-row' }, el('div', { style: 'flex:none;width:470px' }, board.canvas), el('div', { class: 'gv-side' }, ctl)));
     SL.onTheme(show);
     syncCtl(); reset();
+    // kaymaz: durum satırı ve istatistik kutusu en uzun içeriklerine göre baştan boylanır (YZ oynayınca kutu büyümesin)
+    const yerAyir = () => {
+      if (!root.clientWidth) return;
+      const eS = stats.innerHTML, eI = info.innerHTML;
+      stats.style.minHeight = info.style.minHeight = '';
+      stats.innerHTML = '<div class="mini">Her sütun: ziyaret sayısı (çubuk) ve kazanma oranı</div>' + [0, 1, 2, 3, 4, 5, 6].map(c => `<div class="uscore"><span>sütun ${c + 1}</span><span class="ubar wide"><i style="width:50%"></i></span><b>20000</b></div>`).join('');
+      const hs = stats.offsetHeight;
+      let hi = 0;
+      for (const m of ['Sıra sizde: kırmızı taşınızı bırakmak için bir sütuna tıklayın.', 'Alfa-beta, derinlik 7: <b>999.999</b> düğüm, 99999 ms. Sıra sizde (kırmızı).', 'MCTS, <b>20.000</b> simülasyon, 99999 ms. Sıra sizde (kırmızı).', '🤖 düşünüyor…']) { info.innerHTML = m; hi = Math.max(hi, info.offsetHeight); }
+      stats.innerHTML = eS; info.innerHTML = eI;
+      stats.style.minHeight = hs + 'px'; info.style.minHeight = hi + 'px';
+    };
+    let gen = 0;
+    yerAyir();
+    if (window.ResizeObserver) new ResizeObserver(() => { const w = root.clientWidth; if (w && Math.abs(w - gen) > 1) { gen = w; yerAyir(); } }).observe(root);
   };
 
   /* ---------- simlab: değerlendirme fonksiyonunu sen yaz ---------- */
