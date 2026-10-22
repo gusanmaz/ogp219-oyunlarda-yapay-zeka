@@ -224,7 +224,7 @@
     const fp = new SL.FramePlayer(draw, { speed: 1.3 });
     // günlük ve sonuç satırı için en uzun karenin boyunu baştan ayır (kaymaz): adımlar ilerledikçe kutu büyümesin.
     // Günlük kutusu son 7 satırın en uzun hâli kadar SABİT yükseklikte; daha eski satırlar kutunun içinde kaydırılarak okunur.
-    logEl.style.overflowY = 'auto';
+    logEl.style.overflowY = 'auto'; logEl.dataset.kaydir = 'gunluk';   // bilerek kaydırılan günlük (amaç denetimi iç kaydırma saymaz)
     const yerAyir = F => {
       logEl.style.height = ''; logEl.style.minHeight = moral.style.minHeight = '';
       let hl = 0, hm = 0;
@@ -291,19 +291,21 @@
       last = pl.idx;
     };
     const fp = new SL.FramePlayer(draw, { speed: 6 });
-    // kaymaz: kartlar, not ve sayaçlar bütün kareler (üç strateji) içinde en uzun hâllerine göre baştan boylanır
+    // kaymaz: kartlar, not ve sayaçlar üç stratejinin BÜTÜN kareleri içinde en uzun hâllerine göre SABİT yükseklik alır
+    // (min-height değil height: köprünün "büyüyen küçülmez" kilidiyle birlikte min-height her karede biraz daha büyüyüp
+    // geri düşüyor, oynatırken alttaki düğmeler kayıyordu, 2026-10-22)
     let sonF = null, gen = 0;
     const yerAyir = () => {
       if (!root.clientWidth || !sonF) return;
-      for (const e of [cards, note, stat, how]) e.style.minHeight = '';
+      for (const e of [cards, note, stat, how]) { e.style.height = ''; e.style.minHeight = ''; e.style.boxSizing = 'border-box'; }
       const h = [0, 0, 0, 0], eM = mode;
       for (const k of Object.keys(ST)) {
         mode = k; how.innerHTML = '📖 ' + ST[k][1];
         const F = k === eM ? sonF : sim();
-        for (const f of [F[0], F[1], F[F.length - 2], F[F.length - 1]]) { draw(f, { idx: 0 }); [cards, note, stat, how].forEach((e, i) => { h[i] = Math.max(h[i], e.offsetHeight); }); }
+        for (const f of F) { draw(f, { idx: 0 }); [cards, note, stat, how].forEach((e, i) => { h[i] = Math.max(h[i], e.getBoundingClientRect().height); }); }
       }
       mode = eM; how.innerHTML = '📖 ' + ST[mode][1];
-      [cards, note, stat, how].forEach((e, i) => { e.style.minHeight = h[i] + 'px'; });
+      [cards, note, stat, how].forEach((e, i) => { e.style.height = Math.ceil(h[i]) + 'px'; e.style.minHeight = ''; });
       last = 0;
     };
     const go = play => { how.innerHTML = '📖 ' + ST[mode][1]; last = 0; sonF = sim(); fp.load(sonF); if (!gen) { yerAyir(); fp.render(); } if (play) fp.play(); };
