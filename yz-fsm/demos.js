@@ -130,6 +130,7 @@
       W: 760, H: 340, rw: 236, start: 'UYU',
       states: { UYU: [140, 60, '😴', 'UYUYOR', 'blue', 'kıvrılmış uyuyor.'], MAMA: [620, 60, '😿', 'MAMA BEKLİYOR', 'amber', 'kabın başında miyavlıyor.'], OYUN: [380, 290, '😼', 'OYNUYOR', 'green', 'evin içinde koşturuyor.'] },
       edges: [['UYU', 'MAMA', 'sabah', 0], ['MAMA', 'OYUN', 'mama', 0], ['OYUN', 'UYU', 'yorul', -80, 0.42], ['UYU', 'OYUN', 'ip', -80, 0.42]],
+      dar: { esik: 480, W: 560, H: 500, pos: { UYU: [170, 50], MAMA: [420, 250], OYUN: [170, 450] }, edges: { 1: { lt: 0.32 }, 2: { bow: -110, lt: 0.3 }, 3: { bow: -110, lt: 0.3 } } },   // dar ekran: yazılar okunur boyda kalsın
       events: { sabah: ['sabah oldu', '⏰ sabah oldu'], mama: ['mama verildi', '🍗 mama verildi'], ip: ['ip sallandı', '🧶 ip sallandı'], yorul: ['yoruldu', '🥱 yoruldu'] },
       none: (st, ev) => ({ UYU: { mama: 'Uyuyan kedi mamayı fark etmez.', yorul: 'Zaten uyuyor.' }, MAMA: { sabah: 'Zaten kalkmış, mama bekliyor.', ip: 'Aç kedi oyun düşünmez!', yorul: 'Yorgun değil, aç.' }, OYUN: { sabah: 'Zaten ayakta.', mama: 'Karnı tok, oyuna devam.', ip: 'Zaten oynuyor.' } }[st][ev] || 'Bu durumdan bu olayla çıkan ok yok.'),
       intro: 'Kedinin üç hâli var ve aynı anda yalnızca birindedir. Oklar “ne olursa hangi hâle geçer”i söyler.',
@@ -220,11 +221,14 @@
     const LOGN = 4, logSatirlari = log => Array.from({ length: LOGN }, (_, i) => `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${log[i] != null ? log[i] : i === 0 ? '<i>henüz geçiş yok</i>' : '&nbsp;'}</div>`).join('');
     const check = (label, on, fn) => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => fn(e.target.checked) }); cb.checked = on; return cb; })(), ' ' + label);
     root.setAttribute('data-prevent-swipe', '');
-    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'),
+    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => { sim.shoot(); if (!sim.world.playing) sim.world.draw(); }, 'primary'),
       flicker ? check('histerezis (60’ta gir, 90’da çık)', hyst, v => { hyst = v; }) : null,
       check('algı hafızası (1,2 sn)', sim.st.memory, v => sim.setMemory(v)),
       el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses çıkar · X = ateş et')),
     el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas), el('div', { class: 'gv-side' }, diag, info)), sim.world.controls());
+    // dar kutuda (kitap sütunu) çizim alanın altına: yan sütunda şemanın yazıları okunmayacak kadar küçülüyor
+    const satir = root.querySelector('.gv-row'), yerlesim = () => { const g = root.clientWidth > 0 && root.clientWidth < 1000 ? 'minmax(0, 1fr)' : ''; if (satir.style.gridTemplateColumns !== g) satir.style.gridTemplateColumns = g; };
+    yerlesim(); if (window.ResizeObserver) new ResizeObserver(yerlesim).observe(root);
     sim.world.reset();
     return { start: () => sim.world.start(), stop: () => sim.world.stop() };
   };

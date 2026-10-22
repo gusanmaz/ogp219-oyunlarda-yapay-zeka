@@ -97,17 +97,17 @@
     const half = n => (n.type === 'cond' || n.type === 'act' ? Math.max(70, n.name.length * 7 + 14) / 2 : 24) + 6, mx = Math.max(70, half(leaves[0]), half(leaves[leaves.length - 1]));   // kenardaki yaprak etiketi tuvale yapışmasın
     const X = i => mx + (L.leaves > 1 ? (i * (W - 2 * mx)) / (L.leaves - 1) : (W - 2 * mx) / 2), Y = d => 34 + (d * (H - 70)) / Math.max(1, L.depth);
     let s = '';
-    const edges = n => (n.kids || []).forEach(k => { const [x1, d1] = L.pos[n.id], [x2, d2] = L.pos[k.id], on = statuses[k.id]; s += `<line x1="${X(x1)}" y1="${Y(d1) + 16}" x2="${X(x2)}" y2="${Y(d2) - 16}" stroke="${on ? colOf(on, t) : t.rule}" stroke-width="${on ? 3 : 1.5}"/>`; edges(k); });
+    const edges = n => (n.kids || []).forEach(k => { const [x1, d1] = L.pos[n.id], [x2, d2] = L.pos[k.id], on = statuses[k.id]; s += `<line x1="${X(x1)}" y1="${Y(d1) + 16}" x2="${X(x2)}" y2="${Y(d2) - ((k.type === 'sel' || k.type === 'seq') && k.name ? 36 : 16)}" stroke="${on ? colOf(on, t) : t.rule}" stroke-width="${on ? 3 : 1.5}"/>`; edges(k); });
     edges(tree);
     const nodes = n => {
       const [xi, d] = L.pos[n.id], x = X(xi), y = Y(d), st = statuses[n.id], col = colOf(st, t), fill = st ? col : t.card, ink = st ? (st === 'RUNNING' ? '#111' : '#fff') : t.ink;
-      if (o.badges && o.badges[n.id]) s += `<circle cx="${x - 30}" cy="${y - 20}" r="11" fill="${t.ink}"/><text x="${x - 30}" y="${y - 16}" text-anchor="middle" font-size="12" font-weight="800" fill="${t.card}">${o.badges[n.id]}</text>`;
-      if (o.notes && o.notes[n.id]) s += `<text x="${x}" y="${y + 34}" text-anchor="middle" font-size="12" fill="${t['ink-2']}" stroke="${t.bg || t.card}" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${o.notes[n.id]}</text>`;
-      if (n.type === 'par') { s += `<rect x="${x - 22}" y="${y - 16}" width="44" height="32" rx="6" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="900" fill="${ink}">⇉</text><text x="${x}" y="${y - 22}" text-anchor="middle" font-size="12" font-weight="700" fill="${t.muted}" stroke="${t.bg || t.card}" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${n.name}</text>`; }
-      else if (n.type === 'dec') { s += `<polygon points="${x},${y - 18} ${x + 24},${y} ${x},${y + 18} ${x - 24},${y}" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${ink}">${n.icon || '◇'}</text><text x="${x + 30}" y="${y + 4}" font-size="12" font-weight="700" fill="${t.muted}">${n.name}</text>`; }
-      else if (n.type === 'sel' || n.type === 'seq') { s += `<rect x="${x - 22}" y="${y - 16}" width="44" height="32" rx="6" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="900" fill="${ink}">${n.type === 'sel' ? '?' : '→'}</text><text x="${x}" y="${y - 22}" text-anchor="middle" font-size="12" font-weight="700" fill="${t.muted}" stroke="${t.bg || t.card}" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${n.name}</text>`; }
-      else if (n.type === 'not') { s += `<polygon points="${x},${y - 18} ${x + 20},${y} ${x},${y + 18} ${x - 20},${y}" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${ink}">!</text>`; }
-      else { const w = Math.max(70, n.name.length * 7 + 14); const r = n.type === 'cond' ? 16 : 6; s += `<rect x="${x - w / 2}" y="${y - 16}" width="${w}" height="32" rx="${r}" fill="${fill}" stroke="${st ? col : n.type === 'cond' ? t.blue : t.purple}" stroke-width="2.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="12" font-weight="700" fill="${ink}">${n.name}</text>`; }
+      if (o.badges && o.badges[n.id]) s += `<circle cx="${x - 30}" cy="${y - 20}" r="11" fill="${t.ink}"/><text data-etiket-degil="1" x="${x - 30}" y="${y - 16}" text-anchor="middle" font-size="12" font-weight="800" fill="${t.card}">${o.badges[n.id]}</text>`;
+      if (o.notes && o.notes[n.id]) s += `<text data-etiket-degil="1" x="${x}" y="${y + 34}" text-anchor="middle" font-size="12" fill="${t['ink-2']}" stroke="${t.bg || t.card}" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${o.notes[n.id]}</text>`;
+      if (n.type === 'par') { s += `<rect x="${x - 22}" y="${y - 16}" width="44" height="32" rx="6" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text data-etiket-degil="1" x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="900" fill="${ink}">⇉</text><text data-etiket-degil="1" x="${x}" y="${y - 22}" text-anchor="middle" font-size="12" font-weight="700" fill="${t.muted}" stroke="${t.bg || t.card}" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${n.name}</text>`; }
+      else if (n.type === 'dec') { s += `<polygon points="${x},${y - 18} ${x + 24},${y} ${x},${y + 18} ${x - 24},${y}" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text data-etiket-degil="1" x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${ink}">${n.icon || '◇'}</text><text data-etiket-degil="1" x="${x + 30}" y="${y + 4}" font-size="12" font-weight="700" fill="${t.muted}">${n.name}</text>`; }
+      else if (n.type === 'sel' || n.type === 'seq') { s += `<rect x="${x - 22}" y="${y - 16}" width="44" height="32" rx="6" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text data-etiket-degil="1" x="${x}" y="${y + 7}" text-anchor="middle" font-size="19" font-weight="900" fill="${ink}">${n.type === 'sel' ? '?' : '→'}</text><text data-etiket-degil="1" x="${x}" y="${y - 22}" text-anchor="middle" font-size="12" font-weight="700" fill="${t.muted}" stroke="${t.bg || t.card}" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${n.name}</text>`; }
+      else if (n.type === 'not') { s += `<polygon points="${x},${y - 18} ${x + 20},${y} ${x},${y + 18} ${x - 20},${y}" fill="${fill}" stroke="${st ? col : t['ink-2']}" stroke-width="2.5"/><text data-etiket-degil="1" x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="${ink}">!</text>`; }
+      else { const w = Math.max(70, n.name.length * 7 + 14); const r = n.type === 'cond' ? 16 : 6; s += `<rect x="${x - w / 2}" y="${y - 16}" width="${w}" height="32" rx="${r}" fill="${fill}" stroke="${st ? col : n.type === 'cond' ? t.blue : t.purple}" stroke-width="2.5"/><text data-etiket-degil="1" x="${x}" y="${y + 5}" text-anchor="middle" font-size="12" font-weight="700" fill="${ink}">${n.name}</text>`; }
       (n.kids || []).forEach(nodes);
     };
     nodes(tree);
@@ -164,7 +164,8 @@
     // iki görünüm: "ağaç" (alan küçülür, altta tam genişlikte ağaç) ve "liste" (alan büyük, sağda girintili liste)
     let view = 'tree';
     const treeBox = el('div', { class: 'bt-diag' }), hint = el('div', { class: 'gv-side' });
-    const sim = SL.makeGuardArena({ decide: brain, displayW: 660, onDraw: () => { if (view === 'tree') treeBox.innerHTML = treeSVG(tree, last, { H: 200 }); else diag.innerHTML = treeOutline(tree, last); } });
+    const agacCiz = st => (root.clientWidth && root.clientWidth < 600 ? treeOutline(tree, st) : treeSVG(tree, st, { H: 200 }));   // dar kutuda SVG ağaç okunmaz: girintili liste
+    const sim = SL.makeGuardArena({ decide: brain, displayW: 660, onDraw: () => { if (view === 'tree') treeBox.innerHTML = agacCiz(last); else diag.innerHTML = treeOutline(tree, last); } });
     hint.innerHTML = '<div class="box" style="margin:0;font-size:.82em"><span class="bt">Nasıl okunur?</span><ul><li>Alttaki ağaçta <b>renkli yol</b> = nöbetçinin bu karedeki kararı.</li><li><span class="c-green"><b>yeşil</b></span> koşul tuttu · <span class="c-red"><b>kırmızı</b></span> tutmadı · <span class="c-amber"><b>turuncu</b></span> çalışan eylem · soluk = hiç sorulmadı.</li><li>Soldaki dal = yüksek öncelik. Canı azalt (X): karar en sola kayar.</li></ul></div>';
     const apply = () => {
       const tr = view === 'tree';
@@ -177,7 +178,7 @@
     root.setAttribute('data-prevent-swipe', '');
     const tasima = sim.world.controls(), oynat = tasima.querySelector('button');
     const satir = el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, sim.world.canvas, info), diag, hint), alt = el('div', {}, treeBox);
-    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => sim.shoot(), 'primary'), toggle, el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses · X = ateş · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
+    root.append(el('div', { class: 'sv-controls' }, btn('🔫 Ateş et (−25 can) · X tuşu', () => { sim.shoot(); if (!sim.world.playing) sim.world.draw(); }, 'primary'), toggle, el('span', { class: 'mini' }, 'Fare = oyuncu · tıkla = ses · X = ateş · ağaç her karede KÖKTEN yeniden değerlendiriliyor')),
       satir, tasima, alt);
     apply();
     // Kaymaz: iki görünümün (ağaç / liste) büyüğü kadar yer; liste her düğümde her durum yazısıyla ölçülür
@@ -194,7 +195,7 @@
       for (const v of ['list', 'tree']) {
         view = v; apply();
         for (const hepsi of durumlar) {
-          if (v === 'list') diag.innerHTML = treeOutline(tree, hepsi); else treeBox.innerHTML = treeSVG(tree, hepsi, { H: 200 });
+          if (v === 'list') diag.innerHTML = treeOutline(tree, hepsi); else treeBox.innerHTML = agacCiz(hepsi);
           hS = Math.max(hS, satir.getBoundingClientRect().height); hA = Math.max(hA, alt.getBoundingClientRect().height);
         }
       }
@@ -251,11 +252,14 @@
       F.forEach((f, q) => { f.note = `<span style="opacity:.6">Adım ${q}/${F.length - 1} ·</span> ` + f.note; });
       fp.load(F, at);
     };
-    const fp = new SL.FramePlayer(f => { diag.innerHTML = treeSVG(tree, f.st, { H: 250 }); note.innerHTML = f.note; }, { speed: 1 });
+    const darMi = () => root.clientWidth > 0 && root.clientWidth < 600;   // dar kutuda SVG ağaç okunmaz: girintili liste
+    const fp = new SL.FramePlayer(f => { diag.innerHTML = darMi() ? treeOutline(tree, f.st) : treeSVG(tree, f.st, { H: 250 }); note.innerHTML = f.note; }, { speed: 1 });
     const boxes = Object.keys(senses).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { senses[k] = e.target.checked; build('end'); } }); cb.checked = senses[k]; return cb; })(), ' ' + NAMES[k]));
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, el('b', null, 'Algı: '), ...boxes), diag, legend('<span style="--c:var(--blue)">şu an değerlendiriliyor</span>'), SL.transport(fp, { min: 0.5, max: 8 }), note);
     build(); SL.onTheme(() => fp.render());
+    let sonDar = darMi();
+    if (window.ResizeObserver) new ResizeObserver(() => { if (darMi() !== sonDar) { sonDar = darMi(); fp.render(); } }).observe(root);
     return { stop: () => fp.pause() };
   };
 
@@ -332,8 +336,11 @@
         o2.remove(); story.style.minHeight = Math.ceil(h2) + 'px';
       }
     };
+    // dar kutuda (kitap sütunu) ağaç ile günlük alt alta: yan yana dururken ağacın yazıları okunmayacak kadar küçülüyor
+    const sarici = sutun.parentElement;
+    const yerlesim = () => { const tek = root.clientWidth > 0 && root.clientWidth < 1000; const g = tek ? 'minmax(0, 1fr)' : ''; if (sarici.style.gridTemplateColumns !== g) sarici.style.gridTemplateColumns = g; };
     let sonW = 0;
-    const izle = () => { const w = sutun.clientWidth + story.clientWidth * 1000; if (sutun.clientWidth && w !== sonW) { sonW = w; yerAyir(); } };
+    const izle = () => { yerlesim(); const w = sutun.clientWidth + story.clientWidth * 1000; if (sutun.clientWidth && w !== sonW) { sonW = w; yerAyir(); } };
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(izle)).observe(root);
     window.addEventListener('resize', izle); setTimeout(izle, 0);
     // yazı tipi ölçüm sırasında yükleniyor olabilir (ölçülen metin yeni bir yazı tipi ister): her yükleme bitince yeniden ölç
