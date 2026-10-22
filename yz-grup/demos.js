@@ -22,7 +22,7 @@
     const cfg = { shape: 'wedge', n: 8, s: 34, assign: 'nearest', wait: true, wall: false };
     let L, units = [], slots = [], target;
     const mkU = () => ({ p: V.v(SL.rand(60, 160), SL.rand(120, 260)), v: V.v(), h: 0, slot: -1 });
-    const reset = () => { L = { p: V.v(140, 190), v: V.v(), h: 0, maxSpeed: 110 }; units = Array.from({ length: cfg.n }, mkU); target = V.v(560, 190); };
+    const reset = () => { L = { p: V.v(220, 190), v: V.v(), h: 0, maxSpeed: 110 }; units = Array.from({ length: cfg.n }, mkU); target = V.v(560, 190); };
     reset();
     const GAP = { x: 380, y0: 140, y1: 240 };   // duvardaki geçit
     const assign = () => {
@@ -68,7 +68,8 @@
         units.forEach(u => { const s = slots[u.slot]; if (!s) return; ctx.strokeStyle = t.dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.moveTo(u.p.x, u.p.y); ctx.lineTo(s.x, s.y); ctx.stroke(); });
         units.forEach(u => SL.drawAgent(ctx, u.p, u.h, t.blue, 9));
         SL.drawAgent(ctx, L.p, L.h, t.red, 13); SL.drawLabel(ctx, 'lider', L.p.x, L.p.y - 22, t.red, { size: 11 });
-        SL.drawLabel(ctx, `${w.nearGap ? 'dar geçit: sütun düzenine geçildi · ' : ''}en geride kalan: ${Math.round(w.lag || 0)} px`, 200, 16, t.ink, { size: 12 });
+        SL.drawLabel(ctx, `${w.nearGap ? 'dar geçit: sütun düzenine geçildi · ' : ''}en geride kalan: ${Math.round(w.lag || 0)} px`, 8, 16, t.ink, { size: 12, align: 'left' });
+        SL.drawLabel(ctx, 'halka = yuva · ince çizgi = üyenin atandığı yuva', 8, H - 10, t.muted, { size: 10, align: 'left' });
       }
     });
     const cb = (lab, key) => el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg[key] = e.target.checked; } }); x.checked = cfg[key]; return x; })(), ' ' + lab);
@@ -129,7 +130,7 @@
         ctx.strokeStyle = t.rule; ctx.setLineDash([4, 6]); [62, 165].forEach(r => { ctx.beginPath(); ctx.arc(P.x, P.y, r, 0, 7); ctx.stroke(); }); ctx.setLineDash([]);
         SL.drawLabel(ctx, 'saldırı çemberi', P.x, P.y - 74, t.muted, { size: 10 }); SL.drawLabel(ctx, 'bekleme çemberi', P.x, P.y - 177, t.muted, { size: 10 });
         ctx.fillStyle = t.green; ctx.beginPath(); ctx.arc(P.x, P.y, 14, 0, 7); ctx.fill(); SL.drawLabel(ctx, 'oyuncu', P.x, P.y + 26, t.green, { size: 11 });
-        E.forEach(e => { const ty = TYPES[e.type]; ctx.fillStyle = e.flash > 0 ? t.red : t[ty.col]; ctx.globalAlpha = e.state === 'wait' ? 0.55 : 1; ctx.beginPath(); ctx.arc(e.p.x, e.p.y, ty.r, 0, 7); ctx.fill(); ctx.globalAlpha = 1; if (e.state === 'attack') { ctx.strokeStyle = t.red; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(e.p.x, e.p.y); ctx.lineTo(P.x, P.y); ctx.stroke(); } SL.drawLabel(ctx, `${ty.ad} ${ty.w}`, e.p.x, e.p.y - ty.r - 9, t.ink, { size: 10 }); });
+        E.forEach(e => { const ty = TYPES[e.type]; ctx.fillStyle = e.flash > 0 ? t.red : t[ty.col]; ctx.globalAlpha = e.state === 'wait' ? 0.55 : 1; ctx.beginPath(); ctx.arc(e.p.x, e.p.y, ty.r, 0, 7); ctx.fill(); ctx.globalAlpha = 1; if (e.state === 'attack') { ctx.strokeStyle = t.red; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(e.p.x, e.p.y); ctx.lineTo(P.x, P.y); ctx.stroke(); } SL.drawLabel(ctx, `${ty.ad} ${ty.w}`, e.p.x, e.p.y - ty.r - 9 < 12 ? e.p.y + ty.r + 10 : e.p.y - ty.r - 9, t.ink, { size: 10 }); });
         const dps = time > 0 ? (dmg / time) * 60 : 0;
         SL.drawLabel(ctx, `oyuncuya dakikada hasar ≈ ${Math.round(dps)}`, 120, 16, t.ink, { size: 12 });
         if (cfg.mode === 'belgian') SL.drawLabel(ctx, `ızgara ${gridUsed}/${cfg.gridCap} · saldırı ${atkUsed}/${cfg.atkCap}`, 600, 16, t.ink, { size: 12 });
@@ -191,6 +192,8 @@
         ctx.strokeStyle = t.blue; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.beginPath(); ctx.moveTo(0, -170); ctx.lineTo(0, 170); ctx.stroke(); ctx.setLineDash([]);
         ctx.restore();
         SL.drawLabel(ctx, 'cephe hattı', v.front.x, v.front.y - 175, t.blue, { size: 11 });
+        { const ux = v.dir.x / (Math.hypot(v.dir.x, v.dir.y) || 1), uy = v.dir.y / (Math.hypot(v.dir.x, v.dir.y) || 1), at = (a) => [v.front.x + ux * a, v.front.y + uy * a - 145];
+          const [tx, ty] = at(20), [dx, dy] = at(110); SL.drawLabel(ctx, 'tampon', tx, ty, t.amber, { size: 10 }); SL.drawLabel(ctx, 'düşman alanı', dx, dy, t.red, { size: 10 }); }
         blue.forEach(u => { ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(u.p.x, u.p.y, 11, 0, 7); ctx.fill(); ctx.fillStyle = t.rule; ctx.fillRect(u.p.x - 12, u.p.y + 14, 24, 4); ctx.fillStyle = t.green; ctx.fillRect(u.p.x - 12, u.p.y + 14, 24 * u.hp / 100, 4); });
         red.forEach(u => { ctx.fillStyle = t.red; ctx.beginPath(); ctx.arc(u.p.x, u.p.y, 11, 0, 7); ctx.fill(); ctx.fillStyle = t.rule; ctx.fillRect(u.p.x - 12, u.p.y + 14, 24, 4); ctx.fillStyle = t.green; ctx.fillRect(u.p.x - 12, u.p.y + 14, 24 * u.hp / 100, 4); });
         const lvName = LEVELS[v.lv][1];
