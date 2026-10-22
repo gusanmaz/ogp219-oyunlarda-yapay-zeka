@@ -135,12 +135,19 @@
       render(ctx) { g.draw(ctx, S, 0, 0, showT); }
     });
     const RULES = { Blinky: 'Pac-Man’in olduğu kare (takipçi)', Pinky: 'Pac-Man’in 4 kare önü (pusucu)', Inky: 'Pac-Man’in 2 kare önü + Blinky’den oraya olan okun 2 katı (sinsi)', Clyde: '8 kareden uzaksa Pac-Man, yakınsa kendi köşesi (çekingen)' };
-    w.hud = () => {
-      const m = g.curMode();
-      side.innerHTML = `<div class="sv-counters"><span class="cnt">mod <b class="${m === 'chase' ? 'c-red' : 'c-green'}">${m === 'chase' ? 'KOVALA' : 'DAĞIL'}</b>${g.forced ? '' : ` (${Math.ceil((m === 'scatter' ? 7 : 20) - g.modeT)} sn)`}</span><span class="cnt">yakalanma <b>${g.caught}</b></span><span class="cnt">yem <b>${g.score}</b></span></div>` +
+    const hudHTML = (m) => `<div class="sv-counters"><span class="cnt">mod <b class="${m === 'chase' ? 'c-red' : 'c-green'}">${m === 'chase' ? 'KOVALA' : 'DAĞIL'}</b>${g.forced ? '' : ` (${Math.ceil((m === 'scatter' ? 7 : 20) - g.modeT)} sn)`}</span><span class="cnt">yakalanma <b>${g.caught}</b></span><span class="cnt">yem <b>${g.score}</b></span></div>` +
         g.ghosts.map(gh => `<div class="pac-rule"><b style="color:${gh.col}">●</b> <b>${gh.name}</b>: ${m === 'scatter' ? 'kendi köşesi (dağılma modu)' : RULES[gh.name]}</div>`).join('') +
         '<p class="mini">Kesikli çizgi + X = hayaletin şu anki hedef karesi. Her kavşakta hedefe kuş uçuşu en yakın yönü seçer; geri dönemez.</p>';
+    // Kaymaz: kovala kipinin kuralları daha uzun; iki kipin en uzunu kadar yer ayır (genişlik değişince yeniden ölç)
+    let sonG = 0;
+    const yerAyir = () => {
+      const gn = side.clientWidth; if (!gn || gn === sonG) return; sonG = gn;
+      const eski = side.innerHTML; side.style.minHeight = '';
+      let h = 0; for (const m of ['chase', 'scatter']) { side.innerHTML = hudHTML(m); h = Math.max(h, side.getBoundingClientRect().height); }
+      side.innerHTML = eski; side.style.minHeight = Math.ceil(h) + 'px';
     };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(yerAyir)).observe(side);
+    w.hud = () => { yerAyir(); side.innerHTML = hudHTML(g.curMode()); };
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Mod ', select({ auto: 'otomatik (7 sn dağıl / 20 sn kovala)', chase: 'hep kovala', scatter: 'hep dağıl' }, 'auto', v => { g.forced = v === 'auto' ? null : v; })),
@@ -164,7 +171,7 @@
       reset() { st = { shots: 0, hits: 0 }; bullets.length = 0; hist.length = 0; cool = 0; },
       update(dt, w) {
         bot += dt;
-        const p = w.mouse.inside ? V.v(w.mouse.x, Math.max(120, w.mouse.y)) : V.v(590 + Math.sin(bot * 0.55) * 300, 285 + Math.sin(bot * 1.3) * 30);
+        const p = w.mouse.inside ? V.v(w.mouse.x, Math.max(120, w.mouse.y)) : V.v(590 + Math.sin(bot * 0.55) * 470, 285 + Math.sin(bot * 1.3) * 30);
         hist.push({ t: w.time, p, v: hist.length ? V.mul(V.sub(p, hist[hist.length - 1].p), 1 / dt) : V.v() });
         while (hist.length && hist[0].t < w.time - 2) hist.shift();
         const seenRec = hist.find(h => h.t >= w.time - react) || hist[hist.length - 1];
@@ -310,6 +317,8 @@
         o2.remove(); story.style.minHeight = Math.ceil(h2) + 'px';
       }
     };
+    // çizgiler figürlerin (💂, 🧍) içinden geçmesin: uçlardan 24 birim kısalt
+    const uclar = (a, b, r = 24) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, u = Math.min(r, L / 2) / L; return [[a[0] + dx * u, a[1] + dy * u], [b[0] - dx * u, b[1] - dy * u]]; };
     const draw = () => {
       const t = T(), sc = SC[cur], ph = phaseOf(sc, k - 1), acted = k >= sc.steps.length, G = acted ? sc.G : G0, P = sc.P;
       let s = `<rect x="0" y="0" width="${W}" height="${H}" rx="10" fill="${t.card}" stroke="${t.rule}"/>`;
@@ -317,19 +326,20 @@
       if (sc.noise && (ph === 0 || (k > 0 && !acted))) for (let r = 105; r <= 420; r += 105) s += `<circle cx="${P[0]}" cy="${P[1]}" r="${r}" fill="none" stroke="${t.amber}" stroke-width="2.5" opacity="${1.15 - r / 480}"/>`;
       PH.forEach((p, i) => {
         const x = 30 + i * 230, on = i === ph;
-        s += `<rect x="${x}" y="14" width="200" height="56" rx="10" fill="${on ? t[p[1]] : t.card}" fill-opacity="${on ? 0.2 : 1}" stroke="${t[p[1]]}" stroke-width="${on ? 4 : 2}"/>`;
-        s += `<text x="${x + 100}" y="40" text-anchor="middle" font-size="19" font-weight="800" fill="${t.ink}">${i + 1} · ${p[0]}</text><text x="${x + 100}" y="60" text-anchor="middle" font-size="13" fill="${t.muted}">${p[2]}</text>`;
-        if (i < 2) s += `<text x="${x + 215}" y="48" text-anchor="middle" font-size="22" fill="${t.muted}">→</text>`;
+        s += `<rect x="${x}" y="14" width="190" height="64" rx="10" fill="${on ? t[p[1]] : t.card}" fill-opacity="${on ? 0.2 : 1}" stroke="${t[p[1]]}" stroke-width="${on ? 4 : 2}"/>`;
+        s += `<text x="${x + 95}" y="43" text-anchor="middle" font-size="22" font-weight="800" fill="${t.ink}">${i + 1} · ${p[0]}</text><text x="${x + 95}" y="64" text-anchor="middle" font-size="16" fill="${t.muted}">${p[2]}</text>`;
+        if (i < 2) s += `<text x="${x + 210}" y="52" text-anchor="middle" font-size="17" fill="${t.muted}">→</text>`;
       });
-      s += `<text x="${W / 2}" y="90" text-anchor="middle" font-size="13" fill="${t.muted}">3’ten sonra döngü bir sonraki karede yeniden 1’den başlar</text>`;
-      s += `<line x1="${WALL[0]}" y1="${WALL[1]}" x2="${WALL[2]}" y2="${WALL[3]}" stroke="${t.ink}" stroke-width="12" stroke-linecap="round"/><text x="${WALL[0] + 12}" y="${WALL[1] + 4}" font-size="14" fill="${t.muted}">duvar</text>`;
+      s += `<text x="${W / 2}" y="98" text-anchor="middle" font-size="15" fill="${t.muted}">3’ten sonra döngü bir sonraki karede yeniden 1’den başlar</text>`;
+      s += `<line x1="${WALL[0]}" y1="${WALL[1]}" x2="${WALL[2]}" y2="${WALL[3]}" stroke="${t.ink}" stroke-width="12" stroke-linecap="round"/><text x="${WALL[0] + 12}" y="${WALL[1] + 4}" font-size="16" fill="${t.muted}">duvar</text>`;
       if (!acted) s += `<path d="M${G0[0]},${G0[1]} L${G0[0] + RANGE * Math.cos(0.6)},${G0[1] - RANGE * Math.sin(0.6)} A${RANGE},${RANGE} 0 0 1 ${G0[0] + RANGE * Math.cos(0.6)},${G0[1] + RANGE * Math.sin(0.6)} Z" fill="${t.amber}" opacity=".13"/>`;
       if (ph === 0 || (k > 0 && !acted)) {
         const col = sc.cheat ? t.purple : (sc.ad.startsWith('👀') ? t.green : t.red);
-        s += `<line x1="${G0[0]}" y1="${G0[1]}" x2="${P[0]}" y2="${P[1]}" stroke="${col}" stroke-width="3" stroke-dasharray="${sc.ad.startsWith('👀') ? '' : '8 6'}"/>`;
-        if (sc.cheat) s += `<text x="${(G0[0] + P[0]) / 2}" y="${(G0[1] + P[1]) / 2 - 12}" text-anchor="middle" font-size="14" font-weight="700" fill="${t.purple}">bellekten okuma: duvar yok sayılıyor</text>`;
+        const [a1, a2] = uclar(G0, P); s += `<line x1="${a1[0]}" y1="${a1[1]}" x2="${a2[0]}" y2="${a2[1]}" stroke="${col}" stroke-width="3" stroke-dasharray="${sc.ad.startsWith('👀') ? '' : '8 6'}"/>`;
+        // duvarın solunda, iki satır: duvar çizgisi ve nöbetçi yazının üstünden geçmesin
+        if (sc.cheat) s += `<text x="${WALL[0] - 14}" y="${WALL[1] + 62}" text-anchor="end" font-size="14" font-weight="700" fill="${t.purple}"><tspan x="${WALL[0] - 14}">bellekten okuma:</tspan><tspan x="${WALL[0] - 14}" dy="17">duvar yok sayılıyor</tspan></text>`;
       }
-      if (acted) s += `<line x1="${G0[0]}" y1="${G0[1]}" x2="${G[0]}" y2="${G[1]}" stroke="${t.green}" stroke-width="3" stroke-dasharray="3 6"/>`;
+      if (acted) { const [a1, a2] = uclar(G0, G); s += `<line x1="${a1[0]}" y1="${a1[1]}" x2="${a2[0]}" y2="${a2[1]}" stroke="${t.green}" stroke-width="3" stroke-dasharray="3 6"/>`; }
       s += `<text x="${G[0]}" y="${G[1] + 14}" text-anchor="middle" font-size="38">💂</text>`;
       if (acted && sc.bub) s += `<circle cx="${G[0] + 26}" cy="${G[1] - 34}" r="16" fill="${sc.bub === '!' ? t.red : t.amber}"/><text x="${G[0] + 26}" y="${G[1] - 27}" text-anchor="middle" font-size="20" font-weight="900" fill="#fff">${sc.bub}</text>`;
       s += `<text x="${P[0]}" y="${P[1] + 12}" text-anchor="middle" font-size="34">${sc.noise ? '🥷' : '🧍'}</text>`;
@@ -338,13 +348,15 @@
       log.innerHTML = logHTML(sc, k);
       moral.innerHTML = acted ? '💡 ' + sc.moral : '';
       next.disabled = acted;
+      bastan.disabled = k === 0;   // başta sıfırlanacak bir şey yok: pasif (yerinde durur, kaymaz)
     };
     const next = btn('▶ Sonraki adım', () => { const sc = SC[cur]; if (k < sc.steps.length) { k++; if (k === sc.steps.length && sc.snd && SL.sfx) { try { SL.sfx(sc.snd); } catch (e) {} } draw(); } });
     const bs = SC.map((sc, i) => { const b = btn(sc.ad, () => { cur = i; k = 0; bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); story.innerHTML = '📖 ' + sc.story; draw(); }); return b; });
     next.classList.add('primary');
+    const bastan = btn('↺ Baştan', () => { k = 0; draw(); });
     root.setAttribute('data-prevent-swipe', '');
     const alan = el('div', {}, log, moral);
-    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap al' }, diag, el('div', {}, el('div', { class: 'sv-controls' }, next, btn('↺ Baştan', () => { k = 0; draw(); })), alan)));
+    root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap al' }, diag, el('div', {}, el('div', { class: 'sv-controls' }, next, bastan), alan)));
     // yer ayırmayı genişlik her değiştiğinde (ilk görünüş, pencere, yazı tipleri yüklenince) yinele
     let sonW = 0;
     const izle = () => { const w = alan.clientWidth; if (w && w !== sonW) { sonW = w; yerAyir(); } };

@@ -48,7 +48,8 @@
       let html = '';
       const vs = v => `(${f1(v.x)}, ${f1(v.y)})`;
       if (mode === 'add') {
-        const s = V.add(A, B); arr(O, pa, t.blue, 'a'); arr(pa, toPx(s), t.green, '', { dash: [6, 4] });   // kesikli kopya etiketsiz: “b” bir kez yazılsın, “a + b” ile üst üste binmesin arr(O, pb, t.green, 'b'); arr(O, toPx(s), t.purple, 'a + b');
+        // kesikli kopya etiketsiz: “b” bir kez yazılsın, “a + b” ile üst üste binmesin
+        const s = V.add(A, B); arr(O, pa, t.blue, 'a'); arr(pa, toPx(s), t.green, '', { dash: [6, 4] }); arr(O, pb, t.green, 'b'); arr(O, toPx(s), t.purple, 'a + b');
         html = `<p><b class="c-blue">a</b> = ${vs(A)}<br><b class="c-green">b</b> = ${vs(B)}<br><b style="color:var(--purple)">a + b</b> = ${vs(s)}</p><p class="mini">Uç uca ekle: önce a kadar git, sonra b kadar. 🎮 konum = konum + hız</p>`;
       } else if (mode === 'sub') {
         const d = V.sub(B, A); arr(O, pa, t.blue, 'a (ben)'); arr(O, pb, t.green, 'b (hedef)'); arr(pa, pb, t.red, 'b − a');
@@ -71,9 +72,10 @@
       info.innerHTML = html + '<p class="mini">Ok uçlarını (noktaları) fareyle sürükleyin.</p>';
     };
     const pick = e => { const r = c.getBoundingClientRect(), p = V.v(((e.clientX - r.left) * W) / r.width, ((e.clientY - r.top) * H) / r.height); return p; };
-    c.addEventListener('mousedown', e => { const p = pick(e); drag = V.dist(p, toPx(A)) < 20 ? 'A' : V.dist(p, toPx(B)) < 20 ? 'B' : null; });
-    c.addEventListener('mousemove', e => { if (!drag) return; const u = toU(pick(e)); if (drag === 'A') A = u; else B = u; draw(); });
-    window.addEventListener('mouseup', () => (drag = null));
+    c.style.touchAction = 'none';   // dokunmatikte de sürüklenebilsin (parmak sayfayı kaydırmasın)
+    c.addEventListener('pointerdown', e => { const p = pick(e); drag = V.dist(p, toPx(A)) < 20 ? 'A' : V.dist(p, toPx(B)) < 20 ? 'B' : null; });
+    c.addEventListener('pointermove', e => { if (!drag) return; const u = toU(pick(e)); if (drag === 'A') A = u; else B = u; draw(); });
+    window.addEventListener('pointerup', () => (drag = null));
     root.setAttribute('data-prevent-swipe', '');
     const narrow = !!root.closest('.cols');   // iki sütunlu slaytta açıklamayı tuvalin altına koy
     if (narrow) info.classList.add('below');
@@ -111,7 +113,7 @@
     let fpsA = 30, fpsB = 144, useDt = false;
     const speed = 150; // piksel / saniye
     const run = [{ x: 30, acc: 0, fps: () => fpsA, frames: 0 }, { x: 30, acc: 0, fps: () => fpsB, frames: 0 }];
-    const code = el('pre', { class: 'mini-code' });
+    const code = el('pre', { class: 'mini-code', style: 'white-space:pre-wrap;max-width:100%;box-sizing:border-box' });   // dar kutuda satır kırılsın, taşmasın
     const w = new SL.World({
       W: 1180, H: 230,
       reset() { run.forEach(r => { r.x = 30; r.acc = 0; r.frames = 0; }); },
@@ -142,7 +144,7 @@
     let k = 0.1, fps = [20, 60, 144], useExp = false;
     const F = fps.map(f => ({ fps: f, x: 40, acc: 0 }));
     let target = 1100;
-    const code = el('pre', { class: 'mini-code' });
+    const code = el('pre', { class: 'mini-code', style: 'white-space:pre-wrap;max-width:100%;box-sizing:border-box' });   // dar kutuda satır kırılsın, taşmasın
     const w = new SL.World({
       W: 1180, H: 260,
       reset() { F.forEach(o => { o.x = 40; o.acc = 0; }); target = 1100; },
