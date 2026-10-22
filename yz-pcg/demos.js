@@ -9,6 +9,15 @@
   const RNG = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
   SL.PCG_RNG = RNG;
   const seedBox = (val, onChange) => { const i = el('input', { type: 'number', value: val, class: 'seed-in', onchange: e => onChange(+e.target.value | 0) }); return el('label', { class: 'ctl' }, 'tohum: ', i); };
+  // dar kutu (telefon, < 560 px): tuvaldeki yazılar okunur kalsın diye dar düzende çizilir; eşik geçilince yeniden kurulur
+  const darMi = root => root.clientWidth > 0 && root.clientWidth < 560;
+  const darIzle = (root, fn) => { let son = null; if (window.ResizeObserver) new ResizeObserver(() => { const d = darMi(root); if (root.clientWidth && d !== son) { son = d; fn(d); } }).observe(root); };
+  // içeriği değişen yazı kutusu en uzun hâli kadar yer tutsun (altındakiler kaymasın); genişlik değişince yeniden ölçülür
+  const enUzun = (root, kutu, metinler) => {
+    const yap = () => { if (!root.clientWidth) return; const eski = kutu.innerHTML; kutu.style.boxSizing = 'border-box'; kutu.style.minHeight = ''; let m = 0; for (const s of metinler()) { kutu.innerHTML = s; m = Math.max(m, kutu.offsetHeight); } kutu.innerHTML = eski; if (m) kutu.style.minHeight = m + 'px'; };
+    if (window.ResizeObserver) { let w = 0; new ResizeObserver(() => { if (Math.abs(root.clientWidth - w) > 2) { w = root.clientWidth; yap(); } }).observe(root); }
+    return yap;
+  };
 
   /* ================= Perlin gürültüsü ================= */
   function makePerlin(seed) {
@@ -37,7 +46,7 @@
       ['⛰️ 5 rastgele tepe, arası yumuşak', 'Yalnızca 5 noktaya rastgele yükseklik ver; aralarını yumuşak bir eğriyle doldur.', 'Artık komşu sütunlar benzer: yumuşak tepeler çıktı. Ama fazla düzgün; gerçek dağda küçük girinti çıkıntılar da olur.'],
       ['➕ Üstüne ince bir kat', 'İkinci bir kat ekle: iki kat sık (9 nokta), yarı boyda. İkisini topla.', 'Büyük biçim aynı kaldı, üstüne orta boy tümsekler geldi. Her yeni kata <b>oktav</b> denir.'],
       ['🏔️ Dört kat (oktav)', 'Dört kat: 5, 9, 17, 33 nokta; boyları 1, ½, ¼, ⅛.', 'Büyük dağlar + tepeler + kayalar + çakıl: doğal görünen arazi. Perlin gürültüsü ve Minecraft’ın dünyası bu fikrin 2 ve 3 boyutlu hâlidir.']];
-    const c = el('canvas'), W = 1100, H = 300, ctx = SL.setupCanvas(c, W, H), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' }), sd = el('b', {}, '7');
+    const c = el('canvas'); let W = 1100, H = 300, dar = false; const ctx = SL.setupCanvas(c, W, H), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' }), sd = el('b', { style: 'display:inline-block;min-width:3ch;font-variant-numeric:tabular-nums' }, '7');
     const sm = t => t * t * (3 - 2 * t);
     const layer = (k, rnd) => { const n = (4 << k) + 1, pts = Array.from({ length: n }, rnd); return x => { const u = x * (n - 1), i = Math.min(n - 2, Math.floor(u)), f = u - i; return pts[i] + (pts[i + 1] - pts[i]) * sm(f); }; };
     const draw = () => {
@@ -53,19 +62,24 @@
       // katmanlar: ince çizgiler ve kontrol noktaları
       const LC = [t.blue, t.amber, t.purple, t.red];
       Ls.forEach((f, k) => { ctx.strokeStyle = LC[k]; ctx.lineWidth = 1.6; ctx.beginPath(); for (let i = 0; i <= cols; i++) { const x = Math.min(i / cols, 0.9999), y = H - 20 - f(x) * amp(k) * (H - 60) / tot; i ? ctx.lineTo(i / cols * W, y) : ctx.moveTo(0, y); } ctx.stroke(); if (k < 2) { const n = (4 << k) + 1; ctx.fillStyle = LC[k]; for (let j = 0; j < n; j++) { const x = j / (n - 1); ctx.beginPath(); ctx.arc(x * W, H - 20 - f(Math.min(x, 0.9999)) * amp(k) * (H - 60) / tot, 5, 0, 7); ctx.fill(); } } });
-      ctx.font = '600 15px "Source Sans 3"'; ctx.textAlign = 'left';
-      Ls.forEach((_, k) => { ctx.fillStyle = LC[k]; ctx.fillText(`${k + 1}. kat: ${(4 << k) + 1} nokta, boy ${['1', '½', '¼', '⅛'][k]}`, 12, 22 + k * 20); });
-      ctx.fillStyle = t.green; ctx.textAlign = 'right'; ctx.fillText(nl > 1 ? 'yeşil: katların toplamı' : 'yeşil: arazi', W - 12, 22);
+      ctx.font = `600 ${dar ? 13 : 15}px "Source Sans 3"`; ctx.textAlign = 'left';
+      const sat = dar ? 16 : 20;   // dar: bütün açıklamalar solda alt alta
+      Ls.forEach((_, k) => { ctx.fillStyle = LC[k]; ctx.fillText(`${k + 1}. kat: ${(4 << k) + 1} nokta, boy ${['1', '½', '¼', '⅛'][k]}`, dar ? 8 : 12, 22 + k * sat); });
+      ctx.fillStyle = t.green; ctx.textAlign = dar ? 'left' : 'right'; ctx.fillText(nl > 1 ? 'yeşil: katların toplamı' : 'yeşil: arazi', dar ? 8 : W - 12, dar ? 22 + nl * sat : 22);
       story.innerHTML = '📖 ' + SC[mode][1]; moral.innerHTML = '💡 ' + SC[mode][2]; sd.textContent = seed;
     };
     const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { mode = i; bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } }); return b; });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, c, el('div', { class: 'sv-controls' }, el('span', {}, 'tohum (seed): ', sd), btn('🎲 Yeni tohum', () => { seed = 1 + Math.floor(Math.random() * 999); draw(); }), btn('↺ Tohum 7’ye dön', () => { seed = 7; draw(); }), el('span', { class: 'btd-own' }, 'Aynı tohum her zaman aynı araziyi verir.')), moral);
     bs[0].classList.add('primary'); draw(); SL.onTheme(draw);
+    // öykü ve ders kutuları en uzun hâlleri kadar: düğmeye basınca tuval ve alt satır kaymaz
+    const olc1 = enUzun(root, story, () => SC.map(x => '📖 ' + x[1])), olc2 = enUzun(root, moral, () => SC.map(x => '💡 ' + x[2]));
+    darIzle(root, d => { dar = d; W = d ? 360 : 1100; H = d ? 240 : 300; SL.setupCanvas(c, W, H); draw(); olc1(); olc2(); });
   };
 
   D.noise = function (root) {
-    const W = 720, H = 300, cell = 4, GW = W / cell, GH = 230 / cell;
+    const W = 720, cell = 4, GW = W / cell, GH = 230 / cell;
+    let H = 300, dar = false;   // dar: kesitin açıklaması altta, büyük yazıyla
     const c = { seed: 7, scale: 60, oct: 5, pers: 0.5, lac: 2, water: -0.1, view: 'biome' };
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     let noise = makePerlin(c.seed);
@@ -84,7 +98,9 @@
       ctx.fillStyle = t.dark ? 'rgba(63,134,201,0.35)' : 'rgba(63,134,201,0.25)'; ctx.fillRect(0, y0 + hh / 2, W, hh / 2);
       ctx.strokeStyle = t.ink; ctx.lineWidth = 2; ctx.beginPath();
       for (let x = 0; x <= W; x += 2) { const h = fbm(x / c.scale, row * cell / c.scale) * 2.6 - c.water; const y = y0 + hh / 2 - Math.max(-1, Math.min(1, h)) * hh / 2; x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
-      ctx.stroke(); SL.drawLabel(ctx, 'kesit (sarı çizgi) — mavi: deniz seviyesi', 8, y0 + 8, t.muted, { size: 10, align: 'left' });
+      ctx.stroke();
+      if (dar) SL.drawLabel(ctx, 'kesit (sarı çizgi) · mavi: deniz', 8, H - 16, t.muted, { size: Math.round(11 * W / (root.clientWidth || W)), align: 'left', bg: false });
+      else SL.drawLabel(ctx, 'kesit (sarı çizgi) — mavi: deniz seviyesi', 8, y0 + 8, t.muted, { size: 10, align: 'left' });
       info.innerHTML = `${c.oct} oktav: her oktav bir öncekinin ${c.lac}× frekansında (boşluk) ve ${c.pers}× genliğinde (kalıcılık) (fBm). Renkler alçaktan yükseğe: derin su, sığ su, kum, çimen, orman, kaya (gri), kar (beyaz). Aynı tohum = aynı dünya: tohumu not edin, yeniden yazın, harita birebir geri gelir.`;
     };
     root.setAttribute('data-prevent-swipe', '');
@@ -95,6 +111,7 @@
       el('div', { class: 'sv-controls' }, slider('boşluk (lacunarity)', 1.5, 3, c.lac, 0.1, v => { c.lac = v; draw(); }), slider('deniz seviyesi', -0.5, 0.5, c.water, 0.05, v => { c.water = v; draw(); }),
         el('label', { class: 'ctl' }, 'görünüm: ', select({ biome: 'biyom renkleri', gray: 'gri yükseklik' }, c.view, v => { c.view = v; draw(); }))), C, info);
     draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; H = d ? 334 : 300; SL.setupCanvas(C, W, H); draw(); });
   };
 
   /* ================= zindan üreteçleri ================= */
@@ -133,7 +150,8 @@
     return g;
   }
   D.dungeon = function (root) {
-    const W = 720, H = 330, GW = 60, GH = 26, cs = 12;
+    const W = 720, GW = 60, GH = 26, cs = 12;
+    let H = 330, dar = false;   // dar: alttaki sayaç kısaltılır ve büyür
     const c = { algo: 'ca', seed: 3, fill: 0.45, iters: 4, walk: 0.35, showRegions: true };
     let g, extra = null, iter = 0;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
@@ -154,7 +172,8 @@
       }
       if (extra && c.algo === 'bsp') { ctx.strokeStyle = t.amber; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); extra.leaves.forEach(L => ctx.strokeRect(L.x * cs + 0.5, L.y * cs + 0.5, L.w * cs, L.h * cs)); ctx.setLineDash([]); }
       const open = g.reduce((a, v) => a + (v ? 0 : 1), 0), lost = open - (sizes[big] || 0);
-      SL.drawLabel(ctx, `açık hücre ${open} · bölge ${sizes.length} · ana bölgeye bağlı olmayan ${lost}`, W / 2, H - 9, lost ? t.red : t.green, { size: 11 });
+      if (dar) SL.drawLabel(ctx, `açık ${open} · bölge ${sizes.length} · kopuk ${lost}`, W / 2, GH * cs + (H - GH * cs) / 2, lost ? t.red : t.green, { size: Math.round(11 * W / (root.clientWidth || W)), bg: false });
+      else SL.drawLabel(ctx, `açık hücre ${open} · bölge ${sizes.length} · ana bölgeye bağlı olmayan ${lost}`, W / 2, H - 9, lost ? t.red : t.green, { size: 11 });
       info.innerHTML = { ca: `Hücresel otomat: rastgele doldur (%${Math.round(c.fill * 100)} duvar), sonra her adımda “8 komşudan en az 5’i duvarsa duvar ol (zaten duvarsa 4’ü yeter)” kuralı. Adım: <b>${iter}</b>. Kırmızı: ana mağaraya bağlı olmayan cepler (flood fill ile bulundu).`, bsp: 'İkili alan bölme (BSP): alanı ikiye, sonra parçaları tekrar ikiye böl (sarı kesikli çizgiler); her yaprağa bir oda koy; sırayla komşu odaları L biçimli koridorlarla bağla. Hep bağlı ve “insan yapımı” görünür.', walk: `Sarhoş yürüyüşü: ortadan başla, rastgele yönde yürü, geçtiğin yeri kaz; alanın %${Math.round(c.walk * 100)}’i açılınca dur. Hep bağlıdır (tek bir yürüyüş!), organik ve dolambaçlıdır.` }[c.algo];
     };
     const regen = () => { gen(); draw(); };
@@ -169,6 +188,7 @@
       seedBox(c.seed, v => { c.seed = v; regen(); }), btn('🎲', () => { c.seed = Math.floor(Math.random() * 99999); root.querySelector('.seed-in').value = c.seed; regen(); }), cbReg),
       el('div', { class: 'sv-controls' }, slFill, slIters, slWalk), C, info);
     syncAlgo(); regen(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; H = d ? GH * cs + 44 : 330; SL.setupCanvas(C, W, H); draw(); });
   };
 
   /* ================= dalga fonksiyonu çöküşü (basit karo modeli) ================= */
@@ -176,7 +196,8 @@
   // komşuluk kuralı: aynı karo ya da bir “yanındaki” karo (sıra boyunca) yan yana gelebilir
   const OK = (a, b) => Math.abs(a - b) <= 1;
   D.wfc = function (root) {
-    const W = 720, H = 300, GW = 36, GH = 14, cs = 20;
+    const cs = 20;
+    let W = 720, H = 300, GW = 36, GH = 14, dar = false;   // dar: 18 sütunluk ızgara, açıklama iki satır, büyük yazı
     let opts, seed = 11, r, timer = null, steps = 0, fails = 0, weights = [1, 1, 1, 2, 1.5, 1];
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const reset = () => { r = RNG(seed + fails * 7919); opts = Array.from({ length: GW * GH }, () => TILES.map((_, i) => i)); steps = 0; };
@@ -209,11 +230,11 @@
         if (o.length === 1) { ctx.fillStyle = TILES[o[0]].col; ctx.fillRect(x, y, cs - 1, cs - 1); }
         else { // olası karoların küçük şeritleri + seçenek sayısı (entropi)
           o.forEach((ti, k) => { ctx.fillStyle = TILES[ti].col; ctx.globalAlpha = o.length === TILES.length ? 0.18 : 0.45; ctx.fillRect(x + (k * (cs - 1)) / o.length, y, (cs - 1) / o.length, cs - 1); });
-          ctx.globalAlpha = 1; if (o.length < TILES.length) SL.drawLabel(ctx, String(o.length), x + cs / 2, y + cs / 2, t.ink, { size: 10, bg: false });
+          ctx.globalAlpha = 1; if (o.length < TILES.length) SL.drawLabel(ctx, String(o.length), x + cs / 2, y + cs / 2, t.ink, { size: dar ? 13 : 10, bg: false });
         }
       }
       const done = opts.every(o => o.length === 1);
-      TILES.forEach((tl, i) => { ctx.fillStyle = tl.col; ctx.fillRect(10 + i * 110, H - 18, 14, 14); SL.drawLabel(ctx, tl.n, 30 + i * 110, H - 11, t.ink, { size: 11, align: 'left', bg: false }); });
+      TILES.forEach((tl, i) => { const lx = dar ? 10 + (i % 3) * 118 : 10 + i * 110, ly = dar ? H - 40 + Math.floor(i / 3) * 21 : H - 18; ctx.fillStyle = tl.col; ctx.fillRect(lx, ly, 14, 14); SL.drawLabel(ctx, tl.n, lx + 20, ly + 7, t.ink, { size: dar ? 13 : 11, align: 'left', bg: false }); });
       info.innerHTML = `Adım ${steps}${fails ? ` · çelişki nedeniyle ${fails} kez baştan` : ''}${done ? ' · <b>bitti</b>' : ''}. Kural: bir karo sadece kendisiyle ya da “bir yanındakiyle” komşu olabilir (derin su–su–kum–çimen–orman–dağ). Sayı = o hücrede hâlâ mümkün olan karo sayısı; her adımda <b>en az seçeneği olan</b> hücre çöker, kısıtlar komşulara yayılır.`;
     };
     const run = () => { if (timer) { clearInterval(timer); timer = null; return; } timer = setInterval(() => { for (let k = 0; k < 4; k++) { if (step() === 'done') { clearInterval(timer); timer = null; break; } } draw(); }, 30); };
@@ -221,8 +242,11 @@
     root.append(el('div', { class: 'sv-controls' },
       btn('1 adım', () => { step(); draw(); }), btn('▶ / ⏸ çalıştır', run), btn('⏭ hepsi', () => { let g = 0; while (step() !== 'done' && g++ < 5000); draw(); }),
       seedBox(seed, v => { seed = v; fails = 0; reset(); draw(); }), btn('↺ yeni', () => { seed = Math.floor(Math.random() * 99999); fails = 0; root.querySelector('.seed-in').value = seed; reset(); draw(); }),
-      slider('çimen ağırlığı', 0.5, 5, weights[3], 0.5, v => { weights[3] = v; }), slider('su ağırlığı', 0.5, 5, weights[1], 0.5, v => { weights[1] = v; weights[0] = v; })), C, info);
+      slider('çimen ağırlığı', 0.5, 5, weights[3], 0.5, v => { weights[3] = v; regen(); }), slider('su ağırlığı', 0.5, 5, weights[1], 0.5, v => { weights[1] = v; weights[0] = v; regen(); })), C, info);
+    // ağırlık değişince haritayı aynı tohumla yeni ağırlıklarla baştan üret: etkisi hemen görünsün
+    function regen() { if (timer) { clearInterval(timer); timer = null; } fails = 0; reset(); let g = 0; while (step() !== 'done' && g++ < 5000); draw(); }
     reset(); draw(); SL.onTheme(draw);
+    darIzle(root, d => { if (timer) { clearInterval(timer); timer = null; } dar = d; GW = d ? 18 : 36; W = GW * cs; H = d ? GH * cs + 46 : 300; SL.setupCanvas(C, W, H); fails = 0; reset(); draw(); });
     return { stop() { if (timer) { clearInterval(timer); timer = null; } } };
   };
 
@@ -236,7 +260,7 @@
   const expand = (ax, rules, n) => { let s = ax; for (let i = 0; i < n; i++) { let o = ''; for (const ch of s) o += rules[ch] !== undefined ? rules[ch] : ch; s = o; if (s.length > 400000) break; } return s; };
   SL.LSYS_expand = expand;
   D.lsystem = function (root) {
-    const W = 720, H = 330;
+    let W = 720, H = 330, dar = false;   // dar: dar tuval, alt yazı iki satır
     let key = 'plant', n = LSYS.plant.n, ang = LSYS.plant.ang, jitter = 0, seed = 1;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
@@ -245,12 +269,13 @@
       // önce sınırları bul, sonra ölçekle
       const walk = cb => { let x = 0, y = 0, a = L.start * Math.PI / 180; const st = []; for (const ch of s) { if (ch === 'F') { const nx = x + Math.cos(a), ny = y + Math.sin(a); cb(x, y, nx, ny, st.length); x = nx; y = ny; } else if (ch === '+') a += (ang + (r() - 0.5) * jitter) * Math.PI / 180; else if (ch === '-') a -= (ang + (r() - 0.5) * jitter) * Math.PI / 180; else if (ch === '[') st.push([x, y, a]); else if (ch === ']') [x, y, a] = st.pop(); } };
       let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9; walk((x, y, nx, ny) => { mnx = Math.min(mnx, x, nx); mny = Math.min(mny, y, ny); mxx = Math.max(mxx, x, nx); mxy = Math.max(mxy, y, ny); });
-      const sc = Math.min((W - 30) / Math.max(1e-6, mxx - mnx), (H - 40) / Math.max(1e-6, mxy - mny)), ox = (W - (mxx - mnx) * sc) / 2 - mnx * sc, oy = (H - 20 - (mxy - mny) * sc) / 2 - mny * sc + 4;
+      const sc = Math.min((W - 30) / Math.max(1e-6, mxx - mnx), (H - (dar ? 60 : 40)) / Math.max(1e-6, mxy - mny)), ox = (W - (mxx - mnx) * sc) / 2 - mnx * sc, oy = (H - (dar ? 40 : 20) - (mxy - mny) * sc) / 2 - mny * sc + 4;
       ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
       ctx.lineWidth = 1; ctx.lineCap = 'round';
       // ikinci geçiş: aynı tohumla yeniden yürüyüp çiz (sınır hesabıyla aynı açılar)
       (function () { let x = 0, y = 0, a = L.start * Math.PI / 180; const st = []; const rr = RNG(seed); for (const ch of s) { if (ch === 'F') { const nx = x + Math.cos(a), ny = y + Math.sin(a); const d = st.length; ctx.strokeStyle = key === 'koch' || key === 'dragon' ? t.blue : d > 3 ? t.green : (t.dark ? '#b08a5a' : '#7a5a32'); ctx.beginPath(); ctx.moveTo(ox + x * sc, oy + y * sc); ctx.lineTo(ox + nx * sc, oy + ny * sc); ctx.stroke(); x = nx; y = ny; } else if (ch === '+') a += (ang + (rr() - 0.5) * jitter) * Math.PI / 180; else if (ch === '-') a -= (ang + (rr() - 0.5) * jitter) * Math.PI / 180; else if (ch === '[') st.push([x, y, a]); else if (ch === ']') [x, y, a] = st.pop(); } })();
-      SL.drawLabel(ctx, `${L.name} · aksiyom “${L.ax}” · ${done} yineleme${done < n ? ' (dize çok uzadı, burada durduk)' : ''} · dize uzunluğu ${s.length.toLocaleString('tr')}`, W / 2, H - 10, t.muted, { size: 11 });
+      if (dar) { SL.drawLabel(ctx, `${L.name} · aksiyom “${L.ax}” · ${done} yineleme`, W / 2, H - 30, t.muted, { size: 12 }); SL.drawLabel(ctx, `dize uzunluğu ${s.length.toLocaleString('tr')}${done < n ? ' (çok uzadı, durduk)' : ''}`, W / 2, H - 11, t.muted, { size: 12 }); }
+      else SL.drawLabel(ctx, `${L.name} · aksiyom “${L.ax}” · ${done} yineleme${done < n ? ' (dize çok uzadı, burada durduk)' : ''} · dize uzunluğu ${s.length.toLocaleString('tr')}`, W / 2, H - 10, t.muted, { size: 11 });
       info.innerHTML = `Kurallar: ${Object.entries(L.rules).map(([k, v]) => `<code>${k} → ${v}</code>`).join(' · ')}. Kaplumbağa: <code>F</code> ileri çiz, <code>+</code>/<code>−</code> ${ang}° dön, <code>[</code> konumu kaydet, <code>]</code> geri dön (dal!). ${jitter ? 'Açıya ±' + jitter / 2 + '° rastgelelik eklendi: her ağaç farklı.' : ''}`;
     };
     const setKey = k => { key = k; n = LSYS[k].n; ang = LSYS[k].ang; nS.querySelector('input').value = n; nS.querySelector('b').textContent = n; aS.querySelector('input').value = ang; aS.querySelector('b').textContent = ang; draw(); };
@@ -261,11 +286,15 @@
       el('label', { class: 'ctl' }, 'Sistem: ', select(Object.fromEntries(Object.entries(LSYS).map(([k, v]) => [k, v.name])), key, setKey)), nS, aS,
       slider('rastgelelik', 0, 30, jitter, 1, v => { jitter = v; syncJ(); draw(); }), bOther), C, info);
     syncJ(); draw(); SL.onTheme(draw);
+    // açıklama kutusu en uzun hâli kadar (sistem ya da rastgelelik değişince alttakiler kaymasın)
+    const olc = enUzun(root, info, () => Object.values(LSYS).map(L => `Kurallar: ${Object.entries(L.rules).map(([k, v]) => `<code>${k} → ${v}</code>`).join(' · ')}. Kaplumbağa: <code>F</code> ileri çiz, <code>+</code>/<code>−</code> 22.5° dön, <code>[</code> konumu kaydet, <code>]</code> geri dön (dal!). Açıya ±15° rastgelelik eklendi: her ağaç farklı.`));
+    darIzle(root, d => { dar = d; W = d ? 360 : 720; H = d ? 380 : 330; SL.setupCanvas(C, W, H); draw(); olc(); });
   };
 
   /* ================= Spelunky: 4×4 oda ızgarası ve çözüm yolu ================= */
   D.spelunky = function (root) {
-    const W = 720, H = 330, RW = 10, RH = 8, cs = 9, ox = 20, oy = 10;
+    const RW = 10, RH = 8, cs = 9, oy = 10;
+    let W = 720, H = 330, ox = 20, dar = false;   // dar: açıklama haritanın altında, büyük yazıyla
     let seed = 5, rooms, path;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const gen = () => {
@@ -298,19 +327,20 @@
         const type = rooms[ry][rx], g = tmpl(type, r, rx), bx = ox + rx * RW * cs, by = oy + ry * RH * cs;
         for (let j = 0; j < RH; j++) for (let i = 0; i < RW; i++) { ctx.fillStyle = g[j][i] === '#' ? (t.dark ? '#5b5145' : '#8a6f4e') : (t.dark ? '#22252f' : '#f3ede1'); ctx.fillRect(bx + i * cs, by + j * cs, cs, cs); }
         ctx.strokeStyle = cols[type]; ctx.lineWidth = 2; ctx.strokeRect(bx + 1, by + 1, RW * cs - 2, RH * cs - 2);
-        SL.drawLabel(ctx, String(type), bx + 10, by + 10, cols[type], { size: 10 });
+        SL.drawLabel(ctx, String(type), bx + 10, by + 10, cols[type], { size: dar ? 12 : 10 });
       }
       ctx.strokeStyle = t.green; ctx.lineWidth = 3; ctx.beginPath(); path.forEach(([x, y], i) => { const px = ox + x * RW * cs + RW * cs / 2, py = oy + y * RH * cs + RH * cs / 2; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.stroke();
       const [sx, sy] = rooms.start, [ex, ey] = rooms.exit;
-      SL.drawLabel(ctx, 'GİRİŞ', ox + sx * RW * cs + RW * cs / 2, oy + sy * RH * cs + RH * cs / 2, t.blue, { size: 11 });
-      SL.drawLabel(ctx, 'ÇIKIŞ', ox + ex * RW * cs + RW * cs / 2, oy + ey * RH * cs + RH * cs / 2, t.red, { size: 11 });
-      const lx = ox + 4 * RW * cs + 30;
-      [['0', 'yol dışı (kapalı olabilir)'], ['1', 'sol–sağ açık'], ['2', 'sol–sağ + ALT açık (buradan düşülür)'], ['3', 'sol–sağ + ÜST açık (buraya düşülür)'], ['4', 'hem üst hem alt açık']].forEach(([k, d], i) => { ctx.fillStyle = cols[i]; ctx.fillRect(lx, 30 + i * 26, 14, 14); SL.drawLabel(ctx, k + ': ' + d, lx + 22, 37 + i * 26, t.ink, { size: 11, align: 'left', bg: false }); });
-      SL.drawLabel(ctx, 'yeşil: garantili çözüm yolu', lx, 30 + 5 * 26 + 8, t.green, { size: 11, align: 'left', bg: false });
+      SL.drawLabel(ctx, 'GİRİŞ', ox + sx * RW * cs + RW * cs / 2, oy + sy * RH * cs + RH * cs / 2, t.blue, { size: dar ? 12 : 11 });
+      SL.drawLabel(ctx, 'ÇIKIŞ', ox + ex * RW * cs + RW * cs / 2, oy + ey * RH * cs + RH * cs / 2, t.red, { size: dar ? 12 : 11 });
+      const lx = dar ? ox : ox + 4 * RW * cs + 30, ly = dar ? oy + 4 * RH * cs + 16 : 30, la = dar ? 22 : 26, lf = dar ? 12 : 11;
+      [['0', 'yol dışı (kapalı olabilir)'], ['1', 'sol–sağ açık'], ['2', 'sol–sağ + ALT açık (buradan düşülür)'], ['3', 'sol–sağ + ÜST açık (buraya düşülür)'], ['4', 'hem üst hem alt açık']].forEach(([k, d], i) => { ctx.fillStyle = cols[i]; ctx.fillRect(lx, ly + i * la, 14, 14); SL.drawLabel(ctx, k + ': ' + d, lx + 22, ly + 7 + i * la, t.ink, { size: lf, align: 'left', bg: false }); });
+      SL.drawLabel(ctx, 'yeşil: garantili çözüm yolu', lx, ly + 5 * la + 8, t.green, { size: lf, align: 'left', bg: false });
       info.innerHTML = 'Önce <b>yol</b>, sonra <b>içerik</b>: üst sıradan rastgele bir odadan başla; rastgele sola, sağa ya da aşağı git; kenara çarpınca aşağı in; en alt sırada aşağı inmek isteyince orası çıkış. Yol üstündeki odalar açıklıklarına uygun el yapımı şablonlardan seçilir; şablonların içi de biraz rastgeledir.';
     };
     root.append(el('div', { class: 'sv-controls' }, seedBox(seed, v => { seed = v; gen(); draw(); }), btn('🎲 yeni seviye', () => { seed = Math.floor(Math.random() * 99999); root.querySelector('.seed-in').value = seed; gen(); draw(); })), C, info);
     gen(); draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; ox = d ? 10 : 20; W = d ? 4 * RW * cs + 2 * ox : 720; H = d ? oy + 4 * RH * cs + 16 + 6 * 22 + 8 : 330; SL.setupCanvas(C, W, H); draw(); });
   };
 
   /* ---------- simlab: mağara otomatı kuralı ---------- */
