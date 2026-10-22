@@ -7,6 +7,9 @@
   const RNG = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
   const sig = x => 1 / (1 + Math.exp(-x));
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  // dar kutu (telefon, < 560 px): tuvalli demolar yazıları okunur kalsın diye dar düzende çizilir; eşik geçilince yeniden kurulur
+  const darMi = root => root.clientWidth > 0 && root.clientWidth < 560;
+  const darIzle = (root, fn) => { let son = null; if (window.ResizeObserver) new ResizeObserver(() => { const d = darMi(root); if (root.clientWidth && d !== son) { son = d; fn(d); } }).observe(root); };
 
   /* ---------- simüle oyuncu: beceri zamanla artar; başarı olasılığı = σ(beceri − zorluk) ---------- */
   function simulate(policy, opts) {
@@ -31,7 +34,7 @@
     dda: (target) => (d, rec) => { if (rec.length < 3) return d; const wr = rec.reduce((a, b) => a + b, 0) / rec.length; return d + (wr - target) * 0.6; }
   };
   D.flow = function (root) {
-    const W = 720, H = 330;
+    let W = 720, H = 330, dar = false;   // dar: düzlem üstte, olasılık ve çubuklar altta
     const c = { policy: 'dda', learn: 1, target: 0.7, skill0: 2, seed: 4 };
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
@@ -41,25 +44,26 @@
       // sol: beceri–zorluk düzlemi ve akış kanalı. Tek “akış” tanımı: P_LO ≤ p ≤ P_HI; p = σ(1,2·(beceri − zorluk)) olduğundan
       // kanalın kenarları: zorluk = beceri + A (üstü kaygı) ve zorluk = beceri − B (altı sıkıntı)
       const A = Math.log(1 / P_LO - 1) / 1.2, B = Math.log(1 / (1 - P_HI) - 1) / 1.2;
-      const ox = 40, oy = 20, S = 270, X = v => ox + v / 10 * S, Y = v => oy + S - v / 10 * S;
+      const ox = dar ? 52 : 40, oy = dar ? 14 : 20, S = dar ? 256 : 270, fs = dar ? 12 : 11, X = v => ox + v / 10 * S, Y = v => oy + S - v / 10 * S;
       ctx.fillStyle = t.dark ? 'rgba(255,92,122,0.12)' : 'rgba(255,92,122,0.12)'; ctx.beginPath(); ctx.moveTo(X(0), Y(A)); ctx.lineTo(X(10 - A), Y(10)); ctx.lineTo(X(0), Y(10)); ctx.closePath(); ctx.fill();
       ctx.fillStyle = t.dark ? 'rgba(79,140,255,0.12)' : 'rgba(79,140,255,0.12)'; ctx.beginPath(); ctx.moveTo(X(B), Y(0)); ctx.lineTo(X(10), Y(10 - B)); ctx.lineTo(X(10), Y(0)); ctx.closePath(); ctx.fill();
       ctx.fillStyle = t.dark ? 'rgba(46,170,90,0.16)' : 'rgba(46,170,90,0.14)'; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(B), Y(0)); ctx.lineTo(X(10), Y(10 - B)); ctx.lineTo(X(10), Y(10)); ctx.lineTo(X(10 - A), Y(10)); ctx.lineTo(X(0), Y(A)); ctx.closePath(); ctx.fill();
       ctx.strokeStyle = t.rule; ctx.strokeRect(X(0), Y(10), S, S);
-      SL.drawLabel(ctx, 'KAYGI (çok zor)', X(2.2), Y(8.6), t.red, { size: 11 }); SL.drawLabel(ctx, 'SIKINTI (çok kolay)', X(7.8), Y(1.4), t.blue, { size: 11 }); SL.drawLabel(ctx, 'AKIŞ', X(6.5), Y(5.85), t.green, { size: 12 });
-      SL.drawLabel(ctx, 'beceri →', X(5), Y(0) + 14, t.muted, { size: 10, bg: false }); ctx.save(); ctx.translate(X(0) - 16, Y(5)); ctx.rotate(-Math.PI / 2); SL.drawLabel(ctx, 'zorluk →', 0, 0, t.muted, { size: 10, bg: false }); ctx.restore();
+      SL.drawLabel(ctx, 'KAYGI (çok zor)', X(2.2), Y(8.6), t.red, { size: fs }); SL.drawLabel(ctx, 'SIKINTI (çok kolay)', X(dar ? 7.6 : 7.8), Y(1.4), t.blue, { size: fs });
+      SL.drawLabel(ctx, 'beceri →', X(5), Y(0) + 14, t.muted, { size: fs - 1, bg: false }); ctx.save(); ctx.translate(X(0) - 16, Y(5)); ctx.rotate(-Math.PI / 2); SL.drawLabel(ctx, 'zorluk →', 0, 0, t.muted, { size: fs - 1, bg: false }); ctx.restore();
       ctx.strokeStyle = t.ink; ctx.lineWidth = 2; ctx.beginPath(); h.forEach((s, i) => { const x = X(s.skill), y = Y(s.diff); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+      SL.drawLabel(ctx, 'AKIŞ', X(1.4), Y(0.6), t.green, { size: 12 });   // sol altta (çizgi buradan seyrek geçer), çizginin üstünde: hep okunur
       const last = h[h.length - 1]; ctx.fillStyle = t.amber; ctx.beginPath(); ctx.arc(X(last.skill), Y(last.diff), 6, 0, 7); ctx.fill();
       // sağ: zamanla kazanma olasılığı
-      const px = 360, pw = 340, py = 30, ph = 120;
+      const px = dar ? 16 : 360, pw = dar ? 308 : 340, py = dar ? 318 : 30, ph = dar ? 90 : 120;
       ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)'; ctx.fillRect(px, py, pw, ph);
       ctx.fillStyle = t.dark ? 'rgba(46,170,90,0.18)' : 'rgba(46,170,90,0.16)'; ctx.fillRect(px, py + ph * (1 - P_HI), pw, ph * (P_HI - P_LO));
       ctx.strokeStyle = t.purple; ctx.lineWidth = 2; ctx.beginPath(); h.forEach((s, i) => { const x = px + (i / (h.length - 1)) * pw, y = py + ph * (1 - s.p); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
       h.forEach((s, i) => { ctx.fillStyle = s.win ? t.green : t.red; ctx.fillRect(px + (i / h.length) * pw, py + ph + 6, pw / h.length - 0.5, 8); });
-      SL.drawLabel(ctx, 'mor: kazanma olasılığı · yeşil bant: akış (%35–90)', px, py - 10, t.muted, { size: 10, align: 'left' });
+      SL.drawLabel(ctx, dar ? 'mor: kazanma olasılığı (yeşil: akış)' : 'mor: kazanma olasılığı · yeşil bant: akış (%35–90)', px, py - 10, t.muted, { size: fs - 1, align: 'left' });
       const anx = h.filter(s => s.p < P_LO).length, bor = h.filter(s => s.p > P_HI).length, flow = h.length - anx - bor;
-      const sx = px, sy = 200;
-      [['akışta', flow, t.green], ['kaygıda (p < 0,35)', anx, t.red], ['sıkıntıda (p > 0,9)', bor, t.blue]].forEach(([n, v, col], i) => { ctx.fillStyle = col; ctx.fillRect(sx, sy + i * 30, (v / h.length) * 170, 20); SL.drawLabel(ctx, `${n}: %${Math.round(v / h.length * 100)}`, sx + 178, sy + i * 30 + 10, t.ink, { size: 11, align: 'left', bg: false }); });
+      const sx = px, sy = dar ? 440 : 200, bmax = dar ? 120 : 170;
+      [['akışta', flow, t.green], ['kaygıda (p < 0,35)', anx, t.red], ['sıkıntıda (p > 0,9)', bor, t.blue]].forEach(([n, v, col], i) => { ctx.fillStyle = col; ctx.fillRect(sx, sy + i * 30, (v / h.length) * bmax, 20); SL.drawLabel(ctx, `${n}: %${Math.round(v / h.length * 100)}`, sx + bmax + 8, sy + i * 30 + 10, t.ink, { size: 11, align: 'left', bg: false }); });
       SL.drawLabel(ctx, `son beceri ${last.skill.toFixed(1)} · son zorluk ${last.diff.toFixed(1)} · galibiyet %${Math.round(h.reduce((a, s) => a + s.win, 0) / h.length * 100)}`, sx, sy + 100, t.ink, { size: 11, align: 'left' });
       info.innerHTML = { fixed: 'Sabit zorluk: oyuncu öğrendikçe oyun kolaylaşır; çizgi sağa kayıp <b>sıkıntı</b> bölgesine girer. Yavaş öğrenen bir oyuncu ise kaygıda takılır.', steps: 'Basamaklı zorluk (tasarımcının seviye eğrisi): her 30 karşılaşmada bir zorluk artar. Ortalama oyuncu için iyi; hızlı ya da yavaş öğrenenler için değil.', dda: `Dinamik zorluk: son 5 sonucun kazanma oranı hedefin (%${Math.round(c.target * 100)}) üstündeyse zorluk artar, altındaysa azalır. Çizgi akış kanalının içinde kalmaya çalışır.` }[c.policy];
     };
@@ -71,11 +75,12 @@
       slider('öğrenme hızı', 0, 3, c.learn, 0.25, v => { c.learn = v; draw(); }), slider('başlangıç becerisi', 0, 6, c.skill0, 0.5, v => { c.skill0 = v; draw(); }),
       targetS, btn('🎲 başka oyuncu', () => { c.seed++; draw(); })), C, info);
     syncTarget(); draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; W = d ? 340 : 720; H = d ? 560 : 330; SL.setupCanvas(C, W, H); draw(); });
   };
 
   /* ================= Left 4 Dead tarzı YZ Yönetmeni ================= */
   D.director = function (root) {
-    const W = 720, H = 300, HIST = 360;
+    let W = 720, dar = false; const H = 300, HIST = 360;   // dar: lejant iki satır, evre adı ayrı satırda, kutucuklar 2 × 2
     const c = { peak: 0.8, relax: 12, sustain: 4, decay: 0.08, skill: 0.5 };
     let I = 0, phase = 'build', tPhase = 0, enemies = 0, hist = [], timer = null, t = 0, r = RNG(7);
     const COLS = () => { const th = T(); return { build: th.red, sustain: th.amber, fade: th.purple, relax: th.green }; };
@@ -98,16 +103,17 @@
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
       const th = T(), col = COLS(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = th.card; ctx.fillRect(0, 0, W, H);
-      const ox = 20, ow = W - 40, oy = 40, oh = 170;
+      const ox = dar ? 16 : 20, ow = W - 2 * ox, oy = dar ? 48 : 40, oh = dar ? 150 : 170;
       hist.forEach((hh, i) => { ctx.fillStyle = col[hh.phase]; ctx.globalAlpha = 0.16; ctx.fillRect(ox + (i / HIST) * ow, oy, ow / HIST + 0.5, oh); });
       ctx.globalAlpha = 1;
       ctx.strokeStyle = th.ink; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(ox, oy + oh * (1 - c.peak)); ctx.lineTo(ox + ow, oy + oh * (1 - c.peak)); ctx.stroke(); ctx.setLineDash([]);
-      SL.drawLabel(ctx, 'zirve eşiği', ox + ow - 4, oy + oh * (1 - c.peak) - 9, th.muted, { size: 10, align: 'right' });
+      SL.drawLabel(ctx, 'zirve eşiği', ox + ow - 4, oy + oh * (1 - c.peak) - 9, th.muted, { size: dar ? 11 : 10, align: 'right' });
       ctx.strokeStyle = th.red; ctx.lineWidth = 2.5; ctx.beginPath(); hist.forEach((hh, i) => { const x = ox + (i / HIST) * ow, y = oy + oh * (1 - hh.I); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
       ctx.strokeStyle = th.blue; ctx.lineWidth = 1.5; ctx.beginPath(); hist.forEach((hh, i) => { const x = ox + (i / HIST) * ow, y = oy + oh * (1 - Math.min(1, hh.enemies / 12)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
-      SL.drawLabel(ctx, '— oyuncunun “duygusal yoğunluğu”', ox, 14, th.red, { size: 11, align: 'left' }); SL.drawLabel(ctx, '— aktif düşman sayısı', ox + 250, 14, th.blue, { size: 11, align: 'left' });
-      SL.drawLabel(ctx, 'Yönetmen durumu: ' + NAMES[phase], W / 2, oy + oh + 26, col[phase], { size: 13 });
-      Object.entries(NAMES).forEach(([k, n], i) => { ctx.fillStyle = col[k]; ctx.fillRect(ox + i * 175, H - 30, 12, 12); SL.drawLabel(ctx, n.split(' (')[0], ox + 16 + i * 175, H - 24, th.ink, { size: 10, align: 'left', bg: false }); });
+      SL.drawLabel(ctx, '— oyuncunun “duygusal yoğunluğu”', ox, 14, th.red, { size: 11, align: 'left' }); SL.drawLabel(ctx, '— aktif düşman sayısı', dar ? ox : ox + 250, dar ? 32 : 14, th.blue, { size: 11, align: 'left' });
+      if (dar) { SL.drawLabel(ctx, 'Yönetmen durumu:', W / 2, oy + oh + 20, col[phase], { size: 12 }); SL.drawLabel(ctx, NAMES[phase], W / 2, oy + oh + 38, col[phase], { size: 12 }); }
+      else SL.drawLabel(ctx, 'Yönetmen durumu: ' + NAMES[phase], W / 2, oy + oh + 26, col[phase], { size: 13 });
+      Object.entries(NAMES).forEach(([k, n], i) => { const lx = dar ? ox + 24 + (i % 2) * 150 : ox + i * 175, ly = dar ? H - 44 + Math.floor(i / 2) * 22 : H - 30; ctx.fillStyle = col[k]; ctx.fillRect(lx, ly, 12, 12); SL.drawLabel(ctx, n.split(' (')[0], lx + 16, ly + 6, th.ink, { size: dar ? 11 : 10, align: 'left', bg: false }); });
       info.innerHTML = 'Valve’in Left 4 Dead “YZ Yönetmeni” mantığı: yoğunluk; hasar alınca, yakında düşman ölünce artar, ortada düşman yoksa azalır. Yoğunluk zirveyi geçince yönetmen birkaç saniye daha bastırır, sonra düşman göndermeyi keser, çatışmanın doğal olarak bitmesini bekler ve oyunculara nefes aldırır. Sonuç: <b>gerilim–rahatlama dalgası</b>. Oyun zamanı 6× hızlı akar: 12 oyun saniyesi ekranda 2 saniye sürer.';
     };
     const run = () => { if (timer) return; timer = setInterval(() => { for (let k = 0; k < 3; k++) step(0.1); draw(); }, 50); };
@@ -118,12 +124,13 @@
       slider('oyuncu becerisi', 0, 1, c.skill, 0.1, v => { c.skill = v; }), slider('zirve eşiği', 0.4, 1, c.peak, 0.05, v => { c.peak = v; }),
       slider('dinlenme (oyun sn)', 2, 40, c.relax, 1, v => { c.relax = v; })), C, info);
     draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; W = d ? 340 : 720; SL.setupCanvas(C, W, H); draw(); });
     return { start: run, stop };
   };
 
   /* ================= yarış: lastik bant ================= */
   D.rubber = function (root) {
-    const W = 720, H = 300, LAP = 3000, N = 5;
+    let W = 720, dar = false; const H = 300, LAP = 3000, N = 5;   // dar: şeritler kısa, çarpan yazıları sağda
     const c = { band: 0.6, dead: 120, maxB: 0.25, player: 1.0 };
     let cars, timer = null, done = false, res = [], nitro = 0, nitroLeft = 3;
     const reset = () => { const r = RNG(11); cars = Array.from({ length: N }, (_, i) => ({ me: i === 0, x: 0, base: i === 0 ? 0 : [0.86, 0.95, 1.12, 1.22][i - 1], col: i })); done = false; res = []; nitro = 0; nitroLeft = 3; };
@@ -137,23 +144,23 @@
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
-      const cols = [t.blue, t.red, t.amber, t.purple, t.green], me = cars[0], CX = 330, SC = 0.42;
+      const cols = [t.blue, t.red, t.amber, t.purple, t.green], me = cars[0], CX = dar ? 118 : 330, SC = dar ? 0.14 : 0.42, fs = dar ? 11 : 10;
       // görünüm oyuncuya göre: yatay konum = YZ ile oyuncu arasındaki fark (±700 birim)
       const dz = c.dead * SC;
       ctx.fillStyle = t.dark ? 'rgba(46,170,90,0.15)' : 'rgba(46,170,90,0.12)'; ctx.fillRect(CX - dz, 24, 2 * dz, 214);
       ctx.strokeStyle = t.rule; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(CX, 20); ctx.lineTo(CX, 240); ctx.stroke(); ctx.setLineDash([]);
-      SL.drawLabel(ctx, '← geride', CX - 290, 14, t.muted, { size: 10 }); SL.drawLabel(ctx, 'önde →', CX + 290, 14, t.muted, { size: 10 });
+      SL.drawLabel(ctx, '← geride', CX - (dar ? 66 : 290), 14, t.muted, { size: fs }); SL.drawLabel(ctx, 'önde →', CX + (dar ? 66 : 290), 14, t.muted, { size: fs });
       cars.forEach((k, i) => {
         const y = 44 + i * 42, gap = k.x - me.x, x = CX + clamp(gap, -700, 700) * SC;
         ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'; ctx.fillRect(CX - 700 * SC, y - 12, 1400 * SC, 24);
         ctx.fillStyle = cols[i]; ctx.fillRect(x - 12, y - 8, 24, 16);
         const m = k.me ? 1 : mult(gap);
-        SL.drawLabel(ctx, k.me ? (nitro > 0 ? 'SİZ 🚀' : 'SİZ') : `YZ ${i} ×${m.toFixed(2)}`, 640, y, k.me ? t.blue : m > 1.001 ? t.green : m < 0.999 ? t.red : t.muted, { size: 11, align: 'left', bg: false });
+        SL.drawLabel(ctx, k.me ? (nitro > 0 ? 'SİZ 🚀' : 'SİZ') : `YZ ${i} ×${m.toFixed(2)}`, dar ? 226 : 640, y, k.me ? t.blue : m > 1.001 ? t.green : m < 0.999 ? t.red : t.muted, { size: 11, align: 'left', bg: false });
       });
-      SL.drawLabel(ctx, 'ölü bölge (lastik bant yok)', CX, 252, t.green, { size: 10 });
-      ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'; ctx.fillRect(20, 266, 520, 8); ctx.fillStyle = t.blue; ctx.fillRect(20, 266, 520 * Math.min(1, me.x / LAP), 8);
-      SL.drawLabel(ctx, 'yarışın ilerlemesi', 550, 270, t.muted, { size: 10, align: 'left', bg: false });
-      if (done) SL.drawLabel(ctx, 'Sıralama: ' + res.map(k => (k.me ? 'SİZ' : 'YZ ' + cars.indexOf(k))).join(' › '), W / 2, H - 10, t.ink, { size: 12 });
+      SL.drawLabel(ctx, 'ölü bölge (lastik bant yok)', CX, 252, t.green, { size: fs });
+      ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'; const pb = dar ? 150 : 520; ctx.fillRect(20, 266, pb, 8); ctx.fillStyle = t.blue; ctx.fillRect(20, 266, pb * Math.min(1, me.x / LAP), 8);
+      SL.drawLabel(ctx, 'yarışın ilerlemesi', pb + 30, 270, t.muted, { size: fs, align: 'left', bg: false });
+      if (done) SL.drawLabel(ctx, 'Sıralama: ' + res.map(k => (k.me ? 'SİZ' : 'YZ ' + cars.indexOf(k))).join(' › '), W / 2, H - 10, t.ink, { size: dar ? 11 : 12 });
       info.innerHTML = 'Görünüm <b>size göre</b>: her araba, sizden ne kadar önde ya da geride olduğuna göre çiziliyor. Nic Melder’in (Game AI Pro) eğrisi: yakınınızda (yeşil ölü bölge) hiçbir değişiklik yok, böylece yan yana yarışırken “hile” görünmez. Öndeki YZ uzaklaştıkça yavaşlar (kırmızı çarpan), arkadaki hızlanır (yeşil). Lastik bant gücünü 0 yapıp yarışı yeniden başlatın: araçlar dağılır. Tercihen önce YZ’nin <b>sürüş becerisi</b> düşürülür, yetmezse aracın gücü. <b>🚀 Nitro</b> (yarış başına 3 hak) sizi kısa süre hızlandırır: öne geçince arkadaki YZ’lerin çarpanı nasıl değişiyor?';
     };
     const run = () => { if (timer) return; timer = setInterval(() => { for (let k = 0; k < 2; k++) step(); draw(); if (done) { clearInterval(timer); timer = null; } }, 30); };
@@ -162,26 +169,28 @@
       btn('🏁 yarışı başlat', () => { reset(); run(); }), btn('🚀 nitro (3 hak)', () => { if (!timer || nitroLeft <= 0 || nitro > 0) return; nitroLeft--; nitro = 90; SL.sfx && SL.sfx('shot'); }), slider('lastik bant gücü', 0, 1, c.band, 0.1, v => { c.band = v; }), slider('ölü bölge', 0, 400, c.dead, 20, v => { c.dead = v; }),
       slider('sizin hızınız', 0.8, 1.3, c.player, 0.02, v => { c.player = v; })), C, info);
     reset(); draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; W = d ? 340 : 720; SL.setupCanvas(C, W, H); draw(); });
     return { stop() { if (timer) { clearInterval(timer); timer = null; } } };
   };
 
   /* ================= adil hissettiren rastgelelik: PRD ve “yalancı yüzdeler” ================= */
   D.prd = function (root) {
-    const W = 720, H = 300;
+    let W = 720, H = 300, dar = false;   // dar: 25'lik satırlar, başlık iki satır
     let mode = 'true', p = 0.25, seq = [], seed = 5;
     const C_PRD = { 0.25: 0.084744, 0.15: 0.032221, 0.4: 0.201547 };
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const gen = () => { const r = RNG(seed); seq = []; let n = 0; const Cc = C_PRD[p]; for (let i = 0; i < 400; i++) { n++; const pr = mode === 'true' ? p : Math.min(1, Cc * n); const hit = r() < pr; seq.push(hit); if (hit) n = 0; } };
     const draw = () => {
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
-      seq.slice(0, 200).forEach((hit, i) => { ctx.fillStyle = hit ? t.amber : (t.dark ? '#33384a' : '#dad6e6'); ctx.fillRect(20 + (i % 50) * 13.6, 20 + Math.floor(i / 50) * 18, 12, 14); });
+      const sat = dar ? 25 : 50, cw = dar ? 12 : 13.6; seq.slice(0, 200).forEach((hit, i) => { ctx.fillStyle = hit ? t.amber : (t.dark ? '#33384a' : '#dad6e6'); ctx.fillRect(20 + (i % sat) * cw, 20 + Math.floor(i / sat) * 18, cw - 1.6, 14); });
       // kaç vuruşta bir kritik? aralık histogramı
       const gaps = []; let g = 0; seq.forEach(h => { g++; if (h) { gaps.push(g); g = 0; } });
       const bins = Array(16).fill(0); gaps.forEach(x => bins[Math.min(15, x - 1)]++); const mx = Math.max(1, ...bins);
-      const bx = 20, by = 120, bw = 680, bh = 130;
+      const bx = 20, by = dar ? 214 : 120, bw = W - 40, bh = dar ? 110 : 130;
       bins.forEach((v, i) => { ctx.fillStyle = t.purple; const hh = (v / mx) * bh; ctx.fillRect(bx + i * (bw / 16) + 4, by + bh - hh, bw / 16 - 8, hh); SL.drawLabel(ctx, i === 15 ? '16+' : String(i + 1), bx + i * (bw / 16) + bw / 32, by + bh + 10, t.muted, { size: 10, bg: false }); });
       const longest = Math.max(0, ...gaps), rate = seq.filter(Boolean).length / seq.length;
-      SL.drawLabel(ctx, `iki kritik arasındaki vuruş sayısı · gerçekleşen oran %${(rate * 100).toFixed(1)} · en uzun kuraklık ${longest} vuruş`, W / 2, by - 10, t.ink, { size: 11 });
+      if (dar) { SL.drawLabel(ctx, 'iki kritik arasındaki vuruş sayısı', W / 2, by - 30, t.ink, { size: 11 }); SL.drawLabel(ctx, `gerçekleşen oran %${(rate * 100).toFixed(1)} · en uzun kuraklık ${longest} vuruş`, W / 2, by - 12, t.ink, { size: 11 }); }
+      else SL.drawLabel(ctx, `iki kritik arasındaki vuruş sayısı · gerçekleşen oran %${(rate * 100).toFixed(1)} · en uzun kuraklık ${longest} vuruş`, W / 2, by - 10, t.ink, { size: 11 });
       info.innerHTML = mode === 'true' ? `Gerçek rastgele: her vuruşta %${p * 100} şans. Ortalama doğru, ama arka arkaya 10+ ıska ya da 3 kritik üst üste olabilir: oyuncu bunu “bozuk” hisseder.` : `Sözde rastgele dağılım (PRD, Dota 2 ve Warcraft III): n’inci denemede şans C·n (C ≈ ${C_PRD[p]}); kritik gelince n sıfırlanır. Ortalama yine %${p * 100}, ama uzun kuraklıklar ve üst üste kritikler neredeyse yok: daha <b>adil hissettirir</b>.`;
     };
     root.append(el('div', { class: 'sv-controls' },
@@ -189,6 +198,7 @@
       el('label', { class: 'ctl' }, 'Kritik şansı: ', select({ 0.15: '%15', 0.25: '%25', 0.4: '%40' }, String(p), v => { p = +v; gen(); draw(); })),
       btn('🎲 yeniden', () => { seed++; gen(); draw(); })), C, info);
     gen(); draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; W = d ? 340 : 720; H = d ? 348 : 300; SL.setupCanvas(C, W, H); draw(); });
   };
 
   /* ---------- simlab: kendi DDA kuralın ---------- */
