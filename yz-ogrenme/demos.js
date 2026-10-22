@@ -4,6 +4,16 @@
   const { el, btn, slider, select } = SL;
   const D = window.DEMOS, V = SL.V;
   const T = () => SL.theme();
+  // kaymaz: yazısı değişen düğme en uzun etiketinin genişliğinde; FramePlayer kutuları bütün karelerin en uzun hâlinde
+  const sabitGen = (b, etiketler) => requestAnimationFrame(() => { const eski = b.textContent; let m = 0; for (const e of etiketler) { b.textContent = e; m = Math.max(m, b.offsetWidth); } b.textContent = eski; if (m) b.style.minWidth = m + 'px'; });
+  const sabitBoy = (root, kutular, olc) => {
+    const yap = () => { if (!root.clientWidth) return; kutular.forEach(e => { e.style.minHeight = ''; }); const h = kutular.map(() => 0); olc(() => kutular.forEach((e, i) => { h[i] = Math.max(h[i], e.offsetHeight); })); kutular.forEach((e, i) => { if (h[i]) e.style.minHeight = h[i] + 'px'; }); };
+    requestAnimationFrame(yap);
+    if (window.ResizeObserver) { let w = 0; new ResizeObserver(() => { if (Math.abs(root.clientWidth - w) > 2) { w = root.clientWidth; yap(); } }).observe(root); }
+  };
+  // dar kutu (telefon, < 560 px): tuvalli/SVG'li demolar yazıları okunur kalsın diye dar düzende çizilir; eşik geçilince yeniden kurulur
+  const darMi = root => root.clientWidth > 0 && root.clientWidth < 560;
+  const darIzle = (root, fn) => { let son = null; if (window.ResizeObserver) new ResizeObserver(() => { const d = darMi(root); if (root.clientWidth && d !== son) { son = d; fn(d); } }).observe(root); };
   const argmax = a => { let k = 0; for (let i = 1; i < a.length; i++) if (a[i] > a[k]) k = i; return k; };
   const lineChart = (ctx, x, y, w, h, data, col, t, label) => {
     ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)'; ctx.fillRect(x, y, w, h);
@@ -61,19 +71,20 @@
     };
     const diag = el('div'), note = el('div', { class: 'sv-note ah-note' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' });
     const draw = (f, pl) => {
-      const t = T(), C = 200; let s = '';
+      const t = T(), C = 200, dar = darMi(root); let s = '';
       for (let i = 0; i < N; i++) {
         const x = 20 + i * C, q = f.Q[i], ch = f.ch === i, goal = i === N - 1;
         s += `<rect x="${x}" y="20" width="${C - 12}" height="150" rx="12" fill="${goal ? (t.dark ? '#3a3210' : '#fff3c4') : t.card}" stroke="${ch ? t.red : f.pos === i ? t.amber : t.rule}" stroke-width="${ch ? 5 : f.pos === i ? 4 : 1.5}"/>`;
-        s += `<text x="${x + 14}" y="44" font-size="15" fill="${t.muted}">${goal ? 'peynir' : (i + 1) + '. kare'}</text>`;
+        s += `<text x="${x + 14}" y="${dar ? 58 : 44}" font-size="${dar ? 34 : 15}" fill="${t.muted}">${goal ? 'peynir' : (i + 1) + '. kare'}</text>`;
         if (goal) s += `<text x="${x + C / 2 - 6}" y="120" text-anchor="middle" font-size="56">🧀</text>`;
         else {
           s += `<rect x="${x + 16}" y="${140 - q * 8}" width="${C - 44}" height="${q * 8}" rx="4" fill="${t.green}" opacity=".35"/>`;
-          s += `<text x="${x + C / 2 - 6}" y="112" text-anchor="middle" font-size="34" font-weight="900" font-family="JetBrains Mono" fill="${ch ? t.red : q > 0 ? t.ink : t.muted}">${f2(q)}</text><text x="${x + C / 2 - 6}" y="160" text-anchor="middle" font-size="14" fill="${t.muted}">“sağa git”in değeri</text>`;
+          s += `<text x="${x + C / 2 - 6}" y="${dar ? 128 : 112}" text-anchor="middle" font-size="${dar ? 56 : 34}" font-weight="900" font-family="JetBrains Mono" fill="${ch ? t.red : q > 0 ? t.ink : t.muted}">${f2(q)}</text>` + (dar ? '' : `<text x="${x + C / 2 - 6}" y="160" text-anchor="middle" font-size="14" fill="${t.muted}">“sağa git”in değeri</text>`);
         }
-        if (f.pos === i) s += `<text x="${x + C - 40}" y="60" text-anchor="middle" font-size="34">🐭</text>`;
+        if (f.pos === i) s += dar ? `<text x="${x + C / 2 - 6}" y="214" text-anchor="middle" font-size="44">🐭</text>` : `<text x="${x + C - 40}" y="60" text-anchor="middle" font-size="34">🐭</text>`;
       }
-      diag.innerHTML = `<svg viewBox="0 0 ${N * C + 28} 190" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
+      if (dar) s += `<text x="${(N * C + 28) / 2}" y="262" text-anchor="middle" font-size="32" fill="${t.muted}">kutudaki sayı: “sağa git”in değeri</text>`;
+      diag.innerHTML = `<svg viewBox="0 0 ${N * C + 28} ${dar ? 280 : 190}" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
       note.innerHTML = f.note;
       moral.innerHTML = pl.done && moralTxt ? '💡 ' + moralTxt : `tur ${f.ep} / ${EP}`;
     };
@@ -83,13 +94,15 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, diag, SL.transport(fp, { min: 0.4, max: 8 }), note, moral);
     bs[0].classList.add('primary'); load(0, false);
+    sabitBoy(root, [story, note, moral], olc => { const F0 = F, m0 = moralTxt, s0 = story.innerHTML; SC.forEach(sc => { build(sc[1], sc[2]); moralTxt = sc[4]; story.innerHTML = '📖 ' + sc[3]; F.forEach((f, k) => { draw(f, { done: k === F.length - 1 }); olc(); }); }); F = F0; moralTxt = m0; story.innerHTML = s0; fp.render(); });
+    darIzle(root, () => fp.render());
     SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };
   };
 
   D.qgrid = function (root) {
     const env = GridEnv(MAP1), N = env.W * env.H;
-    const W = 720, H = 300, cs = 46, ox = 10, oy = 8;
+    let W = 720, H = 300, cs = 46, ox = 10, oy = 8, dar = false;   // dar: ızgara üstte, grafik ve açıklamalar altta
     const cfg = { alpha: 0.5, gamma: 0.9, eps: 0.2, showQ: true };
     let Q, s, ep, steps, ret, rets, last, timer = null, mode = null;
     const reset = () => { Q = Array.from({ length: N }, () => [0, 0, 0, 0]); s = env.start; ep = 0; steps = 0; ret = 0; rets = []; last = null; };
@@ -111,19 +124,27 @@
       for (let i = 0; i < N; i++) {
         const x = ox + (i % env.W) * cs, y = oy + Math.floor(i / env.W) * cs, c = env.cell(i);
         if (c === '#') { ctx.fillStyle = t.dark ? '#4a4f63' : '#3d4255'; ctx.fillRect(x, y, cs - 1, cs - 1); continue; }
-        if (c === 'L') { ctx.fillStyle = t.dark ? '#6b2a2a' : '#f3b3a8'; ctx.fillRect(x, y, cs - 1, cs - 1); SL.drawLabel(ctx, 'lav −10', x + cs / 2, y + cs / 2, t.red, { size: 9 }); continue; }
-        if (c === 'G') { ctx.fillStyle = t.dark ? '#24543a' : '#bde8c9'; ctx.fillRect(x, y, cs - 1, cs - 1); SL.drawLabel(ctx, 'hazine', x + cs / 2, y + cs / 2 - 6, t.green, { size: 9 }); SL.drawLabel(ctx, '+10', x + cs / 2, y + cs / 2 + 7, t.green, { size: 9 }); continue; }
+        if (c === 'L') { ctx.fillStyle = t.dark ? '#6b2a2a' : '#f3b3a8'; ctx.fillRect(x, y, cs - 1, cs - 1); SL.drawLabel(ctx, dar ? '−10' : 'lav −10', x + cs / 2, y + cs / 2, t.red, { size: dar ? 11 : 9, bg: !dar }); continue; }
+        if (c === 'G') { ctx.fillStyle = t.dark ? '#24543a' : '#bde8c9'; ctx.fillRect(x, y, cs - 1, cs - 1); if (dar) SL.drawLabel(ctx, '+10', x + cs / 2, y + cs / 2, t.green, { size: 11, bg: false }); else { SL.drawLabel(ctx, 'hazine', x + cs / 2, y + cs / 2 - 6, t.green, { size: 9 }); SL.drawLabel(ctx, '+10', x + cs / 2, y + cs / 2 + 7, t.green, { size: 9 }); } continue; }
         const cx = x + cs / 2, cy = y + cs / 2;
         if (cfg.showQ) {
           const tri = [[[x, y], [x + cs - 1, y]], [[x + cs - 1, y], [x + cs - 1, y + cs - 1]], [[x + cs - 1, y + cs - 1], [x, y + cs - 1]], [[x, y + cs - 1], [x, y]]];
           tri.forEach(([p, q], a) => { const v = Q[i][a] / mxQ; ctx.fillStyle = v >= 0 ? `rgba(46,170,90,${Math.min(0.85, v)})` : `rgba(230,70,70,${Math.min(0.85, -v)})`; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.closePath(); ctx.fill(); });
         } else { ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'; ctx.fillRect(x, y, cs - 1, cs - 1); }
         ctx.strokeStyle = t.rule; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, cs - 2, cs - 2);
-        if (Q[i].some(v => v !== 0)) SL.drawLabel(ctx, ARW[argmax(Q[i])], cx, cy, t.ink, { size: 15 });
+        if (Q[i].some(v => v !== 0)) SL.drawLabel(ctx, ARW[argmax(Q[i])], cx, cy, t.ink, { size: dar ? 13 : 15 });
         if (c === 'S') SL.drawLabel(ctx, 'S', x + 8, y + 9, t.blue, { size: 10 });
       }
       const ax = ox + (s % env.W) * cs + cs / 2, ay = oy + Math.floor(s / env.W) * cs + cs / 2;
-      ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(ax, ay, 9, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(ax, ay, dar ? 7 : 9, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      if (dar) {   // dar: grafik ızgaranın altında tam genişlikte, açıklamalar kısa satırlarda
+        const py = oy + env.H * cs + 10, avg = rets.slice(-20);
+        lineChart(ctx, ox, py, W - 2 * ox, 70, rets.slice(-200), t.blue, t, 'bölüm getirisi');
+        SL.drawLabel(ctx, `bölüm: ${ep} · adım: ${steps} · son 20 ort.: ${avg.length ? (avg.reduce((a, b) => a + b, 0) / avg.length).toFixed(2) : '—'}`, ox, py + 86, t.ink, { size: 11, align: 'left' });
+        SL.drawLabel(ctx, 'yeşil = iyi, kırmızı = kötü · +10 hazine, −10 lav', ox, py + 104, t.muted, { size: 10, align: 'left' });
+        SL.drawLabel(ctx, 'ok = en iyi eylem · üçgen = o yönün Q değeri', ox, py + 120, t.muted, { size: 10, align: 'left' });
+        SL.drawLabel(ctx, 'tık = duvar/lav/boş', ox, py + 136, t.muted, { size: 10, align: 'left' });
+      } else {
       const px = ox + env.W * cs + 14, pw = W - px - 8;
       lineChart(ctx, px, oy, pw, 120, rets.slice(-200), t.blue, t, 'bölüm getirisi');
       SL.drawLabel(ctx, `bölüm: ${ep}`, px, oy + 140, t.ink, { size: 12, align: 'left' });
@@ -133,6 +154,7 @@
       SL.drawLabel(ctx, 'ok = açgözlü (en iyi) eylem', px, oy + 222, t.muted, { size: 10, align: 'left' });
       SL.drawLabel(ctx, 'üçgen = o yöne gitmenin Q değeri', px, oy + 238, t.muted, { size: 10, align: 'left' });
       SL.drawLabel(ctx, 'tık = duvar/lav/boş', px, oy + 254, t.muted, { size: 10, align: 'left' });
+      }
       if (last) {
         const f = v => v.toFixed(2);
         info.innerHTML = `Son güncelleme: Q(s, ${ARW[last.a]}) ← ${f(last.old)} + α·(r + γ·max Q(s′) − ${f(last.old)}) = ${f(last.old)} + ${cfg.alpha}·(${f(last.r)} + ${cfg.gamma}·${f(last.mx)} − ${f(last.old)}) = <b>${f(last.nw)}</b>${last.done ? ' (bölüm bitti: max Q(s′) = 0)' : ''}`;
@@ -140,6 +162,7 @@
     };
     const stop = () => { if (timer) { clearInterval(timer); timer = null; } mode = null; playBtn.textContent = '▶ canlı oynat'; };
     const playBtn = btn('▶ canlı oynat', () => { if (timer) { stop(); return; } mode = 'play'; playBtn.textContent = '⏸ durdur'; timer = setInterval(() => { stepOnce(); draw(); }, 60); });
+    sabitGen(playBtn, ['▶ canlı oynat', '⏸ durdur']);
     C.addEventListener('mousedown', e => {
       const r = C.getBoundingClientRect(), x = ((e.clientX - r.left) * W) / r.width - ox, y = ((e.clientY - r.top) * H) / r.height - oy;
       const gx = Math.floor(x / cs), gy = Math.floor(y / cs); if (gx < 0 || gy < 0 || gx >= env.W || gy >= env.H) return;
@@ -159,12 +182,14 @@
         btn('↺ unut', () => { stop(); reset(); draw(); })),
       C, info);
     draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; cs = d ? 33 : 46; ox = d ? 8 : 10; W = d ? env.W * cs + 2 * ox : 720; H = d ? oy + env.H * cs + 156 : 300; SL.setupCanvas(C, W, H); draw(); });
     return { stop };
   };
 
   /* ================= çok kollu haydut: keşif ve sömürü ================= */
   D.bandit = function (root) {
-    const W = 720, H = 250, K = 4;
+    let W = 720, H = 250, dar = false;   // dar: makineler üstte, grafik altta tam genişlikte
+    const K = 4;
     let p, est, cnt, total, pulls, showTrue = false, eps = 0.1, hist, opt;
     const newGame = () => { p = Array.from({ length: K }, () => 0.15 + Math.random() * 0.7); est = Array(K).fill(0); cnt = Array(K).fill(0); total = 0; pulls = 0; hist = []; opt = 0; };
     newGame();
@@ -175,19 +200,26 @@
       const t = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = t.card; ctx.fillRect(0, 0, W, H);
       const best = argmax(p);
       for (let k = 0; k < K; k++) {
-        const x = 20 + k * 110, y = 20, w = 90, h = 150;
+        const x = dar ? 8 + k * 87 : 20 + k * 110, y = 20, w = dar ? 80 : 90, h = dar ? 130 : 150, b1 = dar ? 12 : 14, b2 = dar ? 44 : 50, bw = dar ? 24 : 26, fs = dar ? 11 : 10;
         ctx.fillStyle = t.dark ? '#2b2f40' : '#e9e6f2'; ctx.fillRect(x, y, w, h);
         if (lastPull && lastPull[0] === k) { ctx.strokeStyle = lastPull[1] ? t.green : t.red; ctx.lineWidth = 3; ctx.strokeRect(x, y, w, h); }
-        const bh = est[k] * (h - 40); ctx.fillStyle = t.blue; ctx.fillRect(x + 14, y + h - 10 - bh, 26, bh);
-        if (showTrue) { const th = p[k] * (h - 40); ctx.fillStyle = t.amber; ctx.fillRect(x + 50, y + h - 10 - th, 26, th); }
+        const bh = est[k] * (h - 40); ctx.fillStyle = t.blue; ctx.fillRect(x + b1, y + h - 10 - bh, bw, bh);
+        if (showTrue) { const th = p[k] * (h - 40); ctx.fillStyle = t.amber; ctx.fillRect(x + b2, y + h - 10 - th, bw, th); }
         SL.drawLabel(ctx, '🎰 ' + (k + 1), x + w / 2, y + 12, t.ink, { size: 12 });
-        SL.drawLabel(ctx, `tahmin ${est[k].toFixed(2)}`, x + w / 2, y + h + 14, t.blue, { size: 10 });
-        SL.drawLabel(ctx, `${cnt[k]} kez`, x + w / 2, y + h + 28, t.muted, { size: 10 });
-        if (showTrue) SL.drawLabel(ctx, `gerçek ${p[k].toFixed(2)}${k === best ? ' ★' : ''}`, x + w / 2, y + h + 42, t.amber, { size: 10 });
+        SL.drawLabel(ctx, dar ? `≈ ${est[k].toFixed(2)}` : `tahmin ${est[k].toFixed(2)}`, x + w / 2, y + h + 14, t.blue, { size: fs });
+        SL.drawLabel(ctx, `${cnt[k]} kez`, x + w / 2, y + h + 29, t.muted, { size: fs });
+        if (showTrue) SL.drawLabel(ctx, dar ? `${p[k].toFixed(2)}${k === best ? ' ★' : ''}` : `gerçek ${p[k].toFixed(2)}${k === best ? ' ★' : ''}`, x + w / 2, y + h + 44, t.amber, { size: fs });
       }
-      lineChart(ctx, 470, 20, 230, 150, hist.slice(-300), t.green, t, 'çekiş başına ortalama ödül');
-      SL.drawLabel(ctx, `toplam ödül ${total} / ${pulls} çekiş`, 585, 186, t.ink, { size: 11 });
-      SL.drawLabel(ctx, `pişmanlık ≈ ${opt.toFixed(1)}`, 585, 202, t.red, { size: 11 });
+      if (dar) {
+        SL.drawLabel(ctx, 'mavi ≈ tahmin · sarı = gerçek (gizli)', W / 2, 222, t.muted, { size: 11, bg: false });
+        lineChart(ctx, 8, 236, W - 16, 96, hist.slice(-300), t.green, t, 'çekiş başına ortalama ödül');
+        SL.drawLabel(ctx, `toplam ödül ${total} / ${pulls} çekiş`, W / 2, 348, t.ink, { size: 11 });
+        SL.drawLabel(ctx, `pişmanlık ≈ ${opt.toFixed(1)}`, W / 2, 366, t.red, { size: 11 });
+      } else {
+        lineChart(ctx, 470, 20, 230, 150, hist.slice(-300), t.green, t, 'çekiş başına ortalama ödül');
+        SL.drawLabel(ctx, `toplam ödül ${total} / ${pulls} çekiş`, 585, 186, t.ink, { size: 11 });
+        SL.drawLabel(ctx, `pişmanlık ≈ ${opt.toFixed(1)}`, 585, 202, t.red, { size: 11 });
+      }
       info.innerHTML = `Mavi: ajanın tahmini (ortalama ödül), sarı: gerçek olasılık. ε = ${eps}: her çekişte %${Math.round(eps * 100)} rastgele makine (keşif), kalan zamanda en iyi görünen (sömürü). <b>Pişmanlık</b> = hep en iyi makineyi çekseydik beklenen ödül − çektiğimiz makinelerin beklenen ödülü (hiç eksiye düşmez).`;
     };
     root.setAttribute('data-prevent-swipe', '');
@@ -196,6 +228,7 @@
       btn('1 çek', () => { lastPull = pull(); draw(); }), btn('100 çek', () => { for (let i = 0; i < 100; i++) lastPull = pull(); draw(); }), btn('1000 çek', () => { for (let i = 0; i < 1000; i++) lastPull = pull(); draw(); }),
       btn('gerçeği göster/gizle', () => { showTrue = !showTrue; draw(); }), btn('↺ yeni makineler', () => { newGame(); lastPull = null; draw(); })), C, info);
     draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; W = d ? 360 : 720; H = d ? 378 : 250; SL.setupCanvas(C, W, H); draw(); });
   };
 
   /* ================= ödül hilesi (CoastRunners) ================= */
@@ -233,7 +266,7 @@
   }
   SL.trainHack = trainHack;
   D.rewardhack = function (root) {
-    const W = 720, H = 350, cs = 40, ox = 80, oy = 32;
+    let W = 720, H = 350, cs = 40, ox = 80, oy = 32, dar = false;   // dar: küçük hücreler, açıklama üç kısa satır
     let design = 'score', env, Q, c, k, score, t, done, timer = null, trained = false, laps = 0;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const setup = () => { env = hackEnv(design); Q = null; trained = false; c = env.start; k = 0; score = 0; t = 0; done = false; laps = 0; };
@@ -249,15 +282,19 @@
         const px = ox + x * cs, py = oy + y * cs;
         if (ch === '#') { ctx.fillStyle = tt.dark ? '#1f3a52' : '#9cc7e6'; ctx.fillRect(px, py, cs - 1, cs - 1); return; }
         ctx.fillStyle = tt.dark ? '#2b2f40' : '#eef0f6'; ctx.fillRect(px, py, cs - 1, cs - 1);
-        if (ch === 'F') { for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(px + i * 10, py + j * 10, 10, 10); } }
-        if (ch === 'S') { ctx.fillStyle = tt.green; ctx.globalAlpha = 0.28; ctx.fillRect(px, py, cs - 1, cs - 1); ctx.globalAlpha = 1; ctx.fillStyle = tt.green; ctx.font = '700 11px "Source Sans 3"'; ctx.textAlign = 'center'; ctx.fillText('BAŞLA', px + cs / 2, py + cs - 5); }
+        if (ch === 'F') { const q = cs / 4; for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(px + i * q, py + j * q, q, q); } }
+        if (ch === 'S') { ctx.fillStyle = tt.green; ctx.globalAlpha = 0.28; ctx.fillRect(px, py, cs - 1, cs - 1); ctx.globalAlpha = 1; if (!dar) { ctx.fillStyle = tt.green; ctx.font = '700 11px "Source Sans 3"'; ctx.textAlign = 'center'; ctx.fillText('BAŞLA', px + cs / 2, py + cs - 5); } }
         const isA = ch === 'A', isB = ch === 'B';
-        if (isA || isB) { const active = (isA && k === 0) || (isB && k === 1); ctx.fillStyle = active ? tt.amber : tt.card; ctx.strokeStyle = active ? tt.amber : tt.muted; ctx.lineWidth = 2; ctx.setLineDash(active ? [] : [3, 3]); ctx.beginPath(); ctx.arc(px + cs / 2, py + cs / 2, 12, 0, 7); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = active ? '#222' : tt.muted; ctx.font = '700 12px "Source Sans 3"'; ctx.textAlign = 'center'; ctx.fillText(isA ? 'A' : 'B', px + cs / 2, py + cs / 2 + 4); }
+        if (isA || isB) { const active = (isA && k === 0) || (isB && k === 1); ctx.fillStyle = active ? tt.amber : tt.card; ctx.strokeStyle = active ? tt.amber : tt.muted; ctx.lineWidth = 2; ctx.setLineDash(active ? [] : [3, 3]); ctx.beginPath(); ctx.arc(px + cs / 2, py + cs / 2, dar ? 9 : 12, 0, 7); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = active ? '#222' : tt.muted; ctx.font = `700 ${dar ? 11 : 12}px "Source Sans 3"`; ctx.textAlign = 'center'; ctx.fillText(isA ? 'A' : 'B', px + cs / 2, py + cs / 2 + 4); }
       }));
-      const bx = ox + (c % env.Ww) * cs + cs / 2, by = oy + Math.floor(c / env.Ww) * cs + cs / 2;
-      ctx.fillStyle = tt.red; ctx.beginPath(); ctx.moveTo(bx + 12, by - 4); ctx.lineTo(bx - 9, by - 12); ctx.lineTo(bx - 9, by + 4); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = tt.ink; ctx.font = '600 13px "Source Sans 3"'; ctx.textAlign = 'left'; ctx.fillText('kırmızı üçgen: tekne · sarı daire: şu an alınabilecek altın · kesikli daire: sonra doğacak altın', ox, oy - 8);
-      SL.drawLabel(ctx, `puan: ${score.toFixed(1)}   adım: ${t}/120   altın: ${laps}   ${done ? '🏁 YARIŞI BİTİRDİ' : t >= 120 ? '⌛ süre bitti — yarışı hiç bitirmedi!' : ''}`, W / 2, H - 22, done ? tt.green : t >= 120 ? tt.red : tt.ink, { size: 13 });
+      const bx = ox + (c % env.Ww) * cs + cs / 2, by = oy + Math.floor(c / env.Ww) * cs + cs / 2, z = cs / 40;
+      ctx.fillStyle = tt.red; ctx.beginPath(); ctx.moveTo(bx + 12 * z, by - 4 * z); ctx.lineTo(bx - 9 * z, by - 12 * z); ctx.lineTo(bx - 9 * z, by + 4 * z); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = tt.ink; ctx.font = '600 13px "Source Sans 3"'; ctx.textAlign = 'left';
+      if (dar) ['kırmızı üçgen: tekne · yeşil kare: başlangıç', 'sarı daire: şu an alınabilecek altın', 'kesikli daire: sonra doğacak altın'].forEach((s, i) => ctx.fillText(s, ox, 16 + i * 16));
+      else ctx.fillText('kırmızı üçgen: tekne · sarı daire: şu an alınabilecek altın · kesikli daire: sonra doğacak altın', ox, oy - 8);
+      const durum = done ? '🏁 YARIŞI BİTİRDİ' : t >= 120 ? '⌛ süre bitti — yarışı hiç bitirmedi!' : '', renk = done ? tt.green : t >= 120 ? tt.red : tt.ink;
+      if (dar) { SL.drawLabel(ctx, `puan: ${score.toFixed(1)}   adım: ${t}/120   altın: ${laps}`, W / 2, H - 38, renk, { size: 12 }); if (durum) SL.drawLabel(ctx, durum, W / 2, H - 18, renk, { size: 12 }); }
+      else SL.drawLabel(ctx, `puan: ${score.toFixed(1)}   adım: ${t}/120   altın: ${laps}   ${durum}`, W / 2, H - 22, renk, { size: 13 });
       info.innerHTML = design === 'score'
         ? '<b>Ödül = oyunun puanı</b> (CoastRunners gibi): her altın +1, bitiş +3. Altınlar A ve B arasında sırayla yeniden doğar. Eğitip izleyin: ajan neyi “öğrendi”?'
         : '<b>Ödül = ne istediğimiz</b>: bitiş +10, her adım −0,05 (acele et), altın 0. Aynı algoritma, aynı harita, farklı ödül.';
@@ -269,6 +306,7 @@
       el('label', { class: 'ctl' }, 'Ödül tasarımı: ', select({ score: 'oyun puanı (altın +1, bitiş +3)', intent: 'niyet (bitiş +10, adım −0,05)' }, design, v => { design = v; if (timer) clearInterval(timer); timer = null; setup(); draw(); })),
       btn('🧠 eğit', () => { train(); draw(); }), btn('▶ izle', () => { if (!trained) train(); c = env.start; k = 0; score = 0; t = 0; done = false; laps = 0; play(); })), C, info);
     setup(); draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; cs = d ? 24 : 40; ox = d ? 12 : 80; oy = d ? 58 : 32; W = d ? 360 : 720; H = d ? oy + env.Hh * cs + 54 : 350; SL.setupCanvas(C, W, H); draw(); });
     return { stop() { if (timer) clearInterval(timer); timer = null; } };
   };
 
@@ -319,16 +357,16 @@
     };
     const diag = el('div'), note = el('div', { class: 'sv-note ah-note' }), story = el('div', { class: 'btd-story' }), moral = el('div', { class: 'btd-moral' }), side = el('div', { class: 'ev-side' });
     const draw = (f, pl) => {
-      const t = T(); let s = '';
+      const t = T(), dar = darMi(root), fa = dar ? 26 : 17, fb = dar ? 22 : 15, k = dar ? 11 : 13, b0 = dar ? 112 : 110; let s = '';
       const order = f.pop.map((a, i) => i);
       order.forEach((i, r) => {
         const y = 14 + r * 40, a = f.pop[i], d = f.sc[i], isPar = f.par && f.par.includes(i), dead = f.par && !isPar, isKid = f.phase === 'çoğal' && r >= 2;
-        s += `<text x="10" y="${y + 22}" font-size="17" font-weight="700" font-family="JetBrains Mono" fill="${dead ? t.muted : t.ink}">${String(a).padStart(2, ' ')}°</text>`;
-        s += `<line x1="76" y1="${y + 30}" x2="${76 + 28 * Math.cos(a * Math.PI / 180)}" y2="${y + 30 - 28 * Math.sin(a * Math.PI / 180)}" stroke="${dead ? t.muted : t.amber}" stroke-width="4" stroke-linecap="round"/>`;
-        s += `<rect x="110" y="${y + 6}" width="${d * 13}" height="24" rx="5" fill="${isPar ? t.green : dead ? t.rule : isKid ? t.purple : t.blue}" opacity="${dead ? 0.6 : 0.85}"/><text x="${118 + d * 13}" y="${y + 24}" font-size="15" fill="${dead ? t.muted : t.ink}">${String(d).replace('.', ',')} m${isPar ? '  ✔ seçildi' : isKid ? '  (çocuk)' : ''}</text>`;
+        s += `<text x="${dar ? 4 : 10}" y="${y + (dar ? 28 : 22)}" font-size="${fa}" font-weight="700" font-family="JetBrains Mono" fill="${dead ? t.muted : t.ink}">${String(a).padStart(2, ' ')}°</text>`;
+        s += `<line x1="${dar ? 84 : 76}" y1="${y + 30}" x2="${(dar ? 84 : 76) + (dar ? 24 : 28) * Math.cos(a * Math.PI / 180)}" y2="${y + 30 - (dar ? 24 : 28) * Math.sin(a * Math.PI / 180)}" stroke="${dead ? t.muted : t.amber}" stroke-width="4" stroke-linecap="round"/>`;
+        s += `<rect x="${b0}" y="${y + 6}" width="${d * k}" height="24" rx="5" fill="${isPar ? t.green : dead ? t.rule : isKid ? t.purple : t.blue}" opacity="${dead ? 0.6 : 0.85}"/><text x="${b0 + 8 + d * k}" y="${y + (dar ? 26 : 24)}" font-size="${fb}" fill="${dead ? t.muted : t.ink}">${String(d).replace('.', ',')} m${isPar ? '  ✔ seçildi' : isKid ? '  (çocuk)' : ''}</text>`;
       });
-      s += `<line x1="${110 + 40.8 * 13}" y1="8" x2="${110 + 40.8 * 13}" y2="${14 + 8 * 40}" stroke="${t.green}" stroke-width="2" stroke-dasharray="6 5"/><text x="${110 + 40.8 * 13}" y="${26 + 8 * 40}" text-anchor="middle" font-size="14" fill="${t.green}">en iyisi: 45° → 40,8 m</text>`;
-      diag.innerHTML = `<svg viewBox="0 0 760 360" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
+      s += `<line x1="${b0 + 40.8 * k}" y1="8" x2="${b0 + 40.8 * k}" y2="${14 + 8 * 40}" stroke="${t.green}" stroke-width="2" stroke-dasharray="6 5"/><text x="${b0 + 40.8 * k}" y="${(dar ? 34 : 26) + 8 * 40}" text-anchor="middle" font-size="${dar ? 22 : 14}" fill="${t.green}">en iyisi: 45° → 40,8 m</text>`;
+      diag.innerHTML = `<svg viewBox="0 0 760 ${dar ? 366 : 360}" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
       side.innerHTML = `<div class="ev-big">${f.g}. nesil · <span>${f.phase}</span></div><div class="ah-leg">Her satır bir mancınık. Soldaki sayı ve turuncu çizgi atış açısı (geni), çubuk attığı mesafe (uygunluğu).</div><b>Nesillerin en iyisi:</b>` + f.hist.map((h, i) => `<div class="ev-h"><span>${i + 1}.</span><i style="width:${h / 40.8 * 100}%"></i>${String(h).replace('.', ',')} m</div>`).join('');
       note.innerHTML = f.note; moral.innerHTML = f.final && moralTxt ? '💡 ' + moralTxt : '';
     };
@@ -338,11 +376,14 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap ah' }, diag, side), SL.transport(fp, { min: 0.4, max: 6 }), note, moral);
     bs[0].classList.add('primary'); load(0, false); SL.onTheme(() => fp.render());
+    sabitBoy(root, [story, side, note, moral], olc => { const F0 = F, m0 = moralTxt, s0 = story.innerHTML; SC.forEach(sc => { build(sc[1]); moralTxt = sc[3]; story.innerHTML = '📖 ' + sc[2]; F.forEach(f => { draw(f, {}); olc(); }); }); F = F0; moralTxt = m0; story.innerHTML = s0; fp.render(); });
+    darIzle(root, () => fp.render());
     return { stop: () => fp.pause() };
   };
 
   D.neuro = function (root) {
-    const W = 720, H = 340, POP = 30;
+    let W = 720, H = 340, dar = false;   // dar: pist aynı, sayaç ve grafik pistin altında büyük yazıyla
+    const POP = 30;
     let gen = 1, cars, genes, best = [], timer = null, sigma = 0.3, fast = 8, tframe = 0, bestEver = null;
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const startP = TRK[0], startH = V.angle(V.sub(TRK[1], TRK[0]));
@@ -378,12 +419,20 @@
         ctx.save(); ctx.translate(c.p.x, c.p.y); ctx.rotate(c.h); ctx.globalAlpha = c.alive ? 0.9 : 0.25; ctx.fillStyle = c === lead ? t.green : t.blue; ctx.fillRect(-7, -4, 14, 8); ctx.restore();
       });
       if (lead) { ctx.strokeStyle = t.amber; ctx.lineWidth = 1.5; sense(lead).forEach((d, i) => { const e = V.add(lead.p, V.mul(V.fromAngle(lead.h + RAYS[i]), d * 120)); ctx.beginPath(); ctx.moveTo(lead.p.x, lead.p.y); ctx.lineTo(e.x, e.y); ctx.stroke(); }); }
-      lineChart(ctx, 560, 8, 152, 60, best, t.green, t, 'en iyi (tur)');
-      SL.drawLabel(ctx, `nesil ${gen} · yaşayan ${cars.filter(c => c.alive).length}/${POP}`, 10, 14, t.ink, { size: 12, align: 'left' });
+      if (dar) {   // dar kutuda tuval ~0,45 ölçekle görünür: alt şeridi 2,2 kat büyüt
+        ctx.save(); ctx.translate(10, 334); ctx.scale(2.2, 2.2);
+        SL.drawLabel(ctx, `nesil ${gen} · yaşayan ${cars.filter(c => c.alive).length}/${POP}`, 0, 9, t.ink, { size: 12, align: 'left' });
+        lineChart(ctx, 0, 22, (W - 20) / 2.2, 46, best, t.green, t, 'en iyi (tur)');
+        ctx.restore();
+      } else {
+        lineChart(ctx, 560, 8, 152, 60, best, t.green, t, 'en iyi (tur)');
+        SL.drawLabel(ctx, `nesil ${gen} · yaşayan ${cars.filter(c => c.alive).length}/${POP}`, 10, 14, t.ink, { size: 12, align: 'left' });
+      }
       info.innerHTML = `Her araba 5 ışınla (sarı) duvara uzaklığı ölçer; 5 giriş + sabit → 6 gizli nöron → direksiyon ve gaz. Ağırlıkları <b>kimse eğitmiyor</b>: her nesilde en çok yol alan 5 arabanın ağırlıkları karıştırılıp biraz bozularak (mutasyon σ = ${sigma}) yeni nesil yapılıyor. Yeşil: önde giden. En iyi: <b>${best.length ? Math.max(...best).toFixed(2) : 0} tur</b> (2 turda durdurulur).`;
     };
     const loop = () => { for (let i = 0; i < fast; i++) tick(); draw(); };
     const pb = btn('⏸ durdur', () => (timer ? stopT() : startT()));
+    sabitGen(pb, ['⏸ durdur', '▶ devam']);
     const startT = () => { if (!timer) timer = setInterval(loop, 33); pb.textContent = '⏸ durdur'; };
     const stopT = () => { if (timer) { clearInterval(timer); timer = null; } pb.textContent = '▶ devam'; };
     root.setAttribute('data-prevent-swipe', '');
@@ -391,6 +440,7 @@
       pb, slider('hız ×', 1, 20, fast, 1, v => { fast = v; }), slider('mutasyon σ', 0.05, 1, sigma, 0.05, v => { sigma = v; }),
       btn('⏭ nesli bitir', () => { evolve(); draw(); }), btn('↺ baştan', () => { init(); draw(); })), C, info);
     init(); draw(); SL.onTheme(draw);
+    darIzle(root, d => { dar = d; H = d ? 340 + 160 : 340; SL.setupCanvas(C, W, H); draw(); });
     return { start: startT, stop: stopT };
   };
 
