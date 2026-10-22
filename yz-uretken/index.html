@@ -47,7 +47,7 @@
       <li><b>Dünya modelleri</b> — Doom’u “hayal eden” GameNGen, Microsoft Muse, Genie 3</li>
       <li><b>Etik, hukuk, sektör</b> — Clair Obscur’un geri alınan ödülleri, ARC Raiders’ın sesleri, SAG-AFTRA anlaşması, telif</li>
       <li><b>İş akışı</b> — nerede gerçekten işe yarıyor, nerede yaramıyor?</li>
-      <li><b>Kod</b> — diffusers, MusicGen, Unity Inference Engine + dört laboratuvar</li>
+      <li><b>Kod</b> — diffusers, MusicGen, Unity Sentis + dört laboratuvar</li>
       <li><b>Araçlar</b> — Hugging Face, ComfyUI, Unity AI, TRELLIS, AudioCraft, lisanslar</li>
     </ol>
     <div class="box game"><span class="bt">🎮 Bu dersin sonunda…</span>
@@ -257,7 +257,7 @@
         </ul></div>
     </div>
   </div>
-  <div class="box low" style="margin-top:6px"><span class="bt">Motorun içinde: Unity AI (Unity 6.2+)</span>Muse ve Sentis’in yerine geldi: <b>Assistant</b> (projeyi bilen sohbet ve kod yardımcısı), <b>Generators</b> (sprite, doku, malzeme, ses ve animasyon üretimi; Unity’nin kendi modelleri ve Scenario ile Layer AI’ın Stable Diffusion/FLUX tabanlı modelleri) ve <b>Inference Engine</b> (kendi ONNX modellerinizi oyun içinde çalıştırmak). Unity, üretilen içeriğin telif sorumluluğunun kullanıcıda olduğunu belirtiyor.</div>
+  <div class="box low" style="margin-top:6px"><span class="bt">Motorun içinde: Unity AI (Unity 6.2+)</span>Muse’un yerine geldi: <b>Assistant</b> (projeyi bilen sohbet ve kod yardımcısı), <b>Generators</b> (sprite, doku, malzeme, ses ve animasyon üretimi; Unity’nin kendi modelleri ve Scenario ile Layer AI’ın Stable Diffusion/FLUX tabanlı modelleri) ve <b>Sentis</b> (kendi ONNX modellerinizi oyun içinde çalıştırmak). Unity, üretilen içeriğin telif sorumluluğunun kullanıcıda olduğunu belirtiyor.</div>
 </section>
 
 <section data-sec="varlıklar">
@@ -440,7 +440,7 @@
 <section class="level" data-background-gradient="linear-gradient(135deg, #1b3a0d 0%, #1b1036 100%)">
   <div class="lv">LEVEL 6</div>
   <div class="ttl">Kod ve laboratuvarlar</div>
-  <div class="sub">diffusers, MusicGen, Inference Engine</div>
+  <div class="sub">diffusers, MusicGen, Sentis</div>
   <ul class="agenda"><li class="done">üretken YZ nedir?</li><li class="done">difüzyon: gürültüden görüntüye</li><li class="done">oyun varlıkları: 2B, 3B, ses</li><li class="done">dünya modelleri</li><li class="done">etik, hukuk ve sektör</li><li class="done">iş akışı</li><li class="on">kod ve laboratuvarlar</li><li class="">kütüphaneler ve araçlar</li></ul>
 </section>
 
@@ -481,11 +481,11 @@ scipy.io.wavfile.write("han.wav", rate=music["sampling_rate"], data=music["audio
 </section>
 
 <section data-sec="kod">
-  <h2>Unity: kendi modelinizi oyun içinde çalıştırmak (Inference Engine)</h2>
+  <h2>Unity: kendi modelinizi oyun içinde çalıştırmak (Sentis)</h2>
   <div class="tabs short">
     <div class="tab" data-label="C# (Unity)">
 <pre><code class="language-csharp" data-trim data-line-numbers="8-11|13-19"><script type="text/template">
-using Unity.InferenceEngine;     // Unity 6.2+: “Inference Engine” paketi (eski adı Sentis)
+using Unity.InferenceEngine;     // com.unity.ai.inference (görünen adı Sentis)
 using UnityEngine;
 
 public class StyleClassifier : MonoBehaviour {
@@ -507,11 +507,11 @@ public class StyleClassifier : MonoBehaviour {
 
     void OnDestroy() => worker?.Dispose();                    // GPU belleğini bırak
 }
-// API ayrıntıları paket sürümüne göre değişebilir: Inference Engine belgelerini kontrol edin.
+// API ayrıntıları paket sürümüne göre değişebilir: Sentis belgelerini kontrol edin.
 </script></code></pre>
     </div>
   </div>
-  <p class="mini">Büyük görüntü modelleri oyun içinde çalıştırılamayacak kadar ağır; küçük modeller (sınıflandırıcı, stil aktarımı, ML-Agents politikaları, poz tahmini) ise Inference Engine ile cihazda rahatça çalışır.</p>
+  <p class="mini">Büyük görüntü modelleri oyun içinde çalıştırılamayacak kadar ağır; küçük modeller (sınıflandırıcı, stil aktarımı, ML-Agents politikaları, poz tahmini) ise Sentis ile cihazda rahatça çalışır.</p>
 </section>
 
 <section data-sec="kod">
@@ -521,7 +521,7 @@ public class StyleClassifier : MonoBehaviour {
     <tr><td>torch.float16 · .to("cuda")</td><td>yarım hassasiyet · GPU’ya taşı</td><td>Bellek kullanımını yarıya indirir · NVIDIA GPU’da çalıştırır</td></tr>
     <tr><td>generator.manual_seed(42)</td><td>tohum</td><td>Aynı gürültüyle başlat: tekrarlanabilir üretim</td></tr>
     <tr><td>pipeline("text-to-audio", ...)</td><td>hazır iş hattı</td><td>Model + ön/son işleme tek nesnede</td></tr>
-    <tr><td>Tensor&lt;float&gt; · TensorShape</td><td>tensör</td><td>Çok boyutlu sayı dizisi ve boyutları (Inference Engine)</td></tr>
+    <tr><td>Tensor&lt;float&gt; · TensorShape</td><td>tensör</td><td>Çok boyutlu sayı dizisi ve boyutları (Sentis)</td></tr>
     <tr><td>using var ... · Dispose()</td><td>kaynak temizliği</td><td>İş bitince (GPU) belleğini hemen bırakmak</td></tr>
   </table>
 </section>
@@ -690,7 +690,7 @@ def most_likely_next(seq, note):
   <h2>🧰 Kütüphaneler ve araçlar</h2>
   <table class="sum-t libtable" style="font-size:16px">
     <tr><th>ad</th><th>platform</th><th>ne yapar / sınırları</th><th>nasıl eklenir</th></tr>
-    <tr><td><a href="https://huggingface.co/docs/diffusers/index" target="_blank" rel="noopener"><b>Hugging Face (diffusers, transformers)</b></a></td><td>Python</td><td>Açık modelleri indirip birkaç satırla çalıştırma: görüntü, ses, metin, 3B. Her modelin sayfasında <b>lisans</b> yazar.</td><td><code>pip install diffusers transformers</code></td></tr><tr><td><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noopener"><b>ComfyUI</b></a></td><td>Windows / Linux / macOS</td><td>Düğüm tabanlı görsel iş akışı: difüzyon, ControlNet, LoRA, TRELLIS gibi 3B düğümler; tekrarlanabilir “tarifler”.</td><td>GitHub sürümü / masaüstü uygulaması</td></tr><tr><td><a href="https://docs.unity3d.com/6000.2/Documentation/Manual/unity-ai.html" target="_blank" rel="noopener"><b>Unity AI</b></a></td><td>Unity 6.2+</td><td>Assistant, Generators (sprite, doku, malzeme, ses, animasyon), Inference Engine.</td><td>AI menüsü; kullanım kredisi</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.inference@2.2/manual/index.html" target="_blank" rel="noopener"><b>Unity Inference Engine</b></a></td><td>Unity 6+</td><td>ONNX modellerini oyun içinde CPU/GPU’da çalıştırma (eski Sentis).</td><td>Package Manager → com.unity.ai.inference</td></tr><tr><td><a href="https://github.com/microsoft/TRELLIS.2" target="_blank" rel="noopener"><b>TRELLIS 2</b></a></td><td>Python (GPU)</td><td>Görselden PBR malzemeli 3B model (.glb); açık kaynak.</td><td>GitHub / Hugging Face</td></tr><tr><td><a href="https://github.com/Roblox/cube" target="_blank" rel="noopener"><b>Roblox Cube</b></a></td><td>Python / Roblox Studio</td><td>Metinden 3B nesne; açık kaynak model + Studio API.</td><td>GitHub</td></tr><tr><td><a href="https://github.com/facebookresearch/audiocraft" target="_blank" rel="noopener"><b>AudioCraft (MusicGen, AudioGen)</b></a></td><td>Python</td><td>Metinden müzik ve ses efekti. Ağırlıkların lisansına dikkat.</td><td><code>pip install audiocraft</code></td></tr>
+    <tr><td><a href="https://huggingface.co/docs/diffusers/index" target="_blank" rel="noopener"><b>Hugging Face (diffusers, transformers)</b></a></td><td>Python</td><td>Açık modelleri indirip birkaç satırla çalıştırma: görüntü, ses, metin, 3B. Her modelin sayfasında <b>lisans</b> yazar.</td><td><code>pip install diffusers transformers</code></td></tr><tr><td><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noopener"><b>ComfyUI</b></a></td><td>Windows / Linux / macOS</td><td>Düğüm tabanlı görsel iş akışı: difüzyon, ControlNet, LoRA, TRELLIS gibi 3B düğümler; tekrarlanabilir “tarifler”.</td><td>GitHub sürümü / masaüstü uygulaması</td></tr><tr><td><a href="https://docs.unity3d.com/6000.2/Documentation/Manual/unity-ai.html" target="_blank" rel="noopener"><b>Unity AI</b></a></td><td>Unity 6.2+</td><td>Assistant, Generators (sprite, doku, malzeme, ses, animasyon), Sentis.</td><td>AI menüsü; kullanım kredisi</td></tr><tr><td><a href="https://docs.unity3d.com/Packages/com.unity.ai.inference@2.6/manual/index.html" target="_blank" rel="noopener"><b>Unity Sentis</b></a></td><td>Unity 6+</td><td>ONNX modellerini oyun içinde CPU/GPU’da çalıştırma (2.2–2.3’te adı Inference Engine).</td><td>Package Manager → com.unity.ai.inference</td></tr><tr><td><a href="https://github.com/microsoft/TRELLIS.2" target="_blank" rel="noopener"><b>TRELLIS 2</b></a></td><td>Python (GPU)</td><td>Görselden PBR malzemeli 3B model (.glb); açık kaynak.</td><td>GitHub / Hugging Face</td></tr><tr><td><a href="https://github.com/Roblox/cube" target="_blank" rel="noopener"><b>Roblox Cube</b></a></td><td>Python / Roblox Studio</td><td>Metinden 3B nesne; açık kaynak model + Studio API.</td><td>GitHub</td></tr><tr><td><a href="https://github.com/facebookresearch/audiocraft" target="_blank" rel="noopener"><b>AudioCraft (MusicGen, AudioGen)</b></a></td><td>Python</td><td>Metinden müzik ve ses efekti. Ağırlıkların lisansına dikkat.</td><td><code>pip install audiocraft</code></td></tr>
   </table>
   
 </section>

@@ -52,7 +52,7 @@
       ctx.fillStyle = t.amber; ctx.fillRect(bx, 20, 200 * (step / STEPS), 20);
       SL.drawLabel(ctx, `adım ${step}/${STEPS}`, bx + 100, 30, t.ink, { size: 11 });
       SL.drawLabel(ctx, `gürültü seviyesi σ ≈ ${s.toFixed(2)}`, bx + 100, 56, t.muted, { size: 11 });
-      SL.drawLabel(ctx, mode === 'gen' ? 'ÜRETİM: gürültü → şekil' : 'EĞİTİM VERİSİ BOZULUYOR: şekil → gürültü', bx + 100, 84, mode === 'gen' ? t.purple : t.red, { size: 11 });
+      SL.drawLabel(ctx, mode === 'gen' ? 'ÜRETİM: gürültü → şekil' : 'BOZMA: şekil → gürültü', bx + 100, 84, mode === 'gen' ? t.purple : t.red, { size: 11 });
       info.innerHTML = mode === 'gen'
         ? `Her nokta saf gürültüyle başlıyor. Her adımda “gürültü giderici”, noktanın <b>temiz hâlini tahmin ediyor</b> ve noktayı o yöne biraz kaydırıyor; gürültü seviyesi azaldıkça şekil beliriyor. “İstem” (${({ star: 'yıldız', heart: 'kalp', ring: 'halka', all: 'hepsi' })[prompt]}) hangi veriye göre tahmin yapılacağını belirliyor: koşullu üretim.`
         : 'İleri süreç: eğitim verisine adım adım gürültü eklenir. Model, her gürültü seviyesinde “orijinal neydi?” sorusunu cevaplamayı öğrenir. Üretim bunun tersidir.';
