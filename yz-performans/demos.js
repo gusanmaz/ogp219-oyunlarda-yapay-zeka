@@ -6,6 +6,8 @@
   const T = () => SL.theme();
   const RNG = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const darMi = root => root.clientWidth > 0 && root.clientWidth < 560;   // dar ekran: yazılar okunur kalsın
+  const darIzle = (root, fn) => { let son = null; if (window.ResizeObserver) new ResizeObserver(() => { const d = darMi(root); if (root.clientWidth && d !== son) { son = d; fn(d); } }).observe(root); };
 
   /* ================= kare bütçesi: güncelleme politikaları ================= */
   // her ajanın bir “tam güncelleme” maliyeti (ms): algılama ışınları + karar + yol isteği (ara sıra pahalı)
@@ -73,7 +75,8 @@
 
   /* ================= yol isteği kuyruğu: kare başına sınırlı A* ================= */
   D.pathqueue = function (root) {
-    const W = 720, H = 300, GW = 26, GH = 15, cs = 20;
+    let W = 720, H = 300, cs = 20, dar = false;
+    const GW = 26, GH = 15;
     const c = { budget: 60, burst: 12 };
     let grid, queue = [], doneList = [], frame = 0, timer = null, active = null, expHist = [], r = RNG(5);
     const mk = () => { r = RNG(5); grid = Array.from({ length: GW * GH }, (_, i) => { const x = i % GW, y = (i / GW) | 0; return x > 0 && x < GW - 1 && y > 0 && y < GH - 1 && r() < 0.22 ? 1 : 0; }); };
@@ -108,15 +111,16 @@
       grid.forEach((v, i) => { ctx.fillStyle = v ? (t.dark ? '#4a4f63' : '#3d4255') : (t.dark ? '#2b2f40' : '#efe9dc'); ctx.fillRect((i % GW) * cs, ((i / GW) | 0) * cs, cs - 1, cs - 1); });
       if (active) active.closed.forEach(i => { ctx.fillStyle = 'rgba(169,112,255,0.35)'; ctx.fillRect((i % GW) * cs, ((i / GW) | 0) * cs, cs - 1, cs - 1); });
       doneList.forEach(d => { if (!d.path) return; ctx.strokeStyle = t.green; ctx.globalAlpha = 1 - (frame - d.at) / 40; ctx.lineWidth = 2; ctx.beginPath(); d.path.forEach((i, k) => { const x = (i % GW) * cs + cs / 2, y = ((i / GW) | 0) * cs + cs / 2; k ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.globalAlpha = 1; });
-      const gx = GW * cs + 10;
-      SL.drawLabel(ctx, `kuyruktaki istek: ${queue.length + (active ? 1 : 0)}`, gx, 20, queue.length > 10 ? t.red : t.ink, { size: 11, align: 'left' });
+      // dar ekranda (kutu < 560 px) sayılar ve grafik ızgaranın altına iner; yazılar 12 px
+      const gx = dar ? 2 : GW * cs + 10, ty = dar ? GH * cs + 18 : 20, fs = dar ? 12 : 11;
+      SL.drawLabel(ctx, `kuyruktaki istek: ${queue.length + (active ? 1 : 0)}`, gx, ty, queue.length > 10 ? t.red : t.ink, { size: fs, align: 'left' });
       const avgW = waits.length ? waits.reduce((a, b) => a + b, 0) / waits.length : 0;
-      SL.drawLabel(ctx, `ort. bekleme: ${avgW.toFixed(1)} kare`, gx, 40, t.ink, { size: 11, align: 'left' });
-      SL.drawLabel(ctx, `kare başına düğüm: ≤ ${c.budget}`, gx, 60, t.muted, { size: 11, align: 'left' });
-      const bx = gx, by = 90, bw = W - gx - 10, bh = 120, mx = Math.max(c.budget, 1);
+      SL.drawLabel(ctx, `ort. bekleme: ${avgW.toFixed(1)} kare`, dar ? W / 2 + 4 : gx, dar ? ty : 40, t.ink, { size: fs, align: 'left' });
+      SL.drawLabel(ctx, `kare başına düğüm: ≤ ${c.budget}`, gx, dar ? ty + 20 : 60, t.muted, { size: fs, align: 'left' });
+      const bx = gx, by = dar ? ty + 36 : 90, bw = W - gx - (dar ? 2 : 10), bh = dar ? 90 : 120, mx = Math.max(c.budget, 1);
       ctx.fillStyle = t.dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)'; ctx.fillRect(bx, by, bw, bh);
       expHist.forEach((v, i) => { ctx.fillStyle = t.purple; const hh = (v / mx) * bh; ctx.fillRect(bx + (i / 160) * bw, by + bh - hh, bw / 160 + 0.5, hh); });
-      SL.drawLabel(ctx, 'kare başına açılan düğüm', bx, by + bh + 12, t.muted, { size: 10, align: 'left' });
+      SL.drawLabel(ctx, 'kare başına açılan düğüm', bx, by + bh + 12, t.muted, { size: dar ? 12 : 10, align: 'left' });
       info.innerHTML = 'Her NPC’nin yol isteği bir <b>kuyruğa</b> girer; yol bulucu her kare en fazla belirli sayıda düğüm açar (mor alan: şu an aranan). Bir arama bitmezse <b>sonraki kareden devam eder</b>. Kare süresi sabit kalır; bedeli, isteklerin birkaç kare beklemesi. Çoğu oyunda NPC bu sürede “düşünüyormuş gibi” bir animasyon oynatır ya da kaba bir yöne yürümeye başlar.';
     };
     const run = () => { if (timer) return; timer = setInterval(() => { tick(); doneList.forEach(d => { if (d.at === frame) { waits.push(d.wait); if (waits.length > 40) waits.shift(); } }); draw(); }, 33); };
@@ -125,13 +129,14 @@
     root.append(el('div', { class: 'sv-controls' },
       btn(`📨 ${c.burst} NPC aynı anda yol istesin`, () => { for (let i = 0; i < c.burst; i++) queue.push({ s: free(), t: free(), t0: frame }); SL.sfx && SL.sfx('knock'); }),
       slider('kare başına düğüm bütçesi', 20, 1000, c.budget, 10, v => { c.budget = v; }), btn('↺ temizle', () => { queue = []; active = null; doneList = []; waits = []; })), C, info);
+    darIzle(root, d => { dar = d; W = d ? 340 : 720; cs = d ? 13 : 20; H = d ? GH * cs + 186 : 300; SL.setupCanvas(C, W, H); draw(); });
     mk(); draw(); SL.onTheme(draw);
     return { start: run, stop };
   };
 
   /* ================= olay tabanlı güncelleme ================= */
   D.events = function (root) {
-    const W = 720, H = 260;
+    let W = 720, H = 260, dar = false;
     const c = { n: 500, mode: 'frame' };
     let t = 0, ops = 0, opsHist = [], timer = null, heap = [], npcs = [];
     const RATE = 0.1;   // açlık / sn
@@ -145,27 +150,29 @@
     const C = el('canvas', { class: 'world-canvas' }), ctx = SL.setupCanvas(C, W, H), info = el('div', { class: 'sv-note' });
     const draw = () => {
       const th = T(); ctx.clearRect(0, 0, W, H); ctx.fillStyle = th.card; ctx.fillRect(0, 0, W, H);
-      const mx = c.n * 1.1, gx = 20, gw = 460, gy = 20, gh = 160;   // sabit ölçek: üst kenar ≈ “her NPC her kare”; iki yöntem aynı ölçekte karşılaştırılır
+      const mx = c.n * 1.1, gx = dar ? 10 : 20, gw = dar ? W - 20 : 460, gy = 20, gh = dar ? 130 : 160, fs = dar ? 12 : 11;   // sabit ölçek: üst kenar ≈ “her NPC her kare”; iki yöntem aynı ölçekte karşılaştırılır
       ctx.fillStyle = th.dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)'; ctx.fillRect(gx, gy, gw, gh);
       opsHist.forEach((v, i) => { ctx.fillStyle = c.mode === 'frame' ? th.red : th.green; const hh = Math.min(1, v / mx) * gh; ctx.fillRect(gx + (i / 200) * gw, gy + gh - hh, gw / 200 + 0.5, hh); });
       const avg = opsHist.reduce((a, b) => a + b, 0) / Math.max(1, opsHist.length);
       SL.drawLabel(ctx, `kare başına iş (ortalama): ${avg.toFixed(1)}`, gx, gy + gh + 16, th.ink, { size: 12, align: 'left' });
-      // sağ: sıradaki olaylar (öncelik kuyruğu)
-      const lx = 500;
-      SL.drawLabel(ctx, c.mode === 'events' ? 'sıradaki olaylar (öncelik kuyruğu)' : 'her kare, her NPC: açlık += hız·dt', lx, 22, th.muted, { size: 10, align: 'left' });
-      if (c.mode === 'events') heap.slice(0, 7).forEach(([due, i], k) => SL.drawLabel(ctx, `NPC ${i}: ${Math.max(0, due - t).toFixed(1)} sn sonra acıkacak`, lx, 46 + k * 20, th.ink, { size: 11, align: 'left', bg: false }));
+      // sağ (dar ekranda alt): sıradaki olaylar (öncelik kuyruğu)
+      const lx = dar ? gx : 500, ly = dar ? gy + gh + 64 : 22;
+      SL.drawLabel(ctx, c.mode === 'events' ? 'sıradaki olaylar (öncelik kuyruğu)' : 'her kare, her NPC: açlık += hız·dt', lx, ly, th.muted, { size: dar ? 12 : 10, align: 'left' });
+      if (c.mode === 'events') heap.slice(0, 7).forEach(([due, i], k) => SL.drawLabel(ctx, `NPC ${i}: ${Math.max(0, due - t).toFixed(1)} sn sonra acıkacak`, lx, ly + 24 + k * 20, th.ink, { size: fs, align: 'left', bg: false }));
       // örnek NPC: açlık değerini istenince hesapla
       const n0 = npcs[0], h0 = c.mode === 'frame' ? n0.hunger : Math.min(1, n0.hunger + n0.rate * (t - n0.t0));
-      SL.drawLabel(ctx, `NPC 0 açlık: ${h0.toFixed(2)}${c.mode === 'events' ? ' (istenince formülle hesaplandı)' : ''}`, gx, gy + gh + 40, th.blue, { size: 11, align: 'left' });
-      info.innerHTML = c.mode === 'frame'
-        ? `Kare tabanlı: ${c.n} NPC’nin açlığı her kare güncelleniyor; iş, NPC sayısıyla doğru orantılı ve <b>her kare</b> ödeniyor.`
-        : `Olay tabanlı (David “Rez” Graham, Game AI Pro Online 2021): açlık doğrusal arttığı için her NPC’nin <b>ne zaman</b> acıkacağı önceden hesaplanır ve öncelik kuyruğuna (yığın) konur. Kare başına iş sadece o an gerçekleşen olaylar kadar; açlık değeri gerekince <code>açlık = başlangıç + hız · geçen süre</code> ile hesaplanır.`;
+      SL.drawLabel(ctx, `NPC 0 açlık: ${h0.toFixed(2)}${c.mode === 'events' ? (dar ? ' (formülle)' : ' (istenince formülle hesaplandı)') : ''}`, gx, gy + gh + 40, th.blue, { size: fs, align: 'left' });
+      // iki kipin açıklaması üst üste: kutu uzun olanın boyunda kalır, kip değişince altındakiler kaymaz
+      const ac = { frame: `Kare tabanlı: ${c.n} NPC’nin açlığı her kare güncelleniyor; iş, NPC sayısıyla doğru orantılı ve <b>her kare</b> ödeniyor.`,
+        events: `Olay tabanlı (David “Rez” Graham, Game AI Pro Online 2021): açlık doğrusal arttığı için her NPC’nin <b>ne zaman</b> acıkacağı önceden hesaplanır ve öncelik kuyruğuna (yığın) konur. Kare başına iş sadece o an gerçekleşen olaylar kadar; açlık değeri gerekince <code>açlık = başlangıç + hız · geçen süre</code> ile hesaplanır.` };
+      info.innerHTML = '<div style="display:grid">' + ['frame', 'events'].map(m => `<div style="grid-area:1/1;${m === c.mode ? '' : 'visibility:hidden'}">${ac[m]}</div>`).join('') + '</div>';
     };
     const run = () => { if (timer) return; timer = setInterval(() => { tick(); draw(); }, 33); };
     const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Yöntem: ', select({ frame: 'her kare güncelle', events: 'olay tabanlı (öncelik kuyruğu)' }, c.mode, v => { c.mode = v; init(); })),
       slider('NPC sayısı', 100, 2000, c.n, 100, v => { c.n = v; init(); })), C, info);
+    darIzle(root, d => { dar = d; W = d ? 340 : 720; H = d ? 390 : 260; SL.setupCanvas(C, W, H); draw(); });
     init(); draw(); SL.onTheme(draw);
     return { start: run, stop };
   };
