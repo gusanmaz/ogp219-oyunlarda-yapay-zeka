@@ -41,19 +41,34 @@
       s += `<text x="70" y="262" text-anchor="middle" font-size="40">🧍</text><text x="70" y="290" text-anchor="middle" font-size="14" fill="${t.muted}">asker</text><text x="560" y="262" text-anchor="middle" font-size="40">👾</text><text x="560" y="290" text-anchor="middle" font-size="14" fill="${t.muted}">düşman</text>`;
       C.forEach(([id, nm, p, v, em], i) => {
         const on = i === wi;
-        if (v[1]) s += `<line x1="${p[0]}" y1="${p[1]}" x2="560" y2="245" stroke="${on ? t.red : t.rule}" stroke-width="${on ? 3 : 1.5}" stroke-dasharray="6 6"/>`;
+        // ateş hattı düşman simgesinin kenarında biter (simgeye ve "düşman" yazısına değmesin)
+        if (v[1]) { const dx = 560 - p[0], dy = 245 - p[1], L = Math.hypot(dx, dy), ex = 560 - (dx / L) * 40, ey = 245 - (dy / L) * 40; s += `<line x1="${p[0]}" y1="${p[1]}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="${on ? t.red : t.rule}" stroke-width="${on ? 3 : 1.5}" stroke-dasharray="6 6"/>`; }
         s += `<circle cx="${p[0]}" cy="${p[1]}" r="30" fill="${on ? t.green : t.card}" fill-opacity="${on ? 0.3 : 1}" stroke="${on ? t.green : t['ink-2']}" stroke-width="${on ? 5 : 2}"/><text x="${p[0]}" y="${p[1] + 9}" text-anchor="middle" font-size="26">${em}</text><text x="${p[0]}" y="${p[1] - 38}" text-anchor="middle" font-size="18" font-weight="800" fill="${on ? t.green : t.ink}">${id}: ${nm}</text>`;
       });
       s += `<text x="360" y="388" text-anchor="middle" font-size="14" fill="${t.muted}">kesikli çizgi: bu noktadan düşmana ateş edilebilir · yeşil halka: seçilen nokta</text>`;
-      diag.innerHTML = `<svg viewBox="0 0 720 400" style="width:100%" font-family="Source Sans 3">${s}</svg>`;
-      tbl.innerHTML = '<table class="sum-t" style="font-size:17px"><tr><th>aday</th>' + K.map((k, i) => `<th>${k}<br><small>ağırlık ${f1(w[i])}</small></th>`).join('') + '<th>toplam</th></tr>' +
-        C.map((c, i) => `<tr style="${i === wi ? 'background:color-mix(in srgb, var(--green) 14%, var(--card));font-weight:700' : ''}"><td><b>${c[0]}</b> ${c[1]}</td>` + c[3].map((v, k) => `<td>${f1(v)} × ${f1(w[k])}</td>`).join('') + `<td><b>${f1(sc[i])}</b>${i === wi ? ' ✔' : ''}</td></tr>`).join('') + '</table>';
+      // yazılar ok etiketi değil: nokta adları, simgeler ve açıklama (kesikli çizgiler ateş hattı, etiketleri yok)
+      diag.innerHTML = `<svg viewBox="0 0 720 400" style="width:100%" font-family="Source Sans 3">${s.replace(/<text /g, '<text data-etiket-degil="1" ')}</svg>`;
+      // dar ekranda tablo sığsın: yazı ve yan boşluk ekran genişliğiyle küçülür (sunumda 17/16 px ve 10 px kalır)
+      const pd = 'padding:7px clamp(4px, 1.2vw, 10px)', th = `<th style="font-size:clamp(12px, 3.4vw, 16px);${pd}">`, td = `<td style="${pd}">`;
+      tbl.innerHTML = '<table class="sum-t" style="font-size:clamp(13px, 3.6vw, 17px)"><tr>' + th + 'aday</th>' + K.map((k, i) => `${th}${k}<br><small>ağırlık ${f1(w[i])}</small></th>`).join('') + th + 'toplam</th></tr>' +
+        C.map((c, i) => `<tr style="${i === wi ? 'background:color-mix(in srgb, var(--green) 14%, var(--card));font-weight:700' : ''}">${td}<b>${c[0]}</b> ${c[1]}</td>` + c[3].map((v, k) => `${td}${f1(v)} × ${f1(w[k])}</td>`).join('') + `${td}<b>${f1(sc[i])}</b>${i === wi ? ' ✔' : ''}</td></tr>`).join('') + '</table>';
       moral.innerHTML = moralTxt ? '💡 ' + moralTxt : '';
     };
     const bs = SC.map((sc, i) => { const b = btn(sc[0], () => { w = sc[1].slice(); bs.forEach(x => x.classList.remove('primary')); b.classList.add('primary'); story.innerHTML = '📖 ' + sc[2]; moralTxt = sc[3]; draw(); if (SL.sfx) { try { SL.sfx('waka'); } catch (e) {} } }); return b; });
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'btd-wrap doors' }, diag, el('div', {}, tbl, moral)));
     bs[0].classList.add('primary'); story.innerHTML = '📖 ' + SC[0][2]; draw(); SL.onTheme(draw);
+    // yer ayır: hikâye ve ders kutuları en uzun metinleri kadar (asker değişince altındakiler kaymasın)
+    const yerAyir = () => {
+      for (const [kutu, metinler, simdi] of [[story, SC.map(x => '📖 ' + x[2]), () => story.innerHTML], [moral, SC.map(x => '💡 ' + x[3]), () => moral.innerHTML]]) {
+        if (!kutu.offsetWidth) continue;
+        const eski = simdi(); kutu.style.minHeight = ''; let en = 0;
+        for (const m of metinler) { kutu.innerHTML = m; en = Math.max(en, kutu.offsetHeight); }
+        kutu.innerHTML = eski; kutu.style.minHeight = en + 'px';
+      }
+    };
+    requestAnimationFrame(yerAyir); if (document.fonts) document.fonts.ready.then(yerAyir);
+    if (window.ResizeObserver) { let gen = 0; new ResizeObserver(() => { const n = root.offsetWidth; if (Math.abs(n - gen) > 2) { gen = n; yerAyir(); } }).observe(root); }
   };
 
   D.influence = function (root) {
