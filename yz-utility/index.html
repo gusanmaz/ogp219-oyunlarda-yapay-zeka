@@ -356,9 +356,9 @@ def compensate(score, n):
     <table class="sum-t" style="font-size:17px">
       <tr><th>etkenler</th><th>çarpım</th><th>telafili</th></tr>
       <tr><td>0,9 · 0,9</td><td>0,81</td><td>0,89</td></tr>
-      <tr><td>0,9 · 0,9 · 0,9</td><td>0,73</td><td>0,86</td></tr>
-      <tr><td>0,9 × 5</td><td>0,59</td><td>0,78</td></tr>
-      <tr><td>0,5 · 0,5</td><td>0,25</td><td>0,34</td></tr>
+      <tr><td>0,9 · 0,9 · 0,9</td><td>0,73</td><td>0,88</td></tr>
+      <tr><td>0,9 × 5</td><td>0,59</td><td>0,87</td></tr>
+      <tr><td>0,5 · 0,5</td><td>0,25</td><td>0,39</td></tr>
       <tr><td>0 · 0,9 · 0,9</td><td>0</td><td>0 (veto korunur)</td></tr>
     </table>
   </div>
@@ -371,7 +371,7 @@ def compensate(score, n):
   <div class="demo-help" data-auto="1" data-title="🔎 Ne denemeli?">
     <ol style="font-size:.9em">
       <li>Mermiyi 0 yapın: “Ateş et”in kırmızı etkeni bütün eylemi veto ediyor; “Şarjör değiştir” öne çıkıyor. Düşmanı 5 m’ye getirin: şarjör değiştirmek artık riskli (düşman uzak etkeni düştü).</li>
-      <li>Canı yavaş yavaş azaltın: “Ateş et” sönüyor; can ≈ 15’te kısa bir “Siper al”dan sonra “Kaç” kazanıyor. Düşmanı 30 m’ye uzaklaştırıp yeniden deneyin: bu kez can ≈ 43’te “İyileş” kazanıyor (düşman uzakken iyileşmek güvenli). Hiçbir yerde “eşik” yazmadık!</li>
+      <li>Canı yavaş yavaş azaltın: “Ateş et” sönüyor; can ≈ 13’te kısa bir “Siper al”dan sonra “Kaç” kazanıyor. Düşmanı 30 m’ye uzaklaştırıp yeniden deneyin: bu kez can ≈ 37’de “İyileş” kazanıyor (düşman uzakken iyileşmek güvenli). Hiçbir yerde “eşik” yazmadık!</li>
       <li>Medkit kutusunu kaldırın: “İyileş” sıfırlanıyor. Kutu, tasarımcının “bu eylem şu an mümkün mü?” sorusunu etken olarak sormasıdır.</li>
       <li>Telafi faktörünü kapatın: 3 etkenli eylemlerin puanı düşüyor, 2 etkenliler kazançlı çıkıyor. Kazanan değişti mi?</li>
     </ol>
@@ -382,7 +382,7 @@ def compensate(score, n):
   <div class="box ask" style="font-size:1em"><span class="bt">🔎 DEMODA DENEYİN</span>
     <ol style="font-size:.9em">
       <li>Mermiyi 0 yapın: “Ateş et”in kırmızı etkeni bütün eylemi veto ediyor; “Şarjör değiştir” öne çıkıyor. Düşmanı 5 m’ye getirin: şarjör değiştirmek artık riskli (düşman uzak etkeni düştü).</li>
-      <li>Canı yavaş yavaş azaltın: “Ateş et” sönüyor; can ≈ 15’te kısa bir “Siper al”dan sonra “Kaç” kazanıyor. Düşmanı 30 m’ye uzaklaştırıp yeniden deneyin: bu kez can ≈ 43’te “İyileş” kazanıyor (düşman uzakken iyileşmek güvenli). Hiçbir yerde “eşik” yazmadık!</li>
+      <li>Canı yavaş yavaş azaltın: “Ateş et” sönüyor; can ≈ 13’te kısa bir “Siper al”dan sonra “Kaç” kazanıyor. Düşmanı 30 m’ye uzaklaştırıp yeniden deneyin: bu kez can ≈ 37’de “İyileş” kazanıyor (düşman uzakken iyileşmek güvenli). Hiçbir yerde “eşik” yazmadık!</li>
       <li>Medkit kutusunu kaldırın: “İyileş” sıfırlanıyor. Kutu, tasarımcının “bu eylem şu an mümkün mü?” sorusunu etken olarak sormasıdır.</li>
       <li>Telafi faktörünü kapatın: 3 etkenli eylemlerin puanı düşüyor, 2 etkenliler kazançlı çıkıyor. Kazanan değişti mi?</li>
     </ol>
@@ -783,14 +783,15 @@ actions = {
   <h2>Etken, eylem, beyin (2/2)</h2>
   <div class="tabs short">
     <div class="tab" data-label="C# (Unity)">
-<pre><code class="language-csharp" data-trim data-line-numbers="1-10|11-14" data-ln-start-from="18"><script type="text/template">
+<pre><code class="language-csharp" data-trim data-line-numbers="1-9|10-15" data-ln-start-from="18"><script type="text/template">
     public float Score(Npc npc) {
         float total = 1f;
+        int n = considerations.Count;
         foreach (var c in considerations) {
-            total *= c.Score(npc);
+            total *= Compensate(c.Score(npc), n);    // telafi her etkene
             if (total == 0f) return 0f;              // veto: gerisini hesaplama
         }
-        return Compensate(total, considerations.Count);
+        return total;
     }
     static float Compensate(float s, int n) {
         if (n < 2) return s;
@@ -810,27 +811,28 @@ actions = {
 ];
 
 function scoreAction(a, npc) {
+  const n = a.considerations.length, mod = 1 - 1 / n;
   let total = 1;
   for (const c of a.considerations) {
-    total *= c(npc);
+    const s = c(npc);
+    total *= s + (1 - s) * mod * s;   // telafi her etkene
     if (total === 0) return 0;
   }
-  const n = a.considerations.length, mod = 1 - 1 / n;
-  return n < 2 ? total : total + (1 - total) * mod * total;
+  return total;
 }
 </script></code></pre>
     </div>
     <div class="tab" data-label="Python">
 <pre><code class="language-python" data-trim data-line-numbers data-ln-start-from="21"><script type="text/template">
 def score(considerations, npc):
+    mod = 1 - 1 / len(considerations)
     total = 1.0
     for c in considerations:
-        total *= c(npc)
+        s = c(npc)
+        total *= s + (1 - s) * mod * s   # telafi her etkene
         if total == 0:
             return 0.0
-    k = len(considerations)
-    mod = 1 - 1 / k
-    return total + (1 - total) * mod * total if k > 1 else total
+    return total
 
 best = max(actions, key=lambda name: score(actions[name], npc))
 </script></code></pre>
@@ -1008,10 +1010,11 @@ function score(needs, ad, dist) {
 #         ör. [0.9, 0.8, 0.5]
 # 1) Çarp; biri 0 ise hemen 0
 #    döndür (veto + erken çıkış)
-# 2) Telafi:
+# 2) Telafi, her etken s için,
+#    çarpmadan önce:
 #    mod = 1 - 1/n
-#    make_up = (1 - p) * mod
-#    sonuç = p + make_up * p
+#    make_up = (1 - s) * mod
+#    s2 = s + make_up * s
 # 3) Liste boşsa 0 döndür
 def dse_score(scores):
     p = 1.0

@@ -30,7 +30,9 @@
     let curMoral = '';
     const draw = () => {
       const sc = OPT.map(o => o[1](v)), mx = Math.max(...sc), wi = sc.indexOf(mx), tie = sc.filter(x => Math.abs(x - mx) < 0.005).length > 1;
-      bars.innerHTML = OPT.map((o, i) => `<div class="ev-row${i === wi && !tie ? ' win' : ''}"><div class="ev-nm">${o[0]}</div><div class="ev-bar"><i style="width:${Math.round(sc[i] * 100)}%"></i></div><div class="ev-sc">${f2(sc[i])}</div><div class="ev-why">= ${o[2](v)}</div></div>`).join('');
+      // dar sütunda (telefon) dört sütun sığmaz: ad + puan üstte, çubuk ve formül altında tam genişlikte
+      const dar = bars.clientWidth > 0 && bars.clientWidth < 600, gs = k => (dar ? ` style="${k}"` : '');
+      bars.innerHTML = OPT.map((o, i) => `<div class="ev-row${i === wi && !tie ? ' win' : ''}"${gs('grid-template-columns:minmax(0,1fr) auto;row-gap:4px')}><div class="ev-nm"${gs('grid-area:1/1')}>${o[0]}</div><div class="ev-bar"${gs('grid-area:2/1/3/3')}><i style="width:${Math.round(sc[i] * 100)}%"></i></div><div class="ev-sc"${gs('grid-area:1/2')}>${f2(sc[i])}</div><div class="ev-why"${gs('grid-area:3/1/4/3')}>= ${o[2](v)}</div></div>`).join('');
       const [ri, why] = rule(v);
       ruleEl.innerHTML = `<b>Puanlama:</b> ${tie ? 'berabere! (' + OPT.filter((o, i) => Math.abs(sc[i] - mx) < 0.005).map(o => o[0]).join(' = ') + ')' : OPT[wi][0] + ' (en yüksek puan)'} &nbsp;·&nbsp; <b>Evet/hayır kuralları olsaydı:</b> ${OPT[ri][0]} <span class="mini">(${why})</span>${!tie && ri !== wi ? ' <b class="c-red">← farklı!</b>' : ''}`;
       moral.innerHTML = curMoral ? '💡 ' + curMoral : '';
@@ -41,6 +43,13 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls btd-sc' }, ...bs), story, el('div', { class: 'sv-controls ev-sl' }, ...Object.values(sl)), bars, ruleEl, moral);
     bs[0].classList.add('primary'); set(SC[0][1], SC[0][2], SC[0][3]);
+    // senaryo değişince öykü, ders ve kural satırı boy değiştirmesin: en uzun metne göre yer ayır
+    const enUzun = (e, metinler) => { if (!e.isConnected || !e.clientWidth) return; const eski = e.innerHTML; e.style.minHeight = ''; let m = 0; for (const t of metinler) { e.innerHTML = t; m = Math.max(m, e.offsetHeight); } e.innerHTML = eski; e.style.minHeight = m + 'px'; };
+    const adlar = OPT.map(o => o[0]), uzunAd = adlar.reduce((a, b) => (b.length > a.length ? b : a));
+    const kuralAday = ['açlık > 0,5', 'yorgunluk > 0,5', 'sınav yakınlığı > 0,5', 'hiçbiri tutmadı'].map(w => `<b>Puanlama:</b> ${uzunAd} (en yüksek puan) &nbsp;·&nbsp; <b>Evet/hayır kuralları olsaydı:</b> ${uzunAd} <span class="mini">(${w})</span> <b class="c-red">← farklı!</b>`)
+      .concat(adlar.map(a => `<b>Puanlama:</b> berabere! (${a} = ${uzunAd}) &nbsp;·&nbsp; <b>Evet/hayır kuralları olsaydı:</b> ${uzunAd} <span class="mini">(sınav yakınlığı > 0,5)</span>`));
+    const sabitle = () => { enUzun(story, SC.map(sc => '📖 ' + sc[2]).concat('📖 Kendi akşamınız: kaydırıcıları oynatın ve sıralamanın nerede değiştiğine bakın.')); enUzun(moral, SC.map(sc => (sc[3] ? '💡 ' + sc[3] : ''))); enUzun(ruleEl, kuralAday); };
+    requestAnimationFrame(() => { draw(); sabitle(); }); window.addEventListener('resize', () => { draw(); sabitle(); });
     SL.onTheme(draw);
   };
 
@@ -82,18 +91,26 @@
     c.addEventListener('mousemove', e => { if (drag < 0) return; const [px, py] = pos(e); const P = st.p.pts; let x = clamp01(IX(px)); if (drag === 0) x = 0; else if (drag === P.length - 1) x = 1; else x = Math.max(P[drag - 1][0] + 0.02, Math.min(P[drag + 1][0] - 0.02, x)); let y = clamp01(IY(py)); if (st.inv) y = 1 - y; P[drag] = [x, y]; draw(); });
     window.addEventListener('mouseup', () => { drag = -1; });
     const ctl = el('div', { class: 'ctl-col' });
+    // tür seçici bir kez kurulur (yeniden kurulunca odak ve denetim kaybolmasın); altındaki parametreler türe göre yenilenir
+    // tür değişince c: doğrusal/üslüde 0 (y = x, y = x²), lojistikte orta nokta 0,5
+    const turSec = select({ linear: CURVES.linear.ad, power: CURVES.power.ad, logistic: CURVES.logistic.ad, piecewise: CURVES.piecewise.ad }, st.type, v => { st.type = v; st.xlab = null; st.p.c = v === 'logistic' ? 0.5 : 0; build(); draw(); });
+    const param = el('div', { class: 'ctl-col' });
+    ctl.append(el('label', { class: 'ctl' }, 'Eğri: ', turSec), param);
     const build = () => {
-      ctl.innerHTML = '';
-      // tür değişince c: doğrusal/üslüde 0 (y = x, y = x²), lojistikte orta nokta 0,5
-      ctl.append(el('label', { class: 'ctl' }, 'Eğri: ', select({ linear: CURVES.linear.ad, power: CURVES.power.ad, logistic: CURVES.logistic.ad, piecewise: CURVES.piecewise.ad }, st.type, v => { st.type = v; st.xlab = null; st.p.c = v === 'logistic' ? 0.5 : 0; build(); draw(); })));
-      const P = st.p, sl = (lab, key, a, b, s) => ctl.append(slider(lab, a, b, P[key], s, v => { P[key] = v; draw(); }));
+      param.innerHTML = ''; turSec.value = st.type;
+      const P = st.p, sl = (lab, key, a, b, s) => param.append(slider(lab, a, b, P[key], s, v => { P[key] = v; draw(); }));
       if (st.type !== 'piecewise') { sl('eğim m', 'm', -2, 2, 0.1); if (st.type === 'power') sl('üs k', 'k', 0.25, 6, 0.25); sl('x kaydırma c', 'c', -0.5, 1, 0.05); sl('y kaydırma b', 'b', -0.5, 0.5, 0.05); }
-      ctl.append(el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { st.inv = e.target.checked; draw(); } }); cb.checked = st.inv; return cb; })(), ' ters çevir (1 − y)'));
-      ctl.append(slider('girdi x', 0, 1, st.x, 0.01, v => { st.x = v; draw(); }));
+      param.append(el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { st.inv = e.target.checked; draw(); } }); cb.checked = st.inv; return cb; })(), ' ters çevir (1 − y)'));
+      param.append(slider('girdi x', 0, 1, st.x, 0.01, v => { st.x = v; draw(); }));
       const presets = { 'Açlık (Sims tarzı)': () => { st.type = 'piecewise'; st.inv = false; st.xlab = 'girdi x: açlık göstergesinin doluluğu (0 = aç, 1 = tok)'; st.p.pts = [[0, 1], [0.15, 0.95], [0.4, 0.4], [0.6, 0.08], [1, 0]]; }, 'Mesafe: yakın iyi': () => { st.type = 'power'; st.inv = true; st.xlab = 'girdi x: mesafe (0 = dibinde, 1 = en uzak)'; Object.assign(st.p, { m: 1, k: 0.5, c: 0, b: 0 }); }, 'Can az → kaç': () => { st.type = 'logistic'; st.inv = true; st.xlab = 'girdi x: can (0 = ölü, 1 = tam)'; Object.assign(st.p, { m: 1.5, c: 0.3, b: 0 }); }, 'Mermi: biraz yeter': () => { st.type = 'power'; st.inv = false; st.xlab = 'girdi x: mermi (0 = boş, 1 = dolu şarjör)'; Object.assign(st.p, { m: 1, k: 0.35, c: 0, b: 0 }); } };
-      ctl.append(el('div', { class: 'sv-controls' }, el('b', null, 'Hazır: '), ...Object.entries(presets).map(([k, f]) => btn(k, () => { f(); build(); draw(); }))));
+      param.append(el('div', { class: 'sv-controls' }, el('b', null, 'Hazır: '), ...Object.entries(presets).map(([k, f]) => btn(k, () => { f(); build(); draw(); }))));
     };
     build();
+    // Kaymaz: parametre sütunu dört eğri türünün en uzununa göre yer ayırır (tür değişince alttakiler oynamasın)
+    let sonW = 0;
+    const yerAyir = () => { const wd = param.clientWidth; if (!wd || wd === sonW) return; sonW = wd; const eski = st.type, eskiInv = st.inv; param.style.minHeight = formula.style.minHeight = ''; let m = 0, mf = 0; for (const t of Object.keys(CURVES)) for (const inv of [false, true]) { st.type = t; st.inv = inv; build(); draw(); m = Math.max(m, param.offsetHeight); mf = Math.max(mf, formula.offsetHeight); } st.type = eski; st.inv = eskiInv; build(); draw(); param.style.minHeight = m + 'px'; formula.style.minHeight = mf + 'px'; };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(yerAyir)).observe(root);
+    window.addEventListener('resize', yerAyir); requestAnimationFrame(yerAyir);
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, c), el('div', { class: 'gv-side' }, ctl, formula, info)));
     info.innerHTML = 'Girdiyi önce <b>0–1</b> aralığına getiriyoruz (normalleştirme), sonra eğri onu bir <b>puana</b> çeviriyor. Tasarımcının işi doğru eğriyi seçmek.';
@@ -116,10 +133,18 @@
     const bar = (v, col) => `<span class="ubar"><i style="width:${Math.round(clamp01(v) * 100)}%;background:${col}"></i></span><span class="unum">${f2(v)}</span>`;
     const draw = () => {
       const t = T();
-      const rows = COMBAT.map(a => { const vals = a.cons.map(([n, f]) => [n, clamp01(f(s))]); const prod = vals.reduce((p, [, v]) => p * v, 1); return { a, vals, prod, fin: s.comp ? compensate(prod, vals.length) : prod }; });
+      const rows = COMBAT.map(a => { const vals = a.cons.map(([n, f]) => [n, clamp01(f(s))]); const prod = vals.reduce((p, [, v]) => p * v, 1); return { a, vals, prod, fin: s.comp ? vals.reduce((p, [, v]) => p * compensate(v, vals.length), 1) : prod }; });   // telafi her etkene, çarpmadan önce (Curvature Behavior.cs)
       const best = rows.reduce((b, r) => (r.fin > b.fin ? r : b), rows[0]);
-      tbl.innerHTML = `<table class="sum-t ut-table"><tr><th>eylem</th><th>etkenler (her biri 0–1)</th><th>çarpım</th><th>${s.comp ? 'telafili puan' : 'puan'}</th></tr>` +
-        rows.map(r => `<tr class="${r === best ? 'ut-best' : ''}"><td><b>${r.a.ad}</b></td><td>${r.vals.map(([n, v]) => `<div class="ucons"><span class="ulab">${n}</span>${bar(v, v === 0 ? t.red : t.blue)}</div>`).join('')}</td><td>${bar(r.prod, t.purple)}</td><td>${bar(r.fin, r === best ? t.green : t['ink-2'])}</td></tr>`).join('') + '</table>';
+      const puanAd = `<span style="display:inline-grid"><span style="grid-area:1/1;visibility:${s.comp ? 'visible' : 'hidden'}">telafili puan</span><span style="grid-area:1/1;visibility:${s.comp ? 'hidden' : 'visible'}">puan</span></span>`;
+      const etkenler = r => r.vals.map(([n, v]) => `<div class="ucons"><span class="ulab">${n}</span>${bar(v, v === 0 ? t.red : t.blue)}</div>`).join('');
+      // dar sütunda (telefon) dört sütun sığmaz: çarpım ve puan, etkenlerin altında iki satır olur
+      if (tbl.clientWidth > 0 && tbl.clientWidth < 480) {
+        tbl.innerHTML = `<table class="sum-t ut-table"><tr><th>eylem</th><th>etkenler (her biri 0–1) → çarpım → ${puanAd}</th></tr>` +
+          rows.map(r => `<tr class="${r === best ? 'ut-best' : ''}"><td><b>${r.a.ad}</b></td><td>${etkenler(r)}<div class="ucons" style="border-top:1px solid var(--rule)"><span class="ulab">çarpım</span>${bar(r.prod, t.purple)}</div><div class="ucons"><span class="ulab"><b>${puanAd}</b></span>${bar(r.fin, r === best ? t.green : t['ink-2'])}</div></td></tr>`).join('') + '</table>';
+      } else {
+        tbl.innerHTML = `<table class="sum-t ut-table"><tr><th>eylem</th><th>etkenler (her biri 0–1)</th><th>çarpım</th><th>${puanAd}</th></tr>` +
+          rows.map(r => `<tr class="${r === best ? 'ut-best' : ''}"><td><b>${r.a.ad}</b></td><td>${etkenler(r)}</td><td>${bar(r.prod, t.purple)}</td><td>${bar(r.fin, r === best ? t.green : t['ink-2'])}</td></tr>`).join('') + '</table>';
+      }
       verdict.innerHTML = `Seçilen: <b class="c-green">${best.a.ad}</b>. ` + (rows.some(r => r.prod === 0) ? 'Puanı 0 olan bir etken bütün eylemi <b>veto</b> eder (kırmızı çubuk). ' : '') + (s.comp ? '' : '<b>Telafi kapalı</b>: 3 etkenli eylemler, 2 etkenlilere göre haksız biçimde düşük puan alıyor.');
     };
     const sl = (lab, key, a, b, st2) => slider(lab, a, b, s[key], st2, v => { s[key] = v; draw(); });
@@ -127,6 +152,9 @@
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'gv-row' }, el('div', { class: 'ctl-col', style: 'flex:0 0 300px' }, el('b', null, 'Durum'), sl('can', 'hp', 0, 100, 1), sl('mermi', 'ammo', 0, 30, 1), sl('düşmana mesafe (m)', 'dist', 0, 50, 1), sl('düşman sayısı', 'enemies', 0, 5, 1), sl('en yakın siper (m)', 'cover', 0, 30, 1), cb('medkit var', 'medkit'), cb('telafi faktörü (Dave Mark)', 'comp')), el('div', { class: 'gv-side' }, tbl, verdict)));
     draw(); SL.onTheme(draw);
+    // telafi ya da veto değişince karar yazısı boy değiştirmesin: en uzun hâline göre yer ayır
+    const sabitle = () => { if (!verdict.isConnected || !verdict.clientWidth) return; const eski = verdict.innerHTML; verdict.style.minHeight = ''; let m = 0; for (const a of COMBAT) { verdict.innerHTML = `Seçilen: <b class="c-green">${a.ad}</b>. Puanı 0 olan bir etken bütün eylemi <b>veto</b> eder (kırmızı çubuk). <b>Telafi kapalı</b>: 3 etkenli eylemler, 2 etkenlilere göre haksız biçimde düşük puan alıyor.`; m = Math.max(m, verdict.offsetHeight); } verdict.innerHTML = eski; verdict.style.minHeight = m + 'px'; };
+    requestAnimationFrame(() => { draw(); sabitle(); }); window.addEventListener('resize', () => { draw(); sabitle(); });
   };
 
   /* ================= Sims tarzı oda: ihtiyaçlar + akıllı nesneler ================= */
@@ -201,28 +229,29 @@
         ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(st.pos.x, st.pos.y, 13, 0, 7); ctx.fill();
         ctx.fillStyle = '#fff'; ctx.font = '15px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🙂', st.pos.x, st.pos.y + 1);
         const lab = st.cur ? (st.phase === 'walk' ? '→ ' : '') + st.cur.act + (st.phase === 'use' ? ` (${Math.max(0, st.cur.dur - st.t).toFixed(1)} sn)` : '') : 'boş duruyor';
-        SL.drawLabel(ctx, lab, st.pos.x, st.pos.y - 26, t.ink, { size: 12 });
+        SL.drawLabel(ctx, lab, st.pos.x, st.cur && st.cur.y < H / 2 ? st.pos.y + 28 : st.pos.y - 26, t.ink, { size: 12 });   // hedef üst sıradaysa yazı Sim'in altında: nesnenin adına binmesin (yer yalnızca hedef değişince değişir)
+        if (!st.scores.length) st.scores = scoreAll();   // ilk karede de puan satırları dolu olsun (boy oynamasın)
         if (o.onDraw) o.onDraw(st);
       }
     });
-    return { world: w, st, cfg, setScore: f => { scoreFn = f; }, objs, NEEDS };
+    return { world: w, st, cfg, setScore: f => { scoreFn = f; }, rescore: () => { st.scores = scoreAll(); w.draw(); }, objs, NEEDS };
   }
 
   const needBars = st => NEEDS.map(([k, n, ic]) => { const v = st.needs[k]; const col = v < 20 ? 'var(--red)' : v < 45 ? 'var(--amber)' : 'var(--green)'; return `<div class="uneed"><span>${ic} ${n}</span><span class="ubar wide"><i style="width:${v}%;background:${col}"></i></span><b>${Math.round(v)}</b></div>`; }).join('');
-  const scoreBars = st => { const rs = (st.scores || []).slice().sort((a, b) => b.s - a.s), mx = Math.max(0.01, ...rs.map(r => r.s)); return rs.map(r => `<div class="uscore ${st.lastPick && r.b === st.lastPick.b ? 'on' : ''}"><span>${r.b ? r.b.act : 'boş dur'}</span><span class="ubar wide"><i style="width:${(100 * r.s) / mx}%"></i></span><b>${r.s.toFixed(2)}</b></div>`).join(''); };
+  const scoreBars = st => { const rs = (st.scores || []).slice().sort((a, b) => b.s - a.s), mx = Math.max(0.01, ...rs.map(r => r.s)); return rs.map(r => `<div class="uscore ${st.lastPick && r.b === st.lastPick.b ? 'on' : ''}"><span>${r.b ? r.b.act : 'boş dur'}</span><span class="ubar wide"><i style="width:${(100 * r.s) / mx}%"></i></span><b>${r.s.toFixed(2)}</b></div>`).join('') + '<div class="uscore" style="visibility:hidden" aria-hidden="true"><span>Joy Booth</span><span class="ubar wide"></span><b>0.00</b></div>'.repeat(Math.max(0, OBJS.length + 1 - rs.length)); };   // Joy Booth kapalıyken de satır sayısı sabit
 
   D.simroom = function (root) {
     const side = el('div', { class: 'gv-side' }), stats = el('div', { class: 'sv-counters' });
     const room = makeRoom({ onDraw: st => {
       side.innerHTML = `<div class="mini"><b>İhtiyaçlar</b> (100 = tam dolu)</div>${needBars(st)}<div class="mini" style="margin-top:6px"><b>Eylem puanları</b> ${room && room.cfg.inertia === 'commit' ? '(karar: eylem bitince)' : '(karar: her kare)'}</div>${scoreBars(st)}`;
-      stats.innerHTML = `<span class="cnt">kriz (ihtiyaç 0’a düştü) <b class="${st.crises ? 'c-red' : ''}">${st.crises}</b></span><span class="cnt">ort. mutluluk <b>${st.n ? Math.round(st.happySum / st.n) : '-'}</b></span><span class="cnt">fikir değiştirme <b>${st.switches}</b></span>${room && room.cfg.joy ? `<span class="cnt">Joy Booth süresi <b>${Math.round(st.uses.joy || 0)} sn</b></span>` : ''}`;
+      stats.innerHTML = `<span class="cnt">kriz (ihtiyaç 0’a düştü) <b class="${st.crises ? 'c-red' : ''}">${st.crises}</b></span><span class="cnt">ort. mutluluk <b>${st.n ? Math.round(st.happySum / st.n) : '-'}</b></span><span class="cnt">fikir değiştirme <b>${st.switches}</b></span><span class="cnt" style="visibility:${room && room.cfg.joy ? 'visible' : 'hidden'}">Joy Booth süresi <b>${Math.round(st.uses.joy || 0)} sn</b></span>`;
     } });
     const cfg = room.cfg;
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
       el('label', { class: 'ctl' }, 'Seçim: ', select({ best: 'en yüksek puan', weighted: 'ağırlıklı rastgele (hepsi)', top: 'ağırlıklı rastgele (en iyinin %75’i üstü)' }, cfg.mode, v => { cfg.mode = v; })),
       el('label', { class: 'ctl' }, 'Atalet: ', select({ commit: 'eylemi bitir, sonra karar ver', bonus: 'her kare karar + mevcut eyleme ×1,3', none: 'her kare karar (atalet yok)' }, cfg.inertia, v => { cfg.inertia = v; })),
-      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.atten = e.target.checked; } }); x.checked = cfg.atten; return x; })(), ' mesafe zayıflatması'),
+      el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.atten = e.target.checked; room.rescore(); } }); x.checked = cfg.atten; return x; })(), ' mesafe zayıflatması'),
       el('label', { class: 'ctl' }, (() => { const x = el('input', { type: 'checkbox', onchange: e => { cfg.joy = e.target.checked; if (!e.target.checked && room.st.cur && room.st.cur.id === 'joy') room.st.cur = null; } }); x.checked = cfg.joy; return x; })(), ' 🎡 Joy Booth ekle')),
       el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, room.world.canvas, stats), side), room.world.controls());
     room.world.reset();
@@ -266,14 +295,14 @@
   /* ---------- ailab’lar ---------- */
   SL.AILABS.dse = {
     fn: 'dse_score', jsFn: 'dseScore', tol: 1e-6,
-    ref: scores => { if (!scores.length) return 0; let p = 1; for (const s of scores) { p *= s; if (p === 0) return 0; } return compensate(p, scores.length); },
+    ref: scores => { if (!scores.length) return 0; let p = 1; for (const s of scores) { p *= compensate(s, scores.length); if (p === 0) return 0; } return p; },
     cases: () => {
       const cs = [[[0.5]], [[0.9, 0.9]], [[0.8, 0.5, 0.9]], [[1, 1, 1, 1]], [[0.6, 0, 0.9]], [[0, 0.5]], [[0.3, 0.3, 0.3, 0.3, 0.3]], [[]]];
       for (let i = 0; i < 14; i++) { const n = 1 + Math.floor(Math.random() * 6); cs.push([Array.from({ length: n }, () => (Math.random() < 0.08 ? 0 : Math.round(Math.random() * 1000) / 1000))]); }
       return cs;
     },
     show: s => `etken puanları ${JSON.stringify(s)}`,
-    hint: s => (s.length === 0 ? 'Etken yoksa 0 döndürün.' : s.includes(0) ? 'Bir etken 0 ise sonuç 0 (veto).' : s.length === 1 ? 'Tek etkende telafi yok: mod = 1 − 1/1 = 0.' : 'çarpım p; mod = 1 − 1/n; telafi = (1 − p)·mod; sonuç = p + telafi·p')
+    hint: s => (s.length === 0 ? 'Etken yoksa 0 döndürün.' : s.includes(0) ? 'Bir etken 0 ise sonuç 0 (veto).' : s.length === 1 ? 'Tek etkende telafi yok: mod = 1 − 1/1 = 0.' : 'her etken s için: mod = 1 − 1/n; telafi = (1 − s)·mod; s′ = s + telafi·s; sonra s′ puanlarını çarp')
   };
   SL.AILABS.dual = {
     fn: 'dual_candidates', jsFn: 'dualCandidates',

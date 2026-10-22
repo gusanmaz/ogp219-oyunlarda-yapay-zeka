@@ -73,7 +73,8 @@
       ['📖 Tarif elinde', { tarif: true }, 'Tarif zaten elinde; para yok.', 'Pasta tek eylem (8) ama Para çek + Pizza iki eylem olduğu hâlde daha ucuz (5). Planlayıcı en kısa değil, <b>en ucuz</b> planı seçer.'],
       ['😵 Her şey bozuk', { atmBozuk: true, firinBozuk: true }, 'Bankamatik de fırın da bozuk.', 'İki yol da kapandı; geriye pahalı ama her zaman mümkün olan eylem kaldı. Böyle bir “son çare” eylemi koymazsanız planlayıcı <b>plan bulamaz</b> ve karakter öylece durur.']];
     const w = {}; let moralTxt = '';
-    const cards = el('div', { class: 'al-cards' }), planEl = el('div', { class: 'al-plan' }), story = el('div', { class: 'btd-story' }), why = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
+    const cards = el('div', { class: 'al-cards', style: 'grid-template-columns:repeat(auto-fit, minmax(150px, 1fr))' }),   // dar sütunda kartlar sıkışmasın: sığdığı kadar sütun
+           planEl = el('div', { class: 'al-plan' }), story = el('div', { class: 'btd-story' }), why = el('div', { class: 'btd-log' }), moral = el('div', { class: 'btd-moral' });
     const boxes = {};
     const draw = () => {
       const start = Object.assign({}, w), res = plan(start, { tok: true }, A, { noH: true }), used = new Set((res.plan || []).map(a => a.name));
@@ -203,7 +204,7 @@
   };
 
   /* ---------- 2) canlı asker: planla, yürüt, başarısız olunca yeniden planla ---------- */
-  const LOC = { start: V.v(110, 190), crate: V.v(90, 70), door: V.v(360, 120), window: V.v(360, 300), target: V.v(600, 200) };
+  const LOC = { start: V.v(175, 190), crate: V.v(90, 70), door: V.v(360, 120), window: V.v(360, 300), target: V.v(600, 200) };
   function makeSoldier(o = {}) {
     const W = 720, H = 380;
     let actions = o.actions || ACTIONS;
@@ -218,7 +219,8 @@
       st.phase = r.plan ? 'go' : 'stuck';
       log(r.plan ? `📝 Plan (${r.cost}): ${r.plan.map(a => a.name).join(' → ')}` : '❌ Plan bulunamadı!');
     };
-    const where = a => ({ 'Cephane al': LOC.crate, 'Kapıdan geç': LOC.door, 'Kapıyı tekmele': LOC.door, 'Pencereden atla': LOC.window, 'Ateş et': V.v(470, 200), 'Yumruk': V.v(570, 200) }[a.name] || null);
+    const where = a => ({ 'Cephane al': V.v(LOC.crate.x + 80, LOC.crate.y),   // sandığın yanında dur: ad yazısı simgeye ve etikete binmesin
+      'Kapıdan geç': LOC.door, 'Kapıyı tekmele': LOC.door, 'Pencereden atla': LOC.window, 'Ateş et': V.v(470, 200), 'Yumruk': V.v(570, 200) }[a.name] || null);
     const DUR = { 'Cephane al': 0.8, 'Şarjör tak': 1.0, 'Kapıdan geç': 0.8, 'Kapıyı tekmele': 1.2, 'Pencereden atla': 1.0, 'Ateş et': 0.8, 'Yumruk': 1.2 };
     const fails = a => (a.name === 'Cephane al' && env.emptyArmory ? { armoryEmpty: true, msg: 'cephanelik boş!' } : a.name === 'Kapıdan geç' && env.holdDoor ? { doorStuck: true, msg: 'kapı açılmıyor (biri tutuyor)!' } : a.name === 'Kapıyı tekmele' && env.holdDoor ? { kickFailed: true, msg: 'tekme işe yaramadı!' } : null);
     const w = new SL.World({
@@ -273,9 +275,10 @@
 
   D.goaplive = function (root) {
     const side = el('div', { class: 'gv-side' });
-    const sol = makeSoldier({ onDraw: (st, env) => {
+    const yanCiz = (st) => {
       side.innerHTML = `<div class="mini"><b>Çalışma belleği</b> (dünya durumu)</div><div class="gfacts-view">${chips(st.s)}</div><div class="mini" style="margin-top:6px"><b>Plan</b></div><div class="gplan">${planCards(st.plan, st.i, st.failed && st.flash > 0)}</div><div class="mini" style="margin-top:6px"><b>Günlük</b> · yeniden planlama: ${st.replans}</div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('')}</div>`;
-    } });
+    };
+    const sol = makeSoldier({ onDraw: yanCiz });
     const env = sol.env;
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' },
@@ -284,6 +287,21 @@
       el('span', { class: 'mini' }, 'Kutuları seçip ↺ Baştan’a basın. Asker başarısızlıkları çalışma belleğine yazar ve yeniden plan yapar.')),
       el('div', { class: 'gv-row' }, el('div', { style: 'flex:none' }, (sol.world.canvas.style.width = '640px', sol.world.canvas)), side), sol.world.controls());
     sol.world.reset();
+    // Kaymaz: bellek, plan ve günlük sütunu dört senaryonun (kapı tutuluyor mu, cephanelik boş mu) baştan sona en uzun hâli
+    // kadar yer ayırır; böylece günlük uzadıkça alttaki oynatıcı düğmeleri aşağı kaymaz
+    let sonW = 0;
+    const yerAyir = () => {
+      const wd = side.clientWidth; if (!wd || wd === sonW) return; sonW = wd;
+      const eH = env.holdDoor, eA = env.emptyArmory; let m = 0;
+      side.style.minHeight = '';
+      for (const [h, a] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+        env.holdDoor = !!h; env.emptyArmory = !!a; sol.world.reset();
+        for (let k = 0; k < 3600; k++) { sol.world.tick(); const son = sol.st.phase === 'done' || sol.st.phase === 'stuck'; if (k % 6 === 0 || son) { yanCiz(sol.st); m = Math.max(m, side.offsetHeight); } if (son) break; }
+      }
+      env.holdDoor = eH; env.emptyArmory = eA; sol.world.reset(); side.style.minHeight = Math.ceil(m) + 'px';
+    };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(yerAyir)).observe(root);
+    window.addEventListener('resize', yerAyir); setTimeout(yerAyir, 0);
     return { start: () => sol.world.start(), stop: () => sol.world.stop() };
   };
 
@@ -366,7 +384,7 @@
     UprootTrunk: P('UprootTrunk', null, { hasTrunk: true }),
     ChooseBridge: P('ChooseBridge'), NavigateToBridge: P('NavigateToBridge'), CheckBridge: P('CheckBridge')
   };
-  const TR = { BeTrunkThumper: 'Trunk Thumper ol', AttackEnemy: 'Düşmana saldır', Patrol: 'Devriye', NavigateToEnemy: 'Düşmana git', DoTrunkSlam: 'Kütükle vur', FindTree: 'Ağaç bul', UprootTrunk: 'Ağacı sök', ChooseBridge: 'Köprü seç', NavigateToBridge: 'Köprüye git', CheckBridge: 'Köprüyü kontrol et' };
+  const TR = { BeTrunkThumper: 'Trol ol', AttackEnemy: 'Düşmana saldır', Patrol: 'Devriye', NavigateToEnemy: 'Düşmana git', DoTrunkSlam: 'Kütükle vur', FindTree: 'Ağaç bul', UprootTrunk: 'Ağacı sök', ChooseBridge: 'Köprü seç', NavigateToBridge: 'Köprüye git', CheckBridge: 'Köprüyü kontrol et' };
   /* derinlik öncelikli ayrıştırma + geri izleme (backtracking) */
   function htnFrames(world) {
     const F = [];
@@ -414,12 +432,28 @@
       void t;
       return `<div class="mini"><b>Alan (domain)</b>: ◆ bileşik görev · ▪ ilkel görev</div>` + node('BeTrunkThumper', 0);
     };
-    const fp = new SL.FramePlayer(f => {
+    const ciz = f => {
       left.innerHTML = tree(f.cur);
       right.innerHTML = `<div class="mini"><b>Görev yığını</b> (en üstteki işlenir)</div><div class="pd-stack">${f.stack.map((x, i) => `<div class="${i === 0 ? 'top' : ''}">${TR[x]}</div>`).join('') || '<div>(boş)</div>'}</div><div class="mini"><b>Plan</b></div><div class="gplan">${f.plan.map((x, i) => `<span class="gcard">${i + 1}. ${TR[x]}</span>`).join('<span class="garrow">→</span>') || '<span class="gchip off">henüz boş</span>'}</div>`;
       note.innerHTML = f.note;
-    }, { speed: 1 });
+    };
+    const fp = new SL.FramePlayer(ciz, { speed: 1 });
     const build = () => fp.load(htnFrames(world).F);
+    // Kaymaz: yığın/plan sütunu ve açıklama, 16 dünyanın bütün karelerindeki en uzun hâli kadar yer ayırır;
+    // böylece ⏭ ya da kutucuklar sütunu uzatıp alttaki oynatıcıyı aşağı itmez
+    const parcalar = [right, note];
+    let sonW = 0;
+    const yerAyir = () => {
+      const wd = root.clientWidth; if (!wd || wd === sonW) return; sonW = wd;
+      const eski = Object.assign({}, world), h = parcalar.map(() => 0), ks = Object.keys(world);
+      parcalar.forEach(p => (p.style.minHeight = ''));
+      for (let m = 0; m < 16; m++) { ks.forEach((k, j) => (world[k] = !!((m >> j) & 1))); htnFrames(world).F.forEach(f => { ciz(f); parcalar.forEach((p, j) => (h[j] = Math.max(h[j], p.getBoundingClientRect().height))); }); }
+      Object.assign(world, eski);
+      parcalar.forEach((p, j) => { const c = getComputedStyle(p), ek = c.boxSizing === 'border-box' ? 0 : ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((t, x) => t + (parseFloat(c[x]) || 0), 0); p.style.minHeight = Math.ceil(h[j] - ek) + 'px'; });
+      build();
+    };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(yerAyir)).observe(root);
+    window.addEventListener('resize', yerAyir); setTimeout(yerAyir, 0);
     const boxes = Object.keys(world).map(k => el('label', { class: 'ctl' }, (() => { const cb = el('input', { type: 'checkbox', onchange: e => { world[k] = e.target.checked; build(); } }); cb.checked = world[k]; return cb; })(), ' ' + NAMES[k]));
     root.setAttribute('data-prevent-swipe', '');
     root.append(el('div', { class: 'sv-controls' }, el('b', null, 'Dünya: '), ...boxes), view, SL.transport(fp, { min: 0.5, max: 6 }), note);
