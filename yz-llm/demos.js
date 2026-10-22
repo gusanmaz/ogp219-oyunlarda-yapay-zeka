@@ -32,15 +32,18 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
     return ws.map((w, i) => ({ w, n: c[w], p: ex[i] / Z })).sort((a, b) => b.p - a.p);
   };
   D.minilm = function (root) {
-    let temp = 1, text = [], ctxw = '<baş>', last = null;
+    // Kaymaz: metin en çok MAXW kelime gösterilir (eskisi "…" ile kırpılır), çubuklar hep 8 satır, metin kutusuna en uzun hâli kadar yer
+    const MAXW = 24;
+    let temp = 1, text = [], ctxw = '<baş>', last = null, kirpik = false;
     const out = el('div', { class: 'lm-out' }), bars = el('div', { class: 'lm-bars' }), info = el('div', { class: 'sv-note' });
     const sample = () => { const d = dist(ctxw, temp); let r = Math.random(), k = 0; while (k < d.length - 1 && r > d[k].p) { r -= d[k].p; k++; } return d[k].w; };
-    const add = w => { text.push(w); last = w; ctxw = ['.', '?'].includes(w) ? '<baş>' : w; };
+    const add = w => { text.push(w); if (text.length > MAXW) { text.splice(0, text.length - MAXW); kirpik = true; } last = w; ctxw = ['.', '?'].includes(w) ? '<baş>' : w; };
     const draw = () => {
-      out.innerHTML = text.length ? text.map((w, i) => `<span class="${i === text.length - 1 ? 'lm-new' : ''}">${esc(w)}</span>`).join(' ') : '<i>(boş: “1 kelime” ile başlayın)</i>';
+      out.innerHTML = text.length ? (kirpik ? '… ' : '') + text.map((w, i) => `<span class="${i === text.length - 1 ? 'lm-new' : ''}">${esc(w)}</span>`).join(' ') : '<i>(boş: “1 kelime” ile başlayın)</i>';
       const d = dist(ctxw, temp).slice(0, 8);
+      while (d.length < 8) d.push(null);   // az seçenekli bağlamda da 8 satır: kutu boyu değişmesin
       bars.innerHTML = `<div class="lm-ctx">bağlam: <b>${esc(ctxw === '<baş>' ? '‹cümle başı›' : ctxw)}</b> → sıradaki kelime olasılıkları (T = ${temp})</div>` +
-        d.map(x => `<div class="lm-row"><span class="lm-w">${esc(x.w)}</span><span class="lm-bar"><span style="width:${(x.p * 100).toFixed(1)}%"></span></span><span class="lm-p">${(x.p * 100).toFixed(1)}% <small>(${x.n} kez)</small></span></div>`).join('');
+        d.map(x => x ? `<div class="lm-row"><span class="lm-w">${esc(x.w)}</span><span class="lm-bar"><span style="width:${(x.p * 100).toFixed(1)}%"></span></span><span class="lm-p">${(x.p * 100).toFixed(1)}% <small>(${x.n} kez)</small></span></div>` : '<div class="lm-row" style="visibility:hidden"><span class="lm-w">—</span><span class="lm-bar"></span><span class="lm-p">0.0% <small>(0 kez)</small></span></div>').join('');
       info.innerHTML = 'Bu “model” sadece şunu biliyor: derlemde hangi kelimeden sonra hangisi kaç kez gelmiş. Gerçek bir LLM aynı işi yapar (sıradaki parçayı tahmin et, örnekle, ekle, tekrarla) ama bağlam olarak <b>binlerce</b> önceki parçaya bakar ve olasılıkları milyarlarca parametreli bir ağ hesaplar.';
     };
     root.append(el('div', { class: 'sv-controls' },
@@ -51,6 +54,19 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
       btn('↺ temizle', () => { text = []; ctxw = '<baş>'; last = null; draw(); })),
       el('div', { class: 'cols' }, out, bars), info);
     draw();
+    let sonW = 0;
+    const yerAyir = () => {
+      const w = out.clientWidth; if (!w || w === sonW) return; sonW = w;
+      const eski = out.innerHTML; out.style.minHeight = '';
+      out.innerHTML = '… ' + Array(MAXW).fill('<span>kılıçlarını</span>').join(' ');
+      const h = out.getBoundingClientRect().height; out.innerHTML = eski;
+      const c = getComputedStyle(out), ek = c.boxSizing === 'border-box' ? 0 : ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((t, x) => t + (parseFloat(c[x]) || 0), 0);
+      out.style.minHeight = Math.ceil(h - ek) + 'px';
+    };
+    const izle = () => requestAnimationFrame(yerAyir);
+    if (window.ResizeObserver) new ResizeObserver(izle).observe(root);
+    window.addEventListener('resize', izle); setTimeout(izle, 0);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { sonW = 0; izle(); });
   };
 
   /* ================= hafıza akışı (Generative Agents) ================= */
