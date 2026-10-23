@@ -139,7 +139,7 @@
       g.draw(ctx, W, H, t);
       const px = GW * CS + 8;
       [`altın: ${g.collected}/5`, `taş (X): ${g.stones}`, `yakalanma: ${g.caught}`, `görüş: ${g.vision}`, `YZ: ${g.aiMs.toFixed(2)} ms`, `A* çağrısı: ${g.stats.paths}`].forEach((s, i) => SL.drawLabel(ctx, s, px, 14 + i * 16, t.ink, { size: 10, align: 'left', bg: false }));
-      SL.drawLabel(ctx, 'yönetmen:', px, 112, t.muted, { size: 10, align: 'left', bg: false });
+      SL.drawLabel(ctx, 'yönetmen (son 3):', px, 112, t.muted, { size: 10, align: 'left', bg: false });
       g.dirLog.forEach((s, i) => SL.drawLabel(ctx, s, px, 128 + i * 15, t.purple, { size: 9, align: 'left', bg: false }));
       [['devriye', t.blue], ['incele', t.amber], ['kovala', t.red]].forEach(([n, c], i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(px + 5, 200 + i * 18, 5, 0, 7); ctx.fill(); SL.drawLabel(ctx, n, px + 14, 200 + i * 18, t.ink, { size: 10, align: 'left', bg: false }); });
       const gb = g.guards.map(x => `M${x.id + 1}: ${x.bb.state}, farkındalık ${x.bb.awareness.toFixed(2)}${x.bb.lastKnown ? `, son görülen (${x.bb.lastKnown})` : ''}`).join(' · ');

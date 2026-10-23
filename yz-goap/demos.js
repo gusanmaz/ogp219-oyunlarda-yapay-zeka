@@ -276,7 +276,7 @@
   D.goaplive = function (root) {
     const side = el('div', { class: 'gv-side' });
     const yanCiz = (st) => {
-      side.innerHTML = `<div class="mini"><b>Çalışma belleği</b> (dünya durumu)</div><div class="gfacts-view">${chips(st.s)}</div><div class="mini" style="margin-top:6px"><b>Plan</b></div><div class="gplan">${planCards(st.plan, st.i, st.failed && st.flash > 0)}</div><div class="mini" style="margin-top:6px"><b>Günlük</b> · yeniden planlama: ${st.replans}</div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('')}</div>`;
+      side.innerHTML = `<div class="mini"><b>Çalışma belleği</b> (dünya durumu)</div><div class="gfacts-view">${chips(st.s)}</div><div class="mini" style="margin-top:6px"><b>Plan</b></div><div class="gplan">${planCards(st.plan, st.i, st.failed && st.flash > 0)}</div><div class="mini" style="margin-top:6px"><b>Günlük</b> (son 7, en yeni üstte) · yeniden planlama: ${st.replans}</div><div class="fsm-log">${st.log.map(l => `<div>${l}</div>`).join('')}</div>`;
     };
     const sol = makeSoldier({ onDraw: yanCiz });
     const env = sol.env;

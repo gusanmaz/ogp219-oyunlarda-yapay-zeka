@@ -139,14 +139,14 @@
       ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(ax, ay, dar ? 7 : 9, 0, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
       if (dar) {   // dar: grafik ızgaranın altında tam genişlikte, açıklamalar kısa satırlarda
         const py = oy + env.H * cs + 10, avg = rets.slice(-20);
-        lineChart(ctx, ox, py, W - 2 * ox, 70, rets.slice(-200), t.blue, t, 'bölüm getirisi');
+        lineChart(ctx, ox, py, W - 2 * ox, 70, rets.slice(-200), t.blue, t, rets.length > 200 ? 'bölüm getirisi (son 200 bölüm)' : 'bölüm getirisi');
         SL.drawLabel(ctx, `bölüm: ${ep} · adım: ${steps} · son 20 ort.: ${avg.length ? (avg.reduce((a, b) => a + b, 0) / avg.length).toFixed(2) : '—'}`, ox, py + 86, t.ink, { size: 11, align: 'left' });
         SL.drawLabel(ctx, 'yeşil = iyi, kırmızı = kötü · +10 hazine, −10 lav', ox, py + 104, t.muted, { size: 10, align: 'left' });
         SL.drawLabel(ctx, 'ok = en iyi eylem · üçgen = o yönün Q değeri', ox, py + 120, t.muted, { size: 10, align: 'left' });
         SL.drawLabel(ctx, 'tık = duvar/lav/boş', ox, py + 136, t.muted, { size: 10, align: 'left' });
       } else {
       const px = ox + env.W * cs + 14, pw = W - px - 8;
-      lineChart(ctx, px, oy, pw, 120, rets.slice(-200), t.blue, t, 'bölüm getirisi');
+      lineChart(ctx, px, oy, pw, 120, rets.slice(-200), t.blue, t, rets.length > 200 ? 'bölüm getirisi (son 200 bölüm)' : 'bölüm getirisi');
       SL.drawLabel(ctx, `bölüm: ${ep}`, px, oy + 140, t.ink, { size: 12, align: 'left' });
       SL.drawLabel(ctx, `adım: ${steps}`, px, oy + 158, t.muted, { size: 11, align: 'left' });
       const avg = rets.slice(-20); SL.drawLabel(ctx, `son 20 ort.: ${avg.length ? (avg.reduce((a, b) => a + b, 0) / avg.length).toFixed(2) : '—'}`, px, oy + 176, t.muted, { size: 11, align: 'left' });
@@ -212,11 +212,11 @@
       }
       if (dar) {
         SL.drawLabel(ctx, 'mavi ≈ tahmin · sarı = gerçek (gizli)', W / 2, 222, t.muted, { size: 11, bg: false });
-        lineChart(ctx, 8, 236, W - 16, 96, hist.slice(-300), t.green, t, 'çekiş başına ortalama ödül');
+        lineChart(ctx, 8, 236, W - 16, 96, hist.slice(-300), t.green, t, hist.length > 300 ? 'çekiş başına ortalama ödül (son 300)' : 'çekiş başına ortalama ödül');
         SL.drawLabel(ctx, `toplam ödül ${total} / ${pulls} çekiş`, W / 2, 348, t.ink, { size: 11 });
         SL.drawLabel(ctx, `pişmanlık ≈ ${opt.toFixed(1)}`, W / 2, 366, t.red, { size: 11 });
       } else {
-        lineChart(ctx, 470, 20, 230, 150, hist.slice(-300), t.green, t, 'çekiş başına ortalama ödül');
+        lineChart(ctx, 470, 20, 230, 150, hist.slice(-300), t.green, t, hist.length > 300 ? 'çekiş başına ortalama ödül (son 300)' : 'çekiş başına ortalama ödül');
         SL.drawLabel(ctx, `toplam ödül ${total} / ${pulls} çekiş`, 585, 186, t.ink, { size: 11 });
         SL.drawLabel(ctx, `pişmanlık ≈ ${opt.toFixed(1)}`, 585, 202, t.red, { size: 11 });
       }
@@ -472,7 +472,7 @@
           if (c === 'G') SL.drawLabel(ctx, '+10', x + cs / 2, y + cs / 2, t.green, { size: 10 }); if (c === 'L') SL.drawLabel(ctx, '−10', x + cs / 2, y + cs / 2, t.red, { size: 10 });
         }
         ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(10 + (s % env.W) * cs + cs / 2, 10 + Math.floor(s / env.W) * cs + cs / 2, 8, 0, 7); ctx.fill();
-        lineChart(ctx, 10, H, W - 20, 60, rets.slice(-150), t.blue, t, `bölüm getirisi (${rets.length} bölüm)`);
+        lineChart(ctx, 10, H, W - 20, 60, rets.slice(-150), t.blue, t, rets.length > 150 ? `bölüm getirisi (son 150 / ${rets.length} bölüm)` : `bölüm getirisi (${rets.length} bölüm)`);
       },
       reset() { reset(); }
     });

@@ -61,6 +61,7 @@
     let cur = cfg.start, lastEdge = null, log = [], timer = null, sonDar = null;
     const diag = el('div'), logEl = el('div', { class: 'btd-log' }), story = el('div', { class: 'btd-story' }), now = el('div', { class: 'fs-now' });
     logEl.style.cssText = 'height:11.2em;overflow-y:auto;overscroll-behavior:contain';   // en az 6 satırlık sabit yer: günlük uzayınca altındaki düğmeler kaymaz, içi kendi içinde kayar
+    logEl.dataset.kaydir = 'gunluk';   // bilerek kaydırılan günlük: bütün satırlar burada, eskiler kaydırılarak okunur
     const RW = cfg.rw || 150, RH = cfg.rh || 62, LH = 27, labW = tx => tx.length * 8.8 + 18;
     // dar yerleşim yalnızca genişliğe bağlı (kaymaz kural: genişlik değişince yeniden yerleşim serbest)
     const darMi = () => !!cfg.dar && diag.clientWidth > 0 && diag.clientWidth < (cfg.dar.esik || 480);
@@ -97,7 +98,7 @@
       diag.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%" font-family="Source Sans 3">${g}</svg>`;
       const st = S[cur];
       now.innerHTML = `Şu an: <b style="color:${t[st[4]]}">${st[2]} ${st[3]}</b> — ${st[5]}`;
-      const rows = log.slice(-6);
+      const rows = log;   // bütün satırlar (yalnız sonuncular değil): kutu sabit boyda, eskiler kaydırılarak okunur
       logEl.innerHTML = rows.length ? rows.map(([ok, tx], i) => `<div class="${ok ? 'l-ok' : ''}${i === rows.length - 1 ? ' now' : ''}"><span>${ok ? '→' : '·'}</span>${tx}</div>`).join('') : '<div class="hint">Bir senaryo seçin ya da olay düğmelerine kendiniz basın.</div>';
       logEl.scrollTop = logEl.scrollHeight;   // son satır görünür kalsın
     };
@@ -212,7 +213,7 @@
       diag.innerHTML = fsmSVG(st.state, st.flashT > 0 ? st.flash : null, hyst ? 90 : 60, mid);
       const s = st.sense || {};
       const fx = n => `style="display:inline-block;min-width:${n}ch;font-variant-numeric:tabular-nums"`;   // sabit genişlik: sayaçlar yerinden oynamasın
-      info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b ${fx(3)}>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b ${fx(3)}>${s.dist}</b></span><span class="cnt">görüyor <b ${fx(9)}>${s.seesPlayer ? (st.rawSees ? 'evet' : 'hafızadan') : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b ${fx(2)} class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log">${logSatirlari(st.log)}</div>`;
+      info.innerHTML = `<div class="sv-counters"><span class="cnt">can <b ${fx(3)}>${Math.round(st.hp)}</b></span><span class="cnt">mesafe <b ${fx(3)}>${s.dist}</b></span><span class="cnt">görüyor <b ${fx(9)}>${s.seesPlayer ? (st.rawSees ? 'evet' : 'hafızadan') : 'hayır'}</b></span><span class="cnt">son 5 sn’de geçiş <b ${fx(2)} class="${st.switches.length > 6 ? 'c-red' : ''}">${st.switches.length}</b></span></div><div class="fsm-log"><div class="mini">son ${LOGN} geçiş (en yeni üstte)</div>${logSatirlari(st.log)}</div>`;
     } });
     // min-height:0: çizimin boyu yalnızca genişliğe bağlı (en-boy oranı); dar yan sütunda boş 200 px ayırıp düğmeleri aşağı itmesin
     const diag = el('div', { class: 'fsm-diag', style: 'min-height:0' }), info = el('div');
@@ -257,10 +258,11 @@
     const view = el('div', { class: 'cols' });
     const draw = () => {
       view.innerHTML = `<div><div class="mini" style="font-size:15px"><b>Yığınlı FSM</b> (en üstteki = şu anki durum):</div><div class="pd-stack">${stack.slice().reverse().map((s, i) => `<div class="${i === 0 ? 'top' : ''}">${s}</div>`).join('')}</div></div>` +
-        `<div><div class="mini" style="font-size:15px"><b>Düz FSM</b> (tek değişken):</div><div class="pd-stack"><div class="top">${plain}</div></div><div class="mini" style="margin-top:8px;font-size:14px;line-height:1.35">${[0, 1, 2].map(k => `<div>${log[log.length - 3 + k] || '&nbsp;'}</div>`).join('')}</div></div>`;
+        `<div><div class="mini" style="font-size:15px"><b>Düz FSM</b> (tek değişken):</div><div class="pd-stack"><div class="top">${plain}</div></div><div class="mini pd-log" data-kaydir="gunluk" style="margin-top:8px;font-size:14px;line-height:1.35;height:4.05em;overflow-y:auto;overscroll-behavior:contain">${log.length ? log.map(l => `<div>${l}</div>`).join('') : '&nbsp;'}</div></div>`;
+      const g = view.querySelector('.pd-log'); if (g) g.scrollTop = g.scrollHeight;   // en yeni satır görünür
     };
-    // günlük: son 3 satır, yeri baştan ayrılır (boş satırlar &nbsp;); dizi de 3'te tutulur, kutu büyümez
-    const ev = (name, fn) => btn(name, () => { fn(); log = log.slice(-3); draw(); });
+    // günlük: 3 satırlık SABİT kutu (kutu büyümez, düğmeler kaymaz); bütün satırlar içinde, eskiler kaydırılarak okunur
+    const ev = (name, fn) => btn(name, () => { fn(); draw(); });
     root.append(el('div', { class: 'sv-controls' },
       ev('📞 Telefon çaldı', () => { stack.push('TELEFONDA'); plain = 'TELEFONDA'; log.push('Telefon: düz FSM önceki durumu unuttu!'); }),
       ev('🔫 Silah sesi', () => { stack.push('ALARM'); plain = 'ALARM'; log.push('Alarm üste eklendi'); }),

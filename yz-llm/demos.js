@@ -32,14 +32,17 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
     return ws.map((w, i) => ({ w, n: c[w], p: ex[i] / Z })).sort((a, b) => b.p - a.p);
   };
   D.minilm = function (root) {
-    // Kaymaz: metin en çok MAXW kelime gösterilir (eskisi "…" ile kırpılır), çubuklar hep 8 satır, metin kutusuna en uzun hâli kadar yer
+    // Kaymaz: metin kutusu MAXW kelimelik en uzun hâli kadar SABİT yükseklikte; üretilen bütün metin içinde durur, uzayınca
+    // kutu büyümez, kendi içinde kayar (en yenisi görünür, eskisi yukarı kaydırılarak okunur). Çubuklar hep 8 satır.
     const MAXW = 24;
-    let temp = 1, text = [], ctxw = '<baş>', last = null, kirpik = false;
+    let temp = 1, text = [], ctxw = '<baş>', last = null;
     const out = el('div', { class: 'lm-out' }), bars = el('div', { class: 'lm-bars' }), info = el('div', { class: 'sv-note' });
     const sample = () => { const d = dist(ctxw, temp); let r = Math.random(), k = 0; while (k < d.length - 1 && r > d[k].p) { r -= d[k].p; k++; } return d[k].w; };
-    const add = w => { text.push(w); if (text.length > MAXW) { text.splice(0, text.length - MAXW); kirpik = true; } last = w; ctxw = ['.', '?'].includes(w) ? '<baş>' : w; };
+    const add = w => { text.push(w); last = w; ctxw = ['.', '?'].includes(w) ? '<baş>' : w; };
+    out.dataset.kaydir = 'gunluk'; out.style.overflowY = 'auto'; out.style.overscrollBehavior = 'contain';
     const draw = () => {
-      out.innerHTML = text.length ? (kirpik ? '… ' : '') + text.map((w, i) => `<span class="${i === text.length - 1 ? 'lm-new' : ''}">${esc(w)}</span>`).join(' ') : '<i>(boş: “1 kelime” ile başlayın)</i>';
+      out.innerHTML = text.length ? text.map((w, i) => `<span class="${i === text.length - 1 ? 'lm-new' : ''}">${esc(w)}</span>`).join(' ') : '<i>(boş: “1 kelime” ile başlayın)</i>';
+      out.scrollTop = out.scrollHeight;
       const d = dist(ctxw, temp).slice(0, 8);
       while (d.length < 8) d.push(null);   // az seçenekli bağlamda da 8 satır: kutu boyu değişmesin
       bars.innerHTML = `<div class="lm-ctx">bağlam: <b>${esc(ctxw === '<baş>' ? '‹cümle başı›' : ctxw)}</b> → sıradaki kelime olasılıkları (T = ${temp})</div>` +
@@ -57,11 +60,11 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
     let sonW = 0;
     const yerAyir = () => {
       const w = out.clientWidth; if (!w || w === sonW) return; sonW = w;
-      const eski = out.innerHTML; out.style.minHeight = '';
+      const eski = out.innerHTML; out.style.minHeight = out.style.height = '';
       out.innerHTML = '… ' + Array(MAXW).fill('<span>kılıçlarını</span>').join(' ');
       const h = out.getBoundingClientRect().height; out.innerHTML = eski;
       const c = getComputedStyle(out), ek = c.boxSizing === 'border-box' ? 0 : ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((t, x) => t + (parseFloat(c[x]) || 0), 0);
-      out.style.minHeight = Math.ceil(h - ek) + 'px';
+      out.style.height = Math.ceil(h - ek) + 'px'; out.scrollTop = out.scrollHeight;
     };
     const izle = () => requestAnimationFrame(yerAyir);
     if (window.ResizeObserver) new ResizeObserver(izle).observe(root);
@@ -213,16 +216,17 @@ Kılıcı ister misin yolcu ? Altın getir , kılıç senin olsun . Kalkanı da 
         if (!fn) return; timer -= dt; if (timer > 0) return; timer = 1.6;
         const raw = FEED[k++ % FEED.length]; let a;
         try { a = fn(raw); } catch (e) { w.pause(); api.setMsg('err', '⚠️ parseAction hata verdi: ' + SL.jsErrorText(e)); return; }
-        if (a && a.eylem === 'git' && P[a.hedef]) { target = P[a.hedef]; bubble = '→ ' + a.hedef; log.push('✅ ' + raw.slice(0, 40)); }
-        else if (a && a.eylem === 'söyle' && typeof a.söz === 'string') { bubble = '“' + a.söz + '”'; log.push('✅ ' + raw.slice(0, 40)); }
-        else if (a) { bubble = '⚠️ geçersiz eylem uygulandı!'; log.push('❌ ' + raw.slice(0, 40)); }
-        else { bubble = '(yedek: “Hmm?”)'; log.push('⛔ reddedildi: ' + raw.slice(0, 32)); }
+        if (a && a.eylem === 'git' && P[a.hedef]) { target = P[a.hedef]; bubble = '→ ' + a.hedef; log.push('✅ ' + raw); }
+        else if (a && a.eylem === 'söyle' && typeof a.söz === 'string') { bubble = '“' + a.söz + '”'; log.push('✅ ' + raw); }
+        else if (a) { bubble = '⚠️ geçersiz eylem uygulandı!'; log.push('❌ ' + raw); }
+        else { bubble = '(yedek: “Hmm?”)'; log.push('⛔ reddedildi: ' + raw); }   // ham çıktının tamamı (kesilirse okur hangi girdinin reddedildiğini göremez)
         log = log.slice(-5);
       },
       render(ctx, w, t) {
         Object.entries(P).forEach(([n, [x, y]]) => { ctx.fillStyle = t.dark ? '#2f3448' : '#e6e3f0'; ctx.fillRect(x - 34, y - 20, 68, 40); SL.drawLabel(ctx, n, x, y, t.ink, { size: 11 }); });
         ctx.fillStyle = t.blue; ctx.beginPath(); ctx.arc(npc[0], npc[1] - 30, 10, 0, 7); ctx.fill();
         if (bubble) SL.drawLabel(ctx, bubble, npc[0], npc[1] - 52, bubble.startsWith('⚠️') ? t.red : t.ink, { size: 11 });
+        SL.drawLabel(ctx, 'son 5 model çıktısı (en yeni altta)', 8, 194, t.muted, { size: 10, align: 'left' });
         log.forEach((l, i) => SL.drawLabel(ctx, l, 8, 212 + i * 18, l.startsWith('❌') ? t.red : l.startsWith('⛔') ? t.amber : t.green, { size: 10, align: 'left' }));
       },
       reset() { k = 0; timer = 0; npc = [90, 150]; target = null; bubble = ''; log = []; }

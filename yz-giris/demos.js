@@ -143,7 +143,10 @@
     const yerAyir = () => {
       const gn = side.clientWidth; if (!gn || gn === sonG) return; sonG = gn;
       const eski = side.innerHTML; side.style.minHeight = '';
+      // sayaçlar en uzun değerleriyle ölçülür (yem 4, yakalanma 3 basamak): oynarken sayaç satırı sarınca kutu büyüyüp düğmeleri itmesin
+      const sak = { caught: g.caught, score: g.score, modeT: g.modeT, forced: g.forced }; Object.assign(g, { caught: 888, score: 8888, modeT: 0, forced: null });
       let h = 0; for (const m of ['chase', 'scatter']) { side.innerHTML = hudHTML(m); h = Math.max(h, side.getBoundingClientRect().height); }
+      Object.assign(g, sak);
       side.innerHTML = eski; side.style.minHeight = Math.ceil(h) + 'px';
     };
     if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(yerAyir)).observe(side);

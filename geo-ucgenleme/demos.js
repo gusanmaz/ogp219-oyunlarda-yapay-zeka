@@ -71,6 +71,8 @@
   };
   D.ear = function (root) {
     const S = scaffold(root);
+    // günlük: 9 satırlık SABİT kutu (kutu büyümez); bütün sınamalar içinde, eskiler kaydırılarak okunur, her adımda en sona iner
+    S.log.style.cssText = 'height:14em;overflow-y:auto;overscroll-behavior:contain'; S.log.dataset.kaydir = 'gunluk';
     let shape = 'oda', poly, idx, out, lines, cand, done;
     const reset = () => { scan = SHAPES[shape].bas; poly = SHAPES[shape].p.map(([x, y]) => ({ x, y })); idx = poly.map((_, i) => i); out = []; lines = []; cand = null; done = false; S.story.innerHTML = `📖 ${SHAPES[shape].ad}: ${poly.length} köşe. Kulak = komşularıyla birlikte, çokgenin <b>içinde kalan</b> ve içinde başka köşe bulunmayan bir üçgen. Onu kes, çokgen bir köşe küçülsün; tekrarla.`; draw(); };
     const isEar = k => {
@@ -98,7 +100,8 @@
       if (idx.length) { ctx.beginPath(); idx.forEach((i, k) => (k ? ctx.lineTo(P[i].x, P[i].y) : ctx.moveTo(P[i].x, P[i].y))); ctx.closePath(); ctx.setLineDash([7, 6]); ctx.strokeStyle = t.blue; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]); }
       if (cand && !done) { const [a, b, c] = cand.v.map(i => P[i]); tri(ctx, a, b, c); ctx.fillStyle = cand.ok ? t.green + '66' : t.red + '44'; ctx.fill(); ctx.strokeStyle = cand.ok ? t.green : t.red; ctx.lineWidth = 3; ctx.stroke(); }
       P.forEach((p, i) => { const alive = idx.includes(i); ctx.fillStyle = alive ? t.ink : t.muted; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 7); ctx.fill(); label(ctx, String(i + 1), p.x + (p.x < 360 ? -14 : 14), p.y - 12, alive ? t.ink : t.muted, 13); });
-      S.log.innerHTML = lines.slice(-9).join('') || '<div class="hint"><span>·</span>“▶ Sonraki köşe” her basışta bir köşeyi sınar. Basmadan tahmin edin: kulak mı?</div>';
+      S.log.innerHTML = lines.join('') || '<div class="hint"><span>·</span>“▶ Sonraki köşe” her basışta bir köşeyi sınar. Basmadan tahmin edin: kulak mı?</div>';
+      S.log.scrollTop = S.log.scrollHeight;
       S.moral.innerHTML = done ? `💡 ${P.length} köşeli çokgen → ${out.length} üçgen. İçbükey köşeler (iç açısı 180°’den büyük) asla kulak olamaz; ama hep en az iki kulak vardır, bu yüzden yöntem takılmaz.` : '';
     };
     S.ctrl.append(el('label', { class: 'ctl' }, 'Çokgen: ', select(Object.fromEntries(Object.entries(SHAPES).map(([k, v]) => [k, v.ad])), shape, v => { shape = v; reset(); })),

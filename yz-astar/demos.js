@@ -228,6 +228,18 @@
     const legend = el('div', { class: 'gv-side', html: '<div class="box" style="margin:0;font-size:.8em"><span class="bt">Nasıl okunur?</span><ul><li><b>B</b> başlangıç, <b>H</b> hedef, koyu kareler duvar.</li><li><b>Renkli kareler</b> = algoritmanın <b>baktığı</b> (genişlettiği) yerler. Mavi: başlangıca yakın → yeşil → turuncu: uzak.</li><li><b>Sarı kenar</b> = sırada bekleyenler (açık liste).</li><li><b>Kırmızı çizgi</b> = bulunan yol.</li><li>Alttaki sayılar: kaç kareye bakıldı (<b>az = hızlı</b>) ve yolun maliyeti (<b>az = kısa</b>).</li></ul><p style="margin:.4em 0 0"><b>Soru:</b> hangisi hem az kareye bakıyor hem en kısa yolu buluyor?</p></div>' });
     root.append(el('div', { class: 'gv-row' }, grid, legend), SL.transport(fp, { min: 5, max: 300, unit: 'kare/sn' }), el('div', { style: 'font-size:16px' }, 'Herhangi bir ızgarada duvar çizin ya da B/H’yi sürükleyin: dördü aynı haritada yeniden yarışır.'));
     run(); SL.onTheme(() => fp.render());
+    // Kaymaz: sayaç yazıları oynarken uzayıp kısalıyor (dar ekranda 1 ↔ 2 satır); ikinci sıradaki başlıklar oynamasın diye
+    // dört yazının yeri en uzun hâline göre ayrılır (genişlik değişince yeniden ölçülür)
+    let sonGw = 0;
+    const yerAyir = () => {
+      const gw = grid.clientWidth; if (!gw || gw === sonGw) return; sonGw = gw;
+      const eski = labs.map(l => l.innerHTML); let h = 0;
+      labs.forEach(l => { l.style.minHeight = ''; l.innerHTML = 'genişletilen: <b>888</b> / 888 · maliyet <b>88,8</b>'; });
+      labs.forEach(l => { h = Math.max(h, l.getBoundingClientRect().height); });
+      labs.forEach((l, i) => { l.innerHTML = eski[i]; l.style.minHeight = Math.round(h) + 'px'; });
+    };
+    if (window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(yerAyir)).observe(grid);
+    setTimeout(yerAyir, 0);
     return { stop: () => fp.pause() };
   };
 

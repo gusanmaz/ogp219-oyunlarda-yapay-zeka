@@ -134,6 +134,7 @@
         const dps = time > 0 ? (dmg / time) * 60 : 0;
         SL.drawLabel(ctx, `oyuncuya dakikada hasar ≈ ${Math.round(dps)}`, 120, 16, t.ink, { size: 12 });
         if (cfg.mode === 'belgian') SL.drawLabel(ctx, `ızgara ${gridUsed}/${cfg.gridCap} · saldırı ${atkUsed}/${cfg.atkCap}`, 600, 16, t.ink, { size: 12 });
+        SL.drawLabel(ctx, 'son 5 olay (en yeni üstte)', 712, 274, t.muted, { size: 10, align: 'right' });
         log.forEach((l, i) => SL.drawLabel(ctx, l, 712, 290 + i * 16, t.muted, { size: 10, align: 'right' }));
         SL.drawLabel(ctx, 'adın yanındaki sayı = ızgarada kapladığı yer (ağırlık)', 8, 370, t.muted, { size: 10, align: 'left' });
       }
