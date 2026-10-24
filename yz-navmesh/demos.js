@@ -180,6 +180,8 @@
       note.innerHTML = f.note;
     };
     const fp = new SL.FramePlayer(draw, { speed: 1 });
+    // ▶ Oynat ilk adımı hemen atar (1 adım/sn'de okur bir saniye boş ekrana bakmasın); sonrakiler hız kadar arayla
+    { const oynat0 = fp.play.bind(fp); fp.play = () => { if (fp.playing) return; if (!fp.done) { fp.step(); if (fp.done) return; } oynat0(); }; }
     root.append(C, SL.transport(fp, { min: 0.5, max: 8 }), note, el('div', { style: 'font-size:16px;margin-top:6px', html: '<b>S</b> = portalın sol ucu, <b>Ğ</b> = sağ ucu (yürüyüş yönüne göre). <span class="c-blue"><b>Mavi</b></span> = huninin sol kenarı, <span class="c-red"><b>kırmızı</b></span> = sağ kenarı, turuncu = tepe noktası, kalın yeşil = şu an bakılan portal.' }));
     fp.load(frames); SL.onTheme(() => fp.render());
     return { stop: () => fp.pause() };

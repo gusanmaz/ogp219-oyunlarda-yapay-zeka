@@ -438,6 +438,8 @@
       note.innerHTML = f.note;
     };
     const fp = new SL.FramePlayer(ciz, { speed: 1 });
+    // ▶ Oynat ilk adımı hemen atar (1 adım/sn'de okur bir saniye boş ekrana bakmasın); sonrakiler hız kadar arayla
+    { const oynat0 = fp.play.bind(fp); fp.play = () => { if (fp.playing) return; if (!fp.done) { fp.step(); if (fp.done) return; } oynat0(); }; }
     const build = () => fp.load(htnFrames(world).F);
     // Kaymaz: yığın/plan sütunu ve açıklama, 16 dünyanın bütün karelerindeki en uzun hâli kadar yer ayırır;
     // böylece ⏭ ya da kutucuklar sütunu uzatıp alttaki oynatıcıyı aşağı itmez
